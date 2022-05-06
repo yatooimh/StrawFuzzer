@@ -1,0 +1,3530 @@
+public class com.android.server.backup.keyvalue.KeyValueBackupTask extends java.lang.Object implements com.android.server.backup.BackupRestoreTask, java.lang.Runnable
+{
+    private static final java.lang.String BLANK_STATE_FILE_NAME;
+    public static final java.lang.String NEW_STATE_FILE_SUFFIX;
+    static final java.lang.String NO_DATA_END_SENTINEL;
+    private static final java.lang.String PM_PACKAGE;
+    public static final java.lang.String STAGING_FILE_SUFFIX;
+    private static final java.lang.String SUCCESS_STATE_SUBDIR;
+    private static final java.lang.String TAG;
+    private static final java.util.concurrent.atomic.AtomicInteger THREAD_COUNT;
+    private static final int THREAD_PRIORITY;
+    private android.app.IBackupAgent mAgent;
+    private final com.android.server.backup.BackupAgentTimeoutParameters mAgentTimeoutParameters;
+    private android.os.ParcelFileDescriptor mBackupData;
+    private java.io.File mBackupDataFile;
+    private final com.android.server.backup.UserBackupManagerService mBackupManagerService;
+    private final java.io.File mBlankStateFile;
+    private final android.os.ConditionVariable mCancelAcknowledged;
+    private volatile boolean mCancelled;
+    private final int mCurrentOpToken;
+    private android.content.pm.PackageInfo mCurrentPackage;
+    private final java.io.File mDataDirectory;
+    private com.android.server.backup.fullbackup.PerformFullTransportBackupTask mFullBackupTask;
+    private boolean mHasDataToBackup;
+    private final com.android.server.backup.DataChangedJournal mJournal;
+    private android.os.ParcelFileDescriptor mNewState;
+    private java.io.File mNewStateFile;
+    private boolean mNonIncremental;
+    private final java.util.List mOriginalQueue;
+    private final android.content.pm.PackageManager mPackageManager;
+    private volatile com.android.server.backup.remote.RemoteCall mPendingCall;
+    private final java.util.List mPendingFullBackups;
+    private final java.util.List mQueue;
+    private final java.lang.Object mQueueLock;
+    private final com.android.server.backup.keyvalue.KeyValueBackupReporter mReporter;
+    private android.os.ParcelFileDescriptor mSavedState;
+    private java.io.File mSavedStateFile;
+    private final java.io.File mStateDirectory;
+    private final com.android.server.backup.internal.OnTaskFinishedListener mTaskFinishedListener;
+    private final com.android.server.backup.transport.TransportClient mTransportClient;
+    private final int mUserId;
+    private final boolean mUserInitiated;
+
+    static void <clinit>()
+    {
+        java.util.concurrent.atomic.AtomicInteger $r0;
+
+        <com.android.server.backup.keyvalue.KeyValueBackupTask: int THREAD_PRIORITY> = 10;
+
+        <com.android.server.backup.keyvalue.KeyValueBackupTask: java.lang.String TAG> = "KVBT";
+
+        <com.android.server.backup.keyvalue.KeyValueBackupTask: java.lang.String SUCCESS_STATE_SUBDIR> = "backing-up";
+
+        <com.android.server.backup.keyvalue.KeyValueBackupTask: java.lang.String STAGING_FILE_SUFFIX> = ".data";
+
+        <com.android.server.backup.keyvalue.KeyValueBackupTask: java.lang.String PM_PACKAGE> = "@pm@";
+
+        <com.android.server.backup.keyvalue.KeyValueBackupTask: java.lang.String NO_DATA_END_SENTINEL> = "@end@";
+
+        <com.android.server.backup.keyvalue.KeyValueBackupTask: java.lang.String NEW_STATE_FILE_SUFFIX> = ".new";
+
+        <com.android.server.backup.keyvalue.KeyValueBackupTask: java.lang.String BLANK_STATE_FILE_NAME> = "blank_state";
+
+        $r0 = new java.util.concurrent.atomic.AtomicInteger;
+
+        specialinvoke $r0.<java.util.concurrent.atomic.AtomicInteger: void <init>()>();
+
+        <com.android.server.backup.keyvalue.KeyValueBackupTask: java.util.concurrent.atomic.AtomicInteger THREAD_COUNT> = $r0;
+
+        return;
+    }
+
+    public void <init>(com.android.server.backup.UserBackupManagerService, com.android.server.backup.transport.TransportClient, java.lang.String, java.util.List, com.android.server.backup.DataChangedJournal, com.android.server.backup.keyvalue.KeyValueBackupReporter, com.android.server.backup.internal.OnTaskFinishedListener, java.util.List, boolean, boolean)
+    {
+        com.android.server.backup.keyvalue.KeyValueBackupTask r0;
+        com.android.server.backup.UserBackupManagerService r1, $r15, $r17;
+        java.lang.String r2;
+        java.util.List r3, r7;
+        com.android.server.backup.DataChangedJournal r4;
+        com.android.server.backup.keyvalue.KeyValueBackupReporter r5;
+        com.android.server.backup.internal.OnTaskFinishedListener r6;
+        boolean z0, z1;
+        android.os.ConditionVariable $r8;
+        android.content.pm.PackageManager $r9;
+        java.util.ArrayList $r10;
+        com.android.server.backup.BackupAgentTimeoutParameters $r12, r22;
+        java.io.File $r13, $r14, $r16, $r19, $r20;
+        int $i0, $i1;
+        java.lang.Object $r18;
+        com.android.server.backup.transport.TransportClient r21;
+
+        r0 := @this: com.android.server.backup.keyvalue.KeyValueBackupTask;
+
+        r1 := @parameter0: com.android.server.backup.UserBackupManagerService;
+
+        r21 := @parameter1: com.android.server.backup.transport.TransportClient;
+
+        r2 := @parameter2: java.lang.String;
+
+        r3 := @parameter3: java.util.List;
+
+        r4 := @parameter4: com.android.server.backup.DataChangedJournal;
+
+        r5 := @parameter5: com.android.server.backup.keyvalue.KeyValueBackupReporter;
+
+        r6 := @parameter6: com.android.server.backup.internal.OnTaskFinishedListener;
+
+        r7 := @parameter7: java.util.List;
+
+        z0 := @parameter8: boolean;
+
+        z1 := @parameter9: boolean;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        $r8 = new android.os.ConditionVariable;
+
+        specialinvoke $r8.<android.os.ConditionVariable: void <init>(boolean)>(0);
+
+        r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: android.os.ConditionVariable mCancelAcknowledged> = $r8;
+
+        r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: boolean mCancelled> = 0;
+
+        r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.UserBackupManagerService mBackupManagerService> = r1;
+
+        $r9 = virtualinvoke r1.<com.android.server.backup.UserBackupManagerService: android.content.pm.PackageManager getPackageManager()>();
+
+        r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: android.content.pm.PackageManager mPackageManager> = $r9;
+
+        r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.transport.TransportClient mTransportClient> = r21;
+
+        r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: java.util.List mOriginalQueue> = r3;
+
+        $r10 = new java.util.ArrayList;
+
+        specialinvoke $r10.<java.util.ArrayList: void <init>(java.util.Collection)>(r3);
+
+        r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: java.util.List mQueue> = $r10;
+
+        r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.DataChangedJournal mJournal> = r4;
+
+        r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.keyvalue.KeyValueBackupReporter mReporter> = r5;
+
+        r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.internal.OnTaskFinishedListener mTaskFinishedListener> = r6;
+
+        r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: java.util.List mPendingFullBackups> = r7;
+
+        r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: boolean mUserInitiated> = z0;
+
+        r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: boolean mNonIncremental> = z1;
+
+        r22 = virtualinvoke r1.<com.android.server.backup.UserBackupManagerService: com.android.server.backup.BackupAgentTimeoutParameters getAgentTimeoutParameters()>();
+
+        staticinvoke <java.util.Objects: java.lang.Object requireNonNull(java.lang.Object,java.lang.String)>(r22, "Timeout parameters cannot be null");
+
+        $r12 = (com.android.server.backup.BackupAgentTimeoutParameters) r22;
+
+        r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.BackupAgentTimeoutParameters mAgentTimeoutParameters> = $r12;
+
+        $r13 = new java.io.File;
+
+        $r14 = virtualinvoke r1.<com.android.server.backup.UserBackupManagerService: java.io.File getBaseStateDir()>();
+
+        specialinvoke $r13.<java.io.File: void <init>(java.io.File,java.lang.String)>($r14, r2);
+
+        r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: java.io.File mStateDirectory> = $r13;
+
+        $r15 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.UserBackupManagerService mBackupManagerService>;
+
+        $r16 = virtualinvoke $r15.<com.android.server.backup.UserBackupManagerService: java.io.File getDataDir()>();
+
+        r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: java.io.File mDataDirectory> = $r16;
+
+        $i0 = virtualinvoke r1.<com.android.server.backup.UserBackupManagerService: int generateRandomIntegerToken()>();
+
+        r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: int mCurrentOpToken> = $i0;
+
+        $r17 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.UserBackupManagerService mBackupManagerService>;
+
+        $r18 = virtualinvoke $r17.<com.android.server.backup.UserBackupManagerService: java.lang.Object getQueueLock()>();
+
+        r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: java.lang.Object mQueueLock> = $r18;
+
+        $r19 = new java.io.File;
+
+        $r20 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: java.io.File mStateDirectory>;
+
+        specialinvoke $r19.<java.io.File: void <init>(java.io.File,java.lang.String)>($r20, "blank_state");
+
+        r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: java.io.File mBlankStateFile> = $r19;
+
+        $i1 = virtualinvoke r1.<com.android.server.backup.UserBackupManagerService: int getUserId()>();
+
+        r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: int mUserId> = $i1;
+
+        return;
+    }
+
+    private java.lang.String SHA1Checksum(byte[])
+    {
+        com.android.server.backup.keyvalue.KeyValueBackupTask r0;
+        byte[] r1, r9;
+        int i0, $i1, $i2, i4;
+        java.security.MessageDigest $r2;
+        java.lang.String $r4, $r5;
+        byte $b3;
+        java.lang.Throwable $r7;
+        com.android.server.backup.keyvalue.KeyValueBackupReporter $r8;
+        java.lang.StringBuilder r12;
+        java.security.NoSuchAlgorithmException r13;
+
+        r0 := @this: com.android.server.backup.keyvalue.KeyValueBackupTask;
+
+        r9 := @parameter0: byte[];
+
+     label1:
+        $r2 = staticinvoke <java.security.MessageDigest: java.security.MessageDigest getInstance(java.lang.String)>("SHA-1");
+
+        r1 = virtualinvoke $r2.<java.security.MessageDigest: byte[] digest(byte[])>(r9);
+
+     label2:
+        r12 = new java.lang.StringBuilder;
+
+        $i1 = lengthof r1;
+
+        $i2 = $i1 * 2;
+
+        specialinvoke r12.<java.lang.StringBuilder: void <init>(int)>($i2);
+
+        i0 = lengthof r1;
+
+        i4 = 0;
+
+     label3:
+        if i4 >= i0 goto label4;
+
+        $b3 = r1[i4];
+
+        $r5 = staticinvoke <java.lang.Integer: java.lang.String toHexString(int)>($b3);
+
+        virtualinvoke r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r5);
+
+        i4 = i4 + 1;
+
+        goto label3;
+
+     label4:
+        $r4 = virtualinvoke r12.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        return $r4;
+
+     label5:
+        $r7 := @caughtexception;
+
+        $r8 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.keyvalue.KeyValueBackupReporter mReporter>;
+
+        r13 = (java.security.NoSuchAlgorithmException) $r7;
+
+        virtualinvoke $r8.<com.android.server.backup.keyvalue.KeyValueBackupReporter: void onDigestError(java.security.NoSuchAlgorithmException)>(r13);
+
+        return "00";
+
+        catch java.security.NoSuchAlgorithmException from label1 to label2 with label5;
+    }
+
+    private void agentDoQuotaExceeded(android.app.IBackupAgent, java.lang.String, long)
+    {
+        com.android.server.backup.keyvalue.KeyValueBackupTask r0;
+        long l0, l1, $l2;
+        com.android.server.backup.transport.TransportClient $r1;
+        com.android.internal.backup.IBackupTransport $r2;
+        com.android.server.backup.BackupAgentTimeoutParameters $r3;
+        java.lang.Exception $r5;
+        com.android.server.backup.keyvalue.KeyValueBackupReporter $r6;
+        android.app.IBackupAgent r7;
+        java.lang.String r8;
+        com.android.server.backup.keyvalue._$$Lambda$KeyValueBackupTask$XyLNsBl81S_JjG_2y6Nb3ueV0ZY r9;
+
+        r0 := @this: com.android.server.backup.keyvalue.KeyValueBackupTask;
+
+        r7 := @parameter0: android.app.IBackupAgent;
+
+        r8 := @parameter1: java.lang.String;
+
+        l0 := @parameter2: long;
+
+        if r7 == null goto label4;
+
+     label1:
+        $r1 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.transport.TransportClient mTransportClient>;
+
+        $r2 = virtualinvoke $r1.<com.android.server.backup.transport.TransportClient: com.android.internal.backup.IBackupTransport connectOrThrow(java.lang.String)>("KVBT.agentDoQuotaExceeded()");
+
+        l1 = interfaceinvoke $r2.<com.android.internal.backup.IBackupTransport: long getBackupQuota(java.lang.String,boolean)>(r8, 0);
+
+        r9 = new com.android.server.backup.keyvalue._$$Lambda$KeyValueBackupTask$XyLNsBl81S_JjG_2y6Nb3ueV0ZY;
+
+        specialinvoke r9.<com.android.server.backup.keyvalue._$$Lambda$KeyValueBackupTask$XyLNsBl81S_JjG_2y6Nb3ueV0ZY: void <init>(android.app.IBackupAgent,long,long)>(r7, l0, l1);
+
+        $r3 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.BackupAgentTimeoutParameters mAgentTimeoutParameters>;
+
+        $l2 = virtualinvoke $r3.<com.android.server.backup.BackupAgentTimeoutParameters: long getQuotaExceededTimeoutMillis()>();
+
+        specialinvoke r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.remote.RemoteResult remoteCall(com.android.server.backup.remote.RemoteCallable,long,java.lang.String)>(r9, $l2, "doQuotaExceeded()");
+
+     label2:
+        goto label4;
+
+     label3:
+        $r5 := @caughtexception;
+
+        $r6 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.keyvalue.KeyValueBackupReporter mReporter>;
+
+        virtualinvoke $r6.<com.android.server.backup.keyvalue.KeyValueBackupReporter: void onAgentDoQuotaExceededError(java.lang.Exception)>($r5);
+
+     label4:
+        return;
+
+        catch java.lang.Exception from label1 to label2 with label3;
+    }
+
+    private void agentFail(android.app.IBackupAgent, java.lang.String)
+    {
+        com.android.server.backup.keyvalue.KeyValueBackupTask r0;
+        java.lang.String r1, $r4;
+        java.lang.Exception $r2;
+        android.content.pm.PackageInfo $r3;
+        com.android.server.backup.keyvalue.KeyValueBackupReporter $r5;
+        android.app.IBackupAgent r6;
+
+        r0 := @this: com.android.server.backup.keyvalue.KeyValueBackupTask;
+
+        r6 := @parameter0: android.app.IBackupAgent;
+
+        r1 := @parameter1: java.lang.String;
+
+     label1:
+        interfaceinvoke r6.<android.app.IBackupAgent: void fail(java.lang.String)>(r1);
+
+     label2:
+        goto label4;
+
+     label3:
+        $r2 := @caughtexception;
+
+        $r5 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.keyvalue.KeyValueBackupReporter mReporter>;
+
+        $r3 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: android.content.pm.PackageInfo mCurrentPackage>;
+
+        $r4 = $r3.<android.content.pm.PackageInfo: java.lang.String packageName>;
+
+        virtualinvoke $r5.<com.android.server.backup.keyvalue.KeyValueBackupReporter: void onFailAgentError(java.lang.String)>($r4);
+
+     label4:
+        return;
+
+        catch java.lang.Exception from label1 to label2 with label3;
+    }
+
+    private void applyStateTransaction(int)
+    {
+        com.android.server.backup.keyvalue.KeyValueBackupTask r0;
+        int i0;
+        java.io.File $r1, $r2, $r8, $r9, r11;
+        java.lang.StringBuilder $r3;
+        java.lang.IllegalArgumentException $r6;
+        java.lang.String $r7;
+
+        r0 := @this: com.android.server.backup.keyvalue.KeyValueBackupTask;
+
+        i0 := @parameter0: int;
+
+        if i0 == 0 goto label3;
+
+        if i0 == 1 goto label2;
+
+        if i0 != 2 goto label1;
+
+        $r8 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: java.io.File mSavedStateFile>;
+
+        virtualinvoke $r8.<java.io.File: boolean delete()>();
+
+        $r9 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: java.io.File mNewStateFile>;
+
+        virtualinvoke $r9.<java.io.File: boolean delete()>();
+
+        goto label4;
+
+     label1:
+        $r3 = new java.lang.StringBuilder;
+
+        specialinvoke $r3.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Unknown state transaction ");
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r6 = new java.lang.IllegalArgumentException;
+
+        $r7 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r6.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>($r7);
+
+        throw $r6;
+
+     label2:
+        r11 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: java.io.File mNewStateFile>;
+
+        if r11 == null goto label4;
+
+        virtualinvoke r11.<java.io.File: boolean delete()>();
+
+        goto label4;
+
+     label3:
+        $r2 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: java.io.File mNewStateFile>;
+
+        $r1 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: java.io.File mSavedStateFile>;
+
+        virtualinvoke $r2.<java.io.File: boolean renameTo(java.io.File)>($r1);
+
+     label4:
+        return;
+    }
+
+    private void backupPackage(java.lang.String) throws com.android.server.backup.keyvalue.AgentException, com.android.server.backup.keyvalue.TaskException
+    {
+        com.android.server.backup.keyvalue.KeyValueBackupTask r0;
+        com.android.server.backup.keyvalue.KeyValueBackupReporter $r1;
+        android.content.pm.PackageInfo $r2, r5;
+        int $i0;
+        com.android.server.backup.keyvalue.BackupException $r3;
+        java.lang.String r4;
+
+        r0 := @this: com.android.server.backup.keyvalue.KeyValueBackupTask;
+
+        r4 := @parameter0: java.lang.String;
+
+        $r1 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.keyvalue.KeyValueBackupReporter mReporter>;
+
+        virtualinvoke $r1.<com.android.server.backup.keyvalue.KeyValueBackupReporter: void onStartPackageBackup(java.lang.String)>(r4);
+
+        r5 = specialinvoke r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: android.content.pm.PackageInfo getPackageForBackup(java.lang.String)>(r4);
+
+        r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: android.content.pm.PackageInfo mCurrentPackage> = r5;
+
+     label1:
+        specialinvoke r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: void extractAgentData(android.content.pm.PackageInfo)>(r5);
+
+        $r2 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: android.content.pm.PackageInfo mCurrentPackage>;
+
+        $i0 = specialinvoke r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: int sendDataToTransport(android.content.pm.PackageInfo)>($r2);
+
+        specialinvoke r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: void cleanUpAgentForTransportStatus(int)>($i0);
+
+     label2:
+        return;
+
+     label3:
+        $r3 := @caughtexception;
+
+        specialinvoke r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: void cleanUpAgentForError(com.android.server.backup.keyvalue.BackupException)>($r3);
+
+        throw $r3;
+
+        catch com.android.server.backup.keyvalue.AgentException from label1 to label2 with label3;
+        catch com.android.server.backup.keyvalue.TaskException from label1 to label2 with label3;
+    }
+
+    private void backupPm() throws com.android.server.backup.keyvalue.TaskException
+    {
+        com.android.server.backup.keyvalue.KeyValueBackupTask r0;
+        com.android.server.backup.keyvalue.KeyValueBackupReporter $r1, $r6;
+        android.content.pm.PackageInfo $r2, $r3, $r4;
+        int $i0;
+        com.android.server.backup.keyvalue.BackupException $r5;
+        com.android.server.backup.keyvalue.TaskException $r7;
+
+        r0 := @this: com.android.server.backup.keyvalue.KeyValueBackupTask;
+
+        $r1 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.keyvalue.KeyValueBackupReporter mReporter>;
+
+        virtualinvoke $r1.<com.android.server.backup.keyvalue.KeyValueBackupReporter: void onStartPackageBackup(java.lang.String)>("@pm@");
+
+        $r2 = new android.content.pm.PackageInfo;
+
+        specialinvoke $r2.<android.content.pm.PackageInfo: void <init>()>();
+
+        r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: android.content.pm.PackageInfo mCurrentPackage> = $r2;
+
+        $r2.<android.content.pm.PackageInfo: java.lang.String packageName> = "@pm@";
+
+     label1:
+        $r3 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: android.content.pm.PackageInfo mCurrentPackage>;
+
+        specialinvoke r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: void extractPmAgentData(android.content.pm.PackageInfo)>($r3);
+
+        $r4 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: android.content.pm.PackageInfo mCurrentPackage>;
+
+        $i0 = specialinvoke r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: int sendDataToTransport(android.content.pm.PackageInfo)>($r4);
+
+        specialinvoke r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: void cleanUpAgentForTransportStatus(int)>($i0);
+
+     label2:
+        return;
+
+     label3:
+        $r5 := @caughtexception;
+
+        $r6 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.keyvalue.KeyValueBackupReporter mReporter>;
+
+        virtualinvoke $r6.<com.android.server.backup.keyvalue.KeyValueBackupReporter: void onExtractPmAgentDataError(java.lang.Exception)>($r5);
+
+        specialinvoke r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: void cleanUpAgentForError(com.android.server.backup.keyvalue.BackupException)>($r5);
+
+        $r7 = staticinvoke <com.android.server.backup.keyvalue.TaskException: com.android.server.backup.keyvalue.TaskException stateCompromised(java.lang.Exception)>($r5);
+
+        throw $r7;
+
+        catch com.android.server.backup.keyvalue.AgentException from label1 to label2 with label3;
+        catch com.android.server.backup.keyvalue.TaskException from label1 to label2 with label3;
+    }
+
+    private android.app.IBackupAgent bindAgent(android.content.pm.PackageInfo) throws com.android.server.backup.keyvalue.AgentException
+    {
+        com.android.server.backup.keyvalue.KeyValueBackupTask r0;
+        java.lang.String r1;
+        android.content.pm.ApplicationInfo $r2;
+        com.android.server.backup.UserBackupManagerService $r3;
+        com.android.server.backup.keyvalue.KeyValueBackupReporter $r4, $r7;
+        com.android.server.backup.keyvalue.AgentException $r5, $r8;
+        java.lang.Throwable $r6;
+        android.content.pm.PackageInfo r9;
+        android.app.IBackupAgent r10;
+        java.lang.SecurityException r12;
+        java.lang.Exception r13;
+
+        r0 := @this: com.android.server.backup.keyvalue.KeyValueBackupTask;
+
+        r9 := @parameter0: android.content.pm.PackageInfo;
+
+        r1 = r9.<android.content.pm.PackageInfo: java.lang.String packageName>;
+
+     label1:
+        $r3 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.UserBackupManagerService mBackupManagerService>;
+
+        $r2 = r9.<android.content.pm.PackageInfo: android.content.pm.ApplicationInfo applicationInfo>;
+
+        r10 = virtualinvoke $r3.<com.android.server.backup.UserBackupManagerService: android.app.IBackupAgent bindToAgentSynchronous(android.content.pm.ApplicationInfo,int)>($r2, 0);
+
+     label2:
+        if r10 == null goto label3;
+
+        return r10;
+
+     label3:
+        $r4 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.keyvalue.KeyValueBackupReporter mReporter>;
+
+        virtualinvoke $r4.<com.android.server.backup.keyvalue.KeyValueBackupReporter: void onAgentError(java.lang.String)>(r1);
+
+        $r5 = staticinvoke <com.android.server.backup.keyvalue.AgentException: com.android.server.backup.keyvalue.AgentException transitory()>();
+
+        throw $r5;
+
+     label4:
+        $r6 := @caughtexception;
+
+        $r7 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.keyvalue.KeyValueBackupReporter mReporter>;
+
+        r12 = (java.lang.SecurityException) $r6;
+
+        virtualinvoke $r7.<com.android.server.backup.keyvalue.KeyValueBackupReporter: void onBindAgentError(java.lang.String,java.lang.SecurityException)>(r1, r12);
+
+        r13 = (java.lang.Exception) $r6;
+
+        $r8 = staticinvoke <com.android.server.backup.keyvalue.AgentException: com.android.server.backup.keyvalue.AgentException transitory(java.lang.Exception)>(r13);
+
+        throw $r8;
+
+        catch java.lang.SecurityException from label1 to label2 with label4;
+        catch java.lang.SecurityException from label3 to label4 with label4;
+    }
+
+    private void checkAgentResult(android.content.pm.PackageInfo, com.android.server.backup.remote.RemoteResult) throws com.android.server.backup.keyvalue.AgentException, com.android.server.backup.keyvalue.TaskException
+    {
+        com.android.server.backup.keyvalue.KeyValueBackupTask r0;
+        android.content.pm.PackageInfo r1;
+        com.android.server.backup.remote.RemoteResult r2, r3, $r6, $r9;
+        long l0;
+        com.android.server.backup.keyvalue.KeyValueBackupReporter $r4, $r7, $r10, $r12;
+        com.android.server.backup.keyvalue.TaskException $r5, $r8;
+        com.android.server.backup.keyvalue.AgentException $r11, $r13;
+        boolean $z0, z1;
+        byte $b1, $b2;
+
+        r0 := @this: com.android.server.backup.keyvalue.KeyValueBackupTask;
+
+        r1 := @parameter0: android.content.pm.PackageInfo;
+
+        r2 := @parameter1: com.android.server.backup.remote.RemoteResult;
+
+        r3 = <com.android.server.backup.remote.RemoteResult: com.android.server.backup.remote.RemoteResult FAILED_THREAD_INTERRUPTED>;
+
+        z1 = 1;
+
+        if r2 == r3 goto label6;
+
+        $r6 = <com.android.server.backup.remote.RemoteResult: com.android.server.backup.remote.RemoteResult FAILED_CANCELLED>;
+
+        if r2 == $r6 goto label5;
+
+        $r9 = <com.android.server.backup.remote.RemoteResult: com.android.server.backup.remote.RemoteResult FAILED_TIMED_OUT>;
+
+        if r2 == $r9 goto label4;
+
+        $z0 = virtualinvoke r2.<com.android.server.backup.remote.RemoteResult: boolean isPresent()>();
+
+        staticinvoke <com.android.internal.util.Preconditions: void checkState(boolean)>($z0);
+
+        l0 = virtualinvoke r2.<com.android.server.backup.remote.RemoteResult: long get()>();
+
+        $b1 = l0 cmp -1L;
+
+        if $b1 == 0 goto label3;
+
+        $b2 = l0 cmp 0L;
+
+        if $b2 != 0 goto label1;
+
+        goto label2;
+
+     label1:
+        z1 = 0;
+
+     label2:
+        staticinvoke <com.android.internal.util.Preconditions: void checkState(boolean)>(z1);
+
+        return;
+
+     label3:
+        $r12 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.keyvalue.KeyValueBackupReporter mReporter>;
+
+        virtualinvoke $r12.<com.android.server.backup.keyvalue.KeyValueBackupReporter: void onAgentResultError(android.content.pm.PackageInfo)>(r1);
+
+        $r13 = staticinvoke <com.android.server.backup.keyvalue.AgentException: com.android.server.backup.keyvalue.AgentException transitory()>();
+
+        throw $r13;
+
+     label4:
+        $r10 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.keyvalue.KeyValueBackupReporter mReporter>;
+
+        virtualinvoke $r10.<com.android.server.backup.keyvalue.KeyValueBackupReporter: void onAgentTimedOut(android.content.pm.PackageInfo)>(r1);
+
+        $r11 = staticinvoke <com.android.server.backup.keyvalue.AgentException: com.android.server.backup.keyvalue.AgentException transitory()>();
+
+        throw $r11;
+
+     label5:
+        $r7 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.keyvalue.KeyValueBackupReporter mReporter>;
+
+        virtualinvoke $r7.<com.android.server.backup.keyvalue.KeyValueBackupReporter: void onAgentCancelled(android.content.pm.PackageInfo)>(r1);
+
+        $r8 = staticinvoke <com.android.server.backup.keyvalue.TaskException: com.android.server.backup.keyvalue.TaskException create()>();
+
+        throw $r8;
+
+     label6:
+        r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: boolean mCancelled> = 1;
+
+        $r4 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.keyvalue.KeyValueBackupReporter mReporter>;
+
+        virtualinvoke $r4.<com.android.server.backup.keyvalue.KeyValueBackupReporter: void onAgentCancelled(android.content.pm.PackageInfo)>(r1);
+
+        $r5 = staticinvoke <com.android.server.backup.keyvalue.TaskException: com.android.server.backup.keyvalue.TaskException create()>();
+
+        throw $r5;
+    }
+
+    private void checkBackupData(android.content.pm.ApplicationInfo, java.io.File) throws java.io.IOException, com.android.server.backup.keyvalue.AgentException
+    {
+        com.android.server.backup.keyvalue.KeyValueBackupTask r0;
+        java.lang.StringBuilder r1;
+        int $i0, $i1;
+        java.io.FileDescriptor $r2;
+        boolean $z0;
+        char $c2;
+        android.content.pm.PackageInfo $r3;
+        com.android.server.backup.keyvalue.KeyValueBackupReporter $r4;
+        java.lang.String $r7, r15;
+        com.android.server.backup.keyvalue.AgentException $r8;
+        java.lang.Throwable $r9, $r10;
+        android.content.pm.ApplicationInfo r11;
+        java.io.File r12;
+        android.os.ParcelFileDescriptor r13;
+        android.app.backup.BackupDataInput r14;
+        android.app.IBackupAgent r16;
+
+        r0 := @this: com.android.server.backup.keyvalue.KeyValueBackupTask;
+
+        r11 := @parameter0: android.content.pm.ApplicationInfo;
+
+        r12 := @parameter1: java.io.File;
+
+        if r11 == null goto label17;
+
+        $i0 = r11.<android.content.pm.ApplicationInfo: int flags>;
+
+        $i1 = $i0 & 1;
+
+        if $i1 == 0 goto label01;
+
+        goto label17;
+
+     label01:
+        r13 = staticinvoke <android.os.ParcelFileDescriptor: android.os.ParcelFileDescriptor open(java.io.File,int)>(r12, 268435456);
+
+     label02:
+        r14 = new android.app.backup.BackupDataInput;
+
+        $r2 = virtualinvoke r13.<android.os.ParcelFileDescriptor: java.io.FileDescriptor getFileDescriptor()>();
+
+        specialinvoke r14.<android.app.backup.BackupDataInput: void <init>(java.io.FileDescriptor)>($r2);
+
+     label03:
+        $z0 = virtualinvoke r14.<android.app.backup.BackupDataInput: boolean readNextHeader()>();
+
+        if $z0 == 0 goto label10;
+
+        r15 = virtualinvoke r14.<android.app.backup.BackupDataInput: java.lang.String getKey()>();
+
+     label04:
+        if r15 == null goto label08;
+
+     label05:
+        $c2 = virtualinvoke r15.<java.lang.String: char charAt(int)>(0);
+
+        if $c2 >= 65280 goto label07;
+
+     label06:
+        goto label08;
+
+     label07:
+        $r4 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.keyvalue.KeyValueBackupReporter mReporter>;
+
+        $r3 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: android.content.pm.PackageInfo mCurrentPackage>;
+
+        virtualinvoke $r4.<com.android.server.backup.keyvalue.KeyValueBackupReporter: void onAgentIllegalKey(android.content.pm.PackageInfo,java.lang.String)>($r3, r15);
+
+        r16 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: android.app.IBackupAgent mAgent>;
+
+        r1 = new java.lang.StringBuilder;
+
+        specialinvoke r1.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Illegal backup key: ");
+
+        virtualinvoke r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r15);
+
+        $r7 = virtualinvoke r1.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: void agentFail(android.app.IBackupAgent,java.lang.String)>(r16, $r7);
+
+        $r8 = staticinvoke <com.android.server.backup.keyvalue.AgentException: com.android.server.backup.keyvalue.AgentException permanent()>();
+
+        throw $r8;
+
+     label08:
+        virtualinvoke r14.<android.app.backup.BackupDataInput: void skipEntityData()>();
+
+     label09:
+        goto label03;
+
+     label10:
+        if r13 == null goto label11;
+
+        virtualinvoke r13.<android.os.ParcelFileDescriptor: void close()>();
+
+     label11:
+        return;
+
+     label12:
+        $r10 := @caughtexception;
+
+        if r13 == null goto label16;
+
+     label13:
+        virtualinvoke r13.<android.os.ParcelFileDescriptor: void close()>();
+
+     label14:
+        goto label16;
+
+     label15:
+        $r9 := @caughtexception;
+
+        virtualinvoke $r10.<java.lang.Throwable: void addSuppressed(java.lang.Throwable)>($r9);
+
+     label16:
+        throw $r10;
+
+     label17:
+        return;
+
+        catch java.lang.Throwable from label02 to label03 with label12;
+        catch java.lang.Throwable from label03 to label04 with label12;
+        catch java.lang.Throwable from label05 to label06 with label12;
+        catch java.lang.Throwable from label07 to label08 with label12;
+        catch java.lang.Throwable from label08 to label09 with label12;
+        catch java.lang.Throwable from label13 to label14 with label15;
+    }
+
+    private void cleanUpAgent(int)
+    {
+        com.android.server.backup.keyvalue.KeyValueBackupTask r0;
+        int i0;
+        java.io.File r1, $r2;
+        android.os.ParcelFileDescriptor $r3, $r4, $r5;
+        android.content.pm.PackageInfo $r6, $r8;
+        android.content.pm.ApplicationInfo $r7, $r9;
+        com.android.server.backup.UserBackupManagerService $r10;
+
+        r0 := @this: com.android.server.backup.keyvalue.KeyValueBackupTask;
+
+        i0 := @parameter0: int;
+
+        specialinvoke r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: void applyStateTransaction(int)>(i0);
+
+        r1 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: java.io.File mBackupDataFile>;
+
+        if r1 == null goto label1;
+
+        virtualinvoke r1.<java.io.File: boolean delete()>();
+
+     label1:
+        $r2 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: java.io.File mBlankStateFile>;
+
+        virtualinvoke $r2.<java.io.File: boolean delete()>();
+
+        r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: java.io.File mSavedStateFile> = null;
+
+        r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: java.io.File mBackupDataFile> = null;
+
+        r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: java.io.File mNewStateFile> = null;
+
+        $r3 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: android.os.ParcelFileDescriptor mSavedState>;
+
+        specialinvoke r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: void tryCloseFileDescriptor(java.io.Closeable,java.lang.String)>($r3, "old state");
+
+        $r4 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: android.os.ParcelFileDescriptor mBackupData>;
+
+        specialinvoke r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: void tryCloseFileDescriptor(java.io.Closeable,java.lang.String)>($r4, "backup data");
+
+        $r5 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: android.os.ParcelFileDescriptor mNewState>;
+
+        specialinvoke r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: void tryCloseFileDescriptor(java.io.Closeable,java.lang.String)>($r5, "new state");
+
+        r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: android.os.ParcelFileDescriptor mSavedState> = null;
+
+        r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: android.os.ParcelFileDescriptor mBackupData> = null;
+
+        r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: android.os.ParcelFileDescriptor mNewState> = null;
+
+        $r6 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: android.content.pm.PackageInfo mCurrentPackage>;
+
+        $r7 = $r6.<android.content.pm.PackageInfo: android.content.pm.ApplicationInfo applicationInfo>;
+
+        if $r7 == null goto label2;
+
+        $r10 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.UserBackupManagerService mBackupManagerService>;
+
+        $r8 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: android.content.pm.PackageInfo mCurrentPackage>;
+
+        $r9 = $r8.<android.content.pm.PackageInfo: android.content.pm.ApplicationInfo applicationInfo>;
+
+        virtualinvoke $r10.<com.android.server.backup.UserBackupManagerService: void unbindAgent(android.content.pm.ApplicationInfo)>($r9);
+
+     label2:
+        r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: android.app.IBackupAgent mAgent> = null;
+
+        return;
+    }
+
+    private void cleanUpAgentForError(com.android.server.backup.keyvalue.BackupException)
+    {
+        com.android.server.backup.keyvalue.KeyValueBackupTask r0;
+        com.android.server.backup.keyvalue.BackupException r1;
+
+        r0 := @this: com.android.server.backup.keyvalue.KeyValueBackupTask;
+
+        r1 := @parameter0: com.android.server.backup.keyvalue.BackupException;
+
+        specialinvoke r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: void cleanUpAgent(int)>(1);
+
+        return;
+    }
+
+    private void cleanUpAgentForTransportStatus(int)
+    {
+        com.android.server.backup.keyvalue.KeyValueBackupTask r0;
+        int i0;
+        java.lang.AssertionError $r1;
+
+        r0 := @this: com.android.server.backup.keyvalue.KeyValueBackupTask;
+
+        i0 := @parameter0: int;
+
+        if i0 == -1006 goto label2;
+
+        if i0 != 0 goto label1;
+
+        specialinvoke r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: void cleanUpAgent(int)>(0);
+
+        goto label3;
+
+     label1:
+        $r1 = new java.lang.AssertionError;
+
+        specialinvoke $r1.<java.lang.AssertionError: void <init>()>();
+
+        throw $r1;
+
+     label2:
+        specialinvoke r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: void cleanUpAgent(int)>(2);
+
+     label3:
+        return;
+    }
+
+    private void clearStatus(java.lang.String)
+    {
+        com.android.server.backup.keyvalue.KeyValueBackupTask r0;
+        java.lang.String r1;
+        java.io.File r2;
+
+        r0 := @this: com.android.server.backup.keyvalue.KeyValueBackupTask;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 = specialinvoke r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: java.io.File getSuccessStateFileFor(java.lang.String)>(r1);
+
+        if r2 != null goto label1;
+
+        return;
+
+     label1:
+        specialinvoke r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: void clearStatus(java.lang.String,java.io.File)>(r1, r2);
+
+        return;
+    }
+
+    private void clearStatus(java.lang.String, java.io.File)
+    {
+        com.android.server.backup.keyvalue.KeyValueBackupTask r0;
+        java.lang.String r1, $r5;
+        boolean $z0, $z1;
+        java.lang.StringBuilder $r2;
+        java.io.File r6;
+
+        r0 := @this: com.android.server.backup.keyvalue.KeyValueBackupTask;
+
+        r1 := @parameter0: java.lang.String;
+
+        r6 := @parameter1: java.io.File;
+
+        $z0 = virtualinvoke r6.<java.io.File: boolean exists()>();
+
+        if $z0 == 0 goto label1;
+
+        $z1 = virtualinvoke r6.<java.io.File: boolean delete()>();
+
+        if $z1 != 0 goto label1;
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Unable to remove status file for ");
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r5 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("KVBT", $r5);
+
+     label1:
+        return;
+    }
+
+    private com.android.server.backup.fullbackup.PerformFullTransportBackupTask createFullBackupTask(java.util.List)
+    {
+        com.android.server.backup.keyvalue.KeyValueBackupTask r0;
+        java.util.List r1;
+        com.android.server.backup.fullbackup.PerformFullTransportBackupTask $r2;
+        com.android.server.backup.UserBackupManagerService $r3;
+        com.android.server.backup.transport.TransportClient $r4;
+        int $i0;
+        java.lang.String[] $r5, $r8;
+        java.lang.Object[] $r6;
+        java.util.concurrent.CountDownLatch $r7;
+        com.android.server.backup.keyvalue.KeyValueBackupReporter $r9, $r11;
+        android.app.backup.IBackupObserver $r10;
+        android.app.backup.IBackupManagerMonitor $r12;
+        boolean $z0;
+        com.android.server.backup.internal.OnTaskFinishedListener $r13;
+
+        r0 := @this: com.android.server.backup.keyvalue.KeyValueBackupTask;
+
+        r1 := @parameter0: java.util.List;
+
+        $r2 = new com.android.server.backup.fullbackup.PerformFullTransportBackupTask;
+
+        $r3 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.UserBackupManagerService mBackupManagerService>;
+
+        $r4 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.transport.TransportClient mTransportClient>;
+
+        $i0 = interfaceinvoke r1.<java.util.List: int size()>();
+
+        $r5 = newarray (java.lang.String)[$i0];
+
+        $r6 = interfaceinvoke r1.<java.util.List: java.lang.Object[] toArray(java.lang.Object[])>($r5);
+
+        $r8 = (java.lang.String[]) $r6;
+
+        $r7 = new java.util.concurrent.CountDownLatch;
+
+        specialinvoke $r7.<java.util.concurrent.CountDownLatch: void <init>(int)>(1);
+
+        $r9 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.keyvalue.KeyValueBackupReporter mReporter>;
+
+        $r10 = virtualinvoke $r9.<com.android.server.backup.keyvalue.KeyValueBackupReporter: android.app.backup.IBackupObserver getObserver()>();
+
+        $r11 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.keyvalue.KeyValueBackupReporter mReporter>;
+
+        $r12 = virtualinvoke $r11.<com.android.server.backup.keyvalue.KeyValueBackupReporter: android.app.backup.IBackupManagerMonitor getMonitor()>();
+
+        $r13 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.internal.OnTaskFinishedListener mTaskFinishedListener>;
+
+        $z0 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: boolean mUserInitiated>;
+
+        specialinvoke $r2.<com.android.server.backup.fullbackup.PerformFullTransportBackupTask: void <init>(com.android.server.backup.UserBackupManagerService,com.android.server.backup.transport.TransportClient,android.app.backup.IFullBackupRestoreObserver,java.lang.String[],boolean,com.android.server.backup.FullBackupJob,java.util.concurrent.CountDownLatch,android.app.backup.IBackupObserver,android.app.backup.IBackupManagerMonitor,com.android.server.backup.internal.OnTaskFinishedListener,boolean)>($r3, $r4, null, $r8, 0, null, $r7, $r10, $r12, $r13, $z0);
+
+        return $r2;
+    }
+
+    private void deletePmStateFile()
+    {
+        com.android.server.backup.keyvalue.KeyValueBackupTask r0;
+        java.io.File $r1, $r2;
+
+        r0 := @this: com.android.server.backup.keyvalue.KeyValueBackupTask;
+
+        $r1 = new java.io.File;
+
+        $r2 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: java.io.File mStateDirectory>;
+
+        specialinvoke $r1.<java.io.File: void <init>(java.io.File,java.lang.String)>($r2, "@pm@");
+
+        virtualinvoke $r1.<java.io.File: boolean delete()>();
+
+        return;
+    }
+
+    private void extractAgentData(android.content.pm.PackageInfo) throws com.android.server.backup.keyvalue.AgentException, com.android.server.backup.keyvalue.TaskException
+    {
+        com.android.server.backup.keyvalue.KeyValueBackupTask r0;
+        android.app.IBackupAgent r1;
+        android.os.WorkSource $r2;
+        android.content.pm.ApplicationInfo $r3;
+        int $i0;
+        com.android.server.backup.UserBackupManagerService $r4, $r5, $r7;
+        java.lang.Throwable $r6;
+        android.content.pm.PackageInfo r8;
+
+        r0 := @this: com.android.server.backup.keyvalue.KeyValueBackupTask;
+
+        r8 := @parameter0: android.content.pm.PackageInfo;
+
+        $r4 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.UserBackupManagerService mBackupManagerService>;
+
+        $r2 = new android.os.WorkSource;
+
+        $r3 = r8.<android.content.pm.PackageInfo: android.content.pm.ApplicationInfo applicationInfo>;
+
+        $i0 = $r3.<android.content.pm.ApplicationInfo: int uid>;
+
+        specialinvoke $r2.<android.os.WorkSource: void <init>(int)>($i0);
+
+        virtualinvoke $r4.<com.android.server.backup.UserBackupManagerService: void setWorkSource(android.os.WorkSource)>($r2);
+
+     label1:
+        r1 = specialinvoke r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: android.app.IBackupAgent bindAgent(android.content.pm.PackageInfo)>(r8);
+
+        r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: android.app.IBackupAgent mAgent> = r1;
+
+        specialinvoke r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: void extractAgentData(android.content.pm.PackageInfo,android.app.IBackupAgent)>(r8, r1);
+
+     label2:
+        $r5 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.UserBackupManagerService mBackupManagerService>;
+
+        virtualinvoke $r5.<com.android.server.backup.UserBackupManagerService: void setWorkSource(android.os.WorkSource)>(null);
+
+        return;
+
+     label3:
+        $r6 := @caughtexception;
+
+        $r7 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.UserBackupManagerService mBackupManagerService>;
+
+        virtualinvoke $r7.<com.android.server.backup.UserBackupManagerService: void setWorkSource(android.os.WorkSource)>(null);
+
+        throw $r6;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+    }
+
+    private void extractAgentData(android.content.pm.PackageInfo, android.app.IBackupAgent) throws com.android.server.backup.keyvalue.AgentException, com.android.server.backup.keyvalue.TaskException
+    {
+        com.android.server.backup.keyvalue.KeyValueBackupTask r0;
+        java.lang.String r1, $r9, $r14;
+        long l0, $l3;
+        int i1, $i2;
+        com.android.server.backup.keyvalue.KeyValueBackupReporter $r2, $r16, $r24, $r26;
+        java.io.File $r3, $r4, $r8, $r13, $r15, $r18, $r20, $r22, $r23, r31, r33, r35;
+        java.lang.StringBuilder $r5, $r10;
+        boolean $z0, $z1, z3;
+        android.os.ParcelFileDescriptor $r17, $r19, $r21;
+        java.lang.Exception $r25;
+        com.android.server.backup.keyvalue.TaskException $r27;
+        com.android.server.backup.keyvalue.AgentException $r28;
+        android.content.pm.PackageInfo r29;
+        android.app.IBackupAgent r30;
+        com.android.server.backup.transport.TransportClient $r36;
+        com.android.internal.backup.IBackupTransport r37;
+        com.android.server.backup.keyvalue._$$Lambda$KeyValueBackupTask$NN2H32cNizGxrUxqHgqPqGldNsA r38;
+        com.android.server.backup.BackupAgentTimeoutParameters $r39;
+        com.android.server.backup.remote.RemoteResult r40;
+
+        r0 := @this: com.android.server.backup.keyvalue.KeyValueBackupTask;
+
+        r29 := @parameter0: android.content.pm.PackageInfo;
+
+        r30 := @parameter1: android.app.IBackupAgent;
+
+        r1 = r29.<android.content.pm.PackageInfo: java.lang.String packageName>;
+
+        $r2 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.keyvalue.KeyValueBackupReporter mReporter>;
+
+        virtualinvoke $r2.<com.android.server.backup.keyvalue.KeyValueBackupReporter: void onExtractAgentData(java.lang.String)>(r1);
+
+        $r3 = new java.io.File;
+
+        $r4 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: java.io.File mStateDirectory>;
+
+        specialinvoke $r3.<java.io.File: void <init>(java.io.File,java.lang.String)>($r4, r1);
+
+        r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: java.io.File mSavedStateFile> = $r3;
+
+        r31 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: java.io.File mDataDirectory>;
+
+        $r5 = new java.lang.StringBuilder;
+
+        specialinvoke $r5.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(".data");
+
+        $r8 = new java.io.File;
+
+        $r9 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r8.<java.io.File: void <init>(java.io.File,java.lang.String)>(r31, $r9);
+
+        r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: java.io.File mBackupDataFile> = $r8;
+
+        r33 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: java.io.File mStateDirectory>;
+
+        $r10 = new java.lang.StringBuilder;
+
+        specialinvoke $r10.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(".new");
+
+        $r13 = new java.io.File;
+
+        $r14 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r13.<java.io.File: void <init>(java.io.File,java.lang.String)>(r33, $r14);
+
+        r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: java.io.File mNewStateFile> = $r13;
+
+        $r16 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.keyvalue.KeyValueBackupReporter mReporter>;
+
+        $r15 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: java.io.File mBackupDataFile>;
+
+        virtualinvoke $r16.<com.android.server.backup.keyvalue.KeyValueBackupReporter: void onAgentFilesReady(java.io.File)>($r15);
+
+        z3 = 0;
+
+     label01:
+        $z0 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: boolean mNonIncremental>;
+
+        if $z0 == 0 goto label05;
+
+     label02:
+        z3 = 0;
+
+     label03:
+        r35 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: java.io.File mBlankStateFile>;
+
+     label04:
+        goto label07;
+
+     label05:
+        z3 = 0;
+
+     label06:
+        r35 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: java.io.File mSavedStateFile>;
+
+     label07:
+        z3 = 0;
+
+     label08:
+        $r17 = staticinvoke <android.os.ParcelFileDescriptor: android.os.ParcelFileDescriptor open(java.io.File,int)>(r35, 402653184);
+
+        r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: android.os.ParcelFileDescriptor mSavedState> = $r17;
+
+     label09:
+        z3 = 0;
+
+     label10:
+        $r18 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: java.io.File mBackupDataFile>;
+
+        $r19 = staticinvoke <android.os.ParcelFileDescriptor: android.os.ParcelFileDescriptor open(java.io.File,int)>($r18, 1006632960);
+
+        r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: android.os.ParcelFileDescriptor mBackupData> = $r19;
+
+     label11:
+        z3 = 0;
+
+     label12:
+        $r20 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: java.io.File mNewStateFile>;
+
+        $r21 = staticinvoke <android.os.ParcelFileDescriptor: android.os.ParcelFileDescriptor open(java.io.File,int)>($r20, 1006632960);
+
+        r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: android.os.ParcelFileDescriptor mNewState> = $r21;
+
+     label13:
+        z3 = 0;
+
+     label14:
+        $i2 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: int mUserId>;
+
+        if $i2 != 0 goto label19;
+
+     label15:
+        z3 = 0;
+
+     label16:
+        $r22 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: java.io.File mBackupDataFile>;
+
+        $z1 = staticinvoke <android.os.SELinux: boolean restorecon(java.io.File)>($r22);
+
+        if $z1 != 0 goto label19;
+
+     label17:
+        z3 = 0;
+
+     label18:
+        $r24 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.keyvalue.KeyValueBackupReporter mReporter>;
+
+        $r23 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: java.io.File mBackupDataFile>;
+
+        virtualinvoke $r24.<com.android.server.backup.keyvalue.KeyValueBackupReporter: void onRestoreconFailed(java.io.File)>($r23);
+
+     label19:
+        z3 = 0;
+
+     label20:
+        $r36 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.transport.TransportClient mTransportClient>;
+
+        r37 = virtualinvoke $r36.<com.android.server.backup.transport.TransportClient: com.android.internal.backup.IBackupTransport connectOrThrow(java.lang.String)>("KVBT.extractAgentData()");
+
+     label21:
+        z3 = 0;
+
+     label22:
+        l0 = interfaceinvoke r37.<com.android.internal.backup.IBackupTransport: long getBackupQuota(java.lang.String,boolean)>(r1, 0);
+
+     label23:
+        z3 = 0;
+
+     label24:
+        i1 = interfaceinvoke r37.<com.android.internal.backup.IBackupTransport: int getTransportFlags()>();
+
+     label25:
+        z3 = 1;
+
+     label26:
+        r38 = new com.android.server.backup.keyvalue._$$Lambda$KeyValueBackupTask$NN2H32cNizGxrUxqHgqPqGldNsA;
+
+     label27:
+        z3 = 1;
+
+     label28:
+        specialinvoke r38.<com.android.server.backup.keyvalue._$$Lambda$KeyValueBackupTask$NN2H32cNizGxrUxqHgqPqGldNsA: void <init>(com.android.server.backup.keyvalue.KeyValueBackupTask,android.app.IBackupAgent,long,int)>(r0, r30, l0, i1);
+
+     label29:
+        z3 = 1;
+
+     label30:
+        $r39 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.BackupAgentTimeoutParameters mAgentTimeoutParameters>;
+
+        $l3 = virtualinvoke $r39.<com.android.server.backup.BackupAgentTimeoutParameters: long getKvBackupAgentTimeoutMillis()>();
+
+        r40 = specialinvoke r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.remote.RemoteResult remoteCall(com.android.server.backup.remote.RemoteCallable,long,java.lang.String)>(r38, $l3, "doBackup()");
+
+     label31:
+        specialinvoke r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: void checkAgentResult(android.content.pm.PackageInfo,com.android.server.backup.remote.RemoteResult)>(r29, r40);
+
+        return;
+
+     label32:
+        $r25 := @caughtexception;
+
+        $r26 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.keyvalue.KeyValueBackupReporter mReporter>;
+
+        virtualinvoke $r26.<com.android.server.backup.keyvalue.KeyValueBackupReporter: void onCallAgentDoBackupError(java.lang.String,boolean,java.lang.Exception)>(r1, z3, $r25);
+
+        if z3 == 0 goto label33;
+
+        $r28 = staticinvoke <com.android.server.backup.keyvalue.AgentException: com.android.server.backup.keyvalue.AgentException transitory(java.lang.Exception)>($r25);
+
+        throw $r28;
+
+     label33:
+        $r27 = staticinvoke <com.android.server.backup.keyvalue.TaskException: com.android.server.backup.keyvalue.TaskException create()>();
+
+        throw $r27;
+
+        catch java.lang.Exception from label01 to label02 with label32;
+        catch java.lang.Exception from label03 to label04 with label32;
+        catch java.lang.Exception from label06 to label07 with label32;
+        catch java.lang.Exception from label08 to label09 with label32;
+        catch java.lang.Exception from label10 to label11 with label32;
+        catch java.lang.Exception from label12 to label13 with label32;
+        catch java.lang.Exception from label14 to label15 with label32;
+        catch java.lang.Exception from label16 to label17 with label32;
+        catch java.lang.Exception from label18 to label19 with label32;
+        catch java.lang.Exception from label20 to label21 with label32;
+        catch java.lang.Exception from label22 to label23 with label32;
+        catch java.lang.Exception from label24 to label25 with label32;
+        catch java.lang.Exception from label26 to label27 with label32;
+        catch java.lang.Exception from label28 to label29 with label32;
+        catch java.lang.Exception from label30 to label31 with label32;
+    }
+
+    private void extractPmAgentData(android.content.pm.PackageInfo) throws com.android.server.backup.keyvalue.AgentException, com.android.server.backup.keyvalue.TaskException
+    {
+        com.android.server.backup.keyvalue.KeyValueBackupTask r0;
+        android.content.pm.PackageInfo r1;
+        android.app.IBackupAgent r2;
+        java.lang.String $r3;
+        boolean $z0;
+        com.android.server.backup.UserBackupManagerService $r4;
+        android.app.backup.BackupAgent $r5;
+        android.os.IBinder $r6;
+
+        r0 := @this: com.android.server.backup.keyvalue.KeyValueBackupTask;
+
+        r1 := @parameter0: android.content.pm.PackageInfo;
+
+        $r3 = r1.<android.content.pm.PackageInfo: java.lang.String packageName>;
+
+        $z0 = virtualinvoke $r3.<java.lang.String: boolean equals(java.lang.Object)>("@pm@");
+
+        staticinvoke <com.android.internal.util.Preconditions: void checkArgument(boolean)>($z0);
+
+        $r4 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.UserBackupManagerService mBackupManagerService>;
+
+        $r5 = virtualinvoke $r4.<com.android.server.backup.UserBackupManagerService: android.app.backup.BackupAgent makeMetadataAgent()>();
+
+        $r6 = virtualinvoke $r5.<android.app.backup.BackupAgent: android.os.IBinder onBind()>();
+
+        r2 = staticinvoke <android.app.IBackupAgent$Stub: android.app.IBackupAgent asInterface(android.os.IBinder)>($r6);
+
+        r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: android.app.IBackupAgent mAgent> = r2;
+
+        specialinvoke r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: void extractAgentData(android.content.pm.PackageInfo,android.app.IBackupAgent)>(r1, r2);
+
+        return;
+    }
+
+    private void finishTask(int)
+    {
+        com.android.server.backup.keyvalue.KeyValueBackupTask r0;
+        int i0, $i2, i5;
+        long l1, $l4;
+        java.util.List $r1, $r7, $r8;
+        boolean $z0, $z1, $z2, $z3, $z4, $z5, $z6;
+        com.android.server.backup.internal.OnTaskFinishedListener $r2;
+        com.android.server.backup.keyvalue.KeyValueBackupReporter $r3, $r9, $r13, $r18, $r22, $r25, $r37;
+        com.android.server.backup.UserBackupManagerService $r4, $r15, $r16, $r20, $r29, $r35;
+        com.android.server.backup.UserBackupManagerService$BackupWakeLock $r5;
+        com.android.server.backup.fullbackup.PerformFullTransportBackupTask $r6, $r11, r38;
+        java.lang.Thread $r10;
+        android.os.ConditionVariable $r12;
+        byte $b3;
+        com.android.server.backup.transport.TransportClient $r14;
+        com.android.server.backup.DataChangedJournal $r17, r28;
+        java.lang.Object $r19, r34;
+        java.lang.Exception $r21, $r24;
+        java.lang.Throwable $r23;
+        java.util.Iterator r26;
+        java.lang.String r27, r30, r32;
+        com.android.internal.backup.IBackupTransport r31;
+
+        r0 := @this: com.android.server.backup.keyvalue.KeyValueBackupTask;
+
+        i0 := @parameter0: int;
+
+        $r1 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: java.util.List mQueue>;
+
+        r26 = interfaceinvoke $r1.<java.util.List: java.util.Iterator iterator()>();
+
+     label01:
+        $z0 = interfaceinvoke r26.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label02;
+
+        $r19 = interfaceinvoke r26.<java.util.Iterator: java.lang.Object next()>();
+
+        r27 = (java.lang.String) $r19;
+
+        $r20 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.UserBackupManagerService mBackupManagerService>;
+
+        virtualinvoke $r20.<com.android.server.backup.UserBackupManagerService: void dataChangedImpl(java.lang.String)>(r27);
+
+        goto label01;
+
+     label02:
+        r28 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.DataChangedJournal mJournal>;
+
+        if r28 == null goto label03;
+
+        $z4 = virtualinvoke r28.<com.android.server.backup.DataChangedJournal: boolean delete()>();
+
+        if $z4 != 0 goto label03;
+
+        $r18 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.keyvalue.KeyValueBackupReporter mReporter>;
+
+        $r17 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.DataChangedJournal mJournal>;
+
+        virtualinvoke $r18.<com.android.server.backup.keyvalue.KeyValueBackupReporter: void onJournalDeleteFailed(com.android.server.backup.DataChangedJournal)>($r17);
+
+     label03:
+        $r29 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.UserBackupManagerService mBackupManagerService>;
+
+        l1 = virtualinvoke $r29.<com.android.server.backup.UserBackupManagerService: long getCurrentToken()>();
+
+        r30 = null;
+
+        $z5 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: boolean mHasDataToBackup>;
+
+        if $z5 == 0 goto label13;
+
+        r30 = null;
+
+        if i0 != 0 goto label13;
+
+        r30 = null;
+
+        $b3 = l1 cmp 0L;
+
+        if $b3 != 0 goto label13;
+
+        r30 = null;
+
+     label04:
+        $r14 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.transport.TransportClient mTransportClient>;
+
+        r31 = virtualinvoke $r14.<com.android.server.backup.transport.TransportClient: com.android.internal.backup.IBackupTransport connectOrThrow(java.lang.String)>("KVBT.finishTask()");
+
+     label05:
+        r30 = null;
+
+     label06:
+        r32 = interfaceinvoke r31.<com.android.internal.backup.IBackupTransport: java.lang.String name()>();
+
+     label07:
+        r30 = r32;
+
+     label08:
+        $r15 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.UserBackupManagerService mBackupManagerService>;
+
+        $l4 = interfaceinvoke r31.<com.android.internal.backup.IBackupTransport: long getCurrentRestoreSet()>();
+
+        virtualinvoke $r15.<com.android.server.backup.UserBackupManagerService: void setCurrentToken(long)>($l4);
+
+     label09:
+        r30 = r32;
+
+     label10:
+        $r16 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.UserBackupManagerService mBackupManagerService>;
+
+        virtualinvoke $r16.<com.android.server.backup.UserBackupManagerService: void writeRestoreTokens()>();
+
+     label11:
+        r30 = r32;
+
+        goto label13;
+
+     label12:
+        $r21 := @caughtexception;
+
+        $r22 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.keyvalue.KeyValueBackupReporter mReporter>;
+
+        virtualinvoke $r22.<com.android.server.backup.keyvalue.KeyValueBackupReporter: void onSetCurrentTokenError(java.lang.Exception)>($r21);
+
+     label13:
+        r34 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: java.lang.Object mQueueLock>;
+
+        entermonitor r34;
+
+     label14:
+        $r35 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.UserBackupManagerService mBackupManagerService>;
+
+        virtualinvoke $r35.<com.android.server.backup.UserBackupManagerService: void setBackupRunning(boolean)>(0);
+
+     label15:
+        i5 = i0;
+
+        if i0 != -1001 goto label22;
+
+     label16:
+        $r13 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.keyvalue.KeyValueBackupReporter mReporter>;
+
+        virtualinvoke $r13.<com.android.server.backup.keyvalue.KeyValueBackupReporter: void onTransportNotInitialized(java.lang.String)>(r30);
+
+     label17:
+        specialinvoke r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: void triggerTransportInitializationLocked()>();
+
+     label18:
+        i5 = i0;
+
+        goto label22;
+
+     label19:
+        $r24 := @caughtexception;
+
+     label20:
+        $r25 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.keyvalue.KeyValueBackupReporter mReporter>;
+
+        virtualinvoke $r25.<com.android.server.backup.keyvalue.KeyValueBackupReporter: void onPendingInitializeTransportError(java.lang.Exception)>($r24);
+
+     label21:
+        i5 = -1000;
+
+     label22:
+        exitmonitor r34;
+
+     label23:
+        specialinvoke r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: void unregisterTask()>();
+
+        $r37 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.keyvalue.KeyValueBackupReporter mReporter>;
+
+        virtualinvoke $r37.<com.android.server.backup.keyvalue.KeyValueBackupReporter: void onTaskFinished()>();
+
+        $z6 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: boolean mCancelled>;
+
+        if $z6 == 0 goto label24;
+
+        $r12 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: android.os.ConditionVariable mCancelAcknowledged>;
+
+        virtualinvoke $r12.<android.os.ConditionVariable: void open()>();
+
+     label24:
+        $z1 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: boolean mCancelled>;
+
+        if $z1 != 0 goto label25;
+
+        if i5 != 0 goto label25;
+
+        $r6 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.fullbackup.PerformFullTransportBackupTask mFullBackupTask>;
+
+        if $r6 == null goto label25;
+
+        $r7 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: java.util.List mPendingFullBackups>;
+
+        $z3 = interfaceinvoke $r7.<java.util.List: boolean isEmpty()>();
+
+        if $z3 != 0 goto label25;
+
+        $r9 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.keyvalue.KeyValueBackupReporter mReporter>;
+
+        $r8 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: java.util.List mPendingFullBackups>;
+
+        virtualinvoke $r9.<com.android.server.backup.keyvalue.KeyValueBackupReporter: void onStartFullBackup(java.util.List)>($r8);
+
+        $r10 = new java.lang.Thread;
+
+        $r11 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.fullbackup.PerformFullTransportBackupTask mFullBackupTask>;
+
+        specialinvoke $r10.<java.lang.Thread: void <init>(java.lang.Runnable,java.lang.String)>($r11, "full-transport-requested");
+
+        virtualinvoke $r10.<java.lang.Thread: void start()>();
+
+        return;
+
+     label25:
+        r38 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.fullbackup.PerformFullTransportBackupTask mFullBackupTask>;
+
+        if r38 == null goto label26;
+
+        virtualinvoke r38.<com.android.server.backup.fullbackup.PerformFullTransportBackupTask: void unregisterTask()>();
+
+     label26:
+        $r2 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.internal.OnTaskFinishedListener mTaskFinishedListener>;
+
+        interfaceinvoke $r2.<com.android.server.backup.internal.OnTaskFinishedListener: void onFinished(java.lang.String)>("KVBT.finishTask()");
+
+        $r3 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.keyvalue.KeyValueBackupReporter mReporter>;
+
+        $z2 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: boolean mCancelled>;
+
+        $i2 = specialinvoke r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: int getBackupFinishedStatus(boolean,int)>($z2, i5);
+
+        virtualinvoke $r3.<com.android.server.backup.keyvalue.KeyValueBackupReporter: void onBackupFinished(int)>($i2);
+
+        $r4 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.UserBackupManagerService mBackupManagerService>;
+
+        $r5 = virtualinvoke $r4.<com.android.server.backup.UserBackupManagerService: com.android.server.backup.UserBackupManagerService$BackupWakeLock getWakelock()>();
+
+        virtualinvoke $r5.<com.android.server.backup.UserBackupManagerService$BackupWakeLock: void release()>();
+
+        return;
+
+     label27:
+        $r23 := @caughtexception;
+
+     label28:
+        exitmonitor r34;
+
+     label29:
+        throw $r23;
+
+        catch java.lang.Exception from label04 to label05 with label12;
+        catch java.lang.Exception from label06 to label07 with label12;
+        catch java.lang.Exception from label08 to label09 with label12;
+        catch java.lang.Exception from label10 to label11 with label12;
+        catch java.lang.Throwable from label14 to label15 with label27;
+        catch java.lang.Throwable from label16 to label17 with label27;
+        catch java.lang.Exception from label17 to label18 with label19;
+        catch java.lang.Throwable from label17 to label18 with label27;
+        catch java.lang.Throwable from label20 to label21 with label27;
+        catch java.lang.Throwable from label22 to label23 with label27;
+        catch java.lang.Throwable from label28 to label29 with label27;
+    }
+
+    private int getBackupFinishedStatus(boolean, int)
+    {
+        com.android.server.backup.keyvalue.KeyValueBackupTask r0;
+        boolean z0;
+        int i0;
+
+        r0 := @this: com.android.server.backup.keyvalue.KeyValueBackupTask;
+
+        z0 := @parameter0: boolean;
+
+        i0 := @parameter1: int;
+
+        if z0 == 0 goto label1;
+
+        return -2003;
+
+     label1:
+        if i0 == -1005 goto label2;
+
+        if i0 == -1002 goto label2;
+
+        if i0 == 0 goto label2;
+
+        return -1000;
+
+     label2:
+        return 0;
+    }
+
+    private android.content.pm.PackageInfo getPackageForBackup(java.lang.String) throws com.android.server.backup.keyvalue.AgentException
+    {
+        com.android.server.backup.keyvalue.KeyValueBackupTask r0;
+        java.lang.String r1;
+        android.content.pm.PackageInfo r2;
+        int $i0, $i1;
+        android.content.pm.PackageManager $r3;
+        boolean $z0, $z1, $z2;
+        com.android.server.backup.keyvalue.KeyValueBackupReporter $r4, $r6, $r8, $r11;
+        com.android.server.backup.keyvalue.AgentException $r5, $r7, $r9, $r12;
+        android.content.pm.PackageManager$NameNotFoundException $r10;
+        android.content.pm.ApplicationInfo r13;
+
+        r0 := @this: com.android.server.backup.keyvalue.KeyValueBackupTask;
+
+        r1 := @parameter0: java.lang.String;
+
+     label1:
+        $r3 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: android.content.pm.PackageManager mPackageManager>;
+
+        $i0 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: int mUserId>;
+
+        r2 = virtualinvoke $r3.<android.content.pm.PackageManager: android.content.pm.PackageInfo getPackageInfoAsUser(java.lang.String,int,int)>(r1, 134217728, $i0);
+
+     label2:
+        r13 = r2.<android.content.pm.PackageInfo: android.content.pm.ApplicationInfo applicationInfo>;
+
+        $i1 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: int mUserId>;
+
+        $z0 = staticinvoke <com.android.server.backup.utils.AppBackupUtils: boolean appIsEligibleForBackup(android.content.pm.ApplicationInfo,int)>(r13, $i1);
+
+        if $z0 == 0 goto label5;
+
+        $z1 = staticinvoke <com.android.server.backup.utils.AppBackupUtils: boolean appGetsFullBackup(android.content.pm.PackageInfo)>(r2);
+
+        if $z1 != 0 goto label4;
+
+        $z2 = staticinvoke <com.android.server.backup.utils.AppBackupUtils: boolean appIsStopped(android.content.pm.ApplicationInfo)>(r13);
+
+        if $z2 != 0 goto label3;
+
+        return r2;
+
+     label3:
+        $r8 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.keyvalue.KeyValueBackupReporter mReporter>;
+
+        virtualinvoke $r8.<com.android.server.backup.keyvalue.KeyValueBackupReporter: void onPackageStopped(java.lang.String)>(r1);
+
+        $r9 = staticinvoke <com.android.server.backup.keyvalue.AgentException: com.android.server.backup.keyvalue.AgentException permanent()>();
+
+        throw $r9;
+
+     label4:
+        $r6 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.keyvalue.KeyValueBackupReporter mReporter>;
+
+        virtualinvoke $r6.<com.android.server.backup.keyvalue.KeyValueBackupReporter: void onPackageEligibleForFullBackup(java.lang.String)>(r1);
+
+        $r7 = staticinvoke <com.android.server.backup.keyvalue.AgentException: com.android.server.backup.keyvalue.AgentException permanent()>();
+
+        throw $r7;
+
+     label5:
+        $r4 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.keyvalue.KeyValueBackupReporter mReporter>;
+
+        virtualinvoke $r4.<com.android.server.backup.keyvalue.KeyValueBackupReporter: void onPackageNotEligibleForBackup(java.lang.String)>(r1);
+
+        $r5 = staticinvoke <com.android.server.backup.keyvalue.AgentException: com.android.server.backup.keyvalue.AgentException permanent()>();
+
+        throw $r5;
+
+     label6:
+        $r10 := @caughtexception;
+
+        $r11 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.keyvalue.KeyValueBackupReporter mReporter>;
+
+        virtualinvoke $r11.<com.android.server.backup.keyvalue.KeyValueBackupReporter: void onAgentUnknown(java.lang.String)>(r1);
+
+        $r12 = staticinvoke <com.android.server.backup.keyvalue.AgentException: com.android.server.backup.keyvalue.AgentException permanent(java.lang.Exception)>($r10);
+
+        throw $r12;
+
+        catch android.content.pm.PackageManager$NameNotFoundException from label1 to label2 with label6;
+    }
+
+    private int getPerformBackupFlags(boolean, boolean)
+    {
+        com.android.server.backup.keyvalue.KeyValueBackupTask r0;
+        boolean z0, z1;
+        int $i0, i1, i2;
+
+        r0 := @this: com.android.server.backup.keyvalue.KeyValueBackupTask;
+
+        z0 := @parameter0: boolean;
+
+        z1 := @parameter1: boolean;
+
+        if z1 == 0 goto label1;
+
+        i1 = 4;
+
+        goto label2;
+
+     label1:
+        i1 = 2;
+
+     label2:
+        i2 = (int) z0;
+
+        $i0 = i2 | i1;
+
+        return $i0;
+    }
+
+    private java.lang.String[] getSucceedingPackages()
+    {
+        com.android.server.backup.keyvalue.KeyValueBackupTask r0;
+        java.io.File r1;
+        java.lang.String[] $r2;
+
+        r0 := @this: com.android.server.backup.keyvalue.KeyValueBackupTask;
+
+        r1 = specialinvoke r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: java.io.File getTopLevelSuccessStateDirectory(boolean)>(0);
+
+        if r1 != null goto label1;
+
+        return null;
+
+     label1:
+        $r2 = virtualinvoke r1.<java.io.File: java.lang.String[] list()>();
+
+        return $r2;
+    }
+
+    private java.io.File getSuccessStateFileFor(java.lang.String)
+    {
+        com.android.server.backup.keyvalue.KeyValueBackupTask r0;
+        java.io.File r1, $r2, r4;
+        java.lang.String r3;
+
+        r0 := @this: com.android.server.backup.keyvalue.KeyValueBackupTask;
+
+        r3 := @parameter0: java.lang.String;
+
+        r1 = specialinvoke r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: java.io.File getTopLevelSuccessStateDirectory(boolean)>(1);
+
+        if r1 != null goto label1;
+
+        r4 = null;
+
+        goto label2;
+
+     label1:
+        $r2 = new java.io.File;
+
+        specialinvoke $r2.<java.io.File: void <init>(java.io.File,java.lang.String)>(r1, r3);
+
+        r4 = $r2;
+
+     label2:
+        return r4;
+    }
+
+    private java.io.File getTopLevelSuccessStateDirectory(boolean)
+    {
+        com.android.server.backup.keyvalue.KeyValueBackupTask r0;
+        boolean z0, $z1, $z2;
+        java.io.File $r2, $r3;
+
+        r0 := @this: com.android.server.backup.keyvalue.KeyValueBackupTask;
+
+        z0 := @parameter0: boolean;
+
+        $r2 = new java.io.File;
+
+        $r3 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: java.io.File mStateDirectory>;
+
+        specialinvoke $r2.<java.io.File: void <init>(java.io.File,java.lang.String)>($r3, "backing-up");
+
+        $z1 = virtualinvoke $r2.<java.io.File: boolean exists()>();
+
+        if $z1 != 0 goto label1;
+
+        if z0 == 0 goto label1;
+
+        $z2 = virtualinvoke $r2.<java.io.File: boolean mkdirs()>();
+
+        if $z2 != 0 goto label1;
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>("KVBT", "Unable to create backing-up state directory");
+
+        return null;
+
+     label1:
+        return $r2;
+    }
+
+    private void handleTransportStatus(int, java.lang.String, long) throws com.android.server.backup.keyvalue.TaskException, com.android.server.backup.keyvalue.AgentException
+    {
+        com.android.server.backup.keyvalue.KeyValueBackupTask r0;
+        int i0;
+        java.lang.String r1;
+        long l1;
+        com.android.server.backup.keyvalue.KeyValueBackupReporter $r2, $r4, $r6, $r10, $r12;
+        com.android.server.backup.keyvalue.AgentException $r3, $r8;
+        com.android.server.backup.keyvalue.TaskException $r5;
+        android.app.IBackupAgent $r7;
+        android.content.pm.PackageInfo $r9;
+        java.util.List $r11;
+
+        r0 := @this: com.android.server.backup.keyvalue.KeyValueBackupTask;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: java.lang.String;
+
+        l1 := @parameter2: long;
+
+        if i0 != 0 goto label1;
+
+        $r12 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.keyvalue.KeyValueBackupReporter mReporter>;
+
+        virtualinvoke $r12.<com.android.server.backup.keyvalue.KeyValueBackupReporter: void onPackageBackupComplete(java.lang.String,long)>(r1, l1);
+
+        return;
+
+     label1:
+        if i0 != -1006 goto label2;
+
+        $r10 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.keyvalue.KeyValueBackupReporter mReporter>;
+
+        $r9 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: android.content.pm.PackageInfo mCurrentPackage>;
+
+        virtualinvoke $r10.<com.android.server.backup.keyvalue.KeyValueBackupReporter: void onPackageBackupNonIncrementalRequired(android.content.pm.PackageInfo)>($r9);
+
+        $r11 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: java.util.List mQueue>;
+
+        interfaceinvoke $r11.<java.util.List: void add(int,java.lang.Object)>(0, r1);
+
+        return;
+
+     label2:
+        if i0 == -1002 goto label4;
+
+        if i0 != -1005 goto label3;
+
+        $r6 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.keyvalue.KeyValueBackupReporter mReporter>;
+
+        virtualinvoke $r6.<com.android.server.backup.keyvalue.KeyValueBackupReporter: void onPackageBackupQuotaExceeded(java.lang.String)>(r1);
+
+        $r7 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: android.app.IBackupAgent mAgent>;
+
+        specialinvoke r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: void agentDoQuotaExceeded(android.app.IBackupAgent,java.lang.String,long)>($r7, r1, l1);
+
+        $r8 = staticinvoke <com.android.server.backup.keyvalue.AgentException: com.android.server.backup.keyvalue.AgentException permanent()>();
+
+        throw $r8;
+
+     label3:
+        $r4 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.keyvalue.KeyValueBackupReporter mReporter>;
+
+        virtualinvoke $r4.<com.android.server.backup.keyvalue.KeyValueBackupReporter: void onPackageBackupTransportFailure(java.lang.String)>(r1);
+
+        $r5 = staticinvoke <com.android.server.backup.keyvalue.TaskException: com.android.server.backup.keyvalue.TaskException forStatus(int)>(i0);
+
+        throw $r5;
+
+     label4:
+        $r2 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.keyvalue.KeyValueBackupReporter mReporter>;
+
+        virtualinvoke $r2.<com.android.server.backup.keyvalue.KeyValueBackupReporter: void onPackageBackupRejected(java.lang.String)>(r1);
+
+        $r3 = staticinvoke <com.android.server.backup.keyvalue.AgentException: com.android.server.backup.keyvalue.AgentException permanent()>();
+
+        throw $r3;
+    }
+
+    private void informTransportOfUnchangedApps(java.util.Set)
+    {
+        com.android.server.backup.keyvalue.KeyValueBackupTask r0;
+        java.lang.String[] r1;
+        com.android.internal.backup.IBackupTransport r2;
+        int i0, i4;
+        java.lang.String r3, $r8;
+        boolean $z0, $z1, $z2, z3;
+        com.android.server.backup.transport.TransportClient $r4;
+        android.content.pm.PackageManager $r5;
+        android.util.AndroidException $r9;
+        android.content.pm.PackageManager$NameNotFoundException $r10;
+        java.util.Set r11;
+        byte b3;
+        java.lang.StringBuilder r12;
+        android.content.pm.PackageInfo r13, r15;
+
+        r0 := @this: com.android.server.backup.keyvalue.KeyValueBackupTask;
+
+        r11 := @parameter0: java.util.Set;
+
+        r1 = specialinvoke r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: java.lang.String[] getSucceedingPackages()>();
+
+        if r1 != null goto label01;
+
+        return;
+
+     label01:
+        b3 = 8;
+
+        $z0 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: boolean mUserInitiated>;
+
+        if $z0 == 0 goto label02;
+
+        b3 = 8 | 1;
+
+     label02:
+        z3 = 0;
+
+     label03:
+        $r4 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.transport.TransportClient mTransportClient>;
+
+        r2 = virtualinvoke $r4.<com.android.server.backup.transport.TransportClient: com.android.internal.backup.IBackupTransport connectOrThrow(java.lang.String)>("KVBT.informTransportOfEmptyBackups()");
+
+        i0 = lengthof r1;
+
+     label04:
+        i4 = 0;
+
+     label05:
+        if i4 >= i0 goto label15;
+
+        r3 = r1[i4];
+
+     label06:
+        $z1 = interfaceinvoke r11.<java.util.Set: boolean contains(java.lang.Object)>(r3);
+
+        if $z1 == 0 goto label08;
+
+        r12 = new java.lang.StringBuilder;
+
+        specialinvoke r12.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Skipping package which was backed up this time :");
+
+        virtualinvoke r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r3);
+
+        $r8 = virtualinvoke r12.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("KVBT", $r8);
+
+     label07:
+        goto label14;
+
+     label08:
+        $r5 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: android.content.pm.PackageManager mPackageManager>;
+
+        r13 = virtualinvoke $r5.<android.content.pm.PackageManager: android.content.pm.PackageInfo getPackageInfo(java.lang.String,int)>(r3, 0);
+
+        $z2 = specialinvoke r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: boolean isEligibleForNoDataCall(android.content.pm.PackageInfo)>(r13);
+
+        if $z2 != 0 goto label10;
+
+        specialinvoke r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: void clearStatus(java.lang.String)>(r3);
+
+     label09:
+        goto label14;
+
+     label10:
+        specialinvoke r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: void sendNoDataChangedTo(com.android.internal.backup.IBackupTransport,android.content.pm.PackageInfo,int)>(r2, r13, b3);
+
+     label11:
+        z3 = 1;
+
+        goto label14;
+
+     label12:
+        $r10 := @caughtexception;
+
+     label13:
+        specialinvoke r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: void clearStatus(java.lang.String)>(r3);
+
+     label14:
+        i4 = i4 + 1;
+
+        goto label05;
+
+     label15:
+        if z3 == 0 goto label17;
+
+     label16:
+        r15 = new android.content.pm.PackageInfo;
+
+        specialinvoke r15.<android.content.pm.PackageInfo: void <init>()>();
+
+        r15.<android.content.pm.PackageInfo: java.lang.String packageName> = "@end@";
+
+        specialinvoke r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: void sendNoDataChangedTo(com.android.internal.backup.IBackupTransport,android.content.pm.PackageInfo,int)>(r2, r15, b3);
+
+     label17:
+        goto label19;
+
+     label18:
+        $r9 := @caughtexception;
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("KVBT", "Could not inform transport of all unchanged apps", $r9);
+
+     label19:
+        return;
+
+        catch com.android.server.backup.transport.TransportNotAvailableException from label03 to label04 with label18;
+        catch android.os.RemoteException from label03 to label04 with label18;
+        catch com.android.server.backup.transport.TransportNotAvailableException from label06 to label07 with label18;
+        catch android.os.RemoteException from label06 to label07 with label18;
+        catch android.content.pm.PackageManager$NameNotFoundException from label08 to label09 with label12;
+        catch com.android.server.backup.transport.TransportNotAvailableException from label08 to label09 with label18;
+        catch android.os.RemoteException from label08 to label09 with label18;
+        catch com.android.server.backup.transport.TransportNotAvailableException from label10 to label11 with label18;
+        catch android.os.RemoteException from label10 to label11 with label18;
+        catch com.android.server.backup.transport.TransportNotAvailableException from label13 to label14 with label18;
+        catch android.os.RemoteException from label13 to label14 with label18;
+        catch com.android.server.backup.transport.TransportNotAvailableException from label16 to label17 with label18;
+        catch android.os.RemoteException from label16 to label17 with label18;
+    }
+
+    private boolean isEligibleForNoDataCall(android.content.pm.PackageInfo)
+    {
+        com.android.server.backup.keyvalue.KeyValueBackupTask r0;
+        android.content.pm.PackageInfo r1;
+        boolean $z0, $z1, z2;
+        int $i0;
+        android.content.pm.PackageManager $r2;
+        java.lang.String $r3;
+        com.android.server.backup.transport.TransportClient $r4;
+
+        r0 := @this: com.android.server.backup.keyvalue.KeyValueBackupTask;
+
+        r1 := @parameter0: android.content.pm.PackageInfo;
+
+        $z0 = staticinvoke <com.android.server.backup.utils.AppBackupUtils: boolean appIsKeyValueOnly(android.content.pm.PackageInfo)>(r1);
+
+        if $z0 == 0 goto label1;
+
+        $r4 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.transport.TransportClient mTransportClient>;
+
+        $r3 = r1.<android.content.pm.PackageInfo: java.lang.String packageName>;
+
+        $r2 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: android.content.pm.PackageManager mPackageManager>;
+
+        $i0 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: int mUserId>;
+
+        $z1 = staticinvoke <com.android.server.backup.utils.AppBackupUtils: boolean appIsRunningAndEligibleForBackupWithTransport(com.android.server.backup.transport.TransportClient,java.lang.String,android.content.pm.PackageManager,int)>($r4, $r3, $r2, $i0);
+
+        if $z1 == 0 goto label1;
+
+        z2 = 1;
+
+        goto label2;
+
+     label1:
+        z2 = 0;
+
+     label2:
+        return z2;
+    }
+
+    static void lambda$agentDoQuotaExceeded$1(android.app.IBackupAgent, long, long, android.app.backup.IBackupCallback) throws android.os.RemoteException
+    {
+        android.app.IBackupAgent r0;
+        long l0, l1;
+        android.app.backup.IBackupCallback r1;
+
+        r0 := @parameter0: android.app.IBackupAgent;
+
+        l0 := @parameter1: long;
+
+        l1 := @parameter2: long;
+
+        r1 := @parameter3: android.app.backup.IBackupCallback;
+
+        interfaceinvoke r0.<android.app.IBackupAgent: void doQuotaExceeded(long,long,android.app.backup.IBackupCallback)>(l0, l1, r1);
+
+        return;
+    }
+
+    private void registerTask()
+    {
+        com.android.server.backup.keyvalue.KeyValueBackupTask r0;
+        com.android.server.backup.internal.Operation $r1;
+        com.android.server.backup.UserBackupManagerService $r2;
+        int $i0;
+
+        r0 := @this: com.android.server.backup.keyvalue.KeyValueBackupTask;
+
+        $r2 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.UserBackupManagerService mBackupManagerService>;
+
+        $i0 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: int mCurrentOpToken>;
+
+        $r1 = new com.android.server.backup.internal.Operation;
+
+        specialinvoke $r1.<com.android.server.backup.internal.Operation: void <init>(int,com.android.server.backup.BackupRestoreTask,int)>(0, r0, 2);
+
+        virtualinvoke $r2.<com.android.server.backup.UserBackupManagerService: void putOperation(int,com.android.server.backup.internal.Operation)>($i0, $r1);
+
+        return;
+    }
+
+    private com.android.server.backup.remote.RemoteResult remoteCall(com.android.server.backup.remote.RemoteCallable, long, java.lang.String) throws android.os.RemoteException
+    {
+        com.android.server.backup.keyvalue.KeyValueBackupTask r0;
+        long l0;
+        java.lang.String r1;
+        com.android.server.backup.remote.RemoteCall $r2, $r3;
+        boolean $z0;
+        com.android.server.backup.keyvalue.KeyValueBackupReporter $r4;
+        com.android.server.backup.remote.RemoteCallable r5;
+        com.android.server.backup.remote.RemoteResult r6;
+
+        r0 := @this: com.android.server.backup.keyvalue.KeyValueBackupTask;
+
+        r5 := @parameter0: com.android.server.backup.remote.RemoteCallable;
+
+        l0 := @parameter1: long;
+
+        r1 := @parameter2: java.lang.String;
+
+        $r2 = new com.android.server.backup.remote.RemoteCall;
+
+        $z0 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: boolean mCancelled>;
+
+        specialinvoke $r2.<com.android.server.backup.remote.RemoteCall: void <init>(boolean,com.android.server.backup.remote.RemoteCallable,long)>($z0, r5, l0);
+
+        r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.remote.RemoteCall mPendingCall> = $r2;
+
+        $r3 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.remote.RemoteCall mPendingCall>;
+
+        r6 = virtualinvoke $r3.<com.android.server.backup.remote.RemoteCall: com.android.server.backup.remote.RemoteResult call()>();
+
+        $r4 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.keyvalue.KeyValueBackupReporter mReporter>;
+
+        virtualinvoke $r4.<com.android.server.backup.keyvalue.KeyValueBackupReporter: void onRemoteCallReturned(com.android.server.backup.remote.RemoteResult,java.lang.String)>(r6, r1);
+
+        r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.remote.RemoteCall mPendingCall> = null;
+
+        return r6;
+    }
+
+    private void revertTask()
+    {
+        com.android.server.backup.keyvalue.KeyValueBackupTask r0;
+        java.lang.String r1;
+        com.android.server.backup.keyvalue.KeyValueBackupReporter $r2, $r14;
+        com.android.server.backup.transport.TransportClient $r3;
+        com.android.internal.backup.IBackupTransport $r4;
+        com.android.server.backup.UserBackupManagerService $r5, $r6, $r8, $r12;
+        int $i0;
+        android.content.Context $r7;
+        com.android.server.backup.BackupManagerConstants $r9;
+        java.util.List $r10;
+        java.lang.Object $r11;
+        java.lang.Exception $r13;
+        long l1;
+        java.util.Iterator r16;
+        boolean $z0;
+
+        r0 := @this: com.android.server.backup.keyvalue.KeyValueBackupTask;
+
+        $r2 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.keyvalue.KeyValueBackupReporter mReporter>;
+
+        virtualinvoke $r2.<com.android.server.backup.keyvalue.KeyValueBackupReporter: void onRevertTask()>();
+
+     label1:
+        $r3 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.transport.TransportClient mTransportClient>;
+
+        $r4 = virtualinvoke $r3.<com.android.server.backup.transport.TransportClient: com.android.internal.backup.IBackupTransport connectOrThrow(java.lang.String)>("KVBT.revertTask()");
+
+        l1 = interfaceinvoke $r4.<com.android.internal.backup.IBackupTransport: long requestBackupTime()>();
+
+     label2:
+        goto label4;
+
+     label3:
+        $r13 := @caughtexception;
+
+        $r14 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.keyvalue.KeyValueBackupReporter mReporter>;
+
+        virtualinvoke $r14.<com.android.server.backup.keyvalue.KeyValueBackupReporter: void onTransportRequestBackupTimeError(java.lang.Exception)>($r13);
+
+        l1 = 0L;
+
+     label4:
+        $r5 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.UserBackupManagerService mBackupManagerService>;
+
+        $i0 = virtualinvoke $r5.<com.android.server.backup.UserBackupManagerService: int getUserId()>();
+
+        $r6 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.UserBackupManagerService mBackupManagerService>;
+
+        $r7 = virtualinvoke $r6.<com.android.server.backup.UserBackupManagerService: android.content.Context getContext()>();
+
+        $r8 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.UserBackupManagerService mBackupManagerService>;
+
+        $r9 = virtualinvoke $r8.<com.android.server.backup.UserBackupManagerService: com.android.server.backup.BackupManagerConstants getConstants()>();
+
+        staticinvoke <com.android.server.backup.KeyValueBackupJob: void schedule(int,android.content.Context,long,com.android.server.backup.BackupManagerConstants)>($i0, $r7, l1, $r9);
+
+        $r10 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: java.util.List mOriginalQueue>;
+
+        r16 = interfaceinvoke $r10.<java.util.List: java.util.Iterator iterator()>();
+
+     label5:
+        $z0 = interfaceinvoke r16.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label6;
+
+        $r11 = interfaceinvoke r16.<java.util.Iterator: java.lang.Object next()>();
+
+        r1 = (java.lang.String) $r11;
+
+        $r12 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.UserBackupManagerService mBackupManagerService>;
+
+        virtualinvoke $r12.<com.android.server.backup.UserBackupManagerService: void dataChangedImpl(java.lang.String)>(r1);
+
+        goto label5;
+
+     label6:
+        return;
+
+        catch java.lang.Exception from label1 to label2 with label3;
+    }
+
+    private int sendDataToTransport() throws com.android.server.backup.keyvalue.AgentException, com.android.server.backup.keyvalue.TaskException, java.io.IOException
+    {
+        com.android.server.backup.keyvalue.KeyValueBackupTask r0;
+        int i0;
+        android.content.pm.PackageInfo $r1, $r4, $r9;
+        java.io.File $r2, $r7, $r8, $r10;
+        android.content.pm.ApplicationInfo $r3;
+        android.os.ParcelFileDescriptor $r5, r11;
+        java.io.FileDescriptor $r6;
+        long $l1, $l3;
+        byte $b2;
+        boolean z1, z2;
+        java.lang.String r12;
+
+        r0 := @this: com.android.server.backup.keyvalue.KeyValueBackupTask;
+
+        r11 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: android.os.ParcelFileDescriptor mBackupData>;
+
+        if r11 == null goto label1;
+
+        z1 = 1;
+
+        goto label2;
+
+     label1:
+        z1 = 0;
+
+     label2:
+        staticinvoke <com.android.internal.util.Preconditions: void checkState(boolean)>(z1);
+
+        $r1 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: android.content.pm.PackageInfo mCurrentPackage>;
+
+        $r3 = $r1.<android.content.pm.PackageInfo: android.content.pm.ApplicationInfo applicationInfo>;
+
+        $r2 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: java.io.File mBackupDataFile>;
+
+        specialinvoke r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: void checkBackupData(android.content.pm.ApplicationInfo,java.io.File)>($r3, $r2);
+
+        $r4 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: android.content.pm.PackageInfo mCurrentPackage>;
+
+        r12 = $r4.<android.content.pm.PackageInfo: java.lang.String packageName>;
+
+        $r5 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: android.os.ParcelFileDescriptor mBackupData>;
+
+        $r6 = virtualinvoke $r5.<android.os.ParcelFileDescriptor: java.io.FileDescriptor getFileDescriptor()>();
+
+        specialinvoke r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: void writeWidgetPayloadIfAppropriate(java.io.FileDescriptor,java.lang.String)>($r6, r12);
+
+        $r7 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: java.io.File mSavedStateFile>;
+
+        $l1 = virtualinvoke $r7.<java.io.File: long length()>();
+
+        $b2 = $l1 cmp 0L;
+
+        if $b2 != 0 goto label3;
+
+        z2 = 1;
+
+        goto label4;
+
+     label3:
+        z2 = 0;
+
+     label4:
+        $r9 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: android.content.pm.PackageInfo mCurrentPackage>;
+
+        $r8 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: java.io.File mBackupDataFile>;
+
+        i0 = specialinvoke r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: int transportPerformBackup(android.content.pm.PackageInfo,java.io.File,boolean)>($r9, $r8, z2);
+
+        $r10 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: java.io.File mBackupDataFile>;
+
+        $l3 = virtualinvoke $r10.<java.io.File: long length()>();
+
+        specialinvoke r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: void handleTransportStatus(int,java.lang.String,long)>(i0, r12, $l3);
+
+        return i0;
+    }
+
+    private int sendDataToTransport(android.content.pm.PackageInfo) throws com.android.server.backup.keyvalue.AgentException, com.android.server.backup.keyvalue.TaskException
+    {
+        com.android.server.backup.keyvalue.KeyValueBackupTask r0;
+        android.content.pm.PackageInfo r1;
+        int i0;
+        java.lang.Throwable $r3;
+        java.lang.String $r4;
+        com.android.server.backup.keyvalue.KeyValueBackupReporter $r5;
+        com.android.server.backup.keyvalue.TaskException $r6;
+        java.io.IOException r7;
+        java.lang.Exception r8;
+
+        r0 := @this: com.android.server.backup.keyvalue.KeyValueBackupTask;
+
+        r1 := @parameter0: android.content.pm.PackageInfo;
+
+     label1:
+        i0 = specialinvoke r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: int sendDataToTransport()>();
+
+     label2:
+        return i0;
+
+     label3:
+        $r3 := @caughtexception;
+
+        $r5 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.keyvalue.KeyValueBackupReporter mReporter>;
+
+        $r4 = r1.<android.content.pm.PackageInfo: java.lang.String packageName>;
+
+        r7 = (java.io.IOException) $r3;
+
+        virtualinvoke $r5.<com.android.server.backup.keyvalue.KeyValueBackupReporter: void onAgentDataError(java.lang.String,java.io.IOException)>($r4, r7);
+
+        r8 = (java.lang.Exception) $r3;
+
+        $r6 = staticinvoke <com.android.server.backup.keyvalue.TaskException: com.android.server.backup.keyvalue.TaskException causedBy(java.lang.Exception)>(r8);
+
+        throw $r6;
+
+        catch java.io.IOException from label1 to label2 with label3;
+    }
+
+    private void sendNoDataChangedTo(com.android.internal.backup.IBackupTransport, android.content.pm.PackageInfo, int) throws android.os.RemoteException
+    {
+        com.android.server.backup.keyvalue.KeyValueBackupTask r0;
+        android.content.pm.PackageInfo r1;
+        android.os.ParcelFileDescriptor r2;
+        java.io.File $r3;
+        java.lang.Throwable $r4, $r5;
+        com.android.internal.backup.IBackupTransport r6;
+        int i3, i4;
+
+        r0 := @this: com.android.server.backup.keyvalue.KeyValueBackupTask;
+
+        r6 := @parameter0: com.android.internal.backup.IBackupTransport;
+
+        r1 := @parameter1: android.content.pm.PackageInfo;
+
+        i3 := @parameter2: int;
+
+     label1:
+        $r3 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: java.io.File mBlankStateFile>;
+
+        r2 = staticinvoke <android.os.ParcelFileDescriptor: android.os.ParcelFileDescriptor open(java.io.File,int)>($r3, 402653184);
+
+     label2:
+        i4 = interfaceinvoke r6.<com.android.internal.backup.IBackupTransport: int performBackup(android.content.pm.PackageInfo,android.os.ParcelFileDescriptor,int)>(r1, r2, i3);
+
+     label3:
+        if i4 == -1000 goto label6;
+
+        if i4 != -1001 goto label4;
+
+        goto label6;
+
+     label4:
+        interfaceinvoke r6.<com.android.internal.backup.IBackupTransport: int finishBackup()>();
+
+     label5:
+        staticinvoke <libcore.io.IoUtils: void closeQuietly(java.lang.AutoCloseable)>(r2);
+
+        return;
+
+     label6:
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("KVBT", "Aborting informing transport of unchanged apps, transport errored");
+
+     label7:
+        staticinvoke <libcore.io.IoUtils: void closeQuietly(java.lang.AutoCloseable)>(r2);
+
+        return;
+
+     label8:
+        $r5 := @caughtexception;
+
+        staticinvoke <libcore.io.IoUtils: void closeQuietly(java.lang.AutoCloseable)>(r2);
+
+        throw $r5;
+
+     label9:
+        $r4 := @caughtexception;
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>("KVBT", "Unable to find blank state file, aborting unchanged apps signal.");
+
+        return;
+
+        catch java.io.FileNotFoundException from label1 to label2 with label9;
+        catch java.lang.Throwable from label2 to label3 with label8;
+        catch java.lang.Throwable from label4 to label5 with label8;
+        catch java.lang.Throwable from label6 to label7 with label8;
+    }
+
+    private void setSuccessState(java.lang.String, boolean)
+    {
+        com.android.server.backup.keyvalue.KeyValueBackupTask r0;
+        java.lang.String r1, $r5, $r10;
+        boolean z0, $z1, $z2;
+        java.lang.Throwable $r6;
+        java.lang.StringBuilder $r7, r12;
+        java.io.File r11;
+
+        r0 := @this: com.android.server.backup.keyvalue.KeyValueBackupTask;
+
+        r1 := @parameter0: java.lang.String;
+
+        z0 := @parameter1: boolean;
+
+        r11 = specialinvoke r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: java.io.File getSuccessStateFileFor(java.lang.String)>(r1);
+
+        if r11 != null goto label1;
+
+        return;
+
+     label1:
+        $z1 = virtualinvoke r11.<java.io.File: boolean exists()>();
+
+        if $z1 == z0 goto label5;
+
+        if z0 != 0 goto label2;
+
+        specialinvoke r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: void clearStatus(java.lang.String,java.io.File)>(r1, r11);
+
+        return;
+
+     label2:
+        $z2 = virtualinvoke r11.<java.io.File: boolean createNewFile()>();
+
+        if $z2 != 0 goto label3;
+
+        r12 = new java.lang.StringBuilder;
+
+        specialinvoke r12.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Unable to permanently record success for ");
+
+        virtualinvoke r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r5 = virtualinvoke r12.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("KVBT", $r5);
+
+     label3:
+        goto label5;
+
+     label4:
+        $r6 := @caughtexception;
+
+        $r7 = new java.lang.StringBuilder;
+
+        specialinvoke $r7.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Unable to permanently record success for ");
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r10 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String,java.lang.Throwable)>("KVBT", $r10, $r6);
+
+     label5:
+        return;
+
+        catch java.io.IOException from label2 to label3 with label4;
+    }
+
+    public static com.android.server.backup.keyvalue.KeyValueBackupTask start(com.android.server.backup.UserBackupManagerService, com.android.server.backup.transport.TransportClient, java.lang.String, java.util.List, com.android.server.backup.DataChangedJournal, android.app.backup.IBackupObserver, android.app.backup.IBackupManagerMonitor, com.android.server.backup.internal.OnTaskFinishedListener, java.util.List, boolean, boolean)
+    {
+        java.lang.String r0, $r14, $r15;
+        java.util.List r1, r6;
+        com.android.server.backup.DataChangedJournal r2;
+        android.app.backup.IBackupObserver r3;
+        android.app.backup.IBackupManagerMonitor r4;
+        com.android.server.backup.internal.OnTaskFinishedListener r5;
+        boolean z0, z1;
+        com.android.server.backup.keyvalue.KeyValueBackupTask $r7;
+        com.android.server.backup.keyvalue.KeyValueBackupReporter $r8;
+        java.lang.StringBuilder $r9;
+        java.util.concurrent.atomic.AtomicInteger $r11;
+        int $i0;
+        java.lang.Thread $r13;
+        com.android.server.backup.UserBackupManagerService r16;
+        com.android.server.backup.transport.TransportClient r17;
+
+        r16 := @parameter0: com.android.server.backup.UserBackupManagerService;
+
+        r17 := @parameter1: com.android.server.backup.transport.TransportClient;
+
+        r0 := @parameter2: java.lang.String;
+
+        r1 := @parameter3: java.util.List;
+
+        r2 := @parameter4: com.android.server.backup.DataChangedJournal;
+
+        r3 := @parameter5: android.app.backup.IBackupObserver;
+
+        r4 := @parameter6: android.app.backup.IBackupManagerMonitor;
+
+        r5 := @parameter7: com.android.server.backup.internal.OnTaskFinishedListener;
+
+        r6 := @parameter8: java.util.List;
+
+        z0 := @parameter9: boolean;
+
+        z1 := @parameter10: boolean;
+
+        $r7 = new com.android.server.backup.keyvalue.KeyValueBackupTask;
+
+        $r8 = new com.android.server.backup.keyvalue.KeyValueBackupReporter;
+
+        specialinvoke $r8.<com.android.server.backup.keyvalue.KeyValueBackupReporter: void <init>(com.android.server.backup.UserBackupManagerService,android.app.backup.IBackupObserver,android.app.backup.IBackupManagerMonitor)>(r16, r3, r4);
+
+        specialinvoke $r7.<com.android.server.backup.keyvalue.KeyValueBackupTask: void <init>(com.android.server.backup.UserBackupManagerService,com.android.server.backup.transport.TransportClient,java.lang.String,java.util.List,com.android.server.backup.DataChangedJournal,com.android.server.backup.keyvalue.KeyValueBackupReporter,com.android.server.backup.internal.OnTaskFinishedListener,java.util.List,boolean,boolean)>(r16, r17, r0, r1, r2, $r8, r5, r6, z0, z1);
+
+        $r9 = new java.lang.StringBuilder;
+
+        specialinvoke $r9.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("key-value-backup-");
+
+        $r11 = <com.android.server.backup.keyvalue.KeyValueBackupTask: java.util.concurrent.atomic.AtomicInteger THREAD_COUNT>;
+
+        $i0 = virtualinvoke $r11.<java.util.concurrent.atomic.AtomicInteger: int incrementAndGet()>();
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i0);
+
+        $r13 = new java.lang.Thread;
+
+        $r14 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r13.<java.lang.Thread: void <init>(java.lang.Runnable,java.lang.String)>($r7, $r14);
+
+        virtualinvoke $r13.<java.lang.Thread: void start()>();
+
+        $r15 = virtualinvoke $r13.<java.lang.Thread: java.lang.String getName()>();
+
+        staticinvoke <com.android.server.backup.keyvalue.KeyValueBackupReporter: void onNewThread(java.lang.String)>($r15);
+
+        return $r7;
+    }
+
+    private void startTask() throws com.android.server.backup.keyvalue.TaskException
+    {
+        com.android.server.backup.keyvalue.KeyValueBackupTask r0;
+        java.lang.String r2;
+        com.android.server.backup.UserBackupManagerService $r3, $r19;
+        boolean $z0, $z1, $z2, $z3, $z4, $z5, z6;
+        com.android.server.backup.keyvalue.KeyValueBackupReporter $r4, $r10, $r12, $r16, $r17, $r20, $r24, $r27;
+        com.android.server.backup.keyvalue.TaskException $r5, $r21, $r25, $r28;
+        java.util.List $r6, $r8, $r9, $r11, $r22, $r23;
+        com.android.server.backup.fullbackup.PerformFullTransportBackupTask $r7;
+        java.io.File $r13, $r14, $r18;
+        com.android.server.backup.transport.TransportClient $r15;
+        long $l0;
+        byte $b1;
+        java.lang.Exception $r26;
+        com.android.internal.backup.IBackupTransport r29;
+        int i2;
+
+        r0 := @this: com.android.server.backup.keyvalue.KeyValueBackupTask;
+
+        $r3 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.UserBackupManagerService mBackupManagerService>;
+
+        $z0 = virtualinvoke $r3.<com.android.server.backup.UserBackupManagerService: boolean isBackupOperationInProgress()>();
+
+        if $z0 != 0 goto label14;
+
+        $r6 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: java.util.List mPendingFullBackups>;
+
+        $r7 = specialinvoke r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.fullbackup.PerformFullTransportBackupTask createFullBackupTask(java.util.List)>($r6);
+
+        r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.fullbackup.PerformFullTransportBackupTask mFullBackupTask> = $r7;
+
+        specialinvoke r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: void registerTask()>();
+
+        $r8 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: java.util.List mQueue>;
+
+        $z1 = interfaceinvoke $r8.<java.util.List: boolean isEmpty()>();
+
+        if $z1 == 0 goto label01;
+
+        $r23 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: java.util.List mPendingFullBackups>;
+
+        $z5 = interfaceinvoke $r23.<java.util.List: boolean isEmpty()>();
+
+        if $z5 == 0 goto label01;
+
+        $r24 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.keyvalue.KeyValueBackupReporter mReporter>;
+
+        virtualinvoke $r24.<com.android.server.backup.keyvalue.KeyValueBackupReporter: void onEmptyQueueAtStart()>();
+
+        return;
+
+     label01:
+        $r9 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: java.util.List mQueue>;
+
+        $z2 = interfaceinvoke $r9.<java.util.List: boolean remove(java.lang.Object)>("@pm@");
+
+        if $z2 != 0 goto label03;
+
+        $z4 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: boolean mNonIncremental>;
+
+        if $z4 != 0 goto label02;
+
+        goto label03;
+
+     label02:
+        z6 = 0;
+
+        goto label04;
+
+     label03:
+        z6 = 1;
+
+     label04:
+        if z6 == 0 goto label05;
+
+        $r22 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: java.util.List mQueue>;
+
+        interfaceinvoke $r22.<java.util.List: void add(int,java.lang.Object)>(0, "@pm@");
+
+        goto label06;
+
+     label05:
+        $r10 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.keyvalue.KeyValueBackupReporter mReporter>;
+
+        virtualinvoke $r10.<com.android.server.backup.keyvalue.KeyValueBackupReporter: void onSkipPm()>();
+
+     label06:
+        $r12 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.keyvalue.KeyValueBackupReporter mReporter>;
+
+        $r11 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: java.util.List mQueue>;
+
+        virtualinvoke $r12.<com.android.server.backup.keyvalue.KeyValueBackupReporter: void onQueueReady(java.util.List)>($r11);
+
+        $r13 = new java.io.File;
+
+        $r14 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: java.io.File mStateDirectory>;
+
+        specialinvoke $r13.<java.io.File: void <init>(java.io.File,java.lang.String)>($r14, "@pm@");
+
+     label07:
+        $r15 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.transport.TransportClient mTransportClient>;
+
+        r29 = virtualinvoke $r15.<com.android.server.backup.transport.TransportClient: com.android.internal.backup.IBackupTransport connectOrThrow(java.lang.String)>("KVBT.startTask()");
+
+        r2 = interfaceinvoke r29.<com.android.internal.backup.IBackupTransport: java.lang.String name()>();
+
+        $z3 = virtualinvoke r2.<java.lang.String: boolean contains(java.lang.CharSequence)>("EncryptedLocalTransport");
+
+        if $z3 == 0 goto label08;
+
+        r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: boolean mNonIncremental> = 1;
+
+     label08:
+        $r16 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.keyvalue.KeyValueBackupReporter mReporter>;
+
+        virtualinvoke $r16.<com.android.server.backup.keyvalue.KeyValueBackupReporter: void onTransportReady(java.lang.String)>(r2);
+
+        $l0 = virtualinvoke $r13.<java.io.File: long length()>();
+
+        $b1 = $l0 cmp 0L;
+
+        if $b1 > 0 goto label11;
+
+        $r17 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.keyvalue.KeyValueBackupReporter mReporter>;
+
+        virtualinvoke $r17.<com.android.server.backup.keyvalue.KeyValueBackupReporter: void onInitializeTransport(java.lang.String)>(r2);
+
+        $r19 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.UserBackupManagerService mBackupManagerService>;
+
+        $r18 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: java.io.File mStateDirectory>;
+
+        virtualinvoke $r19.<com.android.server.backup.UserBackupManagerService: void resetBackupState(java.io.File)>($r18);
+
+        i2 = interfaceinvoke r29.<com.android.internal.backup.IBackupTransport: int initializeDevice()>();
+
+        $r20 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.keyvalue.KeyValueBackupReporter mReporter>;
+
+        virtualinvoke $r20.<com.android.server.backup.keyvalue.KeyValueBackupReporter: void onTransportInitialized(int)>(i2);
+
+     label09:
+        if i2 != 0 goto label10;
+
+        goto label11;
+
+     label10:
+        $r21 = staticinvoke <com.android.server.backup.keyvalue.TaskException: com.android.server.backup.keyvalue.TaskException stateCompromised()>();
+
+        throw $r21;
+
+     label11:
+        return;
+
+     label12:
+        $r26 := @caughtexception;
+
+        $r27 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.keyvalue.KeyValueBackupReporter mReporter>;
+
+        virtualinvoke $r27.<com.android.server.backup.keyvalue.KeyValueBackupReporter: void onInitializeTransportError(java.lang.Exception)>($r26);
+
+        $r28 = staticinvoke <com.android.server.backup.keyvalue.TaskException: com.android.server.backup.keyvalue.TaskException stateCompromised()>();
+
+        throw $r28;
+
+     label13:
+        $r25 := @caughtexception;
+
+        throw $r25;
+
+     label14:
+        $r4 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.keyvalue.KeyValueBackupReporter mReporter>;
+
+        virtualinvoke $r4.<com.android.server.backup.keyvalue.KeyValueBackupReporter: void onSkipBackup()>();
+
+        $r5 = staticinvoke <com.android.server.backup.keyvalue.TaskException: com.android.server.backup.keyvalue.TaskException create()>();
+
+        throw $r5;
+
+        catch com.android.server.backup.keyvalue.TaskException from label07 to label08 with label13;
+        catch java.lang.Exception from label07 to label08 with label12;
+        catch com.android.server.backup.keyvalue.TaskException from label08 to label09 with label13;
+        catch java.lang.Exception from label08 to label09 with label12;
+        catch com.android.server.backup.keyvalue.TaskException from label10 to label11 with label13;
+        catch java.lang.Exception from label10 to label11 with label12;
+    }
+
+    private int transportPerformBackup(android.content.pm.PackageInfo, java.io.File, boolean) throws com.android.server.backup.keyvalue.TaskException
+    {
+        com.android.server.backup.keyvalue.KeyValueBackupTask r0;
+        boolean z0, $z1;
+        java.lang.String r1, $r8;
+        com.android.internal.backup.IBackupTransport r2;
+        int i0, $i3, i4;
+        long $l1;
+        byte $b2;
+        com.android.server.backup.transport.TransportClient $r3;
+        com.android.server.backup.keyvalue.KeyValueBackupReporter $r4, $r5, $r7, $r9, $r13;
+        com.android.server.backup.keyvalue.TaskException $r6, $r14;
+        java.lang.Throwable $r10, $r11;
+        java.lang.Exception $r12;
+        android.content.pm.PackageInfo r15;
+        java.io.File r16;
+        android.os.ParcelFileDescriptor r17;
+
+        r0 := @this: com.android.server.backup.keyvalue.KeyValueBackupTask;
+
+        r15 := @parameter0: android.content.pm.PackageInfo;
+
+        r16 := @parameter1: java.io.File;
+
+        z0 := @parameter2: boolean;
+
+        r1 = r15.<android.content.pm.PackageInfo: java.lang.String packageName>;
+
+        $l1 = virtualinvoke r16.<java.io.File: long length()>();
+
+        $b2 = $l1 cmp 0L;
+
+        if $b2 > 0 goto label01;
+
+        $r9 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.keyvalue.KeyValueBackupReporter mReporter>;
+
+        virtualinvoke $r9.<com.android.server.backup.keyvalue.KeyValueBackupReporter: void onEmptyData(android.content.pm.PackageInfo)>(r15);
+
+        return 0;
+
+     label01:
+        r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: boolean mHasDataToBackup> = 1;
+
+     label02:
+        r17 = staticinvoke <android.os.ParcelFileDescriptor: android.os.ParcelFileDescriptor open(java.io.File,int)>(r16, 268435456);
+
+     label03:
+        $r3 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.transport.TransportClient mTransportClient>;
+
+        r2 = virtualinvoke $r3.<com.android.server.backup.transport.TransportClient: com.android.internal.backup.IBackupTransport connectOrThrow(java.lang.String)>("KVBT.transportPerformBackup()");
+
+        $r4 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.keyvalue.KeyValueBackupReporter mReporter>;
+
+        virtualinvoke $r4.<com.android.server.backup.keyvalue.KeyValueBackupReporter: void onTransportPerformBackup(java.lang.String)>(r1);
+
+        $z1 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: boolean mUserInitiated>;
+
+        $i3 = specialinvoke r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: int getPerformBackupFlags(boolean,boolean)>($z1, z0);
+
+        i0 = interfaceinvoke r2.<com.android.internal.backup.IBackupTransport: int performBackup(android.content.pm.PackageInfo,android.os.ParcelFileDescriptor,int)>(r15, r17, $i3);
+
+     label04:
+        if i0 != 0 goto label07;
+
+     label05:
+        i4 = interfaceinvoke r2.<com.android.internal.backup.IBackupTransport: int finishBackup()>();
+
+     label06:
+        goto label10;
+
+     label07:
+        i4 = i0;
+
+        if i0 != -1001 goto label10;
+
+     label08:
+        $r7 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.keyvalue.KeyValueBackupReporter mReporter>;
+
+        $r8 = interfaceinvoke r2.<com.android.internal.backup.IBackupTransport: java.lang.String name()>();
+
+        virtualinvoke $r7.<com.android.server.backup.keyvalue.KeyValueBackupReporter: void onTransportNotInitialized(java.lang.String)>($r8);
+
+     label09:
+        i4 = i0;
+
+     label10:
+        if r17 == null goto label12;
+
+     label11:
+        virtualinvoke r17.<android.os.ParcelFileDescriptor: void close()>();
+
+     label12:
+        if z0 == 0 goto label14;
+
+        if i4 == -1006 goto label13;
+
+        goto label14;
+
+     label13:
+        $r5 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.keyvalue.KeyValueBackupReporter mReporter>;
+
+        virtualinvoke $r5.<com.android.server.backup.keyvalue.KeyValueBackupReporter: void onPackageBackupNonIncrementalAndNonIncrementalRequired(java.lang.String)>(r1);
+
+        $r6 = staticinvoke <com.android.server.backup.keyvalue.TaskException: com.android.server.backup.keyvalue.TaskException create()>();
+
+        throw $r6;
+
+     label14:
+        return i4;
+
+     label15:
+        $r10 := @caughtexception;
+
+        if r17 == null goto label20;
+
+     label16:
+        virtualinvoke r17.<android.os.ParcelFileDescriptor: void close()>();
+
+     label17:
+        goto label20;
+
+     label18:
+        $r11 := @caughtexception;
+
+     label19:
+        virtualinvoke $r10.<java.lang.Throwable: void addSuppressed(java.lang.Throwable)>($r11);
+
+     label20:
+        throw $r10;
+
+     label21:
+        $r12 := @caughtexception;
+
+        $r13 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.keyvalue.KeyValueBackupReporter mReporter>;
+
+        virtualinvoke $r13.<com.android.server.backup.keyvalue.KeyValueBackupReporter: void onPackageBackupTransportError(java.lang.String,java.lang.Exception)>(r1, $r12);
+
+        $r14 = staticinvoke <com.android.server.backup.keyvalue.TaskException: com.android.server.backup.keyvalue.TaskException causedBy(java.lang.Exception)>($r12);
+
+        throw $r14;
+
+        catch java.lang.Exception from label02 to label03 with label21;
+        catch java.lang.Throwable from label03 to label04 with label15;
+        catch java.lang.Throwable from label05 to label06 with label15;
+        catch java.lang.Throwable from label08 to label09 with label15;
+        catch java.lang.Exception from label11 to label12 with label21;
+        catch java.lang.Throwable from label16 to label17 with label18;
+        catch java.lang.Exception from label19 to label20 with label21;
+        catch java.lang.Exception from label20 to label21 with label21;
+    }
+
+    private void triggerTransportInitializationLocked() throws java.lang.Exception
+    {
+        com.android.server.backup.keyvalue.KeyValueBackupTask r0;
+        com.android.internal.backup.IBackupTransport r1;
+        com.android.server.backup.transport.TransportClient $r2;
+        com.android.server.backup.UserBackupManagerService $r3, $r6;
+        android.util.ArraySet $r4;
+        java.lang.String $r5;
+
+        r0 := @this: com.android.server.backup.keyvalue.KeyValueBackupTask;
+
+        $r2 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.transport.TransportClient mTransportClient>;
+
+        r1 = virtualinvoke $r2.<com.android.server.backup.transport.TransportClient: com.android.internal.backup.IBackupTransport connectOrThrow(java.lang.String)>("KVBT.triggerTransportInitializationLocked");
+
+        $r3 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.UserBackupManagerService mBackupManagerService>;
+
+        $r4 = virtualinvoke $r3.<com.android.server.backup.UserBackupManagerService: android.util.ArraySet getPendingInits()>();
+
+        $r5 = interfaceinvoke r1.<com.android.internal.backup.IBackupTransport: java.lang.String name()>();
+
+        virtualinvoke $r4.<android.util.ArraySet: boolean add(java.lang.Object)>($r5);
+
+        specialinvoke r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: void deletePmStateFile()>();
+
+        $r6 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.UserBackupManagerService mBackupManagerService>;
+
+        virtualinvoke $r6.<com.android.server.backup.UserBackupManagerService: void backupNow()>();
+
+        return;
+    }
+
+    private void tryCloseFileDescriptor(java.io.Closeable, java.lang.String)
+    {
+        com.android.server.backup.keyvalue.KeyValueBackupTask r0;
+        java.lang.String r1;
+        java.lang.Throwable $r2;
+        com.android.server.backup.keyvalue.KeyValueBackupReporter $r3;
+        java.io.Closeable r4;
+
+        r0 := @this: com.android.server.backup.keyvalue.KeyValueBackupTask;
+
+        r4 := @parameter0: java.io.Closeable;
+
+        r1 := @parameter1: java.lang.String;
+
+        if r4 == null goto label4;
+
+     label1:
+        interfaceinvoke r4.<java.io.Closeable: void close()>();
+
+     label2:
+        goto label4;
+
+     label3:
+        $r2 := @caughtexception;
+
+        $r3 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.keyvalue.KeyValueBackupReporter mReporter>;
+
+        virtualinvoke $r3.<com.android.server.backup.keyvalue.KeyValueBackupReporter: void onCloseFileDescriptorError(java.lang.String)>(r1);
+
+     label4:
+        return;
+
+        catch java.io.IOException from label1 to label2 with label3;
+    }
+
+    private void unregisterTask()
+    {
+        com.android.server.backup.keyvalue.KeyValueBackupTask r0;
+        int $i0;
+        com.android.server.backup.UserBackupManagerService $r1;
+
+        r0 := @this: com.android.server.backup.keyvalue.KeyValueBackupTask;
+
+        $r1 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.UserBackupManagerService mBackupManagerService>;
+
+        $i0 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: int mCurrentOpToken>;
+
+        virtualinvoke $r1.<com.android.server.backup.UserBackupManagerService: void removeOperation(int)>($i0);
+
+        return;
+    }
+
+    private void writeWidgetPayloadIfAppropriate(java.io.FileDescriptor, java.lang.String) throws java.io.IOException
+    {
+        com.android.server.backup.keyvalue.KeyValueBackupTask r0;
+        byte[] r1;
+        boolean z0, $z2;
+        java.io.DataInputStream r2;
+        java.lang.String r3, $r8, r21, r25, r26;
+        int $i0, $i2, $i4;
+        java.lang.StringBuilder $r4;
+        java.io.File $r7, r22;
+        com.android.server.backup.keyvalue.KeyValueBackupReporter $r9;
+        java.io.FileOutputStream $r10;
+        java.io.FileInputStream $r11;
+        java.lang.Throwable $r12, $r13, $r14, $r15, $r16, $r17, $r18, $r19;
+        java.io.FileDescriptor r20;
+        android.app.backup.BackupDataOutput $r32;
+        java.io.DataOutputStream r35;
+
+        r0 := @this: com.android.server.backup.keyvalue.KeyValueBackupTask;
+
+        r20 := @parameter0: java.io.FileDescriptor;
+
+        r21 := @parameter1: java.lang.String;
+
+        $i0 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: int mUserId>;
+
+        r1 = staticinvoke <com.android.server.AppWidgetBackupBridge: byte[] getWidgetState(java.lang.String,int)>(r21, $i0);
+
+        r22 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: java.io.File mStateDirectory>;
+
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r21);
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("_widget");
+
+        $r7 = new java.io.File;
+
+        $r8 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r7.<java.io.File: void <init>(java.io.File,java.lang.String)>(r22, $r8);
+
+        z0 = virtualinvoke $r7.<java.io.File: boolean exists()>();
+
+        if z0 != 0 goto label01;
+
+        if r1 != null goto label01;
+
+        return;
+
+     label01:
+        $r9 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.keyvalue.KeyValueBackupReporter mReporter>;
+
+        virtualinvoke $r9.<com.android.server.backup.keyvalue.KeyValueBackupReporter: void onWriteWidgetData(boolean,byte[])>(z0, r1);
+
+        r25 = null;
+
+        if r1 == null goto label17;
+
+        r26 = specialinvoke r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: java.lang.String SHA1Checksum(byte[])>(r1);
+
+        r25 = r26;
+
+        if z0 == 0 goto label17;
+
+        $r11 = new java.io.FileInputStream;
+
+        specialinvoke $r11.<java.io.FileInputStream: void <init>(java.io.File)>($r7);
+
+     label02:
+        r2 = new java.io.DataInputStream;
+
+        specialinvoke r2.<java.io.DataInputStream: void <init>(java.io.InputStream)>($r11);
+
+     label03:
+        r3 = virtualinvoke r2.<java.io.DataInputStream: java.lang.String readUTF()>();
+
+     label04:
+        virtualinvoke r2.<java.io.DataInputStream: void close()>();
+
+     label05:
+        virtualinvoke $r11.<java.io.FileInputStream: void close()>();
+
+        r25 = r26;
+
+        $z2 = staticinvoke <java.util.Objects: boolean equals(java.lang.Object,java.lang.Object)>(r26, r3);
+
+        if $z2 == 0 goto label17;
+
+        return;
+
+     label06:
+        $r15 := @caughtexception;
+
+     label07:
+        virtualinvoke r2.<java.io.DataInputStream: void close()>();
+
+     label08:
+        goto label11;
+
+     label09:
+        $r19 := @caughtexception;
+
+     label10:
+        virtualinvoke $r15.<java.lang.Throwable: void addSuppressed(java.lang.Throwable)>($r19);
+
+     label11:
+        throw $r15;
+
+     label12:
+        $r18 := @caughtexception;
+
+     label13:
+        virtualinvoke $r11.<java.io.FileInputStream: void close()>();
+
+     label14:
+        goto label16;
+
+     label15:
+        $r17 := @caughtexception;
+
+        virtualinvoke $r18.<java.lang.Throwable: void addSuppressed(java.lang.Throwable)>($r17);
+
+     label16:
+        throw $r18;
+
+     label17:
+        $r32 = new android.app.backup.BackupDataOutput;
+
+        specialinvoke $r32.<android.app.backup.BackupDataOutput: void <init>(java.io.FileDescriptor)>(r20);
+
+        if r1 == null goto label33;
+
+        $r10 = new java.io.FileOutputStream;
+
+        specialinvoke $r10.<java.io.FileOutputStream: void <init>(java.io.File)>($r7);
+
+     label18:
+        r35 = new java.io.DataOutputStream;
+
+        specialinvoke r35.<java.io.DataOutputStream: void <init>(java.io.OutputStream)>($r10);
+
+     label19:
+        virtualinvoke r35.<java.io.DataOutputStream: void writeUTF(java.lang.String)>(r25);
+
+     label20:
+        virtualinvoke r35.<java.io.DataOutputStream: void close()>();
+
+     label21:
+        virtualinvoke $r10.<java.io.FileOutputStream: void close()>();
+
+        $i2 = lengthof r1;
+
+        virtualinvoke $r32.<android.app.backup.BackupDataOutput: int writeEntityHeader(java.lang.String,int)>("\uffed\uffedwidget", $i2);
+
+        $i4 = lengthof r1;
+
+        virtualinvoke $r32.<android.app.backup.BackupDataOutput: int writeEntityData(byte[],int)>(r1, $i4);
+
+        goto label34;
+
+     label22:
+        $r12 := @caughtexception;
+
+     label23:
+        virtualinvoke r35.<java.io.DataOutputStream: void close()>();
+
+     label24:
+        goto label27;
+
+     label25:
+        $r14 := @caughtexception;
+
+     label26:
+        virtualinvoke $r12.<java.lang.Throwable: void addSuppressed(java.lang.Throwable)>($r14);
+
+     label27:
+        throw $r12;
+
+     label28:
+        $r13 := @caughtexception;
+
+     label29:
+        virtualinvoke $r10.<java.io.FileOutputStream: void close()>();
+
+     label30:
+        goto label32;
+
+     label31:
+        $r16 := @caughtexception;
+
+        virtualinvoke $r13.<java.lang.Throwable: void addSuppressed(java.lang.Throwable)>($r16);
+
+     label32:
+        throw $r13;
+
+     label33:
+        virtualinvoke $r32.<android.app.backup.BackupDataOutput: int writeEntityHeader(java.lang.String,int)>("\uffed\uffedwidget", -1);
+
+        virtualinvoke $r7.<java.io.File: boolean delete()>();
+
+     label34:
+        return;
+
+        catch java.lang.Throwable from label02 to label03 with label12;
+        catch java.lang.Throwable from label03 to label04 with label06;
+        catch java.lang.Throwable from label04 to label05 with label12;
+        catch java.lang.Throwable from label07 to label08 with label09;
+        catch java.lang.Throwable from label10 to label11 with label12;
+        catch java.lang.Throwable from label11 to label12 with label12;
+        catch java.lang.Throwable from label13 to label14 with label15;
+        catch java.lang.Throwable from label18 to label19 with label28;
+        catch java.lang.Throwable from label19 to label20 with label22;
+        catch java.lang.Throwable from label20 to label21 with label28;
+        catch java.lang.Throwable from label23 to label24 with label25;
+        catch java.lang.Throwable from label26 to label27 with label28;
+        catch java.lang.Throwable from label27 to label28 with label28;
+        catch java.lang.Throwable from label29 to label30 with label31;
+    }
+
+    public void execute()
+    {
+        com.android.server.backup.keyvalue.KeyValueBackupTask r0;
+
+        r0 := @this: com.android.server.backup.keyvalue.KeyValueBackupTask;
+
+        return;
+    }
+
+    public void handleCancel(boolean)
+    {
+        com.android.server.backup.keyvalue.KeyValueBackupTask r0;
+        boolean z0;
+
+        r0 := @this: com.android.server.backup.keyvalue.KeyValueBackupTask;
+
+        z0 := @parameter0: boolean;
+
+        staticinvoke <com.android.internal.util.Preconditions: void checkArgument(boolean,java.lang.Object)>(z0, "Can\'t partially cancel a key-value backup task");
+
+        virtualinvoke r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: void markCancel()>();
+
+        virtualinvoke r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: void waitCancel()>();
+
+        return;
+    }
+
+    public void lambda$extractAgentData$0$KeyValueBackupTask(android.app.IBackupAgent, long, int, android.app.backup.IBackupCallback) throws android.os.RemoteException
+    {
+        com.android.server.backup.keyvalue.KeyValueBackupTask r0;
+        android.app.IBackupAgent r1;
+        long l0;
+        int i1;
+        android.app.backup.IBackupCallback r2;
+        android.os.ParcelFileDescriptor $r3, $r4, $r5;
+
+        r0 := @this: com.android.server.backup.keyvalue.KeyValueBackupTask;
+
+        r1 := @parameter0: android.app.IBackupAgent;
+
+        l0 := @parameter1: long;
+
+        i1 := @parameter2: int;
+
+        r2 := @parameter3: android.app.backup.IBackupCallback;
+
+        $r5 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: android.os.ParcelFileDescriptor mSavedState>;
+
+        $r4 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: android.os.ParcelFileDescriptor mBackupData>;
+
+        $r3 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: android.os.ParcelFileDescriptor mNewState>;
+
+        interfaceinvoke r1.<android.app.IBackupAgent: void doBackup(android.os.ParcelFileDescriptor,android.os.ParcelFileDescriptor,android.os.ParcelFileDescriptor,long,android.app.backup.IBackupCallback,int)>($r5, $r4, $r3, l0, r2, i1);
+
+        return;
+    }
+
+    public void markCancel()
+    {
+        com.android.server.backup.keyvalue.KeyValueBackupTask r0;
+        com.android.server.backup.remote.RemoteCall r1;
+        com.android.server.backup.keyvalue.KeyValueBackupReporter $r2;
+
+        r0 := @this: com.android.server.backup.keyvalue.KeyValueBackupTask;
+
+        $r2 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.keyvalue.KeyValueBackupReporter mReporter>;
+
+        virtualinvoke $r2.<com.android.server.backup.keyvalue.KeyValueBackupReporter: void onCancel()>();
+
+        r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: boolean mCancelled> = 1;
+
+        r1 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.remote.RemoteCall mPendingCall>;
+
+        if r1 == null goto label1;
+
+        virtualinvoke r1.<com.android.server.backup.remote.RemoteCall: void cancel()>();
+
+     label1:
+        return;
+    }
+
+    public void operationComplete(long)
+    {
+        com.android.server.backup.keyvalue.KeyValueBackupTask r0;
+        long l0;
+
+        r0 := @this: com.android.server.backup.keyvalue.KeyValueBackupTask;
+
+        l0 := @parameter0: long;
+
+        return;
+    }
+
+    public void run()
+    {
+        com.android.server.backup.keyvalue.KeyValueBackupTask r0;
+        java.lang.String r2, $r7;
+        java.util.HashSet $r3;
+        java.util.List $r4, $r5;
+        boolean $z0, $z1, $z2, $z4, $z5;
+        java.lang.Object $r6;
+        com.android.server.backup.keyvalue.TaskException $r8;
+        java.io.File $r9;
+        com.android.server.backup.UserBackupManagerService $r10, $r12;
+        com.android.server.backup.keyvalue.AgentException $r11;
+        int i0;
+
+        r0 := @this: com.android.server.backup.keyvalue.KeyValueBackupTask;
+
+        staticinvoke <android.os.Process: void setThreadPriority(int)>(10);
+
+        r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: boolean mHasDataToBackup> = 0;
+
+        $r3 = new java.util.HashSet;
+
+        specialinvoke $r3.<java.util.HashSet: void <init>()>();
+
+        i0 = 0;
+
+     label01:
+        specialinvoke r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: void startTask()>();
+
+     label02:
+        $r4 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: java.util.List mQueue>;
+
+        $z0 = interfaceinvoke $r4.<java.util.List: boolean isEmpty()>();
+
+        if $z0 != 0 goto label11;
+
+        $z1 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: boolean mCancelled>;
+
+        if $z1 != 0 goto label11;
+
+        $r5 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: java.util.List mQueue>;
+
+        $r6 = interfaceinvoke $r5.<java.util.List: java.lang.Object remove(int)>(0);
+
+        r2 = (java.lang.String) $r6;
+
+     label03:
+        $r7 = "@pm@";
+
+        $z2 = virtualinvoke $r7.<java.lang.String: boolean equals(java.lang.Object)>(r2);
+
+        if $z2 == 0 goto label05;
+
+        specialinvoke r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: void backupPm()>();
+
+     label04:
+        goto label06;
+
+     label05:
+        specialinvoke r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: void backupPackage(java.lang.String)>(r2);
+
+     label06:
+        specialinvoke r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: void setSuccessState(java.lang.String,boolean)>(r2, 1);
+
+        interfaceinvoke $r3.<java.util.Set: boolean add(java.lang.Object)>(r2);
+
+     label07:
+        goto label10;
+
+     label08:
+        $r11 := @caughtexception;
+
+     label09:
+        specialinvoke r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: void setSuccessState(java.lang.String,boolean)>(r2, 0);
+
+        $z5 = virtualinvoke $r11.<com.android.server.backup.keyvalue.AgentException: boolean isTransitory()>();
+
+        if $z5 == 0 goto label10;
+
+        $r12 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.UserBackupManagerService mBackupManagerService>;
+
+        virtualinvoke $r12.<com.android.server.backup.UserBackupManagerService: void dataChangedImpl(java.lang.String)>(r2);
+
+     label10:
+        goto label02;
+
+     label11:
+        specialinvoke r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: void informTransportOfUnchangedApps(java.util.Set)>($r3);
+
+     label12:
+        goto label15;
+
+     label13:
+        $r8 := @caughtexception;
+
+        $z4 = virtualinvoke $r8.<com.android.server.backup.keyvalue.TaskException: boolean isStateCompromised()>();
+
+        if $z4 == 0 goto label14;
+
+        $r10 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: com.android.server.backup.UserBackupManagerService mBackupManagerService>;
+
+        $r9 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: java.io.File mStateDirectory>;
+
+        virtualinvoke $r10.<com.android.server.backup.UserBackupManagerService: void resetBackupState(java.io.File)>($r9);
+
+     label14:
+        specialinvoke r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: void revertTask()>();
+
+        i0 = virtualinvoke $r8.<com.android.server.backup.keyvalue.TaskException: int getStatus()>();
+
+     label15:
+        specialinvoke r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: void finishTask(int)>(i0);
+
+        return;
+
+        catch com.android.server.backup.keyvalue.TaskException from label01 to label02 with label13;
+        catch com.android.server.backup.keyvalue.TaskException from label02 to label03 with label13;
+        catch com.android.server.backup.keyvalue.AgentException from label03 to label04 with label08;
+        catch com.android.server.backup.keyvalue.TaskException from label03 to label04 with label13;
+        catch com.android.server.backup.keyvalue.AgentException from label05 to label06 with label08;
+        catch com.android.server.backup.keyvalue.TaskException from label05 to label06 with label13;
+        catch com.android.server.backup.keyvalue.AgentException from label06 to label07 with label08;
+        catch com.android.server.backup.keyvalue.TaskException from label06 to label07 with label13;
+        catch com.android.server.backup.keyvalue.TaskException from label09 to label10 with label13;
+        catch com.android.server.backup.keyvalue.TaskException from label11 to label12 with label13;
+    }
+
+    public void waitCancel()
+    {
+        com.android.server.backup.keyvalue.KeyValueBackupTask r0;
+        android.os.ConditionVariable $r1;
+
+        r0 := @this: com.android.server.backup.keyvalue.KeyValueBackupTask;
+
+        $r1 = r0.<com.android.server.backup.keyvalue.KeyValueBackupTask: android.os.ConditionVariable mCancelAcknowledged>;
+
+        virtualinvoke $r1.<android.os.ConditionVariable: void block()>();
+
+        return;
+    }
+}

@@ -1,0 +1,1416 @@
+class com.android.server.sip.SipService$SipAutoReg extends android.net.sip.SipSessionAdapter implements java.lang.Runnable, com.android.server.sip.SipSessionGroup$KeepAliveProcessCallback
+{
+    private static final int MIN_KEEPALIVE_SUCCESS_COUNT;
+    private static final boolean SAR_DBG;
+    private java.lang.String SAR_TAG;
+    private int mBackoff;
+    private int mErrorCode;
+    private java.lang.String mErrorMessage;
+    private long mExpiryTime;
+    private com.android.server.sip.SipSessionGroup$SipSessionImpl mKeepAliveSession;
+    private int mKeepAliveSuccessCount;
+    private com.android.server.sip.SipSessionListenerProxy mProxy;
+    private boolean mRegistered;
+    private boolean mRunning;
+    private com.android.server.sip.SipSessionGroup$SipSessionImpl mSession;
+    final com.android.server.sip.SipService this$0;
+
+    private void <init>(com.android.server.sip.SipService)
+    {
+        com.android.server.sip.SipService$SipAutoReg r0;
+        com.android.server.sip.SipService r1;
+        com.android.server.sip.SipSessionListenerProxy $r2;
+
+        r0 := @this: com.android.server.sip.SipService$SipAutoReg;
+
+        r1 := @parameter0: com.android.server.sip.SipService;
+
+        r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipService this$0> = r1;
+
+        specialinvoke r0.<android.net.sip.SipSessionAdapter: void <init>()>();
+
+        $r2 = new com.android.server.sip.SipSessionListenerProxy;
+
+        specialinvoke $r2.<com.android.server.sip.SipSessionListenerProxy: void <init>()>();
+
+        r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipSessionListenerProxy mProxy> = $r2;
+
+        r0.<com.android.server.sip.SipService$SipAutoReg: int mBackoff> = 1;
+
+        r0.<com.android.server.sip.SipService$SipAutoReg: boolean mRunning> = 0;
+
+        r0.<com.android.server.sip.SipService$SipAutoReg: int mKeepAliveSuccessCount> = 0;
+
+        return;
+    }
+
+    void <init>(com.android.server.sip.SipService, com.android.server.sip.SipService$1)
+    {
+        com.android.server.sip.SipService$SipAutoReg r0;
+        com.android.server.sip.SipService r1;
+        com.android.server.sip.SipService$1 r2;
+
+        r0 := @this: com.android.server.sip.SipService$SipAutoReg;
+
+        r1 := @parameter0: com.android.server.sip.SipService;
+
+        r2 := @parameter1: com.android.server.sip.SipService$1;
+
+        specialinvoke r0.<com.android.server.sip.SipService$SipAutoReg: void <init>(com.android.server.sip.SipService)>(r1);
+
+        return;
+    }
+
+    private int backoffDuration()
+    {
+        com.android.server.sip.SipService$SipAutoReg r0;
+        int i0, $i1, i2;
+
+        r0 := @this: com.android.server.sip.SipService$SipAutoReg;
+
+        i0 = r0.<com.android.server.sip.SipService$SipAutoReg: int mBackoff>;
+
+        i2 = i0 * 10;
+
+        if i2 <= 3600 goto label1;
+
+        i2 = 3600;
+
+        goto label2;
+
+     label1:
+        $i1 = i0 * 2;
+
+        r0.<com.android.server.sip.SipService$SipAutoReg: int mBackoff> = $i1;
+
+     label2:
+        return i2;
+    }
+
+    private void log(java.lang.String)
+    {
+        com.android.server.sip.SipService$SipAutoReg r0;
+        java.lang.String r1, $r2;
+
+        r0 := @this: com.android.server.sip.SipService$SipAutoReg;
+
+        r1 := @parameter0: java.lang.String;
+
+        $r2 = r0.<com.android.server.sip.SipService$SipAutoReg: java.lang.String SAR_TAG>;
+
+        staticinvoke <android.telephony.Rlog: int d(java.lang.String,java.lang.String)>($r2, r1);
+
+        return;
+    }
+
+    private void loge(java.lang.String)
+    {
+        com.android.server.sip.SipService$SipAutoReg r0;
+        java.lang.String r1, $r2;
+
+        r0 := @this: com.android.server.sip.SipService$SipAutoReg;
+
+        r1 := @parameter0: java.lang.String;
+
+        $r2 = r0.<com.android.server.sip.SipService$SipAutoReg: java.lang.String SAR_TAG>;
+
+        staticinvoke <android.telephony.Rlog: int e(java.lang.String,java.lang.String)>($r2, r1);
+
+        return;
+    }
+
+    private void loge(java.lang.String, java.lang.Throwable)
+    {
+        com.android.server.sip.SipService$SipAutoReg r0;
+        java.lang.String r1, $r3;
+        java.lang.Throwable r2;
+
+        r0 := @this: com.android.server.sip.SipService$SipAutoReg;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 := @parameter1: java.lang.Throwable;
+
+        $r3 = r0.<com.android.server.sip.SipService$SipAutoReg: java.lang.String SAR_TAG>;
+
+        staticinvoke <android.telephony.Rlog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>($r3, r1, r2);
+
+        return;
+    }
+
+    private boolean notCurrentSession(android.net.sip.ISipSession)
+    {
+        com.android.server.sip.SipService$SipAutoReg r0;
+        android.net.sip.ISipSession r1;
+        com.android.server.sip.SipSessionGroup$SipSessionImpl $r2, $r3;
+        boolean $z0, $z1;
+        com.android.server.sip.SipService $r4;
+        com.android.server.sip.SipWakeLock $r5;
+
+        r0 := @this: com.android.server.sip.SipService$SipAutoReg;
+
+        r1 := @parameter0: android.net.sip.ISipSession;
+
+        $r2 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipSessionGroup$SipSessionImpl mSession>;
+
+        if r1 == $r2 goto label1;
+
+        $r3 = (com.android.server.sip.SipSessionGroup$SipSessionImpl) r1;
+
+        virtualinvoke $r3.<com.android.server.sip.SipSessionGroup$SipSessionImpl: void setListener(android.net.sip.ISipSessionListener)>(null);
+
+        $r4 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipService this$0>;
+
+        $r5 = staticinvoke <com.android.server.sip.SipService: com.android.server.sip.SipWakeLock access$300(com.android.server.sip.SipService)>($r4);
+
+        virtualinvoke $r5.<com.android.server.sip.SipWakeLock: void release(java.lang.Object)>(r1);
+
+        return 1;
+
+     label1:
+        $z0 = r0.<com.android.server.sip.SipService$SipAutoReg: boolean mRunning>;
+
+        $z1 = $z0 ^ 1;
+
+        return $z1;
+    }
+
+    private void restart(int)
+    {
+        com.android.server.sip.SipService$SipAutoReg r0;
+        int i0, $i1;
+        java.lang.StringBuilder $r2;
+        java.lang.String $r6;
+        com.android.server.sip.SipService $r7, $r9;
+        com.android.server.sip.SipWakeupTimer $r8, $r10;
+
+        r0 := @this: com.android.server.sip.SipService$SipAutoReg;
+
+        i0 := @parameter0: int;
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("restart: duration=");
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("s later.");
+
+        $r6 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.server.sip.SipService$SipAutoReg: void log(java.lang.String)>($r6);
+
+        $r7 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipService this$0>;
+
+        $r8 = staticinvoke <com.android.server.sip.SipService: com.android.server.sip.SipWakeupTimer access$200(com.android.server.sip.SipService)>($r7);
+
+        virtualinvoke $r8.<com.android.server.sip.SipWakeupTimer: void cancel(java.lang.Runnable)>(r0);
+
+        $r9 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipService this$0>;
+
+        $r10 = staticinvoke <com.android.server.sip.SipService: com.android.server.sip.SipWakeupTimer access$200(com.android.server.sip.SipService)>($r9);
+
+        $i1 = i0 * 1000;
+
+        virtualinvoke $r10.<com.android.server.sip.SipWakeupTimer: void set(int,java.lang.Runnable)>($i1, r0);
+
+        return;
+    }
+
+    private void restartLater()
+    {
+        com.android.server.sip.SipService$SipAutoReg r0;
+        int $i0;
+
+        r0 := @this: com.android.server.sip.SipService$SipAutoReg;
+
+        specialinvoke r0.<com.android.server.sip.SipService$SipAutoReg: void loge(java.lang.String)>("restartLater");
+
+        r0.<com.android.server.sip.SipService$SipAutoReg: boolean mRegistered> = 0;
+
+        $i0 = specialinvoke r0.<com.android.server.sip.SipService$SipAutoReg: int backoffDuration()>();
+
+        specialinvoke r0.<com.android.server.sip.SipService$SipAutoReg: void restart(int)>($i0);
+
+        return;
+    }
+
+    private void startKeepAliveProcess(int)
+    {
+        com.android.server.sip.SipService$SipAutoReg r0;
+        int i0;
+        java.lang.StringBuilder $r2, $r10;
+        java.lang.String $r5, $r13;
+        com.android.server.sip.SipSessionGroup$SipSessionImpl $r6, $r7, $r8, r15;
+        java.lang.Throwable $r9;
+
+        r0 := @this: com.android.server.sip.SipService$SipAutoReg;
+
+        i0 := @parameter0: int;
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("startKeepAliveProcess: interval=");
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r5 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.server.sip.SipService$SipAutoReg: void log(java.lang.String)>($r5);
+
+        r15 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipSessionGroup$SipSessionImpl mKeepAliveSession>;
+
+        if r15 != null goto label1;
+
+        $r7 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipSessionGroup$SipSessionImpl mSession>;
+
+        $r8 = virtualinvoke $r7.<com.android.server.sip.SipSessionGroup$SipSessionImpl: com.android.server.sip.SipSessionGroup$SipSessionImpl duplicate()>();
+
+        r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipSessionGroup$SipSessionImpl mKeepAliveSession> = $r8;
+
+        goto label2;
+
+     label1:
+        virtualinvoke r15.<com.android.server.sip.SipSessionGroup$SipSessionImpl: void stopKeepAliveProcess()>();
+
+     label2:
+        $r6 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipSessionGroup$SipSessionImpl mKeepAliveSession>;
+
+        virtualinvoke $r6.<com.android.server.sip.SipSessionGroup$SipSessionImpl: void startKeepAliveProcess(int,com.android.server.sip.SipSessionGroup$KeepAliveProcessCallback)>(i0, r0);
+
+     label3:
+        goto label5;
+
+     label4:
+        $r9 := @caughtexception;
+
+        $r10 = new java.lang.StringBuilder;
+
+        specialinvoke $r10.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("startKeepAliveProcess: interval=");
+
+        virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r13 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.server.sip.SipService$SipAutoReg: void loge(java.lang.String,java.lang.Throwable)>($r13, $r9);
+
+     label5:
+        return;
+
+        catch javax.sip.SipException from label2 to label3 with label4;
+    }
+
+    private void stopKeepAliveProcess()
+    {
+        com.android.server.sip.SipService$SipAutoReg r0;
+        com.android.server.sip.SipSessionGroup$SipSessionImpl r1;
+
+        r0 := @this: com.android.server.sip.SipService$SipAutoReg;
+
+        r1 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipSessionGroup$SipSessionImpl mKeepAliveSession>;
+
+        if r1 == null goto label1;
+
+        virtualinvoke r1.<com.android.server.sip.SipSessionGroup$SipSessionImpl: void stopKeepAliveProcess()>();
+
+        r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipSessionGroup$SipSessionImpl mKeepAliveSession> = null;
+
+     label1:
+        r0.<com.android.server.sip.SipService$SipAutoReg: int mKeepAliveSuccessCount> = 0;
+
+        return;
+    }
+
+    public boolean isRegistered()
+    {
+        com.android.server.sip.SipService$SipAutoReg r0;
+        boolean $z0;
+
+        r0 := @this: com.android.server.sip.SipService$SipAutoReg;
+
+        $z0 = r0.<com.android.server.sip.SipService$SipAutoReg: boolean mRegistered>;
+
+        return $z0;
+    }
+
+    public void onError(int, java.lang.String)
+    {
+        com.android.server.sip.SipService$SipAutoReg r0;
+        int i0;
+        java.lang.String r1, $r8;
+        java.lang.StringBuilder $r3;
+
+        r0 := @this: com.android.server.sip.SipService$SipAutoReg;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: java.lang.String;
+
+        $r3 = new java.lang.StringBuilder;
+
+        specialinvoke $r3.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("onError: errorCode=");
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" desc=");
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r8 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.server.sip.SipService$SipAutoReg: void loge(java.lang.String)>($r8);
+
+        virtualinvoke r0.<com.android.server.sip.SipService$SipAutoReg: void onResponse(boolean)>(1);
+
+        return;
+    }
+
+    public void onKeepAliveIntervalChanged()
+    {
+        com.android.server.sip.SipService$SipAutoReg r0;
+        int i0;
+        com.android.server.sip.SipSessionGroup$SipSessionImpl $r2;
+        com.android.server.sip.SipService $r3;
+        java.lang.StringBuilder $r4;
+        java.lang.String $r7;
+
+        r0 := @this: com.android.server.sip.SipService$SipAutoReg;
+
+        $r2 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipSessionGroup$SipSessionImpl mKeepAliveSession>;
+
+        if $r2 == null goto label1;
+
+        $r3 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipService this$0>;
+
+        i0 = staticinvoke <com.android.server.sip.SipService: int access$1200(com.android.server.sip.SipService)>($r3);
+
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("onKeepAliveIntervalChanged: interval=");
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r7 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.server.sip.SipService$SipAutoReg: void log(java.lang.String)>($r7);
+
+        r0.<com.android.server.sip.SipService$SipAutoReg: int mKeepAliveSuccessCount> = 0;
+
+        specialinvoke r0.<com.android.server.sip.SipService$SipAutoReg: void startKeepAliveProcess(int)>(i0);
+
+     label1:
+        return;
+    }
+
+    public void onRegistering(android.net.sip.ISipSession)
+    {
+        com.android.server.sip.SipService$SipAutoReg r0;
+        java.lang.StringBuilder $r1;
+        java.lang.String $r4;
+        boolean $z0;
+        com.android.server.sip.SipSessionListenerProxy $r5;
+        java.lang.Throwable $r6;
+        android.net.sip.ISipSession r7;
+        com.android.server.sip.SipService r9;
+
+        r0 := @this: com.android.server.sip.SipService$SipAutoReg;
+
+        r7 := @parameter0: android.net.sip.ISipSession;
+
+        $r1 = new java.lang.StringBuilder;
+
+        specialinvoke $r1.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("onRegistering: ");
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r7);
+
+        $r4 = virtualinvoke $r1.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.server.sip.SipService$SipAutoReg: void log(java.lang.String)>($r4);
+
+        r9 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipService this$0>;
+
+        entermonitor r9;
+
+     label1:
+        $z0 = specialinvoke r0.<com.android.server.sip.SipService$SipAutoReg: boolean notCurrentSession(android.net.sip.ISipSession)>(r7);
+
+        if $z0 == 0 goto label3;
+
+        exitmonitor r9;
+
+     label2:
+        return;
+
+     label3:
+        r0.<com.android.server.sip.SipService$SipAutoReg: boolean mRegistered> = 0;
+
+        $r5 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipSessionListenerProxy mProxy>;
+
+        virtualinvoke $r5.<com.android.server.sip.SipSessionListenerProxy: void onRegistering(android.net.sip.ISipSession)>(r7);
+
+        exitmonitor r9;
+
+     label4:
+        return;
+
+     label5:
+        $r6 := @caughtexception;
+
+     label6:
+        exitmonitor r9;
+
+     label7:
+        throw $r6;
+
+        catch java.lang.Throwable from label1 to label2 with label5;
+        catch java.lang.Throwable from label3 to label4 with label5;
+        catch java.lang.Throwable from label6 to label7 with label5;
+    }
+
+    public void onRegistrationDone(android.net.sip.ISipSession, int)
+    {
+        com.android.server.sip.SipService$SipAutoReg r0;
+        int i0, $i2, $i5, i6, i7;
+        android.net.sip.SipProfile r1;
+        java.lang.StringBuilder $r2;
+        java.lang.String $r5, $r11;
+        boolean $z0, $z1, $z2, $z3;
+        com.android.server.sip.SipSessionListenerProxy $r6;
+        long $l1, $l3, $l4;
+        com.android.server.sip.SipSessionGroup$SipSessionImpl $r7, $r8;
+        com.android.server.sip.SipService $r9, $r10, $r12, r16, $r17;
+        java.lang.Throwable $r13;
+        android.net.sip.ISipSession r14;
+        com.android.server.sip.SipWakeLock $r18;
+
+        r0 := @this: com.android.server.sip.SipService$SipAutoReg;
+
+        r14 := @parameter0: android.net.sip.ISipSession;
+
+        i6 := @parameter1: int;
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("onRegistrationDone: ");
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r14);
+
+        $r5 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.server.sip.SipService$SipAutoReg: void log(java.lang.String)>($r5);
+
+        r16 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipService this$0>;
+
+        entermonitor r16;
+
+     label01:
+        $z0 = specialinvoke r0.<com.android.server.sip.SipService$SipAutoReg: boolean notCurrentSession(android.net.sip.ISipSession)>(r14);
+
+        if $z0 == 0 goto label03;
+
+        exitmonitor r16;
+
+     label02:
+        return;
+
+     label03:
+        $r6 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipSessionListenerProxy mProxy>;
+
+        virtualinvoke $r6.<com.android.server.sip.SipSessionListenerProxy: void onRegistrationDone(android.net.sip.ISipSession,int)>(r14, i6);
+
+     label04:
+        if i6 <= 0 goto label11;
+
+     label05:
+        $l1 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        $i2 = i6 * 1000;
+
+        $l3 = (long) $i2;
+
+        $l4 = $l1 + $l3;
+
+        r0.<com.android.server.sip.SipService$SipAutoReg: long mExpiryTime> = $l4;
+
+        $z1 = r0.<com.android.server.sip.SipService$SipAutoReg: boolean mRegistered>;
+
+        if $z1 != 0 goto label09;
+
+        r0.<com.android.server.sip.SipService$SipAutoReg: boolean mRegistered> = 1;
+
+     label06:
+        i0 = i6 - 60;
+
+        i7 = i0;
+
+        if i0 >= 60 goto label07;
+
+        i7 = 60;
+
+     label07:
+        specialinvoke r0.<com.android.server.sip.SipService$SipAutoReg: void restart(int)>(i7);
+
+        $r7 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipSessionGroup$SipSessionImpl mSession>;
+
+        r1 = virtualinvoke $r7.<com.android.server.sip.SipSessionGroup$SipSessionImpl: android.net.sip.SipProfile getLocalProfile()>();
+
+        $r8 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipSessionGroup$SipSessionImpl mKeepAliveSession>;
+
+        if $r8 != null goto label09;
+
+        $r10 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipService this$0>;
+
+        $r9 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipService this$0>;
+
+        $r11 = staticinvoke <com.android.server.sip.SipService: java.lang.String access$1500(com.android.server.sip.SipService)>($r9);
+
+        $z2 = staticinvoke <com.android.server.sip.SipService: boolean access$1600(com.android.server.sip.SipService,java.lang.String)>($r10, $r11);
+
+        if $z2 != 0 goto label08;
+
+        $z3 = virtualinvoke r1.<android.net.sip.SipProfile: boolean getSendKeepAlive()>();
+
+        if $z3 == 0 goto label09;
+
+     label08:
+        $r12 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipService this$0>;
+
+        $i5 = staticinvoke <com.android.server.sip.SipService: int access$1200(com.android.server.sip.SipService)>($r12);
+
+        specialinvoke r0.<com.android.server.sip.SipService$SipAutoReg: void startKeepAliveProcess(int)>($i5);
+
+     label09:
+        $r17 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipService this$0>;
+
+        $r18 = staticinvoke <com.android.server.sip.SipService: com.android.server.sip.SipWakeLock access$300(com.android.server.sip.SipService)>($r17);
+
+        virtualinvoke $r18.<com.android.server.sip.SipWakeLock: void release(java.lang.Object)>(r14);
+
+     label10:
+        goto label12;
+
+     label11:
+        r0.<com.android.server.sip.SipService$SipAutoReg: boolean mRegistered> = 0;
+
+        r0.<com.android.server.sip.SipService$SipAutoReg: long mExpiryTime> = -1L;
+
+        specialinvoke r0.<com.android.server.sip.SipService$SipAutoReg: void log(java.lang.String)>("Refresh registration immediately");
+
+        virtualinvoke r0.<com.android.server.sip.SipService$SipAutoReg: void run()>();
+
+     label12:
+        exitmonitor r16;
+
+     label13:
+        return;
+
+     label14:
+        $r13 := @caughtexception;
+
+     label15:
+        exitmonitor r16;
+
+     label16:
+        throw $r13;
+
+        catch java.lang.Throwable from label01 to label02 with label14;
+        catch java.lang.Throwable from label03 to label04 with label14;
+        catch java.lang.Throwable from label05 to label06 with label14;
+        catch java.lang.Throwable from label07 to label08 with label14;
+        catch java.lang.Throwable from label08 to label09 with label14;
+        catch java.lang.Throwable from label09 to label10 with label14;
+        catch java.lang.Throwable from label11 to label12 with label14;
+        catch java.lang.Throwable from label12 to label13 with label14;
+        catch java.lang.Throwable from label15 to label16 with label14;
+    }
+
+    public void onRegistrationFailed(android.net.sip.ISipSession, int, java.lang.String)
+    {
+        com.android.server.sip.SipService$SipAutoReg r0;
+        int i0;
+        java.lang.String r1, $r6, $r10;
+        java.lang.StringBuilder $r2;
+        boolean $z0;
+        java.lang.Throwable $r11;
+        android.net.sip.ISipSession r12;
+        com.android.server.sip.SipService r14, $r16;
+        com.android.server.sip.SipSessionListenerProxy $r15;
+        com.android.server.sip.SipWakeLock $r17;
+
+        r0 := @this: com.android.server.sip.SipService$SipAutoReg;
+
+        r12 := @parameter0: android.net.sip.ISipSession;
+
+        i0 := @parameter1: int;
+
+        r1 := @parameter2: java.lang.String;
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("onRegistrationFailed: ");
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r12);
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(": ");
+
+        $r6 = staticinvoke <android.net.sip.SipErrorCode: java.lang.String toString(int)>(i0);
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r6);
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(": ");
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r10 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.server.sip.SipService$SipAutoReg: void log(java.lang.String)>($r10);
+
+        r14 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipService this$0>;
+
+        entermonitor r14;
+
+     label01:
+        $z0 = specialinvoke r0.<com.android.server.sip.SipService$SipAutoReg: boolean notCurrentSession(android.net.sip.ISipSession)>(r12);
+
+        if $z0 == 0 goto label03;
+
+        exitmonitor r14;
+
+     label02:
+        return;
+
+     label03:
+        if i0 == -12 goto label06;
+
+        if i0 == -8 goto label06;
+
+     label04:
+        specialinvoke r0.<com.android.server.sip.SipService$SipAutoReg: void restartLater()>();
+
+     label05:
+        goto label07;
+
+     label06:
+        specialinvoke r0.<com.android.server.sip.SipService$SipAutoReg: void log(java.lang.String)>("   pause auto-registration");
+
+        virtualinvoke r0.<com.android.server.sip.SipService$SipAutoReg: void stop()>();
+
+     label07:
+        r0.<com.android.server.sip.SipService$SipAutoReg: int mErrorCode> = i0;
+
+        r0.<com.android.server.sip.SipService$SipAutoReg: java.lang.String mErrorMessage> = r1;
+
+        $r15 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipSessionListenerProxy mProxy>;
+
+        virtualinvoke $r15.<com.android.server.sip.SipSessionListenerProxy: void onRegistrationFailed(android.net.sip.ISipSession,int,java.lang.String)>(r12, i0, r1);
+
+        $r16 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipService this$0>;
+
+        $r17 = staticinvoke <com.android.server.sip.SipService: com.android.server.sip.SipWakeLock access$300(com.android.server.sip.SipService)>($r16);
+
+        virtualinvoke $r17.<com.android.server.sip.SipWakeLock: void release(java.lang.Object)>(r12);
+
+        exitmonitor r14;
+
+     label08:
+        return;
+
+     label09:
+        $r11 := @caughtexception;
+
+     label10:
+        exitmonitor r14;
+
+     label11:
+        throw $r11;
+
+        catch java.lang.Throwable from label01 to label02 with label09;
+        catch java.lang.Throwable from label04 to label05 with label09;
+        catch java.lang.Throwable from label06 to label07 with label09;
+        catch java.lang.Throwable from label07 to label08 with label09;
+        catch java.lang.Throwable from label10 to label11 with label09;
+    }
+
+    public void onRegistrationTimeout(android.net.sip.ISipSession)
+    {
+        com.android.server.sip.SipService$SipAutoReg r0;
+        java.lang.StringBuilder $r1;
+        java.lang.String $r4;
+        boolean $z0;
+        com.android.server.sip.SipSessionListenerProxy $r5;
+        com.android.server.sip.SipService $r6, r11;
+        com.android.server.sip.SipWakeLock $r7;
+        java.lang.Throwable $r8;
+        android.net.sip.ISipSession r9;
+
+        r0 := @this: com.android.server.sip.SipService$SipAutoReg;
+
+        r9 := @parameter0: android.net.sip.ISipSession;
+
+        $r1 = new java.lang.StringBuilder;
+
+        specialinvoke $r1.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("onRegistrationTimeout: ");
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r9);
+
+        $r4 = virtualinvoke $r1.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.server.sip.SipService$SipAutoReg: void log(java.lang.String)>($r4);
+
+        r11 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipService this$0>;
+
+        entermonitor r11;
+
+     label1:
+        $z0 = specialinvoke r0.<com.android.server.sip.SipService$SipAutoReg: boolean notCurrentSession(android.net.sip.ISipSession)>(r9);
+
+        if $z0 == 0 goto label3;
+
+        exitmonitor r11;
+
+     label2:
+        return;
+
+     label3:
+        r0.<com.android.server.sip.SipService$SipAutoReg: int mErrorCode> = -5;
+
+        $r5 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipSessionListenerProxy mProxy>;
+
+        virtualinvoke $r5.<com.android.server.sip.SipSessionListenerProxy: void onRegistrationTimeout(android.net.sip.ISipSession)>(r9);
+
+        specialinvoke r0.<com.android.server.sip.SipService$SipAutoReg: void restartLater()>();
+
+        $r6 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipService this$0>;
+
+        $r7 = staticinvoke <com.android.server.sip.SipService: com.android.server.sip.SipWakeLock access$300(com.android.server.sip.SipService)>($r6);
+
+        virtualinvoke $r7.<com.android.server.sip.SipWakeLock: void release(java.lang.Object)>(r9);
+
+        exitmonitor r11;
+
+     label4:
+        return;
+
+     label5:
+        $r8 := @caughtexception;
+
+     label6:
+        exitmonitor r11;
+
+     label7:
+        throw $r8;
+
+        catch java.lang.Throwable from label1 to label2 with label5;
+        catch java.lang.Throwable from label3 to label4 with label5;
+        catch java.lang.Throwable from label6 to label7 with label5;
+    }
+
+    public void onResponse(boolean)
+    {
+        com.android.server.sip.SipService$SipAutoReg r0;
+        boolean z0, $z1;
+        com.android.server.sip.SipService r1, $r3, $r5, $r9, $r21;
+        int i0, $i1, $i2, $i3, $i4, $i5, $i6, $i7;
+        com.android.server.sip.SipSessionGroup$SipSessionImpl $r2, $r7, $r8, $r20;
+        android.net.sip.SipProfile $r4, $r22;
+        com.android.server.sip.SipWakeLock $r6;
+        java.lang.String $r14, $r19;
+        java.lang.Throwable $r23;
+        java.lang.StringBuilder r24, r25;
+
+        r0 := @this: com.android.server.sip.SipService$SipAutoReg;
+
+        z0 := @parameter0: boolean;
+
+        r1 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipService this$0>;
+
+        entermonitor r1;
+
+        if z0 == 0 goto label07;
+
+     label01:
+        $r9 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipService this$0>;
+
+        i0 = staticinvoke <com.android.server.sip.SipService: int access$1200(com.android.server.sip.SipService)>($r9);
+
+        $i3 = r0.<com.android.server.sip.SipService$SipAutoReg: int mKeepAliveSuccessCount>;
+
+        if $i3 >= 10 goto label05;
+
+        r24 = new java.lang.StringBuilder;
+
+        specialinvoke r24.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r24.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("onResponse: keepalive doesn\'t work with interval ");
+
+        virtualinvoke r24.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        virtualinvoke r24.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", past success count=");
+
+        $i7 = r0.<com.android.server.sip.SipService$SipAutoReg: int mKeepAliveSuccessCount>;
+
+        virtualinvoke r24.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i7);
+
+        $r19 = virtualinvoke r24.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.server.sip.SipService$SipAutoReg: void log(java.lang.String)>($r19);
+
+     label02:
+        if i0 <= 10 goto label06;
+
+     label03:
+        $r21 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipService this$0>;
+
+        $r20 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipSessionGroup$SipSessionImpl mSession>;
+
+        $r22 = virtualinvoke $r20.<com.android.server.sip.SipSessionGroup$SipSessionImpl: android.net.sip.SipProfile getLocalProfile()>();
+
+        staticinvoke <com.android.server.sip.SipService: void access$1300(com.android.server.sip.SipService,android.net.sip.SipProfile,int)>($r21, $r22, i0);
+
+        r0.<com.android.server.sip.SipService$SipAutoReg: int mKeepAliveSuccessCount> = 0;
+
+     label04:
+        goto label06;
+
+     label05:
+        r25 = new java.lang.StringBuilder;
+
+        specialinvoke r25.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r25.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("keep keepalive going with interval ");
+
+        virtualinvoke r25.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        virtualinvoke r25.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", past success count=");
+
+        $i4 = r0.<com.android.server.sip.SipService$SipAutoReg: int mKeepAliveSuccessCount>;
+
+        virtualinvoke r25.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i4);
+
+        $r14 = virtualinvoke r25.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.server.sip.SipService$SipAutoReg: void log(java.lang.String)>($r14);
+
+        $i5 = r0.<com.android.server.sip.SipService$SipAutoReg: int mKeepAliveSuccessCount>;
+
+        $i6 = $i5 / 2;
+
+        r0.<com.android.server.sip.SipService$SipAutoReg: int mKeepAliveSuccessCount> = $i6;
+
+     label06:
+        goto label08;
+
+     label07:
+        $r3 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipService this$0>;
+
+        $r2 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipSessionGroup$SipSessionImpl mSession>;
+
+        $r4 = virtualinvoke $r2.<com.android.server.sip.SipSessionGroup$SipSessionImpl: android.net.sip.SipProfile getLocalProfile()>();
+
+        staticinvoke <com.android.server.sip.SipService: void access$1400(com.android.server.sip.SipService,android.net.sip.SipProfile)>($r3, $r4);
+
+        $i1 = r0.<com.android.server.sip.SipService$SipAutoReg: int mKeepAliveSuccessCount>;
+
+        $i2 = $i1 + 1;
+
+        r0.<com.android.server.sip.SipService$SipAutoReg: int mKeepAliveSuccessCount> = $i2;
+
+     label08:
+        $z1 = r0.<com.android.server.sip.SipService$SipAutoReg: boolean mRunning>;
+
+        if $z1 == 0 goto label12;
+
+     label09:
+        if z0 != 0 goto label10;
+
+        goto label12;
+
+     label10:
+        r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipSessionGroup$SipSessionImpl mKeepAliveSession> = null;
+
+        $r5 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipService this$0>;
+
+        $r6 = staticinvoke <com.android.server.sip.SipService: com.android.server.sip.SipWakeLock access$300(com.android.server.sip.SipService)>($r5);
+
+        $r7 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipSessionGroup$SipSessionImpl mSession>;
+
+        virtualinvoke $r6.<com.android.server.sip.SipWakeLock: void acquire(java.lang.Object)>($r7);
+
+        $r8 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipSessionGroup$SipSessionImpl mSession>;
+
+        virtualinvoke $r8.<com.android.server.sip.SipSessionGroup$SipSessionImpl: void register(int)>(3600);
+
+        exitmonitor r1;
+
+     label11:
+        return;
+
+     label12:
+        exitmonitor r1;
+
+     label13:
+        return;
+
+     label14:
+        $r23 := @caughtexception;
+
+     label15:
+        exitmonitor r1;
+
+     label16:
+        throw $r23;
+
+        catch java.lang.Throwable from label01 to label02 with label14;
+        catch java.lang.Throwable from label03 to label04 with label14;
+        catch java.lang.Throwable from label05 to label06 with label14;
+        catch java.lang.Throwable from label07 to label08 with label14;
+        catch java.lang.Throwable from label08 to label09 with label14;
+        catch java.lang.Throwable from label10 to label11 with label14;
+        catch java.lang.Throwable from label12 to label13 with label14;
+        catch java.lang.Throwable from label15 to label16 with label14;
+    }
+
+    public void run()
+    {
+        com.android.server.sip.SipService$SipAutoReg r0;
+        com.android.server.sip.SipService r1, $r3, $r4;
+        boolean $z0;
+        int $i0;
+        com.android.server.sip.SipWakeLock $r5;
+        com.android.server.sip.SipSessionGroup$SipSessionImpl $r6, $r7;
+        java.lang.Throwable $r8;
+
+        r0 := @this: com.android.server.sip.SipService$SipAutoReg;
+
+        r1 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipService this$0>;
+
+        entermonitor r1;
+
+     label1:
+        $z0 = r0.<com.android.server.sip.SipService$SipAutoReg: boolean mRunning>;
+
+        if $z0 != 0 goto label3;
+
+        exitmonitor r1;
+
+     label2:
+        return;
+
+     label3:
+        r0.<com.android.server.sip.SipService$SipAutoReg: int mErrorCode> = 0;
+
+        r0.<com.android.server.sip.SipService$SipAutoReg: java.lang.String mErrorMessage> = null;
+
+        specialinvoke r0.<com.android.server.sip.SipService$SipAutoReg: void log(java.lang.String)>("run: registering");
+
+        $r3 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipService this$0>;
+
+        $i0 = staticinvoke <com.android.server.sip.SipService: int access$400(com.android.server.sip.SipService)>($r3);
+
+        if $i0 == -1 goto label4;
+
+        $r4 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipService this$0>;
+
+        $r5 = staticinvoke <com.android.server.sip.SipService: com.android.server.sip.SipWakeLock access$300(com.android.server.sip.SipService)>($r4);
+
+        $r6 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipSessionGroup$SipSessionImpl mSession>;
+
+        virtualinvoke $r5.<com.android.server.sip.SipWakeLock: void acquire(java.lang.Object)>($r6);
+
+        $r7 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipSessionGroup$SipSessionImpl mSession>;
+
+        virtualinvoke $r7.<com.android.server.sip.SipSessionGroup$SipSessionImpl: void register(int)>(3600);
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        return;
+
+     label6:
+        $r8 := @caughtexception;
+
+     label7:
+        exitmonitor r1;
+
+     label8:
+        throw $r8;
+
+        catch java.lang.Throwable from label1 to label2 with label6;
+        catch java.lang.Throwable from label3 to label4 with label6;
+        catch java.lang.Throwable from label4 to label5 with label6;
+        catch java.lang.Throwable from label7 to label8 with label6;
+    }
+
+    public void setListener(android.net.sip.ISipSessionListener)
+    {
+        com.android.server.sip.SipService$SipAutoReg r0;
+        com.android.server.sip.SipService r1, $r7;
+        com.android.server.sip.SipSessionListenerProxy $r2, $r6, $r8, $r12, $r14, $r17, $r19, $r21;
+        com.android.server.sip.SipSessionGroup$SipSessionImpl $r3, $r4, $r5, $r9, $r11, $r13, $r16, $r18, $r20;
+        boolean $z0, $z1;
+        int $i0, $i1, $i2, $i3, i7, i8;
+        java.lang.String $r10, $r15;
+        long $l4, $l5, $l6;
+        java.lang.Throwable $r22, $r23;
+        android.net.sip.ISipSessionListener r24;
+
+        r0 := @this: com.android.server.sip.SipService$SipAutoReg;
+
+        r24 := @parameter0: android.net.sip.ISipSessionListener;
+
+        r1 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipService this$0>;
+
+        entermonitor r1;
+
+     label01:
+        $r2 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipSessionListenerProxy mProxy>;
+
+        virtualinvoke $r2.<com.android.server.sip.SipSessionListenerProxy: void setListener(android.net.sip.ISipSessionListener)>(r24);
+
+     label02:
+        $r3 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipSessionGroup$SipSessionImpl mSession>;
+
+        if $r3 != null goto label04;
+
+     label03:
+        i7 = 0;
+
+        goto label05;
+
+     label04:
+        $r4 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipSessionGroup$SipSessionImpl mSession>;
+
+        i7 = virtualinvoke $r4.<com.android.server.sip.SipSessionGroup$SipSessionImpl: int getState()>();
+
+     label05:
+        if i7 == 1 goto label18;
+
+        if i7 != 2 goto label06;
+
+        goto label18;
+
+     label06:
+        $z0 = r0.<com.android.server.sip.SipService$SipAutoReg: boolean mRegistered>;
+
+        if $z0 == 0 goto label08;
+
+        $l4 = r0.<com.android.server.sip.SipService$SipAutoReg: long mExpiryTime>;
+
+        $l5 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        $l6 = $l4 - $l5;
+
+        i8 = (int) $l6;
+
+        $r21 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipSessionListenerProxy mProxy>;
+
+        $r20 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipSessionGroup$SipSessionImpl mSession>;
+
+        virtualinvoke $r21.<com.android.server.sip.SipSessionListenerProxy: void onRegistrationDone(android.net.sip.ISipSession,int)>($r20, i8);
+
+     label07:
+        goto label19;
+
+     label08:
+        $i0 = r0.<com.android.server.sip.SipService$SipAutoReg: int mErrorCode>;
+
+        if $i0 == 0 goto label12;
+
+        $i2 = r0.<com.android.server.sip.SipService$SipAutoReg: int mErrorCode>;
+
+        if $i2 != -5 goto label10;
+
+        $r19 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipSessionListenerProxy mProxy>;
+
+        $r18 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipSessionGroup$SipSessionImpl mSession>;
+
+        virtualinvoke $r19.<com.android.server.sip.SipSessionListenerProxy: void onRegistrationTimeout(android.net.sip.ISipSession)>($r18);
+
+     label09:
+        goto label19;
+
+     label10:
+        $r17 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipSessionListenerProxy mProxy>;
+
+        $r16 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipSessionGroup$SipSessionImpl mSession>;
+
+        $i3 = r0.<com.android.server.sip.SipService$SipAutoReg: int mErrorCode>;
+
+        $r15 = r0.<com.android.server.sip.SipService$SipAutoReg: java.lang.String mErrorMessage>;
+
+        virtualinvoke $r17.<com.android.server.sip.SipSessionListenerProxy: void onRegistrationFailed(android.net.sip.ISipSession,int,java.lang.String)>($r16, $i3, $r15);
+
+     label11:
+        goto label19;
+
+     label12:
+        $r7 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipService this$0>;
+
+        $i1 = staticinvoke <com.android.server.sip.SipService: int access$400(com.android.server.sip.SipService)>($r7);
+
+        if $i1 != -1 goto label14;
+
+        $r14 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipSessionListenerProxy mProxy>;
+
+        $r13 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipSessionGroup$SipSessionImpl mSession>;
+
+        virtualinvoke $r14.<com.android.server.sip.SipSessionListenerProxy: void onRegistrationFailed(android.net.sip.ISipSession,int,java.lang.String)>($r13, -10, "no data connection");
+
+     label13:
+        goto label19;
+
+     label14:
+        $z1 = r0.<com.android.server.sip.SipService$SipAutoReg: boolean mRunning>;
+
+        if $z1 != 0 goto label16;
+
+        $r12 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipSessionListenerProxy mProxy>;
+
+        $r11 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipSessionGroup$SipSessionImpl mSession>;
+
+        virtualinvoke $r12.<com.android.server.sip.SipSessionListenerProxy: void onRegistrationFailed(android.net.sip.ISipSession,int,java.lang.String)>($r11, -4, "registration not running");
+
+     label15:
+        goto label19;
+
+     label16:
+        $r8 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipSessionListenerProxy mProxy>;
+
+        $r9 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipSessionGroup$SipSessionImpl mSession>;
+
+        $r10 = staticinvoke <java.lang.String: java.lang.String valueOf(int)>(i7);
+
+        virtualinvoke $r8.<com.android.server.sip.SipSessionListenerProxy: void onRegistrationFailed(android.net.sip.ISipSession,int,java.lang.String)>($r9, -9, $r10);
+
+     label17:
+        goto label19;
+
+     label18:
+        $r6 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipSessionListenerProxy mProxy>;
+
+        $r5 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipSessionGroup$SipSessionImpl mSession>;
+
+        virtualinvoke $r6.<com.android.server.sip.SipSessionListenerProxy: void onRegistering(android.net.sip.ISipSession)>($r5);
+
+     label19:
+        goto label22;
+
+     label20:
+        $r22 := @caughtexception;
+
+     label21:
+        specialinvoke r0.<com.android.server.sip.SipService$SipAutoReg: void loge(java.lang.String,java.lang.Throwable)>("setListener: ", $r22);
+
+     label22:
+        exitmonitor r1;
+
+     label23:
+        return;
+
+     label24:
+        $r23 := @caughtexception;
+
+     label25:
+        exitmonitor r1;
+
+     label26:
+        throw $r23;
+
+        catch java.lang.Throwable from label01 to label02 with label24;
+        catch java.lang.Throwable from label02 to label03 with label20;
+        catch java.lang.Throwable from label04 to label05 with label20;
+        catch java.lang.Throwable from label06 to label07 with label20;
+        catch java.lang.Throwable from label08 to label09 with label20;
+        catch java.lang.Throwable from label10 to label11 with label20;
+        catch java.lang.Throwable from label12 to label13 with label20;
+        catch java.lang.Throwable from label14 to label15 with label20;
+        catch java.lang.Throwable from label16 to label17 with label20;
+        catch java.lang.Throwable from label18 to label19 with label20;
+        catch java.lang.Throwable from label21 to label22 with label24;
+        catch java.lang.Throwable from label22 to label23 with label24;
+        catch java.lang.Throwable from label25 to label26 with label24;
+    }
+
+    public void start(com.android.server.sip.SipSessionGroup)
+    {
+        com.android.server.sip.SipService$SipAutoReg r0;
+        com.android.server.sip.SipSessionGroup r1;
+        boolean $z0;
+        android.net.sip.ISipSession $r2;
+        com.android.server.sip.SipService $r3;
+        com.android.server.sip.SipWakeLock $r4;
+        com.android.server.sip.SipSessionGroup$SipSessionImpl $r5, $r6, $r9, r19;
+        java.lang.StringBuilder $r7, $r15;
+        android.net.sip.SipProfile $r10;
+        java.lang.String $r11, $r12, $r14, $r18;
+
+        r0 := @this: com.android.server.sip.SipService$SipAutoReg;
+
+        r1 := @parameter0: com.android.server.sip.SipSessionGroup;
+
+        $z0 = r0.<com.android.server.sip.SipService$SipAutoReg: boolean mRunning>;
+
+        if $z0 != 0 goto label2;
+
+        r0.<com.android.server.sip.SipService$SipAutoReg: boolean mRunning> = 1;
+
+        r0.<com.android.server.sip.SipService$SipAutoReg: int mBackoff> = 1;
+
+        $r2 = virtualinvoke r1.<com.android.server.sip.SipSessionGroup: android.net.sip.ISipSession createSession(android.net.sip.ISipSessionListener)>(r0);
+
+        r19 = (com.android.server.sip.SipSessionGroup$SipSessionImpl) $r2;
+
+        r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipSessionGroup$SipSessionImpl mSession> = r19;
+
+        if r19 != null goto label1;
+
+        return;
+
+     label1:
+        $r3 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipService this$0>;
+
+        $r4 = staticinvoke <com.android.server.sip.SipService: com.android.server.sip.SipWakeLock access$300(com.android.server.sip.SipService)>($r3);
+
+        $r5 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipSessionGroup$SipSessionImpl mSession>;
+
+        virtualinvoke $r4.<com.android.server.sip.SipWakeLock: void acquire(java.lang.Object)>($r5);
+
+        $r6 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipSessionGroup$SipSessionImpl mSession>;
+
+        virtualinvoke $r6.<com.android.server.sip.SipSessionGroup$SipSessionImpl: void unregister()>();
+
+        $r7 = new java.lang.StringBuilder;
+
+        specialinvoke $r7.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("SipAutoReg:");
+
+        $r9 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipSessionGroup$SipSessionImpl mSession>;
+
+        $r10 = virtualinvoke $r9.<com.android.server.sip.SipSessionGroup$SipSessionImpl: android.net.sip.SipProfile getLocalProfile()>();
+
+        $r11 = virtualinvoke $r10.<android.net.sip.SipProfile: java.lang.String getUriString()>();
+
+        $r12 = staticinvoke <com.android.server.sip.SipService: java.lang.String obfuscateSipUri(java.lang.String)>($r11);
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r12);
+
+        $r14 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        r0.<com.android.server.sip.SipService$SipAutoReg: java.lang.String SAR_TAG> = $r14;
+
+        $r15 = new java.lang.StringBuilder;
+
+        specialinvoke $r15.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r15.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("start: group=");
+
+        virtualinvoke $r15.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r1);
+
+        $r18 = virtualinvoke $r15.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.server.sip.SipService$SipAutoReg: void log(java.lang.String)>($r18);
+
+     label2:
+        return;
+    }
+
+    public void stop()
+    {
+        com.android.server.sip.SipService$SipAutoReg r0;
+        com.android.server.sip.SipSessionGroup$SipSessionImpl r1, $r4, $r6;
+        boolean $z0, $z1;
+        com.android.server.sip.SipService $r2, $r5, $r7;
+        com.android.server.sip.SipWakeLock $r3;
+        int $i0;
+        com.android.server.sip.SipWakeupTimer $r8;
+        com.android.server.sip.SipSessionListenerProxy $r9;
+        android.net.sip.ISipSessionListener $r10;
+
+        r0 := @this: com.android.server.sip.SipService$SipAutoReg;
+
+        $z0 = r0.<com.android.server.sip.SipService$SipAutoReg: boolean mRunning>;
+
+        if $z0 != 0 goto label1;
+
+        return;
+
+     label1:
+        r0.<com.android.server.sip.SipService$SipAutoReg: boolean mRunning> = 0;
+
+        $r2 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipService this$0>;
+
+        $r3 = staticinvoke <com.android.server.sip.SipService: com.android.server.sip.SipWakeLock access$300(com.android.server.sip.SipService)>($r2);
+
+        $r4 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipSessionGroup$SipSessionImpl mSession>;
+
+        virtualinvoke $r3.<com.android.server.sip.SipWakeLock: void release(java.lang.Object)>($r4);
+
+        r1 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipSessionGroup$SipSessionImpl mSession>;
+
+        if r1 == null goto label2;
+
+        virtualinvoke r1.<com.android.server.sip.SipSessionGroup$SipSessionImpl: void setListener(android.net.sip.ISipSessionListener)>(null);
+
+        $r5 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipService this$0>;
+
+        $i0 = staticinvoke <com.android.server.sip.SipService: int access$400(com.android.server.sip.SipService)>($r5);
+
+        if $i0 == -1 goto label2;
+
+        $z1 = r0.<com.android.server.sip.SipService$SipAutoReg: boolean mRegistered>;
+
+        if $z1 == 0 goto label2;
+
+        $r6 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipSessionGroup$SipSessionImpl mSession>;
+
+        virtualinvoke $r6.<com.android.server.sip.SipSessionGroup$SipSessionImpl: void unregister()>();
+
+     label2:
+        $r7 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipService this$0>;
+
+        $r8 = staticinvoke <com.android.server.sip.SipService: com.android.server.sip.SipWakeupTimer access$200(com.android.server.sip.SipService)>($r7);
+
+        virtualinvoke $r8.<com.android.server.sip.SipWakeupTimer: void cancel(java.lang.Runnable)>(r0);
+
+        specialinvoke r0.<com.android.server.sip.SipService$SipAutoReg: void stopKeepAliveProcess()>();
+
+        r0.<com.android.server.sip.SipService$SipAutoReg: boolean mRegistered> = 0;
+
+        $r9 = r0.<com.android.server.sip.SipService$SipAutoReg: com.android.server.sip.SipSessionListenerProxy mProxy>;
+
+        $r10 = virtualinvoke $r9.<com.android.server.sip.SipSessionListenerProxy: android.net.sip.ISipSessionListener getListener()>();
+
+        virtualinvoke r0.<com.android.server.sip.SipService$SipAutoReg: void setListener(android.net.sip.ISipSessionListener)>($r10);
+
+        return;
+    }
+
+    public static void <clinit>()
+    {
+        <com.android.server.sip.SipService$SipAutoReg: boolean SAR_DBG> = 1;
+
+        <com.android.server.sip.SipService$SipAutoReg: int MIN_KEEPALIVE_SUCCESS_COUNT> = 10;
+
+        return;
+    }
+}

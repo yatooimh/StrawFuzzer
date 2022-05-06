@@ -1,0 +1,453 @@
+public class com.android.server.storage.AppFuseBridge extends java.lang.Object implements java.lang.Runnable
+{
+    private static final java.lang.String APPFUSE_MOUNT_NAME_TEMPLATE;
+    public static final java.lang.String TAG;
+    private long mNativeLoop;
+    private final android.util.SparseArray mScopes;
+
+    public void <init>()
+    {
+        com.android.server.storage.AppFuseBridge r0;
+        android.util.SparseArray $r1;
+        long $l0;
+
+        r0 := @this: com.android.server.storage.AppFuseBridge;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        $r1 = new android.util.SparseArray;
+
+        specialinvoke $r1.<android.util.SparseArray: void <init>()>();
+
+        r0.<com.android.server.storage.AppFuseBridge: android.util.SparseArray mScopes> = $r1;
+
+        $l0 = specialinvoke r0.<com.android.server.storage.AppFuseBridge: long native_new()>();
+
+        r0.<com.android.server.storage.AppFuseBridge: long mNativeLoop> = $l0;
+
+        return;
+    }
+
+    private native int native_add_bridge(long, int, int);
+
+    private native void native_delete(long);
+
+    private native void native_lock();
+
+    private native long native_new();
+
+    private native void native_start_loop(long);
+
+    private native void native_unlock();
+
+    private void onClosed(int)
+    {
+        com.android.server.storage.AppFuseBridge r0;
+        int i0;
+        android.util.SparseArray $r1, $r3;
+        java.lang.Object $r2;
+        java.lang.Throwable $r4;
+        com.android.server.storage.AppFuseBridge$MountScope r5;
+
+        r0 := @this: com.android.server.storage.AppFuseBridge;
+
+        i0 := @parameter0: int;
+
+        entermonitor r0;
+
+     label1:
+        $r1 = r0.<com.android.server.storage.AppFuseBridge: android.util.SparseArray mScopes>;
+
+        $r2 = virtualinvoke $r1.<android.util.SparseArray: java.lang.Object get(int)>(i0);
+
+        r5 = (com.android.server.storage.AppFuseBridge$MountScope) $r2;
+
+     label2:
+        if r5 == null goto label4;
+
+     label3:
+        virtualinvoke r5.<com.android.server.storage.AppFuseBridge$MountScope: void setMountResultLocked(boolean)>(0);
+
+        staticinvoke <libcore.io.IoUtils: void closeQuietly(java.lang.AutoCloseable)>(r5);
+
+        $r3 = r0.<com.android.server.storage.AppFuseBridge: android.util.SparseArray mScopes>;
+
+        virtualinvoke $r3.<android.util.SparseArray: void remove(int)>(i0);
+
+     label4:
+        exitmonitor r0;
+
+        return;
+
+     label5:
+        $r4 := @caughtexception;
+
+        exitmonitor r0;
+
+        throw $r4;
+
+        catch java.lang.Throwable from label1 to label2 with label5;
+        catch java.lang.Throwable from label3 to label4 with label5;
+    }
+
+    private void onMount(int)
+    {
+        com.android.server.storage.AppFuseBridge r0;
+        int i0;
+        android.util.SparseArray $r1;
+        java.lang.Object $r2;
+        java.lang.Throwable $r3;
+        com.android.server.storage.AppFuseBridge$MountScope r4;
+
+        r0 := @this: com.android.server.storage.AppFuseBridge;
+
+        i0 := @parameter0: int;
+
+        entermonitor r0;
+
+     label1:
+        $r1 = r0.<com.android.server.storage.AppFuseBridge: android.util.SparseArray mScopes>;
+
+        $r2 = virtualinvoke $r1.<android.util.SparseArray: java.lang.Object get(int)>(i0);
+
+        r4 = (com.android.server.storage.AppFuseBridge$MountScope) $r2;
+
+     label2:
+        if r4 == null goto label4;
+
+     label3:
+        virtualinvoke r4.<com.android.server.storage.AppFuseBridge$MountScope: void setMountResultLocked(boolean)>(1);
+
+     label4:
+        exitmonitor r0;
+
+        return;
+
+     label5:
+        $r3 := @caughtexception;
+
+        exitmonitor r0;
+
+        throw $r3;
+
+        catch java.lang.Throwable from label1 to label2 with label5;
+        catch java.lang.Throwable from label3 to label4 with label5;
+    }
+
+    public android.os.ParcelFileDescriptor addBridge(com.android.server.storage.AppFuseBridge$MountScope) throws com.android.internal.os.FuseUnavailableMountException, com.android.server.NativeDaemonConnectorException
+    {
+        com.android.server.storage.AppFuseBridge r0;
+        int i0, $i1, $i2, $i5, $i7, $i8, $i9, $i10;
+        android.util.SparseArray $r1, $r3;
+        long $l3, $l6;
+        byte $b4;
+        android.os.ParcelFileDescriptor $r2, r8;
+        java.lang.Throwable $r4, $r5;
+        com.android.server.storage.AppFuseBridge$MountScope r6, r7;
+        boolean z0;
+        com.android.internal.os.FuseUnavailableMountException r9, r10;
+
+        r0 := @this: com.android.server.storage.AppFuseBridge;
+
+        r6 := @parameter0: com.android.server.storage.AppFuseBridge$MountScope;
+
+        specialinvoke r0.<com.android.server.storage.AppFuseBridge: void native_lock()>();
+
+        r7 = r6;
+
+     label01:
+        entermonitor r0;
+
+     label02:
+        r7 = r6;
+
+     label03:
+        $r1 = r0.<com.android.server.storage.AppFuseBridge: android.util.SparseArray mScopes>;
+
+        $i1 = r6.<com.android.server.storage.AppFuseBridge$MountScope: int mountId>;
+
+        $i2 = virtualinvoke $r1.<android.util.SparseArray: int indexOfKey(int)>($i1);
+
+        if $i2 >= 0 goto label05;
+
+     label04:
+        z0 = 1;
+
+        goto label06;
+
+     label05:
+        z0 = 0;
+
+     label06:
+        r7 = r6;
+
+     label07:
+        staticinvoke <com.android.internal.util.Preconditions: void checkArgument(boolean)>(z0);
+
+     label08:
+        r7 = r6;
+
+     label09:
+        $l3 = r0.<com.android.server.storage.AppFuseBridge: long mNativeLoop>;
+
+        $b4 = $l3 cmp 0L;
+
+        if $b4 == 0 goto label25;
+
+     label10:
+        r7 = r6;
+
+     label11:
+        $l6 = r0.<com.android.server.storage.AppFuseBridge: long mNativeLoop>;
+
+        $i7 = r6.<com.android.server.storage.AppFuseBridge$MountScope: int mountId>;
+
+        $r2 = virtualinvoke r6.<com.android.server.storage.AppFuseBridge$MountScope: android.os.ParcelFileDescriptor open()>();
+
+        $i8 = virtualinvoke $r2.<android.os.ParcelFileDescriptor: int detachFd()>();
+
+        i0 = specialinvoke r0.<com.android.server.storage.AppFuseBridge: int native_add_bridge(long,int,int)>($l6, $i7, $i8);
+
+     label12:
+        if i0 == -1 goto label19;
+
+        r7 = r6;
+
+     label13:
+        r8 = staticinvoke <android.os.ParcelFileDescriptor: android.os.ParcelFileDescriptor adoptFd(int)>(i0);
+
+     label14:
+        r7 = r6;
+
+     label15:
+        $r3 = r0.<com.android.server.storage.AppFuseBridge: android.util.SparseArray mScopes>;
+
+        $i10 = r6.<com.android.server.storage.AppFuseBridge$MountScope: int mountId>;
+
+        virtualinvoke $r3.<android.util.SparseArray: void put(int,java.lang.Object)>($i10, r6);
+
+     label16:
+        r7 = null;
+
+     label17:
+        exitmonitor r0;
+
+     label18:
+        specialinvoke r0.<com.android.server.storage.AppFuseBridge: void native_unlock()>();
+
+        staticinvoke <libcore.io.IoUtils: void closeQuietly(java.lang.AutoCloseable)>(null);
+
+        return r8;
+
+     label19:
+        r7 = r6;
+
+     label20:
+        r9 = new com.android.internal.os.FuseUnavailableMountException;
+
+     label21:
+        r7 = r6;
+
+     label22:
+        $i9 = r6.<com.android.server.storage.AppFuseBridge$MountScope: int mountId>;
+
+        specialinvoke r9.<com.android.internal.os.FuseUnavailableMountException: void <init>(int)>($i9);
+
+     label23:
+        r7 = r6;
+
+     label24:
+        throw r9;
+
+     label25:
+        r7 = r6;
+
+     label26:
+        r10 = new com.android.internal.os.FuseUnavailableMountException;
+
+     label27:
+        r7 = r6;
+
+     label28:
+        $i5 = r6.<com.android.server.storage.AppFuseBridge$MountScope: int mountId>;
+
+        specialinvoke r10.<com.android.internal.os.FuseUnavailableMountException: void <init>(int)>($i5);
+
+     label29:
+        r7 = r6;
+
+     label30:
+        throw r10;
+
+     label31:
+        $r4 := @caughtexception;
+
+     label32:
+        exitmonitor r0;
+
+     label33:
+        throw $r4;
+
+     label34:
+        $r5 := @caughtexception;
+
+        specialinvoke r0.<com.android.server.storage.AppFuseBridge: void native_unlock()>();
+
+        staticinvoke <libcore.io.IoUtils: void closeQuietly(java.lang.AutoCloseable)>(r7);
+
+        throw $r5;
+
+        catch java.lang.Throwable from label01 to label02 with label34;
+        catch java.lang.Throwable from label03 to label04 with label31;
+        catch java.lang.Throwable from label07 to label08 with label31;
+        catch java.lang.Throwable from label09 to label10 with label31;
+        catch java.lang.Throwable from label11 to label12 with label31;
+        catch java.lang.Throwable from label13 to label14 with label31;
+        catch java.lang.Throwable from label15 to label16 with label31;
+        catch java.lang.Throwable from label17 to label18 with label31;
+        catch java.lang.Throwable from label20 to label21 with label31;
+        catch java.lang.Throwable from label22 to label23 with label31;
+        catch java.lang.Throwable from label24 to label25 with label31;
+        catch java.lang.Throwable from label26 to label27 with label31;
+        catch java.lang.Throwable from label28 to label29 with label31;
+        catch java.lang.Throwable from label30 to label31 with label31;
+        catch java.lang.Throwable from label32 to label33 with label31;
+        catch java.lang.Throwable from label33 to label34 with label34;
+    }
+
+    public android.os.ParcelFileDescriptor openFile(int, int, int) throws com.android.internal.os.FuseUnavailableMountException, java.lang.InterruptedException
+    {
+        com.android.server.storage.AppFuseBridge r0;
+        int i0, i1, i2, $i3;
+        android.util.SparseArray $r1;
+        java.lang.Object $r2;
+        boolean $z0;
+        com.android.internal.os.FuseUnavailableMountException $r3, $r5, r10;
+        com.android.server.NativeDaemonConnectorException $r4;
+        java.lang.Throwable $r6;
+        com.android.server.storage.AppFuseBridge$MountScope r7;
+        android.os.ParcelFileDescriptor r8;
+
+        r0 := @this: com.android.server.storage.AppFuseBridge;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        i2 := @parameter2: int;
+
+        entermonitor r0;
+
+     label01:
+        $r1 = r0.<com.android.server.storage.AppFuseBridge: android.util.SparseArray mScopes>;
+
+        $r2 = virtualinvoke $r1.<android.util.SparseArray: java.lang.Object get(int)>(i0);
+
+        r7 = (com.android.server.storage.AppFuseBridge$MountScope) $r2;
+
+     label02:
+        if r7 == null goto label09;
+
+     label03:
+        exitmonitor r0;
+
+     label04:
+        $z0 = virtualinvoke r7.<com.android.server.storage.AppFuseBridge$MountScope: boolean waitForMount()>();
+
+        if $z0 == 0 goto label08;
+
+     label05:
+        $i3 = staticinvoke <android.os.FileUtils: int translateModePfdToPosix(int)>(i2);
+
+        r8 = virtualinvoke r7.<com.android.server.storage.AppFuseBridge$MountScope: android.os.ParcelFileDescriptor openFile(int,int,int)>(i0, i1, $i3);
+
+     label06:
+        return r8;
+
+     label07:
+        $r4 := @caughtexception;
+
+        $r5 = new com.android.internal.os.FuseUnavailableMountException;
+
+        specialinvoke $r5.<com.android.internal.os.FuseUnavailableMountException: void <init>(int)>(i0);
+
+        throw $r5;
+
+     label08:
+        $r3 = new com.android.internal.os.FuseUnavailableMountException;
+
+        specialinvoke $r3.<com.android.internal.os.FuseUnavailableMountException: void <init>(int)>(i0);
+
+        throw $r3;
+
+     label09:
+        r10 = new com.android.internal.os.FuseUnavailableMountException;
+
+        specialinvoke r10.<com.android.internal.os.FuseUnavailableMountException: void <init>(int)>(i0);
+
+        throw r10;
+
+     label10:
+        $r6 := @caughtexception;
+
+     label11:
+        exitmonitor r0;
+
+     label12:
+        throw $r6;
+
+        catch java.lang.Throwable from label01 to label02 with label10;
+        catch java.lang.Throwable from label03 to label04 with label10;
+        catch com.android.server.NativeDaemonConnectorException from label05 to label06 with label07;
+        catch java.lang.Throwable from label09 to label10 with label10;
+        catch java.lang.Throwable from label11 to label12 with label10;
+    }
+
+    public void run()
+    {
+        com.android.server.storage.AppFuseBridge r0;
+        long $l0, $l1;
+        java.lang.Throwable $r2;
+
+        r0 := @this: com.android.server.storage.AppFuseBridge;
+
+        $l0 = r0.<com.android.server.storage.AppFuseBridge: long mNativeLoop>;
+
+        specialinvoke r0.<com.android.server.storage.AppFuseBridge: void native_start_loop(long)>($l0);
+
+        entermonitor r0;
+
+     label1:
+        $l1 = r0.<com.android.server.storage.AppFuseBridge: long mNativeLoop>;
+
+        specialinvoke r0.<com.android.server.storage.AppFuseBridge: void native_delete(long)>($l1);
+
+        r0.<com.android.server.storage.AppFuseBridge: long mNativeLoop> = 0L;
+
+        exitmonitor r0;
+
+     label2:
+        return;
+
+     label3:
+        $r2 := @caughtexception;
+
+     label4:
+        exitmonitor r0;
+
+     label5:
+        throw $r2;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    public static void <clinit>()
+    {
+        <com.android.server.storage.AppFuseBridge: java.lang.String TAG> = "AppFuseBridge";
+
+        <com.android.server.storage.AppFuseBridge: java.lang.String APPFUSE_MOUNT_NAME_TEMPLATE> = "/mnt/appfuse/%d_%d";
+
+        return;
+    }
+}

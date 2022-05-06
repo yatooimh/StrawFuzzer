@@ -1,0 +1,674 @@
+final class com.android.internal.graphics.palette.ColorCutQuantizer extends java.lang.Object implements com.android.internal.graphics.palette.Quantizer
+{
+    static final int COMPONENT_BLUE;
+    static final int COMPONENT_GREEN;
+    static final int COMPONENT_RED;
+    private static final java.lang.String LOG_TAG;
+    private static final boolean LOG_TIMINGS;
+    private static final int QUANTIZE_WORD_MASK;
+    private static final int QUANTIZE_WORD_WIDTH;
+    private static final java.util.Comparator VBOX_COMPARATOR_VOLUME;
+    int[] mColors;
+    com.android.internal.graphics.palette.Palette$Filter[] mFilters;
+    int[] mHistogram;
+    java.util.List mQuantizedColors;
+    private final float[] mTempHsl;
+    android.util.TimingLogger mTimingLogger;
+
+    static void <clinit>()
+    {
+        com.android.internal.graphics.palette.ColorCutQuantizer$1 $r0;
+
+        <com.android.internal.graphics.palette.ColorCutQuantizer: int QUANTIZE_WORD_WIDTH> = 5;
+
+        <com.android.internal.graphics.palette.ColorCutQuantizer: int QUANTIZE_WORD_MASK> = 31;
+
+        <com.android.internal.graphics.palette.ColorCutQuantizer: boolean LOG_TIMINGS> = 0;
+
+        <com.android.internal.graphics.palette.ColorCutQuantizer: java.lang.String LOG_TAG> = "ColorCutQuantizer";
+
+        <com.android.internal.graphics.palette.ColorCutQuantizer: int COMPONENT_RED> = -3;
+
+        <com.android.internal.graphics.palette.ColorCutQuantizer: int COMPONENT_GREEN> = -2;
+
+        <com.android.internal.graphics.palette.ColorCutQuantizer: int COMPONENT_BLUE> = -1;
+
+        $r0 = new com.android.internal.graphics.palette.ColorCutQuantizer$1;
+
+        specialinvoke $r0.<com.android.internal.graphics.palette.ColorCutQuantizer$1: void <init>()>();
+
+        <com.android.internal.graphics.palette.ColorCutQuantizer: java.util.Comparator VBOX_COMPARATOR_VOLUME> = $r0;
+
+        return;
+    }
+
+    void <init>()
+    {
+        com.android.internal.graphics.palette.ColorCutQuantizer r0;
+        float[] $r1;
+
+        r0 := @this: com.android.internal.graphics.palette.ColorCutQuantizer;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        $r1 = newarray (float)[3];
+
+        r0.<com.android.internal.graphics.palette.ColorCutQuantizer: float[] mTempHsl> = $r1;
+
+        return;
+    }
+
+    private static int approximateToRgb888(int)
+    {
+        int i0, $i1, $i2, $i3, $i4;
+
+        i0 := @parameter0: int;
+
+        $i1 = staticinvoke <com.android.internal.graphics.palette.ColorCutQuantizer: int quantizedRed(int)>(i0);
+
+        $i2 = staticinvoke <com.android.internal.graphics.palette.ColorCutQuantizer: int quantizedGreen(int)>(i0);
+
+        $i3 = staticinvoke <com.android.internal.graphics.palette.ColorCutQuantizer: int quantizedBlue(int)>(i0);
+
+        $i4 = staticinvoke <com.android.internal.graphics.palette.ColorCutQuantizer: int approximateToRgb888(int,int,int)>($i1, $i2, $i3);
+
+        return $i4;
+    }
+
+    static int approximateToRgb888(int, int, int)
+    {
+        int i0, i1, i2, $i3, $i4, $i5, $i6;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        i2 := @parameter2: int;
+
+        $i3 = staticinvoke <com.android.internal.graphics.palette.ColorCutQuantizer: int modifyWordWidth(int,int,int)>(i0, 5, 8);
+
+        $i4 = staticinvoke <com.android.internal.graphics.palette.ColorCutQuantizer: int modifyWordWidth(int,int,int)>(i1, 5, 8);
+
+        $i5 = staticinvoke <com.android.internal.graphics.palette.ColorCutQuantizer: int modifyWordWidth(int,int,int)>(i2, 5, 8);
+
+        $i6 = staticinvoke <android.graphics.Color: int rgb(int,int,int)>($i3, $i4, $i5);
+
+        return $i6;
+    }
+
+    private java.util.List generateAverageColors(java.util.Collection)
+    {
+        com.android.internal.graphics.palette.ColorCutQuantizer r0;
+        com.android.internal.graphics.palette.Palette$Swatch r2;
+        java.util.ArrayList $r3;
+        int $i0;
+        boolean $z0, $z1;
+        java.lang.Object $r4;
+        com.android.internal.graphics.palette.ColorCutQuantizer$Vbox $r5;
+        java.util.Collection r6;
+        java.util.Iterator r7;
+
+        r0 := @this: com.android.internal.graphics.palette.ColorCutQuantizer;
+
+        r6 := @parameter0: java.util.Collection;
+
+        $r3 = new java.util.ArrayList;
+
+        $i0 = interfaceinvoke r6.<java.util.Collection: int size()>();
+
+        specialinvoke $r3.<java.util.ArrayList: void <init>(int)>($i0);
+
+        r7 = interfaceinvoke r6.<java.util.Collection: java.util.Iterator iterator()>();
+
+     label1:
+        $z0 = interfaceinvoke r7.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label3;
+
+        $r4 = interfaceinvoke r7.<java.util.Iterator: java.lang.Object next()>();
+
+        $r5 = (com.android.internal.graphics.palette.ColorCutQuantizer$Vbox) $r4;
+
+        r2 = virtualinvoke $r5.<com.android.internal.graphics.palette.ColorCutQuantizer$Vbox: com.android.internal.graphics.palette.Palette$Swatch getAverageColor()>();
+
+        $z1 = specialinvoke r0.<com.android.internal.graphics.palette.ColorCutQuantizer: boolean shouldIgnoreColor(com.android.internal.graphics.palette.Palette$Swatch)>(r2);
+
+        if $z1 != 0 goto label2;
+
+        virtualinvoke $r3.<java.util.ArrayList: boolean add(java.lang.Object)>(r2);
+
+     label2:
+        goto label1;
+
+     label3:
+        return $r3;
+    }
+
+    static void modifySignificantOctet(int[], int, int, int)
+    {
+        int[] r0;
+        int i0, $i1, $i2, $i3, $i4, $i5, $i6, $i7, $i8, $i9, $i10, $i11, $i12, $i13, $i14, i15, i16, i17, i18, i19, i20;
+
+        r0 := @parameter0: int[];
+
+        i15 := @parameter1: int;
+
+        i16 := @parameter2: int;
+
+        i0 := @parameter3: int;
+
+        if i15 == -2 goto label3;
+
+        if i15 == -1 goto label1;
+
+        goto label5;
+
+     label1:
+        i17 = i16;
+
+     label2:
+        if i17 > i0 goto label5;
+
+        i18 = r0[i17];
+
+        $i8 = staticinvoke <com.android.internal.graphics.palette.ColorCutQuantizer: int quantizedBlue(int)>(i18);
+
+        $i9 = $i8 << 10;
+
+        $i10 = staticinvoke <com.android.internal.graphics.palette.ColorCutQuantizer: int quantizedGreen(int)>(i18);
+
+        $i11 = $i10 << 5;
+
+        $i12 = $i9 | $i11;
+
+        $i13 = staticinvoke <com.android.internal.graphics.palette.ColorCutQuantizer: int quantizedRed(int)>(i18);
+
+        $i14 = $i12 | $i13;
+
+        r0[i17] = $i14;
+
+        i17 = i17 + 1;
+
+        goto label2;
+
+     label3:
+        i19 = i16;
+
+     label4:
+        if i19 > i0 goto label5;
+
+        i20 = r0[i19];
+
+        $i1 = staticinvoke <com.android.internal.graphics.palette.ColorCutQuantizer: int quantizedGreen(int)>(i20);
+
+        $i2 = $i1 << 10;
+
+        $i3 = staticinvoke <com.android.internal.graphics.palette.ColorCutQuantizer: int quantizedRed(int)>(i20);
+
+        $i4 = $i3 << 5;
+
+        $i5 = $i2 | $i4;
+
+        $i6 = staticinvoke <com.android.internal.graphics.palette.ColorCutQuantizer: int quantizedBlue(int)>(i20);
+
+        $i7 = $i5 | $i6;
+
+        r0[i19] = $i7;
+
+        i19 = i19 + 1;
+
+        goto label4;
+
+     label5:
+        return;
+    }
+
+    private static int modifyWordWidth(int, int, int)
+    {
+        int i0, i1, $i2, $i3, $i4, $i5, $i6, i7, i8;
+
+        i7 := @parameter0: int;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        if i1 <= i0 goto label1;
+
+        $i6 = i1 - i0;
+
+        i8 = i7 << $i6;
+
+        goto label2;
+
+     label1:
+        $i2 = i0 - i1;
+
+        i8 = i7 >> $i2;
+
+     label2:
+        $i3 = 1 << i1;
+
+        $i4 = $i3 - 1;
+
+        $i5 = i8 & $i4;
+
+        return $i5;
+    }
+
+    private static int quantizeFromRgb888(int)
+    {
+        int i0, $i1, $i2, $i3, $i4, $i5, $i6, $i7, $i8, $i9, $i10;
+
+        i0 := @parameter0: int;
+
+        $i1 = staticinvoke <android.graphics.Color: int red(int)>(i0);
+
+        $i2 = staticinvoke <com.android.internal.graphics.palette.ColorCutQuantizer: int modifyWordWidth(int,int,int)>($i1, 8, 5);
+
+        $i3 = $i2 << 10;
+
+        $i4 = staticinvoke <android.graphics.Color: int green(int)>(i0);
+
+        $i5 = staticinvoke <com.android.internal.graphics.palette.ColorCutQuantizer: int modifyWordWidth(int,int,int)>($i4, 8, 5);
+
+        $i6 = $i5 << 5;
+
+        $i7 = $i3 | $i6;
+
+        $i8 = staticinvoke <android.graphics.Color: int blue(int)>(i0);
+
+        $i9 = staticinvoke <com.android.internal.graphics.palette.ColorCutQuantizer: int modifyWordWidth(int,int,int)>($i8, 8, 5);
+
+        $i10 = $i7 | $i9;
+
+        return $i10;
+    }
+
+    private java.util.List quantizePixels(int)
+    {
+        com.android.internal.graphics.palette.ColorCutQuantizer r0;
+        int i0, $i1, $i2;
+        java.util.PriorityQueue $r2;
+        java.util.Comparator $r3;
+        com.android.internal.graphics.palette.ColorCutQuantizer$Vbox $r4;
+        int[] $r5;
+        java.util.List $r6;
+
+        r0 := @this: com.android.internal.graphics.palette.ColorCutQuantizer;
+
+        i0 := @parameter0: int;
+
+        $r2 = new java.util.PriorityQueue;
+
+        $r3 = <com.android.internal.graphics.palette.ColorCutQuantizer: java.util.Comparator VBOX_COMPARATOR_VOLUME>;
+
+        specialinvoke $r2.<java.util.PriorityQueue: void <init>(int,java.util.Comparator)>(i0, $r3);
+
+        $r4 = new com.android.internal.graphics.palette.ColorCutQuantizer$Vbox;
+
+        $r5 = r0.<com.android.internal.graphics.palette.ColorCutQuantizer: int[] mColors>;
+
+        $i1 = lengthof $r5;
+
+        $i2 = $i1 - 1;
+
+        specialinvoke $r4.<com.android.internal.graphics.palette.ColorCutQuantizer$Vbox: void <init>(com.android.internal.graphics.palette.ColorCutQuantizer,int,int)>(r0, 0, $i2);
+
+        virtualinvoke $r2.<java.util.PriorityQueue: boolean offer(java.lang.Object)>($r4);
+
+        specialinvoke r0.<com.android.internal.graphics.palette.ColorCutQuantizer: void splitBoxes(java.util.PriorityQueue,int)>($r2, i0);
+
+        $r6 = specialinvoke r0.<com.android.internal.graphics.palette.ColorCutQuantizer: java.util.List generateAverageColors(java.util.Collection)>($r2);
+
+        return $r6;
+    }
+
+    static int quantizedBlue(int)
+    {
+        int i0, $i1;
+
+        i0 := @parameter0: int;
+
+        $i1 = i0 & 31;
+
+        return $i1;
+    }
+
+    static int quantizedGreen(int)
+    {
+        int i0, $i1, $i2;
+
+        i0 := @parameter0: int;
+
+        $i1 = i0 >> 5;
+
+        $i2 = $i1 & 31;
+
+        return $i2;
+    }
+
+    static int quantizedRed(int)
+    {
+        int i0, $i1, $i2;
+
+        i0 := @parameter0: int;
+
+        $i1 = i0 >> 10;
+
+        $i2 = $i1 & 31;
+
+        return $i2;
+    }
+
+    private boolean shouldIgnoreColor(int)
+    {
+        com.android.internal.graphics.palette.ColorCutQuantizer r0;
+        float[] $r1, $r2;
+        boolean $z0;
+        int i0, i1;
+
+        r0 := @this: com.android.internal.graphics.palette.ColorCutQuantizer;
+
+        i0 := @parameter0: int;
+
+        i1 = staticinvoke <com.android.internal.graphics.palette.ColorCutQuantizer: int approximateToRgb888(int)>(i0);
+
+        $r1 = r0.<com.android.internal.graphics.palette.ColorCutQuantizer: float[] mTempHsl>;
+
+        staticinvoke <com.android.internal.graphics.ColorUtils: void colorToHSL(int,float[])>(i1, $r1);
+
+        $r2 = r0.<com.android.internal.graphics.palette.ColorCutQuantizer: float[] mTempHsl>;
+
+        $z0 = specialinvoke r0.<com.android.internal.graphics.palette.ColorCutQuantizer: boolean shouldIgnoreColor(int,float[])>(i1, $r2);
+
+        return $z0;
+    }
+
+    private boolean shouldIgnoreColor(int, float[])
+    {
+        com.android.internal.graphics.palette.ColorCutQuantizer r0;
+        int i0, i1, $i2, i3;
+        float[] r1;
+        com.android.internal.graphics.palette.Palette$Filter[] r2, $r3;
+        com.android.internal.graphics.palette.Palette$Filter $r4;
+        boolean $z0;
+
+        r0 := @this: com.android.internal.graphics.palette.ColorCutQuantizer;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: float[];
+
+        r2 = r0.<com.android.internal.graphics.palette.ColorCutQuantizer: com.android.internal.graphics.palette.Palette$Filter[] mFilters>;
+
+        if r2 == null goto label3;
+
+        $i2 = lengthof r2;
+
+        if $i2 <= 0 goto label3;
+
+        i3 = 0;
+
+        i1 = lengthof r2;
+
+     label1:
+        if i3 >= i1 goto label3;
+
+        $r3 = r0.<com.android.internal.graphics.palette.ColorCutQuantizer: com.android.internal.graphics.palette.Palette$Filter[] mFilters>;
+
+        $r4 = $r3[i3];
+
+        $z0 = interfaceinvoke $r4.<com.android.internal.graphics.palette.Palette$Filter: boolean isAllowed(int,float[])>(i0, r1);
+
+        if $z0 != 0 goto label2;
+
+        return 1;
+
+     label2:
+        i3 = i3 + 1;
+
+        goto label1;
+
+     label3:
+        return 0;
+    }
+
+    private boolean shouldIgnoreColor(com.android.internal.graphics.palette.Palette$Swatch)
+    {
+        com.android.internal.graphics.palette.ColorCutQuantizer r0;
+        com.android.internal.graphics.palette.Palette$Swatch r1;
+        int $i0;
+        float[] $r2;
+        boolean $z0;
+
+        r0 := @this: com.android.internal.graphics.palette.ColorCutQuantizer;
+
+        r1 := @parameter0: com.android.internal.graphics.palette.Palette$Swatch;
+
+        $i0 = virtualinvoke r1.<com.android.internal.graphics.palette.Palette$Swatch: int getRgb()>();
+
+        $r2 = virtualinvoke r1.<com.android.internal.graphics.palette.Palette$Swatch: float[] getHsl()>();
+
+        $z0 = specialinvoke r0.<com.android.internal.graphics.palette.ColorCutQuantizer: boolean shouldIgnoreColor(int,float[])>($i0, $r2);
+
+        return $z0;
+    }
+
+    private void splitBoxes(java.util.PriorityQueue, int)
+    {
+        com.android.internal.graphics.palette.ColorCutQuantizer r0;
+        java.util.PriorityQueue r1;
+        int i0, $i1;
+        com.android.internal.graphics.palette.ColorCutQuantizer$Vbox r2, $r4;
+        java.lang.Object $r3;
+        boolean $z0;
+
+        r0 := @this: com.android.internal.graphics.palette.ColorCutQuantizer;
+
+        r1 := @parameter0: java.util.PriorityQueue;
+
+        i0 := @parameter1: int;
+
+     label1:
+        $i1 = virtualinvoke r1.<java.util.PriorityQueue: int size()>();
+
+        if $i1 >= i0 goto label3;
+
+        $r3 = virtualinvoke r1.<java.util.PriorityQueue: java.lang.Object poll()>();
+
+        r2 = (com.android.internal.graphics.palette.ColorCutQuantizer$Vbox) $r3;
+
+        if r2 == null goto label2;
+
+        $z0 = virtualinvoke r2.<com.android.internal.graphics.palette.ColorCutQuantizer$Vbox: boolean canSplit()>();
+
+        if $z0 == 0 goto label2;
+
+        $r4 = virtualinvoke r2.<com.android.internal.graphics.palette.ColorCutQuantizer$Vbox: com.android.internal.graphics.palette.ColorCutQuantizer$Vbox splitBox()>();
+
+        virtualinvoke r1.<java.util.PriorityQueue: boolean offer(java.lang.Object)>($r4);
+
+        virtualinvoke r1.<java.util.PriorityQueue: boolean offer(java.lang.Object)>(r2);
+
+        goto label1;
+
+     label2:
+        return;
+
+     label3:
+        return;
+    }
+
+    public java.util.List getQuantizedColors()
+    {
+        com.android.internal.graphics.palette.ColorCutQuantizer r0;
+        java.util.List $r1;
+
+        r0 := @this: com.android.internal.graphics.palette.ColorCutQuantizer;
+
+        $r1 = r0.<com.android.internal.graphics.palette.ColorCutQuantizer: java.util.List mQuantizedColors>;
+
+        return $r1;
+    }
+
+    public void quantize(int[], int, com.android.internal.graphics.palette.Palette$Filter[])
+    {
+        com.android.internal.graphics.palette.ColorCutQuantizer r0;
+        int $i1, $i2, $i3, $i4, $i5, $i6, $i7, $i8, $i9, i10, i11, i12, i13, i14, i15, i16, $i17, i18, i19, i20, i21, i22, i23;
+        java.util.List $r1, $r4;
+        java.util.ArrayList $r2;
+        com.android.internal.graphics.palette.Palette$Swatch $r3;
+        boolean $z1;
+        int[] r5, r7, r8;
+        com.android.internal.graphics.palette.Palette$Filter[] r6;
+
+        r0 := @this: com.android.internal.graphics.palette.ColorCutQuantizer;
+
+        r5 := @parameter0: int[];
+
+        i10 := @parameter1: int;
+
+        r6 := @parameter2: com.android.internal.graphics.palette.Palette$Filter[];
+
+        r0.<com.android.internal.graphics.palette.ColorCutQuantizer: android.util.TimingLogger mTimingLogger> = null;
+
+        r0.<com.android.internal.graphics.palette.ColorCutQuantizer: com.android.internal.graphics.palette.Palette$Filter[] mFilters> = r6;
+
+        r7 = newarray (int)[32768];
+
+        r0.<com.android.internal.graphics.palette.ColorCutQuantizer: int[] mHistogram> = r7;
+
+        i11 = 0;
+
+     label01:
+        $i1 = lengthof r5;
+
+        if i11 >= $i1 goto label02;
+
+        $i7 = r5[i11];
+
+        i12 = staticinvoke <com.android.internal.graphics.palette.ColorCutQuantizer: int quantizeFromRgb888(int)>($i7);
+
+        r5[i11] = i12;
+
+        $i8 = r7[i12];
+
+        $i9 = $i8 + 1;
+
+        r7[i12] = $i9;
+
+        i11 = i11 + 1;
+
+        goto label01;
+
+     label02:
+        i13 = 0;
+
+        i14 = 0;
+
+     label03:
+        i15 = lengthof r7;
+
+        if i14 >= i15 goto label06;
+
+        $i6 = r7[i14];
+
+        if $i6 <= 0 goto label04;
+
+        $z1 = specialinvoke r0.<com.android.internal.graphics.palette.ColorCutQuantizer: boolean shouldIgnoreColor(int)>(i14);
+
+        if $z1 == 0 goto label04;
+
+        r7[i14] = 0;
+
+     label04:
+        i16 = i13;
+
+        $i17 = r7[i14];
+
+        if $i17 <= 0 goto label05;
+
+        i16 = i13 + 1;
+
+     label05:
+        i14 = i14 + 1;
+
+        i13 = i16;
+
+        goto label03;
+
+     label06:
+        r8 = newarray (int)[i13];
+
+        r0.<com.android.internal.graphics.palette.ColorCutQuantizer: int[] mColors> = r8;
+
+        i18 = 0;
+
+        i19 = 0;
+
+     label07:
+        $i2 = lengthof r7;
+
+        if i19 >= $i2 goto label09;
+
+        i20 = i18;
+
+        $i5 = r7[i19];
+
+        if $i5 <= 0 goto label08;
+
+        r8[i18] = i19;
+
+        i20 = i18 + 1;
+
+     label08:
+        i19 = i19 + 1;
+
+        i18 = i20;
+
+        goto label07;
+
+     label09:
+        if i13 > i10 goto label11;
+
+        $r2 = new java.util.ArrayList;
+
+        specialinvoke $r2.<java.util.ArrayList: void <init>()>();
+
+        r0.<com.android.internal.graphics.palette.ColorCutQuantizer: java.util.List mQuantizedColors> = $r2;
+
+        i21 = lengthof r8;
+
+        i22 = 0;
+
+     label10:
+        if i22 >= i21 goto label12;
+
+        i23 = r8[i22];
+
+        $r4 = r0.<com.android.internal.graphics.palette.ColorCutQuantizer: java.util.List mQuantizedColors>;
+
+        $r3 = new com.android.internal.graphics.palette.Palette$Swatch;
+
+        $i3 = staticinvoke <com.android.internal.graphics.palette.ColorCutQuantizer: int approximateToRgb888(int)>(i23);
+
+        $i4 = r7[i23];
+
+        specialinvoke $r3.<com.android.internal.graphics.palette.Palette$Swatch: void <init>(int,int)>($i3, $i4);
+
+        interfaceinvoke $r4.<java.util.List: boolean add(java.lang.Object)>($r3);
+
+        i22 = i22 + 1;
+
+        goto label10;
+
+     label11:
+        $r1 = specialinvoke r0.<com.android.internal.graphics.palette.ColorCutQuantizer: java.util.List quantizePixels(int)>(i10);
+
+        r0.<com.android.internal.graphics.palette.ColorCutQuantizer: java.util.List mQuantizedColors> = $r1;
+
+     label12:
+        return;
+    }
+}

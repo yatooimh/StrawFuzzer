@@ -1,0 +1,3583 @@
+public class com.android.internal.telephony.PhoneSwitcher extends android.os.Handler
+{
+    public static int DEFAULT_DATA_OVERRIDE_TIMEOUT_MS;
+    private static final int DEFAULT_EMERGENCY_PHONE_ID;
+    private static final int DEFAULT_NETWORK_CHANGE_TIMEOUT_MS;
+    private static final int DEFAULT_VALIDATION_EXPIRATION_TIME;
+    public static int ECBM_DEFAULT_DATA_SWITCH_BASE_TIME_MS;
+    public static final int EVENT_DATA_ENABLED_CHANGED;
+    private static final int EVENT_EMERGENCY_TOGGLE;
+    private static final int EVENT_MODEM_COMMAND_DONE;
+    private static final int EVENT_MODEM_COMMAND_RETRY;
+    public static final int EVENT_MULTI_SIM_CONFIG_CHANGED;
+    private static final int EVENT_NETWORK_AVAILABLE;
+    private static final int EVENT_NETWORK_VALIDATION_DONE;
+    private static final int EVENT_OPPT_DATA_SUB_CHANGED;
+    private static final int EVENT_OVERRIDE_DDS_FOR_EMERGENCY;
+    public static final int EVENT_PRECISE_CALL_STATE_CHANGED;
+    private static final int EVENT_PRIMARY_DATA_SUB_CHANGED;
+    private static final int EVENT_RADIO_AVAILABLE;
+    private static final int EVENT_RADIO_CAPABILITY_CHANGED;
+    private static final int EVENT_RELEASE_NETWORK;
+    private static final int EVENT_REMOVE_DDS_EMERGENCY_OVERRIDE;
+    private static final int EVENT_REMOVE_DEFAULT_NETWORK_CHANGE_CALLBACK;
+    private static final int EVENT_REQUEST_NETWORK;
+    protected static final int EVENT_SUBSCRIPTION_CHANGED;
+    protected static final int HAL_COMMAND_ALLOW_DATA;
+    protected static final int HAL_COMMAND_PREFERRED_DATA;
+    protected static final int HAL_COMMAND_UNKNOWN;
+    private static final java.lang.String LOG_TAG;
+    private static final int MAX_LOCAL_LOG_LINES;
+    private static final int MODEM_COMMAND_RETRY_PERIOD_MS;
+    protected static final boolean REQUESTS_CHANGED;
+    protected static final boolean REQUESTS_UNCHANGED;
+    protected static final boolean VDBG;
+    protected static com.android.internal.telephony.PhoneSwitcher sPhoneSwitcher;
+    protected int mActiveModemCount;
+    protected final com.android.internal.telephony.RegistrantList mActivePhoneRegistrants;
+    private android.net.ConnectivityManager mConnectivityManager;
+    protected final android.content.Context mContext;
+    private final android.content.BroadcastReceiver mDefaultDataChangedReceiver;
+    private final com.android.internal.telephony.PhoneSwitcher$DefaultNetworkCallback mDefaultNetworkCallback;
+    private com.android.internal.telephony.PhoneSwitcher$EmergencyOverrideRequest mEmergencyOverride;
+    protected int mHalCommandToUse;
+    private java.lang.Boolean mHasRegisteredDefaultNetworkChangeCallback;
+    private final com.android.internal.telephony.LocalLog mLocalLog;
+    protected int mMaxDataAttachModemCount;
+    private int mOpptDataSubId;
+    private boolean mPendingSwitchNeedValidation;
+    private int mPendingSwitchSubId;
+    protected int mPhoneIdInVoiceCall;
+    protected com.android.internal.telephony.PhoneSwitcher$PhoneState[] mPhoneStates;
+    protected int[] mPhoneSubscriptions;
+    protected int mPreferredDataPhoneId;
+    protected com.android.internal.telephony.SubscriptionController$WatchedInt mPreferredDataSubId;
+    protected int mPrimaryDataSubId;
+    protected final java.util.List mPrioritizedDcRequests;
+    protected com.android.internal.telephony.RadioConfig mRadioConfig;
+    private com.android.internal.telephony.ISetOpportunisticDataCallback mSetOpptSubCallback;
+    protected final com.android.internal.telephony.SubscriptionController mSubscriptionController;
+    private final android.telephony.SubscriptionManager$OnSubscriptionsChangedListener mSubscriptionsChangedListener;
+    public final com.android.internal.telephony.CellularNetworkValidator$ValidationCallback mValidationCallback;
+    protected final com.android.internal.telephony.CellularNetworkValidator mValidator;
+
+    static void <clinit>()
+    {
+        <com.android.internal.telephony.PhoneSwitcher: boolean VDBG> = 0;
+
+        <com.android.internal.telephony.PhoneSwitcher: boolean REQUESTS_UNCHANGED> = 0;
+
+        <com.android.internal.telephony.PhoneSwitcher: boolean REQUESTS_CHANGED> = 1;
+
+        <com.android.internal.telephony.PhoneSwitcher: int MODEM_COMMAND_RETRY_PERIOD_MS> = 5000;
+
+        <com.android.internal.telephony.PhoneSwitcher: int MAX_LOCAL_LOG_LINES> = 30;
+
+        <com.android.internal.telephony.PhoneSwitcher: java.lang.String LOG_TAG> = "PhoneSwitcher";
+
+        <com.android.internal.telephony.PhoneSwitcher: int HAL_COMMAND_UNKNOWN> = 0;
+
+        <com.android.internal.telephony.PhoneSwitcher: int HAL_COMMAND_PREFERRED_DATA> = 2;
+
+        <com.android.internal.telephony.PhoneSwitcher: int HAL_COMMAND_ALLOW_DATA> = 1;
+
+        <com.android.internal.telephony.PhoneSwitcher: int EVENT_SUBSCRIPTION_CHANGED> = 102;
+
+        <com.android.internal.telephony.PhoneSwitcher: int EVENT_REQUEST_NETWORK> = 103;
+
+        <com.android.internal.telephony.PhoneSwitcher: int EVENT_REMOVE_DEFAULT_NETWORK_CHANGE_CALLBACK> = 111;
+
+        <com.android.internal.telephony.PhoneSwitcher: int EVENT_REMOVE_DDS_EMERGENCY_OVERRIDE> = 116;
+
+        <com.android.internal.telephony.PhoneSwitcher: int EVENT_RELEASE_NETWORK> = 104;
+
+        <com.android.internal.telephony.PhoneSwitcher: int EVENT_RADIO_CAPABILITY_CHANGED> = 106;
+
+        <com.android.internal.telephony.PhoneSwitcher: int EVENT_RADIO_AVAILABLE> = 108;
+
+        <com.android.internal.telephony.PhoneSwitcher: int EVENT_PRIMARY_DATA_SUB_CHANGED> = 101;
+
+        <com.android.internal.telephony.PhoneSwitcher: int EVENT_PRECISE_CALL_STATE_CHANGED> = 109;
+
+        <com.android.internal.telephony.PhoneSwitcher: int EVENT_OVERRIDE_DDS_FOR_EMERGENCY> = 115;
+
+        <com.android.internal.telephony.PhoneSwitcher: int EVENT_OPPT_DATA_SUB_CHANGED> = 107;
+
+        <com.android.internal.telephony.PhoneSwitcher: int EVENT_NETWORK_VALIDATION_DONE> = 110;
+
+        <com.android.internal.telephony.PhoneSwitcher: int EVENT_NETWORK_AVAILABLE> = 118;
+
+        <com.android.internal.telephony.PhoneSwitcher: int EVENT_MULTI_SIM_CONFIG_CHANGED> = 117;
+
+        <com.android.internal.telephony.PhoneSwitcher: int EVENT_MODEM_COMMAND_RETRY> = 113;
+
+        <com.android.internal.telephony.PhoneSwitcher: int EVENT_MODEM_COMMAND_DONE> = 112;
+
+        <com.android.internal.telephony.PhoneSwitcher: int EVENT_EMERGENCY_TOGGLE> = 105;
+
+        <com.android.internal.telephony.PhoneSwitcher: int EVENT_DATA_ENABLED_CHANGED> = 114;
+
+        <com.android.internal.telephony.PhoneSwitcher: int DEFAULT_VALIDATION_EXPIRATION_TIME> = 2000;
+
+        <com.android.internal.telephony.PhoneSwitcher: int DEFAULT_NETWORK_CHANGE_TIMEOUT_MS> = 5000;
+
+        <com.android.internal.telephony.PhoneSwitcher: int DEFAULT_EMERGENCY_PHONE_ID> = 0;
+
+        <com.android.internal.telephony.PhoneSwitcher: int DEFAULT_DATA_OVERRIDE_TIMEOUT_MS> = 0;
+
+        <com.android.internal.telephony.PhoneSwitcher: int ECBM_DEFAULT_DATA_SWITCH_BASE_TIME_MS> = 5000;
+
+        <com.android.internal.telephony.PhoneSwitcher: int DEFAULT_DATA_OVERRIDE_TIMEOUT_MS> = 5000;
+
+        <com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.PhoneSwitcher sPhoneSwitcher> = null;
+
+        return;
+    }
+
+    public void <init>(int, android.content.Context, android.os.Looper)
+    {
+        com.android.internal.telephony.PhoneSwitcher r0;
+        android.os.Looper r1;
+        android.telephony.TelephonyRegistryManager r2;
+        java.util.ArrayList $r3;
+        com.android.internal.telephony.PhoneSwitcher$1 $r4;
+        com.android.internal.telephony.PhoneSwitcher$2 $r5;
+        java.lang.Boolean $r6;
+        com.android.internal.telephony.PhoneSwitcher$DefaultNetworkCallback $r7;
+        com.android.internal.telephony.PhoneSwitcher$3 $r8;
+        com.android.internal.telephony.PhoneSwitcher$4 $r9;
+        android.telephony.TelephonyManager $r10;
+        int[] $r11;
+        com.android.internal.telephony.PhoneSwitcher$PhoneState[] $r12, $r48;
+        com.android.internal.telephony.LocalLog $r13;
+        com.android.internal.telephony.SubscriptionController $r14;
+        android.content.Context $r15, $r24, r58;
+        com.android.internal.telephony.RadioConfig $r16;
+        com.android.internal.telephony.CellularNetworkValidator $r17;
+        com.android.internal.telephony.RegistrantList $r18;
+        java.lang.Object $r19, $r21;
+        com.android.internal.telephony.util.HandlerExecutor $r20;
+        android.net.ConnectivityManager $r22;
+        android.content.IntentFilter $r23;
+        android.content.BroadcastReceiver $r25;
+        android.net.NetworkCapabilities $r27;
+        android.net.MatchAllNetworkSpecifier $r42;
+        com.android.internal.telephony.PhoneSwitcher$PhoneSwitcherNetworkRequestListener $r44;
+        com.android.internal.telephony.Phone $r45, $r49, $r50, $r51, $r52, $r53, $r54, $r56, $r57;
+        com.android.internal.telephony.CommandsInterface $r46;
+        com.android.internal.telephony.PhoneSwitcher$PhoneState $r47;
+        com.android.internal.telephony.dataconnection.DataEnabledSettings $r55;
+        int i0, i1, i2, i3;
+        android.telephony.SubscriptionManager$OnSubscriptionsChangedListener r59;
+
+        r0 := @this: com.android.internal.telephony.PhoneSwitcher;
+
+        i0 := @parameter0: int;
+
+        r58 := @parameter1: android.content.Context;
+
+        r1 := @parameter2: android.os.Looper;
+
+        specialinvoke r0.<android.os.Handler: void <init>(android.os.Looper)>(r1);
+
+        $r3 = new java.util.ArrayList;
+
+        specialinvoke $r3.<java.util.ArrayList: void <init>()>();
+
+        r0.<com.android.internal.telephony.PhoneSwitcher: java.util.List mPrioritizedDcRequests> = $r3;
+
+        r0.<com.android.internal.telephony.PhoneSwitcher: int mPendingSwitchSubId> = -1;
+
+        $r4 = new com.android.internal.telephony.PhoneSwitcher$1;
+
+        specialinvoke $r4.<com.android.internal.telephony.PhoneSwitcher$1: void <init>(com.android.internal.telephony.PhoneSwitcher)>(r0);
+
+        r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.CellularNetworkValidator$ValidationCallback mValidationCallback> = $r4;
+
+        r0.<com.android.internal.telephony.PhoneSwitcher: int mPrimaryDataSubId> = -1;
+
+        r0.<com.android.internal.telephony.PhoneSwitcher: int mOpptDataSubId> = 2147483647;
+
+        r0.<com.android.internal.telephony.PhoneSwitcher: int mPhoneIdInVoiceCall> = -1;
+
+        r0.<com.android.internal.telephony.PhoneSwitcher: int mPreferredDataPhoneId> = -1;
+
+        $r5 = new com.android.internal.telephony.PhoneSwitcher$2;
+
+        specialinvoke $r5.<com.android.internal.telephony.PhoneSwitcher$2: void <init>(com.android.internal.telephony.PhoneSwitcher,int)>(r0, -1);
+
+        r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.SubscriptionController$WatchedInt mPreferredDataSubId> = $r5;
+
+        r0.<com.android.internal.telephony.PhoneSwitcher: int mHalCommandToUse> = 0;
+
+        $r6 = staticinvoke <java.lang.Boolean: java.lang.Boolean valueOf(boolean)>(0);
+
+        r0.<com.android.internal.telephony.PhoneSwitcher: java.lang.Boolean mHasRegisteredDefaultNetworkChangeCallback> = $r6;
+
+        $r7 = new com.android.internal.telephony.PhoneSwitcher$DefaultNetworkCallback;
+
+        specialinvoke $r7.<com.android.internal.telephony.PhoneSwitcher$DefaultNetworkCallback: void <init>(com.android.internal.telephony.PhoneSwitcher,com.android.internal.telephony.PhoneSwitcher$1)>(r0, null);
+
+        r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.PhoneSwitcher$DefaultNetworkCallback mDefaultNetworkCallback> = $r7;
+
+        $r8 = new com.android.internal.telephony.PhoneSwitcher$3;
+
+        specialinvoke $r8.<com.android.internal.telephony.PhoneSwitcher$3: void <init>(com.android.internal.telephony.PhoneSwitcher)>(r0);
+
+        r0.<com.android.internal.telephony.PhoneSwitcher: android.content.BroadcastReceiver mDefaultDataChangedReceiver> = $r8;
+
+        $r9 = new com.android.internal.telephony.PhoneSwitcher$4;
+
+        specialinvoke $r9.<com.android.internal.telephony.PhoneSwitcher$4: void <init>(com.android.internal.telephony.PhoneSwitcher)>(r0);
+
+        r0.<com.android.internal.telephony.PhoneSwitcher: android.telephony.SubscriptionManager$OnSubscriptionsChangedListener mSubscriptionsChangedListener> = $r9;
+
+        r0.<com.android.internal.telephony.PhoneSwitcher: android.content.Context mContext> = r58;
+
+        $r10 = specialinvoke r0.<com.android.internal.telephony.PhoneSwitcher: android.telephony.TelephonyManager getTm()>();
+
+        i1 = virtualinvoke $r10.<android.telephony.TelephonyManager: int getActiveModemCount()>();
+
+        r0.<com.android.internal.telephony.PhoneSwitcher: int mActiveModemCount> = i1;
+
+        $r11 = newarray (int)[i1];
+
+        r0.<com.android.internal.telephony.PhoneSwitcher: int[] mPhoneSubscriptions> = $r11;
+
+        $r12 = newarray (com.android.internal.telephony.PhoneSwitcher$PhoneState)[i1];
+
+        r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.PhoneSwitcher$PhoneState[] mPhoneStates> = $r12;
+
+        r0.<com.android.internal.telephony.PhoneSwitcher: int mMaxDataAttachModemCount> = i0;
+
+        $r13 = new com.android.internal.telephony.LocalLog;
+
+        specialinvoke $r13.<com.android.internal.telephony.LocalLog: void <init>(int)>(30);
+
+        r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.LocalLog mLocalLog> = $r13;
+
+        $r14 = staticinvoke <com.android.internal.telephony.SubscriptionController: com.android.internal.telephony.SubscriptionController getInstance()>();
+
+        r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.SubscriptionController mSubscriptionController> = $r14;
+
+        $r15 = r0.<com.android.internal.telephony.PhoneSwitcher: android.content.Context mContext>;
+
+        $r16 = staticinvoke <com.android.internal.telephony.RadioConfig: com.android.internal.telephony.RadioConfig getInstance(android.content.Context)>($r15);
+
+        r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.RadioConfig mRadioConfig> = $r16;
+
+        $r17 = staticinvoke <com.android.internal.telephony.CellularNetworkValidator: com.android.internal.telephony.CellularNetworkValidator getInstance()>();
+
+        r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.CellularNetworkValidator mValidator> = $r17;
+
+        $r18 = new com.android.internal.telephony.RegistrantList;
+
+        specialinvoke $r18.<com.android.internal.telephony.RegistrantList: void <init>()>();
+
+        r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.RegistrantList mActivePhoneRegistrants> = $r18;
+
+        i2 = 0;
+
+     label1:
+        i3 = r0.<com.android.internal.telephony.PhoneSwitcher: int mActiveModemCount>;
+
+        if i2 >= i3 goto label4;
+
+        $r48 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.PhoneSwitcher$PhoneState[] mPhoneStates>;
+
+        $r47 = new com.android.internal.telephony.PhoneSwitcher$PhoneState;
+
+        specialinvoke $r47.<com.android.internal.telephony.PhoneSwitcher$PhoneState: void <init>()>();
+
+        $r48[i2] = $r47;
+
+        $r49 = staticinvoke <com.android.internal.telephony.PhoneFactory: com.android.internal.telephony.Phone getPhone(int)>(i2);
+
+        if $r49 == null goto label3;
+
+        $r50 = staticinvoke <com.android.internal.telephony.PhoneFactory: com.android.internal.telephony.Phone getPhone(int)>(i2);
+
+        virtualinvoke $r50.<com.android.internal.telephony.Phone: void registerForEmergencyCallToggle(android.os.Handler,int,java.lang.Object)>(r0, 105, null);
+
+        $r51 = staticinvoke <com.android.internal.telephony.PhoneFactory: com.android.internal.telephony.Phone getPhone(int)>(i2);
+
+        virtualinvoke $r51.<com.android.internal.telephony.Phone: void registerForPreciseCallStateChanged(android.os.Handler,int,java.lang.Object)>(r0, 109, null);
+
+        $r52 = staticinvoke <com.android.internal.telephony.PhoneFactory: com.android.internal.telephony.Phone getPhone(int)>(i2);
+
+        $r53 = virtualinvoke $r52.<com.android.internal.telephony.Phone: com.android.internal.telephony.Phone getImsPhone()>();
+
+        if $r53 == null goto label2;
+
+        $r56 = staticinvoke <com.android.internal.telephony.PhoneFactory: com.android.internal.telephony.Phone getPhone(int)>(i2);
+
+        $r57 = virtualinvoke $r56.<com.android.internal.telephony.Phone: com.android.internal.telephony.Phone getImsPhone()>();
+
+        virtualinvoke $r57.<com.android.internal.telephony.Phone: void registerForPreciseCallStateChanged(android.os.Handler,int,java.lang.Object)>(r0, 109, null);
+
+     label2:
+        $r54 = staticinvoke <com.android.internal.telephony.PhoneFactory: com.android.internal.telephony.Phone getPhone(int)>(i2);
+
+        $r55 = virtualinvoke $r54.<com.android.internal.telephony.Phone: com.android.internal.telephony.dataconnection.DataEnabledSettings getDataEnabledSettings()>();
+
+        virtualinvoke $r55.<com.android.internal.telephony.dataconnection.DataEnabledSettings: void registerForDataEnabledChanged(android.os.Handler,int,java.lang.Object)>(r0, 114, null);
+
+     label3:
+        i2 = i2 + 1;
+
+        goto label1;
+
+     label4:
+        if i3 <= 0 goto label5;
+
+        $r45 = staticinvoke <com.android.internal.telephony.PhoneFactory: com.android.internal.telephony.Phone getPhone(int)>(0);
+
+        $r46 = $r45.<com.android.internal.telephony.Phone: com.android.internal.telephony.CommandsInterface mCi>;
+
+        interfaceinvoke $r46.<com.android.internal.telephony.CommandsInterface: void registerForAvailable(android.os.Handler,int,java.lang.Object)>(r0, 108, null);
+
+     label5:
+        $r19 = virtualinvoke r58.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("telephony_registry");
+
+        r2 = (android.telephony.TelephonyRegistryManager) $r19;
+
+        r59 = r0.<com.android.internal.telephony.PhoneSwitcher: android.telephony.SubscriptionManager$OnSubscriptionsChangedListener mSubscriptionsChangedListener>;
+
+        $r20 = virtualinvoke r59.<android.telephony.SubscriptionManager$OnSubscriptionsChangedListener: com.android.internal.telephony.util.HandlerExecutor getHandlerExecutor()>();
+
+        virtualinvoke r2.<android.telephony.TelephonyRegistryManager: void addOnSubscriptionsChangedListener(android.telephony.SubscriptionManager$OnSubscriptionsChangedListener,java.util.concurrent.Executor)>(r59, $r20);
+
+        $r21 = virtualinvoke r58.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("connectivity");
+
+        $r22 = (android.net.ConnectivityManager) $r21;
+
+        r0.<com.android.internal.telephony.PhoneSwitcher: android.net.ConnectivityManager mConnectivityManager> = $r22;
+
+        $r24 = r0.<com.android.internal.telephony.PhoneSwitcher: android.content.Context mContext>;
+
+        $r25 = r0.<com.android.internal.telephony.PhoneSwitcher: android.content.BroadcastReceiver mDefaultDataChangedReceiver>;
+
+        $r23 = new android.content.IntentFilter;
+
+        specialinvoke $r23.<android.content.IntentFilter: void <init>(java.lang.String)>("android.intent.action.ACTION_DEFAULT_DATA_SUBSCRIPTION_CHANGED");
+
+        virtualinvoke $r24.<android.content.Context: android.content.Intent registerReceiver(android.content.BroadcastReceiver,android.content.IntentFilter)>($r25, $r23);
+
+        staticinvoke <com.android.internal.telephony.PhoneConfigurationManager: void registerForMultiSimConfigChange(android.os.Handler,int,java.lang.Object)>(r0, 117, null);
+
+        $r27 = new android.net.NetworkCapabilities;
+
+        specialinvoke $r27.<android.net.NetworkCapabilities: void <init>()>();
+
+        virtualinvoke $r27.<android.net.NetworkCapabilities: android.net.NetworkCapabilities addTransportType(int)>(0);
+
+        virtualinvoke $r27.<android.net.NetworkCapabilities: android.net.NetworkCapabilities addCapability(int)>(0);
+
+        virtualinvoke $r27.<android.net.NetworkCapabilities: android.net.NetworkCapabilities addCapability(int)>(1);
+
+        virtualinvoke $r27.<android.net.NetworkCapabilities: android.net.NetworkCapabilities addCapability(int)>(2);
+
+        virtualinvoke $r27.<android.net.NetworkCapabilities: android.net.NetworkCapabilities addCapability(int)>(3);
+
+        virtualinvoke $r27.<android.net.NetworkCapabilities: android.net.NetworkCapabilities addCapability(int)>(4);
+
+        virtualinvoke $r27.<android.net.NetworkCapabilities: android.net.NetworkCapabilities addCapability(int)>(5);
+
+        virtualinvoke $r27.<android.net.NetworkCapabilities: android.net.NetworkCapabilities addCapability(int)>(7);
+
+        virtualinvoke $r27.<android.net.NetworkCapabilities: android.net.NetworkCapabilities addCapability(int)>(8);
+
+        virtualinvoke $r27.<android.net.NetworkCapabilities: android.net.NetworkCapabilities addCapability(int)>(9);
+
+        virtualinvoke $r27.<android.net.NetworkCapabilities: android.net.NetworkCapabilities addCapability(int)>(10);
+
+        virtualinvoke $r27.<android.net.NetworkCapabilities: android.net.NetworkCapabilities addCapability(int)>(13);
+
+        virtualinvoke $r27.<android.net.NetworkCapabilities: android.net.NetworkCapabilities addCapability(int)>(12);
+
+        virtualinvoke $r27.<android.net.NetworkCapabilities: android.net.NetworkCapabilities addCapability(int)>(23);
+
+        $r42 = new android.net.MatchAllNetworkSpecifier;
+
+        specialinvoke $r42.<android.net.MatchAllNetworkSpecifier: void <init>()>();
+
+        virtualinvoke $r27.<android.net.NetworkCapabilities: android.net.NetworkCapabilities setNetworkSpecifier(android.net.NetworkSpecifier)>($r42);
+
+        $r44 = new com.android.internal.telephony.PhoneSwitcher$PhoneSwitcherNetworkRequestListener;
+
+        specialinvoke $r44.<com.android.internal.telephony.PhoneSwitcher$PhoneSwitcherNetworkRequestListener: void <init>(android.os.Looper,android.content.Context,android.net.NetworkCapabilities,com.android.internal.telephony.PhoneSwitcher)>(r1, r58, $r27, r0);
+
+        virtualinvoke $r44.<com.android.internal.telephony.NetworkFactory: void setScoreFilter(int)>(101);
+
+        virtualinvoke $r44.<com.android.internal.telephony.NetworkFactory: void register()>();
+
+        virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void log(java.lang.String)>("PhoneSwitcher started");
+
+        return;
+    }
+
+    static void access$000(com.android.internal.telephony.PhoneSwitcher, int, int, int)
+    {
+        com.android.internal.telephony.PhoneSwitcher r0;
+        int i0, i1, i2;
+
+        r0 := @parameter0: com.android.internal.telephony.PhoneSwitcher;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        i2 := @parameter3: int;
+
+        specialinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void logDataSwitchEvent(int,int,int)>(i0, i1, i2);
+
+        return;
+    }
+
+    static void access$100(com.android.internal.telephony.PhoneSwitcher)
+    {
+        com.android.internal.telephony.PhoneSwitcher r0;
+
+        r0 := @parameter0: com.android.internal.telephony.PhoneSwitcher;
+
+        specialinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void removeDefaultNetworkChangeCallback()>();
+
+        return;
+    }
+
+    private void collectReleaseNetworkMetrics(android.net.NetworkRequest)
+    {
+        com.android.internal.telephony.PhoneSwitcher r0;
+        int $i0;
+        boolean $z0;
+        com.android.internal.telephony.nano.TelephonyProto$TelephonyEvent$OnDemandDataSwitch $r1;
+        com.android.internal.telephony.metrics.TelephonyMetrics $r2;
+        android.net.NetworkRequest r3;
+
+        r0 := @this: com.android.internal.telephony.PhoneSwitcher;
+
+        r3 := @parameter0: android.net.NetworkRequest;
+
+        $i0 = r0.<com.android.internal.telephony.PhoneSwitcher: int mActiveModemCount>;
+
+        if $i0 <= 1 goto label1;
+
+        $z0 = virtualinvoke r3.<android.net.NetworkRequest: boolean hasCapability(int)>(0);
+
+        if $z0 == 0 goto label1;
+
+        $r1 = new com.android.internal.telephony.nano.TelephonyProto$TelephonyEvent$OnDemandDataSwitch;
+
+        specialinvoke $r1.<com.android.internal.telephony.nano.TelephonyProto$TelephonyEvent$OnDemandDataSwitch: void <init>()>();
+
+        $r1.<com.android.internal.telephony.nano.TelephonyProto$TelephonyEvent$OnDemandDataSwitch: int apn> = 2;
+
+        $r1.<com.android.internal.telephony.nano.TelephonyProto$TelephonyEvent$OnDemandDataSwitch: int state> = 2;
+
+        $r2 = staticinvoke <com.android.internal.telephony.metrics.TelephonyMetrics: com.android.internal.telephony.metrics.TelephonyMetrics getInstance()>();
+
+        virtualinvoke $r2.<com.android.internal.telephony.metrics.TelephonyMetrics: void writeOnDemandDataSwitch(com.android.internal.telephony.nano.TelephonyProto$TelephonyEvent$OnDemandDataSwitch)>($r1);
+
+     label1:
+        return;
+    }
+
+    private void collectRequestNetworkMetrics(android.net.NetworkRequest)
+    {
+        com.android.internal.telephony.PhoneSwitcher r0;
+        int $i0;
+        boolean $z0;
+        com.android.internal.telephony.nano.TelephonyProto$TelephonyEvent$OnDemandDataSwitch $r1;
+        com.android.internal.telephony.metrics.TelephonyMetrics $r2;
+        android.net.NetworkRequest r3;
+
+        r0 := @this: com.android.internal.telephony.PhoneSwitcher;
+
+        r3 := @parameter0: android.net.NetworkRequest;
+
+        $i0 = r0.<com.android.internal.telephony.PhoneSwitcher: int mActiveModemCount>;
+
+        if $i0 <= 1 goto label1;
+
+        $z0 = virtualinvoke r3.<android.net.NetworkRequest: boolean hasCapability(int)>(0);
+
+        if $z0 == 0 goto label1;
+
+        $r1 = new com.android.internal.telephony.nano.TelephonyProto$TelephonyEvent$OnDemandDataSwitch;
+
+        specialinvoke $r1.<com.android.internal.telephony.nano.TelephonyProto$TelephonyEvent$OnDemandDataSwitch: void <init>()>();
+
+        $r1.<com.android.internal.telephony.nano.TelephonyProto$TelephonyEvent$OnDemandDataSwitch: int apn> = 2;
+
+        $r1.<com.android.internal.telephony.nano.TelephonyProto$TelephonyEvent$OnDemandDataSwitch: int state> = 1;
+
+        $r2 = staticinvoke <com.android.internal.telephony.metrics.TelephonyMetrics: com.android.internal.telephony.metrics.TelephonyMetrics getInstance()>();
+
+        virtualinvoke $r2.<com.android.internal.telephony.metrics.TelephonyMetrics: void writeOnDemandDataSwitch(com.android.internal.telephony.nano.TelephonyProto$TelephonyEvent$OnDemandDataSwitch)>($r1);
+
+     label1:
+        return;
+    }
+
+    private void confirmSwitch(int, boolean)
+    {
+        com.android.internal.telephony.PhoneSwitcher r0;
+        boolean z0, $z1, $z2;
+        java.lang.StringBuilder $r2, $r9;
+        java.lang.String $r6, $r13, r14;
+        com.android.internal.telephony.SubscriptionController $r7, $r8;
+        int i0;
+        byte b1;
+        com.android.internal.telephony.ISetOpportunisticDataCallback $r16;
+
+        r0 := @this: com.android.internal.telephony.PhoneSwitcher;
+
+        i0 := @parameter0: int;
+
+        z0 := @parameter1: boolean;
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("confirmSwitch: subId ");
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        if z0 == 0 goto label1;
+
+        r14 = " confirmed.";
+
+        goto label2;
+
+     label1:
+        r14 = " cancelled.";
+
+     label2:
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r14);
+
+        $r6 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void log(java.lang.String)>($r6);
+
+        $r7 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.SubscriptionController mSubscriptionController>;
+
+        $z1 = virtualinvoke $r7.<com.android.internal.telephony.SubscriptionController: boolean isActiveSubId(int)>(i0);
+
+        if $z1 != 0 goto label3;
+
+        $r9 = new java.lang.StringBuilder;
+
+        specialinvoke $r9.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("confirmSwitch: subId ");
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" is no longer active");
+
+        $r13 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void log(java.lang.String)>($r13);
+
+        b1 = 2;
+
+        goto label7;
+
+     label3:
+        if z0 != 0 goto label4;
+
+        b1 = 1;
+
+        goto label7;
+
+     label4:
+        $r8 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.SubscriptionController mSubscriptionController>;
+
+        $z2 = virtualinvoke $r8.<com.android.internal.telephony.SubscriptionController: boolean isOpportunistic(int)>(i0);
+
+        if $z2 == 0 goto label5;
+
+        specialinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void setOpportunisticSubscriptionInternal(int)>(i0);
+
+        goto label6;
+
+     label5:
+        specialinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void setOpportunisticSubscriptionInternal(int)>(2147483647);
+
+     label6:
+        b1 = 0;
+
+     label7:
+        $r16 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.ISetOpportunisticDataCallback mSetOpptSubCallback>;
+
+        specialinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void sendSetOpptCallbackHelper(com.android.internal.telephony.ISetOpportunisticDataCallback,int)>($r16, b1);
+
+        r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.ISetOpportunisticDataCallback mSetOpptSubCallback> = null;
+
+        r0.<com.android.internal.telephony.PhoneSwitcher: int mPendingSwitchSubId> = -1;
+
+        return;
+    }
+
+    private com.android.internal.telephony.dataconnection.ApnConfigTypeRepository createApnRepository(android.net.NetworkRequest)
+    {
+        com.android.internal.telephony.PhoneSwitcher r0;
+        com.android.internal.telephony.SubscriptionController $r1;
+        android.content.Context $r2;
+        java.lang.Object $r3;
+        com.android.internal.telephony.dataconnection.ApnConfigTypeRepository $r4;
+        android.net.NetworkRequest r5;
+        int i0, i1;
+        android.telephony.CarrierConfigManager r6;
+        android.os.PersistableBundle r7;
+
+        r0 := @this: com.android.internal.telephony.PhoneSwitcher;
+
+        r5 := @parameter0: android.net.NetworkRequest;
+
+        i0 = specialinvoke r0.<com.android.internal.telephony.PhoneSwitcher: int phoneIdForRequest(android.net.NetworkRequest)>(r5);
+
+        $r1 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.SubscriptionController mSubscriptionController>;
+
+        i1 = virtualinvoke $r1.<com.android.internal.telephony.SubscriptionController: int getSubIdUsingPhoneId(int)>(i0);
+
+        $r2 = r0.<com.android.internal.telephony.PhoneSwitcher: android.content.Context mContext>;
+
+        $r3 = virtualinvoke $r2.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("carrier_config");
+
+        r6 = (android.telephony.CarrierConfigManager) $r3;
+
+        if r6 == null goto label1;
+
+        r7 = virtualinvoke r6.<android.telephony.CarrierConfigManager: android.os.PersistableBundle getConfigForSubId(int)>(i1);
+
+        goto label2;
+
+     label1:
+        r7 = null;
+
+     label2:
+        $r4 = new com.android.internal.telephony.dataconnection.ApnConfigTypeRepository;
+
+        specialinvoke $r4.<com.android.internal.telephony.dataconnection.ApnConfigTypeRepository: void <init>(android.os.PersistableBundle)>(r7);
+
+        return $r4;
+    }
+
+    private com.android.internal.telephony.Phone findPhoneById(int)
+    {
+        com.android.internal.telephony.PhoneSwitcher r0;
+        int i0;
+        boolean $z0;
+        com.android.internal.telephony.Phone $r1;
+
+        r0 := @this: com.android.internal.telephony.PhoneSwitcher;
+
+        i0 := @parameter0: int;
+
+        $z0 = staticinvoke <android.telephony.SubscriptionManager: boolean isValidPhoneId(int)>(i0);
+
+        if $z0 != 0 goto label1;
+
+        return null;
+
+     label1:
+        $r1 = staticinvoke <com.android.internal.telephony.PhoneFactory: com.android.internal.telephony.Phone getPhone(int)>(i0);
+
+        return $r1;
+    }
+
+    public static com.android.internal.telephony.PhoneSwitcher getInstance()
+    {
+        com.android.internal.telephony.PhoneSwitcher $r0;
+
+        $r0 = <com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.PhoneSwitcher sPhoneSwitcher>;
+
+        return $r0;
+    }
+
+    private int getSubIdForDefaultNetworkRequests()
+    {
+        com.android.internal.telephony.PhoneSwitcher r0;
+        int $i0, $i1, $i2;
+        com.android.internal.telephony.SubscriptionController $r1;
+        boolean $z0;
+
+        r0 := @this: com.android.internal.telephony.PhoneSwitcher;
+
+        $r1 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.SubscriptionController mSubscriptionController>;
+
+        $i0 = r0.<com.android.internal.telephony.PhoneSwitcher: int mOpptDataSubId>;
+
+        $z0 = virtualinvoke $r1.<com.android.internal.telephony.SubscriptionController: boolean isActiveSubId(int)>($i0);
+
+        if $z0 == 0 goto label1;
+
+        $i2 = r0.<com.android.internal.telephony.PhoneSwitcher: int mOpptDataSubId>;
+
+        return $i2;
+
+     label1:
+        $i1 = r0.<com.android.internal.telephony.PhoneSwitcher: int mPrimaryDataSubId>;
+
+        return $i1;
+    }
+
+    private android.telephony.TelephonyManager getTm()
+    {
+        com.android.internal.telephony.PhoneSwitcher r0;
+        android.content.Context $r1;
+        java.lang.Object $r2;
+        android.telephony.TelephonyManager $r3;
+
+        r0 := @this: com.android.internal.telephony.PhoneSwitcher;
+
+        $r1 = r0.<com.android.internal.telephony.PhoneSwitcher: android.content.Context mContext>;
+
+        $r2 = virtualinvoke $r1.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("phone");
+
+        $r3 = (android.telephony.TelephonyManager) $r2;
+
+        return $r3;
+    }
+
+    private long getValidationTimeout(int, boolean)
+    {
+        com.android.internal.telephony.PhoneSwitcher r0;
+        int i0;
+        boolean z0;
+        android.content.Context $r1;
+        java.lang.Object $r2;
+        android.telephony.CarrierConfigManager r3;
+        long l2;
+        android.os.PersistableBundle r4;
+
+        r0 := @this: com.android.internal.telephony.PhoneSwitcher;
+
+        i0 := @parameter0: int;
+
+        z0 := @parameter1: boolean;
+
+        if z0 != 0 goto label1;
+
+        return 2000L;
+
+     label1:
+        $r1 = r0.<com.android.internal.telephony.PhoneSwitcher: android.content.Context mContext>;
+
+        $r2 = virtualinvoke $r1.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("carrier_config");
+
+        r3 = (android.telephony.CarrierConfigManager) $r2;
+
+        l2 = 2000L;
+
+        if r3 == null goto label2;
+
+        r4 = virtualinvoke r3.<android.telephony.CarrierConfigManager: android.os.PersistableBundle getConfigForSubId(int)>(i0);
+
+        l2 = 2000L;
+
+        if r4 == null goto label2;
+
+        l2 = virtualinvoke r4.<android.os.PersistableBundle: long getLong(java.lang.String)>("data_switch_validation_timeout_long");
+
+     label2:
+        return l2;
+    }
+
+    private boolean isInEmergencyCallbackMode()
+    {
+        com.android.internal.telephony.PhoneSwitcher r0;
+        com.android.internal.telephony.Phone[] r1;
+        int i0, i1;
+        boolean $z0, $z1;
+        com.android.internal.telephony.Phone r2, r3;
+
+        r0 := @this: com.android.internal.telephony.PhoneSwitcher;
+
+        r1 = staticinvoke <com.android.internal.telephony.PhoneFactory: com.android.internal.telephony.Phone[] getPhones()>();
+
+        i0 = lengthof r1;
+
+        i1 = 0;
+
+     label1:
+        if i1 >= i0 goto label5;
+
+        r2 = r1[i1];
+
+        if r2 != null goto label2;
+
+        goto label4;
+
+     label2:
+        $z0 = virtualinvoke r2.<com.android.internal.telephony.Phone: boolean isInEcm()>();
+
+        if $z0 == 0 goto label3;
+
+        return 1;
+
+     label3:
+        r3 = virtualinvoke r2.<com.android.internal.telephony.Phone: com.android.internal.telephony.Phone getImsPhone()>();
+
+        if r3 == null goto label4;
+
+        $z1 = virtualinvoke r3.<com.android.internal.telephony.Phone: boolean isInEcm()>();
+
+        if $z1 == 0 goto label4;
+
+        return 1;
+
+     label4:
+        i1 = i1 + 1;
+
+        goto label1;
+
+     label5:
+        return 0;
+    }
+
+    private boolean isPhoneInVoiceCallChanged()
+    {
+        com.android.internal.telephony.PhoneSwitcher r0;
+        int i0, i1, $i2, $i3, i4, $i5;
+        com.android.internal.telephony.Phone[] r1;
+        java.lang.StringBuilder $r2;
+        java.lang.String $r7;
+        boolean $z0, $z1;
+        com.android.internal.telephony.Phone $r8, r9;
+
+        r0 := @this: com.android.internal.telephony.PhoneSwitcher;
+
+        i0 = r0.<com.android.internal.telephony.PhoneSwitcher: int mPhoneIdInVoiceCall>;
+
+        r0.<com.android.internal.telephony.PhoneSwitcher: int mPhoneIdInVoiceCall> = -1;
+
+        r1 = staticinvoke <com.android.internal.telephony.PhoneFactory: com.android.internal.telephony.Phone[] getPhones()>();
+
+        i1 = lengthof r1;
+
+        i4 = 0;
+
+     label1:
+        if i4 >= i1 goto label4;
+
+        r9 = r1[i4];
+
+        $z0 = virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: boolean isPhoneInVoiceCall(com.android.internal.telephony.Phone)>(r9);
+
+        if $z0 != 0 goto label3;
+
+        $r8 = virtualinvoke r9.<com.android.internal.telephony.Phone: com.android.internal.telephony.Phone getImsPhone()>();
+
+        $z1 = virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: boolean isPhoneInVoiceCall(com.android.internal.telephony.Phone)>($r8);
+
+        if $z1 == 0 goto label2;
+
+        goto label3;
+
+     label2:
+        i4 = i4 + 1;
+
+        goto label1;
+
+     label3:
+        $i3 = virtualinvoke r9.<com.android.internal.telephony.Phone: int getPhoneId()>();
+
+        r0.<com.android.internal.telephony.PhoneSwitcher: int mPhoneIdInVoiceCall> = $i3;
+
+     label4:
+        $i5 = r0.<com.android.internal.telephony.PhoneSwitcher: int mPhoneIdInVoiceCall>;
+
+        if $i5 == i0 goto label5;
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("isPhoneInVoiceCallChanged from phoneId ");
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" to phoneId ");
+
+        $i2 = r0.<com.android.internal.telephony.PhoneSwitcher: int mPhoneIdInVoiceCall>;
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i2);
+
+        $r7 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void log(java.lang.String)>($r7);
+
+        return 1;
+
+     label5:
+        return 0;
+    }
+
+    private void logDataSwitchEvent(int, int, int)
+    {
+        com.android.internal.telephony.PhoneSwitcher r0;
+        int i0, i1, i2;
+        java.lang.StringBuilder $r1;
+        java.lang.String $r8;
+        com.android.internal.telephony.nano.TelephonyProto$TelephonyEvent$DataSwitch $r9;
+        com.android.internal.telephony.metrics.TelephonyMetrics $r10;
+
+        r0 := @this: com.android.internal.telephony.PhoneSwitcher;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        i2 := @parameter2: int;
+
+        $r1 = new java.lang.StringBuilder;
+
+        specialinvoke $r1.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("logDataSwitchEvent subId ");
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" state ");
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i1);
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" reason ");
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i2);
+
+        $r8 = virtualinvoke $r1.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void log(java.lang.String)>($r8);
+
+        $r9 = new com.android.internal.telephony.nano.TelephonyProto$TelephonyEvent$DataSwitch;
+
+        specialinvoke $r9.<com.android.internal.telephony.nano.TelephonyProto$TelephonyEvent$DataSwitch: void <init>()>();
+
+        $r9.<com.android.internal.telephony.nano.TelephonyProto$TelephonyEvent$DataSwitch: int state> = i1;
+
+        $r9.<com.android.internal.telephony.nano.TelephonyProto$TelephonyEvent$DataSwitch: int reason> = i2;
+
+        $r10 = staticinvoke <com.android.internal.telephony.metrics.TelephonyMetrics: com.android.internal.telephony.metrics.TelephonyMetrics getInstance()>();
+
+        virtualinvoke $r10.<com.android.internal.telephony.metrics.TelephonyMetrics: void writeDataSwitch(int,com.android.internal.telephony.nano.TelephonyProto$TelephonyEvent$DataSwitch)>(i0, $r9);
+
+        return;
+    }
+
+    public static com.android.internal.telephony.PhoneSwitcher make(int, android.content.Context, android.os.Looper)
+    {
+        int i0;
+        android.content.Context r0;
+        android.os.Looper r1;
+        com.android.internal.telephony.PhoneSwitcher $r2, $r3, $r4;
+
+        i0 := @parameter0: int;
+
+        r0 := @parameter1: android.content.Context;
+
+        r1 := @parameter2: android.os.Looper;
+
+        $r2 = <com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.PhoneSwitcher sPhoneSwitcher>;
+
+        if $r2 != null goto label1;
+
+        $r4 = new com.android.internal.telephony.PhoneSwitcher;
+
+        specialinvoke $r4.<com.android.internal.telephony.PhoneSwitcher: void <init>(int,android.content.Context,android.os.Looper)>(i0, r0, r1);
+
+        <com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.PhoneSwitcher sPhoneSwitcher> = $r4;
+
+        staticinvoke <com.android.internal.telephony.SubscriptionController: void invalidateActiveDataSubIdCaches()>();
+
+     label1:
+        $r3 = <com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.PhoneSwitcher sPhoneSwitcher>;
+
+        return $r3;
+    }
+
+    private void onMultiSimConfigChanged(int)
+    {
+        com.android.internal.telephony.PhoneSwitcher r0;
+        com.android.internal.telephony.PhoneSwitcher$PhoneState[] r1, $r4, $r6;
+        int[] $r2, $r3;
+        int $i0, $i1, i2, i3, i4, i5;
+        java.lang.Object[] $r5;
+        com.android.internal.telephony.Phone $r7, $r9, r12;
+        com.android.internal.telephony.dataconnection.DataEnabledSettings $r8;
+        java.lang.Throwable $r10;
+        com.android.internal.telephony.PhoneSwitcher$PhoneState r11;
+
+        r0 := @this: com.android.internal.telephony.PhoneSwitcher;
+
+        i2 := @parameter0: int;
+
+        entermonitor r0;
+
+     label01:
+        i3 = r0.<com.android.internal.telephony.PhoneSwitcher: int mActiveModemCount>;
+
+     label02:
+        if i3 != i2 goto label03;
+
+        exitmonitor r0;
+
+        return;
+
+     label03:
+        i4 = r0.<com.android.internal.telephony.PhoneSwitcher: int mActiveModemCount>;
+
+        r0.<com.android.internal.telephony.PhoneSwitcher: int mActiveModemCount> = i2;
+
+        $r2 = r0.<com.android.internal.telephony.PhoneSwitcher: int[] mPhoneSubscriptions>;
+
+        $r3 = staticinvoke <java.util.Arrays: int[] copyOf(int[],int)>($r2, i2);
+
+        r0.<com.android.internal.telephony.PhoneSwitcher: int[] mPhoneSubscriptions> = $r3;
+
+        $r4 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.PhoneSwitcher$PhoneState[] mPhoneStates>;
+
+        $i0 = r0.<com.android.internal.telephony.PhoneSwitcher: int mActiveModemCount>;
+
+        $r5 = staticinvoke <java.util.Arrays: java.lang.Object[] copyOf(java.lang.Object[],int)>($r4, $i0);
+
+        $r6 = (com.android.internal.telephony.PhoneSwitcher$PhoneState[]) $r5;
+
+        r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.PhoneSwitcher$PhoneState[] mPhoneStates> = $r6;
+
+     label04:
+        i5 = i4;
+
+     label05:
+        $i1 = r0.<com.android.internal.telephony.PhoneSwitcher: int mActiveModemCount>;
+
+        if i5 >= $i1 goto label12;
+
+        r1 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.PhoneSwitcher$PhoneState[] mPhoneStates>;
+
+        r11 = new com.android.internal.telephony.PhoneSwitcher$PhoneState;
+
+        specialinvoke r11.<com.android.internal.telephony.PhoneSwitcher$PhoneState: void <init>()>();
+
+     label06:
+        r1[i5] = r11;
+
+     label07:
+        r12 = staticinvoke <com.android.internal.telephony.PhoneFactory: com.android.internal.telephony.Phone getPhone(int)>(i5);
+
+     label08:
+        if r12 != null goto label09;
+
+        goto label11;
+
+     label09:
+        virtualinvoke r12.<com.android.internal.telephony.Phone: void registerForEmergencyCallToggle(android.os.Handler,int,java.lang.Object)>(r0, 105, null);
+
+        virtualinvoke r12.<com.android.internal.telephony.Phone: void registerForPreciseCallStateChanged(android.os.Handler,int,java.lang.Object)>(r0, 109, null);
+
+        $r7 = virtualinvoke r12.<com.android.internal.telephony.Phone: com.android.internal.telephony.Phone getImsPhone()>();
+
+        if $r7 == null goto label10;
+
+        $r9 = virtualinvoke r12.<com.android.internal.telephony.Phone: com.android.internal.telephony.Phone getImsPhone()>();
+
+        virtualinvoke $r9.<com.android.internal.telephony.Phone: void registerForPreciseCallStateChanged(android.os.Handler,int,java.lang.Object)>(r0, 109, null);
+
+     label10:
+        $r8 = virtualinvoke r12.<com.android.internal.telephony.Phone: com.android.internal.telephony.dataconnection.DataEnabledSettings getDataEnabledSettings()>();
+
+        virtualinvoke $r8.<com.android.internal.telephony.dataconnection.DataEnabledSettings: void registerForDataEnabledChanged(android.os.Handler,int,java.lang.Object)>(r0, 114, null);
+
+     label11:
+        i5 = i5 + 1;
+
+        goto label05;
+
+     label12:
+        exitmonitor r0;
+
+        return;
+
+     label13:
+        $r10 := @caughtexception;
+
+        exitmonitor r0;
+
+        throw $r10;
+
+        catch java.lang.Throwable from label01 to label02 with label13;
+        catch java.lang.Throwable from label03 to label04 with label13;
+        catch java.lang.Throwable from label05 to label06 with label13;
+        catch java.lang.Throwable from label07 to label08 with label13;
+        catch java.lang.Throwable from label09 to label10 with label13;
+        catch java.lang.Throwable from label10 to label11 with label13;
+    }
+
+    private void onNetworkAvailable(int, android.net.Network)
+    {
+        com.android.internal.telephony.PhoneSwitcher r0;
+        int i0, i1;
+        java.lang.StringBuilder $r1;
+        java.lang.String $r4;
+        boolean $z0;
+        android.net.Network r5;
+
+        r0 := @this: com.android.internal.telephony.PhoneSwitcher;
+
+        i0 := @parameter0: int;
+
+        r5 := @parameter1: android.net.Network;
+
+        $r1 = new java.lang.StringBuilder;
+
+        specialinvoke $r1.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("onNetworkAvailable: on subId ");
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r4 = virtualinvoke $r1.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void log(java.lang.String)>($r4);
+
+        i1 = r0.<com.android.internal.telephony.PhoneSwitcher: int mPendingSwitchSubId>;
+
+        if i1 == -1 goto label2;
+
+        if i1 != i0 goto label2;
+
+        $z0 = r0.<com.android.internal.telephony.PhoneSwitcher: boolean mPendingSwitchNeedValidation>;
+
+        if $z0 == 0 goto label1;
+
+        goto label2;
+
+     label1:
+        specialinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void confirmSwitch(int,boolean)>(i0, 1);
+
+        return;
+
+     label2:
+        return;
+    }
+
+    private void onPhoneCapabilityChanged(android.telephony.PhoneCapability)
+    {
+        com.android.internal.telephony.PhoneSwitcher r0;
+        android.telephony.PhoneCapability r1;
+
+        r0 := @this: com.android.internal.telephony.PhoneSwitcher;
+
+        r1 := @parameter0: android.telephony.PhoneCapability;
+
+        specialinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void onPhoneCapabilityChangedInternal(android.telephony.PhoneCapability)>(r1);
+
+        return;
+    }
+
+    private void onPhoneCapabilityChangedInternal(android.telephony.PhoneCapability)
+    {
+        com.android.internal.telephony.PhoneSwitcher r0;
+        int i0, $i1, $i2;
+        android.telephony.TelephonyManager $r1;
+        java.lang.StringBuilder $r2;
+        java.lang.String $r5;
+        android.telephony.PhoneCapability r6;
+
+        r0 := @this: com.android.internal.telephony.PhoneSwitcher;
+
+        r6 := @parameter0: android.telephony.PhoneCapability;
+
+        $r1 = staticinvoke <android.telephony.TelephonyManager: android.telephony.TelephonyManager getDefault()>();
+
+        i0 = virtualinvoke $r1.<android.telephony.TelephonyManager: int getNumberOfModemsWithSimultaneousDataConnections()>();
+
+        $i1 = r0.<com.android.internal.telephony.PhoneSwitcher: int mMaxDataAttachModemCount>;
+
+        if $i1 == i0 goto label1;
+
+        r0.<com.android.internal.telephony.PhoneSwitcher: int mMaxDataAttachModemCount> = i0;
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Max active phones changed to ");
+
+        $i2 = r0.<com.android.internal.telephony.PhoneSwitcher: int mMaxDataAttachModemCount>;
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i2);
+
+        $r5 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void log(java.lang.String)>($r5);
+
+        virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: boolean onEvaluate(boolean,java.lang.String)>(0, "phoneCfgChanged");
+
+     label1:
+        return;
+    }
+
+    private void onReleaseNetwork(android.net.NetworkRequest)
+    {
+        com.android.internal.telephony.PhoneSwitcher r0;
+        com.android.internal.telephony.dataconnection.DcRequest r1;
+        com.android.internal.telephony.dataconnection.ApnConfigTypeRepository $r2;
+        java.util.List $r3, $r6;
+        boolean $z0;
+        java.lang.StringBuilder $r4;
+        int $i0;
+        java.lang.String $r8;
+        android.net.NetworkRequest r9;
+
+        r0 := @this: com.android.internal.telephony.PhoneSwitcher;
+
+        r9 := @parameter0: android.net.NetworkRequest;
+
+        $r2 = specialinvoke r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.dataconnection.ApnConfigTypeRepository createApnRepository(android.net.NetworkRequest)>(r9);
+
+        r1 = staticinvoke <com.android.internal.telephony.dataconnection.DcRequest: com.android.internal.telephony.dataconnection.DcRequest create(android.net.NetworkRequest,com.android.internal.telephony.dataconnection.ApnConfigTypeRepository)>(r9, $r2);
+
+        if r1 == null goto label1;
+
+        $r3 = r0.<com.android.internal.telephony.PhoneSwitcher: java.util.List mPrioritizedDcRequests>;
+
+        $z0 = interfaceinvoke $r3.<java.util.List: boolean remove(java.lang.Object)>(r1);
+
+        if $z0 == 0 goto label1;
+
+        virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: boolean onEvaluate(boolean,java.lang.String)>(1, "netReleased");
+
+        specialinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void collectReleaseNetworkMetrics(android.net.NetworkRequest)>(r9);
+
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Removed DcRequest, size: ");
+
+        $r6 = r0.<com.android.internal.telephony.PhoneSwitcher: java.util.List mPrioritizedDcRequests>;
+
+        $i0 = interfaceinvoke $r6.<java.util.List: int size()>();
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i0);
+
+        $r8 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void log(java.lang.String)>($r8);
+
+     label1:
+        return;
+    }
+
+    private void onRequestNetwork(android.net.NetworkRequest)
+    {
+        com.android.internal.telephony.PhoneSwitcher r0;
+        com.android.internal.telephony.dataconnection.DcRequest r1;
+        com.android.internal.telephony.dataconnection.ApnConfigTypeRepository $r2;
+        java.util.List $r3, $r4, $r5, $r8;
+        boolean $z0;
+        java.lang.StringBuilder $r6;
+        int $i0;
+        java.lang.String $r10;
+        android.net.NetworkRequest r11;
+
+        r0 := @this: com.android.internal.telephony.PhoneSwitcher;
+
+        r11 := @parameter0: android.net.NetworkRequest;
+
+        $r2 = specialinvoke r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.dataconnection.ApnConfigTypeRepository createApnRepository(android.net.NetworkRequest)>(r11);
+
+        r1 = staticinvoke <com.android.internal.telephony.dataconnection.DcRequest: com.android.internal.telephony.dataconnection.DcRequest create(android.net.NetworkRequest,com.android.internal.telephony.dataconnection.ApnConfigTypeRepository)>(r11, $r2);
+
+        if r1 == null goto label1;
+
+        $r3 = r0.<com.android.internal.telephony.PhoneSwitcher: java.util.List mPrioritizedDcRequests>;
+
+        $z0 = interfaceinvoke $r3.<java.util.List: boolean contains(java.lang.Object)>(r1);
+
+        if $z0 != 0 goto label1;
+
+        specialinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void collectRequestNetworkMetrics(android.net.NetworkRequest)>(r11);
+
+        $r4 = r0.<com.android.internal.telephony.PhoneSwitcher: java.util.List mPrioritizedDcRequests>;
+
+        interfaceinvoke $r4.<java.util.List: boolean add(java.lang.Object)>(r1);
+
+        $r5 = r0.<com.android.internal.telephony.PhoneSwitcher: java.util.List mPrioritizedDcRequests>;
+
+        staticinvoke <java.util.Collections: void sort(java.util.List)>($r5);
+
+        virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: boolean onEvaluate(boolean,java.lang.String)>(1, "netRequest");
+
+        $r6 = new java.lang.StringBuilder;
+
+        specialinvoke $r6.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Added DcRequest, size: ");
+
+        $r8 = r0.<com.android.internal.telephony.PhoneSwitcher: java.util.List mPrioritizedDcRequests>;
+
+        $i0 = interfaceinvoke $r8.<java.util.List: int size()>();
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i0);
+
+        $r10 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void log(java.lang.String)>($r10);
+
+     label1:
+        return;
+    }
+
+    private void onValidationDone(int, boolean)
+    {
+        com.android.internal.telephony.PhoneSwitcher r0;
+        int i0, i1;
+        java.lang.StringBuilder $r2;
+        java.lang.String $r7, r8;
+        boolean $z0, z1, z2;
+
+        r0 := @this: com.android.internal.telephony.PhoneSwitcher;
+
+        i0 := @parameter0: int;
+
+        z1 := @parameter1: boolean;
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("onValidationDone: ");
+
+        if z1 == 0 goto label1;
+
+        r8 = "passed";
+
+        goto label2;
+
+     label1:
+        r8 = "failed";
+
+     label2:
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r8);
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" on subId ");
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r7 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void log(java.lang.String)>($r7);
+
+        i1 = r0.<com.android.internal.telephony.PhoneSwitcher: int mPendingSwitchSubId>;
+
+        if i1 == -1 goto label7;
+
+        if i1 == i0 goto label3;
+
+        goto label7;
+
+     label3:
+        if z1 != 0 goto label5;
+
+        $z0 = r0.<com.android.internal.telephony.PhoneSwitcher: boolean mPendingSwitchNeedValidation>;
+
+        if $z0 != 0 goto label4;
+
+        goto label5;
+
+     label4:
+        z2 = 0;
+
+        goto label6;
+
+     label5:
+        z2 = 1;
+
+     label6:
+        specialinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void confirmSwitch(int,boolean)>(i0, z2);
+
+        return;
+
+     label7:
+        return;
+    }
+
+    private int phoneIdForRequest(android.net.NetworkRequest)
+    {
+        com.android.internal.telephony.PhoneSwitcher r0;
+        android.net.NetworkRequest r1;
+        int i0, $i2, $i3, $i4, $i5, i6, i7, i8, i9, $i10;
+        android.net.NetworkSpecifier $r2;
+        int[] $r3, $r5;
+        boolean $z0, $z1;
+        com.android.internal.telephony.CellularNetworkValidator $r4;
+
+        r0 := @this: com.android.internal.telephony.PhoneSwitcher;
+
+        r1 := @parameter0: android.net.NetworkRequest;
+
+        $r2 = virtualinvoke r1.<android.net.NetworkRequest: android.net.NetworkSpecifier getNetworkSpecifier()>();
+
+        i0 = virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: int getSubIdFromNetworkSpecifier(android.net.NetworkSpecifier)>($r2);
+
+        if i0 != 2147483647 goto label1;
+
+        $i5 = r0.<com.android.internal.telephony.PhoneSwitcher: int mPreferredDataPhoneId>;
+
+        return $i5;
+
+     label1:
+        if i0 != -1 goto label2;
+
+        return -1;
+
+     label2:
+        i6 = r0.<com.android.internal.telephony.PhoneSwitcher: int mPreferredDataPhoneId>;
+
+        if i6 < 0 goto label3;
+
+        $i4 = r0.<com.android.internal.telephony.PhoneSwitcher: int mActiveModemCount>;
+
+        if i6 >= $i4 goto label3;
+
+        $r5 = r0.<com.android.internal.telephony.PhoneSwitcher: int[] mPhoneSubscriptions>;
+
+        i7 = $r5[i6];
+
+        goto label4;
+
+     label3:
+        i7 = -1;
+
+     label4:
+        $z1 = virtualinvoke r1.<android.net.NetworkRequest: boolean hasCapability(int)>(12);
+
+        if $z1 == 0 goto label5;
+
+        $z0 = virtualinvoke r1.<android.net.NetworkRequest: boolean hasCapability(int)>(13);
+
+        if $z0 == 0 goto label5;
+
+        if i0 == i7 goto label5;
+
+        $r4 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.CellularNetworkValidator mValidator>;
+
+        $i3 = virtualinvoke $r4.<com.android.internal.telephony.CellularNetworkValidator: int getSubIdInValidation()>();
+
+        if i0 == $i3 goto label5;
+
+        return -1;
+
+     label5:
+        i8 = 0;
+
+     label6:
+        i9 = -1;
+
+        $i10 = r0.<com.android.internal.telephony.PhoneSwitcher: int mActiveModemCount>;
+
+        if i8 >= $i10 goto label8;
+
+        $r3 = r0.<com.android.internal.telephony.PhoneSwitcher: int[] mPhoneSubscriptions>;
+
+        $i2 = $r3[i8];
+
+        if $i2 != i0 goto label7;
+
+        i9 = i8;
+
+        goto label8;
+
+     label7:
+        i8 = i8 + 1;
+
+        goto label6;
+
+     label8:
+        return i9;
+    }
+
+    private void registerDefaultNetworkChangeCallback(int, int)
+    {
+        com.android.internal.telephony.PhoneSwitcher r0;
+        int i0, i1;
+        com.android.internal.telephony.PhoneSwitcher$DefaultNetworkCallback $r1, $r2, $r3;
+        android.net.ConnectivityManager $r4;
+        android.os.Message $r5;
+
+        r0 := @this: com.android.internal.telephony.PhoneSwitcher;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        $r1 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.PhoneSwitcher$DefaultNetworkCallback mDefaultNetworkCallback>;
+
+        $r1.<com.android.internal.telephony.PhoneSwitcher$DefaultNetworkCallback: int mExpectedSubId> = i0;
+
+        $r2 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.PhoneSwitcher$DefaultNetworkCallback mDefaultNetworkCallback>;
+
+        $r2.<com.android.internal.telephony.PhoneSwitcher$DefaultNetworkCallback: int mSwitchReason> = i1;
+
+        $r4 = r0.<com.android.internal.telephony.PhoneSwitcher: android.net.ConnectivityManager mConnectivityManager>;
+
+        $r3 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.PhoneSwitcher$DefaultNetworkCallback mDefaultNetworkCallback>;
+
+        virtualinvoke $r4.<android.net.ConnectivityManager: void registerDefaultNetworkCallback(android.net.ConnectivityManager$NetworkCallback,android.os.Handler)>($r3, r0);
+
+        $r5 = virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: android.os.Message obtainMessage(int)>(111);
+
+        virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: boolean sendMessageDelayed(android.os.Message,long)>($r5, 5000L);
+
+        return;
+    }
+
+    private void removeDefaultNetworkChangeCallback()
+    {
+        com.android.internal.telephony.PhoneSwitcher r0;
+        com.android.internal.telephony.PhoneSwitcher$DefaultNetworkCallback $r1, $r2, $r3;
+        android.net.ConnectivityManager $r4;
+
+        r0 := @this: com.android.internal.telephony.PhoneSwitcher;
+
+        virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void removeMessages(int)>(111);
+
+        $r1 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.PhoneSwitcher$DefaultNetworkCallback mDefaultNetworkCallback>;
+
+        $r1.<com.android.internal.telephony.PhoneSwitcher$DefaultNetworkCallback: int mExpectedSubId> = -1;
+
+        $r2 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.PhoneSwitcher$DefaultNetworkCallback mDefaultNetworkCallback>;
+
+        $r2.<com.android.internal.telephony.PhoneSwitcher$DefaultNetworkCallback: int mSwitchReason> = 0;
+
+        $r4 = r0.<com.android.internal.telephony.PhoneSwitcher: android.net.ConnectivityManager mConnectivityManager>;
+
+        $r3 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.PhoneSwitcher$DefaultNetworkCallback mDefaultNetworkCallback>;
+
+        virtualinvoke $r4.<android.net.ConnectivityManager: void unregisterNetworkCallback(android.net.ConnectivityManager$NetworkCallback)>($r3);
+
+        return;
+    }
+
+    private void sendSetOpptCallbackHelper(com.android.internal.telephony.ISetOpportunisticDataCallback, int)
+    {
+        com.android.internal.telephony.PhoneSwitcher r0;
+        int i0;
+        android.os.RemoteException $r2;
+        java.lang.StringBuilder $r3;
+        java.lang.String $r6;
+        com.android.internal.telephony.ISetOpportunisticDataCallback r7;
+
+        r0 := @this: com.android.internal.telephony.PhoneSwitcher;
+
+        r7 := @parameter0: com.android.internal.telephony.ISetOpportunisticDataCallback;
+
+        i0 := @parameter1: int;
+
+        if r7 != null goto label1;
+
+        return;
+
+     label1:
+        interfaceinvoke r7.<com.android.internal.telephony.ISetOpportunisticDataCallback: void onComplete(int)>(i0);
+
+     label2:
+        goto label4;
+
+     label3:
+        $r2 := @caughtexception;
+
+        $r3 = new java.lang.StringBuilder;
+
+        specialinvoke $r3.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("RemoteException ");
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r2);
+
+        $r6 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void log(java.lang.String)>($r6);
+
+     label4:
+        return;
+
+        catch android.os.RemoteException from label1 to label2 with label3;
+    }
+
+    private void setOpportunisticDataSubscription(int, boolean, com.android.internal.telephony.ISetOpportunisticDataCallback)
+    {
+        com.android.internal.telephony.PhoneSwitcher r0;
+        int i0, $i2, i3, i4, i5;
+        boolean z0, $z1, $z2, $z3;
+        com.android.internal.telephony.ISetOpportunisticDataCallback r1, $r9;
+        long l1;
+        com.android.internal.telephony.SubscriptionController $r3;
+        com.android.internal.telephony.CellularNetworkValidator $r4, $r5, $r7, $r8;
+        com.android.internal.telephony.CellularNetworkValidator$ValidationCallback $r6;
+        java.lang.StringBuilder $r10;
+        java.lang.String $r13;
+
+        r0 := @this: com.android.internal.telephony.PhoneSwitcher;
+
+        i0 := @parameter0: int;
+
+        z0 := @parameter1: boolean;
+
+        r1 := @parameter2: com.android.internal.telephony.ISetOpportunisticDataCallback;
+
+        $r3 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.SubscriptionController mSubscriptionController>;
+
+        $z1 = virtualinvoke $r3.<com.android.internal.telephony.SubscriptionController: boolean isActiveSubId(int)>(i0);
+
+        if $z1 != 0 goto label01;
+
+        if i0 == 2147483647 goto label01;
+
+        $r10 = new java.lang.StringBuilder;
+
+        specialinvoke $r10.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Can\'t switch data to inactive subId ");
+
+        virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r13 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void log(java.lang.String)>($r13);
+
+        specialinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void sendSetOpptCallbackHelper(com.android.internal.telephony.ISetOpportunisticDataCallback,int)>(r1, 2);
+
+        return;
+
+     label01:
+        virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void removeMessages(int)>(110);
+
+        virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void removeMessages(int)>(118);
+
+        if i0 != 2147483647 goto label02;
+
+        i3 = r0.<com.android.internal.telephony.PhoneSwitcher: int mPrimaryDataSubId>;
+
+        goto label03;
+
+     label02:
+        i3 = i0;
+
+     label03:
+        r0.<com.android.internal.telephony.PhoneSwitcher: int mPendingSwitchSubId> = -1;
+
+        $r4 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.CellularNetworkValidator mValidator>;
+
+        $z2 = virtualinvoke $r4.<com.android.internal.telephony.CellularNetworkValidator: boolean isValidating()>();
+
+        if $z2 == 0 goto label04;
+
+        $r8 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.CellularNetworkValidator mValidator>;
+
+        virtualinvoke $r8.<com.android.internal.telephony.CellularNetworkValidator: void stopValidation()>();
+
+        $r9 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.ISetOpportunisticDataCallback mSetOpptSubCallback>;
+
+        specialinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void sendSetOpptCallbackHelper(com.android.internal.telephony.ISetOpportunisticDataCallback,int)>($r9, 1);
+
+        r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.ISetOpportunisticDataCallback mSetOpptSubCallback> = null;
+
+     label04:
+        $i2 = r0.<com.android.internal.telephony.PhoneSwitcher: int mOpptDataSubId>;
+
+        if i0 != $i2 goto label05;
+
+        specialinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void sendSetOpptCallbackHelper(com.android.internal.telephony.ISetOpportunisticDataCallback,int)>(r1, 0);
+
+        return;
+
+     label05:
+        if i0 != 2147483647 goto label06;
+
+        i4 = r0.<com.android.internal.telephony.PhoneSwitcher: int mPrimaryDataSubId>;
+
+        goto label07;
+
+     label06:
+        i4 = i0;
+
+     label07:
+        specialinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void logDataSwitchEvent(int,int,int)>(i4, 1, 3);
+
+        if i0 != 2147483647 goto label08;
+
+        i5 = r0.<com.android.internal.telephony.PhoneSwitcher: int mPrimaryDataSubId>;
+
+        goto label09;
+
+     label08:
+        i5 = i0;
+
+     label09:
+        specialinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void registerDefaultNetworkChangeCallback(int,int)>(i5, 3);
+
+        $r5 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.CellularNetworkValidator mValidator>;
+
+        $z3 = virtualinvoke $r5.<com.android.internal.telephony.CellularNetworkValidator: boolean isValidationFeatureSupported()>();
+
+        if $z3 != 0 goto label10;
+
+        specialinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void setOpportunisticSubscriptionInternal(int)>(i0);
+
+        specialinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void sendSetOpptCallbackHelper(com.android.internal.telephony.ISetOpportunisticDataCallback,int)>(r1, 0);
+
+        return;
+
+     label10:
+        r0.<com.android.internal.telephony.PhoneSwitcher: int mPendingSwitchSubId> = i3;
+
+        r0.<com.android.internal.telephony.PhoneSwitcher: boolean mPendingSwitchNeedValidation> = z0;
+
+        r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.ISetOpportunisticDataCallback mSetOpptSubCallback> = r1;
+
+        l1 = specialinvoke r0.<com.android.internal.telephony.PhoneSwitcher: long getValidationTimeout(int,boolean)>(i3, z0);
+
+        $r7 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.CellularNetworkValidator mValidator>;
+
+        $r6 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.CellularNetworkValidator$ValidationCallback mValidationCallback>;
+
+        virtualinvoke $r7.<com.android.internal.telephony.CellularNetworkValidator: void validate(int,long,boolean,com.android.internal.telephony.CellularNetworkValidator$ValidationCallback)>(i3, l1, 0, $r6);
+
+        return;
+    }
+
+    private void setOpportunisticSubscriptionInternal(int)
+    {
+        com.android.internal.telephony.PhoneSwitcher r0;
+        int i0, $i1;
+
+        r0 := @this: com.android.internal.telephony.PhoneSwitcher;
+
+        i0 := @parameter0: int;
+
+        $i1 = r0.<com.android.internal.telephony.PhoneSwitcher: int mOpptDataSubId>;
+
+        if $i1 == i0 goto label1;
+
+        r0.<com.android.internal.telephony.PhoneSwitcher: int mOpptDataSubId> = i0;
+
+        virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: boolean onEvaluate(boolean,java.lang.String)>(0, "oppt data subId changed");
+
+     label1:
+        return;
+    }
+
+    private void switchPhone(int, boolean)
+    {
+        com.android.internal.telephony.PhoneSwitcher r0;
+        int i0;
+        boolean z0, $z1;
+        com.android.internal.telephony.PhoneSwitcher$PhoneState r1;
+        com.android.internal.telephony.PhoneSwitcher$PhoneState[] $r3;
+        java.lang.StringBuilder $r4;
+        java.lang.String $r7, r8;
+        long $l1;
+
+        r0 := @this: com.android.internal.telephony.PhoneSwitcher;
+
+        i0 := @parameter0: int;
+
+        z0 := @parameter1: boolean;
+
+        $r3 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.PhoneSwitcher$PhoneState[] mPhoneStates>;
+
+        r1 = $r3[i0];
+
+        $z1 = r1.<com.android.internal.telephony.PhoneSwitcher$PhoneState: boolean active>;
+
+        if $z1 != z0 goto label1;
+
+        return;
+
+     label1:
+        r1.<com.android.internal.telephony.PhoneSwitcher$PhoneState: boolean active> = z0;
+
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        if z0 == 0 goto label2;
+
+        r8 = "activate ";
+
+        goto label3;
+
+     label2:
+        r8 = "deactivate ";
+
+     label3:
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r8);
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r7 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void log(java.lang.String)>($r7);
+
+        $l1 = staticinvoke <java.lang.System: long currentTimeMillis()>();
+
+        r1.<com.android.internal.telephony.PhoneSwitcher$PhoneState: long lastRequested> = $l1;
+
+        virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void sendRilCommands(int)>(i0);
+
+        return;
+    }
+
+    private void updateHalCommandToUse()
+    {
+        com.android.internal.telephony.PhoneSwitcher r0;
+        com.android.internal.telephony.RadioConfig $r1;
+        boolean $z0;
+        byte b0;
+
+        r0 := @this: com.android.internal.telephony.PhoneSwitcher;
+
+        $r1 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.RadioConfig mRadioConfig>;
+
+        $z0 = virtualinvoke $r1.<com.android.internal.telephony.RadioConfig: boolean isSetPreferredDataCommandSupported()>();
+
+        if $z0 == 0 goto label1;
+
+        b0 = 2;
+
+        goto label2;
+
+     label1:
+        b0 = 1;
+
+     label2:
+        r0.<com.android.internal.telephony.PhoneSwitcher: int mHalCommandToUse> = b0;
+
+        return;
+    }
+
+    protected void activate(int)
+    {
+        com.android.internal.telephony.PhoneSwitcher r0;
+        int i0;
+
+        r0 := @this: com.android.internal.telephony.PhoneSwitcher;
+
+        i0 := @parameter0: int;
+
+        specialinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void switchPhone(int,boolean)>(i0, 1);
+
+        return;
+    }
+
+    protected void deactivate(int)
+    {
+        com.android.internal.telephony.PhoneSwitcher r0;
+        int i0;
+
+        r0 := @this: com.android.internal.telephony.PhoneSwitcher;
+
+        i0 := @parameter0: int;
+
+        specialinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void switchPhone(int,boolean)>(i0, 0);
+
+        return;
+    }
+
+    public void dump(java.io.FileDescriptor, java.io.PrintWriter, java.lang.String[])
+    {
+        com.android.internal.telephony.PhoneSwitcher r0;
+        java.io.FileDescriptor r1;
+        java.lang.String[] r2;
+        java.util.Calendar r4;
+        com.android.internal.telephony.IndentingPrintWriter $r6;
+        int $i0, i4;
+        com.android.internal.telephony.LocalLog $r8;
+        com.android.internal.telephony.PhoneSwitcher$PhoneState[] $r10;
+        long $l1, $l2;
+        java.lang.StringBuilder $r11;
+        boolean $z0;
+        byte $b3;
+        java.lang.Object[] $r17;
+        java.lang.String $r19, r22;
+        java.io.PrintWriter r20;
+        com.android.internal.telephony.PhoneSwitcher$PhoneState r21;
+
+        r0 := @this: com.android.internal.telephony.PhoneSwitcher;
+
+        r1 := @parameter0: java.io.FileDescriptor;
+
+        r20 := @parameter1: java.io.PrintWriter;
+
+        r2 := @parameter2: java.lang.String[];
+
+        $r6 = new com.android.internal.telephony.IndentingPrintWriter;
+
+        specialinvoke $r6.<com.android.internal.telephony.IndentingPrintWriter: void <init>(java.io.Writer,java.lang.String)>(r20, "  ");
+
+        virtualinvoke $r6.<com.android.internal.telephony.IndentingPrintWriter: void println(java.lang.String)>("PhoneSwitcher:");
+
+        r4 = staticinvoke <java.util.Calendar: java.util.Calendar getInstance()>();
+
+        i4 = 0;
+
+     label1:
+        $i0 = r0.<com.android.internal.telephony.PhoneSwitcher: int mActiveModemCount>;
+
+        if i4 >= $i0 goto label4;
+
+        $r10 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.PhoneSwitcher$PhoneState[] mPhoneStates>;
+
+        r21 = $r10[i4];
+
+        $l1 = r21.<com.android.internal.telephony.PhoneSwitcher$PhoneState: long lastRequested>;
+
+        virtualinvoke r4.<java.util.Calendar: void setTimeInMillis(long)>($l1);
+
+        $r11 = new java.lang.StringBuilder;
+
+        specialinvoke $r11.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("PhoneId(");
+
+        virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i4);
+
+        virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(") active=");
+
+        $z0 = r21.<com.android.internal.telephony.PhoneSwitcher$PhoneState: boolean active>;
+
+        virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>($z0);
+
+        virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", lastRequest=");
+
+        $l2 = r21.<com.android.internal.telephony.PhoneSwitcher$PhoneState: long lastRequested>;
+
+        $b3 = $l2 cmp 0L;
+
+        if $b3 != 0 goto label2;
+
+        r22 = "never";
+
+        goto label3;
+
+     label2:
+        $r17 = newarray (java.lang.Object)[6];
+
+        $r17[0] = r4;
+
+        $r17[1] = r4;
+
+        $r17[2] = r4;
+
+        $r17[3] = r4;
+
+        $r17[4] = r4;
+
+        $r17[5] = r4;
+
+        r22 = staticinvoke <java.lang.String: java.lang.String format(java.lang.String,java.lang.Object[])>("%tm-%td %tH:%tM:%tS.%tL", $r17);
+
+     label3:
+        virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r22);
+
+        $r19 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke $r6.<com.android.internal.telephony.IndentingPrintWriter: void println(java.lang.String)>($r19);
+
+        i4 = i4 + 1;
+
+        goto label1;
+
+     label4:
+        virtualinvoke $r6.<com.android.internal.telephony.IndentingPrintWriter: com.android.internal.telephony.IndentingPrintWriter increaseIndent()>();
+
+        $r8 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.LocalLog mLocalLog>;
+
+        virtualinvoke $r8.<com.android.internal.telephony.LocalLog: void dump(java.io.FileDescriptor,java.io.PrintWriter,java.lang.String[])>(r1, $r6, r2);
+
+        virtualinvoke $r6.<com.android.internal.telephony.IndentingPrintWriter: com.android.internal.telephony.IndentingPrintWriter decreaseIndent()>();
+
+        return;
+    }
+
+    public int getActiveDataSubId()
+    {
+        com.android.internal.telephony.PhoneSwitcher r0;
+        com.android.internal.telephony.SubscriptionController$WatchedInt $r1;
+        int $i0;
+
+        r0 := @this: com.android.internal.telephony.PhoneSwitcher;
+
+        $r1 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.SubscriptionController$WatchedInt mPreferredDataSubId>;
+
+        $i0 = virtualinvoke $r1.<com.android.internal.telephony.SubscriptionController$WatchedInt: int get()>();
+
+        return $i0;
+    }
+
+    public int getOpportunisticDataSubscriptionId()
+    {
+        com.android.internal.telephony.PhoneSwitcher r0;
+        int $i0;
+
+        r0 := @this: com.android.internal.telephony.PhoneSwitcher;
+
+        $i0 = r0.<com.android.internal.telephony.PhoneSwitcher: int mOpptDataSubId>;
+
+        return $i0;
+    }
+
+    public int getPreferredDataPhoneId()
+    {
+        com.android.internal.telephony.PhoneSwitcher r0;
+        int $i0;
+
+        r0 := @this: com.android.internal.telephony.PhoneSwitcher;
+
+        $i0 = r0.<com.android.internal.telephony.PhoneSwitcher: int mPreferredDataPhoneId>;
+
+        return $i0;
+    }
+
+    protected int getSubIdFromNetworkSpecifier(android.net.NetworkSpecifier)
+    {
+        com.android.internal.telephony.PhoneSwitcher r0;
+        android.net.NetworkSpecifier r1;
+        boolean $z0;
+        android.net.TelephonyNetworkSpecifier $r2;
+        int $i0;
+
+        r0 := @this: com.android.internal.telephony.PhoneSwitcher;
+
+        r1 := @parameter0: android.net.NetworkSpecifier;
+
+        if r1 != null goto label1;
+
+        return 2147483647;
+
+     label1:
+        $z0 = r1 instanceof android.net.TelephonyNetworkSpecifier;
+
+        if $z0 == 0 goto label2;
+
+        $r2 = (android.net.TelephonyNetworkSpecifier) r1;
+
+        $i0 = virtualinvoke $r2.<android.net.TelephonyNetworkSpecifier: int getSubscriptionId()>();
+
+        return $i0;
+
+     label2:
+        return -1;
+    }
+
+    public void handleMessage(android.os.Message)
+    {
+        com.android.internal.telephony.PhoneSwitcher r0;
+        java.lang.Object $r1, $r3, $r5, $r12, $r34, $r40, $r41, $r59, $r70, $r72;
+        android.net.Network $r2;
+        int $i0, $i1, $i2, $i4, $i5, $i6, $i7, $i8, $i9, $i10, $i11, $i12, $i13, $i14, $i16, $i17, $i18, $i20, $i21, i22, i23, i24, i25, i26;
+        android.os.AsyncResult $r4, r84;
+        java.lang.Integer $r6, $r35, $r42, $r48;
+        java.lang.StringBuilder $r7, $r13, $r23, $r36, $r43, $r50, $r62;
+        com.android.internal.telephony.PhoneSwitcher$EmergencyOverrideRequest $r9, $r15, $r19, $r20, $r21, $r27, $r54, $r57, $r58, $r61, $r66, $r68, $r69, r79, r80, $r85, r88;
+        java.lang.String $r11, $r17, $r30, $r39, $r47, $r53, $r65;
+        android.os.Message $r18, $r49, $r56, $r67, r76;
+        long $l3, $l15, $l19;
+        boolean $z4, $z5, $z7, $z10, $z11, $z15, $z18, z19, z20, $z21, z22, z23;
+        java.util.concurrent.CompletableFuture $r22, $r31;
+        com.android.internal.telephony.SubscriptionController$WatchedInt $r32, $r33, $r74, $r75;
+        java.lang.Throwable $r45, $r55;
+        com.android.internal.telephony.ISetOpportunisticDataCallback $r60;
+        android.net.NetworkRequest $r71, $r73;
+        java.lang.Boolean r77;
+
+        r0 := @this: com.android.internal.telephony.PhoneSwitcher;
+
+        r76 := @parameter0: android.os.Message;
+
+        i22 = r76.<android.os.Message: int what>;
+
+        z19 = 1;
+
+        r77 = staticinvoke <java.lang.Boolean: java.lang.Boolean valueOf(boolean)>(0);
+
+        tableswitch(i22)
+        {
+            case 101: goto label33;
+            case 102: goto label32;
+            case 103: goto label31;
+            case 104: goto label30;
+            case 105: goto label27;
+            case 106: goto label26;
+            case 107: goto label23;
+            case 108: goto label22;
+            case 109: goto label19;
+            case 110: goto label16;
+            case 111: goto label15;
+            case 112: goto label11;
+            case 113: goto label10;
+            case 114: goto label21;
+            case 115: goto label05;
+            case 116: goto label04;
+            case 117: goto label03;
+            case 118: goto label02;
+            default: goto label01;
+        };
+
+     label01:
+        goto label34;
+
+     label02:
+        $i0 = r76.<android.os.Message: int arg1>;
+
+        $r1 = r76.<android.os.Message: java.lang.Object obj>;
+
+        $r2 = (android.net.Network) $r1;
+
+        specialinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void onNetworkAvailable(int,android.net.Network)>($i0, $r2);
+
+        goto label34;
+
+     label03:
+        $r3 = r76.<android.os.Message: java.lang.Object obj>;
+
+        $r4 = (android.os.AsyncResult) $r3;
+
+        $r5 = $r4.<android.os.AsyncResult: java.lang.Object result>;
+
+        $r6 = (java.lang.Integer) $r5;
+
+        $i1 = virtualinvoke $r6.<java.lang.Integer: int intValue()>();
+
+        specialinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void onMultiSimConfigChanged(int)>($i1);
+
+        goto label34;
+
+     label04:
+        $r7 = new java.lang.StringBuilder;
+
+        specialinvoke $r7.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Emergency override removed - ");
+
+        $r9 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.PhoneSwitcher$EmergencyOverrideRequest mEmergencyOverride>;
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r9);
+
+        $r11 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void log(java.lang.String)>($r11);
+
+        r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.PhoneSwitcher$EmergencyOverrideRequest mEmergencyOverride> = null;
+
+        virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: boolean onEvaluate(boolean,java.lang.String)>(0, "emer_rm_override_dds");
+
+        goto label34;
+
+     label05:
+        $r12 = r76.<android.os.Message: java.lang.Object obj>;
+
+        r79 = (com.android.internal.telephony.PhoneSwitcher$EmergencyOverrideRequest) $r12;
+
+        r80 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.PhoneSwitcher$EmergencyOverrideRequest mEmergencyOverride>;
+
+        if r80 == null goto label08;
+
+        $i5 = r80.<com.android.internal.telephony.PhoneSwitcher$EmergencyOverrideRequest: int mPhoneId>;
+
+        $i4 = r79.<com.android.internal.telephony.PhoneSwitcher$EmergencyOverrideRequest: int mPhoneId>;
+
+        if $i5 == $i4 goto label06;
+
+        $r23 = new java.lang.StringBuilder;
+
+        specialinvoke $r23.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r23.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("emergency override requested for phone id ");
+
+        $i6 = r79.<com.android.internal.telephony.PhoneSwitcher$EmergencyOverrideRequest: int mPhoneId>;
+
+        virtualinvoke $r23.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i6);
+
+        virtualinvoke $r23.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" when there is already an override in place for phone id ");
+
+        $r27 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.PhoneSwitcher$EmergencyOverrideRequest mEmergencyOverride>;
+
+        $i7 = $r27.<com.android.internal.telephony.PhoneSwitcher$EmergencyOverrideRequest: int mPhoneId>;
+
+        virtualinvoke $r23.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i7);
+
+        virtualinvoke $r23.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(". Ignoring.");
+
+        $r30 = virtualinvoke $r23.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void log(java.lang.String)>($r30);
+
+        $z7 = virtualinvoke r79.<com.android.internal.telephony.PhoneSwitcher$EmergencyOverrideRequest: boolean isCallbackAvailable()>();
+
+        if $z7 == 0 goto label34;
+
+        $r31 = r79.<com.android.internal.telephony.PhoneSwitcher$EmergencyOverrideRequest: java.util.concurrent.CompletableFuture mOverrideCompleteFuture>;
+
+        virtualinvoke $r31.<java.util.concurrent.CompletableFuture: boolean complete(java.lang.Object)>(r77);
+
+        goto label34;
+
+     label06:
+        $r20 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.PhoneSwitcher$EmergencyOverrideRequest mEmergencyOverride>;
+
+        $z5 = virtualinvoke $r20.<com.android.internal.telephony.PhoneSwitcher$EmergencyOverrideRequest: boolean isCallbackAvailable()>();
+
+        if $z5 == 0 goto label07;
+
+        $r21 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.PhoneSwitcher$EmergencyOverrideRequest mEmergencyOverride>;
+
+        $r22 = $r21.<com.android.internal.telephony.PhoneSwitcher$EmergencyOverrideRequest: java.util.concurrent.CompletableFuture mOverrideCompleteFuture>;
+
+        virtualinvoke $r22.<java.util.concurrent.CompletableFuture: boolean complete(java.lang.Object)>(r77);
+
+     label07:
+        r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.PhoneSwitcher$EmergencyOverrideRequest mEmergencyOverride> = r79;
+
+        goto label09;
+
+     label08:
+        r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.PhoneSwitcher$EmergencyOverrideRequest mEmergencyOverride> = r79;
+
+     label09:
+        $r13 = new java.lang.StringBuilder;
+
+        specialinvoke $r13.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("new emergency override - ");
+
+        $r15 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.PhoneSwitcher$EmergencyOverrideRequest mEmergencyOverride>;
+
+        virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r15);
+
+        $r17 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void log(java.lang.String)>($r17);
+
+        virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void removeMessages(int)>(116);
+
+        $r18 = virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: android.os.Message obtainMessage(int)>(116);
+
+        $i2 = <com.android.internal.telephony.PhoneSwitcher: int DEFAULT_DATA_OVERRIDE_TIMEOUT_MS>;
+
+        $l3 = (long) $i2;
+
+        virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: boolean sendMessageDelayed(android.os.Message,long)>($r18, $l3);
+
+        $z4 = virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: boolean onEvaluate(boolean,java.lang.String)>(0, "emer_override_dds");
+
+        if $z4 != 0 goto label34;
+
+        $r19 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.PhoneSwitcher$EmergencyOverrideRequest mEmergencyOverride>;
+
+        virtualinvoke $r19.<com.android.internal.telephony.PhoneSwitcher$EmergencyOverrideRequest: void sendOverrideCompleteCallbackResultAndClear(boolean)>(1);
+
+        goto label34;
+
+     label10:
+        $r34 = r76.<android.os.Message: java.lang.Object obj>;
+
+        $r35 = (java.lang.Integer) $r34;
+
+        i23 = virtualinvoke $r35.<java.lang.Integer: int intValue()>();
+
+        $r36 = new java.lang.StringBuilder;
+
+        specialinvoke $r36.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r36.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Resend modem command on phone ");
+
+        virtualinvoke $r36.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i23);
+
+        $r39 = virtualinvoke $r36.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void log(java.lang.String)>($r39);
+
+        virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void sendRilCommands(int)>(i23);
+
+        goto label34;
+
+     label11:
+        $r40 = r76.<android.os.Message: java.lang.Object obj>;
+
+        r84 = (android.os.AsyncResult) $r40;
+
+        if r84 == null goto label12;
+
+        $r55 = r84.<android.os.AsyncResult: java.lang.Throwable exception>;
+
+        if $r55 != null goto label12;
+
+        goto label13;
+
+     label12:
+        z19 = 0;
+
+     label13:
+        $r85 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.PhoneSwitcher$EmergencyOverrideRequest mEmergencyOverride>;
+
+        if $r85 == null goto label14;
+
+        $r50 = new java.lang.StringBuilder;
+
+        specialinvoke $r50.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r50.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Emergency override result sent = ");
+
+        virtualinvoke $r50.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>(z19);
+
+        $r53 = virtualinvoke $r50.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void log(java.lang.String)>($r53);
+
+        $r54 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.PhoneSwitcher$EmergencyOverrideRequest mEmergencyOverride>;
+
+        virtualinvoke $r54.<com.android.internal.telephony.PhoneSwitcher$EmergencyOverrideRequest: void sendOverrideCompleteCallbackResultAndClear(boolean)>(z19);
+
+        goto label34;
+
+     label14:
+        if z19 != 0 goto label34;
+
+        $r41 = r84.<android.os.AsyncResult: java.lang.Object userObj>;
+
+        $r42 = (java.lang.Integer) $r41;
+
+        i24 = virtualinvoke $r42.<java.lang.Integer: int intValue()>();
+
+        $r43 = new java.lang.StringBuilder;
+
+        specialinvoke $r43.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r43.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Modem command failed. with exception ");
+
+        $r45 = r84.<android.os.AsyncResult: java.lang.Throwable exception>;
+
+        virtualinvoke $r43.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r45);
+
+        $r47 = virtualinvoke $r43.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void log(java.lang.String)>($r47);
+
+        $r48 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i24);
+
+        $r49 = staticinvoke <android.os.Message: android.os.Message obtain(android.os.Handler,int,java.lang.Object)>(r0, 113, $r48);
+
+        virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: boolean sendMessageDelayed(android.os.Message,long)>($r49, 5000L);
+
+        goto label34;
+
+     label15:
+        specialinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void removeDefaultNetworkChangeCallback()>();
+
+        goto label34;
+
+     label16:
+        i25 = r76.<android.os.Message: int arg1>;
+
+        $i10 = r76.<android.os.Message: int arg2>;
+
+        if $i10 != 1 goto label17;
+
+        z20 = 1;
+
+        goto label18;
+
+     label17:
+        z20 = 0;
+
+     label18:
+        specialinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void onValidationDone(int,boolean)>(i25, z20);
+
+        goto label34;
+
+     label19:
+        $z10 = specialinvoke r0.<com.android.internal.telephony.PhoneSwitcher: boolean isPhoneInVoiceCallChanged()>();
+
+        if $z10 != 0 goto label20;
+
+        goto label34;
+
+     label20:
+        r88 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.PhoneSwitcher$EmergencyOverrideRequest mEmergencyOverride>;
+
+        if r88 == null goto label21;
+
+        $z11 = r88.<com.android.internal.telephony.PhoneSwitcher$EmergencyOverrideRequest: boolean mPendingOriginatingCall>;
+
+        if $z11 == 0 goto label21;
+
+        virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void removeMessages(int)>(116);
+
+        $i11 = r0.<com.android.internal.telephony.PhoneSwitcher: int mPhoneIdInVoiceCall>;
+
+        if $i11 != -1 goto label21;
+
+        $r56 = virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: android.os.Message obtainMessage(int)>(116);
+
+        $r57 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.PhoneSwitcher$EmergencyOverrideRequest mEmergencyOverride>;
+
+        $i13 = $r57.<com.android.internal.telephony.PhoneSwitcher$EmergencyOverrideRequest: int mGnssOverrideTimeMs>;
+
+        $i12 = <com.android.internal.telephony.PhoneSwitcher: int ECBM_DEFAULT_DATA_SWITCH_BASE_TIME_MS>;
+
+        $i14 = $i13 + $i12;
+
+        $l15 = (long) $i14;
+
+        virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: boolean sendMessageDelayed(android.os.Message,long)>($r56, $l15);
+
+        $r58 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.PhoneSwitcher$EmergencyOverrideRequest mEmergencyOverride>;
+
+        $r58.<com.android.internal.telephony.PhoneSwitcher$EmergencyOverrideRequest: boolean mPendingOriginatingCall> = 0;
+
+     label21:
+        $z21 = virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: boolean onEvaluate(boolean,java.lang.String)>(0, "EVENT_PRECISE_CALL_STATE_CHANGED");
+
+        if $z21 == 0 goto label34;
+
+        $r32 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.SubscriptionController$WatchedInt mPreferredDataSubId>;
+
+        $i8 = virtualinvoke $r32.<com.android.internal.telephony.SubscriptionController$WatchedInt: int get()>();
+
+        specialinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void logDataSwitchEvent(int,int,int)>($i8, 1, 2);
+
+        $r33 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.SubscriptionController$WatchedInt mPreferredDataSubId>;
+
+        $i9 = virtualinvoke $r33.<com.android.internal.telephony.SubscriptionController$WatchedInt: int get()>();
+
+        specialinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void registerDefaultNetworkChangeCallback(int,int)>($i9, 2);
+
+        goto label34;
+
+     label22:
+        specialinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void updateHalCommandToUse()>();
+
+        virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: boolean onEvaluate(boolean,java.lang.String)>(0, "EVENT_RADIO_AVAILABLE");
+
+        goto label34;
+
+     label23:
+        i26 = r76.<android.os.Message: int arg1>;
+
+        $i16 = r76.<android.os.Message: int arg2>;
+
+        if $i16 != 1 goto label24;
+
+        z22 = 1;
+
+        goto label25;
+
+     label24:
+        z22 = 0;
+
+     label25:
+        $r59 = r76.<android.os.Message: java.lang.Object obj>;
+
+        $r60 = (com.android.internal.telephony.ISetOpportunisticDataCallback) $r59;
+
+        specialinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void setOpportunisticDataSubscription(int,boolean,com.android.internal.telephony.ISetOpportunisticDataCallback)>(i26, z22, $r60);
+
+        goto label34;
+
+     label26:
+        $i17 = r76.<android.os.Message: int arg1>;
+
+        virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void sendRilCommands(int)>($i17);
+
+        goto label34;
+
+     label27:
+        z23 = specialinvoke r0.<com.android.internal.telephony.PhoneSwitcher: boolean isInEmergencyCallbackMode()>();
+
+        $r61 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.PhoneSwitcher$EmergencyOverrideRequest mEmergencyOverride>;
+
+        if $r61 == null goto label29;
+
+        $r62 = new java.lang.StringBuilder;
+
+        specialinvoke $r62.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r62.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Emergency override - ecbm status = ");
+
+        virtualinvoke $r62.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>(z23);
+
+        $r65 = virtualinvoke $r62.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void log(java.lang.String)>($r65);
+
+        if z23 == 0 goto label28;
+
+        virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void removeMessages(int)>(116);
+
+        $r69 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.PhoneSwitcher$EmergencyOverrideRequest mEmergencyOverride>;
+
+        $r69.<com.android.internal.telephony.PhoneSwitcher$EmergencyOverrideRequest: boolean mRequiresEcmFinish> = 1;
+
+        goto label29;
+
+     label28:
+        $r66 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.PhoneSwitcher$EmergencyOverrideRequest mEmergencyOverride>;
+
+        $z15 = $r66.<com.android.internal.telephony.PhoneSwitcher$EmergencyOverrideRequest: boolean mRequiresEcmFinish>;
+
+        if $z15 == 0 goto label29;
+
+        $r67 = virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: android.os.Message obtainMessage(int)>(116);
+
+        $r68 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.PhoneSwitcher$EmergencyOverrideRequest mEmergencyOverride>;
+
+        $i18 = $r68.<com.android.internal.telephony.PhoneSwitcher$EmergencyOverrideRequest: int mGnssOverrideTimeMs>;
+
+        $l19 = (long) $i18;
+
+        virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: boolean sendMessageDelayed(android.os.Message,long)>($r67, $l19);
+
+     label29:
+        virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: boolean onEvaluate(boolean,java.lang.String)>(1, "emergencyToggle");
+
+        goto label34;
+
+     label30:
+        $r70 = r76.<android.os.Message: java.lang.Object obj>;
+
+        $r71 = (android.net.NetworkRequest) $r70;
+
+        specialinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void onReleaseNetwork(android.net.NetworkRequest)>($r71);
+
+        goto label34;
+
+     label31:
+        $r72 = r76.<android.os.Message: java.lang.Object obj>;
+
+        $r73 = (android.net.NetworkRequest) $r72;
+
+        specialinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void onRequestNetwork(android.net.NetworkRequest)>($r73);
+
+        goto label34;
+
+     label32:
+        virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: boolean onEvaluate(boolean,java.lang.String)>(0, "subChanged");
+
+        goto label34;
+
+     label33:
+        $z18 = virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: boolean onEvaluate(boolean,java.lang.String)>(0, "primary data subId changed");
+
+        if $z18 == 0 goto label34;
+
+        $r74 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.SubscriptionController$WatchedInt mPreferredDataSubId>;
+
+        $i20 = virtualinvoke $r74.<com.android.internal.telephony.SubscriptionController$WatchedInt: int get()>();
+
+        specialinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void logDataSwitchEvent(int,int,int)>($i20, 1, 1);
+
+        $r75 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.SubscriptionController$WatchedInt mPreferredDataSubId>;
+
+        $i21 = virtualinvoke $r75.<com.android.internal.telephony.SubscriptionController$WatchedInt: int get()>();
+
+        specialinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void registerDefaultNetworkChangeCallback(int,int)>($i21, 1);
+
+     label34:
+        return;
+    }
+
+    boolean isEmergencyNetworkRequest(android.net.NetworkRequest)
+    {
+        com.android.internal.telephony.PhoneSwitcher r0;
+        android.net.NetworkRequest r1;
+        boolean $z0;
+
+        r0 := @this: com.android.internal.telephony.PhoneSwitcher;
+
+        r1 := @parameter0: android.net.NetworkRequest;
+
+        $z0 = virtualinvoke r1.<android.net.NetworkRequest: boolean hasCapability(int)>(10);
+
+        return $z0;
+    }
+
+    protected boolean isPhoneActive(int)
+    {
+        com.android.internal.telephony.PhoneSwitcher r0;
+        int i0, $i1;
+        com.android.internal.telephony.PhoneSwitcher$PhoneState[] $r1;
+        com.android.internal.telephony.PhoneSwitcher$PhoneState $r2;
+        boolean $z0;
+
+        r0 := @this: com.android.internal.telephony.PhoneSwitcher;
+
+        i0 := @parameter0: int;
+
+        $i1 = r0.<com.android.internal.telephony.PhoneSwitcher: int mActiveModemCount>;
+
+        if i0 < $i1 goto label1;
+
+        return 0;
+
+     label1:
+        $r1 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.PhoneSwitcher$PhoneState[] mPhoneStates>;
+
+        $r2 = $r1[i0];
+
+        $z0 = $r2.<com.android.internal.telephony.PhoneSwitcher$PhoneState: boolean active>;
+
+        return $z0;
+    }
+
+    protected boolean isPhoneInVoiceCall(com.android.internal.telephony.Phone)
+    {
+        com.android.internal.telephony.PhoneSwitcher r0;
+        com.android.internal.telephony.Phone r1;
+        com.android.internal.telephony.Call $r2, $r5, $r8;
+        com.android.internal.telephony.Call$State $r3, $r4, $r6, $r7, $r9, $r10;
+        boolean z0;
+
+        r0 := @this: com.android.internal.telephony.PhoneSwitcher;
+
+        r1 := @parameter0: com.android.internal.telephony.Phone;
+
+        z0 = 0;
+
+        if r1 != null goto label1;
+
+        return 0;
+
+     label1:
+        $r2 = virtualinvoke r1.<com.android.internal.telephony.Phone: com.android.internal.telephony.Call getForegroundCall()>();
+
+        $r3 = virtualinvoke $r2.<com.android.internal.telephony.Call: com.android.internal.telephony.Call$State getState()>();
+
+        $r4 = <com.android.internal.telephony.Call$State: com.android.internal.telephony.Call$State ACTIVE>;
+
+        if $r3 == $r4 goto label2;
+
+        $r5 = virtualinvoke r1.<com.android.internal.telephony.Phone: com.android.internal.telephony.Call getForegroundCall()>();
+
+        $r6 = virtualinvoke $r5.<com.android.internal.telephony.Call: com.android.internal.telephony.Call$State getState()>();
+
+        $r7 = <com.android.internal.telephony.Call$State: com.android.internal.telephony.Call$State ALERTING>;
+
+        if $r6 == $r7 goto label2;
+
+        $r8 = virtualinvoke r1.<com.android.internal.telephony.Phone: com.android.internal.telephony.Call getBackgroundCall()>();
+
+        $r9 = virtualinvoke $r8.<com.android.internal.telephony.Call: com.android.internal.telephony.Call$State getState()>();
+
+        $r10 = <com.android.internal.telephony.Call$State: com.android.internal.telephony.Call$State HOLDING>;
+
+        if $r9 != $r10 goto label3;
+
+     label2:
+        z0 = 1;
+
+     label3:
+        return z0;
+    }
+
+    protected void log(java.lang.String)
+    {
+        com.android.internal.telephony.PhoneSwitcher r0;
+        java.lang.String r1;
+        com.android.internal.telephony.LocalLog $r2;
+
+        r0 := @this: com.android.internal.telephony.PhoneSwitcher;
+
+        r1 := @parameter0: java.lang.String;
+
+        staticinvoke <com.android.telephony.Rlog: int d(java.lang.String,java.lang.String)>("PhoneSwitcher", r1);
+
+        $r2 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.LocalLog mLocalLog>;
+
+        virtualinvoke $r2.<com.android.internal.telephony.LocalLog: void log(java.lang.String)>(r1);
+
+        return;
+    }
+
+    protected void notifyPreferredDataSubIdChanged()
+    {
+        com.android.internal.telephony.PhoneSwitcher r0;
+        android.telephony.TelephonyRegistryManager r1;
+        android.content.Context $r3;
+        java.lang.Object $r4;
+        java.lang.StringBuilder $r5;
+        com.android.internal.telephony.SubscriptionController$WatchedInt $r7, $r10;
+        int $i0, $i1;
+        java.lang.String $r9;
+
+        r0 := @this: com.android.internal.telephony.PhoneSwitcher;
+
+        $r3 = r0.<com.android.internal.telephony.PhoneSwitcher: android.content.Context mContext>;
+
+        $r4 = virtualinvoke $r3.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("telephony_registry");
+
+        r1 = (android.telephony.TelephonyRegistryManager) $r4;
+
+        $r5 = new java.lang.StringBuilder;
+
+        specialinvoke $r5.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("notifyPreferredDataSubIdChanged to ");
+
+        $r7 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.SubscriptionController$WatchedInt mPreferredDataSubId>;
+
+        $i0 = virtualinvoke $r7.<com.android.internal.telephony.SubscriptionController$WatchedInt: int get()>();
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i0);
+
+        $r9 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void log(java.lang.String)>($r9);
+
+        $r10 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.SubscriptionController$WatchedInt mPreferredDataSubId>;
+
+        $i1 = virtualinvoke $r10.<com.android.internal.telephony.SubscriptionController$WatchedInt: int get()>();
+
+        virtualinvoke r1.<android.telephony.TelephonyRegistryManager: void notifyActiveDataSubIdChanged(int)>($i1);
+
+        return;
+    }
+
+    protected boolean onEvaluate(boolean, java.lang.String)
+    {
+        com.android.internal.telephony.PhoneSwitcher r0;
+        int i0, $i1, $i2, $i3, $i4, $i5, $i6, $i7, $i8, $i9, $i10, $i11, $i12, $i13, $i14, $i15, $i16, $i17, $i18, $i19, $i20, i21, $i22, i23, $i24, i25, i26, i27, i28, i29, $i30, $i31, i32, $i33;
+        java.lang.StringBuilder $r1, $r2;
+        java.lang.String $r4, $r6, r42;
+        java.util.ArrayList $r7;
+        boolean $z0, $z1, $z2, $z3, $z5, $z9, z10, z11, z12, $z13;
+        com.android.internal.telephony.RegistrantList $r8;
+        java.lang.Object $r9, $r15;
+        java.lang.Integer $r10, $r11, $r12, $r13, $r18, $r19, $r20, $r21;
+        java.util.List $r14;
+        com.android.internal.telephony.dataconnection.DcRequest $r16;
+        android.net.NetworkRequest $r17;
+        com.android.internal.telephony.PhoneSwitcher$PhoneState[] $r22;
+        com.android.internal.telephony.PhoneSwitcher$PhoneState $r23;
+        com.android.internal.telephony.SubscriptionController $r28, $r44;
+        int[] $r29, $r33, $r37;
+        java.util.Iterator r47, r48;
+
+        r0 := @this: com.android.internal.telephony.PhoneSwitcher;
+
+        z10 := @parameter0: boolean;
+
+        r42 := @parameter1: java.lang.String;
+
+        $r1 = new java.lang.StringBuilder;
+
+        specialinvoke $r1.<java.lang.StringBuilder: void <init>(java.lang.String)>(r42);
+
+        $i1 = r0.<com.android.internal.telephony.PhoneSwitcher: int mHalCommandToUse>;
+
+        if $i1 == 2 goto label01;
+
+        if z10 == 0 goto label01;
+
+        z11 = 1;
+
+        goto label02;
+
+     label01:
+        z11 = 0;
+
+     label02:
+        $r44 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.SubscriptionController mSubscriptionController>;
+
+        i21 = virtualinvoke $r44.<com.android.internal.telephony.SubscriptionController: int getDefaultDataSubId()>();
+
+        $i22 = r0.<com.android.internal.telephony.PhoneSwitcher: int mPrimaryDataSubId>;
+
+        if i21 == $i22 goto label03;
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" mPrimaryDataSubId ");
+
+        $i20 = r0.<com.android.internal.telephony.PhoneSwitcher: int mPrimaryDataSubId>;
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i20);
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("->");
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i21);
+
+        r0.<com.android.internal.telephony.PhoneSwitcher: int mPrimaryDataSubId> = i21;
+
+     label03:
+        z12 = 0;
+
+        i23 = 0;
+
+     label04:
+        $i24 = r0.<com.android.internal.telephony.PhoneSwitcher: int mActiveModemCount>;
+
+        if i23 >= $i24 goto label07;
+
+        $r28 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.SubscriptionController mSubscriptionController>;
+
+        i0 = virtualinvoke $r28.<com.android.internal.telephony.SubscriptionController: int getSubIdUsingPhoneId(int)>(i23);
+
+        $z9 = staticinvoke <android.telephony.SubscriptionManager: boolean isValidSubscriptionId(int)>(i0);
+
+        if $z9 == 0 goto label05;
+
+        z12 = 1;
+
+     label05:
+        $r29 = r0.<com.android.internal.telephony.PhoneSwitcher: int[] mPhoneSubscriptions>;
+
+        $i18 = $r29[i23];
+
+        if i0 == $i18 goto label06;
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" phone[");
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i23);
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("] ");
+
+        $r33 = r0.<com.android.internal.telephony.PhoneSwitcher: int[] mPhoneSubscriptions>;
+
+        $i19 = $r33[i23];
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i19);
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("->");
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r37 = r0.<com.android.internal.telephony.PhoneSwitcher: int[] mPhoneSubscriptions>;
+
+        $r37[i23] = i0;
+
+        z11 = 1;
+
+     label06:
+        i23 = i23 + 1;
+
+        goto label04;
+
+     label07:
+        if z12 != 0 goto label08;
+
+        virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void transitionToEmergencyPhone()>();
+
+     label08:
+        i25 = r0.<com.android.internal.telephony.PhoneSwitcher: int mPreferredDataPhoneId>;
+
+        if z12 == 0 goto label09;
+
+        virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void updatePreferredDataPhoneId()>();
+
+     label09:
+        $i2 = r0.<com.android.internal.telephony.PhoneSwitcher: int mPreferredDataPhoneId>;
+
+        if i25 == $i2 goto label10;
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" preferred phoneId ");
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i25);
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("->");
+
+        $i17 = r0.<com.android.internal.telephony.PhoneSwitcher: int mPreferredDataPhoneId>;
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i17);
+
+        z11 = 1;
+
+     label10:
+        if z11 == 0 goto label29;
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("evaluating due to ");
+
+        $r4 = virtualinvoke $r1.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r4);
+
+        $r6 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void log(java.lang.String)>($r6);
+
+        $i3 = r0.<com.android.internal.telephony.PhoneSwitcher: int mHalCommandToUse>;
+
+        if $i3 != 2 goto label13;
+
+        i26 = 0;
+
+     label11:
+        $i15 = r0.<com.android.internal.telephony.PhoneSwitcher: int mActiveModemCount>;
+
+        if i26 >= $i15 goto label12;
+
+        $r22 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.PhoneSwitcher$PhoneState[] mPhoneStates>;
+
+        $r23 = $r22[i26];
+
+        $r23.<com.android.internal.telephony.PhoneSwitcher$PhoneState: boolean active> = 1;
+
+        i26 = i26 + 1;
+
+        goto label11;
+
+     label12:
+        $i16 = r0.<com.android.internal.telephony.PhoneSwitcher: int mPreferredDataPhoneId>;
+
+        virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void sendRilCommands(int)>($i16);
+
+        goto label28;
+
+     label13:
+        $r7 = new java.util.ArrayList;
+
+        specialinvoke $r7.<java.util.ArrayList: void <init>()>();
+
+        $i5 = r0.<com.android.internal.telephony.PhoneSwitcher: int mMaxDataAttachModemCount>;
+
+        $i4 = r0.<com.android.internal.telephony.PhoneSwitcher: int mActiveModemCount>;
+
+        if $i5 != $i4 goto label16;
+
+        i27 = 0;
+
+     label14:
+        $i14 = r0.<com.android.internal.telephony.PhoneSwitcher: int mMaxDataAttachModemCount>;
+
+        if i27 >= $i14 goto label15;
+
+        $r21 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i27);
+
+        interfaceinvoke $r7.<java.util.List: boolean add(java.lang.Object)>($r21);
+
+        i27 = i27 + 1;
+
+        goto label14;
+
+     label15:
+        goto label23;
+
+     label16:
+        i28 = r0.<com.android.internal.telephony.PhoneSwitcher: int mPhoneIdInVoiceCall>;
+
+        if i28 == -1 goto label17;
+
+        $r20 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i28);
+
+        interfaceinvoke $r7.<java.util.List: boolean add(java.lang.Object)>($r20);
+
+     label17:
+        $i6 = interfaceinvoke $r7.<java.util.List: int size()>();
+
+        $i7 = r0.<com.android.internal.telephony.PhoneSwitcher: int mMaxDataAttachModemCount>;
+
+        if $i6 >= $i7 goto label22;
+
+        $r14 = r0.<com.android.internal.telephony.PhoneSwitcher: java.util.List mPrioritizedDcRequests>;
+
+        r47 = interfaceinvoke $r14.<java.util.List: java.util.Iterator iterator()>();
+
+     label18:
+        $z13 = interfaceinvoke r47.<java.util.Iterator: boolean hasNext()>();
+
+        if $z13 == 0 goto label22;
+
+        $r15 = interfaceinvoke r47.<java.util.Iterator: java.lang.Object next()>();
+
+        $r16 = (com.android.internal.telephony.dataconnection.DcRequest) $r15;
+
+        $r17 = $r16.<com.android.internal.telephony.dataconnection.DcRequest: android.net.NetworkRequest networkRequest>;
+
+        i29 = specialinvoke r0.<com.android.internal.telephony.PhoneSwitcher: int phoneIdForRequest(android.net.NetworkRequest)>($r17);
+
+        if i29 != -1 goto label19;
+
+        goto label18;
+
+     label19:
+        $r18 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i29);
+
+        $z5 = interfaceinvoke $r7.<java.util.List: boolean contains(java.lang.Object)>($r18);
+
+        if $z5 == 0 goto label20;
+
+        goto label18;
+
+     label20:
+        $r19 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i29);
+
+        interfaceinvoke $r7.<java.util.List: boolean add(java.lang.Object)>($r19);
+
+        $i12 = interfaceinvoke $r7.<java.util.List: int size()>();
+
+        $i13 = r0.<com.android.internal.telephony.PhoneSwitcher: int mMaxDataAttachModemCount>;
+
+        if $i12 < $i13 goto label21;
+
+        goto label22;
+
+     label21:
+        goto label18;
+
+     label22:
+        $i30 = interfaceinvoke $r7.<java.util.List: int size()>();
+
+        $i31 = r0.<com.android.internal.telephony.PhoneSwitcher: int mMaxDataAttachModemCount>;
+
+        if $i30 >= $i31 goto label23;
+
+        $i9 = r0.<com.android.internal.telephony.PhoneSwitcher: int mPreferredDataPhoneId>;
+
+        $r12 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i9);
+
+        $z2 = interfaceinvoke $r7.<java.util.List: boolean contains(java.lang.Object)>($r12);
+
+        if $z2 == 0 goto label23;
+
+        $i10 = r0.<com.android.internal.telephony.PhoneSwitcher: int mPreferredDataPhoneId>;
+
+        $z3 = staticinvoke <android.telephony.SubscriptionManager: boolean isUsableSubIdValue(int)>($i10);
+
+        if $z3 == 0 goto label23;
+
+        $i11 = r0.<com.android.internal.telephony.PhoneSwitcher: int mPreferredDataPhoneId>;
+
+        $r13 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i11);
+
+        interfaceinvoke $r7.<java.util.List: boolean add(java.lang.Object)>($r13);
+
+     label23:
+        i32 = 0;
+
+     label24:
+        $i33 = r0.<com.android.internal.telephony.PhoneSwitcher: int mActiveModemCount>;
+
+        if i32 >= $i33 goto label26;
+
+        $r11 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i32);
+
+        $z1 = interfaceinvoke $r7.<java.util.List: boolean contains(java.lang.Object)>($r11);
+
+        if $z1 != 0 goto label25;
+
+        virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void deactivate(int)>(i32);
+
+     label25:
+        i32 = i32 + 1;
+
+        goto label24;
+
+     label26:
+        r48 = interfaceinvoke $r7.<java.util.List: java.util.Iterator iterator()>();
+
+     label27:
+        $z0 = interfaceinvoke r48.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label28;
+
+        $r9 = interfaceinvoke r48.<java.util.Iterator: java.lang.Object next()>();
+
+        $r10 = (java.lang.Integer) $r9;
+
+        $i8 = virtualinvoke $r10.<java.lang.Integer: int intValue()>();
+
+        virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void activate(int)>($i8);
+
+        goto label27;
+
+     label28:
+        virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void notifyPreferredDataSubIdChanged()>();
+
+        $r8 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.RegistrantList mActivePhoneRegistrants>;
+
+        virtualinvoke $r8.<com.android.internal.telephony.RegistrantList: void notifyRegistrants()>();
+
+     label29:
+        return z11;
+    }
+
+    public void onRadioCapChanged(int)
+    {
+        com.android.internal.telephony.PhoneSwitcher r0;
+        int i0;
+        android.os.Message r1;
+        boolean $z0;
+
+        r0 := @this: com.android.internal.telephony.PhoneSwitcher;
+
+        i0 := @parameter0: int;
+
+        $z0 = staticinvoke <android.telephony.SubscriptionManager: boolean isValidPhoneId(int)>(i0);
+
+        if $z0 != 0 goto label1;
+
+        return;
+
+     label1:
+        r1 = virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: android.os.Message obtainMessage(int)>(106);
+
+        r1.<android.os.Message: int arg1> = i0;
+
+        virtualinvoke r1.<android.os.Message: void sendToTarget()>();
+
+        return;
+    }
+
+    public void overrideDefaultDataForEmergency(int, int, java.util.concurrent.CompletableFuture)
+    {
+        com.android.internal.telephony.PhoneSwitcher r0;
+        int i0, i1, $i2;
+        java.util.concurrent.CompletableFuture r1;
+        android.os.Message r2;
+        boolean $z0;
+        com.android.internal.telephony.PhoneSwitcher$EmergencyOverrideRequest $r4;
+
+        r0 := @this: com.android.internal.telephony.PhoneSwitcher;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        r1 := @parameter2: java.util.concurrent.CompletableFuture;
+
+        $z0 = staticinvoke <android.telephony.SubscriptionManager: boolean isValidPhoneId(int)>(i0);
+
+        if $z0 != 0 goto label1;
+
+        return;
+
+     label1:
+        r2 = virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: android.os.Message obtainMessage(int)>(115);
+
+        $r4 = new com.android.internal.telephony.PhoneSwitcher$EmergencyOverrideRequest;
+
+        specialinvoke $r4.<com.android.internal.telephony.PhoneSwitcher$EmergencyOverrideRequest: void <init>(com.android.internal.telephony.PhoneSwitcher$1)>(null);
+
+        $r4.<com.android.internal.telephony.PhoneSwitcher$EmergencyOverrideRequest: int mPhoneId> = i0;
+
+        $i2 = i1 * 1000;
+
+        $r4.<com.android.internal.telephony.PhoneSwitcher$EmergencyOverrideRequest: int mGnssOverrideTimeMs> = $i2;
+
+        $r4.<com.android.internal.telephony.PhoneSwitcher$EmergencyOverrideRequest: java.util.concurrent.CompletableFuture mOverrideCompleteFuture> = r1;
+
+        r2.<android.os.Message: java.lang.Object obj> = $r4;
+
+        virtualinvoke r2.<android.os.Message: void sendToTarget()>();
+
+        return;
+    }
+
+    public void registerForActivePhoneSwitch(android.os.Handler, int, java.lang.Object)
+    {
+        com.android.internal.telephony.PhoneSwitcher r0;
+        int i0;
+        java.lang.Object r1;
+        com.android.internal.telephony.Registrant $r2;
+        com.android.internal.telephony.RegistrantList $r3;
+        android.os.Handler r4;
+
+        r0 := @this: com.android.internal.telephony.PhoneSwitcher;
+
+        r4 := @parameter0: android.os.Handler;
+
+        i0 := @parameter1: int;
+
+        r1 := @parameter2: java.lang.Object;
+
+        $r2 = new com.android.internal.telephony.Registrant;
+
+        specialinvoke $r2.<com.android.internal.telephony.Registrant: void <init>(android.os.Handler,int,java.lang.Object)>(r4, i0, r1);
+
+        $r3 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.RegistrantList mActivePhoneRegistrants>;
+
+        virtualinvoke $r3.<com.android.internal.telephony.RegistrantList: void add(com.android.internal.telephony.Registrant)>($r2);
+
+        virtualinvoke $r2.<com.android.internal.telephony.Registrant: void notifyRegistrant()>();
+
+        return;
+    }
+
+    protected void sendRilCommands(int)
+    {
+        com.android.internal.telephony.PhoneSwitcher r0;
+        int i0, $i1, i2, i3;
+        android.os.Message r1;
+        boolean $z0, $z1;
+        java.lang.Integer $r2;
+        com.android.internal.telephony.Phone $r3;
+        com.android.internal.telephony.CommandsInterface $r4;
+        com.android.internal.telephony.RadioConfig $r5;
+
+        r0 := @this: com.android.internal.telephony.PhoneSwitcher;
+
+        i0 := @parameter0: int;
+
+        $z0 = staticinvoke <android.telephony.SubscriptionManager: boolean isValidPhoneId(int)>(i0);
+
+        if $z0 != 0 goto label1;
+
+        return;
+
+     label1:
+        $r2 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i0);
+
+        r1 = staticinvoke <android.os.Message: android.os.Message obtain(android.os.Handler,int,java.lang.Object)>(r0, 112, $r2);
+
+        i2 = r0.<com.android.internal.telephony.PhoneSwitcher: int mHalCommandToUse>;
+
+        if i2 == 1 goto label3;
+
+        if i2 != 0 goto label2;
+
+        goto label3;
+
+     label2:
+        i3 = r0.<com.android.internal.telephony.PhoneSwitcher: int mPreferredDataPhoneId>;
+
+        if i0 != i3 goto label4;
+
+        $r5 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.RadioConfig mRadioConfig>;
+
+        virtualinvoke $r5.<com.android.internal.telephony.RadioConfig: void setPreferredDataModem(int,android.os.Message)>(i3, r1);
+
+        goto label4;
+
+     label3:
+        $i1 = r0.<com.android.internal.telephony.PhoneSwitcher: int mActiveModemCount>;
+
+        if $i1 <= 1 goto label4;
+
+        $r3 = staticinvoke <com.android.internal.telephony.PhoneFactory: com.android.internal.telephony.Phone getPhone(int)>(i0);
+
+        $r4 = $r3.<com.android.internal.telephony.Phone: com.android.internal.telephony.CommandsInterface mCi>;
+
+        $z1 = virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: boolean isPhoneActive(int)>(i0);
+
+        interfaceinvoke $r4.<com.android.internal.telephony.CommandsInterface: void setDataAllowed(boolean,android.os.Message)>($z1, r1);
+
+     label4:
+        return;
+    }
+
+    public boolean shouldApplyNetworkRequest(android.net.NetworkRequest, int)
+    {
+        com.android.internal.telephony.PhoneSwitcher r0;
+        int i0, i1, $i2;
+        boolean z0, $z1, $z2, z3;
+        com.android.internal.telephony.SubscriptionController $r1;
+        java.lang.Throwable $r2;
+        android.net.NetworkRequest r3;
+
+        r0 := @this: com.android.internal.telephony.PhoneSwitcher;
+
+        r3 := @parameter0: android.net.NetworkRequest;
+
+        i0 := @parameter1: int;
+
+        entermonitor r0;
+
+     label1:
+        z0 = staticinvoke <android.telephony.SubscriptionManager: boolean isValidPhoneId(int)>(i0);
+
+     label2:
+        z3 = 0;
+
+        if z0 != 0 goto label3;
+
+        exitmonitor r0;
+
+        return 0;
+
+     label3:
+        $z1 = virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: boolean isPhoneActive(int)>(i0);
+
+        if $z1 == 0 goto label8;
+
+        $r1 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.SubscriptionController mSubscriptionController>;
+
+        $i2 = virtualinvoke $r1.<com.android.internal.telephony.SubscriptionController: int getSubIdUsingPhoneId(int)>(i0);
+
+        if $i2 != -1 goto label5;
+
+        $z2 = virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: boolean isEmergencyNetworkRequest(android.net.NetworkRequest)>(r3);
+
+        if $z2 != 0 goto label5;
+
+     label4:
+        goto label8;
+
+     label5:
+        i1 = specialinvoke r0.<com.android.internal.telephony.PhoneSwitcher: int phoneIdForRequest(android.net.NetworkRequest)>(r3);
+
+     label6:
+        if i0 != i1 goto label7;
+
+        z3 = 1;
+
+     label7:
+        exitmonitor r0;
+
+        return z3;
+
+     label8:
+        exitmonitor r0;
+
+        return 0;
+
+     label9:
+        $r2 := @caughtexception;
+
+        exitmonitor r0;
+
+        throw $r2;
+
+        catch java.lang.Throwable from label1 to label2 with label9;
+        catch java.lang.Throwable from label3 to label4 with label9;
+        catch java.lang.Throwable from label5 to label6 with label9;
+    }
+
+    protected void transitionToEmergencyPhone()
+    {
+        com.android.internal.telephony.PhoneSwitcher r0;
+        int $i0, $i1, $i2;
+        com.android.internal.telephony.SubscriptionController$WatchedInt $r1, $r2;
+
+        r0 := @this: com.android.internal.telephony.PhoneSwitcher;
+
+        $i0 = r0.<com.android.internal.telephony.PhoneSwitcher: int mActiveModemCount>;
+
+        if $i0 > 0 goto label1;
+
+        virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void log(java.lang.String)>("No phones: unable to reset preferred phone for emergency");
+
+        return;
+
+     label1:
+        $i1 = r0.<com.android.internal.telephony.PhoneSwitcher: int mPreferredDataPhoneId>;
+
+        if $i1 == 0 goto label2;
+
+        virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void log(java.lang.String)>("No active subscriptions: resetting preferred phone to 0 for emergency");
+
+        r0.<com.android.internal.telephony.PhoneSwitcher: int mPreferredDataPhoneId> = 0;
+
+     label2:
+        $r1 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.SubscriptionController$WatchedInt mPreferredDataSubId>;
+
+        $i2 = virtualinvoke $r1.<com.android.internal.telephony.SubscriptionController$WatchedInt: int get()>();
+
+        if $i2 == -1 goto label3;
+
+        $r2 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.SubscriptionController$WatchedInt mPreferredDataSubId>;
+
+        virtualinvoke $r2.<com.android.internal.telephony.SubscriptionController$WatchedInt: void set(int)>(-1);
+
+        virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void notifyPreferredDataSubIdChanged()>();
+
+     label3:
+        return;
+    }
+
+    public void trySetOpportunisticDataSubscription(int, boolean, com.android.internal.telephony.ISetOpportunisticDataCallback)
+    {
+        com.android.internal.telephony.PhoneSwitcher r0;
+        int i0, i1;
+        boolean z0;
+        com.android.internal.telephony.ISetOpportunisticDataCallback r1;
+        java.lang.StringBuilder $r3;
+        java.lang.String $r8, r10;
+        android.os.Message $r9;
+
+        r0 := @this: com.android.internal.telephony.PhoneSwitcher;
+
+        i0 := @parameter0: int;
+
+        z0 := @parameter1: boolean;
+
+        r1 := @parameter2: com.android.internal.telephony.ISetOpportunisticDataCallback;
+
+        $r3 = new java.lang.StringBuilder;
+
+        specialinvoke $r3.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Try set opportunistic data subscription to subId ");
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        if z0 == 0 goto label1;
+
+        r10 = " with ";
+
+        goto label2;
+
+     label1:
+        r10 = " without ";
+
+     label2:
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r10);
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("validation");
+
+        $r8 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void log(java.lang.String)>($r8);
+
+        i1 = (int) z0;
+
+        $r9 = virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: android.os.Message obtainMessage(int,int,int,java.lang.Object)>(107, i0, i1, r1);
+
+        virtualinvoke $r9.<android.os.Message: void sendToTarget()>();
+
+        return;
+    }
+
+    public void unregisterForActivePhoneSwitch(android.os.Handler)
+    {
+        com.android.internal.telephony.PhoneSwitcher r0;
+        android.os.Handler r1;
+        com.android.internal.telephony.RegistrantList $r2;
+
+        r0 := @this: com.android.internal.telephony.PhoneSwitcher;
+
+        r1 := @parameter0: android.os.Handler;
+
+        $r2 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.RegistrantList mActivePhoneRegistrants>;
+
+        virtualinvoke $r2.<com.android.internal.telephony.RegistrantList: void remove(android.os.Handler)>(r1);
+
+        return;
+    }
+
+    protected void updatePreferredDataPhoneId()
+    {
+        com.android.internal.telephony.PhoneSwitcher r0;
+        com.android.internal.telephony.Phone r1, $r4;
+        int i0, $i2, $i3, $i4, $i5, $i6, $i7, $i8, i9, i10, $i11, $i12;
+        boolean $z0, $z1;
+        int[] $r2;
+        com.android.internal.telephony.dataconnection.DataEnabledSettings $r3;
+        java.lang.StringBuilder $r5;
+        com.android.internal.telephony.PhoneSwitcher$EmergencyOverrideRequest $r7, $r10, r11;
+        java.lang.String $r9;
+        com.android.internal.telephony.SubscriptionController$WatchedInt $r13;
+        com.android.internal.telephony.SubscriptionController $r14;
+
+        r0 := @this: com.android.internal.telephony.PhoneSwitcher;
+
+        $i2 = r0.<com.android.internal.telephony.PhoneSwitcher: int mPhoneIdInVoiceCall>;
+
+        r1 = specialinvoke r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.Phone findPhoneById(int)>($i2);
+
+        r11 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.PhoneSwitcher$EmergencyOverrideRequest mEmergencyOverride>;
+
+        if r11 == null goto label1;
+
+        $i6 = r11.<com.android.internal.telephony.PhoneSwitcher$EmergencyOverrideRequest: int mPhoneId>;
+
+        $r4 = specialinvoke r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.Phone findPhoneById(int)>($i6);
+
+        if $r4 == null goto label1;
+
+        $r5 = new java.lang.StringBuilder;
+
+        specialinvoke $r5.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("updatePreferredDataPhoneId: preferred data overridden for emergency. phoneId = ");
+
+        $r7 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.PhoneSwitcher$EmergencyOverrideRequest mEmergencyOverride>;
+
+        $i7 = $r7.<com.android.internal.telephony.PhoneSwitcher$EmergencyOverrideRequest: int mPhoneId>;
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i7);
+
+        $r9 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r0.<com.android.internal.telephony.PhoneSwitcher: void log(java.lang.String)>($r9);
+
+        $r10 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.PhoneSwitcher$EmergencyOverrideRequest mEmergencyOverride>;
+
+        $i8 = $r10.<com.android.internal.telephony.PhoneSwitcher$EmergencyOverrideRequest: int mPhoneId>;
+
+        r0.<com.android.internal.telephony.PhoneSwitcher: int mPreferredDataPhoneId> = $i8;
+
+        goto label6;
+
+     label1:
+        if r1 == null goto label2;
+
+        $r3 = virtualinvoke r1.<com.android.internal.telephony.Phone: com.android.internal.telephony.dataconnection.DataEnabledSettings getDataEnabledSettings()>();
+
+        $z1 = virtualinvoke $r3.<com.android.internal.telephony.dataconnection.DataEnabledSettings: boolean isDataEnabled(int)>(17);
+
+        if $z1 == 0 goto label2;
+
+        $i5 = r0.<com.android.internal.telephony.PhoneSwitcher: int mPhoneIdInVoiceCall>;
+
+        r0.<com.android.internal.telephony.PhoneSwitcher: int mPreferredDataPhoneId> = $i5;
+
+        goto label6;
+
+     label2:
+        i0 = specialinvoke r0.<com.android.internal.telephony.PhoneSwitcher: int getSubIdForDefaultNetworkRequests()>();
+
+        i9 = -1;
+
+        $z0 = staticinvoke <android.telephony.SubscriptionManager: boolean isUsableSubIdValue(int)>(i0);
+
+        if $z0 == 0 goto label5;
+
+        i10 = 0;
+
+     label3:
+        i9 = -1;
+
+        $i3 = r0.<com.android.internal.telephony.PhoneSwitcher: int mActiveModemCount>;
+
+        if i10 >= $i3 goto label5;
+
+        $r2 = r0.<com.android.internal.telephony.PhoneSwitcher: int[] mPhoneSubscriptions>;
+
+        $i4 = $r2[i10];
+
+        if $i4 != i0 goto label4;
+
+        i9 = i10;
+
+        goto label5;
+
+     label4:
+        i10 = i10 + 1;
+
+        goto label3;
+
+     label5:
+        r0.<com.android.internal.telephony.PhoneSwitcher: int mPreferredDataPhoneId> = i9;
+
+     label6:
+        $r13 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.SubscriptionController$WatchedInt mPreferredDataSubId>;
+
+        $r14 = r0.<com.android.internal.telephony.PhoneSwitcher: com.android.internal.telephony.SubscriptionController mSubscriptionController>;
+
+        $i11 = r0.<com.android.internal.telephony.PhoneSwitcher: int mPreferredDataPhoneId>;
+
+        $i12 = virtualinvoke $r14.<com.android.internal.telephony.SubscriptionController: int getSubIdUsingPhoneId(int)>($i11);
+
+        virtualinvoke $r13.<com.android.internal.telephony.SubscriptionController$WatchedInt: void set(int)>($i12);
+
+        return;
+    }
+}

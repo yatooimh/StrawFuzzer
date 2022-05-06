@@ -1,0 +1,778 @@
+public class com.android.server.power.AttentionDetector extends java.lang.Object
+{
+    private static final boolean DEBUG;
+    static final long DEFAULT_POST_DIM_CHECK_DURATION_MILLIS;
+    static final long DEFAULT_PRE_DIM_CHECK_DURATION_MILLIS;
+    static final java.lang.String KEY_POST_DIM_CHECK_DURATION_MILLIS;
+    static final java.lang.String KEY_PRE_DIM_CHECK_DURATION_MILLIS;
+    private static final java.lang.String TAG;
+    protected android.attention.AttentionManagerInternal mAttentionManager;
+    com.android.server.power.AttentionDetector$AttentionCallbackInternalImpl mCallback;
+    private java.util.concurrent.atomic.AtomicLong mConsecutiveTimeoutExtendedCount;
+    protected android.content.ContentResolver mContentResolver;
+    private android.content.Context mContext;
+    private boolean mIsSettingEnabled;
+    private long mLastActedOnNextScreenDimming;
+    private long mLastPostDimTimeout;
+    private long mLastUserActivityTime;
+    private final java.lang.Object mLock;
+    protected long mMaximumExtensionMillis;
+    private final java.lang.Runnable mOnUserAttention;
+    protected android.content.pm.PackageManager mPackageManager;
+    protected int mRequestId;
+    private final java.util.concurrent.atomic.AtomicBoolean mRequested;
+    private int mWakefulness;
+    protected com.android.server.wm.WindowManagerInternal mWindowManager;
+
+    public void <init>(java.lang.Runnable, java.lang.Object)
+    {
+        com.android.server.power.AttentionDetector r0;
+        java.lang.Runnable r1;
+        java.lang.Object r2;
+        java.util.concurrent.atomic.AtomicLong $r3;
+        java.util.concurrent.atomic.AtomicBoolean $r4;
+
+        r0 := @this: com.android.server.power.AttentionDetector;
+
+        r1 := @parameter0: java.lang.Runnable;
+
+        r2 := @parameter1: java.lang.Object;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        $r3 = new java.util.concurrent.atomic.AtomicLong;
+
+        specialinvoke $r3.<java.util.concurrent.atomic.AtomicLong: void <init>(long)>(0L);
+
+        r0.<com.android.server.power.AttentionDetector: java.util.concurrent.atomic.AtomicLong mConsecutiveTimeoutExtendedCount> = $r3;
+
+        r0.<com.android.server.power.AttentionDetector: java.lang.Runnable mOnUserAttention> = r1;
+
+        r0.<com.android.server.power.AttentionDetector: java.lang.Object mLock> = r2;
+
+        $r4 = new java.util.concurrent.atomic.AtomicBoolean;
+
+        specialinvoke $r4.<java.util.concurrent.atomic.AtomicBoolean: void <init>(boolean)>(0);
+
+        r0.<com.android.server.power.AttentionDetector: java.util.concurrent.atomic.AtomicBoolean mRequested> = $r4;
+
+        r0.<com.android.server.power.AttentionDetector: int mRequestId> = 0;
+
+        r0.<com.android.server.power.AttentionDetector: int mWakefulness> = 1;
+
+        return;
+    }
+
+    static java.util.concurrent.atomic.AtomicBoolean access$100(com.android.server.power.AttentionDetector)
+    {
+        com.android.server.power.AttentionDetector r0;
+        java.util.concurrent.atomic.AtomicBoolean $r1;
+
+        r0 := @parameter0: com.android.server.power.AttentionDetector;
+
+        $r1 = r0.<com.android.server.power.AttentionDetector: java.util.concurrent.atomic.AtomicBoolean mRequested>;
+
+        return $r1;
+    }
+
+    static java.lang.Object access$200(com.android.server.power.AttentionDetector)
+    {
+        com.android.server.power.AttentionDetector r0;
+        java.lang.Object $r1;
+
+        r0 := @parameter0: com.android.server.power.AttentionDetector;
+
+        $r1 = r0.<com.android.server.power.AttentionDetector: java.lang.Object mLock>;
+
+        return $r1;
+    }
+
+    static int access$300(com.android.server.power.AttentionDetector)
+    {
+        com.android.server.power.AttentionDetector r0;
+        int $i0;
+
+        r0 := @parameter0: com.android.server.power.AttentionDetector;
+
+        $i0 = r0.<com.android.server.power.AttentionDetector: int mWakefulness>;
+
+        return $i0;
+    }
+
+    static java.lang.Runnable access$400(com.android.server.power.AttentionDetector)
+    {
+        com.android.server.power.AttentionDetector r0;
+        java.lang.Runnable $r1;
+
+        r0 := @parameter0: com.android.server.power.AttentionDetector;
+
+        $r1 = r0.<com.android.server.power.AttentionDetector: java.lang.Runnable mOnUserAttention>;
+
+        return $r1;
+    }
+
+    static void access$500(com.android.server.power.AttentionDetector)
+    {
+        com.android.server.power.AttentionDetector r0;
+
+        r0 := @parameter0: com.android.server.power.AttentionDetector;
+
+        specialinvoke r0.<com.android.server.power.AttentionDetector: void resetConsecutiveExtensionCount()>();
+
+        return;
+    }
+
+    static android.content.Context access$600(com.android.server.power.AttentionDetector)
+    {
+        com.android.server.power.AttentionDetector r0;
+        android.content.Context $r1;
+
+        r0 := @parameter0: com.android.server.power.AttentionDetector;
+
+        $r1 = r0.<com.android.server.power.AttentionDetector: android.content.Context mContext>;
+
+        return $r1;
+    }
+
+    private void cancelCurrentRequestIfAny()
+    {
+        com.android.server.power.AttentionDetector r0;
+        java.util.concurrent.atomic.AtomicBoolean $r1, $r4;
+        boolean $z0;
+        com.android.server.power.AttentionDetector$AttentionCallbackInternalImpl $r2;
+        android.attention.AttentionManagerInternal $r3;
+
+        r0 := @this: com.android.server.power.AttentionDetector;
+
+        $r1 = r0.<com.android.server.power.AttentionDetector: java.util.concurrent.atomic.AtomicBoolean mRequested>;
+
+        $z0 = virtualinvoke $r1.<java.util.concurrent.atomic.AtomicBoolean: boolean get()>();
+
+        if $z0 == 0 goto label1;
+
+        $r3 = r0.<com.android.server.power.AttentionDetector: android.attention.AttentionManagerInternal mAttentionManager>;
+
+        $r2 = r0.<com.android.server.power.AttentionDetector: com.android.server.power.AttentionDetector$AttentionCallbackInternalImpl mCallback>;
+
+        virtualinvoke $r3.<android.attention.AttentionManagerInternal: void cancelAttentionCheck(android.attention.AttentionManagerInternal$AttentionCallbackInternal)>($r2);
+
+        $r4 = r0.<com.android.server.power.AttentionDetector: java.util.concurrent.atomic.AtomicBoolean mRequested>;
+
+        virtualinvoke $r4.<java.util.concurrent.atomic.AtomicBoolean: void set(boolean)>(0);
+
+     label1:
+        return;
+    }
+
+    private void resetConsecutiveExtensionCount()
+    {
+        com.android.server.power.AttentionDetector r0;
+        long l0;
+        java.util.concurrent.atomic.AtomicLong $r1;
+        byte $b1;
+
+        r0 := @this: com.android.server.power.AttentionDetector;
+
+        $r1 = r0.<com.android.server.power.AttentionDetector: java.util.concurrent.atomic.AtomicLong mConsecutiveTimeoutExtendedCount>;
+
+        l0 = virtualinvoke $r1.<java.util.concurrent.atomic.AtomicLong: long getAndSet(long)>(0L);
+
+        $b1 = l0 cmp 0L;
+
+        if $b1 <= 0 goto label1;
+
+        staticinvoke <com.android.internal.util.FrameworkStatsLog: void write(int,long)>(168, l0);
+
+     label1:
+        return;
+    }
+
+    public void dump(java.io.PrintWriter)
+    {
+        com.android.server.power.AttentionDetector r0;
+        java.io.PrintWriter r1;
+        java.lang.StringBuilder $r2, $r6, $r10, $r14, $r18, $r22, $r26;
+        boolean $z0, $z1;
+        java.lang.String $r5, $r9, $r13, $r17, $r21, $r25, $r30;
+        long $l0, $l1, $l2, $l3;
+        java.util.concurrent.atomic.AtomicBoolean $r28;
+
+        r0 := @this: com.android.server.power.AttentionDetector;
+
+        r1 := @parameter0: java.io.PrintWriter;
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>("AttentionDetector:");
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" mIsSettingEnabled=");
+
+        $z0 = r0.<com.android.server.power.AttentionDetector: boolean mIsSettingEnabled>;
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>($z0);
+
+        $r5 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r5);
+
+        $r6 = new java.lang.StringBuilder;
+
+        specialinvoke $r6.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" mMaximumExtensionMillis=");
+
+        $l0 = r0.<com.android.server.power.AttentionDetector: long mMaximumExtensionMillis>;
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l0);
+
+        $r9 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r9);
+
+        $r10 = new java.lang.StringBuilder;
+
+        specialinvoke $r10.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" preDimCheckDurationMillis=");
+
+        $l1 = virtualinvoke r0.<com.android.server.power.AttentionDetector: long getPreDimCheckDurationMillis()>();
+
+        virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l1);
+
+        $r13 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r13);
+
+        $r14 = new java.lang.StringBuilder;
+
+        specialinvoke $r14.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r14.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" postDimCheckDurationMillis=");
+
+        $l2 = r0.<com.android.server.power.AttentionDetector: long mLastPostDimTimeout>;
+
+        virtualinvoke $r14.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l2);
+
+        $r17 = virtualinvoke $r14.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r17);
+
+        $r18 = new java.lang.StringBuilder;
+
+        specialinvoke $r18.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r18.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" mLastUserActivityTime(excludingAttention)=");
+
+        $l3 = r0.<com.android.server.power.AttentionDetector: long mLastUserActivityTime>;
+
+        virtualinvoke $r18.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l3);
+
+        $r21 = virtualinvoke $r18.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r21);
+
+        $r22 = new java.lang.StringBuilder;
+
+        specialinvoke $r22.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r22.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" mAttentionServiceSupported=");
+
+        $z1 = virtualinvoke r0.<com.android.server.power.AttentionDetector: boolean isAttentionServiceSupported()>();
+
+        virtualinvoke $r22.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>($z1);
+
+        $r25 = virtualinvoke $r22.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r25);
+
+        $r26 = new java.lang.StringBuilder;
+
+        specialinvoke $r26.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r26.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" mRequested=");
+
+        $r28 = r0.<com.android.server.power.AttentionDetector: java.util.concurrent.atomic.AtomicBoolean mRequested>;
+
+        virtualinvoke $r26.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r28);
+
+        $r30 = virtualinvoke $r26.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r30);
+
+        return;
+    }
+
+    protected long getPostDimCheckDurationMillis(long)
+    {
+        com.android.server.power.AttentionDetector r0;
+        long l0, l4, l5;
+        byte $b1, $b3;
+
+        r0 := @this: com.android.server.power.AttentionDetector;
+
+        l4 := @parameter0: long;
+
+        l0 = staticinvoke <android.provider.DeviceConfig: long getLong(java.lang.String,java.lang.String,long)>("attention_manager_service", "post_dim_check_duration_millis", 0L);
+
+        $b1 = l0 cmp 0L;
+
+        if $b1 < 0 goto label2;
+
+        $b3 = l0 cmp 10000L;
+
+        if $b3 <= 0 goto label1;
+
+        goto label2;
+
+     label1:
+        l5 = staticinvoke <java.lang.Math: long min(long,long)>(l0, l4);
+
+        r0.<com.android.server.power.AttentionDetector: long mLastPostDimTimeout> = l5;
+
+        return l5;
+
+     label2:
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("AttentionDetector", "Bad flag value supplied for: post_dim_check_duration_millis");
+
+        return 0L;
+    }
+
+    protected long getPreDimCheckDurationMillis()
+    {
+        com.android.server.power.AttentionDetector r0;
+        long l0;
+        byte $b1, $b3;
+
+        r0 := @this: com.android.server.power.AttentionDetector;
+
+        l0 = staticinvoke <android.provider.DeviceConfig: long getLong(java.lang.String,java.lang.String,long)>("attention_manager_service", "pre_dim_check_duration_millis", 2000L);
+
+        $b1 = l0 cmp 0L;
+
+        if $b1 < 0 goto label2;
+
+        $b3 = l0 cmp 13000L;
+
+        if $b3 <= 0 goto label1;
+
+        goto label2;
+
+     label1:
+        return l0;
+
+     label2:
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("AttentionDetector", "Bad flag value supplied for: pre_dim_check_duration_millis");
+
+        return 2000L;
+    }
+
+    boolean isAttentionServiceSupported()
+    {
+        com.android.server.power.AttentionDetector r0;
+        android.attention.AttentionManagerInternal r1;
+        boolean $z0, z1;
+
+        r0 := @this: com.android.server.power.AttentionDetector;
+
+        r1 = r0.<com.android.server.power.AttentionDetector: android.attention.AttentionManagerInternal mAttentionManager>;
+
+        if r1 == null goto label1;
+
+        $z0 = virtualinvoke r1.<android.attention.AttentionManagerInternal: boolean isAttentionServiceSupported()>();
+
+        if $z0 == 0 goto label1;
+
+        z1 = 1;
+
+        goto label2;
+
+     label1:
+        z1 = 0;
+
+     label2:
+        return z1;
+    }
+
+    public int onUserActivity(long, int)
+    {
+        com.android.server.power.AttentionDetector r0;
+        long l0;
+        int i1;
+        java.util.concurrent.atomic.AtomicLong $r1;
+
+        r0 := @this: com.android.server.power.AttentionDetector;
+
+        l0 := @parameter0: long;
+
+        i1 := @parameter1: int;
+
+        if i1 == 0 goto label2;
+
+        if i1 == 1 goto label2;
+
+        if i1 == 2 goto label2;
+
+        if i1 == 3 goto label2;
+
+        if i1 == 4 goto label1;
+
+        return -1;
+
+     label1:
+        $r1 = r0.<com.android.server.power.AttentionDetector: java.util.concurrent.atomic.AtomicLong mConsecutiveTimeoutExtendedCount>;
+
+        virtualinvoke $r1.<java.util.concurrent.atomic.AtomicLong: long incrementAndGet()>();
+
+        return 0;
+
+     label2:
+        specialinvoke r0.<com.android.server.power.AttentionDetector: void cancelCurrentRequestIfAny()>();
+
+        r0.<com.android.server.power.AttentionDetector: long mLastUserActivityTime> = l0;
+
+        specialinvoke r0.<com.android.server.power.AttentionDetector: void resetConsecutiveExtensionCount()>();
+
+        return 1;
+    }
+
+    public void onWakefulnessChangeStarted(int)
+    {
+        com.android.server.power.AttentionDetector r0;
+        int i0;
+
+        r0 := @this: com.android.server.power.AttentionDetector;
+
+        i0 := @parameter0: int;
+
+        r0.<com.android.server.power.AttentionDetector: int mWakefulness> = i0;
+
+        if i0 == 1 goto label1;
+
+        specialinvoke r0.<com.android.server.power.AttentionDetector: void cancelCurrentRequestIfAny()>();
+
+        specialinvoke r0.<com.android.server.power.AttentionDetector: void resetConsecutiveExtensionCount()>();
+
+     label1:
+        return;
+    }
+
+    boolean serviceHasSufficientPermissions()
+    {
+        com.android.server.power.AttentionDetector r0;
+        java.lang.String r1;
+        android.content.pm.PackageManager $r2, $r3;
+        int $i0;
+        boolean z0;
+
+        r0 := @this: com.android.server.power.AttentionDetector;
+
+        $r2 = r0.<com.android.server.power.AttentionDetector: android.content.pm.PackageManager mPackageManager>;
+
+        r1 = virtualinvoke $r2.<android.content.pm.PackageManager: java.lang.String getAttentionServicePackageName()>();
+
+        if r1 == null goto label1;
+
+        $r3 = r0.<com.android.server.power.AttentionDetector: android.content.pm.PackageManager mPackageManager>;
+
+        $i0 = virtualinvoke $r3.<android.content.pm.PackageManager: int checkPermission(java.lang.String,java.lang.String)>("android.permission.CAMERA", r1);
+
+        if $i0 != 0 goto label1;
+
+        z0 = 1;
+
+        goto label2;
+
+     label1:
+        z0 = 0;
+
+     label2:
+        return z0;
+    }
+
+    public void systemReady(android.content.Context)
+    {
+        com.android.server.power.AttentionDetector r0;
+        android.content.Context r1;
+        android.content.pm.PackageManager $r2;
+        android.content.ContentResolver $r3, $r10;
+        java.lang.Object $r4, $r6;
+        android.attention.AttentionManagerInternal $r5;
+        com.android.server.wm.WindowManagerInternal $r7;
+        android.content.res.Resources $r8;
+        int $i0;
+        long $l1;
+        android.app.IActivityManager $r9;
+        android.net.Uri $r11;
+        com.android.server.power.AttentionDetector$1 $r12;
+        android.os.Handler $r13;
+        android.os.Looper $r14;
+        android.os.RemoteException $r15;
+        com.android.server.power.AttentionDetector$UserSwitchObserver r16;
+
+        r0 := @this: com.android.server.power.AttentionDetector;
+
+        r1 := @parameter0: android.content.Context;
+
+        r0.<com.android.server.power.AttentionDetector: android.content.Context mContext> = r1;
+
+        virtualinvoke r0.<com.android.server.power.AttentionDetector: void updateEnabledFromSettings(android.content.Context)>(r1);
+
+        $r2 = virtualinvoke r1.<android.content.Context: android.content.pm.PackageManager getPackageManager()>();
+
+        r0.<com.android.server.power.AttentionDetector: android.content.pm.PackageManager mPackageManager> = $r2;
+
+        $r3 = virtualinvoke r1.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        r0.<com.android.server.power.AttentionDetector: android.content.ContentResolver mContentResolver> = $r3;
+
+        $r4 = staticinvoke <com.android.server.LocalServices: java.lang.Object getService(java.lang.Class)>(class "Landroid/attention/AttentionManagerInternal;");
+
+        $r5 = (android.attention.AttentionManagerInternal) $r4;
+
+        r0.<com.android.server.power.AttentionDetector: android.attention.AttentionManagerInternal mAttentionManager> = $r5;
+
+        $r6 = staticinvoke <com.android.server.LocalServices: java.lang.Object getService(java.lang.Class)>(class "Lcom/android/server/wm/WindowManagerInternal;");
+
+        $r7 = (com.android.server.wm.WindowManagerInternal) $r6;
+
+        r0.<com.android.server.power.AttentionDetector: com.android.server.wm.WindowManagerInternal mWindowManager> = $r7;
+
+        $r8 = virtualinvoke r1.<android.content.Context: android.content.res.Resources getResources()>();
+
+        $i0 = virtualinvoke $r8.<android.content.res.Resources: int getInteger(int)>(17694735);
+
+        $l1 = (long) $i0;
+
+        r0.<com.android.server.power.AttentionDetector: long mMaximumExtensionMillis> = $l1;
+
+     label1:
+        r16 = new com.android.server.power.AttentionDetector$UserSwitchObserver;
+
+        specialinvoke r16.<com.android.server.power.AttentionDetector$UserSwitchObserver: void <init>(com.android.server.power.AttentionDetector,com.android.server.power.AttentionDetector$1)>(r0, null);
+
+        $r9 = staticinvoke <android.app.ActivityManager: android.app.IActivityManager getService()>();
+
+        interfaceinvoke $r9.<android.app.IActivityManager: void registerUserSwitchObserver(android.app.IUserSwitchObserver,java.lang.String)>(r16, "AttentionDetector");
+
+     label2:
+        goto label4;
+
+     label3:
+        $r15 := @caughtexception;
+
+     label4:
+        $r10 = virtualinvoke r1.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        $r11 = staticinvoke <android.provider.Settings$Secure: android.net.Uri getUriFor(java.lang.String)>("adaptive_sleep");
+
+        $r12 = new com.android.server.power.AttentionDetector$1;
+
+        $r13 = new android.os.Handler;
+
+        $r14 = virtualinvoke r1.<android.content.Context: android.os.Looper getMainLooper()>();
+
+        specialinvoke $r13.<android.os.Handler: void <init>(android.os.Looper)>($r14);
+
+        specialinvoke $r12.<com.android.server.power.AttentionDetector$1: void <init>(com.android.server.power.AttentionDetector,android.os.Handler,android.content.Context)>(r0, $r13, r1);
+
+        virtualinvoke $r10.<android.content.ContentResolver: void registerContentObserver(android.net.Uri,boolean,android.database.ContentObserver,int)>($r11, 0, $r12, -1);
+
+        return;
+
+        catch android.os.RemoteException from label1 to label2 with label3;
+    }
+
+    void updateEnabledFromSettings(android.content.Context)
+    {
+        com.android.server.power.AttentionDetector r0;
+        int $i0;
+        android.content.Context r1;
+        android.content.ContentResolver r2;
+        boolean z0;
+
+        r0 := @this: com.android.server.power.AttentionDetector;
+
+        r1 := @parameter0: android.content.Context;
+
+        r2 = virtualinvoke r1.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        z0 = 0;
+
+        $i0 = staticinvoke <android.provider.Settings$Secure: int getIntForUser(android.content.ContentResolver,java.lang.String,int,int)>(r2, "adaptive_sleep", 0, -2);
+
+        if $i0 != 1 goto label1;
+
+        z0 = 1;
+
+     label1:
+        r0.<com.android.server.power.AttentionDetector: boolean mIsSettingEnabled> = z0;
+
+        return;
+    }
+
+    public long updateUserActivity(long, long)
+    {
+        com.android.server.power.AttentionDetector r0;
+        long l0, l1, l2, l3, l4, l5, $l6, $l8, $l10, $l17, $l18, $l19;
+        byte $b7, $b9, $b11;
+        boolean $z0, $z1, $z2, $z3, $z4, $z5;
+        com.android.server.wm.WindowManagerInternal $r2;
+        java.util.concurrent.atomic.AtomicBoolean $r3, $r4, $r12;
+        int $i12, $i13, $i14, $i15;
+        com.android.server.power.AttentionDetector$AttentionCallbackInternalImpl $r5, $r11;
+        java.lang.StringBuilder $r6;
+        java.lang.String $r9;
+        android.attention.AttentionManagerInternal $r10;
+
+        r0 := @this: com.android.server.power.AttentionDetector;
+
+        l0 := @parameter0: long;
+
+        l1 := @parameter1: long;
+
+        $l6 = r0.<com.android.server.power.AttentionDetector: long mLastActedOnNextScreenDimming>;
+
+        $b7 = l0 cmp $l6;
+
+        if $b7 == 0 goto label8;
+
+        $z0 = r0.<com.android.server.power.AttentionDetector: boolean mIsSettingEnabled>;
+
+        if $z0 == 0 goto label8;
+
+        $r2 = r0.<com.android.server.power.AttentionDetector: com.android.server.wm.WindowManagerInternal mWindowManager>;
+
+        $z1 = virtualinvoke $r2.<com.android.server.wm.WindowManagerInternal: boolean isKeyguardShowingAndNotOccluded()>();
+
+        if $z1 == 0 goto label1;
+
+        goto label8;
+
+     label1:
+        $z2 = virtualinvoke r0.<com.android.server.power.AttentionDetector: boolean isAttentionServiceSupported()>();
+
+        if $z2 == 0 goto label7;
+
+        $z3 = virtualinvoke r0.<com.android.server.power.AttentionDetector: boolean serviceHasSufficientPermissions()>();
+
+        if $z3 != 0 goto label2;
+
+        goto label7;
+
+     label2:
+        l2 = staticinvoke <android.os.SystemClock: long uptimeMillis()>();
+
+        $l8 = virtualinvoke r0.<com.android.server.power.AttentionDetector: long getPreDimCheckDurationMillis()>();
+
+        l3 = l0 - $l8;
+
+        l4 = r0.<com.android.server.power.AttentionDetector: long mLastUserActivityTime>;
+
+        l5 = r0.<com.android.server.power.AttentionDetector: long mMaximumExtensionMillis>;
+
+        $b9 = l2 cmp l3;
+
+        if $b9 >= 0 goto label3;
+
+        return l3;
+
+     label3:
+        $l10 = l4 + l5;
+
+        $b11 = $l10 cmp l3;
+
+        if $b11 >= 0 goto label4;
+
+        return l0;
+
+     label4:
+        $r3 = r0.<com.android.server.power.AttentionDetector: java.util.concurrent.atomic.AtomicBoolean mRequested>;
+
+        $z4 = virtualinvoke $r3.<java.util.concurrent.atomic.AtomicBoolean: boolean get()>();
+
+        if $z4 == 0 goto label5;
+
+        return l3;
+
+     label5:
+        $r4 = r0.<com.android.server.power.AttentionDetector: java.util.concurrent.atomic.AtomicBoolean mRequested>;
+
+        virtualinvoke $r4.<java.util.concurrent.atomic.AtomicBoolean: void set(boolean)>(1);
+
+        $i12 = r0.<com.android.server.power.AttentionDetector: int mRequestId>;
+
+        $i13 = $i12 + 1;
+
+        r0.<com.android.server.power.AttentionDetector: int mRequestId> = $i13;
+
+        r0.<com.android.server.power.AttentionDetector: long mLastActedOnNextScreenDimming> = l0;
+
+        $r5 = new com.android.server.power.AttentionDetector$AttentionCallbackInternalImpl;
+
+        $i14 = r0.<com.android.server.power.AttentionDetector: int mRequestId>;
+
+        specialinvoke $r5.<com.android.server.power.AttentionDetector$AttentionCallbackInternalImpl: void <init>(com.android.server.power.AttentionDetector,int)>(r0, $i14);
+
+        r0.<com.android.server.power.AttentionDetector: com.android.server.power.AttentionDetector$AttentionCallbackInternalImpl mCallback> = $r5;
+
+        $r6 = new java.lang.StringBuilder;
+
+        specialinvoke $r6.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Checking user attention, ID: ");
+
+        $i15 = r0.<com.android.server.power.AttentionDetector: int mRequestId>;
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i15);
+
+        $r9 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int v(java.lang.String,java.lang.String)>("AttentionDetector", $r9);
+
+        $r10 = r0.<com.android.server.power.AttentionDetector: android.attention.AttentionManagerInternal mAttentionManager>;
+
+        $l17 = virtualinvoke r0.<com.android.server.power.AttentionDetector: long getPreDimCheckDurationMillis()>();
+
+        $l18 = virtualinvoke r0.<com.android.server.power.AttentionDetector: long getPostDimCheckDurationMillis(long)>(l1);
+
+        $l19 = $l17 + $l18;
+
+        $r11 = r0.<com.android.server.power.AttentionDetector: com.android.server.power.AttentionDetector$AttentionCallbackInternalImpl mCallback>;
+
+        $z5 = virtualinvoke $r10.<android.attention.AttentionManagerInternal: boolean checkAttention(long,android.attention.AttentionManagerInternal$AttentionCallbackInternal)>($l19, $r11);
+
+        if $z5 != 0 goto label6;
+
+        $r12 = r0.<com.android.server.power.AttentionDetector: java.util.concurrent.atomic.AtomicBoolean mRequested>;
+
+        virtualinvoke $r12.<java.util.concurrent.atomic.AtomicBoolean: void set(boolean)>(0);
+
+     label6:
+        return l3;
+
+     label7:
+        return l0;
+
+     label8:
+        return l0;
+    }
+
+    public static void <clinit>()
+    {
+        <com.android.server.power.AttentionDetector: java.lang.String TAG> = "AttentionDetector";
+
+        <com.android.server.power.AttentionDetector: java.lang.String KEY_PRE_DIM_CHECK_DURATION_MILLIS> = "pre_dim_check_duration_millis";
+
+        <com.android.server.power.AttentionDetector: java.lang.String KEY_POST_DIM_CHECK_DURATION_MILLIS> = "post_dim_check_duration_millis";
+
+        <com.android.server.power.AttentionDetector: long DEFAULT_PRE_DIM_CHECK_DURATION_MILLIS> = 2000L;
+
+        <com.android.server.power.AttentionDetector: long DEFAULT_POST_DIM_CHECK_DURATION_MILLIS> = 0L;
+
+        <com.android.server.power.AttentionDetector: boolean DEBUG> = 0;
+
+        return;
+    }
+}

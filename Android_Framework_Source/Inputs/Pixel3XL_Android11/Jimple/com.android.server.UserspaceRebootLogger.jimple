@@ -1,0 +1,280 @@
+public final class com.android.server.UserspaceRebootLogger extends java.lang.Object
+{
+    private static final java.lang.String LAST_BOOT_REASON_PROPERTY;
+    private static final java.lang.String TAG;
+    private static final java.lang.String USERSPACE_REBOOT_LAST_FINISHED_PROPERTY;
+    private static final java.lang.String USERSPACE_REBOOT_LAST_STARTED_PROPERTY;
+    private static final java.lang.String USERSPACE_REBOOT_SHOULD_LOG_PROPERTY;
+
+    private void <init>()
+    {
+        com.android.server.UserspaceRebootLogger r0;
+
+        r0 := @this: com.android.server.UserspaceRebootLogger;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        return;
+    }
+
+    private static int computeOutcome()
+    {
+        java.lang.String r0, $r1, $r2, r3;
+        long $l0;
+        byte $b1;
+        boolean $z0, $z1, $z2, $z3, $z4, $z5, $z6;
+        int $i2;
+
+        $l0 = staticinvoke <android.os.SystemProperties: long getLong(java.lang.String,long)>("sys.userspace_reboot.log.last_started", -1L);
+
+        $b1 = $l0 cmp -1L;
+
+        if $b1 == 0 goto label1;
+
+        return 1;
+
+     label1:
+        $r1 = staticinvoke <android.os.SystemProperties: java.lang.String get(java.lang.String,java.lang.String)>("sys.boot.reason.last", "");
+
+        r0 = staticinvoke <android.text.TextUtils: java.lang.String emptyIfNull(java.lang.String)>($r1);
+
+        r3 = r0;
+
+        $z0 = virtualinvoke r0.<java.lang.String: boolean startsWith(java.lang.String)>("reboot,");
+
+        if $z0 == 0 goto label2;
+
+        $r2 = "reboot";
+
+        $i2 = virtualinvoke $r2.<java.lang.String: int length()>();
+
+        r3 = virtualinvoke r0.<java.lang.String: java.lang.String substring(int)>($i2);
+
+     label2:
+        $z1 = virtualinvoke r3.<java.lang.String: boolean startsWith(java.lang.String)>("userspace_failed,watchdog_fork");
+
+        if $z1 == 0 goto label3;
+
+        return 2;
+
+     label3:
+        $z2 = virtualinvoke r3.<java.lang.String: boolean startsWith(java.lang.String)>("userspace_failed,shutdown_aborted");
+
+        if $z2 == 0 goto label4;
+
+        return 2;
+
+     label4:
+        $z3 = virtualinvoke r3.<java.lang.String: boolean startsWith(java.lang.String)>("mount_userdata_failed");
+
+        if $z3 == 0 goto label5;
+
+        return 3;
+
+     label5:
+        $z4 = virtualinvoke r3.<java.lang.String: boolean startsWith(java.lang.String)>("userspace_failed,init_user0");
+
+        if $z4 == 0 goto label6;
+
+        return 3;
+
+     label6:
+        $z5 = virtualinvoke r3.<java.lang.String: boolean startsWith(java.lang.String)>("userspace_failed,enablefilecrypto");
+
+        if $z5 == 0 goto label7;
+
+        return 3;
+
+     label7:
+        $z6 = virtualinvoke r3.<java.lang.String: boolean startsWith(java.lang.String)>("userspace_failed,watchdog_triggered");
+
+        if $z6 == 0 goto label8;
+
+        return 4;
+
+     label8:
+        return 0;
+    }
+
+    static void lambda$logEventAsync$0(int, long, int)
+    {
+        int i0, i2;
+        long l1;
+        java.lang.StringBuilder $r1;
+        java.lang.String $r9;
+
+        i0 := @parameter0: int;
+
+        l1 := @parameter1: long;
+
+        i2 := @parameter2: int;
+
+        $r1 = new java.lang.StringBuilder;
+
+        specialinvoke $r1.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Logging UserspaceRebootReported atom: { outcome: ");
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" durationMillis: ");
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>(l1);
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" encryptionState: ");
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i2);
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" }");
+
+        $r9 = virtualinvoke $r1.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("UserspaceRebootLogger", $r9);
+
+        staticinvoke <com.android.internal.util.FrameworkStatsLog: void write(int,int,long,int)>(243, i0, l1, i2);
+
+        staticinvoke <android.os.SystemProperties: void set(java.lang.String,java.lang.String)>("persist.sys.userspace_reboot.log.should_log", "");
+
+        return;
+    }
+
+    public static void logEventAsync(boolean, java.util.concurrent.Executor)
+    {
+        boolean z0, $z1;
+        java.util.concurrent.Executor r0;
+        int i0;
+        com.android.server._$$Lambda$UserspaceRebootLogger$VEOhpRejFmAYcfCk3N3JgiP0nOQ $r1;
+        long $l1, $l2, l5;
+        byte b4;
+
+        z0 := @parameter0: boolean;
+
+        r0 := @parameter1: java.util.concurrent.Executor;
+
+        $z1 = staticinvoke <android.os.PowerManager: boolean isRebootingUserspaceSupportedImpl()>();
+
+        if $z1 != 0 goto label1;
+
+        staticinvoke <android.util.Slog: int wtf(java.lang.String,java.lang.String)>("UserspaceRebootLogger", "Userspace reboot is not supported.");
+
+        return;
+
+     label1:
+        i0 = staticinvoke <com.android.server.UserspaceRebootLogger: int computeOutcome()>();
+
+        b4 = 1;
+
+        if i0 != 1 goto label2;
+
+        $l1 = staticinvoke <android.os.SystemProperties: long getLong(java.lang.String,long)>("sys.userspace_reboot.log.last_finished", 0L);
+
+        $l2 = staticinvoke <android.os.SystemProperties: long getLong(java.lang.String,long)>("sys.userspace_reboot.log.last_started", 0L);
+
+        l5 = $l1 - $l2;
+
+        goto label3;
+
+     label2:
+        l5 = 0L;
+
+     label3:
+        if z0 == 0 goto label4;
+
+        goto label5;
+
+     label4:
+        b4 = 2;
+
+     label5:
+        $r1 = new com.android.server._$$Lambda$UserspaceRebootLogger$VEOhpRejFmAYcfCk3N3JgiP0nOQ;
+
+        specialinvoke $r1.<com.android.server._$$Lambda$UserspaceRebootLogger$VEOhpRejFmAYcfCk3N3JgiP0nOQ: void <init>(int,long,int)>(i0, l5, b4);
+
+        interfaceinvoke r0.<java.util.concurrent.Executor: void execute(java.lang.Runnable)>($r1);
+
+        return;
+    }
+
+    public static void noteUserspaceRebootSuccess()
+    {
+        boolean $z0;
+        long $l0;
+        java.lang.String $r0;
+
+        $z0 = staticinvoke <android.os.PowerManager: boolean isRebootingUserspaceSupportedImpl()>();
+
+        if $z0 != 0 goto label1;
+
+        staticinvoke <android.util.Slog: int wtf(java.lang.String,java.lang.String)>("UserspaceRebootLogger", "Userspace reboot is not supported.");
+
+        return;
+
+     label1:
+        $l0 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        $r0 = staticinvoke <java.lang.String: java.lang.String valueOf(long)>($l0);
+
+        staticinvoke <android.os.SystemProperties: void set(java.lang.String,java.lang.String)>("sys.userspace_reboot.log.last_finished", $r0);
+
+        return;
+    }
+
+    public static void noteUserspaceRebootWasRequested()
+    {
+        boolean $z0;
+        long $l0;
+        java.lang.String $r0;
+
+        $z0 = staticinvoke <android.os.PowerManager: boolean isRebootingUserspaceSupportedImpl()>();
+
+        if $z0 != 0 goto label1;
+
+        staticinvoke <android.util.Slog: int wtf(java.lang.String,java.lang.String)>("UserspaceRebootLogger", "Userspace reboot is not supported.");
+
+        return;
+
+     label1:
+        staticinvoke <android.os.SystemProperties: void set(java.lang.String,java.lang.String)>("persist.sys.userspace_reboot.log.should_log", "1");
+
+        $l0 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        $r0 = staticinvoke <java.lang.String: java.lang.String valueOf(long)>($l0);
+
+        staticinvoke <android.os.SystemProperties: void set(java.lang.String,java.lang.String)>("sys.userspace_reboot.log.last_started", $r0);
+
+        return;
+    }
+
+    public static boolean shouldLogUserspaceRebootEvent()
+    {
+        boolean $z0, $z1;
+
+        $z0 = staticinvoke <android.os.PowerManager: boolean isRebootingUserspaceSupportedImpl()>();
+
+        if $z0 != 0 goto label1;
+
+        staticinvoke <android.util.Slog: int wtf(java.lang.String,java.lang.String)>("UserspaceRebootLogger", "Userspace reboot is not supported.");
+
+        return 0;
+
+     label1:
+        $z1 = staticinvoke <android.os.SystemProperties: boolean getBoolean(java.lang.String,boolean)>("persist.sys.userspace_reboot.log.should_log", 0);
+
+        return $z1;
+    }
+
+    public static void <clinit>()
+    {
+        <com.android.server.UserspaceRebootLogger: java.lang.String USERSPACE_REBOOT_SHOULD_LOG_PROPERTY> = "persist.sys.userspace_reboot.log.should_log";
+
+        <com.android.server.UserspaceRebootLogger: java.lang.String USERSPACE_REBOOT_LAST_STARTED_PROPERTY> = "sys.userspace_reboot.log.last_started";
+
+        <com.android.server.UserspaceRebootLogger: java.lang.String USERSPACE_REBOOT_LAST_FINISHED_PROPERTY> = "sys.userspace_reboot.log.last_finished";
+
+        <com.android.server.UserspaceRebootLogger: java.lang.String TAG> = "UserspaceRebootLogger";
+
+        <com.android.server.UserspaceRebootLogger: java.lang.String LAST_BOOT_REASON_PROPERTY> = "sys.boot.reason.last";
+
+        return;
+    }
+}

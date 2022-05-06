@@ -1,0 +1,268 @@
+public class android.os.AppZygote extends java.lang.Object
+{
+    private static final java.lang.String LOG_TAG;
+    private final android.content.pm.ApplicationInfo mAppInfo;
+    private final java.lang.Object mLock;
+    private android.os.ChildZygoteProcess mZygote;
+    private final int mZygoteUid;
+    private final int mZygoteUidGidMax;
+    private final int mZygoteUidGidMin;
+
+    public void <init>(android.content.pm.ApplicationInfo, int, int, int)
+    {
+        android.os.AppZygote r0;
+        android.content.pm.ApplicationInfo r1;
+        int i0, i1, i2;
+        java.lang.Object $r2;
+
+        r0 := @this: android.os.AppZygote;
+
+        r1 := @parameter0: android.content.pm.ApplicationInfo;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        i2 := @parameter3: int;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        $r2 = new java.lang.Object;
+
+        specialinvoke $r2.<java.lang.Object: void <init>()>();
+
+        r0.<android.os.AppZygote: java.lang.Object mLock> = $r2;
+
+        r0.<android.os.AppZygote: android.content.pm.ApplicationInfo mAppInfo> = r1;
+
+        r0.<android.os.AppZygote: int mZygoteUid> = i0;
+
+        r0.<android.os.AppZygote: int mZygoteUidGidMin> = i1;
+
+        r0.<android.os.AppZygote: int mZygoteUidGidMax> = i2;
+
+        return;
+    }
+
+    private void connectToZygoteIfNeededLocked()
+    {
+        android.os.AppZygote r0;
+        java.lang.StringBuilder r1;
+        android.content.pm.ApplicationInfo $r2, $r5, $r12, $r14;
+        java.lang.String $r3, $r6, $r9, $r10, r16;
+        java.lang.String[] $r4;
+        int $i0, $i1, $i2, $i3;
+        android.net.LocalSocketAddress $r11;
+        android.os.ChildZygoteProcess $r13, r18;
+        java.lang.Exception $r15;
+        android.os.ZygoteProcess r17;
+
+        r0 := @this: android.os.AppZygote;
+
+        $r2 = r0.<android.os.AppZygote: android.content.pm.ApplicationInfo mAppInfo>;
+
+        $r3 = $r2.<android.content.pm.ApplicationInfo: java.lang.String primaryCpuAbi>;
+
+        if $r3 == null goto label1;
+
+        $r14 = r0.<android.os.AppZygote: android.content.pm.ApplicationInfo mAppInfo>;
+
+        r16 = $r14.<android.content.pm.ApplicationInfo: java.lang.String primaryCpuAbi>;
+
+        goto label2;
+
+     label1:
+        $r4 = <android.os.Build: java.lang.String[] SUPPORTED_ABIS>;
+
+        r16 = $r4[0];
+
+     label2:
+        r17 = <android.os.Process: android.os.ZygoteProcess ZYGOTE_PROCESS>;
+
+        r1 = new java.lang.StringBuilder;
+
+        specialinvoke r1.<java.lang.StringBuilder: void <init>()>();
+
+        $r5 = r0.<android.os.AppZygote: android.content.pm.ApplicationInfo mAppInfo>;
+
+        $r6 = $r5.<android.content.pm.ApplicationInfo: java.lang.String processName>;
+
+        virtualinvoke r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r6);
+
+        virtualinvoke r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("_zygote");
+
+        $r9 = virtualinvoke r1.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $i0 = r0.<android.os.AppZygote: int mZygoteUid>;
+
+        $i1 = r0.<android.os.AppZygote: int mZygoteUid>;
+
+        $r10 = staticinvoke <dalvik.system.VMRuntime: java.lang.String getInstructionSet(java.lang.String)>(r16);
+
+        $i3 = r0.<android.os.AppZygote: int mZygoteUidGidMin>;
+
+        $i2 = r0.<android.os.AppZygote: int mZygoteUidGidMax>;
+
+        r18 = virtualinvoke r17.<android.os.ZygoteProcess: android.os.ChildZygoteProcess startChildZygote(java.lang.String,java.lang.String,int,int,int[],int,java.lang.String,java.lang.String,java.lang.String,java.lang.String,int,int)>("com.android.internal.os.AppZygoteInit", $r9, $i0, $i1, null, 0, "app_zygote", r16, r16, $r10, $i3, $i2);
+
+        r0.<android.os.AppZygote: android.os.ChildZygoteProcess mZygote> = r18;
+
+        $r11 = virtualinvoke r18.<android.os.ChildZygoteProcess: android.net.LocalSocketAddress getPrimarySocketAddress()>();
+
+        staticinvoke <android.os.ZygoteProcess: void waitForConnectionToZygote(android.net.LocalSocketAddress)>($r11);
+
+        staticinvoke <android.util.Log: int i(java.lang.String,java.lang.String)>("AppZygote", "Starting application preload.");
+
+        $r13 = r0.<android.os.AppZygote: android.os.ChildZygoteProcess mZygote>;
+
+        $r12 = r0.<android.os.AppZygote: android.content.pm.ApplicationInfo mAppInfo>;
+
+        virtualinvoke $r13.<android.os.ChildZygoteProcess: boolean preloadApp(android.content.pm.ApplicationInfo,java.lang.String)>($r12, r16);
+
+        staticinvoke <android.util.Log: int i(java.lang.String,java.lang.String)>("AppZygote", "Application preload done.");
+
+     label3:
+        goto label5;
+
+     label4:
+        $r15 := @caughtexception;
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("AppZygote", "Error connecting to app zygote", $r15);
+
+        specialinvoke r0.<android.os.AppZygote: void stopZygoteLocked()>();
+
+     label5:
+        return;
+
+        catch java.lang.Exception from label2 to label3 with label4;
+    }
+
+    private void stopZygoteLocked()
+    {
+        android.os.AppZygote r0;
+        android.os.ChildZygoteProcess r1, $r2;
+        int $i0, $i1;
+
+        r0 := @this: android.os.AppZygote;
+
+        r1 = r0.<android.os.AppZygote: android.os.ChildZygoteProcess mZygote>;
+
+        if r1 == null goto label1;
+
+        virtualinvoke r1.<android.os.ChildZygoteProcess: void close()>();
+
+        $i0 = r0.<android.os.AppZygote: int mZygoteUid>;
+
+        $r2 = r0.<android.os.AppZygote: android.os.ChildZygoteProcess mZygote>;
+
+        $i1 = virtualinvoke $r2.<android.os.ChildZygoteProcess: int getPid()>();
+
+        staticinvoke <android.os.Process: int killProcessGroup(int,int)>($i0, $i1);
+
+        r0.<android.os.AppZygote: android.os.ChildZygoteProcess mZygote> = null;
+
+     label1:
+        return;
+    }
+
+    public android.content.pm.ApplicationInfo getAppInfo()
+    {
+        android.os.AppZygote r0;
+        android.content.pm.ApplicationInfo $r1;
+
+        r0 := @this: android.os.AppZygote;
+
+        $r1 = r0.<android.os.AppZygote: android.content.pm.ApplicationInfo mAppInfo>;
+
+        return $r1;
+    }
+
+    public android.os.ChildZygoteProcess getProcess()
+    {
+        android.os.AppZygote r0;
+        java.lang.Object r1;
+        android.os.ChildZygoteProcess $r2, r4, r5;
+        java.lang.Throwable $r3;
+
+        r0 := @this: android.os.AppZygote;
+
+        r1 = r0.<android.os.AppZygote: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        $r2 = r0.<android.os.AppZygote: android.os.ChildZygoteProcess mZygote>;
+
+        if $r2 == null goto label3;
+
+        r4 = r0.<android.os.AppZygote: android.os.ChildZygoteProcess mZygote>;
+
+        exitmonitor r1;
+
+     label2:
+        return r4;
+
+     label3:
+        specialinvoke r0.<android.os.AppZygote: void connectToZygoteIfNeededLocked()>();
+
+        r5 = r0.<android.os.AppZygote: android.os.ChildZygoteProcess mZygote>;
+
+        exitmonitor r1;
+
+     label4:
+        return r5;
+
+     label5:
+        $r3 := @caughtexception;
+
+     label6:
+        exitmonitor r1;
+
+     label7:
+        throw $r3;
+
+        catch java.lang.Throwable from label1 to label2 with label5;
+        catch java.lang.Throwable from label3 to label4 with label5;
+        catch java.lang.Throwable from label6 to label7 with label5;
+    }
+
+    public void stopZygote()
+    {
+        android.os.AppZygote r0;
+        java.lang.Object r1;
+        java.lang.Throwable $r3;
+
+        r0 := @this: android.os.AppZygote;
+
+        r1 = r0.<android.os.AppZygote: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        specialinvoke r0.<android.os.AppZygote: void stopZygoteLocked()>();
+
+        exitmonitor r1;
+
+     label2:
+        return;
+
+     label3:
+        $r3 := @caughtexception;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        throw $r3;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    public static void <clinit>()
+    {
+        <android.os.AppZygote: java.lang.String LOG_TAG> = "AppZygote";
+
+        return;
+    }
+}

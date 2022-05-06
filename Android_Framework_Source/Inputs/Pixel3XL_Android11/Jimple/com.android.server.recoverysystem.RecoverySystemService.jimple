@@ -1,0 +1,1137 @@
+public class com.android.server.recoverysystem.RecoverySystemService extends android.os.IRecoverySystem$Stub implements com.android.internal.widget.RebootEscrowListener
+{
+    private static final boolean DEBUG;
+    static final java.lang.String INIT_SERVICE_CLEAR_BCB;
+    static final java.lang.String INIT_SERVICE_SETUP_BCB;
+    static final java.lang.String INIT_SERVICE_UNCRYPT;
+    private static final int SOCKET_CONNECTION_MAX_RETRY;
+    private static final java.lang.String TAG;
+    private static final java.lang.String UNCRYPT_SOCKET;
+    private static final java.lang.Object sRequestLock;
+    private final android.content.Context mContext;
+    private final com.android.server.recoverysystem.RecoverySystemService$Injector mInjector;
+    private boolean mPreparedForReboot;
+    private android.content.IntentSender mPreparedForRebootIntentSender;
+    private java.lang.String mUnattendedRebootToken;
+
+    static void <clinit>()
+    {
+        java.lang.Object $r0;
+
+        <com.android.server.recoverysystem.RecoverySystemService: java.lang.String UNCRYPT_SOCKET> = "uncrypt";
+
+        <com.android.server.recoverysystem.RecoverySystemService: java.lang.String TAG> = "RecoverySystemService";
+
+        <com.android.server.recoverysystem.RecoverySystemService: int SOCKET_CONNECTION_MAX_RETRY> = 30;
+
+        <com.android.server.recoverysystem.RecoverySystemService: java.lang.String INIT_SERVICE_UNCRYPT> = "init.svc.uncrypt";
+
+        <com.android.server.recoverysystem.RecoverySystemService: java.lang.String INIT_SERVICE_SETUP_BCB> = "init.svc.setup-bcb";
+
+        <com.android.server.recoverysystem.RecoverySystemService: java.lang.String INIT_SERVICE_CLEAR_BCB> = "init.svc.clear-bcb";
+
+        <com.android.server.recoverysystem.RecoverySystemService: boolean DEBUG> = 0;
+
+        $r0 = new java.lang.Object;
+
+        specialinvoke $r0.<java.lang.Object: void <init>()>();
+
+        <com.android.server.recoverysystem.RecoverySystemService: java.lang.Object sRequestLock> = $r0;
+
+        return;
+    }
+
+    private void <init>(android.content.Context)
+    {
+        com.android.server.recoverysystem.RecoverySystemService r0;
+        android.content.Context r1;
+        com.android.server.recoverysystem.RecoverySystemService$Injector $r2;
+
+        r0 := @this: com.android.server.recoverysystem.RecoverySystemService;
+
+        r1 := @parameter0: android.content.Context;
+
+        $r2 = new com.android.server.recoverysystem.RecoverySystemService$Injector;
+
+        specialinvoke $r2.<com.android.server.recoverysystem.RecoverySystemService$Injector: void <init>(android.content.Context)>(r1);
+
+        specialinvoke r0.<com.android.server.recoverysystem.RecoverySystemService: void <init>(com.android.server.recoverysystem.RecoverySystemService$Injector)>($r2);
+
+        return;
+    }
+
+    void <init>(android.content.Context, com.android.server.recoverysystem.RecoverySystemService$1)
+    {
+        com.android.server.recoverysystem.RecoverySystemService r0;
+        android.content.Context r1;
+        com.android.server.recoverysystem.RecoverySystemService$1 r2;
+
+        r0 := @this: com.android.server.recoverysystem.RecoverySystemService;
+
+        r1 := @parameter0: android.content.Context;
+
+        r2 := @parameter1: com.android.server.recoverysystem.RecoverySystemService$1;
+
+        specialinvoke r0.<com.android.server.recoverysystem.RecoverySystemService: void <init>(android.content.Context)>(r1);
+
+        return;
+    }
+
+    void <init>(com.android.server.recoverysystem.RecoverySystemService$Injector)
+    {
+        com.android.server.recoverysystem.RecoverySystemService r0;
+        com.android.server.recoverysystem.RecoverySystemService$Injector r1;
+        android.content.Context $r2;
+
+        r0 := @this: com.android.server.recoverysystem.RecoverySystemService;
+
+        r1 := @parameter0: com.android.server.recoverysystem.RecoverySystemService$Injector;
+
+        specialinvoke r0.<android.os.IRecoverySystem$Stub: void <init>()>();
+
+        r0.<com.android.server.recoverysystem.RecoverySystemService: com.android.server.recoverysystem.RecoverySystemService$Injector mInjector> = r1;
+
+        $r2 = virtualinvoke r1.<com.android.server.recoverysystem.RecoverySystemService$Injector: android.content.Context getContext()>();
+
+        r0.<com.android.server.recoverysystem.RecoverySystemService: android.content.Context mContext> = $r2;
+
+        return;
+    }
+
+    private boolean checkAndWaitForUncryptService()
+    {
+        com.android.server.recoverysystem.RecoverySystemService r0;
+        java.lang.String r1, r2, $r6, $r8, $r9, r11;
+        com.android.server.recoverysystem.RecoverySystemService$Injector $r3, $r4, $r5, $r7;
+        boolean $z0, $z1, $z2, z3;
+        java.lang.Throwable $r10;
+        int i1;
+
+        r0 := @this: com.android.server.recoverysystem.RecoverySystemService;
+
+        i1 = 0;
+
+     label1:
+        z3 = 0;
+
+        if i1 >= 30 goto label8;
+
+        $r3 = r0.<com.android.server.recoverysystem.RecoverySystemService: com.android.server.recoverysystem.RecoverySystemService$Injector mInjector>;
+
+        r1 = virtualinvoke $r3.<com.android.server.recoverysystem.RecoverySystemService$Injector: java.lang.String systemPropertiesGet(java.lang.String)>("init.svc.uncrypt");
+
+        $r4 = r0.<com.android.server.recoverysystem.RecoverySystemService: com.android.server.recoverysystem.RecoverySystemService$Injector mInjector>;
+
+        r11 = virtualinvoke $r4.<com.android.server.recoverysystem.RecoverySystemService$Injector: java.lang.String systemPropertiesGet(java.lang.String)>("init.svc.setup-bcb");
+
+        $r5 = r0.<com.android.server.recoverysystem.RecoverySystemService: com.android.server.recoverysystem.RecoverySystemService$Injector mInjector>;
+
+        r2 = virtualinvoke $r5.<com.android.server.recoverysystem.RecoverySystemService$Injector: java.lang.String systemPropertiesGet(java.lang.String)>("init.svc.clear-bcb");
+
+        $r6 = "running";
+
+        $z0 = virtualinvoke $r6.<java.lang.String: boolean equals(java.lang.Object)>(r1);
+
+        if $z0 != 0 goto label2;
+
+        $r8 = "running";
+
+        $z1 = virtualinvoke $r8.<java.lang.String: boolean equals(java.lang.Object)>(r11);
+
+        if $z1 != 0 goto label2;
+
+        $r9 = "running";
+
+        $z2 = virtualinvoke $r9.<java.lang.String: boolean equals(java.lang.Object)>(r2);
+
+        if $z2 == 0 goto label3;
+
+     label2:
+        z3 = 1;
+
+     label3:
+        if z3 != 0 goto label4;
+
+        return 1;
+
+     label4:
+        $r7 = r0.<com.android.server.recoverysystem.RecoverySystemService: com.android.server.recoverysystem.RecoverySystemService$Injector mInjector>;
+
+        virtualinvoke $r7.<com.android.server.recoverysystem.RecoverySystemService$Injector: void threadSleep(long)>(1000L);
+
+     label5:
+        goto label7;
+
+     label6:
+        $r10 := @caughtexception;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String,java.lang.Throwable)>("RecoverySystemService", "Interrupted:", $r10);
+
+     label7:
+        i1 = i1 + 1;
+
+        goto label1;
+
+     label8:
+        return 0;
+
+        catch java.lang.InterruptedException from label4 to label5 with label6;
+    }
+
+    private void enforceShell()
+    {
+        com.android.server.recoverysystem.RecoverySystemService r0;
+        boolean $z0;
+        java.lang.SecurityException $r1;
+
+        r0 := @this: com.android.server.recoverysystem.RecoverySystemService;
+
+        $z0 = specialinvoke r0.<com.android.server.recoverysystem.RecoverySystemService: boolean isCallerShell()>();
+
+        if $z0 == 0 goto label1;
+
+        return;
+
+     label1:
+        $r1 = new java.lang.SecurityException;
+
+        specialinvoke $r1.<java.lang.SecurityException: void <init>(java.lang.String)>("Caller must be shell");
+
+        throw $r1;
+    }
+
+    private boolean isCallerShell()
+    {
+        com.android.server.recoverysystem.RecoverySystemService r0;
+        int i0;
+        boolean z0;
+
+        r0 := @this: com.android.server.recoverysystem.RecoverySystemService;
+
+        i0 = staticinvoke <android.os.Binder: int getCallingUid()>();
+
+        if i0 == 2000 goto label2;
+
+        if i0 != 0 goto label1;
+
+        goto label2;
+
+     label1:
+        z0 = 0;
+
+        goto label3;
+
+     label2:
+        z0 = 1;
+
+     label3:
+        return z0;
+    }
+
+    private void sendPreparedForRebootIntentIfNeeded()
+    {
+        com.android.server.recoverysystem.RecoverySystemService r0;
+        android.content.IntentSender$SendIntentException $r2;
+        java.lang.StringBuilder $r3;
+        java.lang.String $r5, $r7;
+        android.content.IntentSender r8;
+
+        r0 := @this: com.android.server.recoverysystem.RecoverySystemService;
+
+        r8 = r0.<com.android.server.recoverysystem.RecoverySystemService: android.content.IntentSender mPreparedForRebootIntentSender>;
+
+        if r8 == null goto label4;
+
+     label1:
+        virtualinvoke r8.<android.content.IntentSender: void sendIntent(android.content.Context,int,android.content.Intent,android.content.IntentSender$OnFinished,android.os.Handler)>(null, 0, null, null, null);
+
+     label2:
+        goto label4;
+
+     label3:
+        $r2 := @caughtexception;
+
+        $r3 = new java.lang.StringBuilder;
+
+        specialinvoke $r3.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Could not send intent for prepared reboot: ");
+
+        $r5 = virtualinvoke $r2.<android.content.IntentSender$SendIntentException: java.lang.String getMessage()>();
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r5);
+
+        $r7 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("RecoverySystemService", $r7);
+
+     label4:
+        return;
+
+        catch android.content.IntentSender$SendIntentException from label1 to label2 with label3;
+    }
+
+    private boolean setupOrClearBcb(boolean, java.lang.String)
+    {
+        com.android.server.recoverysystem.RecoverySystemService r0;
+        boolean z0, $z1;
+        com.android.server.recoverysystem.RecoverySystemService$UncryptSocket r1;
+        int i0;
+        java.lang.StringBuilder r2, r18;
+        android.content.Context $r3;
+        com.android.server.recoverysystem.RecoverySystemService$Injector $r4, $r5, $r13;
+        java.lang.String $r8, $r12, r16, r17;
+        java.lang.Throwable $r14, $r15;
+
+        r0 := @this: com.android.server.recoverysystem.RecoverySystemService;
+
+        z0 := @parameter0: boolean;
+
+        r16 := @parameter1: java.lang.String;
+
+        $r3 = r0.<com.android.server.recoverysystem.RecoverySystemService: android.content.Context mContext>;
+
+        virtualinvoke $r3.<android.content.Context: void enforceCallingOrSelfPermission(java.lang.String,java.lang.String)>("android.permission.RECOVERY", null);
+
+        $z1 = specialinvoke r0.<com.android.server.recoverysystem.RecoverySystemService: boolean checkAndWaitForUncryptService()>();
+
+        if $z1 != 0 goto label01;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("RecoverySystemService", "uncrypt service is unavailable.");
+
+        return 0;
+
+     label01:
+        if z0 == 0 goto label02;
+
+        $r13 = r0.<com.android.server.recoverysystem.RecoverySystemService: com.android.server.recoverysystem.RecoverySystemService$Injector mInjector>;
+
+        virtualinvoke $r13.<com.android.server.recoverysystem.RecoverySystemService$Injector: void systemPropertiesSet(java.lang.String,java.lang.String)>("ctl.start", "setup-bcb");
+
+        goto label03;
+
+     label02:
+        $r4 = r0.<com.android.server.recoverysystem.RecoverySystemService: com.android.server.recoverysystem.RecoverySystemService$Injector mInjector>;
+
+        virtualinvoke $r4.<com.android.server.recoverysystem.RecoverySystemService$Injector: void systemPropertiesSet(java.lang.String,java.lang.String)>("ctl.start", "clear-bcb");
+
+     label03:
+        $r5 = r0.<com.android.server.recoverysystem.RecoverySystemService: com.android.server.recoverysystem.RecoverySystemService$Injector mInjector>;
+
+        r1 = virtualinvoke $r5.<com.android.server.recoverysystem.RecoverySystemService$Injector: com.android.server.recoverysystem.RecoverySystemService$UncryptSocket connectService()>();
+
+        if r1 != null goto label04;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("RecoverySystemService", "Failed to connect to uncrypt socket");
+
+        return 0;
+
+     label04:
+        if z0 == 0 goto label06;
+
+     label05:
+        virtualinvoke r1.<com.android.server.recoverysystem.RecoverySystemService$UncryptSocket: void sendCommand(java.lang.String)>(r16);
+
+     label06:
+        i0 = virtualinvoke r1.<com.android.server.recoverysystem.RecoverySystemService$UncryptSocket: int getPercentageUncrypted()>();
+
+        virtualinvoke r1.<com.android.server.recoverysystem.RecoverySystemService$UncryptSocket: void sendAck()>();
+
+     label07:
+        if i0 != 100 goto label13;
+
+     label08:
+        r2 = new java.lang.StringBuilder;
+
+        specialinvoke r2.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("uncrypt ");
+
+     label09:
+        if z0 == 0 goto label10;
+
+        r17 = "setup";
+
+        goto label11;
+
+     label10:
+        r17 = "clear";
+
+     label11:
+        virtualinvoke r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r17);
+
+        virtualinvoke r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" bcb successfully finished.");
+
+        $r12 = virtualinvoke r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("RecoverySystemService", $r12);
+
+     label12:
+        virtualinvoke r1.<com.android.server.recoverysystem.RecoverySystemService$UncryptSocket: void close()>();
+
+        return 1;
+
+     label13:
+        r18 = new java.lang.StringBuilder;
+
+        specialinvoke r18.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r18.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("uncrypt failed with status: ");
+
+        virtualinvoke r18.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r8 = virtualinvoke r18.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("RecoverySystemService", $r8);
+
+     label14:
+        virtualinvoke r1.<com.android.server.recoverysystem.RecoverySystemService$UncryptSocket: void close()>();
+
+        return 0;
+
+     label15:
+        $r15 := @caughtexception;
+
+        goto label19;
+
+     label16:
+        $r14 := @caughtexception;
+
+     label17:
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("RecoverySystemService", "IOException when communicating with uncrypt:", $r14);
+
+     label18:
+        virtualinvoke r1.<com.android.server.recoverysystem.RecoverySystemService$UncryptSocket: void close()>();
+
+        return 0;
+
+     label19:
+        virtualinvoke r1.<com.android.server.recoverysystem.RecoverySystemService$UncryptSocket: void close()>();
+
+        throw $r15;
+
+        catch java.io.IOException from label05 to label06 with label16;
+        catch java.lang.Throwable from label05 to label06 with label15;
+        catch java.io.IOException from label06 to label07 with label16;
+        catch java.lang.Throwable from label06 to label07 with label15;
+        catch java.io.IOException from label08 to label09 with label16;
+        catch java.lang.Throwable from label08 to label09 with label15;
+        catch java.io.IOException from label11 to label12 with label16;
+        catch java.lang.Throwable from label11 to label12 with label15;
+        catch java.io.IOException from label13 to label14 with label16;
+        catch java.lang.Throwable from label13 to label14 with label15;
+        catch java.lang.Throwable from label17 to label18 with label15;
+    }
+
+    public boolean clearBcb()
+    {
+        com.android.server.recoverysystem.RecoverySystemService r0;
+        java.lang.Object r1;
+        boolean z0;
+        java.lang.Throwable $r3;
+
+        r0 := @this: com.android.server.recoverysystem.RecoverySystemService;
+
+        r1 = <com.android.server.recoverysystem.RecoverySystemService: java.lang.Object sRequestLock>;
+
+        entermonitor r1;
+
+     label1:
+        z0 = specialinvoke r0.<com.android.server.recoverysystem.RecoverySystemService: boolean setupOrClearBcb(boolean,java.lang.String)>(0, null);
+
+        exitmonitor r1;
+
+     label2:
+        return z0;
+
+     label3:
+        $r3 := @caughtexception;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        throw $r3;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    public boolean clearLskf()
+    {
+        com.android.server.recoverysystem.RecoverySystemService r0;
+        long l0;
+        android.content.Context $r2;
+        com.android.server.recoverysystem.RecoverySystemService$Injector $r3;
+        com.android.internal.widget.LockSettingsInternal $r4;
+        java.lang.Throwable $r5;
+
+        r0 := @this: com.android.server.recoverysystem.RecoverySystemService;
+
+        $r2 = r0.<com.android.server.recoverysystem.RecoverySystemService: android.content.Context mContext>;
+
+        virtualinvoke $r2.<android.content.Context: void enforceCallingOrSelfPermission(java.lang.String,java.lang.String)>("android.permission.RECOVERY", null);
+
+        r0.<com.android.server.recoverysystem.RecoverySystemService: boolean mPreparedForReboot> = 0;
+
+        r0.<com.android.server.recoverysystem.RecoverySystemService: java.lang.String mUnattendedRebootToken> = null;
+
+        r0.<com.android.server.recoverysystem.RecoverySystemService: android.content.IntentSender mPreparedForRebootIntentSender> = null;
+
+        l0 = staticinvoke <android.os.Binder: long clearCallingIdentity()>();
+
+     label1:
+        $r3 = r0.<com.android.server.recoverysystem.RecoverySystemService: com.android.server.recoverysystem.RecoverySystemService$Injector mInjector>;
+
+        $r4 = virtualinvoke $r3.<com.android.server.recoverysystem.RecoverySystemService$Injector: com.android.internal.widget.LockSettingsInternal getLockSettingsService()>();
+
+        virtualinvoke $r4.<com.android.internal.widget.LockSettingsInternal: void clearRebootEscrow()>();
+
+     label2:
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l0);
+
+        return 1;
+
+     label3:
+        $r5 := @caughtexception;
+
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l0);
+
+        throw $r5;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+    }
+
+    public void onPreparedForReboot(boolean)
+    {
+        com.android.server.recoverysystem.RecoverySystemService r0;
+        boolean z0;
+        java.lang.String $r1;
+
+        r0 := @this: com.android.server.recoverysystem.RecoverySystemService;
+
+        z0 := @parameter0: boolean;
+
+        $r1 = r0.<com.android.server.recoverysystem.RecoverySystemService: java.lang.String mUnattendedRebootToken>;
+
+        if $r1 != null goto label1;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("RecoverySystemService", "onPreparedForReboot called when mUnattendedRebootToken is null");
+
+     label1:
+        r0.<com.android.server.recoverysystem.RecoverySystemService: boolean mPreparedForReboot> = z0;
+
+        if z0 == 0 goto label2;
+
+        specialinvoke r0.<com.android.server.recoverysystem.RecoverySystemService: void sendPreparedForRebootIntentIfNeeded()>();
+
+     label2:
+        return;
+    }
+
+    public void onShellCommand(java.io.FileDescriptor, java.io.FileDescriptor, java.io.FileDescriptor, java.lang.String[], android.os.ShellCallback, android.os.ResultReceiver)
+    {
+        com.android.server.recoverysystem.RecoverySystemService r0;
+        java.io.FileDescriptor r1, r2, r9;
+        java.lang.String[] r3;
+        android.os.ShellCallback r4;
+        android.os.ResultReceiver r5;
+        long l0;
+        com.android.server.recoverysystem.RecoverySystemShellCommand r6;
+        java.lang.Throwable $r7, $r8, r10;
+
+        r0 := @this: com.android.server.recoverysystem.RecoverySystemService;
+
+        r9 := @parameter0: java.io.FileDescriptor;
+
+        r1 := @parameter1: java.io.FileDescriptor;
+
+        r2 := @parameter2: java.io.FileDescriptor;
+
+        r3 := @parameter3: java.lang.String[];
+
+        r4 := @parameter4: android.os.ShellCallback;
+
+        r5 := @parameter5: android.os.ResultReceiver;
+
+        specialinvoke r0.<com.android.server.recoverysystem.RecoverySystemService: void enforceShell()>();
+
+        l0 = staticinvoke <android.os.Binder: long clearCallingIdentity()>();
+
+     label1:
+        r6 = new com.android.server.recoverysystem.RecoverySystemShellCommand;
+
+     label2:
+        specialinvoke r6.<com.android.server.recoverysystem.RecoverySystemShellCommand: void <init>(com.android.server.recoverysystem.RecoverySystemService)>(r0);
+
+        virtualinvoke r6.<com.android.server.recoverysystem.RecoverySystemShellCommand: int exec(android.os.Binder,java.io.FileDescriptor,java.io.FileDescriptor,java.io.FileDescriptor,java.lang.String[],android.os.ShellCallback,android.os.ResultReceiver)>(r0, r9, r1, r2, r3, r4, r5);
+
+     label3:
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l0);
+
+        return;
+
+     label4:
+        $r7 := @caughtexception;
+
+        r10 = $r7;
+
+        goto label6;
+
+     label5:
+        $r8 := @caughtexception;
+
+        r10 = $r8;
+
+     label6:
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l0);
+
+        throw r10;
+
+        catch java.lang.Throwable from label1 to label2 with label5;
+        catch java.lang.Throwable from label2 to label3 with label4;
+    }
+
+    void onSystemServicesReady()
+    {
+        com.android.server.recoverysystem.RecoverySystemService r0;
+        com.android.server.recoverysystem.RecoverySystemService$Injector $r1;
+        com.android.internal.widget.LockSettingsInternal $r2;
+
+        r0 := @this: com.android.server.recoverysystem.RecoverySystemService;
+
+        $r1 = r0.<com.android.server.recoverysystem.RecoverySystemService: com.android.server.recoverysystem.RecoverySystemService$Injector mInjector>;
+
+        $r2 = virtualinvoke $r1.<com.android.server.recoverysystem.RecoverySystemService$Injector: com.android.internal.widget.LockSettingsInternal getLockSettingsService()>();
+
+        virtualinvoke $r2.<com.android.internal.widget.LockSettingsInternal: void setRebootEscrowListener(com.android.internal.widget.RebootEscrowListener)>(r0);
+
+        return;
+    }
+
+    public void rebootRecoveryWithCommand(java.lang.String)
+    {
+        com.android.server.recoverysystem.RecoverySystemService r0;
+        java.lang.Object r1;
+        boolean $z0;
+        com.android.server.recoverysystem.RecoverySystemService$Injector $r2;
+        android.os.PowerManager $r3;
+        java.lang.Throwable $r4;
+        java.lang.String r5;
+
+        r0 := @this: com.android.server.recoverysystem.RecoverySystemService;
+
+        r5 := @parameter0: java.lang.String;
+
+        r1 = <com.android.server.recoverysystem.RecoverySystemService: java.lang.Object sRequestLock>;
+
+        entermonitor r1;
+
+     label1:
+        $z0 = specialinvoke r0.<com.android.server.recoverysystem.RecoverySystemService: boolean setupOrClearBcb(boolean,java.lang.String)>(1, r5);
+
+        if $z0 != 0 goto label3;
+
+        exitmonitor r1;
+
+     label2:
+        return;
+
+     label3:
+        $r2 = r0.<com.android.server.recoverysystem.RecoverySystemService: com.android.server.recoverysystem.RecoverySystemService$Injector mInjector>;
+
+        $r3 = virtualinvoke $r2.<com.android.server.recoverysystem.RecoverySystemService$Injector: android.os.PowerManager getPowerManager()>();
+
+        virtualinvoke $r3.<android.os.PowerManager: void reboot(java.lang.String)>("recovery");
+
+        exitmonitor r1;
+
+     label4:
+        return;
+
+     label5:
+        $r4 := @caughtexception;
+
+     label6:
+        exitmonitor r1;
+
+     label7:
+        throw $r4;
+
+        catch java.lang.Throwable from label1 to label2 with label5;
+        catch java.lang.Throwable from label3 to label4 with label5;
+        catch java.lang.Throwable from label6 to label7 with label5;
+    }
+
+    public boolean rebootWithLskf(java.lang.String, java.lang.String)
+    {
+        com.android.server.recoverysystem.RecoverySystemService r0;
+        java.lang.String r1, r2, $r8;
+        android.content.Context $r3;
+        boolean $z0, $z1, $z2;
+        com.android.server.recoverysystem.RecoverySystemService$Injector $r4, $r6;
+        com.android.internal.widget.LockSettingsInternal $r5;
+        android.os.PowerManager $r7;
+
+        r0 := @this: com.android.server.recoverysystem.RecoverySystemService;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 := @parameter1: java.lang.String;
+
+        $r3 = r0.<com.android.server.recoverysystem.RecoverySystemService: android.content.Context mContext>;
+
+        virtualinvoke $r3.<android.content.Context: void enforceCallingOrSelfPermission(java.lang.String,java.lang.String)>("android.permission.RECOVERY", null);
+
+        $z0 = r0.<com.android.server.recoverysystem.RecoverySystemService: boolean mPreparedForReboot>;
+
+        if $z0 != 0 goto label1;
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("RecoverySystemService", "Reboot requested before prepare completed");
+
+        return 0;
+
+     label1:
+        if r1 == null goto label2;
+
+        $r8 = r0.<com.android.server.recoverysystem.RecoverySystemService: java.lang.String mUnattendedRebootToken>;
+
+        $z2 = virtualinvoke r1.<java.lang.String: boolean equals(java.lang.Object)>($r8);
+
+        if $z2 != 0 goto label2;
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("RecoverySystemService", "Reboot requested after preparation, but with mismatching token");
+
+        return 0;
+
+     label2:
+        $r4 = r0.<com.android.server.recoverysystem.RecoverySystemService: com.android.server.recoverysystem.RecoverySystemService$Injector mInjector>;
+
+        $r5 = virtualinvoke $r4.<com.android.server.recoverysystem.RecoverySystemService$Injector: com.android.internal.widget.LockSettingsInternal getLockSettingsService()>();
+
+        $z1 = virtualinvoke $r5.<com.android.internal.widget.LockSettingsInternal: boolean armRebootEscrow()>();
+
+        if $z1 != 0 goto label3;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("RecoverySystemService", "Failure to escrow key for reboot");
+
+        return 0;
+
+     label3:
+        $r6 = r0.<com.android.server.recoverysystem.RecoverySystemService: com.android.server.recoverysystem.RecoverySystemService$Injector mInjector>;
+
+        $r7 = virtualinvoke $r6.<com.android.server.recoverysystem.RecoverySystemService$Injector: android.os.PowerManager getPowerManager()>();
+
+        virtualinvoke $r7.<android.os.PowerManager: void reboot(java.lang.String)>(r2);
+
+        return 1;
+    }
+
+    public boolean requestLskf(java.lang.String, android.content.IntentSender)
+    {
+        com.android.server.recoverysystem.RecoverySystemService r0;
+        android.content.IntentSender r1;
+        long l0;
+        android.content.Context $r2;
+        boolean $z0, $z1;
+        com.android.server.recoverysystem.RecoverySystemService$Injector $r3;
+        com.android.internal.widget.LockSettingsInternal $r4;
+        java.lang.String $r5, r7;
+        java.lang.Throwable $r6;
+
+        r0 := @this: com.android.server.recoverysystem.RecoverySystemService;
+
+        r7 := @parameter0: java.lang.String;
+
+        r1 := @parameter1: android.content.IntentSender;
+
+        $r2 = r0.<com.android.server.recoverysystem.RecoverySystemService: android.content.Context mContext>;
+
+        virtualinvoke $r2.<android.content.Context: void enforceCallingOrSelfPermission(java.lang.String,java.lang.String)>("android.permission.RECOVERY", null);
+
+        if r7 != null goto label1;
+
+        return 0;
+
+     label1:
+        $z0 = r0.<com.android.server.recoverysystem.RecoverySystemService: boolean mPreparedForReboot>;
+
+        if $z0 == 0 goto label2;
+
+        $r5 = r0.<com.android.server.recoverysystem.RecoverySystemService: java.lang.String mUnattendedRebootToken>;
+
+        $z1 = virtualinvoke r7.<java.lang.String: boolean equals(java.lang.Object)>($r5);
+
+        if $z1 == 0 goto label2;
+
+        return 1;
+
+     label2:
+        r0.<com.android.server.recoverysystem.RecoverySystemService: boolean mPreparedForReboot> = 0;
+
+        r0.<com.android.server.recoverysystem.RecoverySystemService: java.lang.String mUnattendedRebootToken> = r7;
+
+        r0.<com.android.server.recoverysystem.RecoverySystemService: android.content.IntentSender mPreparedForRebootIntentSender> = r1;
+
+        l0 = staticinvoke <android.os.Binder: long clearCallingIdentity()>();
+
+     label3:
+        $r3 = r0.<com.android.server.recoverysystem.RecoverySystemService: com.android.server.recoverysystem.RecoverySystemService$Injector mInjector>;
+
+        $r4 = virtualinvoke $r3.<com.android.server.recoverysystem.RecoverySystemService$Injector: com.android.internal.widget.LockSettingsInternal getLockSettingsService()>();
+
+        virtualinvoke $r4.<com.android.internal.widget.LockSettingsInternal: void prepareRebootEscrow()>();
+
+     label4:
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l0);
+
+        return 1;
+
+     label5:
+        $r6 := @caughtexception;
+
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l0);
+
+        throw $r6;
+
+        catch java.lang.Throwable from label3 to label4 with label5;
+    }
+
+    public boolean setupBcb(java.lang.String)
+    {
+        com.android.server.recoverysystem.RecoverySystemService r0;
+        java.lang.Object r1;
+        boolean z0;
+        java.lang.Throwable $r2;
+        java.lang.String r3;
+
+        r0 := @this: com.android.server.recoverysystem.RecoverySystemService;
+
+        r3 := @parameter0: java.lang.String;
+
+        r1 = <com.android.server.recoverysystem.RecoverySystemService: java.lang.Object sRequestLock>;
+
+        entermonitor r1;
+
+     label1:
+        z0 = specialinvoke r0.<com.android.server.recoverysystem.RecoverySystemService: boolean setupOrClearBcb(boolean,java.lang.String)>(1, r3);
+
+        exitmonitor r1;
+
+     label2:
+        return z0;
+
+     label3:
+        $r2 := @caughtexception;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        throw $r2;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    public boolean uncrypt(java.lang.String, android.os.IRecoverySystemProgressListener)
+    {
+        com.android.server.recoverysystem.RecoverySystemService r0;
+        java.lang.Object r1;
+        java.lang.StringBuilder r2, r34, r36, r42;
+        int i0, i9;
+        android.content.Context $r3;
+        boolean $z0;
+        com.android.server.recoverysystem.RecoverySystemService$Injector $r4, $r5, $r9, $r10, $r20;
+        java.lang.String $r8, $r13, $r16, $r21, $r24, r30;
+        java.lang.Throwable $r17, $r18, $r25, $r26, $r27, $r29;
+        android.os.RemoteException $r28;
+        android.os.IRecoverySystemProgressListener r31;
+        java.io.FileWriter r32;
+        com.android.server.recoverysystem.RecoverySystemService$UncryptSocket r33;
+
+        r0 := @this: com.android.server.recoverysystem.RecoverySystemService;
+
+        r30 := @parameter0: java.lang.String;
+
+        r31 := @parameter1: android.os.IRecoverySystemProgressListener;
+
+        r1 = <com.android.server.recoverysystem.RecoverySystemService: java.lang.Object sRequestLock>;
+
+        entermonitor r1;
+
+     label01:
+        $r3 = r0.<com.android.server.recoverysystem.RecoverySystemService: android.content.Context mContext>;
+
+        virtualinvoke $r3.<android.content.Context: void enforceCallingOrSelfPermission(java.lang.String,java.lang.String)>("android.permission.RECOVERY", null);
+
+        $z0 = specialinvoke r0.<com.android.server.recoverysystem.RecoverySystemService: boolean checkAndWaitForUncryptService()>();
+
+        if $z0 != 0 goto label03;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("RecoverySystemService", "uncrypt service is unavailable.");
+
+        exitmonitor r1;
+
+     label02:
+        return 0;
+
+     label03:
+        $r4 = r0.<com.android.server.recoverysystem.RecoverySystemService: com.android.server.recoverysystem.RecoverySystemService$Injector mInjector>;
+
+        virtualinvoke $r4.<com.android.server.recoverysystem.RecoverySystemService$Injector: boolean uncryptPackageFileDelete()>();
+
+     label04:
+        $r5 = r0.<com.android.server.recoverysystem.RecoverySystemService: com.android.server.recoverysystem.RecoverySystemService$Injector mInjector>;
+
+        r32 = virtualinvoke $r5.<com.android.server.recoverysystem.RecoverySystemService$Injector: java.io.FileWriter getUncryptPackageFileWriter()>();
+
+     label05:
+        r2 = new java.lang.StringBuilder;
+
+        specialinvoke r2.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r30);
+
+        virtualinvoke r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("\n");
+
+        $r8 = virtualinvoke r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r32.<java.io.FileWriter: void write(java.lang.String)>($r8);
+
+     label06:
+        if r32 == null goto label08;
+
+     label07:
+        virtualinvoke r32.<java.io.FileWriter: void close()>();
+
+     label08:
+        $r9 = r0.<com.android.server.recoverysystem.RecoverySystemService: com.android.server.recoverysystem.RecoverySystemService$Injector mInjector>;
+
+        virtualinvoke $r9.<com.android.server.recoverysystem.RecoverySystemService$Injector: void systemPropertiesSet(java.lang.String,java.lang.String)>("ctl.start", "uncrypt");
+
+        $r10 = r0.<com.android.server.recoverysystem.RecoverySystemService: com.android.server.recoverysystem.RecoverySystemService$Injector mInjector>;
+
+        r33 = virtualinvoke $r10.<com.android.server.recoverysystem.RecoverySystemService$Injector: com.android.server.recoverysystem.RecoverySystemService$UncryptSocket connectService()>();
+
+     label09:
+        if r33 != null goto label12;
+
+     label10:
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("RecoverySystemService", "Failed to connect to uncrypt socket");
+
+        exitmonitor r1;
+
+     label11:
+        return 0;
+
+     label12:
+        i9 = -2147483648;
+
+     label13:
+        i0 = virtualinvoke r33.<com.android.server.recoverysystem.RecoverySystemService$UncryptSocket: int getPercentageUncrypted()>();
+
+     label14:
+        if i0 != i9 goto label15;
+
+        if i9 == -2147483648 goto label15;
+
+        goto label13;
+
+     label15:
+        i9 = i0;
+
+        if i0 < 0 goto label28;
+
+        if i0 > 100 goto label28;
+
+     label16:
+        r34 = new java.lang.StringBuilder;
+
+        specialinvoke r34.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r34.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("uncrypt read status: ");
+
+        virtualinvoke r34.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r16 = virtualinvoke r34.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("RecoverySystemService", $r16);
+
+     label17:
+        if r31 == null goto label22;
+
+     label18:
+        interfaceinvoke r31.<android.os.IRecoverySystemProgressListener: void onProgress(int)>(i0);
+
+     label19:
+        goto label22;
+
+     label20:
+        $r28 := @caughtexception;
+
+     label21:
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("RecoverySystemService", "RemoteException when posting progress");
+
+     label22:
+        if i0 != 100 goto label27;
+
+     label23:
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("RecoverySystemService", "uncrypt successfully finished.");
+
+        virtualinvoke r33.<com.android.server.recoverysystem.RecoverySystemService$UncryptSocket: void sendAck()>();
+
+     label24:
+        virtualinvoke r33.<com.android.server.recoverysystem.RecoverySystemService$UncryptSocket: void close()>();
+
+     label25:
+        exitmonitor r1;
+
+     label26:
+        return 1;
+
+     label27:
+        goto label13;
+
+     label28:
+        r36 = new java.lang.StringBuilder;
+
+        specialinvoke r36.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r36.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("uncrypt failed with status: ");
+
+        virtualinvoke r36.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r13 = virtualinvoke r36.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("RecoverySystemService", $r13);
+
+        virtualinvoke r33.<com.android.server.recoverysystem.RecoverySystemService$UncryptSocket: void sendAck()>();
+
+     label29:
+        virtualinvoke r33.<com.android.server.recoverysystem.RecoverySystemService$UncryptSocket: void close()>();
+
+        exitmonitor r1;
+
+     label30:
+        return 0;
+
+     label31:
+        $r17 := @caughtexception;
+
+        goto label36;
+
+     label32:
+        $r26 := @caughtexception;
+
+     label33:
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("RecoverySystemService", "IOException when reading status: ", $r26);
+
+     label34:
+        virtualinvoke r33.<com.android.server.recoverysystem.RecoverySystemService$UncryptSocket: void close()>();
+
+        exitmonitor r1;
+
+     label35:
+        return 0;
+
+     label36:
+        virtualinvoke r33.<com.android.server.recoverysystem.RecoverySystemService$UncryptSocket: void close()>();
+
+     label37:
+        throw $r17;
+
+     label38:
+        $r25 := @caughtexception;
+
+        if r32 == null goto label43;
+
+     label39:
+        virtualinvoke r32.<java.io.FileWriter: void close()>();
+
+     label40:
+        goto label43;
+
+     label41:
+        $r27 := @caughtexception;
+
+     label42:
+        virtualinvoke $r25.<java.lang.Throwable: void addSuppressed(java.lang.Throwable)>($r27);
+
+     label43:
+        throw $r25;
+
+     label44:
+        $r18 := @caughtexception;
+
+     label45:
+        r42 = new java.lang.StringBuilder;
+
+        specialinvoke r42.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r42.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("IOException when writing \"");
+
+        $r20 = r0.<com.android.server.recoverysystem.RecoverySystemService: com.android.server.recoverysystem.RecoverySystemService$Injector mInjector>;
+
+        $r21 = virtualinvoke $r20.<com.android.server.recoverysystem.RecoverySystemService$Injector: java.lang.String getUncryptPackageFileName()>();
+
+        virtualinvoke r42.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r21);
+
+        virtualinvoke r42.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("\":");
+
+        $r24 = virtualinvoke r42.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("RecoverySystemService", $r24, $r18);
+
+        exitmonitor r1;
+
+     label46:
+        return 0;
+
+     label47:
+        $r29 := @caughtexception;
+
+     label48:
+        exitmonitor r1;
+
+     label49:
+        throw $r29;
+
+        catch java.lang.Throwable from label01 to label02 with label47;
+        catch java.lang.Throwable from label03 to label04 with label47;
+        catch java.io.IOException from label04 to label05 with label44;
+        catch java.lang.Throwable from label04 to label05 with label47;
+        catch java.lang.Throwable from label05 to label06 with label38;
+        catch java.io.IOException from label07 to label08 with label44;
+        catch java.lang.Throwable from label07 to label08 with label47;
+        catch java.lang.Throwable from label08 to label09 with label47;
+        catch java.lang.Throwable from label10 to label11 with label47;
+        catch java.io.IOException from label13 to label14 with label32;
+        catch java.lang.Throwable from label13 to label14 with label31;
+        catch java.io.IOException from label16 to label17 with label32;
+        catch java.lang.Throwable from label16 to label17 with label31;
+        catch android.os.RemoteException from label18 to label19 with label20;
+        catch java.io.IOException from label18 to label19 with label32;
+        catch java.lang.Throwable from label18 to label19 with label31;
+        catch java.io.IOException from label21 to label22 with label32;
+        catch java.lang.Throwable from label21 to label22 with label31;
+        catch java.io.IOException from label23 to label24 with label32;
+        catch java.lang.Throwable from label23 to label24 with label31;
+        catch java.lang.Throwable from label24 to label25 with label47;
+        catch java.lang.Throwable from label25 to label26 with label47;
+        catch java.io.IOException from label28 to label29 with label32;
+        catch java.lang.Throwable from label28 to label29 with label31;
+        catch java.lang.Throwable from label29 to label30 with label47;
+        catch java.lang.Throwable from label33 to label34 with label31;
+        catch java.lang.Throwable from label34 to label35 with label47;
+        catch java.lang.Throwable from label36 to label37 with label47;
+        catch java.lang.Throwable from label37 to label38 with label47;
+        catch java.lang.Throwable from label39 to label40 with label41;
+        catch java.io.IOException from label42 to label43 with label44;
+        catch java.lang.Throwable from label42 to label43 with label47;
+        catch java.io.IOException from label43 to label44 with label44;
+        catch java.lang.Throwable from label43 to label44 with label47;
+        catch java.lang.Throwable from label45 to label46 with label47;
+        catch java.lang.Throwable from label48 to label49 with label47;
+    }
+}

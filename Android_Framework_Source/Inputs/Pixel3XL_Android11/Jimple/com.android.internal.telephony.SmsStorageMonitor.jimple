@@ -1,0 +1,288 @@
+public class com.android.internal.telephony.SmsStorageMonitor extends android.os.Handler
+{
+    private static final int EVENT_ICC_FULL;
+    private static final int EVENT_RADIO_ON;
+    private static final int EVENT_REPORT_MEMORY_STATUS_DONE;
+    private static final java.lang.String TAG;
+    private static final int WAKE_LOCK_TIMEOUT;
+    final com.android.internal.telephony.CommandsInterface mCi;
+    private final android.content.Context mContext;
+    com.android.internal.telephony.Phone mPhone;
+    private boolean mReportMemoryStatusPending;
+    private final android.content.BroadcastReceiver mResultReceiver;
+    boolean mStorageAvailable;
+    private android.os.PowerManager$WakeLock mWakeLock;
+
+    public void <init>(com.android.internal.telephony.Phone)
+    {
+        com.android.internal.telephony.SmsStorageMonitor r0;
+        com.android.internal.telephony.SmsStorageMonitor$1 $r1;
+        android.content.Context $r2, $r8;
+        com.android.internal.telephony.CommandsInterface $r3, $r4, $r5;
+        android.content.IntentFilter $r6;
+        android.content.BroadcastReceiver $r7;
+        com.android.internal.telephony.Phone r10;
+
+        r0 := @this: com.android.internal.telephony.SmsStorageMonitor;
+
+        r10 := @parameter0: com.android.internal.telephony.Phone;
+
+        specialinvoke r0.<android.os.Handler: void <init>()>();
+
+        r0.<com.android.internal.telephony.SmsStorageMonitor: boolean mStorageAvailable> = 1;
+
+        $r1 = new com.android.internal.telephony.SmsStorageMonitor$1;
+
+        specialinvoke $r1.<com.android.internal.telephony.SmsStorageMonitor$1: void <init>(com.android.internal.telephony.SmsStorageMonitor)>(r0);
+
+        r0.<com.android.internal.telephony.SmsStorageMonitor: android.content.BroadcastReceiver mResultReceiver> = $r1;
+
+        r0.<com.android.internal.telephony.SmsStorageMonitor: com.android.internal.telephony.Phone mPhone> = r10;
+
+        $r2 = virtualinvoke r10.<com.android.internal.telephony.Phone: android.content.Context getContext()>();
+
+        r0.<com.android.internal.telephony.SmsStorageMonitor: android.content.Context mContext> = $r2;
+
+        $r3 = r10.<com.android.internal.telephony.Phone: com.android.internal.telephony.CommandsInterface mCi>;
+
+        r0.<com.android.internal.telephony.SmsStorageMonitor: com.android.internal.telephony.CommandsInterface mCi> = $r3;
+
+        specialinvoke r0.<com.android.internal.telephony.SmsStorageMonitor: void createWakelock()>();
+
+        $r4 = r0.<com.android.internal.telephony.SmsStorageMonitor: com.android.internal.telephony.CommandsInterface mCi>;
+
+        interfaceinvoke $r4.<com.android.internal.telephony.CommandsInterface: void setOnIccSmsFull(android.os.Handler,int,java.lang.Object)>(r0, 1, null);
+
+        $r5 = r0.<com.android.internal.telephony.SmsStorageMonitor: com.android.internal.telephony.CommandsInterface mCi>;
+
+        interfaceinvoke $r5.<com.android.internal.telephony.CommandsInterface: void registerForOn(android.os.Handler,int,java.lang.Object)>(r0, 3, null);
+
+        $r6 = new android.content.IntentFilter;
+
+        specialinvoke $r6.<android.content.IntentFilter: void <init>()>();
+
+        virtualinvoke $r6.<android.content.IntentFilter: void addAction(java.lang.String)>("android.intent.action.DEVICE_STORAGE_FULL");
+
+        virtualinvoke $r6.<android.content.IntentFilter: void addAction(java.lang.String)>("android.intent.action.DEVICE_STORAGE_NOT_FULL");
+
+        $r8 = r0.<com.android.internal.telephony.SmsStorageMonitor: android.content.Context mContext>;
+
+        $r7 = r0.<com.android.internal.telephony.SmsStorageMonitor: android.content.BroadcastReceiver mResultReceiver>;
+
+        virtualinvoke $r8.<android.content.Context: android.content.Intent registerReceiver(android.content.BroadcastReceiver,android.content.IntentFilter)>($r7, $r6);
+
+        return;
+    }
+
+    private void createWakelock()
+    {
+        com.android.internal.telephony.SmsStorageMonitor r0;
+        android.os.PowerManager$WakeLock r1;
+        android.content.Context $r2;
+        java.lang.Object $r3;
+        android.os.PowerManager $r4;
+
+        r0 := @this: com.android.internal.telephony.SmsStorageMonitor;
+
+        $r2 = r0.<com.android.internal.telephony.SmsStorageMonitor: android.content.Context mContext>;
+
+        $r3 = virtualinvoke $r2.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("power");
+
+        $r4 = (android.os.PowerManager) $r3;
+
+        r1 = virtualinvoke $r4.<android.os.PowerManager: android.os.PowerManager$WakeLock newWakeLock(int,java.lang.String)>(1, "SmsStorageMonitor");
+
+        r0.<com.android.internal.telephony.SmsStorageMonitor: android.os.PowerManager$WakeLock mWakeLock> = r1;
+
+        virtualinvoke r1.<android.os.PowerManager$WakeLock: void setReferenceCounted(boolean)>(1);
+
+        return;
+    }
+
+    private void handleIccFull()
+    {
+        com.android.internal.telephony.SmsStorageMonitor r0;
+        android.content.Intent $r2;
+        android.content.Context $r3, $r8;
+        android.content.ComponentName $r4;
+        android.os.PowerManager$WakeLock $r6;
+        com.android.internal.telephony.Phone $r7;
+        int $i0;
+
+        r0 := @this: com.android.internal.telephony.SmsStorageMonitor;
+
+        $r2 = new android.content.Intent;
+
+        specialinvoke $r2.<android.content.Intent: void <init>(java.lang.String)>("android.provider.Telephony.SIM_FULL");
+
+        $r3 = r0.<com.android.internal.telephony.SmsStorageMonitor: android.content.Context mContext>;
+
+        $r4 = staticinvoke <com.android.internal.telephony.SmsApplication: android.content.ComponentName getDefaultSimFullApplication(android.content.Context,boolean)>($r3, 0);
+
+        virtualinvoke $r2.<android.content.Intent: android.content.Intent setComponent(android.content.ComponentName)>($r4);
+
+        $r6 = r0.<com.android.internal.telephony.SmsStorageMonitor: android.os.PowerManager$WakeLock mWakeLock>;
+
+        virtualinvoke $r6.<android.os.PowerManager$WakeLock: void acquire(long)>(5000L);
+
+        $r7 = r0.<com.android.internal.telephony.SmsStorageMonitor: com.android.internal.telephony.Phone mPhone>;
+
+        $i0 = virtualinvoke $r7.<com.android.internal.telephony.Phone: int getPhoneId()>();
+
+        staticinvoke <android.telephony.SubscriptionManager: void putPhoneIdAndSubIdExtra(android.content.Intent,int)>($r2, $i0);
+
+        $r8 = r0.<com.android.internal.telephony.SmsStorageMonitor: android.content.Context mContext>;
+
+        virtualinvoke $r8.<android.content.Context: void sendBroadcast(android.content.Intent,java.lang.String)>($r2, "android.permission.RECEIVE_SMS");
+
+        return;
+    }
+
+    public void dispose()
+    {
+        com.android.internal.telephony.SmsStorageMonitor r0;
+        com.android.internal.telephony.CommandsInterface $r1, $r2;
+        android.content.BroadcastReceiver $r3;
+        android.content.Context $r4;
+
+        r0 := @this: com.android.internal.telephony.SmsStorageMonitor;
+
+        $r1 = r0.<com.android.internal.telephony.SmsStorageMonitor: com.android.internal.telephony.CommandsInterface mCi>;
+
+        interfaceinvoke $r1.<com.android.internal.telephony.CommandsInterface: void unSetOnIccSmsFull(android.os.Handler)>(r0);
+
+        $r2 = r0.<com.android.internal.telephony.SmsStorageMonitor: com.android.internal.telephony.CommandsInterface mCi>;
+
+        interfaceinvoke $r2.<com.android.internal.telephony.CommandsInterface: void unregisterForOn(android.os.Handler)>(r0);
+
+        $r4 = r0.<com.android.internal.telephony.SmsStorageMonitor: android.content.Context mContext>;
+
+        $r3 = r0.<com.android.internal.telephony.SmsStorageMonitor: android.content.BroadcastReceiver mResultReceiver>;
+
+        virtualinvoke $r4.<android.content.Context: void unregisterReceiver(android.content.BroadcastReceiver)>($r3);
+
+        return;
+    }
+
+    public void handleMessage(android.os.Message)
+    {
+        com.android.internal.telephony.SmsStorageMonitor r0;
+        int i0;
+        java.lang.Object $r1;
+        android.os.AsyncResult $r2;
+        java.lang.Throwable $r3;
+        java.lang.StringBuilder $r4, $r8;
+        boolean $z0, $z1, $z2, $z3;
+        java.lang.String $r7, $r11;
+        com.android.internal.telephony.CommandsInterface $r12;
+        android.os.Message $r13, r14;
+
+        r0 := @this: com.android.internal.telephony.SmsStorageMonitor;
+
+        r14 := @parameter0: android.os.Message;
+
+        i0 = r14.<android.os.Message: int what>;
+
+        if i0 == 1 goto label4;
+
+        if i0 == 2 goto label2;
+
+        if i0 == 3 goto label1;
+
+        goto label5;
+
+     label1:
+        $z1 = r0.<com.android.internal.telephony.SmsStorageMonitor: boolean mReportMemoryStatusPending>;
+
+        if $z1 == 0 goto label5;
+
+        $r8 = new java.lang.StringBuilder;
+
+        specialinvoke $r8.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Sending pending memory status report : mStorageAvailable = ");
+
+        $z2 = r0.<com.android.internal.telephony.SmsStorageMonitor: boolean mStorageAvailable>;
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>($z2);
+
+        $r11 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.telephony.Rlog: int v(java.lang.String,java.lang.String)>("SmsStorageMonitor", $r11);
+
+        $r12 = r0.<com.android.internal.telephony.SmsStorageMonitor: com.android.internal.telephony.CommandsInterface mCi>;
+
+        $z3 = r0.<com.android.internal.telephony.SmsStorageMonitor: boolean mStorageAvailable>;
+
+        $r13 = virtualinvoke r0.<com.android.internal.telephony.SmsStorageMonitor: android.os.Message obtainMessage(int)>(2);
+
+        interfaceinvoke $r12.<com.android.internal.telephony.CommandsInterface: void reportSmsMemoryStatus(boolean,android.os.Message)>($z3, $r13);
+
+        goto label5;
+
+     label2:
+        $r1 = r14.<android.os.Message: java.lang.Object obj>;
+
+        $r2 = (android.os.AsyncResult) $r1;
+
+        $r3 = $r2.<android.os.AsyncResult: java.lang.Throwable exception>;
+
+        if $r3 == null goto label3;
+
+        r0.<com.android.internal.telephony.SmsStorageMonitor: boolean mReportMemoryStatusPending> = 1;
+
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Memory status report to modem pending : mStorageAvailable = ");
+
+        $z0 = r0.<com.android.internal.telephony.SmsStorageMonitor: boolean mStorageAvailable>;
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>($z0);
+
+        $r7 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.telephony.Rlog: int v(java.lang.String,java.lang.String)>("SmsStorageMonitor", $r7);
+
+        goto label5;
+
+     label3:
+        r0.<com.android.internal.telephony.SmsStorageMonitor: boolean mReportMemoryStatusPending> = 0;
+
+        goto label5;
+
+     label4:
+        specialinvoke r0.<com.android.internal.telephony.SmsStorageMonitor: void handleIccFull()>();
+
+     label5:
+        return;
+    }
+
+    public boolean isStorageAvailable()
+    {
+        com.android.internal.telephony.SmsStorageMonitor r0;
+        boolean $z0;
+
+        r0 := @this: com.android.internal.telephony.SmsStorageMonitor;
+
+        $z0 = r0.<com.android.internal.telephony.SmsStorageMonitor: boolean mStorageAvailable>;
+
+        return $z0;
+    }
+
+    public static void <clinit>()
+    {
+        <com.android.internal.telephony.SmsStorageMonitor: int WAKE_LOCK_TIMEOUT> = 5000;
+
+        <com.android.internal.telephony.SmsStorageMonitor: java.lang.String TAG> = "SmsStorageMonitor";
+
+        <com.android.internal.telephony.SmsStorageMonitor: int EVENT_REPORT_MEMORY_STATUS_DONE> = 2;
+
+        <com.android.internal.telephony.SmsStorageMonitor: int EVENT_RADIO_ON> = 3;
+
+        <com.android.internal.telephony.SmsStorageMonitor: int EVENT_ICC_FULL> = 1;
+
+        return;
+    }
+}

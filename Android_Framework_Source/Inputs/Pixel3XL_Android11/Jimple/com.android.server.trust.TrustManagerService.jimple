@@ -1,0 +1,4566 @@
+public class com.android.server.trust.TrustManagerService extends com.android.server.SystemService
+{
+    static final boolean DEBUG;
+    private static final int MSG_CLEANUP_USER;
+    private static final int MSG_DISPATCH_UNLOCK_ATTEMPT;
+    private static final int MSG_DISPATCH_UNLOCK_LOCKOUT;
+    private static final int MSG_ENABLED_AGENTS_CHANGED;
+    private static final int MSG_FLUSH_TRUST_USUALLY_MANAGED;
+    private static final int MSG_KEYGUARD_SHOWING_CHANGED;
+    private static final int MSG_REFRESH_DEVICE_LOCKED_FOR_USER;
+    private static final int MSG_REGISTER_LISTENER;
+    private static final int MSG_SCHEDULE_TRUST_TIMEOUT;
+    private static final int MSG_START_USER;
+    private static final int MSG_STOP_USER;
+    private static final int MSG_SWITCH_USER;
+    private static final int MSG_UNLOCK_USER;
+    private static final int MSG_UNREGISTER_LISTENER;
+    private static final java.lang.String PERMISSION_PROVIDE_AGENT;
+    private static final java.lang.String TAG;
+    private static final android.content.Intent TRUST_AGENT_INTENT;
+    private static final java.lang.String TRUST_TIMEOUT_ALARM_TAG;
+    private static final long TRUST_TIMEOUT_IN_MILLIS;
+    private static final int TRUST_USUALLY_MANAGED_FLUSH_DELAY;
+    private final android.util.ArraySet mActiveAgents;
+    private final android.app.ActivityManager mActivityManager;
+    private android.app.AlarmManager mAlarmManager;
+    final com.android.server.trust.TrustArchive mArchive;
+    private final android.content.Context mContext;
+    private int mCurrentUser;
+    private final android.util.SparseBooleanArray mDeviceLockedForUser;
+    private final android.os.Handler mHandler;
+    private final com.android.internal.widget.LockPatternUtils mLockPatternUtils;
+    private final com.android.internal.content.PackageMonitor mPackageMonitor;
+    private final com.android.server.trust.TrustManagerService$Receiver mReceiver;
+    private final android.os.IBinder mService;
+    private final com.android.server.trust.TrustManagerService$SettingsObserver mSettingsObserver;
+    private final com.android.server.trust.TrustManagerService$StrongAuthTracker mStrongAuthTracker;
+    private boolean mTrustAgentsCanRun;
+    private final java.util.ArrayList mTrustListeners;
+    private final android.util.ArrayMap mTrustTimeoutAlarmListenerForUser;
+    private final android.util.SparseBooleanArray mTrustUsuallyManagedForUser;
+    private final android.util.SparseBooleanArray mUserIsTrusted;
+    private final android.os.UserManager mUserManager;
+    private final android.util.SparseBooleanArray mUsersUnlockedByBiometric;
+
+    static void <clinit>()
+    {
+        boolean $z0, $z1, z2;
+        android.content.Intent $r0;
+
+        <com.android.server.trust.TrustManagerService: int TRUST_USUALLY_MANAGED_FLUSH_DELAY> = 120000;
+
+        <com.android.server.trust.TrustManagerService: long TRUST_TIMEOUT_IN_MILLIS> = 14400000L;
+
+        <com.android.server.trust.TrustManagerService: java.lang.String TRUST_TIMEOUT_ALARM_TAG> = "TrustManagerService.trustTimeoutForUser";
+
+        <com.android.server.trust.TrustManagerService: java.lang.String TAG> = "TrustManagerService";
+
+        <com.android.server.trust.TrustManagerService: java.lang.String PERMISSION_PROVIDE_AGENT> = "android.permission.PROVIDE_TRUST_AGENT";
+
+        <com.android.server.trust.TrustManagerService: int MSG_UNREGISTER_LISTENER> = 2;
+
+        <com.android.server.trust.TrustManagerService: int MSG_UNLOCK_USER> = 11;
+
+        <com.android.server.trust.TrustManagerService: int MSG_SWITCH_USER> = 9;
+
+        <com.android.server.trust.TrustManagerService: int MSG_STOP_USER> = 12;
+
+        <com.android.server.trust.TrustManagerService: int MSG_START_USER> = 7;
+
+        <com.android.server.trust.TrustManagerService: int MSG_SCHEDULE_TRUST_TIMEOUT> = 15;
+
+        <com.android.server.trust.TrustManagerService: int MSG_REGISTER_LISTENER> = 1;
+
+        <com.android.server.trust.TrustManagerService: int MSG_REFRESH_DEVICE_LOCKED_FOR_USER> = 14;
+
+        <com.android.server.trust.TrustManagerService: int MSG_KEYGUARD_SHOWING_CHANGED> = 6;
+
+        <com.android.server.trust.TrustManagerService: int MSG_FLUSH_TRUST_USUALLY_MANAGED> = 10;
+
+        <com.android.server.trust.TrustManagerService: int MSG_ENABLED_AGENTS_CHANGED> = 4;
+
+        <com.android.server.trust.TrustManagerService: int MSG_DISPATCH_UNLOCK_LOCKOUT> = 13;
+
+        <com.android.server.trust.TrustManagerService: int MSG_DISPATCH_UNLOCK_ATTEMPT> = 3;
+
+        <com.android.server.trust.TrustManagerService: int MSG_CLEANUP_USER> = 8;
+
+        $z0 = <android.os.Build: boolean IS_DEBUGGABLE>;
+
+        if $z0 == 0 goto label1;
+
+        $z1 = staticinvoke <android.util.Log: boolean isLoggable(java.lang.String,int)>("TrustManagerService", 2);
+
+        if $z1 == 0 goto label1;
+
+        z2 = 1;
+
+        goto label2;
+
+     label1:
+        z2 = 0;
+
+     label2:
+        <com.android.server.trust.TrustManagerService: boolean DEBUG> = z2;
+
+        $r0 = new android.content.Intent;
+
+        specialinvoke $r0.<android.content.Intent: void <init>(java.lang.String)>("android.service.trust.TrustAgentService");
+
+        <com.android.server.trust.TrustManagerService: android.content.Intent TRUST_AGENT_INTENT> = $r0;
+
+        return;
+    }
+
+    public void <init>(android.content.Context)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        android.content.Context r1, $r16, $r21;
+        android.util.ArraySet $r2;
+        java.util.ArrayList $r3;
+        com.android.server.trust.TrustManagerService$Receiver $r4;
+        com.android.server.trust.TrustArchive $r5;
+        android.util.SparseBooleanArray $r6, $r7, $r8, $r9;
+        android.util.ArrayMap $r10;
+        com.android.server.trust.TrustManagerService$1 $r11;
+        com.android.server.trust.TrustManagerService$2 $r12;
+        com.android.server.trust.TrustManagerService$3 $r13;
+        java.lang.Object $r14, $r17, $r22;
+        android.os.UserManager $r15;
+        android.app.ActivityManager $r18;
+        com.android.internal.widget.LockPatternUtils $r19;
+        com.android.server.trust.TrustManagerService$StrongAuthTracker $r20;
+        android.app.AlarmManager $r23;
+        com.android.server.trust.TrustManagerService$SettingsObserver $r24;
+        android.os.Handler $r25;
+
+        r0 := @this: com.android.server.trust.TrustManagerService;
+
+        r1 := @parameter0: android.content.Context;
+
+        specialinvoke r0.<com.android.server.SystemService: void <init>(android.content.Context)>(r1);
+
+        $r2 = new android.util.ArraySet;
+
+        specialinvoke $r2.<android.util.ArraySet: void <init>()>();
+
+        r0.<com.android.server.trust.TrustManagerService: android.util.ArraySet mActiveAgents> = $r2;
+
+        $r3 = new java.util.ArrayList;
+
+        specialinvoke $r3.<java.util.ArrayList: void <init>()>();
+
+        r0.<com.android.server.trust.TrustManagerService: java.util.ArrayList mTrustListeners> = $r3;
+
+        $r4 = new com.android.server.trust.TrustManagerService$Receiver;
+
+        specialinvoke $r4.<com.android.server.trust.TrustManagerService$Receiver: void <init>(com.android.server.trust.TrustManagerService,com.android.server.trust.TrustManagerService$1)>(r0, null);
+
+        r0.<com.android.server.trust.TrustManagerService: com.android.server.trust.TrustManagerService$Receiver mReceiver> = $r4;
+
+        $r5 = new com.android.server.trust.TrustArchive;
+
+        specialinvoke $r5.<com.android.server.trust.TrustArchive: void <init>()>();
+
+        r0.<com.android.server.trust.TrustManagerService: com.android.server.trust.TrustArchive mArchive> = $r5;
+
+        $r6 = new android.util.SparseBooleanArray;
+
+        specialinvoke $r6.<android.util.SparseBooleanArray: void <init>()>();
+
+        r0.<com.android.server.trust.TrustManagerService: android.util.SparseBooleanArray mUserIsTrusted> = $r6;
+
+        $r7 = new android.util.SparseBooleanArray;
+
+        specialinvoke $r7.<android.util.SparseBooleanArray: void <init>()>();
+
+        r0.<com.android.server.trust.TrustManagerService: android.util.SparseBooleanArray mDeviceLockedForUser> = $r7;
+
+        $r8 = new android.util.SparseBooleanArray;
+
+        specialinvoke $r8.<android.util.SparseBooleanArray: void <init>()>();
+
+        r0.<com.android.server.trust.TrustManagerService: android.util.SparseBooleanArray mTrustUsuallyManagedForUser> = $r8;
+
+        $r9 = new android.util.SparseBooleanArray;
+
+        specialinvoke $r9.<android.util.SparseBooleanArray: void <init>()>();
+
+        r0.<com.android.server.trust.TrustManagerService: android.util.SparseBooleanArray mUsersUnlockedByBiometric> = $r9;
+
+        $r10 = new android.util.ArrayMap;
+
+        specialinvoke $r10.<android.util.ArrayMap: void <init>()>();
+
+        r0.<com.android.server.trust.TrustManagerService: android.util.ArrayMap mTrustTimeoutAlarmListenerForUser> = $r10;
+
+        r0.<com.android.server.trust.TrustManagerService: boolean mTrustAgentsCanRun> = 0;
+
+        r0.<com.android.server.trust.TrustManagerService: int mCurrentUser> = 0;
+
+        $r11 = new com.android.server.trust.TrustManagerService$1;
+
+        specialinvoke $r11.<com.android.server.trust.TrustManagerService$1: void <init>(com.android.server.trust.TrustManagerService)>(r0);
+
+        r0.<com.android.server.trust.TrustManagerService: android.os.IBinder mService> = $r11;
+
+        $r12 = new com.android.server.trust.TrustManagerService$2;
+
+        specialinvoke $r12.<com.android.server.trust.TrustManagerService$2: void <init>(com.android.server.trust.TrustManagerService)>(r0);
+
+        r0.<com.android.server.trust.TrustManagerService: android.os.Handler mHandler> = $r12;
+
+        $r13 = new com.android.server.trust.TrustManagerService$3;
+
+        specialinvoke $r13.<com.android.server.trust.TrustManagerService$3: void <init>(com.android.server.trust.TrustManagerService)>(r0);
+
+        r0.<com.android.server.trust.TrustManagerService: com.android.internal.content.PackageMonitor mPackageMonitor> = $r13;
+
+        r0.<com.android.server.trust.TrustManagerService: android.content.Context mContext> = r1;
+
+        $r14 = virtualinvoke r1.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("user");
+
+        $r15 = (android.os.UserManager) $r14;
+
+        r0.<com.android.server.trust.TrustManagerService: android.os.UserManager mUserManager> = $r15;
+
+        $r16 = r0.<com.android.server.trust.TrustManagerService: android.content.Context mContext>;
+
+        $r17 = virtualinvoke $r16.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("activity");
+
+        $r18 = (android.app.ActivityManager) $r17;
+
+        r0.<com.android.server.trust.TrustManagerService: android.app.ActivityManager mActivityManager> = $r18;
+
+        $r19 = new com.android.internal.widget.LockPatternUtils;
+
+        specialinvoke $r19.<com.android.internal.widget.LockPatternUtils: void <init>(android.content.Context)>(r1);
+
+        r0.<com.android.server.trust.TrustManagerService: com.android.internal.widget.LockPatternUtils mLockPatternUtils> = $r19;
+
+        $r20 = new com.android.server.trust.TrustManagerService$StrongAuthTracker;
+
+        specialinvoke $r20.<com.android.server.trust.TrustManagerService$StrongAuthTracker: void <init>(com.android.server.trust.TrustManagerService,android.content.Context)>(r0, r1);
+
+        r0.<com.android.server.trust.TrustManagerService: com.android.server.trust.TrustManagerService$StrongAuthTracker mStrongAuthTracker> = $r20;
+
+        $r21 = r0.<com.android.server.trust.TrustManagerService: android.content.Context mContext>;
+
+        $r22 = virtualinvoke $r21.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("alarm");
+
+        $r23 = (android.app.AlarmManager) $r22;
+
+        r0.<com.android.server.trust.TrustManagerService: android.app.AlarmManager mAlarmManager> = $r23;
+
+        $r24 = new com.android.server.trust.TrustManagerService$SettingsObserver;
+
+        $r25 = r0.<com.android.server.trust.TrustManagerService: android.os.Handler mHandler>;
+
+        specialinvoke $r24.<com.android.server.trust.TrustManagerService$SettingsObserver: void <init>(com.android.server.trust.TrustManagerService,android.os.Handler)>(r0, $r25);
+
+        r0.<com.android.server.trust.TrustManagerService: com.android.server.trust.TrustManagerService$SettingsObserver mSettingsObserver> = $r24;
+
+        return;
+    }
+
+    static int access$100(com.android.server.trust.TrustManagerService)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        int $i0;
+
+        r0 := @parameter0: com.android.server.trust.TrustManagerService;
+
+        $i0 = r0.<com.android.server.trust.TrustManagerService: int mCurrentUser>;
+
+        return $i0;
+    }
+
+    static boolean access$1000(com.android.server.trust.TrustManagerService, int)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        int i0;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.server.trust.TrustManagerService;
+
+        i0 := @parameter1: int;
+
+        $z0 = specialinvoke r0.<com.android.server.trust.TrustManagerService: boolean aggregateIsTrusted(int)>(i0);
+
+        return $z0;
+    }
+
+    static int access$102(com.android.server.trust.TrustManagerService, int)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        int i0;
+
+        r0 := @parameter0: com.android.server.trust.TrustManagerService;
+
+        i0 := @parameter1: int;
+
+        r0.<com.android.server.trust.TrustManagerService: int mCurrentUser> = i0;
+
+        return i0;
+    }
+
+    static boolean access$1100(com.android.server.trust.TrustManagerService, int)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        int i0;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.server.trust.TrustManagerService;
+
+        i0 := @parameter1: int;
+
+        $z0 = specialinvoke r0.<com.android.server.trust.TrustManagerService: boolean aggregateIsTrustManaged(int)>(i0);
+
+        return $z0;
+    }
+
+    static com.android.server.trust.TrustManagerService$StrongAuthTracker access$1200(com.android.server.trust.TrustManagerService)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        com.android.server.trust.TrustManagerService$StrongAuthTracker $r1;
+
+        r0 := @parameter0: com.android.server.trust.TrustManagerService;
+
+        $r1 = r0.<com.android.server.trust.TrustManagerService: com.android.server.trust.TrustManagerService$StrongAuthTracker mStrongAuthTracker>;
+
+        return $r1;
+    }
+
+    static android.util.ArraySet access$1300(com.android.server.trust.TrustManagerService)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        android.util.ArraySet $r1;
+
+        r0 := @parameter0: com.android.server.trust.TrustManagerService;
+
+        $r1 = r0.<com.android.server.trust.TrustManagerService: android.util.ArraySet mActiveAgents>;
+
+        return $r1;
+    }
+
+    static android.util.SparseBooleanArray access$1400(com.android.server.trust.TrustManagerService)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        android.util.SparseBooleanArray $r1;
+
+        r0 := @parameter0: com.android.server.trust.TrustManagerService;
+
+        $r1 = r0.<com.android.server.trust.TrustManagerService: android.util.SparseBooleanArray mDeviceLockedForUser>;
+
+        return $r1;
+    }
+
+    static boolean access$1500(com.android.server.trust.TrustManagerService, int)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        int i0;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.server.trust.TrustManagerService;
+
+        i0 := @parameter1: int;
+
+        $z0 = specialinvoke r0.<com.android.server.trust.TrustManagerService: boolean isTrustUsuallyManagedInternal(int)>(i0);
+
+        return $z0;
+    }
+
+    static android.util.SparseBooleanArray access$1600(com.android.server.trust.TrustManagerService)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        android.util.SparseBooleanArray $r1;
+
+        r0 := @parameter0: com.android.server.trust.TrustManagerService;
+
+        $r1 = r0.<com.android.server.trust.TrustManagerService: android.util.SparseBooleanArray mUsersUnlockedByBiometric>;
+
+        return $r1;
+    }
+
+    static com.android.server.trust.TrustManagerService$SettingsObserver access$1700(com.android.server.trust.TrustManagerService)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        com.android.server.trust.TrustManagerService$SettingsObserver $r1;
+
+        r0 := @parameter0: com.android.server.trust.TrustManagerService;
+
+        $r1 = r0.<com.android.server.trust.TrustManagerService: com.android.server.trust.TrustManagerService$SettingsObserver mSettingsObserver>;
+
+        return $r1;
+    }
+
+    static void access$1800(com.android.server.trust.TrustManagerService, android.app.trust.ITrustListener)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        android.app.trust.ITrustListener r1;
+
+        r0 := @parameter0: com.android.server.trust.TrustManagerService;
+
+        r1 := @parameter1: android.app.trust.ITrustListener;
+
+        specialinvoke r0.<com.android.server.trust.TrustManagerService: void addListener(android.app.trust.ITrustListener)>(r1);
+
+        return;
+    }
+
+    static void access$1900(com.android.server.trust.TrustManagerService, android.app.trust.ITrustListener)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        android.app.trust.ITrustListener r1;
+
+        r0 := @parameter0: com.android.server.trust.TrustManagerService;
+
+        r1 := @parameter1: android.app.trust.ITrustListener;
+
+        specialinvoke r0.<com.android.server.trust.TrustManagerService: void removeListener(android.app.trust.ITrustListener)>(r1);
+
+        return;
+    }
+
+    static void access$2000(com.android.server.trust.TrustManagerService, boolean, int)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        boolean z0;
+        int i0;
+
+        r0 := @parameter0: com.android.server.trust.TrustManagerService;
+
+        z0 := @parameter1: boolean;
+
+        i0 := @parameter2: int;
+
+        specialinvoke r0.<com.android.server.trust.TrustManagerService: void dispatchUnlockAttempt(boolean,int)>(z0, i0);
+
+        return;
+    }
+
+    static void access$2100(com.android.server.trust.TrustManagerService, int, int)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        int i0, i1;
+
+        r0 := @parameter0: com.android.server.trust.TrustManagerService;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        specialinvoke r0.<com.android.server.trust.TrustManagerService: void dispatchUnlockLockout(int,int)>(i0, i1);
+
+        return;
+    }
+
+    static void access$2200(com.android.server.trust.TrustManagerService, int)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        int i0;
+
+        r0 := @parameter0: com.android.server.trust.TrustManagerService;
+
+        i0 := @parameter1: int;
+
+        specialinvoke r0.<com.android.server.trust.TrustManagerService: void refreshDeviceLockedForUser(int)>(i0);
+
+        return;
+    }
+
+    static void access$2300(com.android.server.trust.TrustManagerService, int, boolean)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        int i0;
+        boolean z0;
+
+        r0 := @parameter0: com.android.server.trust.TrustManagerService;
+
+        i0 := @parameter1: int;
+
+        z0 := @parameter2: boolean;
+
+        specialinvoke r0.<com.android.server.trust.TrustManagerService: void setDeviceLockedForUser(int,boolean)>(i0, z0);
+
+        return;
+    }
+
+    static android.util.SparseBooleanArray access$2400(com.android.server.trust.TrustManagerService)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        android.util.SparseBooleanArray $r1;
+
+        r0 := @parameter0: com.android.server.trust.TrustManagerService;
+
+        $r1 = r0.<com.android.server.trust.TrustManagerService: android.util.SparseBooleanArray mTrustUsuallyManagedForUser>;
+
+        return $r1;
+    }
+
+    static void access$2500(com.android.server.trust.TrustManagerService, int, int, boolean)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        int i0, i1;
+        boolean z0;
+
+        r0 := @parameter0: com.android.server.trust.TrustManagerService;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        z0 := @parameter3: boolean;
+
+        specialinvoke r0.<com.android.server.trust.TrustManagerService: void updateTrust(int,int,boolean)>(i0, i1, z0);
+
+        return;
+    }
+
+    static void access$2600(com.android.server.trust.TrustManagerService, int, int)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        int i0, i1;
+
+        r0 := @parameter0: com.android.server.trust.TrustManagerService;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        specialinvoke r0.<com.android.server.trust.TrustManagerService: void handleScheduleTrustTimeout(int,int)>(i0, i1);
+
+        return;
+    }
+
+    static void access$2700(com.android.server.trust.TrustManagerService, java.lang.String)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        java.lang.String r1;
+
+        r0 := @parameter0: com.android.server.trust.TrustManagerService;
+
+        r1 := @parameter1: java.lang.String;
+
+        specialinvoke r0.<com.android.server.trust.TrustManagerService: void removeAgentsOfPackage(java.lang.String)>(r1);
+
+        return;
+    }
+
+    static void access$2800(com.android.server.trust.TrustManagerService, com.android.internal.widget.LockPatternUtils, int)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        com.android.internal.widget.LockPatternUtils r1;
+        int i0;
+
+        r0 := @parameter0: com.android.server.trust.TrustManagerService;
+
+        r1 := @parameter1: com.android.internal.widget.LockPatternUtils;
+
+        i0 := @parameter2: int;
+
+        specialinvoke r0.<com.android.server.trust.TrustManagerService: void maybeEnableFactoryTrustAgents(com.android.internal.widget.LockPatternUtils,int)>(r1, i0);
+
+        return;
+    }
+
+    static android.util.SparseBooleanArray access$2900(com.android.server.trust.TrustManagerService)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        android.util.SparseBooleanArray $r1;
+
+        r0 := @parameter0: com.android.server.trust.TrustManagerService;
+
+        $r1 = r0.<com.android.server.trust.TrustManagerService: android.util.SparseBooleanArray mUserIsTrusted>;
+
+        return $r1;
+    }
+
+    static android.os.Handler access$300(com.android.server.trust.TrustManagerService)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        android.os.Handler $r1;
+
+        r0 := @parameter0: com.android.server.trust.TrustManagerService;
+
+        $r1 = r0.<com.android.server.trust.TrustManagerService: android.os.Handler mHandler>;
+
+        return $r1;
+    }
+
+    static android.util.ArrayMap access$3000(com.android.server.trust.TrustManagerService)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        android.util.ArrayMap $r1;
+
+        r0 := @parameter0: com.android.server.trust.TrustManagerService;
+
+        $r1 = r0.<com.android.server.trust.TrustManagerService: android.util.ArrayMap mTrustTimeoutAlarmListenerForUser>;
+
+        return $r1;
+    }
+
+    static android.app.AlarmManager access$3100(com.android.server.trust.TrustManagerService)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        android.app.AlarmManager $r1;
+
+        r0 := @parameter0: com.android.server.trust.TrustManagerService;
+
+        $r1 = r0.<com.android.server.trust.TrustManagerService: android.app.AlarmManager mAlarmManager>;
+
+        return $r1;
+    }
+
+    static void access$3200(com.android.server.trust.TrustManagerService, int)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        int i0;
+
+        r0 := @parameter0: com.android.server.trust.TrustManagerService;
+
+        i0 := @parameter1: int;
+
+        specialinvoke r0.<com.android.server.trust.TrustManagerService: void maybeLockScreen(int)>(i0);
+
+        return;
+    }
+
+    static com.android.internal.widget.LockPatternUtils access$400(com.android.server.trust.TrustManagerService)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        com.android.internal.widget.LockPatternUtils $r1;
+
+        r0 := @parameter0: com.android.server.trust.TrustManagerService;
+
+        $r1 = r0.<com.android.server.trust.TrustManagerService: com.android.internal.widget.LockPatternUtils mLockPatternUtils>;
+
+        return $r1;
+    }
+
+    static int access$500(com.android.server.trust.TrustManagerService, int)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        int i0, $i1;
+
+        r0 := @parameter0: com.android.server.trust.TrustManagerService;
+
+        i0 := @parameter1: int;
+
+        $i1 = specialinvoke r0.<com.android.server.trust.TrustManagerService: int resolveProfileParent(int)>(i0);
+
+        return $i1;
+    }
+
+    static android.content.Context access$600(com.android.server.trust.TrustManagerService)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        android.content.Context $r1;
+
+        r0 := @parameter0: com.android.server.trust.TrustManagerService;
+
+        $r1 = r0.<com.android.server.trust.TrustManagerService: android.content.Context mContext>;
+
+        return $r1;
+    }
+
+    static boolean access$700(com.android.server.trust.TrustManagerService)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.server.trust.TrustManagerService;
+
+        $z0 = r0.<com.android.server.trust.TrustManagerService: boolean mTrustAgentsCanRun>;
+
+        return $z0;
+    }
+
+    static android.os.UserManager access$800(com.android.server.trust.TrustManagerService)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        android.os.UserManager $r1;
+
+        r0 := @parameter0: com.android.server.trust.TrustManagerService;
+
+        $r1 = r0.<com.android.server.trust.TrustManagerService: android.os.UserManager mUserManager>;
+
+        return $r1;
+    }
+
+    private void addListener(android.app.trust.ITrustListener)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        android.app.trust.ITrustListener r1, $r6;
+        java.util.ArrayList $r2, $r3, $r4;
+        int $i0, i1;
+        java.lang.Object $r5;
+        android.os.IBinder $r7, $r8;
+
+        r0 := @this: com.android.server.trust.TrustManagerService;
+
+        r1 := @parameter0: android.app.trust.ITrustListener;
+
+        i1 = 0;
+
+     label1:
+        $r2 = r0.<com.android.server.trust.TrustManagerService: java.util.ArrayList mTrustListeners>;
+
+        $i0 = virtualinvoke $r2.<java.util.ArrayList: int size()>();
+
+        if i1 >= $i0 goto label3;
+
+        $r4 = r0.<com.android.server.trust.TrustManagerService: java.util.ArrayList mTrustListeners>;
+
+        $r5 = virtualinvoke $r4.<java.util.ArrayList: java.lang.Object get(int)>(i1);
+
+        $r6 = (android.app.trust.ITrustListener) $r5;
+
+        $r7 = interfaceinvoke $r6.<android.app.trust.ITrustListener: android.os.IBinder asBinder()>();
+
+        $r8 = interfaceinvoke r1.<android.app.trust.ITrustListener: android.os.IBinder asBinder()>();
+
+        if $r7 != $r8 goto label2;
+
+        return;
+
+     label2:
+        i1 = i1 + 1;
+
+        goto label1;
+
+     label3:
+        $r3 = r0.<com.android.server.trust.TrustManagerService: java.util.ArrayList mTrustListeners>;
+
+        virtualinvoke $r3.<java.util.ArrayList: boolean add(java.lang.Object)>(r1);
+
+        specialinvoke r0.<com.android.server.trust.TrustManagerService: void updateTrustAll()>();
+
+        return;
+    }
+
+    private boolean aggregateIsTrustManaged(int)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        int i0, $i1, $i2, i3;
+        com.android.server.trust.TrustManagerService$AgentInfo r1;
+        com.android.server.trust.TrustManagerService$StrongAuthTracker $r2;
+        boolean $z0, $z1;
+        android.util.ArraySet $r3, $r4;
+        java.lang.Object $r5;
+        com.android.server.trust.TrustAgentWrapper $r6;
+
+        r0 := @this: com.android.server.trust.TrustManagerService;
+
+        i0 := @parameter0: int;
+
+        $r2 = r0.<com.android.server.trust.TrustManagerService: com.android.server.trust.TrustManagerService$StrongAuthTracker mStrongAuthTracker>;
+
+        $z0 = virtualinvoke $r2.<com.android.server.trust.TrustManagerService$StrongAuthTracker: boolean isTrustAllowedForUser(int)>(i0);
+
+        if $z0 != 0 goto label1;
+
+        return 0;
+
+     label1:
+        i3 = 0;
+
+     label2:
+        $r3 = r0.<com.android.server.trust.TrustManagerService: android.util.ArraySet mActiveAgents>;
+
+        $i1 = virtualinvoke $r3.<android.util.ArraySet: int size()>();
+
+        if i3 >= $i1 goto label4;
+
+        $r4 = r0.<com.android.server.trust.TrustManagerService: android.util.ArraySet mActiveAgents>;
+
+        $r5 = virtualinvoke $r4.<android.util.ArraySet: java.lang.Object valueAt(int)>(i3);
+
+        r1 = (com.android.server.trust.TrustManagerService$AgentInfo) $r5;
+
+        $i2 = r1.<com.android.server.trust.TrustManagerService$AgentInfo: int userId>;
+
+        if $i2 != i0 goto label3;
+
+        $r6 = r1.<com.android.server.trust.TrustManagerService$AgentInfo: com.android.server.trust.TrustAgentWrapper agent>;
+
+        $z1 = virtualinvoke $r6.<com.android.server.trust.TrustAgentWrapper: boolean isManagingTrust()>();
+
+        if $z1 == 0 goto label3;
+
+        return 1;
+
+     label3:
+        i3 = i3 + 1;
+
+        goto label2;
+
+     label4:
+        return 0;
+    }
+
+    private boolean aggregateIsTrusted(int)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        int i0, $i1, $i2, i3;
+        com.android.server.trust.TrustManagerService$AgentInfo r1;
+        com.android.server.trust.TrustManagerService$StrongAuthTracker $r2;
+        boolean $z0, $z1;
+        android.util.ArraySet $r3, $r4;
+        java.lang.Object $r5;
+        com.android.server.trust.TrustAgentWrapper $r6;
+
+        r0 := @this: com.android.server.trust.TrustManagerService;
+
+        i0 := @parameter0: int;
+
+        $r2 = r0.<com.android.server.trust.TrustManagerService: com.android.server.trust.TrustManagerService$StrongAuthTracker mStrongAuthTracker>;
+
+        $z0 = virtualinvoke $r2.<com.android.server.trust.TrustManagerService$StrongAuthTracker: boolean isTrustAllowedForUser(int)>(i0);
+
+        if $z0 != 0 goto label1;
+
+        return 0;
+
+     label1:
+        i3 = 0;
+
+     label2:
+        $r3 = r0.<com.android.server.trust.TrustManagerService: android.util.ArraySet mActiveAgents>;
+
+        $i1 = virtualinvoke $r3.<android.util.ArraySet: int size()>();
+
+        if i3 >= $i1 goto label4;
+
+        $r4 = r0.<com.android.server.trust.TrustManagerService: android.util.ArraySet mActiveAgents>;
+
+        $r5 = virtualinvoke $r4.<android.util.ArraySet: java.lang.Object valueAt(int)>(i3);
+
+        r1 = (com.android.server.trust.TrustManagerService$AgentInfo) $r5;
+
+        $i2 = r1.<com.android.server.trust.TrustManagerService$AgentInfo: int userId>;
+
+        if $i2 != i0 goto label3;
+
+        $r6 = r1.<com.android.server.trust.TrustManagerService$AgentInfo: com.android.server.trust.TrustAgentWrapper agent>;
+
+        $z1 = virtualinvoke $r6.<com.android.server.trust.TrustAgentWrapper: boolean isTrusted()>();
+
+        if $z1 == 0 goto label3;
+
+        return 1;
+
+     label3:
+        i3 = i3 + 1;
+
+        goto label2;
+
+     label4:
+        return 0;
+    }
+
+    private void dispatchDeviceLocked(int, boolean)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        int i0, $i1, $i2, i3;
+        boolean z0;
+        com.android.server.trust.TrustManagerService$AgentInfo r1;
+        android.util.ArraySet $r2, $r3;
+        java.lang.Object $r4;
+        com.android.server.trust.TrustAgentWrapper $r5, $r6;
+
+        r0 := @this: com.android.server.trust.TrustManagerService;
+
+        i0 := @parameter0: int;
+
+        z0 := @parameter1: boolean;
+
+        i3 = 0;
+
+     label1:
+        $r2 = r0.<com.android.server.trust.TrustManagerService: android.util.ArraySet mActiveAgents>;
+
+        $i1 = virtualinvoke $r2.<android.util.ArraySet: int size()>();
+
+        if i3 >= $i1 goto label4;
+
+        $r3 = r0.<com.android.server.trust.TrustManagerService: android.util.ArraySet mActiveAgents>;
+
+        $r4 = virtualinvoke $r3.<android.util.ArraySet: java.lang.Object valueAt(int)>(i3);
+
+        r1 = (com.android.server.trust.TrustManagerService$AgentInfo) $r4;
+
+        $i2 = r1.<com.android.server.trust.TrustManagerService$AgentInfo: int userId>;
+
+        if $i2 != i0 goto label3;
+
+        if z0 == 0 goto label2;
+
+        $r6 = r1.<com.android.server.trust.TrustManagerService$AgentInfo: com.android.server.trust.TrustAgentWrapper agent>;
+
+        virtualinvoke $r6.<com.android.server.trust.TrustAgentWrapper: void onDeviceLocked()>();
+
+        goto label3;
+
+     label2:
+        $r5 = r1.<com.android.server.trust.TrustManagerService$AgentInfo: com.android.server.trust.TrustAgentWrapper agent>;
+
+        virtualinvoke $r5.<com.android.server.trust.TrustAgentWrapper: void onDeviceUnlocked()>();
+
+     label3:
+        i3 = i3 + 1;
+
+        goto label1;
+
+     label4:
+        return;
+    }
+
+    private void dispatchEscrowTokenActivatedLocked(long, int)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        long l0;
+        int i1, $i2, $i3, i4;
+        com.android.server.trust.TrustManagerService$AgentInfo r1;
+        android.util.ArraySet $r2, $r3;
+        java.lang.Object $r4;
+        com.android.server.trust.TrustAgentWrapper $r5;
+
+        r0 := @this: com.android.server.trust.TrustManagerService;
+
+        l0 := @parameter0: long;
+
+        i1 := @parameter1: int;
+
+        i4 = 0;
+
+     label1:
+        $r2 = r0.<com.android.server.trust.TrustManagerService: android.util.ArraySet mActiveAgents>;
+
+        $i2 = virtualinvoke $r2.<android.util.ArraySet: int size()>();
+
+        if i4 >= $i2 goto label3;
+
+        $r3 = r0.<com.android.server.trust.TrustManagerService: android.util.ArraySet mActiveAgents>;
+
+        $r4 = virtualinvoke $r3.<android.util.ArraySet: java.lang.Object valueAt(int)>(i4);
+
+        r1 = (com.android.server.trust.TrustManagerService$AgentInfo) $r4;
+
+        $i3 = r1.<com.android.server.trust.TrustManagerService$AgentInfo: int userId>;
+
+        if $i3 != i1 goto label2;
+
+        $r5 = r1.<com.android.server.trust.TrustManagerService$AgentInfo: com.android.server.trust.TrustAgentWrapper agent>;
+
+        virtualinvoke $r5.<com.android.server.trust.TrustAgentWrapper: void onEscrowTokenActivated(long,int)>(l0, i1);
+
+     label2:
+        i4 = i4 + 1;
+
+        goto label1;
+
+     label3:
+        return;
+    }
+
+    private void dispatchOnTrustChanged(boolean, int, int)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        boolean z0, $z1;
+        int i0, i4, i5, i6, $i7;
+        java.util.ArrayList $r1, $r15, $r19;
+        java.lang.Object $r2;
+        android.app.trust.ITrustListener $r3;
+        java.lang.StringBuilder $r4;
+        java.lang.String $r10, $r13;
+        android.os.DeadObjectException $r14;
+        android.os.RemoteException $r17;
+
+        r0 := @this: com.android.server.trust.TrustManagerService;
+
+        z0 := @parameter0: boolean;
+
+        i0 := @parameter1: int;
+
+        i4 := @parameter2: int;
+
+        $z1 = <com.android.server.trust.TrustManagerService: boolean DEBUG>;
+
+        if $z1 == 0 goto label1;
+
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("onTrustChanged(");
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>(z0);
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", ");
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", 0x");
+
+        $r10 = staticinvoke <java.lang.Integer: java.lang.String toHexString(int)>(i4);
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r10);
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(")");
+
+        $r13 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int i(java.lang.String,java.lang.String)>("TrustManagerService", $r13);
+
+     label1:
+        i5 = i4;
+
+        if z0 != 0 goto label2;
+
+        i5 = 0;
+
+     label2:
+        i6 = 0;
+
+     label3:
+        $r19 = r0.<com.android.server.trust.TrustManagerService: java.util.ArrayList mTrustListeners>;
+
+        $i7 = virtualinvoke $r19.<java.util.ArrayList: int size()>();
+
+        if i6 >= $i7 goto label9;
+
+     label4:
+        $r1 = r0.<com.android.server.trust.TrustManagerService: java.util.ArrayList mTrustListeners>;
+
+        $r2 = virtualinvoke $r1.<java.util.ArrayList: java.lang.Object get(int)>(i6);
+
+        $r3 = (android.app.trust.ITrustListener) $r2;
+
+        interfaceinvoke $r3.<android.app.trust.ITrustListener: void onTrustChanged(boolean,int,int)>(z0, i0, i5);
+
+     label5:
+        goto label8;
+
+     label6:
+        $r17 := @caughtexception;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("TrustManagerService", "Exception while notifying TrustListener.", $r17);
+
+        goto label8;
+
+     label7:
+        $r14 := @caughtexception;
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("TrustManagerService", "Removing dead TrustListener.");
+
+        $r15 = r0.<com.android.server.trust.TrustManagerService: java.util.ArrayList mTrustListeners>;
+
+        virtualinvoke $r15.<java.util.ArrayList: java.lang.Object remove(int)>(i6);
+
+        i6 = i6 + -1;
+
+     label8:
+        i6 = i6 + 1;
+
+        goto label3;
+
+     label9:
+        return;
+
+        catch android.os.DeadObjectException from label4 to label5 with label7;
+        catch android.os.RemoteException from label4 to label5 with label6;
+    }
+
+    private void dispatchOnTrustError(java.lang.CharSequence)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        java.lang.CharSequence r1;
+        boolean $z0;
+        java.util.ArrayList $r2, $r12, $r15;
+        java.lang.Object $r3;
+        android.app.trust.ITrustListener $r4;
+        java.lang.StringBuilder $r5;
+        java.lang.String $r9;
+        android.os.RemoteException $r10;
+        android.os.DeadObjectException $r11;
+        int i3, $i4;
+
+        r0 := @this: com.android.server.trust.TrustManagerService;
+
+        r1 := @parameter0: java.lang.CharSequence;
+
+        $z0 = <com.android.server.trust.TrustManagerService: boolean DEBUG>;
+
+        if $z0 == 0 goto label1;
+
+        $r5 = new java.lang.StringBuilder;
+
+        specialinvoke $r5.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("onTrustError(");
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r1);
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(")");
+
+        $r9 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int i(java.lang.String,java.lang.String)>("TrustManagerService", $r9);
+
+     label1:
+        i3 = 0;
+
+     label2:
+        $r15 = r0.<com.android.server.trust.TrustManagerService: java.util.ArrayList mTrustListeners>;
+
+        $i4 = virtualinvoke $r15.<java.util.ArrayList: int size()>();
+
+        if i3 >= $i4 goto label8;
+
+     label3:
+        $r2 = r0.<com.android.server.trust.TrustManagerService: java.util.ArrayList mTrustListeners>;
+
+        $r3 = virtualinvoke $r2.<java.util.ArrayList: java.lang.Object get(int)>(i3);
+
+        $r4 = (android.app.trust.ITrustListener) $r3;
+
+        interfaceinvoke $r4.<android.app.trust.ITrustListener: void onTrustError(java.lang.CharSequence)>(r1);
+
+     label4:
+        goto label7;
+
+     label5:
+        $r10 := @caughtexception;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("TrustManagerService", "Exception while notifying TrustListener.", $r10);
+
+        goto label7;
+
+     label6:
+        $r11 := @caughtexception;
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("TrustManagerService", "Removing dead TrustListener.");
+
+        $r12 = r0.<com.android.server.trust.TrustManagerService: java.util.ArrayList mTrustListeners>;
+
+        virtualinvoke $r12.<java.util.ArrayList: java.lang.Object remove(int)>(i3);
+
+        i3 = i3 + -1;
+
+     label7:
+        i3 = i3 + 1;
+
+        goto label2;
+
+     label8:
+        return;
+
+        catch android.os.DeadObjectException from label3 to label4 with label6;
+        catch android.os.RemoteException from label3 to label4 with label5;
+    }
+
+    private void dispatchOnTrustManagedChanged(boolean, int)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        boolean z0, $z1;
+        int i0, i4, $i5;
+        java.util.ArrayList $r1, $r12, $r16;
+        java.lang.Object $r2;
+        android.app.trust.ITrustListener $r3;
+        java.lang.StringBuilder $r4;
+        java.lang.String $r10;
+        android.os.DeadObjectException $r11;
+        android.os.RemoteException $r14;
+
+        r0 := @this: com.android.server.trust.TrustManagerService;
+
+        z0 := @parameter0: boolean;
+
+        i0 := @parameter1: int;
+
+        $z1 = <com.android.server.trust.TrustManagerService: boolean DEBUG>;
+
+        if $z1 == 0 goto label1;
+
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("onTrustManagedChanged(");
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>(z0);
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", ");
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(")");
+
+        $r10 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int i(java.lang.String,java.lang.String)>("TrustManagerService", $r10);
+
+     label1:
+        i4 = 0;
+
+     label2:
+        $r16 = r0.<com.android.server.trust.TrustManagerService: java.util.ArrayList mTrustListeners>;
+
+        $i5 = virtualinvoke $r16.<java.util.ArrayList: int size()>();
+
+        if i4 >= $i5 goto label8;
+
+     label3:
+        $r1 = r0.<com.android.server.trust.TrustManagerService: java.util.ArrayList mTrustListeners>;
+
+        $r2 = virtualinvoke $r1.<java.util.ArrayList: java.lang.Object get(int)>(i4);
+
+        $r3 = (android.app.trust.ITrustListener) $r2;
+
+        interfaceinvoke $r3.<android.app.trust.ITrustListener: void onTrustManagedChanged(boolean,int)>(z0, i0);
+
+     label4:
+        goto label7;
+
+     label5:
+        $r14 := @caughtexception;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("TrustManagerService", "Exception while notifying TrustListener.", $r14);
+
+        goto label7;
+
+     label6:
+        $r11 := @caughtexception;
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("TrustManagerService", "Removing dead TrustListener.");
+
+        $r12 = r0.<com.android.server.trust.TrustManagerService: java.util.ArrayList mTrustListeners>;
+
+        virtualinvoke $r12.<java.util.ArrayList: java.lang.Object remove(int)>(i4);
+
+        i4 = i4 + -1;
+
+     label7:
+        i4 = i4 + 1;
+
+        goto label2;
+
+     label8:
+        return;
+
+        catch android.os.DeadObjectException from label3 to label4 with label6;
+        catch android.os.RemoteException from label3 to label4 with label5;
+    }
+
+    private void dispatchUnlockAttempt(boolean, int)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        boolean z0;
+        int i0, $i1, i2, $i3;
+        com.android.server.trust.TrustManagerService$AgentInfo r1;
+        android.util.ArraySet $r2, $r6;
+        java.lang.Object $r3;
+        com.android.server.trust.TrustAgentWrapper $r4;
+        com.android.server.trust.TrustManagerService$StrongAuthTracker $r5;
+
+        r0 := @this: com.android.server.trust.TrustManagerService;
+
+        z0 := @parameter0: boolean;
+
+        i0 := @parameter1: int;
+
+        if z0 == 0 goto label1;
+
+        $r5 = r0.<com.android.server.trust.TrustManagerService: com.android.server.trust.TrustManagerService$StrongAuthTracker mStrongAuthTracker>;
+
+        virtualinvoke $r5.<com.android.server.trust.TrustManagerService$StrongAuthTracker: void allowTrustFromUnlock(int)>(i0);
+
+        specialinvoke r0.<com.android.server.trust.TrustManagerService: void updateTrust(int,int,boolean)>(i0, 0, 1);
+
+     label1:
+        i2 = 0;
+
+     label2:
+        $r6 = r0.<com.android.server.trust.TrustManagerService: android.util.ArraySet mActiveAgents>;
+
+        $i3 = virtualinvoke $r6.<android.util.ArraySet: int size()>();
+
+        if i2 >= $i3 goto label4;
+
+        $r2 = r0.<com.android.server.trust.TrustManagerService: android.util.ArraySet mActiveAgents>;
+
+        $r3 = virtualinvoke $r2.<android.util.ArraySet: java.lang.Object valueAt(int)>(i2);
+
+        r1 = (com.android.server.trust.TrustManagerService$AgentInfo) $r3;
+
+        $i1 = r1.<com.android.server.trust.TrustManagerService$AgentInfo: int userId>;
+
+        if $i1 != i0 goto label3;
+
+        $r4 = r1.<com.android.server.trust.TrustManagerService$AgentInfo: com.android.server.trust.TrustAgentWrapper agent>;
+
+        virtualinvoke $r4.<com.android.server.trust.TrustAgentWrapper: void onUnlockAttempt(boolean)>(z0);
+
+     label3:
+        i2 = i2 + 1;
+
+        goto label2;
+
+     label4:
+        return;
+    }
+
+    private void dispatchUnlockLockout(int, int)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        int i0, i1, $i2, $i3, i4;
+        com.android.server.trust.TrustManagerService$AgentInfo r1;
+        android.util.ArraySet $r2, $r3;
+        java.lang.Object $r4;
+        com.android.server.trust.TrustAgentWrapper $r5;
+
+        r0 := @this: com.android.server.trust.TrustManagerService;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        i4 = 0;
+
+     label1:
+        $r2 = r0.<com.android.server.trust.TrustManagerService: android.util.ArraySet mActiveAgents>;
+
+        $i2 = virtualinvoke $r2.<android.util.ArraySet: int size()>();
+
+        if i4 >= $i2 goto label3;
+
+        $r3 = r0.<com.android.server.trust.TrustManagerService: android.util.ArraySet mActiveAgents>;
+
+        $r4 = virtualinvoke $r3.<android.util.ArraySet: java.lang.Object valueAt(int)>(i4);
+
+        r1 = (com.android.server.trust.TrustManagerService$AgentInfo) $r4;
+
+        $i3 = r1.<com.android.server.trust.TrustManagerService$AgentInfo: int userId>;
+
+        if $i3 != i1 goto label2;
+
+        $r5 = r1.<com.android.server.trust.TrustManagerService$AgentInfo: com.android.server.trust.TrustAgentWrapper agent>;
+
+        virtualinvoke $r5.<com.android.server.trust.TrustAgentWrapper: void onUnlockLockout(int)>(i0);
+
+     label2:
+        i4 = i4 + 1;
+
+        goto label1;
+
+     label3:
+        return;
+    }
+
+    private android.content.ComponentName getComponentName(android.content.pm.ResolveInfo)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        android.content.pm.ResolveInfo r1;
+        android.content.pm.ServiceInfo $r2, $r4, $r5;
+        android.content.ComponentName $r3;
+        java.lang.String $r6, $r7;
+
+        r0 := @this: com.android.server.trust.TrustManagerService;
+
+        r1 := @parameter0: android.content.pm.ResolveInfo;
+
+        if r1 == null goto label2;
+
+        $r2 = r1.<android.content.pm.ResolveInfo: android.content.pm.ServiceInfo serviceInfo>;
+
+        if $r2 != null goto label1;
+
+        goto label2;
+
+     label1:
+        $r3 = new android.content.ComponentName;
+
+        $r4 = r1.<android.content.pm.ResolveInfo: android.content.pm.ServiceInfo serviceInfo>;
+
+        $r7 = $r4.<android.content.pm.ServiceInfo: java.lang.String packageName>;
+
+        $r5 = r1.<android.content.pm.ResolveInfo: android.content.pm.ServiceInfo serviceInfo>;
+
+        $r6 = $r5.<android.content.pm.ServiceInfo: java.lang.String name>;
+
+        specialinvoke $r3.<android.content.ComponentName: void <init>(java.lang.String,java.lang.String)>($r7, $r6);
+
+        return $r3;
+
+     label2:
+        return null;
+    }
+
+    private static android.content.ComponentName getDefaultFactoryTrustAgent(android.content.Context)
+    {
+        android.content.res.Resources $r0;
+        boolean $z0;
+        android.content.ComponentName $r1;
+        android.content.Context r2;
+        java.lang.String r3;
+
+        r2 := @parameter0: android.content.Context;
+
+        $r0 = virtualinvoke r2.<android.content.Context: android.content.res.Resources getResources()>();
+
+        r3 = virtualinvoke $r0.<android.content.res.Resources: java.lang.String getString(int)>(17039874);
+
+        $z0 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>(r3);
+
+        if $z0 == 0 goto label1;
+
+        return null;
+
+     label1:
+        $r1 = staticinvoke <android.content.ComponentName: android.content.ComponentName unflattenFromString(java.lang.String)>(r3);
+
+        return $r1;
+    }
+
+    private com.android.server.trust.TrustManagerService$SettingsAttrs getSettingsAttrs(android.content.pm.PackageManager, android.content.pm.ResolveInfo)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        android.content.pm.ResolveInfo r1;
+        android.content.res.Resources r2;
+        int i0, $i1;
+        android.content.pm.ServiceInfo $r3, $r4, $r6, $r7, $r15, $r18;
+        android.os.Bundle $r5;
+        android.content.pm.ApplicationInfo $r8;
+        java.lang.String $r9, $r10, $r16, $r19, $r20, r30, r31, r32, r36, r37, r44;
+        boolean $z0, z1, z2, z3, z4, z5;
+        int[] $r11;
+        com.android.server.trust.TrustManagerService$SettingsAttrs $r12;
+        android.content.ComponentName $r13;
+        java.lang.StringBuilder $r14, $r17;
+        android.content.pm.PackageManager$NameNotFoundException $r21;
+        java.lang.Throwable $r22, $r23, $r24, r38;
+        android.content.pm.PackageManager r25;
+        android.content.res.XmlResourceParser r26, r27, r28, r29, r33;
+        android.util.AttributeSet r34;
+        android.content.res.TypedArray r35;
+
+        r0 := @this: com.android.server.trust.TrustManagerService;
+
+        r25 := @parameter0: android.content.pm.PackageManager;
+
+        r1 := @parameter1: android.content.pm.ResolveInfo;
+
+        if r1 == null goto label39;
+
+        $r3 = r1.<android.content.pm.ResolveInfo: android.content.pm.ServiceInfo serviceInfo>;
+
+        if $r3 == null goto label39;
+
+        $r4 = r1.<android.content.pm.ResolveInfo: android.content.pm.ServiceInfo serviceInfo>;
+
+        $r5 = $r4.<android.content.pm.ServiceInfo: android.os.Bundle metaData>;
+
+        if $r5 != null goto label01;
+
+        goto label39;
+
+     label01:
+        r26 = null;
+
+        r27 = null;
+
+        r28 = null;
+
+        r29 = null;
+
+        r30 = null;
+
+        z1 = 0;
+
+        r31 = null;
+
+        z2 = 0;
+
+        r32 = null;
+
+        z3 = 0;
+
+     label02:
+        $r6 = r1.<android.content.pm.ResolveInfo: android.content.pm.ServiceInfo serviceInfo>;
+
+        r33 = virtualinvoke $r6.<android.content.pm.ServiceInfo: android.content.res.XmlResourceParser loadXmlMetaData(android.content.pm.PackageManager,java.lang.String)>(r25, "android.service.trust.trustagent");
+
+     label03:
+        if r33 != null goto label07;
+
+        r29 = r33;
+
+        r30 = null;
+
+        z1 = 0;
+
+        r26 = r33;
+
+        r31 = null;
+
+        z2 = 0;
+
+        r27 = r33;
+
+        r32 = null;
+
+        z3 = 0;
+
+        r28 = r33;
+
+     label04:
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("TrustManagerService", "Can\'t find android.service.trust.trustagent meta-data");
+
+     label05:
+        if r33 == null goto label06;
+
+        interfaceinvoke r33.<android.content.res.XmlResourceParser: void close()>();
+
+     label06:
+        return null;
+
+     label07:
+        r29 = r33;
+
+        r30 = null;
+
+        z1 = 0;
+
+        r26 = r33;
+
+        r31 = null;
+
+        z2 = 0;
+
+        r27 = r33;
+
+        r32 = null;
+
+        z3 = 0;
+
+        r28 = r33;
+
+     label08:
+        $r7 = r1.<android.content.pm.ResolveInfo: android.content.pm.ServiceInfo serviceInfo>;
+
+        $r8 = $r7.<android.content.pm.ServiceInfo: android.content.pm.ApplicationInfo applicationInfo>;
+
+        r2 = virtualinvoke r25.<android.content.pm.PackageManager: android.content.res.Resources getResourcesForApplication(android.content.pm.ApplicationInfo)>($r8);
+
+     label09:
+        r29 = r33;
+
+        r30 = null;
+
+        z1 = 0;
+
+        r26 = r33;
+
+        r31 = null;
+
+        z2 = 0;
+
+        r27 = r33;
+
+        r32 = null;
+
+        z3 = 0;
+
+        r28 = r33;
+
+     label10:
+        r34 = staticinvoke <android.util.Xml: android.util.AttributeSet asAttributeSet(org.xmlpull.v1.XmlPullParser)>(r33);
+
+     label11:
+        r29 = r33;
+
+        r30 = null;
+
+        z1 = 0;
+
+        r26 = r33;
+
+        r31 = null;
+
+        z2 = 0;
+
+        r27 = r33;
+
+        r32 = null;
+
+        z3 = 0;
+
+        r28 = r33;
+
+     label12:
+        i0 = interfaceinvoke r33.<android.content.res.XmlResourceParser: int next()>();
+
+     label13:
+        if i0 == 1 goto label14;
+
+        if i0 == 2 goto label14;
+
+        goto label11;
+
+     label14:
+        r29 = r33;
+
+        r30 = null;
+
+        z1 = 0;
+
+        r26 = r33;
+
+        r31 = null;
+
+        z2 = 0;
+
+        r27 = r33;
+
+        r32 = null;
+
+        z3 = 0;
+
+        r28 = r33;
+
+     label15:
+        $r9 = "trust-agent";
+
+        $r10 = interfaceinvoke r33.<android.content.res.XmlResourceParser: java.lang.String getName()>();
+
+        $z0 = virtualinvoke $r9.<java.lang.String: boolean equals(java.lang.Object)>($r10);
+
+        if $z0 != 0 goto label20;
+
+     label16:
+        r29 = r33;
+
+        r30 = null;
+
+        z1 = 0;
+
+        r26 = r33;
+
+        r31 = null;
+
+        z2 = 0;
+
+        r27 = r33;
+
+        r32 = null;
+
+        z3 = 0;
+
+        r28 = r33;
+
+     label17:
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("TrustManagerService", "Meta-data does not start with trust-agent tag");
+
+     label18:
+        if r33 == null goto label19;
+
+        interfaceinvoke r33.<android.content.res.XmlResourceParser: void close()>();
+
+     label19:
+        return null;
+
+     label20:
+        r29 = r33;
+
+        r30 = null;
+
+        z1 = 0;
+
+        r26 = r33;
+
+        r31 = null;
+
+        z2 = 0;
+
+        r27 = r33;
+
+        r32 = null;
+
+        z3 = 0;
+
+        r28 = r33;
+
+     label21:
+        $r11 = <com.android.internal.R$styleable: int[] TrustAgent>;
+
+        r35 = virtualinvoke r2.<android.content.res.Resources: android.content.res.TypedArray obtainAttributes(android.util.AttributeSet,int[])>(r34, $r11);
+
+     label22:
+        r29 = r33;
+
+        r30 = null;
+
+        z1 = 0;
+
+        r26 = r33;
+
+        r31 = null;
+
+        z2 = 0;
+
+        r27 = r33;
+
+        r32 = null;
+
+        z3 = 0;
+
+        r28 = r33;
+
+     label23:
+        r36 = virtualinvoke r35.<android.content.res.TypedArray: java.lang.String getString(int)>(2);
+
+     label24:
+        r29 = r33;
+
+        r30 = r36;
+
+        z1 = 0;
+
+        r26 = r33;
+
+        r31 = r36;
+
+        z2 = 0;
+
+        r27 = r33;
+
+        r32 = r36;
+
+        z3 = 0;
+
+        r28 = r33;
+
+     label25:
+        z4 = virtualinvoke r35.<android.content.res.TypedArray: boolean getBoolean(int,boolean)>(3, 0);
+
+     label26:
+        r29 = r33;
+
+        r30 = r36;
+
+        z1 = z4;
+
+        r26 = r33;
+
+        r31 = r36;
+
+        z2 = z4;
+
+        r27 = r33;
+
+        r32 = r36;
+
+        z3 = z4;
+
+        r28 = r33;
+
+     label27:
+        virtualinvoke r35.<android.content.res.TypedArray: void recycle()>();
+
+     label28:
+        r37 = r36;
+
+        z5 = z4;
+
+        r38 = null;
+
+        if r33 == null goto label35;
+
+        r38 = null;
+
+        r37 = r36;
+
+     label29:
+        interfaceinvoke r33.<android.content.res.XmlResourceParser: void close()>();
+
+        z5 = z4;
+
+        goto label35;
+
+     label30:
+        $r24 := @caughtexception;
+
+        if r29 == null goto label31;
+
+        interfaceinvoke r29.<android.content.res.XmlResourceParser: void close()>();
+
+     label31:
+        throw $r24;
+
+     label32:
+        $r23 := @caughtexception;
+
+        r37 = r30;
+
+        z5 = z1;
+
+        r38 = $r23;
+
+        if r26 == null goto label35;
+
+        r37 = r30;
+
+        z4 = z1;
+
+        r33 = r26;
+
+        r38 = $r23;
+
+        goto label29;
+
+     label33:
+        $r22 := @caughtexception;
+
+        r37 = r31;
+
+        z5 = z2;
+
+        r38 = $r22;
+
+        if r27 == null goto label35;
+
+        r37 = r31;
+
+        z4 = z2;
+
+        r33 = r27;
+
+        r38 = $r22;
+
+        goto label29;
+
+     label34:
+        $r21 := @caughtexception;
+
+        r37 = r32;
+
+        z5 = z3;
+
+        r38 = $r21;
+
+        if r28 == null goto label35;
+
+        r37 = r32;
+
+        z4 = z3;
+
+        r33 = r28;
+
+        r38 = $r21;
+
+        goto label29;
+
+     label35:
+        if r38 == null goto label36;
+
+        $r17 = new java.lang.StringBuilder;
+
+        specialinvoke $r17.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r17.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Error parsing : ");
+
+        $r18 = r1.<android.content.pm.ResolveInfo: android.content.pm.ServiceInfo serviceInfo>;
+
+        $r19 = $r18.<android.content.pm.ServiceInfo: java.lang.String packageName>;
+
+        virtualinvoke $r17.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r19);
+
+        $r20 = virtualinvoke $r17.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String,java.lang.Throwable)>("TrustManagerService", $r20, r38);
+
+        return null;
+
+     label36:
+        if r37 != null goto label37;
+
+        return null;
+
+     label37:
+        r44 = r37;
+
+        $i1 = virtualinvoke r37.<java.lang.String: int indexOf(int)>(47);
+
+        if $i1 >= 0 goto label38;
+
+        $r14 = new java.lang.StringBuilder;
+
+        specialinvoke $r14.<java.lang.StringBuilder: void <init>()>();
+
+        $r15 = r1.<android.content.pm.ResolveInfo: android.content.pm.ServiceInfo serviceInfo>;
+
+        $r16 = $r15.<android.content.pm.ServiceInfo: java.lang.String packageName>;
+
+        virtualinvoke $r14.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r16);
+
+        virtualinvoke $r14.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("/");
+
+        virtualinvoke $r14.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r37);
+
+        r44 = virtualinvoke $r14.<java.lang.StringBuilder: java.lang.String toString()>();
+
+     label38:
+        $r12 = new com.android.server.trust.TrustManagerService$SettingsAttrs;
+
+        $r13 = staticinvoke <android.content.ComponentName: android.content.ComponentName unflattenFromString(java.lang.String)>(r44);
+
+        specialinvoke $r12.<com.android.server.trust.TrustManagerService$SettingsAttrs: void <init>(android.content.ComponentName,boolean)>($r13, z5);
+
+        return $r12;
+
+     label39:
+        return null;
+
+        catch android.content.pm.PackageManager$NameNotFoundException from label02 to label03 with label34;
+        catch java.io.IOException from label02 to label03 with label33;
+        catch org.xmlpull.v1.XmlPullParserException from label02 to label03 with label32;
+        catch java.lang.Throwable from label02 to label03 with label30;
+        catch android.content.pm.PackageManager$NameNotFoundException from label04 to label05 with label34;
+        catch java.io.IOException from label04 to label05 with label33;
+        catch org.xmlpull.v1.XmlPullParserException from label04 to label05 with label32;
+        catch java.lang.Throwable from label04 to label05 with label30;
+        catch android.content.pm.PackageManager$NameNotFoundException from label08 to label09 with label34;
+        catch java.io.IOException from label08 to label09 with label33;
+        catch org.xmlpull.v1.XmlPullParserException from label08 to label09 with label32;
+        catch java.lang.Throwable from label08 to label09 with label30;
+        catch android.content.pm.PackageManager$NameNotFoundException from label10 to label11 with label34;
+        catch java.io.IOException from label10 to label11 with label33;
+        catch org.xmlpull.v1.XmlPullParserException from label10 to label11 with label32;
+        catch java.lang.Throwable from label10 to label11 with label30;
+        catch android.content.pm.PackageManager$NameNotFoundException from label12 to label13 with label34;
+        catch java.io.IOException from label12 to label13 with label33;
+        catch org.xmlpull.v1.XmlPullParserException from label12 to label13 with label32;
+        catch java.lang.Throwable from label12 to label13 with label30;
+        catch android.content.pm.PackageManager$NameNotFoundException from label15 to label16 with label34;
+        catch java.io.IOException from label15 to label16 with label33;
+        catch org.xmlpull.v1.XmlPullParserException from label15 to label16 with label32;
+        catch java.lang.Throwable from label15 to label16 with label30;
+        catch android.content.pm.PackageManager$NameNotFoundException from label17 to label18 with label34;
+        catch java.io.IOException from label17 to label18 with label33;
+        catch org.xmlpull.v1.XmlPullParserException from label17 to label18 with label32;
+        catch java.lang.Throwable from label17 to label18 with label30;
+        catch android.content.pm.PackageManager$NameNotFoundException from label21 to label22 with label34;
+        catch java.io.IOException from label21 to label22 with label33;
+        catch org.xmlpull.v1.XmlPullParserException from label21 to label22 with label32;
+        catch java.lang.Throwable from label21 to label22 with label30;
+        catch android.content.pm.PackageManager$NameNotFoundException from label23 to label24 with label34;
+        catch java.io.IOException from label23 to label24 with label33;
+        catch org.xmlpull.v1.XmlPullParserException from label23 to label24 with label32;
+        catch java.lang.Throwable from label23 to label24 with label30;
+        catch android.content.pm.PackageManager$NameNotFoundException from label25 to label26 with label34;
+        catch java.io.IOException from label25 to label26 with label33;
+        catch org.xmlpull.v1.XmlPullParserException from label25 to label26 with label32;
+        catch java.lang.Throwable from label25 to label26 with label30;
+        catch android.content.pm.PackageManager$NameNotFoundException from label27 to label28 with label34;
+        catch java.io.IOException from label27 to label28 with label33;
+        catch org.xmlpull.v1.XmlPullParserException from label27 to label28 with label32;
+        catch java.lang.Throwable from label27 to label28 with label30;
+    }
+
+    private void handleScheduleTrustTimeout(int, int)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        int i0, i5, i6;
+        long l1, $l2;
+        android.util.ArrayMap $r1, $r5;
+        java.lang.Integer $r2, $r6;
+        java.lang.Object $r3;
+        com.android.server.trust.TrustManagerService$TrustTimeoutAlarmListener $r4, r11;
+        boolean $z0, $z1, $z2;
+        android.os.Handler $r8;
+        android.app.AlarmManager $r9, $r10;
+
+        r0 := @this: com.android.server.trust.TrustManagerService;
+
+        i5 := @parameter0: int;
+
+        i0 := @parameter1: int;
+
+        l1 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        i6 = r0.<com.android.server.trust.TrustManagerService: int mCurrentUser>;
+
+        $r1 = r0.<com.android.server.trust.TrustManagerService: android.util.ArrayMap mTrustTimeoutAlarmListenerForUser>;
+
+        $r2 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i6);
+
+        $r3 = virtualinvoke $r1.<android.util.ArrayMap: java.lang.Object get(java.lang.Object)>($r2);
+
+        r11 = (com.android.server.trust.TrustManagerService$TrustTimeoutAlarmListener) $r3;
+
+        if r11 == null goto label3;
+
+        if i0 != 0 goto label2;
+
+        $z1 = virtualinvoke r11.<com.android.server.trust.TrustManagerService$TrustTimeoutAlarmListener: boolean isQueued()>();
+
+        if $z1 == 0 goto label2;
+
+        $z2 = <com.android.server.trust.TrustManagerService: boolean DEBUG>;
+
+        if $z2 == 0 goto label1;
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("TrustManagerService", "Found existing trust timeout alarm. Skipping.");
+
+     label1:
+        return;
+
+     label2:
+        $r10 = r0.<com.android.server.trust.TrustManagerService: android.app.AlarmManager mAlarmManager>;
+
+        virtualinvoke $r10.<android.app.AlarmManager: void cancel(android.app.AlarmManager$OnAlarmListener)>(r11);
+
+        goto label4;
+
+     label3:
+        $r4 = new com.android.server.trust.TrustManagerService$TrustTimeoutAlarmListener;
+
+        specialinvoke $r4.<com.android.server.trust.TrustManagerService$TrustTimeoutAlarmListener: void <init>(com.android.server.trust.TrustManagerService,int)>(r0, i6);
+
+        r11 = $r4;
+
+        $r5 = r0.<com.android.server.trust.TrustManagerService: android.util.ArrayMap mTrustTimeoutAlarmListenerForUser>;
+
+        $r6 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i6);
+
+        virtualinvoke $r5.<android.util.ArrayMap: java.lang.Object put(java.lang.Object,java.lang.Object)>($r6, $r4);
+
+     label4:
+        $z0 = <com.android.server.trust.TrustManagerService: boolean DEBUG>;
+
+        if $z0 == 0 goto label5;
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("TrustManagerService", "\tSetting up trust timeout alarm");
+
+     label5:
+        virtualinvoke r11.<com.android.server.trust.TrustManagerService$TrustTimeoutAlarmListener: void setQueued(boolean)>(1);
+
+        $r9 = r0.<com.android.server.trust.TrustManagerService: android.app.AlarmManager mAlarmManager>;
+
+        $l2 = l1 + 14400000L;
+
+        $r8 = r0.<com.android.server.trust.TrustManagerService: android.os.Handler mHandler>;
+
+        virtualinvoke $r9.<android.app.AlarmManager: void setExact(int,long,java.lang.String,android.app.AlarmManager$OnAlarmListener,android.os.Handler)>(2, $l2, "TrustManagerService.trustTimeoutForUser", r11, $r8);
+
+        return;
+    }
+
+    private boolean isTrustUsuallyManagedInternal(int)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        int i0, i1, i2;
+        android.util.SparseBooleanArray $r1, $r3, $r4, $r5, $r6, r9, r10;
+        com.android.internal.widget.LockPatternUtils $r2;
+        java.lang.Throwable $r7, $r8;
+        boolean z0, z1, z2;
+
+        r0 := @this: com.android.server.trust.TrustManagerService;
+
+        i0 := @parameter0: int;
+
+        r9 = r0.<com.android.server.trust.TrustManagerService: android.util.SparseBooleanArray mTrustUsuallyManagedForUser>;
+
+        entermonitor r9;
+
+     label01:
+        $r1 = r0.<com.android.server.trust.TrustManagerService: android.util.SparseBooleanArray mTrustUsuallyManagedForUser>;
+
+        i1 = virtualinvoke $r1.<android.util.SparseBooleanArray: int indexOfKey(int)>(i0);
+
+     label02:
+        if i1 < 0 goto label05;
+
+     label03:
+        $r6 = r0.<com.android.server.trust.TrustManagerService: android.util.SparseBooleanArray mTrustUsuallyManagedForUser>;
+
+        z0 = virtualinvoke $r6.<android.util.SparseBooleanArray: boolean valueAt(int)>(i1);
+
+        exitmonitor r9;
+
+     label04:
+        return z0;
+
+     label05:
+        exitmonitor r9;
+
+     label06:
+        $r2 = r0.<com.android.server.trust.TrustManagerService: com.android.internal.widget.LockPatternUtils mLockPatternUtils>;
+
+        z1 = virtualinvoke $r2.<com.android.internal.widget.LockPatternUtils: boolean isTrustUsuallyManaged(int)>(i0);
+
+        r10 = r0.<com.android.server.trust.TrustManagerService: android.util.SparseBooleanArray mTrustUsuallyManagedForUser>;
+
+        entermonitor r10;
+
+     label07:
+        $r3 = r0.<com.android.server.trust.TrustManagerService: android.util.SparseBooleanArray mTrustUsuallyManagedForUser>;
+
+        i2 = virtualinvoke $r3.<android.util.SparseBooleanArray: int indexOfKey(int)>(i0);
+
+     label08:
+        if i2 < 0 goto label11;
+
+     label09:
+        $r5 = r0.<com.android.server.trust.TrustManagerService: android.util.SparseBooleanArray mTrustUsuallyManagedForUser>;
+
+        z2 = virtualinvoke $r5.<android.util.SparseBooleanArray: boolean valueAt(int)>(i2);
+
+        exitmonitor r10;
+
+     label10:
+        return z2;
+
+     label11:
+        $r4 = r0.<com.android.server.trust.TrustManagerService: android.util.SparseBooleanArray mTrustUsuallyManagedForUser>;
+
+        virtualinvoke $r4.<android.util.SparseBooleanArray: void put(int,boolean)>(i0, z1);
+
+        exitmonitor r10;
+
+     label12:
+        return z1;
+
+     label13:
+        $r8 := @caughtexception;
+
+     label14:
+        exitmonitor r10;
+
+     label15:
+        throw $r8;
+
+     label16:
+        $r7 := @caughtexception;
+
+     label17:
+        exitmonitor r9;
+
+     label18:
+        throw $r7;
+
+        catch java.lang.Throwable from label01 to label02 with label16;
+        catch java.lang.Throwable from label03 to label04 with label16;
+        catch java.lang.Throwable from label05 to label06 with label16;
+        catch java.lang.Throwable from label07 to label08 with label13;
+        catch java.lang.Throwable from label09 to label10 with label13;
+        catch java.lang.Throwable from label11 to label12 with label13;
+        catch java.lang.Throwable from label14 to label15 with label13;
+        catch java.lang.Throwable from label17 to label18 with label16;
+    }
+
+    private void maybeEnableFactoryTrustAgents(com.android.internal.widget.LockPatternUtils, int)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        com.android.internal.widget.LockPatternUtils r1;
+        int i0, $i1, $i2, $i3;
+        android.content.Context $r2, $r3, $r5, $r7;
+        android.content.pm.PackageManager $r4;
+        android.util.ArraySet $r6;
+        android.content.ContentResolver $r8, r22;
+        java.lang.Object $r9;
+        android.content.pm.ServiceInfo $r10;
+        android.content.pm.ApplicationInfo $r11;
+        java.lang.StringBuilder $r12, $r17;
+        java.lang.String $r16, $r21;
+        boolean z4, $z5;
+        java.util.List r23, r31;
+        android.content.ComponentName r24, r29;
+        java.util.Iterator r27;
+        android.content.pm.ResolveInfo r28;
+
+        r0 := @this: com.android.server.trust.TrustManagerService;
+
+        r1 := @parameter0: com.android.internal.widget.LockPatternUtils;
+
+        i0 := @parameter1: int;
+
+        $r2 = r0.<com.android.server.trust.TrustManagerService: android.content.Context mContext>;
+
+        r22 = virtualinvoke $r2.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        z4 = 0;
+
+        $i1 = staticinvoke <android.provider.Settings$Secure: int getIntForUser(android.content.ContentResolver,java.lang.String,int,int)>(r22, "trust_agents_initialized", 0, i0);
+
+        if $i1 == 0 goto label1;
+
+        return;
+
+     label1:
+        $r3 = r0.<com.android.server.trust.TrustManagerService: android.content.Context mContext>;
+
+        $r4 = virtualinvoke $r3.<android.content.Context: android.content.pm.PackageManager getPackageManager()>();
+
+        r23 = specialinvoke r0.<com.android.server.trust.TrustManagerService: java.util.List resolveAllowedTrustAgents(android.content.pm.PackageManager,int)>($r4, i0);
+
+        $r5 = r0.<com.android.server.trust.TrustManagerService: android.content.Context mContext>;
+
+        r24 = staticinvoke <com.android.server.trust.TrustManagerService: android.content.ComponentName getDefaultFactoryTrustAgent(android.content.Context)>($r5);
+
+        if r24 == null goto label2;
+
+        z4 = 1;
+
+     label2:
+        $r6 = new android.util.ArraySet;
+
+        specialinvoke $r6.<android.util.ArraySet: void <init>()>();
+
+        if z4 == 0 goto label3;
+
+        virtualinvoke $r6.<android.util.ArraySet: boolean add(java.lang.Object)>(r24);
+
+        $r17 = new java.lang.StringBuilder;
+
+        specialinvoke $r17.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r17.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Enabling ");
+
+        virtualinvoke $r17.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r24);
+
+        virtualinvoke $r17.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" because it is a default agent.");
+
+        $r21 = virtualinvoke $r17.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int i(java.lang.String,java.lang.String)>("TrustManagerService", $r21);
+
+        goto label6;
+
+     label3:
+        r27 = interfaceinvoke r23.<java.util.List: java.util.Iterator iterator()>();
+
+     label4:
+        $z5 = interfaceinvoke r27.<java.util.Iterator: boolean hasNext()>();
+
+        if $z5 == 0 goto label6;
+
+        $r9 = interfaceinvoke r27.<java.util.Iterator: java.lang.Object next()>();
+
+        r28 = (android.content.pm.ResolveInfo) $r9;
+
+        r29 = specialinvoke r0.<com.android.server.trust.TrustManagerService: android.content.ComponentName getComponentName(android.content.pm.ResolveInfo)>(r28);
+
+        $r10 = r28.<android.content.pm.ResolveInfo: android.content.pm.ServiceInfo serviceInfo>;
+
+        $r11 = $r10.<android.content.pm.ServiceInfo: android.content.pm.ApplicationInfo applicationInfo>;
+
+        $i2 = $r11.<android.content.pm.ApplicationInfo: int flags>;
+
+        $i3 = $i2 & 1;
+
+        if $i3 != 0 goto label5;
+
+        $r12 = new java.lang.StringBuilder;
+
+        specialinvoke $r12.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Leaving agent ");
+
+        virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r29);
+
+        virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" disabled because package is not a system package.");
+
+        $r16 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int i(java.lang.String,java.lang.String)>("TrustManagerService", $r16);
+
+        goto label4;
+
+     label5:
+        virtualinvoke $r6.<android.util.ArraySet: boolean add(java.lang.Object)>(r29);
+
+        goto label4;
+
+     label6:
+        r31 = virtualinvoke r1.<com.android.internal.widget.LockPatternUtils: java.util.List getEnabledTrustAgents(int)>(i0);
+
+        if r31 == null goto label7;
+
+        virtualinvoke $r6.<android.util.ArraySet: boolean addAll(java.util.Collection)>(r31);
+
+     label7:
+        virtualinvoke r1.<com.android.internal.widget.LockPatternUtils: void setEnabledTrustAgents(java.util.Collection,int)>($r6, i0);
+
+        $r7 = r0.<com.android.server.trust.TrustManagerService: android.content.Context mContext>;
+
+        $r8 = virtualinvoke $r7.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        staticinvoke <android.provider.Settings$Secure: boolean putIntForUser(android.content.ContentResolver,java.lang.String,int,int)>($r8, "trust_agents_initialized", 1, i0);
+
+        return;
+    }
+
+    private void maybeLockScreen(int)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        int i0, $i1;
+        com.android.server.trust.TrustManagerService$SettingsObserver $r1, $r6;
+        boolean $z0, $z1, $z2;
+        android.view.IWindowManager $r2;
+        android.util.ArrayMap $r3;
+        java.lang.Integer $r4;
+        java.lang.Object $r5;
+        android.app.AlarmManager $r7;
+        android.os.RemoteException $r8;
+        com.android.server.trust.TrustManagerService$TrustTimeoutAlarmListener r10;
+
+        r0 := @this: com.android.server.trust.TrustManagerService;
+
+        i0 := @parameter0: int;
+
+        $i1 = r0.<com.android.server.trust.TrustManagerService: int mCurrentUser>;
+
+        if i0 == $i1 goto label1;
+
+        return;
+
+     label1:
+        $r1 = r0.<com.android.server.trust.TrustManagerService: com.android.server.trust.TrustManagerService$SettingsObserver mSettingsObserver>;
+
+        $z0 = virtualinvoke $r1.<com.android.server.trust.TrustManagerService$SettingsObserver: boolean getLockWhenTrustLost()>();
+
+        if $z0 == 0 goto label6;
+
+        $z1 = <com.android.server.trust.TrustManagerService: boolean DEBUG>;
+
+        if $z1 == 0 goto label2;
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("TrustManagerService", "Locking device because trust was lost");
+
+     label2:
+        $r2 = staticinvoke <android.view.WindowManagerGlobal: android.view.IWindowManager getWindowManagerService()>();
+
+        interfaceinvoke $r2.<android.view.IWindowManager: void lockNow(android.os.Bundle)>(null);
+
+     label3:
+        goto label5;
+
+     label4:
+        $r8 := @caughtexception;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("TrustManagerService", "Error locking screen when trust was lost");
+
+     label5:
+        $r3 = r0.<com.android.server.trust.TrustManagerService: android.util.ArrayMap mTrustTimeoutAlarmListenerForUser>;
+
+        $r4 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i0);
+
+        $r5 = virtualinvoke $r3.<android.util.ArrayMap: java.lang.Object get(java.lang.Object)>($r4);
+
+        r10 = (com.android.server.trust.TrustManagerService$TrustTimeoutAlarmListener) $r5;
+
+        if r10 == null goto label6;
+
+        $r6 = r0.<com.android.server.trust.TrustManagerService: com.android.server.trust.TrustManagerService$SettingsObserver mSettingsObserver>;
+
+        $z2 = virtualinvoke $r6.<com.android.server.trust.TrustManagerService$SettingsObserver: boolean getTrustAgentsExtendUnlock()>();
+
+        if $z2 == 0 goto label6;
+
+        $r7 = r0.<com.android.server.trust.TrustManagerService: android.app.AlarmManager mAlarmManager>;
+
+        virtualinvoke $r7.<android.app.AlarmManager: void cancel(android.app.AlarmManager$OnAlarmListener)>(r10);
+
+        virtualinvoke r10.<com.android.server.trust.TrustManagerService$TrustTimeoutAlarmListener: void setQueued(boolean)>(0);
+
+     label6:
+        return;
+
+        catch android.os.RemoteException from label2 to label3 with label4;
+    }
+
+    private void refreshDeviceLockedForUser(int)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        android.view.IWindowManager r1;
+        boolean z0, z2, $z4, $z5, $z6, $z7, z8, z10, z11, z12;
+        android.os.UserManager $r3, $r8;
+        android.content.pm.UserInfo $r4, r19;
+        java.lang.Object $r5, r18;
+        com.android.internal.widget.LockPatternUtils $r6;
+        int $i0, i2, i3, i4, $i5, i6;
+        android.util.SparseBooleanArray $r7, r20;
+        java.lang.String $r13;
+        android.os.RemoteException $r15;
+        java.lang.Throwable $r16, r24;
+        java.lang.StringBuilder r23;
+        java.util.ArrayList r25;
+        java.util.List r26, r27, r28;
+
+        r0 := @this: com.android.server.trust.TrustManagerService;
+
+        i2 := @parameter0: int;
+
+        i3 = i2;
+
+        if i2 == -1 goto label01;
+
+        i3 = i2;
+
+        if i2 >= 0 goto label01;
+
+        r23 = new java.lang.StringBuilder;
+
+        specialinvoke r23.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r23.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("refreshDeviceLockedForUser(userId=");
+
+        virtualinvoke r23.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i2);
+
+        virtualinvoke r23.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("): Invalid user handle, must be USER_ALL or a specific user.");
+
+        $r13 = virtualinvoke r23.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        r24 = new java.lang.Throwable;
+
+        specialinvoke r24.<java.lang.Throwable: void <init>(java.lang.String)>("here");
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("TrustManagerService", $r13, r24);
+
+        i3 = -1;
+
+     label01:
+        if i3 != -1 goto label02;
+
+        $r8 = r0.<com.android.server.trust.TrustManagerService: android.os.UserManager mUserManager>;
+
+        r18 = virtualinvoke $r8.<android.os.UserManager: java.util.List getUsers(boolean)>(1);
+
+        goto label03;
+
+     label02:
+        r25 = new java.util.ArrayList;
+
+        specialinvoke r25.<java.util.ArrayList: void <init>()>();
+
+        r18 = r25;
+
+        $r3 = r0.<com.android.server.trust.TrustManagerService: android.os.UserManager mUserManager>;
+
+        $r4 = virtualinvoke $r3.<android.os.UserManager: android.content.pm.UserInfo getUserInfo(int)>(i3);
+
+        r26 = (java.util.List) r25;
+
+        interfaceinvoke r26.<java.util.List: boolean add(java.lang.Object)>($r4);
+
+     label03:
+        r1 = staticinvoke <android.view.WindowManagerGlobal: android.view.IWindowManager getWindowManagerService()>();
+
+        i4 = 0;
+
+     label04:
+        r27 = (java.util.List) r18;
+
+        $i5 = interfaceinvoke r27.<java.util.List: int size()>();
+
+        if i4 >= $i5 goto label17;
+
+        r28 = (java.util.List) r18;
+
+        $r5 = interfaceinvoke r28.<java.util.List: java.lang.Object get(int)>(i4);
+
+        r19 = (android.content.pm.UserInfo) $r5;
+
+        if r19 == null goto label16;
+
+        $z4 = r19.<android.content.pm.UserInfo: boolean partial>;
+
+        if $z4 != 0 goto label16;
+
+        $z5 = virtualinvoke r19.<android.content.pm.UserInfo: boolean isEnabled()>();
+
+        if $z5 == 0 goto label16;
+
+        $z6 = r19.<android.content.pm.UserInfo: boolean guestToRemove>;
+
+        if $z6 == 0 goto label05;
+
+        goto label16;
+
+     label05:
+        i6 = r19.<android.content.pm.UserInfo: int id>;
+
+        $r6 = r0.<com.android.server.trust.TrustManagerService: com.android.internal.widget.LockPatternUtils mLockPatternUtils>;
+
+        z0 = virtualinvoke $r6.<com.android.internal.widget.LockPatternUtils: boolean isSecure(int)>(i6);
+
+        z8 = virtualinvoke r19.<android.content.pm.UserInfo: boolean supportsSwitchToByUser()>();
+
+        if z8 != 0 goto label06;
+
+        $z7 = virtualinvoke r19.<android.content.pm.UserInfo: boolean isManagedProfile()>();
+
+        if $z7 == 0 goto label16;
+
+        if z0 != 0 goto label16;
+
+        specialinvoke r0.<com.android.server.trust.TrustManagerService: void setDeviceLockedForUser(int,boolean)>(i6, 0);
+
+        goto label16;
+
+     label06:
+        z2 = specialinvoke r0.<com.android.server.trust.TrustManagerService: boolean aggregateIsTrusted(int)>(i6);
+
+        z10 = 0;
+
+        z11 = 1;
+
+        $i0 = r0.<com.android.server.trust.TrustManagerService: int mCurrentUser>;
+
+        if $i0 != i6 goto label14;
+
+        r20 = r0.<com.android.server.trust.TrustManagerService: android.util.SparseBooleanArray mUsersUnlockedByBiometric>;
+
+        entermonitor r20;
+
+     label07:
+        $r7 = r0.<com.android.server.trust.TrustManagerService: android.util.SparseBooleanArray mUsersUnlockedByBiometric>;
+
+        z10 = virtualinvoke $r7.<android.util.SparseBooleanArray: boolean get(int,boolean)>(i6, 0);
+
+        exitmonitor r20;
+
+     label08:
+        z11 = interfaceinvoke r1.<android.view.IWindowManager: boolean isKeyguardLocked()>();
+
+     label09:
+        goto label14;
+
+     label10:
+        $r15 := @caughtexception;
+
+        z11 = 1;
+
+        goto label14;
+
+     label11:
+        $r16 := @caughtexception;
+
+     label12:
+        exitmonitor r20;
+
+     label13:
+        throw $r16;
+
+     label14:
+        z12 = 0;
+
+        if z0 == 0 goto label15;
+
+        z12 = 0;
+
+        if z11 == 0 goto label15;
+
+        z12 = 0;
+
+        if z2 != 0 goto label15;
+
+        z12 = 0;
+
+        if z10 != 0 goto label15;
+
+        z12 = 1;
+
+     label15:
+        specialinvoke r0.<com.android.server.trust.TrustManagerService: void setDeviceLockedForUser(int,boolean)>(i6, z12);
+
+     label16:
+        i4 = i4 + 1;
+
+        goto label04;
+
+     label17:
+        return;
+
+        catch java.lang.Throwable from label07 to label08 with label11;
+        catch android.os.RemoteException from label08 to label09 with label10;
+        catch java.lang.Throwable from label12 to label13 with label11;
+    }
+
+    private void removeAgentsOfPackage(java.lang.String)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        java.lang.String r1, $r8, $r12, $r14;
+        com.android.server.trust.TrustManagerService$AgentInfo r2;
+        android.util.ArraySet $r4, $r5, $r17;
+        int $i0, i2;
+        java.lang.Object $r6;
+        android.content.ComponentName $r7, $r11;
+        boolean $z0, $z1, z2, z3;
+        java.lang.StringBuilder $r9;
+        com.android.server.trust.TrustAgentWrapper $r15, $r16;
+
+        r0 := @this: com.android.server.trust.TrustManagerService;
+
+        r1 := @parameter0: java.lang.String;
+
+        z2 = 0;
+
+        $r4 = r0.<com.android.server.trust.TrustManagerService: android.util.ArraySet mActiveAgents>;
+
+        $i0 = virtualinvoke $r4.<android.util.ArraySet: int size()>();
+
+        i2 = $i0 - 1;
+
+     label1:
+        if i2 < 0 goto label4;
+
+        $r5 = r0.<com.android.server.trust.TrustManagerService: android.util.ArraySet mActiveAgents>;
+
+        $r6 = virtualinvoke $r5.<android.util.ArraySet: java.lang.Object valueAt(int)>(i2);
+
+        r2 = (com.android.server.trust.TrustManagerService$AgentInfo) $r6;
+
+        z3 = z2;
+
+        $r7 = r2.<com.android.server.trust.TrustManagerService$AgentInfo: android.content.ComponentName component>;
+
+        $r8 = virtualinvoke $r7.<android.content.ComponentName: java.lang.String getPackageName()>();
+
+        $z0 = virtualinvoke r1.<java.lang.String: boolean equals(java.lang.Object)>($r8);
+
+        if $z0 == 0 goto label3;
+
+        $r9 = new java.lang.StringBuilder;
+
+        specialinvoke $r9.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Resetting agent ");
+
+        $r11 = r2.<com.android.server.trust.TrustManagerService$AgentInfo: android.content.ComponentName component>;
+
+        $r12 = virtualinvoke $r11.<android.content.ComponentName: java.lang.String flattenToShortString()>();
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r12);
+
+        $r14 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int i(java.lang.String,java.lang.String)>("TrustManagerService", $r14);
+
+        $r15 = r2.<com.android.server.trust.TrustManagerService$AgentInfo: com.android.server.trust.TrustAgentWrapper agent>;
+
+        $z1 = virtualinvoke $r15.<com.android.server.trust.TrustAgentWrapper: boolean isManagingTrust()>();
+
+        if $z1 == 0 goto label2;
+
+        z2 = 1;
+
+     label2:
+        $r16 = r2.<com.android.server.trust.TrustManagerService$AgentInfo: com.android.server.trust.TrustAgentWrapper agent>;
+
+        virtualinvoke $r16.<com.android.server.trust.TrustAgentWrapper: void destroy()>();
+
+        $r17 = r0.<com.android.server.trust.TrustManagerService: android.util.ArraySet mActiveAgents>;
+
+        virtualinvoke $r17.<android.util.ArraySet: java.lang.Object removeAt(int)>(i2);
+
+        z3 = z2;
+
+     label3:
+        i2 = i2 + -1;
+
+        z2 = z3;
+
+        goto label1;
+
+     label4:
+        if z2 == 0 goto label5;
+
+        specialinvoke r0.<com.android.server.trust.TrustManagerService: void updateTrustAll()>();
+
+     label5:
+        return;
+    }
+
+    private void removeListener(android.app.trust.ITrustListener)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        android.app.trust.ITrustListener r1, $r5;
+        java.util.ArrayList $r2, $r3, $r8;
+        int $i0, i1;
+        java.lang.Object $r4;
+        android.os.IBinder $r6, $r7;
+
+        r0 := @this: com.android.server.trust.TrustManagerService;
+
+        r1 := @parameter0: android.app.trust.ITrustListener;
+
+        i1 = 0;
+
+     label1:
+        $r2 = r0.<com.android.server.trust.TrustManagerService: java.util.ArrayList mTrustListeners>;
+
+        $i0 = virtualinvoke $r2.<java.util.ArrayList: int size()>();
+
+        if i1 >= $i0 goto label3;
+
+        $r3 = r0.<com.android.server.trust.TrustManagerService: java.util.ArrayList mTrustListeners>;
+
+        $r4 = virtualinvoke $r3.<java.util.ArrayList: java.lang.Object get(int)>(i1);
+
+        $r5 = (android.app.trust.ITrustListener) $r4;
+
+        $r6 = interfaceinvoke $r5.<android.app.trust.ITrustListener: android.os.IBinder asBinder()>();
+
+        $r7 = interfaceinvoke r1.<android.app.trust.ITrustListener: android.os.IBinder asBinder()>();
+
+        if $r6 != $r7 goto label2;
+
+        $r8 = r0.<com.android.server.trust.TrustManagerService: java.util.ArrayList mTrustListeners>;
+
+        virtualinvoke $r8.<java.util.ArrayList: java.lang.Object remove(int)>(i1);
+
+        return;
+
+     label2:
+        i1 = i1 + 1;
+
+        goto label1;
+
+     label3:
+        return;
+    }
+
+    private java.util.List resolveAllowedTrustAgents(android.content.pm.PackageManager, int)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        android.content.pm.PackageManager r1;
+        int i0, $i1, $i2;
+        android.content.ComponentName r3;
+        android.content.Intent $r4;
+        java.util.ArrayList $r5;
+        java.lang.Object $r6;
+        android.content.pm.ServiceInfo $r7, $r8, $r10;
+        android.content.pm.ApplicationInfo $r9;
+        java.lang.String $r11, $r18;
+        java.lang.StringBuilder $r12;
+        java.util.List r19;
+        java.util.Iterator r20;
+        boolean $z1;
+        android.content.pm.ResolveInfo r21;
+
+        r0 := @this: com.android.server.trust.TrustManagerService;
+
+        r1 := @parameter0: android.content.pm.PackageManager;
+
+        i0 := @parameter1: int;
+
+        $r4 = <com.android.server.trust.TrustManagerService: android.content.Intent TRUST_AGENT_INTENT>;
+
+        r19 = virtualinvoke r1.<android.content.pm.PackageManager: java.util.List queryIntentServicesAsUser(android.content.Intent,int,int)>($r4, 786560, i0);
+
+        $r5 = new java.util.ArrayList;
+
+        $i1 = interfaceinvoke r19.<java.util.List: int size()>();
+
+        specialinvoke $r5.<java.util.ArrayList: void <init>(int)>($i1);
+
+        r20 = interfaceinvoke r19.<java.util.List: java.util.Iterator iterator()>();
+
+     label1:
+        $z1 = interfaceinvoke r20.<java.util.Iterator: boolean hasNext()>();
+
+        if $z1 == 0 goto label5;
+
+        $r6 = interfaceinvoke r20.<java.util.Iterator: java.lang.Object next()>();
+
+        r21 = (android.content.pm.ResolveInfo) $r6;
+
+        $r7 = r21.<android.content.pm.ResolveInfo: android.content.pm.ServiceInfo serviceInfo>;
+
+        if $r7 != null goto label2;
+
+        goto label1;
+
+     label2:
+        $r8 = r21.<android.content.pm.ResolveInfo: android.content.pm.ServiceInfo serviceInfo>;
+
+        $r9 = $r8.<android.content.pm.ServiceInfo: android.content.pm.ApplicationInfo applicationInfo>;
+
+        if $r9 != null goto label3;
+
+        goto label1;
+
+     label3:
+        $r10 = r21.<android.content.pm.ResolveInfo: android.content.pm.ServiceInfo serviceInfo>;
+
+        $r11 = $r10.<android.content.pm.ServiceInfo: java.lang.String packageName>;
+
+        $i2 = virtualinvoke r1.<android.content.pm.PackageManager: int checkPermission(java.lang.String,java.lang.String)>("android.permission.PROVIDE_TRUST_AGENT", $r11);
+
+        if $i2 == 0 goto label4;
+
+        r3 = specialinvoke r0.<com.android.server.trust.TrustManagerService: android.content.ComponentName getComponentName(android.content.pm.ResolveInfo)>(r21);
+
+        $r12 = new java.lang.StringBuilder;
+
+        specialinvoke $r12.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Skipping agent ");
+
+        virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r3);
+
+        virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" because package does not have permission ");
+
+        virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("android.permission.PROVIDE_TRUST_AGENT");
+
+        virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(".");
+
+        $r18 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("TrustManagerService", $r18);
+
+        goto label1;
+
+     label4:
+        virtualinvoke $r5.<java.util.ArrayList: boolean add(java.lang.Object)>(r21);
+
+        goto label1;
+
+     label5:
+        return $r5;
+    }
+
+    private int resolveProfileParent(int)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        long l0;
+        android.os.UserManager $r1;
+        android.os.UserHandle $r2;
+        java.lang.Throwable $r3;
+        int i1, i2;
+        android.content.pm.UserInfo r4;
+
+        r0 := @this: com.android.server.trust.TrustManagerService;
+
+        i1 := @parameter0: int;
+
+        l0 = staticinvoke <android.os.Binder: long clearCallingIdentity()>();
+
+     label1:
+        $r1 = r0.<com.android.server.trust.TrustManagerService: android.os.UserManager mUserManager>;
+
+        r4 = virtualinvoke $r1.<android.os.UserManager: android.content.pm.UserInfo getProfileParent(int)>(i1);
+
+     label2:
+        if r4 == null goto label5;
+
+     label3:
+        $r2 = virtualinvoke r4.<android.content.pm.UserInfo: android.os.UserHandle getUserHandle()>();
+
+        i2 = virtualinvoke $r2.<android.os.UserHandle: int getIdentifier()>();
+
+     label4:
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l0);
+
+        return i2;
+
+     label5:
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l0);
+
+        return i1;
+
+     label6:
+        $r3 := @caughtexception;
+
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l0);
+
+        throw $r3;
+
+        catch java.lang.Throwable from label1 to label2 with label6;
+        catch java.lang.Throwable from label3 to label4 with label6;
+    }
+
+    private void scheduleTrustTimeout(int, boolean)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        int i0, i1;
+        boolean z0, z1;
+        android.os.Handler $r1;
+        android.os.Message $r2;
+
+        r0 := @this: com.android.server.trust.TrustManagerService;
+
+        i0 := @parameter0: int;
+
+        z0 := @parameter1: boolean;
+
+        z1 = z0;
+
+        if z0 == 0 goto label1;
+
+        z1 = 1;
+
+     label1:
+        $r1 = r0.<com.android.server.trust.TrustManagerService: android.os.Handler mHandler>;
+
+        i1 = (int) z1;
+
+        $r2 = virtualinvoke $r1.<android.os.Handler: android.os.Message obtainMessage(int,int,int)>(15, i0, i1);
+
+        virtualinvoke $r2.<android.os.Message: void sendToTarget()>();
+
+        return;
+    }
+
+    private void setDeviceLockedForUser(int, boolean)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        boolean z0, z1, $z2, z3;
+        android.util.SparseBooleanArray r1, $r2;
+        android.security.KeyStore $r3, $r6;
+        android.os.UserManager $r4;
+        com.android.internal.widget.LockPatternUtils $r5;
+        java.lang.Throwable $r7;
+        int i0, i2, i3, i4;
+        int[] r8;
+
+        r0 := @this: com.android.server.trust.TrustManagerService;
+
+        i0 := @parameter0: int;
+
+        z0 := @parameter1: boolean;
+
+        r1 = r0.<com.android.server.trust.TrustManagerService: android.util.SparseBooleanArray mDeviceLockedForUser>;
+
+        entermonitor r1;
+
+     label01:
+        z1 = virtualinvoke r0.<com.android.server.trust.TrustManagerService: boolean isDeviceLockedInner(int)>(i0);
+
+     label02:
+        if z1 == z0 goto label03;
+
+        z3 = 1;
+
+        goto label04;
+
+     label03:
+        z3 = 0;
+
+     label04:
+        $r2 = r0.<com.android.server.trust.TrustManagerService: android.util.SparseBooleanArray mDeviceLockedForUser>;
+
+        virtualinvoke $r2.<android.util.SparseBooleanArray: void put(int,boolean)>(i0, z0);
+
+        exitmonitor r1;
+
+     label05:
+        if z3 == 0 goto label08;
+
+        specialinvoke r0.<com.android.server.trust.TrustManagerService: void dispatchDeviceLocked(int,boolean)>(i0, z0);
+
+        $r3 = staticinvoke <android.security.KeyStore: android.security.KeyStore getInstance()>();
+
+        virtualinvoke $r3.<android.security.KeyStore: void onUserLockedStateChanged(int,boolean)>(i0, z0);
+
+        $r4 = r0.<com.android.server.trust.TrustManagerService: android.os.UserManager mUserManager>;
+
+        r8 = virtualinvoke $r4.<android.os.UserManager: int[] getEnabledProfileIds(int)>(i0);
+
+        i2 = lengthof r8;
+
+        i3 = 0;
+
+     label06:
+        if i3 >= i2 goto label08;
+
+        i4 = r8[i3];
+
+        $r5 = r0.<com.android.server.trust.TrustManagerService: com.android.internal.widget.LockPatternUtils mLockPatternUtils>;
+
+        $z2 = virtualinvoke $r5.<com.android.internal.widget.LockPatternUtils: boolean isManagedProfileWithUnifiedChallenge(int)>(i4);
+
+        if $z2 == 0 goto label07;
+
+        $r6 = staticinvoke <android.security.KeyStore: android.security.KeyStore getInstance()>();
+
+        virtualinvoke $r6.<android.security.KeyStore: void onUserLockedStateChanged(int,boolean)>(i4, z0);
+
+     label07:
+        i3 = i3 + 1;
+
+        goto label06;
+
+     label08:
+        return;
+
+     label09:
+        $r7 := @caughtexception;
+
+     label10:
+        exitmonitor r1;
+
+     label11:
+        throw $r7;
+
+        catch java.lang.Throwable from label01 to label02 with label09;
+        catch java.lang.Throwable from label04 to label05 with label09;
+        catch java.lang.Throwable from label10 to label11 with label09;
+    }
+
+    private void updateTrust(int, int, boolean)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        int i0, i1, $i2, $i4;
+        boolean z0, z1, $z3, $z4, $z5, z6, z7, z8, z9, z10, z11, z12, $z13, z14, z15, $z16, z17;
+        com.android.server.trust.TrustManagerService$StrongAuthTracker $r1;
+        com.android.server.trust.TrustManagerService$SettingsObserver $r2;
+        android.util.SparseBooleanArray $r3, $r4, r19, $r21;
+        java.lang.String $r6, $r9, $r12, $r14;
+        java.lang.Throwable $r15;
+        android.os.RemoteException $r16;
+        android.view.IWindowManager r17;
+        java.lang.StringBuilder r20;
+
+        r0 := @this: com.android.server.trust.TrustManagerService;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        z6 := @parameter2: boolean;
+
+        z7 = specialinvoke r0.<com.android.server.trust.TrustManagerService: boolean aggregateIsTrustManaged(int)>(i0);
+
+        specialinvoke r0.<com.android.server.trust.TrustManagerService: void dispatchOnTrustManagedChanged(boolean,int)>(z7, i0);
+
+        $r1 = r0.<com.android.server.trust.TrustManagerService: com.android.server.trust.TrustManagerService$StrongAuthTracker mStrongAuthTracker>;
+
+        $z3 = virtualinvoke $r1.<com.android.server.trust.TrustManagerService$StrongAuthTracker: boolean isTrustAllowedForUser(int)>(i0);
+
+        if $z3 == 0 goto label01;
+
+        $z5 = specialinvoke r0.<com.android.server.trust.TrustManagerService: boolean isTrustUsuallyManagedInternal(int)>(i0);
+
+        if $z5 == z7 goto label01;
+
+        specialinvoke r0.<com.android.server.trust.TrustManagerService: void updateTrustUsuallyManaged(int,boolean)>(i0, z7);
+
+     label01:
+        z0 = specialinvoke r0.<com.android.server.trust.TrustManagerService: boolean aggregateIsTrusted(int)>(i0);
+
+        r17 = staticinvoke <android.view.WindowManagerGlobal: android.view.IWindowManager getWindowManagerService()>();
+
+        z8 = 1;
+
+     label02:
+        z9 = interfaceinvoke r17.<android.view.IWindowManager: boolean isKeyguardLocked()>();
+
+     label03:
+        z8 = z9;
+
+        goto label05;
+
+     label04:
+        $r16 := @caughtexception;
+
+     label05:
+        r19 = r0.<com.android.server.trust.TrustManagerService: android.util.SparseBooleanArray mUserIsTrusted>;
+
+        entermonitor r19;
+
+     label06:
+        $r2 = r0.<com.android.server.trust.TrustManagerService: com.android.server.trust.TrustManagerService$SettingsObserver mSettingsObserver>;
+
+        z1 = virtualinvoke $r2.<com.android.server.trust.TrustManagerService$SettingsObserver: boolean getTrustAgentsExtendUnlock()>();
+
+     label07:
+        z10 = z0;
+
+        if z1 == 0 goto label24;
+
+     label08:
+        $r4 = r0.<com.android.server.trust.TrustManagerService: android.util.SparseBooleanArray mUserIsTrusted>;
+
+        $z4 = virtualinvoke $r4.<android.util.SparseBooleanArray: boolean get(int)>(i0);
+
+        if $z4 == z0 goto label10;
+
+     label09:
+        z11 = 1;
+
+        goto label11;
+
+     label10:
+        z11 = 0;
+
+     label11:
+        if z0 == 0 goto label14;
+
+        if z8 == 0 goto label12;
+
+        if z6 != 0 goto label12;
+
+        if z11 != 0 goto label14;
+
+     label12:
+        $i4 = r0.<com.android.server.trust.TrustManagerService: int mCurrentUser>;
+
+        if i0 != $i4 goto label14;
+
+     label13:
+        z12 = 1;
+
+        goto label15;
+
+     label14:
+        z12 = 0;
+
+     label15:
+        z10 = z12;
+
+     label16:
+        $z13 = <com.android.server.trust.TrustManagerService: boolean DEBUG>;
+
+        if $z13 == 0 goto label24;
+
+        r20 = new java.lang.StringBuilder;
+
+        specialinvoke r20.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r20.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Extend unlock setting trusted as ");
+
+        $r6 = staticinvoke <java.lang.Boolean: java.lang.String toString(boolean)>(z12);
+
+        virtualinvoke r20.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r6);
+
+        virtualinvoke r20.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" && ");
+
+     label17:
+        if z8 != 0 goto label18;
+
+        z14 = 1;
+
+        goto label19;
+
+     label18:
+        z14 = 0;
+
+     label19:
+        $r9 = staticinvoke <java.lang.Boolean: java.lang.String toString(boolean)>(z14);
+
+        virtualinvoke r20.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r9);
+
+        virtualinvoke r20.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" && ");
+
+        $i2 = r0.<com.android.server.trust.TrustManagerService: int mCurrentUser>;
+
+        if i0 != $i2 goto label21;
+
+     label20:
+        z15 = 1;
+
+        goto label22;
+
+     label21:
+        z15 = 0;
+
+     label22:
+        $r12 = staticinvoke <java.lang.Boolean: java.lang.String toString(boolean)>(z15);
+
+        virtualinvoke r20.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r12);
+
+        $r14 = virtualinvoke r20.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("TrustManagerService", $r14);
+
+     label23:
+        z10 = z12;
+
+     label24:
+        $r21 = r0.<com.android.server.trust.TrustManagerService: android.util.SparseBooleanArray mUserIsTrusted>;
+
+        $z16 = virtualinvoke $r21.<android.util.SparseBooleanArray: boolean get(int)>(i0);
+
+        if $z16 == z10 goto label26;
+
+     label25:
+        z17 = 1;
+
+        goto label27;
+
+     label26:
+        z17 = 0;
+
+     label27:
+        $r3 = r0.<com.android.server.trust.TrustManagerService: android.util.SparseBooleanArray mUserIsTrusted>;
+
+        virtualinvoke $r3.<android.util.SparseBooleanArray: void put(int,boolean)>(i0, z10);
+
+        exitmonitor r19;
+
+     label28:
+        specialinvoke r0.<com.android.server.trust.TrustManagerService: void dispatchOnTrustChanged(boolean,int,int)>(z10, i0, i1);
+
+        if z17 == 0 goto label30;
+
+        specialinvoke r0.<com.android.server.trust.TrustManagerService: void refreshDeviceLockedForUser(int)>(i0);
+
+        if z10 != 0 goto label29;
+
+        specialinvoke r0.<com.android.server.trust.TrustManagerService: void maybeLockScreen(int)>(i0);
+
+        goto label30;
+
+     label29:
+        specialinvoke r0.<com.android.server.trust.TrustManagerService: void scheduleTrustTimeout(int,boolean)>(i0, 0);
+
+     label30:
+        return;
+
+     label31:
+        $r15 := @caughtexception;
+
+     label32:
+        exitmonitor r19;
+
+     label33:
+        throw $r15;
+
+        catch android.os.RemoteException from label02 to label03 with label04;
+        catch java.lang.Throwable from label06 to label07 with label31;
+        catch java.lang.Throwable from label08 to label09 with label31;
+        catch java.lang.Throwable from label12 to label13 with label31;
+        catch java.lang.Throwable from label16 to label17 with label31;
+        catch java.lang.Throwable from label19 to label20 with label31;
+        catch java.lang.Throwable from label22 to label23 with label31;
+        catch java.lang.Throwable from label24 to label25 with label31;
+        catch java.lang.Throwable from label27 to label28 with label31;
+        catch java.lang.Throwable from label32 to label33 with label31;
+    }
+
+    private void updateTrustAll()
+    {
+        com.android.server.trust.TrustManagerService r0;
+        java.util.Iterator r1;
+        android.os.UserManager $r2;
+        java.util.List $r3;
+        boolean $z0;
+        java.lang.Object $r4;
+        android.content.pm.UserInfo $r5;
+        int $i0;
+
+        r0 := @this: com.android.server.trust.TrustManagerService;
+
+        $r2 = r0.<com.android.server.trust.TrustManagerService: android.os.UserManager mUserManager>;
+
+        $r3 = virtualinvoke $r2.<android.os.UserManager: java.util.List getUsers(boolean)>(1);
+
+        r1 = interfaceinvoke $r3.<java.util.List: java.util.Iterator iterator()>();
+
+     label1:
+        $z0 = interfaceinvoke r1.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label2;
+
+        $r4 = interfaceinvoke r1.<java.util.Iterator: java.lang.Object next()>();
+
+        $r5 = (android.content.pm.UserInfo) $r4;
+
+        $i0 = $r5.<android.content.pm.UserInfo: int id>;
+
+        virtualinvoke r0.<com.android.server.trust.TrustManagerService: void updateTrust(int,int)>($i0, 0);
+
+        goto label1;
+
+     label2:
+        return;
+    }
+
+    private void updateTrustUsuallyManaged(int, boolean)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        int i0;
+        boolean z0;
+        android.util.SparseBooleanArray r1, $r2;
+        android.os.Handler $r3, r6;
+        android.os.Message $r4;
+        java.lang.Throwable $r5;
+
+        r0 := @this: com.android.server.trust.TrustManagerService;
+
+        i0 := @parameter0: int;
+
+        z0 := @parameter1: boolean;
+
+        r1 = r0.<com.android.server.trust.TrustManagerService: android.util.SparseBooleanArray mTrustUsuallyManagedForUser>;
+
+        entermonitor r1;
+
+     label1:
+        $r2 = r0.<com.android.server.trust.TrustManagerService: android.util.SparseBooleanArray mTrustUsuallyManagedForUser>;
+
+        virtualinvoke $r2.<android.util.SparseBooleanArray: void put(int,boolean)>(i0, z0);
+
+        exitmonitor r1;
+
+     label2:
+        $r3 = r0.<com.android.server.trust.TrustManagerService: android.os.Handler mHandler>;
+
+        virtualinvoke $r3.<android.os.Handler: void removeMessages(int)>(10);
+
+        r6 = r0.<com.android.server.trust.TrustManagerService: android.os.Handler mHandler>;
+
+        $r4 = virtualinvoke r6.<android.os.Handler: android.os.Message obtainMessage(int)>(10);
+
+        virtualinvoke r6.<android.os.Handler: boolean sendMessageDelayed(android.os.Message,long)>($r4, 120000L);
+
+        return;
+
+     label3:
+        $r5 := @caughtexception;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        throw $r5;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    public long addEscrowToken(byte[], int)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        byte[] r1;
+        int i0;
+        com.android.server.trust._$$Lambda$TrustManagerService$fEkVwjahpkATIGtXudiFOG8VXOo $r2;
+        com.android.internal.widget.LockPatternUtils $r3;
+        long $l1;
+
+        r0 := @this: com.android.server.trust.TrustManagerService;
+
+        r1 := @parameter0: byte[];
+
+        i0 := @parameter1: int;
+
+        $r3 = r0.<com.android.server.trust.TrustManagerService: com.android.internal.widget.LockPatternUtils mLockPatternUtils>;
+
+        $r2 = new com.android.server.trust._$$Lambda$TrustManagerService$fEkVwjahpkATIGtXudiFOG8VXOo;
+
+        specialinvoke $r2.<com.android.server.trust._$$Lambda$TrustManagerService$fEkVwjahpkATIGtXudiFOG8VXOo: void <init>(com.android.server.trust.TrustManagerService)>(r0);
+
+        $l1 = virtualinvoke $r3.<com.android.internal.widget.LockPatternUtils: long addEscrowToken(byte[],int,com.android.internal.widget.LockPatternUtils$EscrowTokenStateChangeCallback)>(r1, i0, $r2);
+
+        return $l1;
+    }
+
+    boolean isDeviceLockedInner(int)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        int i0;
+        android.util.SparseBooleanArray r1, $r3;
+        boolean z0;
+        java.lang.Throwable $r4;
+
+        r0 := @this: com.android.server.trust.TrustManagerService;
+
+        i0 := @parameter0: int;
+
+        r1 = r0.<com.android.server.trust.TrustManagerService: android.util.SparseBooleanArray mDeviceLockedForUser>;
+
+        entermonitor r1;
+
+     label1:
+        $r3 = r0.<com.android.server.trust.TrustManagerService: android.util.SparseBooleanArray mDeviceLockedForUser>;
+
+        z0 = virtualinvoke $r3.<android.util.SparseBooleanArray: boolean get(int,boolean)>(i0, 1);
+
+        exitmonitor r1;
+
+     label2:
+        return z0;
+
+     label3:
+        $r4 := @caughtexception;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        throw $r4;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    public boolean isEscrowTokenActive(long, int)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        long l0;
+        int i1;
+        com.android.internal.widget.LockPatternUtils $r1;
+        boolean $z0;
+
+        r0 := @this: com.android.server.trust.TrustManagerService;
+
+        l0 := @parameter0: long;
+
+        i1 := @parameter1: int;
+
+        $r1 = r0.<com.android.server.trust.TrustManagerService: com.android.internal.widget.LockPatternUtils mLockPatternUtils>;
+
+        $z0 = virtualinvoke $r1.<com.android.internal.widget.LockPatternUtils: boolean isEscrowTokenActive(long,int)>(l0, i1);
+
+        return $z0;
+    }
+
+    public void lambda$addEscrowToken$0$TrustManagerService(long, int)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        long l0;
+        int i1;
+
+        r0 := @this: com.android.server.trust.TrustManagerService;
+
+        l0 := @parameter0: long;
+
+        i1 := @parameter1: int;
+
+        specialinvoke r0.<com.android.server.trust.TrustManagerService: void dispatchEscrowTokenActivatedLocked(long,int)>(l0, i1);
+
+        return;
+    }
+
+    public void onBootPhase(int)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        int i0;
+        boolean $z0;
+        com.android.internal.widget.LockPatternUtils $r1, $r10;
+        android.os.Handler $r2;
+        com.android.internal.content.PackageMonitor $r3;
+        android.content.Context $r4, $r7;
+        android.os.Looper $r5;
+        android.os.UserHandle $r6;
+        com.android.server.trust.TrustManagerService$Receiver $r8;
+        com.android.server.trust.TrustManagerService$StrongAuthTracker $r9;
+
+        r0 := @this: com.android.server.trust.TrustManagerService;
+
+        i0 := @parameter0: int;
+
+        $z0 = virtualinvoke r0.<com.android.server.trust.TrustManagerService: boolean isSafeMode()>();
+
+        if $z0 == 0 goto label1;
+
+        return;
+
+     label1:
+        if i0 != 500 goto label2;
+
+        $r3 = r0.<com.android.server.trust.TrustManagerService: com.android.internal.content.PackageMonitor mPackageMonitor>;
+
+        $r4 = r0.<com.android.server.trust.TrustManagerService: android.content.Context mContext>;
+
+        $r2 = r0.<com.android.server.trust.TrustManagerService: android.os.Handler mHandler>;
+
+        $r5 = virtualinvoke $r2.<android.os.Handler: android.os.Looper getLooper()>();
+
+        $r6 = <android.os.UserHandle: android.os.UserHandle ALL>;
+
+        virtualinvoke $r3.<com.android.internal.content.PackageMonitor: void register(android.content.Context,android.os.Looper,android.os.UserHandle,boolean)>($r4, $r5, $r6, 1);
+
+        $r8 = r0.<com.android.server.trust.TrustManagerService: com.android.server.trust.TrustManagerService$Receiver mReceiver>;
+
+        $r7 = r0.<com.android.server.trust.TrustManagerService: android.content.Context mContext>;
+
+        virtualinvoke $r8.<com.android.server.trust.TrustManagerService$Receiver: void register(android.content.Context)>($r7);
+
+        $r10 = r0.<com.android.server.trust.TrustManagerService: com.android.internal.widget.LockPatternUtils mLockPatternUtils>;
+
+        $r9 = r0.<com.android.server.trust.TrustManagerService: com.android.server.trust.TrustManagerService$StrongAuthTracker mStrongAuthTracker>;
+
+        virtualinvoke $r10.<com.android.internal.widget.LockPatternUtils: void registerStrongAuthTracker(com.android.internal.widget.LockPatternUtils$StrongAuthTracker)>($r9);
+
+        goto label4;
+
+     label2:
+        if i0 != 600 goto label3;
+
+        r0.<com.android.server.trust.TrustManagerService: boolean mTrustAgentsCanRun> = 1;
+
+        virtualinvoke r0.<com.android.server.trust.TrustManagerService: void refreshAgentList(int)>(-1);
+
+        specialinvoke r0.<com.android.server.trust.TrustManagerService: void refreshDeviceLockedForUser(int)>(-1);
+
+        goto label4;
+
+     label3:
+        if i0 != 1000 goto label4;
+
+        $r1 = r0.<com.android.server.trust.TrustManagerService: com.android.internal.widget.LockPatternUtils mLockPatternUtils>;
+
+        specialinvoke r0.<com.android.server.trust.TrustManagerService: void maybeEnableFactoryTrustAgents(com.android.internal.widget.LockPatternUtils,int)>($r1, 0);
+
+     label4:
+        return;
+    }
+
+    public void onCleanupUser(int)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        int i0;
+        android.os.Handler $r1;
+        android.os.Message $r2;
+
+        r0 := @this: com.android.server.trust.TrustManagerService;
+
+        i0 := @parameter0: int;
+
+        $r1 = r0.<com.android.server.trust.TrustManagerService: android.os.Handler mHandler>;
+
+        $r2 = virtualinvoke $r1.<android.os.Handler: android.os.Message obtainMessage(int,int,int,java.lang.Object)>(8, i0, 0, null);
+
+        virtualinvoke $r2.<android.os.Message: void sendToTarget()>();
+
+        return;
+    }
+
+    public void onStart()
+    {
+        com.android.server.trust.TrustManagerService r0;
+        android.os.IBinder $r1;
+
+        r0 := @this: com.android.server.trust.TrustManagerService;
+
+        $r1 = r0.<com.android.server.trust.TrustManagerService: android.os.IBinder mService>;
+
+        virtualinvoke r0.<com.android.server.trust.TrustManagerService: void publishBinderService(java.lang.String,android.os.IBinder)>("trust", $r1);
+
+        return;
+    }
+
+    public void onStartUser(int)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        int i0;
+        android.os.Handler $r1;
+        android.os.Message $r2;
+
+        r0 := @this: com.android.server.trust.TrustManagerService;
+
+        i0 := @parameter0: int;
+
+        $r1 = r0.<com.android.server.trust.TrustManagerService: android.os.Handler mHandler>;
+
+        $r2 = virtualinvoke $r1.<android.os.Handler: android.os.Message obtainMessage(int,int,int,java.lang.Object)>(7, i0, 0, null);
+
+        virtualinvoke $r2.<android.os.Message: void sendToTarget()>();
+
+        return;
+    }
+
+    public void onStopUser(int)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        int i0;
+        android.os.Handler $r1;
+        android.os.Message $r2;
+
+        r0 := @this: com.android.server.trust.TrustManagerService;
+
+        i0 := @parameter0: int;
+
+        $r1 = r0.<com.android.server.trust.TrustManagerService: android.os.Handler mHandler>;
+
+        $r2 = virtualinvoke $r1.<android.os.Handler: android.os.Message obtainMessage(int,int,int,java.lang.Object)>(12, i0, 0, null);
+
+        virtualinvoke $r2.<android.os.Message: void sendToTarget()>();
+
+        return;
+    }
+
+    public void onSwitchUser(int)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        int i0;
+        android.os.Handler $r1;
+        android.os.Message $r2;
+
+        r0 := @this: com.android.server.trust.TrustManagerService;
+
+        i0 := @parameter0: int;
+
+        $r1 = r0.<com.android.server.trust.TrustManagerService: android.os.Handler mHandler>;
+
+        $r2 = virtualinvoke $r1.<android.os.Handler: android.os.Message obtainMessage(int,int,int,java.lang.Object)>(9, i0, 0, null);
+
+        virtualinvoke $r2.<android.os.Message: void sendToTarget()>();
+
+        return;
+    }
+
+    public void onUnlockUser(int)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        int i0;
+        android.os.Handler $r1;
+        android.os.Message $r2;
+
+        r0 := @this: com.android.server.trust.TrustManagerService;
+
+        i0 := @parameter0: int;
+
+        $r1 = r0.<com.android.server.trust.TrustManagerService: android.os.Handler mHandler>;
+
+        $r2 = virtualinvoke $r1.<android.os.Handler: android.os.Message obtainMessage(int,int,int,java.lang.Object)>(11, i0, 0, null);
+
+        virtualinvoke $r2.<android.os.Message: void sendToTarget()>();
+
+        return;
+    }
+
+    void refreshAgentList(int)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        android.content.pm.PackageManager r1;
+        java.util.Iterator r3, r8;
+        android.content.pm.UserInfo r5, $r12;
+        android.app.admin.DevicePolicyManager r6;
+        java.util.List r7, r121, r126, r152, r153;
+        android.content.ComponentName r9;
+        boolean $z0, $z1, $z3, $z5, $z6, $z7, $z8, $z9, $z10, $z11, $z12, $z13, $z14, $z17, $z18, $z19, $z20, $z21, $z22, $z23, $z24, $z25, $z26, $z27, $z28, $z29, z30, $z31, z32, $z33, z34, z35;
+        android.os.UserManager $r11, $r100, $r130;
+        android.util.ArraySet $r14, $r18, $r23, $r24, $r25, $r29, $r30, r139;
+        int $i0, $i1, $i2, $i3, $i4, $i5, $i6, $i7, $i8, $i9, $i10, $i11, $i12, $i13, $i14, $i16, $i18, $i20, $i21, $i23, $i25, $i27, $i29, $i31, i35, i36, i37, $i38, i39, i40;
+        java.lang.Object $r15, $r19, $r21, $r26, r115;
+        com.android.server.trust.TrustAgentWrapper $r16, $r17, $r133, r151;
+        android.app.ActivityManager $r20;
+        com.android.server.trust.TrustManagerService$SettingsAttrs $r27, $r60, $r63;
+        com.android.server.trust.TrustManagerService$StrongAuthTracker $r28, $r36, $r41;
+        android.content.Context $r33, $r114;
+        android.content.Intent $r34, r150;
+        android.os.UserHandle $r35;
+        java.lang.String $r42, $r44, $r51, $r58, $r66, $r71, $r74, $r79, $r84, $r89, $r94, $r99, $r105, $r111;
+        android.content.pm.ServiceInfo $r59;
+        java.lang.CharSequence $r61;
+        android.graphics.drawable.Drawable $r62;
+        com.android.internal.widget.LockPatternUtils r116, r122;
+        android.content.pm.ResolveInfo r124;
+        com.android.server.trust.TrustManagerService$AgentInfo r128, r134, r146;
+        java.lang.StringBuilder r135, r136, r140, r141, r142, r143, r144, r145, r147, r148, r149;
+        java.lang.Throwable r137;
+        java.util.ArrayList r138;
+
+        r0 := @this: com.android.server.trust.TrustManagerService;
+
+        i35 := @parameter0: int;
+
+        $z0 = <com.android.server.trust.TrustManagerService: boolean DEBUG>;
+
+        if $z0 == 0 goto label01;
+
+        r135 = new java.lang.StringBuilder;
+
+        specialinvoke r135.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r135.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("refreshAgentList(");
+
+        virtualinvoke r135.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i35);
+
+        virtualinvoke r135.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(")");
+
+        $r111 = virtualinvoke r135.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("TrustManagerService", $r111);
+
+     label01:
+        $z1 = r0.<com.android.server.trust.TrustManagerService: boolean mTrustAgentsCanRun>;
+
+        if $z1 != 0 goto label02;
+
+        return;
+
+     label02:
+        i36 = i35;
+
+        if i35 == -1 goto label03;
+
+        i36 = i35;
+
+        if i35 >= 0 goto label03;
+
+        r136 = new java.lang.StringBuilder;
+
+        specialinvoke r136.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r136.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("refreshAgentList(userId=");
+
+        virtualinvoke r136.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i35);
+
+        virtualinvoke r136.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("): Invalid user handle, must be USER_ALL or a specific user.");
+
+        $r105 = virtualinvoke r136.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        r137 = new java.lang.Throwable;
+
+        specialinvoke r137.<java.lang.Throwable: void <init>(java.lang.String)>("here");
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("TrustManagerService", $r105, r137);
+
+        i36 = -1;
+
+     label03:
+        $r114 = r0.<com.android.server.trust.TrustManagerService: android.content.Context mContext>;
+
+        r1 = virtualinvoke $r114.<android.content.Context: android.content.pm.PackageManager getPackageManager()>();
+
+        if i36 != -1 goto label04;
+
+        $r100 = r0.<com.android.server.trust.TrustManagerService: android.os.UserManager mUserManager>;
+
+        r115 = virtualinvoke $r100.<android.os.UserManager: java.util.List getUsers(boolean)>(1);
+
+        goto label05;
+
+     label04:
+        r138 = new java.util.ArrayList;
+
+        specialinvoke r138.<java.util.ArrayList: void <init>()>();
+
+        r115 = r138;
+
+        $r11 = r0.<com.android.server.trust.TrustManagerService: android.os.UserManager mUserManager>;
+
+        $r12 = virtualinvoke $r11.<android.os.UserManager: android.content.pm.UserInfo getUserInfo(int)>(i36);
+
+        r152 = (java.util.List) r138;
+
+        interfaceinvoke r152.<java.util.List: boolean add(java.lang.Object)>($r12);
+
+     label05:
+        r116 = r0.<com.android.server.trust.TrustManagerService: com.android.internal.widget.LockPatternUtils mLockPatternUtils>;
+
+        r139 = new android.util.ArraySet;
+
+        specialinvoke r139.<android.util.ArraySet: void <init>()>();
+
+        $r14 = r0.<com.android.server.trust.TrustManagerService: android.util.ArraySet mActiveAgents>;
+
+        virtualinvoke r139.<android.util.ArraySet: void addAll(android.util.ArraySet)>($r14);
+
+        r153 = (java.util.List) r115;
+
+        r3 = interfaceinvoke r153.<java.util.List: java.util.Iterator iterator()>();
+
+     label06:
+        $z29 = interfaceinvoke r3.<java.util.Iterator: boolean hasNext()>();
+
+        if $z29 == 0 goto label37;
+
+        $r19 = interfaceinvoke r3.<java.util.Iterator: java.lang.Object next()>();
+
+        r5 = (android.content.pm.UserInfo) $r19;
+
+        if r5 == null goto label36;
+
+        $z5 = r5.<android.content.pm.UserInfo: boolean partial>;
+
+        if $z5 != 0 goto label36;
+
+        $z6 = virtualinvoke r5.<android.content.pm.UserInfo: boolean isEnabled()>();
+
+        if $z6 == 0 goto label36;
+
+        $z7 = r5.<android.content.pm.UserInfo: boolean guestToRemove>;
+
+        if $z7 == 0 goto label07;
+
+        goto label06;
+
+     label07:
+        $z8 = virtualinvoke r5.<android.content.pm.UserInfo: boolean supportsSwitchToByUser()>();
+
+        if $z8 != 0 goto label08;
+
+        $z28 = <com.android.server.trust.TrustManagerService: boolean DEBUG>;
+
+        if $z28 == 0 goto label06;
+
+        r140 = new java.lang.StringBuilder;
+
+        specialinvoke r140.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r140.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("refreshAgentList: skipping user ");
+
+        $i31 = r5.<android.content.pm.UserInfo: int id>;
+
+        virtualinvoke r140.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i31);
+
+        virtualinvoke r140.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(": switchToByUser=false");
+
+        $r99 = virtualinvoke r140.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("TrustManagerService", $r99);
+
+        goto label06;
+
+     label08:
+        $r20 = r0.<com.android.server.trust.TrustManagerService: android.app.ActivityManager mActivityManager>;
+
+        $i2 = r5.<android.content.pm.UserInfo: int id>;
+
+        $z9 = virtualinvoke $r20.<android.app.ActivityManager: boolean isUserRunning(int)>($i2);
+
+        if $z9 != 0 goto label09;
+
+        $z27 = <com.android.server.trust.TrustManagerService: boolean DEBUG>;
+
+        if $z27 == 0 goto label06;
+
+        r141 = new java.lang.StringBuilder;
+
+        specialinvoke r141.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r141.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("refreshAgentList: skipping user ");
+
+        $i29 = r5.<android.content.pm.UserInfo: int id>;
+
+        virtualinvoke r141.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i29);
+
+        virtualinvoke r141.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(": user not started");
+
+        $r94 = virtualinvoke r141.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("TrustManagerService", $r94);
+
+        goto label06;
+
+     label09:
+        $i3 = r5.<android.content.pm.UserInfo: int id>;
+
+        $z10 = virtualinvoke r116.<com.android.internal.widget.LockPatternUtils: boolean isSecure(int)>($i3);
+
+        if $z10 != 0 goto label10;
+
+        $z26 = <com.android.server.trust.TrustManagerService: boolean DEBUG>;
+
+        if $z26 == 0 goto label06;
+
+        r142 = new java.lang.StringBuilder;
+
+        specialinvoke r142.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r142.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("refreshAgentList: skipping user ");
+
+        $i27 = r5.<android.content.pm.UserInfo: int id>;
+
+        virtualinvoke r142.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i27);
+
+        virtualinvoke r142.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(": no secure credential");
+
+        $r89 = virtualinvoke r142.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("TrustManagerService", $r89);
+
+        goto label06;
+
+     label10:
+        r6 = virtualinvoke r116.<com.android.internal.widget.LockPatternUtils: android.app.admin.DevicePolicyManager getDevicePolicyManager()>();
+
+        $i4 = r5.<android.content.pm.UserInfo: int id>;
+
+        $i5 = virtualinvoke r6.<android.app.admin.DevicePolicyManager: int getKeyguardDisabledFeatures(android.content.ComponentName,int)>(null, $i4);
+
+        $i6 = $i5 & 16;
+
+        if $i6 == 0 goto label11;
+
+        z30 = 1;
+
+        goto label12;
+
+     label11:
+        z30 = 0;
+
+     label12:
+        $i7 = r5.<android.content.pm.UserInfo: int id>;
+
+        r7 = virtualinvoke r116.<com.android.internal.widget.LockPatternUtils: java.util.List getEnabledTrustAgents(int)>($i7);
+
+        if r7 != null goto label13;
+
+        $z25 = <com.android.server.trust.TrustManagerService: boolean DEBUG>;
+
+        if $z25 == 0 goto label06;
+
+        r143 = new java.lang.StringBuilder;
+
+        specialinvoke r143.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r143.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("refreshAgentList: skipping user ");
+
+        $i25 = r5.<android.content.pm.UserInfo: int id>;
+
+        virtualinvoke r143.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i25);
+
+        virtualinvoke r143.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(": no agents enabled by user");
+
+        $r84 = virtualinvoke r143.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("TrustManagerService", $r84);
+
+        goto label06;
+
+     label13:
+        $i8 = r5.<android.content.pm.UserInfo: int id>;
+
+        r121 = specialinvoke r0.<com.android.server.trust.TrustManagerService: java.util.List resolveAllowedTrustAgents(android.content.pm.PackageManager,int)>(r1, $i8);
+
+        r8 = interfaceinvoke r121.<java.util.List: java.util.Iterator iterator()>();
+
+        r122 = r116;
+
+     label14:
+        $z31 = interfaceinvoke r8.<java.util.Iterator: boolean hasNext()>();
+
+        if $z31 == 0 goto label35;
+
+        $r21 = interfaceinvoke r8.<java.util.Iterator: java.lang.Object next()>();
+
+        r124 = (android.content.pm.ResolveInfo) $r21;
+
+        r9 = specialinvoke r0.<com.android.server.trust.TrustManagerService: android.content.ComponentName getComponentName(android.content.pm.ResolveInfo)>(r124);
+
+        $z11 = interfaceinvoke r7.<java.util.List: boolean contains(java.lang.Object)>(r9);
+
+        if $z11 != 0 goto label16;
+
+        $z24 = <com.android.server.trust.TrustManagerService: boolean DEBUG>;
+
+        if $z24 == 0 goto label15;
+
+        r144 = new java.lang.StringBuilder;
+
+        specialinvoke r144.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r144.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("refreshAgentList: skipping ");
+
+        $r74 = virtualinvoke r9.<android.content.ComponentName: java.lang.String flattenToShortString()>();
+
+        virtualinvoke r144.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r74);
+
+        virtualinvoke r144.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" u");
+
+        $i23 = r5.<android.content.pm.UserInfo: int id>;
+
+        virtualinvoke r144.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i23);
+
+        virtualinvoke r144.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(": not enabled by user");
+
+        $r79 = virtualinvoke r144.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("TrustManagerService", $r79);
+
+        goto label15;
+
+     label15:
+        goto label14;
+
+     label16:
+        if z30 == 0 goto label19;
+
+        $i20 = r5.<android.content.pm.UserInfo: int id>;
+
+        r126 = virtualinvoke r6.<android.app.admin.DevicePolicyManager: java.util.List getTrustAgentConfiguration(android.content.ComponentName,android.content.ComponentName,int)>(null, r9, $i20);
+
+        if r126 == null goto label17;
+
+        $z23 = interfaceinvoke r126.<java.util.List: boolean isEmpty()>();
+
+        if $z23 == 0 goto label19;
+
+     label17:
+        $z22 = <com.android.server.trust.TrustManagerService: boolean DEBUG>;
+
+        if $z22 == 0 goto label18;
+
+        r145 = new java.lang.StringBuilder;
+
+        specialinvoke r145.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r145.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("refreshAgentList: skipping ");
+
+        $r66 = virtualinvoke r9.<android.content.ComponentName: java.lang.String flattenToShortString()>();
+
+        virtualinvoke r145.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r66);
+
+        virtualinvoke r145.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" u");
+
+        $i21 = r5.<android.content.pm.UserInfo: int id>;
+
+        virtualinvoke r145.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i21);
+
+        virtualinvoke r145.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(": not allowed by DPM");
+
+        $r71 = virtualinvoke r145.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("TrustManagerService", $r71);
+
+     label18:
+        goto label14;
+
+     label19:
+        r146 = new com.android.server.trust.TrustManagerService$AgentInfo;
+
+        specialinvoke r146.<com.android.server.trust.TrustManagerService$AgentInfo: void <init>(com.android.server.trust.TrustManagerService$1)>(null);
+
+        r128 = r146;
+
+        r146.<com.android.server.trust.TrustManagerService$AgentInfo: android.content.ComponentName component> = r9;
+
+        $i9 = r5.<android.content.pm.UserInfo: int id>;
+
+        r146.<com.android.server.trust.TrustManagerService$AgentInfo: int userId> = $i9;
+
+        $r23 = r0.<com.android.server.trust.TrustManagerService: android.util.ArraySet mActiveAgents>;
+
+        $z12 = virtualinvoke $r23.<android.util.ArraySet: boolean contains(java.lang.Object)>(r146);
+
+        if $z12 != 0 goto label20;
+
+        $r61 = virtualinvoke r124.<android.content.pm.ResolveInfo: java.lang.CharSequence loadLabel(android.content.pm.PackageManager)>(r1);
+
+        r146.<com.android.server.trust.TrustManagerService$AgentInfo: java.lang.CharSequence label> = $r61;
+
+        $r62 = virtualinvoke r124.<android.content.pm.ResolveInfo: android.graphics.drawable.Drawable loadIcon(android.content.pm.PackageManager)>(r1);
+
+        r146.<com.android.server.trust.TrustManagerService$AgentInfo: android.graphics.drawable.Drawable icon> = $r62;
+
+        $r63 = specialinvoke r0.<com.android.server.trust.TrustManagerService: com.android.server.trust.TrustManagerService$SettingsAttrs getSettingsAttrs(android.content.pm.PackageManager,android.content.pm.ResolveInfo)>(r1, r124);
+
+        r146.<com.android.server.trust.TrustManagerService$AgentInfo: com.android.server.trust.TrustManagerService$SettingsAttrs settings> = $r63;
+
+        goto label21;
+
+     label20:
+        $r24 = r0.<com.android.server.trust.TrustManagerService: android.util.ArraySet mActiveAgents>;
+
+        i37 = virtualinvoke $r24.<android.util.ArraySet: int indexOf(java.lang.Object)>(r146);
+
+        $r25 = r0.<com.android.server.trust.TrustManagerService: android.util.ArraySet mActiveAgents>;
+
+        $r26 = virtualinvoke $r25.<android.util.ArraySet: java.lang.Object valueAt(int)>(i37);
+
+        r128 = (com.android.server.trust.TrustManagerService$AgentInfo) $r26;
+
+     label21:
+        z32 = 0;
+
+        $r27 = r128.<com.android.server.trust.TrustManagerService$AgentInfo: com.android.server.trust.TrustManagerService$SettingsAttrs settings>;
+
+        if $r27 == null goto label23;
+
+        $r59 = r124.<android.content.pm.ResolveInfo: android.content.pm.ServiceInfo serviceInfo>;
+
+        $z20 = $r59.<android.content.pm.ServiceInfo: boolean directBootAware>;
+
+        if $z20 == 0 goto label22;
+
+        $r60 = r128.<com.android.server.trust.TrustManagerService$AgentInfo: com.android.server.trust.TrustManagerService$SettingsAttrs settings>;
+
+        $z21 = $r60.<com.android.server.trust.TrustManagerService$SettingsAttrs: boolean canUnlockProfile>;
+
+        if $z21 == 0 goto label22;
+
+        z32 = 1;
+
+        goto label23;
+
+     label22:
+        z32 = 0;
+
+     label23:
+        if z32 == 0 goto label24;
+
+        $z19 = <com.android.server.trust.TrustManagerService: boolean DEBUG>;
+
+        if $z19 == 0 goto label24;
+
+        r147 = new java.lang.StringBuilder;
+
+        specialinvoke r147.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r147.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("refreshAgentList: trustagent ");
+
+        virtualinvoke r147.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r9);
+
+        virtualinvoke r147.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("of user ");
+
+        $i18 = r5.<android.content.pm.UserInfo: int id>;
+
+        virtualinvoke r147.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i18);
+
+        virtualinvoke r147.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("can unlock user profile.");
+
+        $r58 = virtualinvoke r147.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("TrustManagerService", $r58);
+
+     label24:
+        $r130 = r0.<com.android.server.trust.TrustManagerService: android.os.UserManager mUserManager>;
+
+        $i38 = r5.<android.content.pm.UserInfo: int id>;
+
+        $z33 = virtualinvoke $r130.<android.os.UserManager: boolean isUserUnlockingOrUnlocked(int)>($i38);
+
+        if $z33 != 0 goto label26;
+
+        if z32 != 0 goto label26;
+
+        $z18 = <com.android.server.trust.TrustManagerService: boolean DEBUG>;
+
+        if $z18 == 0 goto label25;
+
+        r148 = new java.lang.StringBuilder;
+
+        specialinvoke r148.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r148.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("refreshAgentList: skipping user ");
+
+        $i16 = r5.<android.content.pm.UserInfo: int id>;
+
+        virtualinvoke r148.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i16);
+
+        virtualinvoke r148.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("\'s trust agent ");
+
+        virtualinvoke r148.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r9);
+
+        virtualinvoke r148.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(": FBE still locked and  the agent cannot unlock user profile.");
+
+        $r51 = virtualinvoke r148.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("TrustManagerService", $r51);
+
+     label25:
+        goto label14;
+
+     label26:
+        $r28 = r0.<com.android.server.trust.TrustManagerService: com.android.server.trust.TrustManagerService$StrongAuthTracker mStrongAuthTracker>;
+
+        $i10 = r5.<android.content.pm.UserInfo: int id>;
+
+        $z13 = virtualinvoke $r28.<com.android.server.trust.TrustManagerService$StrongAuthTracker: boolean canAgentsRunForUser(int)>($i10);
+
+        if $z13 != 0 goto label31;
+
+        $r36 = r0.<com.android.server.trust.TrustManagerService: com.android.server.trust.TrustManagerService$StrongAuthTracker mStrongAuthTracker>;
+
+        $i11 = r5.<android.content.pm.UserInfo: int id>;
+
+        i39 = virtualinvoke $r36.<com.android.server.trust.TrustManagerService$StrongAuthTracker: int getStrongAuthForUser(int)>($i11);
+
+        if i39 == 8 goto label30;
+
+        if i39 != 1 goto label28;
+
+        if z32 != 0 goto label27;
+
+        goto label28;
+
+     label27:
+        goto label31;
+
+     label28:
+        $z17 = <com.android.server.trust.TrustManagerService: boolean DEBUG>;
+
+        if $z17 == 0 goto label29;
+
+        r149 = new java.lang.StringBuilder;
+
+        specialinvoke r149.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r149.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("refreshAgentList: skipping user ");
+
+        $i12 = r5.<android.content.pm.UserInfo: int id>;
+
+        virtualinvoke r149.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i12);
+
+        virtualinvoke r149.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(": prevented by StrongAuthTracker = 0x");
+
+        $r41 = r0.<com.android.server.trust.TrustManagerService: com.android.server.trust.TrustManagerService$StrongAuthTracker mStrongAuthTracker>;
+
+        $i13 = r5.<android.content.pm.UserInfo: int id>;
+
+        $i14 = virtualinvoke $r41.<com.android.server.trust.TrustManagerService$StrongAuthTracker: int getStrongAuthForUser(int)>($i13);
+
+        $r42 = staticinvoke <java.lang.Integer: java.lang.String toHexString(int)>($i14);
+
+        virtualinvoke r149.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r42);
+
+        $r44 = virtualinvoke r149.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("TrustManagerService", $r44);
+
+        goto label14;
+
+     label29:
+        goto label14;
+
+     label30:
+        goto label31;
+
+     label31:
+        $r133 = r128.<com.android.server.trust.TrustManagerService$AgentInfo: com.android.server.trust.TrustAgentWrapper agent>;
+
+        if $r133 != null goto label32;
+
+        r151 = new com.android.server.trust.TrustAgentWrapper;
+
+        $r33 = r0.<com.android.server.trust.TrustManagerService: android.content.Context mContext>;
+
+        r150 = new android.content.Intent;
+
+        specialinvoke r150.<android.content.Intent: void <init>()>();
+
+        $r34 = virtualinvoke r150.<android.content.Intent: android.content.Intent setComponent(android.content.ComponentName)>(r9);
+
+        $r35 = virtualinvoke r5.<android.content.pm.UserInfo: android.os.UserHandle getUserHandle()>();
+
+        specialinvoke r151.<com.android.server.trust.TrustAgentWrapper: void <init>(android.content.Context,com.android.server.trust.TrustManagerService,android.content.Intent,android.os.UserHandle)>($r33, r0, $r34, $r35);
+
+        r128.<com.android.server.trust.TrustManagerService$AgentInfo: com.android.server.trust.TrustAgentWrapper agent> = r151;
+
+     label32:
+        $r29 = r0.<com.android.server.trust.TrustManagerService: android.util.ArraySet mActiveAgents>;
+
+        $z14 = virtualinvoke $r29.<android.util.ArraySet: boolean contains(java.lang.Object)>(r128);
+
+        if $z14 != 0 goto label33;
+
+        $r30 = r0.<com.android.server.trust.TrustManagerService: android.util.ArraySet mActiveAgents>;
+
+        virtualinvoke $r30.<android.util.ArraySet: boolean add(java.lang.Object)>(r128);
+
+        goto label34;
+
+     label33:
+        virtualinvoke r139.<android.util.ArraySet: boolean remove(java.lang.Object)>(r128);
+
+     label34:
+        goto label14;
+
+     label35:
+        r116 = r122;
+
+        goto label06;
+
+     label36:
+        goto label06;
+
+     label37:
+        z34 = 0;
+
+        i40 = 0;
+
+     label38:
+        $i0 = virtualinvoke r139.<android.util.ArraySet: int size()>();
+
+        if i40 >= $i0 goto label42;
+
+        $r15 = virtualinvoke r139.<android.util.ArraySet: java.lang.Object valueAt(int)>(i40);
+
+        r134 = (com.android.server.trust.TrustManagerService$AgentInfo) $r15;
+
+        if i36 == -1 goto label39;
+
+        z35 = z34;
+
+        $i1 = r134.<com.android.server.trust.TrustManagerService$AgentInfo: int userId>;
+
+        if i36 != $i1 goto label41;
+
+     label39:
+        $r16 = r134.<com.android.server.trust.TrustManagerService$AgentInfo: com.android.server.trust.TrustAgentWrapper agent>;
+
+        $z3 = virtualinvoke $r16.<com.android.server.trust.TrustAgentWrapper: boolean isManagingTrust()>();
+
+        if $z3 == 0 goto label40;
+
+        z34 = 1;
+
+     label40:
+        $r17 = r134.<com.android.server.trust.TrustManagerService$AgentInfo: com.android.server.trust.TrustAgentWrapper agent>;
+
+        virtualinvoke $r17.<com.android.server.trust.TrustAgentWrapper: void destroy()>();
+
+        $r18 = r0.<com.android.server.trust.TrustManagerService: android.util.ArraySet mActiveAgents>;
+
+        virtualinvoke $r18.<android.util.ArraySet: boolean remove(java.lang.Object)>(r134);
+
+        z35 = z34;
+
+     label41:
+        i40 = i40 + 1;
+
+        z34 = z35;
+
+        goto label38;
+
+     label42:
+        if z34 == 0 goto label44;
+
+        if i36 != -1 goto label43;
+
+        specialinvoke r0.<com.android.server.trust.TrustManagerService: void updateTrustAll()>();
+
+        goto label44;
+
+     label43:
+        virtualinvoke r0.<com.android.server.trust.TrustManagerService: void updateTrust(int,int)>(i36, 0);
+
+     label44:
+        return;
+    }
+
+    public boolean removeEscrowToken(long, int)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        long l0;
+        int i1;
+        com.android.internal.widget.LockPatternUtils $r1;
+        boolean $z0;
+
+        r0 := @this: com.android.server.trust.TrustManagerService;
+
+        l0 := @parameter0: long;
+
+        i1 := @parameter1: int;
+
+        $r1 = r0.<com.android.server.trust.TrustManagerService: com.android.internal.widget.LockPatternUtils mLockPatternUtils>;
+
+        $z0 = virtualinvoke $r1.<com.android.internal.widget.LockPatternUtils: boolean removeEscrowToken(long,int)>(l0, i1);
+
+        return $z0;
+    }
+
+    public void resetAgent(android.content.ComponentName, int)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        android.content.ComponentName r1, $r7, $r10;
+        int i0, $i1, $i2, i4;
+        com.android.server.trust.TrustManagerService$AgentInfo r2;
+        android.util.ArraySet $r4, $r5, $r16;
+        java.lang.Object $r6;
+        boolean $z0, $z1, z2, z3;
+        java.lang.StringBuilder $r8;
+        java.lang.String $r11, $r13;
+        com.android.server.trust.TrustAgentWrapper $r14, $r15;
+
+        r0 := @this: com.android.server.trust.TrustManagerService;
+
+        r1 := @parameter0: android.content.ComponentName;
+
+        i0 := @parameter1: int;
+
+        z2 = 0;
+
+        $r4 = r0.<com.android.server.trust.TrustManagerService: android.util.ArraySet mActiveAgents>;
+
+        $i1 = virtualinvoke $r4.<android.util.ArraySet: int size()>();
+
+        i4 = $i1 - 1;
+
+     label1:
+        if i4 < 0 goto label4;
+
+        $r5 = r0.<com.android.server.trust.TrustManagerService: android.util.ArraySet mActiveAgents>;
+
+        $r6 = virtualinvoke $r5.<android.util.ArraySet: java.lang.Object valueAt(int)>(i4);
+
+        r2 = (com.android.server.trust.TrustManagerService$AgentInfo) $r6;
+
+        z3 = z2;
+
+        $r7 = r2.<com.android.server.trust.TrustManagerService$AgentInfo: android.content.ComponentName component>;
+
+        $z0 = virtualinvoke r1.<android.content.ComponentName: boolean equals(java.lang.Object)>($r7);
+
+        if $z0 == 0 goto label3;
+
+        z3 = z2;
+
+        $i2 = r2.<com.android.server.trust.TrustManagerService$AgentInfo: int userId>;
+
+        if i0 != $i2 goto label3;
+
+        $r8 = new java.lang.StringBuilder;
+
+        specialinvoke $r8.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Resetting agent ");
+
+        $r10 = r2.<com.android.server.trust.TrustManagerService$AgentInfo: android.content.ComponentName component>;
+
+        $r11 = virtualinvoke $r10.<android.content.ComponentName: java.lang.String flattenToShortString()>();
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r11);
+
+        $r13 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int i(java.lang.String,java.lang.String)>("TrustManagerService", $r13);
+
+        $r14 = r2.<com.android.server.trust.TrustManagerService$AgentInfo: com.android.server.trust.TrustAgentWrapper agent>;
+
+        $z1 = virtualinvoke $r14.<com.android.server.trust.TrustAgentWrapper: boolean isManagingTrust()>();
+
+        if $z1 == 0 goto label2;
+
+        z2 = 1;
+
+     label2:
+        $r15 = r2.<com.android.server.trust.TrustManagerService$AgentInfo: com.android.server.trust.TrustAgentWrapper agent>;
+
+        virtualinvoke $r15.<com.android.server.trust.TrustAgentWrapper: void destroy()>();
+
+        $r16 = r0.<com.android.server.trust.TrustManagerService: android.util.ArraySet mActiveAgents>;
+
+        virtualinvoke $r16.<android.util.ArraySet: java.lang.Object removeAt(int)>(i4);
+
+        z3 = z2;
+
+     label3:
+        i4 = i4 + -1;
+
+        z2 = z3;
+
+        goto label1;
+
+     label4:
+        if z2 == 0 goto label5;
+
+        virtualinvoke r0.<com.android.server.trust.TrustManagerService: void updateTrust(int,int)>(i0, 0);
+
+     label5:
+        virtualinvoke r0.<com.android.server.trust.TrustManagerService: void refreshAgentList(int)>(i0);
+
+        return;
+    }
+
+    void showKeyguardErrorMessage(java.lang.CharSequence)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        java.lang.CharSequence r1;
+
+        r0 := @this: com.android.server.trust.TrustManagerService;
+
+        r1 := @parameter0: java.lang.CharSequence;
+
+        specialinvoke r0.<com.android.server.trust.TrustManagerService: void dispatchOnTrustError(java.lang.CharSequence)>(r1);
+
+        return;
+    }
+
+    public void unlockUserWithToken(long, byte[], int)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        long l0;
+        byte[] r1;
+        int i1;
+        com.android.internal.widget.LockPatternUtils $r2;
+
+        r0 := @this: com.android.server.trust.TrustManagerService;
+
+        l0 := @parameter0: long;
+
+        r1 := @parameter1: byte[];
+
+        i1 := @parameter2: int;
+
+        $r2 = r0.<com.android.server.trust.TrustManagerService: com.android.internal.widget.LockPatternUtils mLockPatternUtils>;
+
+        virtualinvoke $r2.<com.android.internal.widget.LockPatternUtils: boolean unlockUserWithToken(long,byte[],int)>(l0, r1, i1);
+
+        return;
+    }
+
+    void updateDevicePolicyFeatures()
+    {
+        com.android.server.trust.TrustManagerService r0;
+        com.android.server.trust.TrustManagerService$AgentInfo r1;
+        android.util.ArraySet $r2, $r4;
+        int $i0, i1;
+        com.android.server.trust.TrustArchive $r3;
+        java.lang.Object $r5;
+        com.android.server.trust.TrustAgentWrapper $r6, $r7;
+        boolean $z0, z2;
+
+        r0 := @this: com.android.server.trust.TrustManagerService;
+
+        z2 = 0;
+
+        i1 = 0;
+
+     label1:
+        $r2 = r0.<com.android.server.trust.TrustManagerService: android.util.ArraySet mActiveAgents>;
+
+        $i0 = virtualinvoke $r2.<android.util.ArraySet: int size()>();
+
+        if i1 >= $i0 goto label3;
+
+        $r4 = r0.<com.android.server.trust.TrustManagerService: android.util.ArraySet mActiveAgents>;
+
+        $r5 = virtualinvoke $r4.<android.util.ArraySet: java.lang.Object valueAt(int)>(i1);
+
+        r1 = (com.android.server.trust.TrustManagerService$AgentInfo) $r5;
+
+        $r6 = r1.<com.android.server.trust.TrustManagerService$AgentInfo: com.android.server.trust.TrustAgentWrapper agent>;
+
+        $z0 = virtualinvoke $r6.<com.android.server.trust.TrustAgentWrapper: boolean isConnected()>();
+
+        if $z0 == 0 goto label2;
+
+        $r7 = r1.<com.android.server.trust.TrustManagerService$AgentInfo: com.android.server.trust.TrustAgentWrapper agent>;
+
+        virtualinvoke $r7.<com.android.server.trust.TrustAgentWrapper: boolean updateDevicePolicyFeatures()>();
+
+        z2 = 1;
+
+     label2:
+        i1 = i1 + 1;
+
+        goto label1;
+
+     label3:
+        if z2 == 0 goto label4;
+
+        $r3 = r0.<com.android.server.trust.TrustManagerService: com.android.server.trust.TrustArchive mArchive>;
+
+        virtualinvoke $r3.<com.android.server.trust.TrustArchive: void logDevicePolicyChanged()>();
+
+     label4:
+        return;
+    }
+
+    public void updateTrust(int, int)
+    {
+        com.android.server.trust.TrustManagerService r0;
+        int i0, i1;
+
+        r0 := @this: com.android.server.trust.TrustManagerService;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        specialinvoke r0.<com.android.server.trust.TrustManagerService: void updateTrust(int,int,boolean)>(i0, i1, 0);
+
+        return;
+    }
+}

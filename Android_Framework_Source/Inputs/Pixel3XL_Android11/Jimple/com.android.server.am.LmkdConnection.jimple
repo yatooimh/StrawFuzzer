@@ -1,0 +1,822 @@
+public class com.android.server.am.LmkdConnection extends java.lang.Object
+{
+    private static final int LMKD_REPLY_MAX_SIZE;
+    private static final java.lang.String TAG;
+    private final java.nio.ByteBuffer mInputBuf;
+    private final com.android.server.am.LmkdConnection$LmkdConnectionListener mListener;
+    private java.io.InputStream mLmkdInputStream;
+    private java.io.OutputStream mLmkdOutputStream;
+    private android.net.LocalSocket mLmkdSocket;
+    private final java.lang.Object mLmkdSocketLock;
+    private final android.os.MessageQueue mMsgQueue;
+    private java.nio.ByteBuffer mReplyBuf;
+    private final java.lang.Object mReplyBufLock;
+
+    void <init>(android.os.MessageQueue, com.android.server.am.LmkdConnection$LmkdConnectionListener)
+    {
+        com.android.server.am.LmkdConnection r0;
+        android.os.MessageQueue r1;
+        com.android.server.am.LmkdConnection$LmkdConnectionListener r2;
+        java.lang.Object $r3, $r5;
+        java.nio.ByteBuffer $r4;
+
+        r0 := @this: com.android.server.am.LmkdConnection;
+
+        r1 := @parameter0: android.os.MessageQueue;
+
+        r2 := @parameter1: com.android.server.am.LmkdConnection$LmkdConnectionListener;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        $r3 = new java.lang.Object;
+
+        specialinvoke $r3.<java.lang.Object: void <init>()>();
+
+        r0.<com.android.server.am.LmkdConnection: java.lang.Object mLmkdSocketLock> = $r3;
+
+        r0.<com.android.server.am.LmkdConnection: android.net.LocalSocket mLmkdSocket> = null;
+
+        r0.<com.android.server.am.LmkdConnection: java.io.OutputStream mLmkdOutputStream> = null;
+
+        r0.<com.android.server.am.LmkdConnection: java.io.InputStream mLmkdInputStream> = null;
+
+        $r4 = staticinvoke <java.nio.ByteBuffer: java.nio.ByteBuffer allocate(int)>(12);
+
+        r0.<com.android.server.am.LmkdConnection: java.nio.ByteBuffer mInputBuf> = $r4;
+
+        $r5 = new java.lang.Object;
+
+        specialinvoke $r5.<java.lang.Object: void <init>()>();
+
+        r0.<com.android.server.am.LmkdConnection: java.lang.Object mReplyBufLock> = $r5;
+
+        r0.<com.android.server.am.LmkdConnection: java.nio.ByteBuffer mReplyBuf> = null;
+
+        r0.<com.android.server.am.LmkdConnection: android.os.MessageQueue mMsgQueue> = r1;
+
+        r0.<com.android.server.am.LmkdConnection: com.android.server.am.LmkdConnection$LmkdConnectionListener mListener> = r2;
+
+        return;
+    }
+
+    static int access$000(com.android.server.am.LmkdConnection, java.io.FileDescriptor, int)
+    {
+        com.android.server.am.LmkdConnection r0;
+        java.io.FileDescriptor r1;
+        int i0, $i1;
+
+        r0 := @parameter0: com.android.server.am.LmkdConnection;
+
+        r1 := @parameter1: java.io.FileDescriptor;
+
+        i0 := @parameter2: int;
+
+        $i1 = specialinvoke r0.<com.android.server.am.LmkdConnection: int fileDescriptorEventHandler(java.io.FileDescriptor,int)>(r1, i0);
+
+        return $i1;
+    }
+
+    private int fileDescriptorEventHandler(java.io.FileDescriptor, int)
+    {
+        com.android.server.am.LmkdConnection r0;
+        int i0, $i1, $i2;
+        com.android.server.am.LmkdConnection$LmkdConnectionListener $r1, $r7;
+        android.net.LocalSocket $r2, $r5;
+        android.os.MessageQueue $r3;
+        java.io.FileDescriptor $r4, r11;
+        java.nio.ByteBuffer $r6;
+        java.lang.Object $r8, r12, r13;
+        java.lang.Throwable $r9, $r10;
+
+        r0 := @this: com.android.server.am.LmkdConnection;
+
+        r11 := @parameter0: java.io.FileDescriptor;
+
+        i0 := @parameter1: int;
+
+        $r1 = r0.<com.android.server.am.LmkdConnection: com.android.server.am.LmkdConnection$LmkdConnectionListener mListener>;
+
+        if $r1 != null goto label01;
+
+        return 0;
+
+     label01:
+        $i1 = i0 & 1;
+
+        if $i1 == 0 goto label02;
+
+        specialinvoke r0.<com.android.server.am.LmkdConnection: void processIncomingData()>();
+
+     label02:
+        $i2 = i0 & 4;
+
+        if $i2 == 0 goto label14;
+
+        r12 = r0.<com.android.server.am.LmkdConnection: java.lang.Object mLmkdSocketLock>;
+
+        entermonitor r12;
+
+     label03:
+        $r3 = r0.<com.android.server.am.LmkdConnection: android.os.MessageQueue mMsgQueue>;
+
+        $r2 = r0.<com.android.server.am.LmkdConnection: android.net.LocalSocket mLmkdSocket>;
+
+        $r4 = virtualinvoke $r2.<android.net.LocalSocket: java.io.FileDescriptor getFileDescriptor()>();
+
+        virtualinvoke $r3.<android.os.MessageQueue: void removeOnFileDescriptorEventListener(java.io.FileDescriptor)>($r4);
+
+        $r5 = r0.<com.android.server.am.LmkdConnection: android.net.LocalSocket mLmkdSocket>;
+
+        staticinvoke <libcore.io.IoUtils: void closeQuietly(java.lang.AutoCloseable)>($r5);
+
+        r0.<com.android.server.am.LmkdConnection: android.net.LocalSocket mLmkdSocket> = null;
+
+        exitmonitor r12;
+
+     label04:
+        r13 = r0.<com.android.server.am.LmkdConnection: java.lang.Object mReplyBufLock>;
+
+        entermonitor r13;
+
+     label05:
+        $r6 = r0.<com.android.server.am.LmkdConnection: java.nio.ByteBuffer mReplyBuf>;
+
+        if $r6 == null goto label06;
+
+        r0.<com.android.server.am.LmkdConnection: java.nio.ByteBuffer mReplyBuf> = null;
+
+        $r8 = r0.<com.android.server.am.LmkdConnection: java.lang.Object mReplyBufLock>;
+
+        virtualinvoke $r8.<java.lang.Object: void notifyAll()>();
+
+     label06:
+        exitmonitor r13;
+
+     label07:
+        $r7 = r0.<com.android.server.am.LmkdConnection: com.android.server.am.LmkdConnection$LmkdConnectionListener mListener>;
+
+        interfaceinvoke $r7.<com.android.server.am.LmkdConnection$LmkdConnectionListener: void onDisconnect()>();
+
+        return 0;
+
+     label08:
+        $r9 := @caughtexception;
+
+     label09:
+        exitmonitor r13;
+
+     label10:
+        throw $r9;
+
+     label11:
+        $r10 := @caughtexception;
+
+     label12:
+        exitmonitor r12;
+
+     label13:
+        throw $r10;
+
+     label14:
+        return 5;
+
+        catch java.lang.Throwable from label03 to label04 with label11;
+        catch java.lang.Throwable from label05 to label06 with label08;
+        catch java.lang.Throwable from label06 to label07 with label08;
+        catch java.lang.Throwable from label09 to label10 with label08;
+        catch java.lang.Throwable from label12 to label13 with label11;
+    }
+
+    private android.net.LocalSocket openSocket()
+    {
+        com.android.server.am.LmkdConnection r0;
+        android.net.LocalSocketAddress$Namespace $r1;
+        java.lang.Throwable $r2;
+        java.lang.String $r5, $r7;
+        android.net.LocalSocket r12;
+        android.net.LocalSocketAddress r13;
+        java.lang.StringBuilder r14;
+        java.io.IOException r15;
+
+        r0 := @this: com.android.server.am.LmkdConnection;
+
+     label1:
+        r12 = new android.net.LocalSocket;
+
+        specialinvoke r12.<android.net.LocalSocket: void <init>(int)>(3);
+
+        r13 = new android.net.LocalSocketAddress;
+
+        $r1 = <android.net.LocalSocketAddress$Namespace: android.net.LocalSocketAddress$Namespace RESERVED>;
+
+        specialinvoke r13.<android.net.LocalSocketAddress: void <init>(java.lang.String,android.net.LocalSocketAddress$Namespace)>("lmkd", $r1);
+
+        virtualinvoke r12.<android.net.LocalSocket: void connect(android.net.LocalSocketAddress)>(r13);
+
+     label2:
+        return r12;
+
+     label3:
+        $r2 := @caughtexception;
+
+        r14 = new java.lang.StringBuilder;
+
+        specialinvoke r14.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r14.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Connection failed: ");
+
+        r15 = (java.io.IOException) $r2;
+
+        $r5 = virtualinvoke r15.<java.io.IOException: java.lang.String toString()>();
+
+        virtualinvoke r14.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r5);
+
+        $r7 = virtualinvoke r14.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("ActivityManager", $r7);
+
+        return null;
+
+        catch java.io.IOException from label1 to label2 with label3;
+    }
+
+    private void processIncomingData()
+    {
+        com.android.server.am.LmkdConnection r0;
+        int i0;
+        java.lang.Object r1, $r12, $r19;
+        java.nio.ByteBuffer $r3, $r4, $r5, $r7, $r8, $r10, $r13, $r14, $r17;
+        com.android.server.am.LmkdConnection$LmkdConnectionListener $r6, $r9, $r11;
+        boolean $z0, $z1, $z2;
+        byte[] $r15;
+        java.lang.Throwable $r20;
+
+        r0 := @this: com.android.server.am.LmkdConnection;
+
+        $r3 = r0.<com.android.server.am.LmkdConnection: java.nio.ByteBuffer mInputBuf>;
+
+        i0 = specialinvoke r0.<com.android.server.am.LmkdConnection: int read(java.nio.ByteBuffer)>($r3);
+
+        if i0 <= 0 goto label11;
+
+        r1 = r0.<com.android.server.am.LmkdConnection: java.lang.Object mReplyBufLock>;
+
+        entermonitor r1;
+
+     label01:
+        $r4 = r0.<com.android.server.am.LmkdConnection: java.nio.ByteBuffer mReplyBuf>;
+
+        if $r4 == null goto label05;
+
+        $r9 = r0.<com.android.server.am.LmkdConnection: com.android.server.am.LmkdConnection$LmkdConnectionListener mListener>;
+
+        $r8 = r0.<com.android.server.am.LmkdConnection: java.nio.ByteBuffer mReplyBuf>;
+
+        $r7 = r0.<com.android.server.am.LmkdConnection: java.nio.ByteBuffer mInputBuf>;
+
+        $z1 = interfaceinvoke $r9.<com.android.server.am.LmkdConnection$LmkdConnectionListener: boolean isReplyExpected(java.nio.ByteBuffer,java.nio.ByteBuffer,int)>($r8, $r7, i0);
+
+        if $z1 == 0 goto label03;
+
+        $r14 = r0.<com.android.server.am.LmkdConnection: java.nio.ByteBuffer mReplyBuf>;
+
+        $r13 = r0.<com.android.server.am.LmkdConnection: java.nio.ByteBuffer mInputBuf>;
+
+        $r15 = virtualinvoke $r13.<java.nio.ByteBuffer: byte[] array()>();
+
+        virtualinvoke $r14.<java.nio.ByteBuffer: java.nio.ByteBuffer put(byte[],int,int)>($r15, 0, i0);
+
+        $r17 = r0.<com.android.server.am.LmkdConnection: java.nio.ByteBuffer mReplyBuf>;
+
+        virtualinvoke $r17.<java.nio.ByteBuffer: java.nio.Buffer rewind()>();
+
+        $r19 = r0.<com.android.server.am.LmkdConnection: java.lang.Object mReplyBufLock>;
+
+        virtualinvoke $r19.<java.lang.Object: void notifyAll()>();
+
+     label02:
+        goto label06;
+
+     label03:
+        $r11 = r0.<com.android.server.am.LmkdConnection: com.android.server.am.LmkdConnection$LmkdConnectionListener mListener>;
+
+        $r10 = r0.<com.android.server.am.LmkdConnection: java.nio.ByteBuffer mInputBuf>;
+
+        $z2 = interfaceinvoke $r11.<com.android.server.am.LmkdConnection$LmkdConnectionListener: boolean handleUnsolicitedMessage(java.nio.ByteBuffer,int)>($r10, i0);
+
+        if $z2 != 0 goto label06;
+
+        r0.<com.android.server.am.LmkdConnection: java.nio.ByteBuffer mReplyBuf> = null;
+
+        $r12 = r0.<com.android.server.am.LmkdConnection: java.lang.Object mReplyBufLock>;
+
+        virtualinvoke $r12.<java.lang.Object: void notifyAll()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("ActivityManager", "Received an unexpected packet from lmkd");
+
+     label04:
+        goto label06;
+
+     label05:
+        $r6 = r0.<com.android.server.am.LmkdConnection: com.android.server.am.LmkdConnection$LmkdConnectionListener mListener>;
+
+        $r5 = r0.<com.android.server.am.LmkdConnection: java.nio.ByteBuffer mInputBuf>;
+
+        $z0 = interfaceinvoke $r6.<com.android.server.am.LmkdConnection$LmkdConnectionListener: boolean handleUnsolicitedMessage(java.nio.ByteBuffer,int)>($r5, i0);
+
+        if $z0 != 0 goto label06;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("ActivityManager", "Received an unexpected packet from lmkd");
+
+     label06:
+        exitmonitor r1;
+
+     label07:
+        goto label11;
+
+     label08:
+        $r20 := @caughtexception;
+
+     label09:
+        exitmonitor r1;
+
+     label10:
+        throw $r20;
+
+     label11:
+        return;
+
+        catch java.lang.Throwable from label01 to label02 with label08;
+        catch java.lang.Throwable from label03 to label04 with label08;
+        catch java.lang.Throwable from label05 to label06 with label08;
+        catch java.lang.Throwable from label06 to label07 with label08;
+        catch java.lang.Throwable from label09 to label10 with label08;
+    }
+
+    private int read(java.nio.ByteBuffer)
+    {
+        com.android.server.am.LmkdConnection r0;
+        java.lang.Object r1;
+        int i0, $i1;
+        java.io.InputStream $r2;
+        byte[] $r3, $r4;
+        java.lang.Throwable $r5, $r6;
+        java.nio.ByteBuffer r7;
+
+        r0 := @this: com.android.server.am.LmkdConnection;
+
+        r7 := @parameter0: java.nio.ByteBuffer;
+
+        r1 = r0.<com.android.server.am.LmkdConnection: java.lang.Object mLmkdSocketLock>;
+
+        entermonitor r1;
+
+     label1:
+        $r2 = r0.<com.android.server.am.LmkdConnection: java.io.InputStream mLmkdInputStream>;
+
+        $r3 = virtualinvoke r7.<java.nio.ByteBuffer: byte[] array()>();
+
+        $r4 = virtualinvoke r7.<java.nio.ByteBuffer: byte[] array()>();
+
+        $i1 = lengthof $r4;
+
+        i0 = virtualinvoke $r2.<java.io.InputStream: int read(byte[],int,int)>($r3, 0, $i1);
+
+     label2:
+        exitmonitor r1;
+
+     label3:
+        return i0;
+
+     label4:
+        $r6 := @caughtexception;
+
+        goto label8;
+
+     label5:
+        $r5 := @caughtexception;
+
+     label6:
+        exitmonitor r1;
+
+     label7:
+        return -1;
+
+     label8:
+        exitmonitor r1;
+
+     label9:
+        throw $r6;
+
+        catch java.io.IOException from label1 to label2 with label5;
+        catch java.lang.Throwable from label1 to label2 with label4;
+        catch java.lang.Throwable from label2 to label3 with label4;
+        catch java.lang.Throwable from label6 to label7 with label4;
+        catch java.lang.Throwable from label8 to label9 with label4;
+    }
+
+    private boolean write(java.nio.ByteBuffer)
+    {
+        com.android.server.am.LmkdConnection r0;
+        java.lang.Object r1;
+        java.io.OutputStream $r2;
+        byte[] $r3;
+        int $i0;
+        java.lang.Throwable $r4, $r5;
+        java.nio.ByteBuffer r6;
+
+        r0 := @this: com.android.server.am.LmkdConnection;
+
+        r6 := @parameter0: java.nio.ByteBuffer;
+
+        r1 = r0.<com.android.server.am.LmkdConnection: java.lang.Object mLmkdSocketLock>;
+
+        entermonitor r1;
+
+     label1:
+        $r2 = r0.<com.android.server.am.LmkdConnection: java.io.OutputStream mLmkdOutputStream>;
+
+        $r3 = virtualinvoke r6.<java.nio.ByteBuffer: byte[] array()>();
+
+        $i0 = virtualinvoke r6.<java.nio.ByteBuffer: int position()>();
+
+        virtualinvoke $r2.<java.io.OutputStream: void write(byte[],int,int)>($r3, 0, $i0);
+
+     label2:
+        exitmonitor r1;
+
+     label3:
+        return 1;
+
+     label4:
+        $r5 := @caughtexception;
+
+        goto label8;
+
+     label5:
+        $r4 := @caughtexception;
+
+     label6:
+        exitmonitor r1;
+
+     label7:
+        return 0;
+
+     label8:
+        exitmonitor r1;
+
+     label9:
+        throw $r5;
+
+        catch java.io.IOException from label1 to label2 with label5;
+        catch java.lang.Throwable from label1 to label2 with label4;
+        catch java.lang.Throwable from label2 to label3 with label4;
+        catch java.lang.Throwable from label6 to label7 with label4;
+        catch java.lang.Throwable from label8 to label9 with label4;
+    }
+
+    public boolean connect()
+    {
+        com.android.server.am.LmkdConnection r0;
+        java.lang.Object r1, $r4;
+        android.net.LocalSocket $r2, r8;
+        com.android.server.am.LmkdConnection$LmkdConnectionListener $r3, $r5;
+        boolean $z0;
+        java.lang.Throwable $r6, $r7;
+        java.io.OutputStream r9;
+        java.io.InputStream r10;
+        android.os.MessageQueue r11;
+        java.io.FileDescriptor r12;
+        com.android.server.am.LmkdConnection$1 r13;
+
+        r0 := @this: com.android.server.am.LmkdConnection;
+
+        r1 = r0.<com.android.server.am.LmkdConnection: java.lang.Object mLmkdSocketLock>;
+
+        entermonitor r1;
+
+     label01:
+        $r2 = r0.<com.android.server.am.LmkdConnection: android.net.LocalSocket mLmkdSocket>;
+
+        if $r2 == null goto label03;
+
+        exitmonitor r1;
+
+     label02:
+        return 1;
+
+     label03:
+        r8 = specialinvoke r0.<com.android.server.am.LmkdConnection: android.net.LocalSocket openSocket()>();
+
+     label04:
+        if r8 != null goto label07;
+
+     label05:
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("ActivityManager", "Failed to connect to lowmemorykiller, retry later");
+
+        exitmonitor r1;
+
+     label06:
+        return 0;
+
+     label07:
+        r9 = virtualinvoke r8.<android.net.LocalSocket: java.io.OutputStream getOutputStream()>();
+
+        r10 = virtualinvoke r8.<android.net.LocalSocket: java.io.InputStream getInputStream()>();
+
+     label08:
+        $r3 = r0.<com.android.server.am.LmkdConnection: com.android.server.am.LmkdConnection$LmkdConnectionListener mListener>;
+
+        if $r3 == null goto label10;
+
+        $r5 = r0.<com.android.server.am.LmkdConnection: com.android.server.am.LmkdConnection$LmkdConnectionListener mListener>;
+
+        $z0 = interfaceinvoke $r5.<com.android.server.am.LmkdConnection$LmkdConnectionListener: boolean onConnect(java.io.OutputStream)>(r9);
+
+        if $z0 != 0 goto label10;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("ActivityManager", "Failed to communicate with lowmemorykiller, retry later");
+
+        staticinvoke <libcore.io.IoUtils: void closeQuietly(java.lang.AutoCloseable)>(r8);
+
+        exitmonitor r1;
+
+     label09:
+        return 0;
+
+     label10:
+        r0.<com.android.server.am.LmkdConnection: android.net.LocalSocket mLmkdSocket> = r8;
+
+        r0.<com.android.server.am.LmkdConnection: java.io.OutputStream mLmkdOutputStream> = r9;
+
+        r0.<com.android.server.am.LmkdConnection: java.io.InputStream mLmkdInputStream> = r10;
+
+        r11 = r0.<com.android.server.am.LmkdConnection: android.os.MessageQueue mMsgQueue>;
+
+        r12 = virtualinvoke r8.<android.net.LocalSocket: java.io.FileDescriptor getFileDescriptor()>();
+
+        r13 = new com.android.server.am.LmkdConnection$1;
+
+        specialinvoke r13.<com.android.server.am.LmkdConnection$1: void <init>(com.android.server.am.LmkdConnection)>(r0);
+
+        virtualinvoke r11.<android.os.MessageQueue: void addOnFileDescriptorEventListener(java.io.FileDescriptor,int,android.os.MessageQueue$OnFileDescriptorEventListener)>(r12, 5, r13);
+
+        $r4 = r0.<com.android.server.am.LmkdConnection: java.lang.Object mLmkdSocketLock>;
+
+        virtualinvoke $r4.<java.lang.Object: void notifyAll()>();
+
+        exitmonitor r1;
+
+     label11:
+        return 1;
+
+     label12:
+        $r6 := @caughtexception;
+
+     label13:
+        staticinvoke <libcore.io.IoUtils: void closeQuietly(java.lang.AutoCloseable)>(r8);
+
+        exitmonitor r1;
+
+     label14:
+        return 0;
+
+     label15:
+        $r7 := @caughtexception;
+
+     label16:
+        exitmonitor r1;
+
+     label17:
+        throw $r7;
+
+        catch java.lang.Throwable from label01 to label02 with label15;
+        catch java.lang.Throwable from label03 to label04 with label15;
+        catch java.lang.Throwable from label05 to label06 with label15;
+        catch java.io.IOException from label07 to label08 with label12;
+        catch java.lang.Throwable from label07 to label08 with label15;
+        catch java.lang.Throwable from label08 to label09 with label15;
+        catch java.lang.Throwable from label10 to label11 with label15;
+        catch java.lang.Throwable from label13 to label14 with label15;
+        catch java.lang.Throwable from label16 to label17 with label15;
+    }
+
+    public boolean exchange(java.nio.ByteBuffer, java.nio.ByteBuffer)
+    {
+        com.android.server.am.LmkdConnection r0;
+        java.nio.ByteBuffer r1, r6, r7;
+        java.lang.Object r2, $r3;
+        boolean z0, $z1, z2;
+        java.lang.Throwable $r4, $r5;
+
+        r0 := @this: com.android.server.am.LmkdConnection;
+
+        r6 := @parameter0: java.nio.ByteBuffer;
+
+        r1 := @parameter1: java.nio.ByteBuffer;
+
+        if r1 != null goto label01;
+
+        $z1 = specialinvoke r0.<com.android.server.am.LmkdConnection: boolean write(java.nio.ByteBuffer)>(r6);
+
+        return $z1;
+
+     label01:
+        z2 = 0;
+
+        r2 = r0.<com.android.server.am.LmkdConnection: java.lang.Object mReplyBufLock>;
+
+        entermonitor r2;
+
+     label02:
+        r0.<com.android.server.am.LmkdConnection: java.nio.ByteBuffer mReplyBuf> = r1;
+
+        z0 = specialinvoke r0.<com.android.server.am.LmkdConnection: boolean write(java.nio.ByteBuffer)>(r6);
+
+     label03:
+        if z0 == 0 goto label09;
+
+     label04:
+        $r3 = r0.<com.android.server.am.LmkdConnection: java.lang.Object mReplyBufLock>;
+
+        virtualinvoke $r3.<java.lang.Object: void wait()>();
+
+        r7 = r0.<com.android.server.am.LmkdConnection: java.nio.ByteBuffer mReplyBuf>;
+
+     label05:
+        if r7 == null goto label06;
+
+        z2 = 1;
+
+        goto label07;
+
+     label06:
+        z2 = 0;
+
+     label07:
+        goto label09;
+
+     label08:
+        $r5 := @caughtexception;
+
+        z2 = 0;
+
+     label09:
+        r0.<com.android.server.am.LmkdConnection: java.nio.ByteBuffer mReplyBuf> = null;
+
+        exitmonitor r2;
+
+     label10:
+        return z2;
+
+     label11:
+        $r4 := @caughtexception;
+
+     label12:
+        exitmonitor r2;
+
+     label13:
+        throw $r4;
+
+        catch java.lang.Throwable from label02 to label03 with label11;
+        catch java.lang.InterruptedException from label04 to label05 with label08;
+        catch java.lang.Throwable from label04 to label05 with label11;
+        catch java.lang.Throwable from label09 to label10 with label11;
+        catch java.lang.Throwable from label12 to label13 with label11;
+    }
+
+    public boolean isConnected()
+    {
+        com.android.server.am.LmkdConnection r0;
+        java.lang.Object r1;
+        android.net.LocalSocket $r3;
+        java.lang.Throwable $r4;
+        boolean z0;
+
+        r0 := @this: com.android.server.am.LmkdConnection;
+
+        r1 = r0.<com.android.server.am.LmkdConnection: java.lang.Object mLmkdSocketLock>;
+
+        entermonitor r1;
+
+     label1:
+        $r3 = r0.<com.android.server.am.LmkdConnection: android.net.LocalSocket mLmkdSocket>;
+
+        if $r3 == null goto label3;
+
+     label2:
+        z0 = 1;
+
+        goto label4;
+
+     label3:
+        z0 = 0;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        return z0;
+
+     label6:
+        $r4 := @caughtexception;
+
+     label7:
+        exitmonitor r1;
+
+     label8:
+        throw $r4;
+
+        catch java.lang.Throwable from label1 to label2 with label6;
+        catch java.lang.Throwable from label4 to label5 with label6;
+        catch java.lang.Throwable from label7 to label8 with label6;
+    }
+
+    public boolean waitForConnection(long)
+    {
+        com.android.server.am.LmkdConnection r0;
+        long l0;
+        java.lang.Object r1, $r2;
+        java.lang.Throwable $r3, $r4;
+        android.net.LocalSocket r5, r6;
+        boolean z0;
+
+        r0 := @this: com.android.server.am.LmkdConnection;
+
+        l0 := @parameter0: long;
+
+        r1 = r0.<com.android.server.am.LmkdConnection: java.lang.Object mLmkdSocketLock>;
+
+        entermonitor r1;
+
+     label01:
+        r5 = r0.<com.android.server.am.LmkdConnection: android.net.LocalSocket mLmkdSocket>;
+
+     label02:
+        z0 = 1;
+
+        if r5 == null goto label05;
+
+     label03:
+        exitmonitor r1;
+
+     label04:
+        return 1;
+
+     label05:
+        $r2 = r0.<com.android.server.am.LmkdConnection: java.lang.Object mLmkdSocketLock>;
+
+        virtualinvoke $r2.<java.lang.Object: void wait(long)>(l0);
+
+        r6 = r0.<com.android.server.am.LmkdConnection: android.net.LocalSocket mLmkdSocket>;
+
+     label06:
+        if r6 == null goto label07;
+
+        goto label08;
+
+     label07:
+        z0 = 0;
+
+     label08:
+        exitmonitor r1;
+
+     label09:
+        return z0;
+
+     label10:
+        $r4 := @caughtexception;
+
+     label11:
+        exitmonitor r1;
+
+     label12:
+        return 0;
+
+     label13:
+        $r3 := @caughtexception;
+
+     label14:
+        exitmonitor r1;
+
+     label15:
+        throw $r3;
+
+        catch java.lang.Throwable from label01 to label02 with label13;
+        catch java.lang.Throwable from label03 to label04 with label13;
+        catch java.lang.InterruptedException from label05 to label06 with label10;
+        catch java.lang.Throwable from label05 to label06 with label13;
+        catch java.lang.Throwable from label08 to label09 with label13;
+        catch java.lang.Throwable from label11 to label12 with label13;
+        catch java.lang.Throwable from label14 to label15 with label13;
+    }
+
+    public static void <clinit>()
+    {
+        <com.android.server.am.LmkdConnection: java.lang.String TAG> = "ActivityManager";
+
+        <com.android.server.am.LmkdConnection: int LMKD_REPLY_MAX_SIZE> = 12;
+
+        return;
+    }
+}

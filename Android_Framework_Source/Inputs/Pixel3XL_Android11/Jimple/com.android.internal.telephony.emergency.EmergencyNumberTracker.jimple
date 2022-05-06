@@ -1,0 +1,4238 @@
+public class com.android.internal.telephony.emergency.EmergencyNumberTracker extends android.os.Handler
+{
+    public static final int ADD_EMERGENCY_NUMBER_TEST_MODE;
+    public static boolean DBG;
+    private static final java.lang.String EMERGENCY_NUMBER_DB_ASSETS_FILE;
+    private static final java.lang.String EMERGENCY_NUMBER_DB_OTA_FILE_NAME;
+    private static final java.lang.String EMERGENCY_NUMBER_DB_OTA_FILE_PATH;
+    private static final int EVENT_OVERRIDE_OTA_EMERGENCY_NUMBER_DB_FILE_PATH;
+    private static final int EVENT_UNSOL_EMERGENCY_NUMBER_LIST;
+    private static final int EVENT_UPDATE_DB_COUNTRY_ISO_CHANGED;
+    private static final int EVENT_UPDATE_EMERGENCY_NUMBER_PREFIX;
+    private static final int EVENT_UPDATE_EMERGENCY_NUMBER_TEST_MODE;
+    private static final int EVENT_UPDATE_OTA_EMERGENCY_NUMBER_DB;
+    private static final int INVALID_DATABASE_VERSION;
+    public static final int REMOVE_EMERGENCY_NUMBER_TEST_MODE;
+    public static final int RESET_EMERGENCY_NUMBER_TEST_MODE;
+    private static final java.lang.String TAG;
+    private final com.android.internal.telephony.CommandsInterface mCi;
+    private java.lang.String mCountryIso;
+    private int mCurrentDatabaseVersion;
+    private java.io.FileInputStream mEmergencyNumberDbOtaFileInputStream;
+    private java.util.List mEmergencyNumberList;
+    private final com.android.internal.telephony.LocalLog mEmergencyNumberListDatabaseLocalLog;
+    private java.util.List mEmergencyNumberListFromDatabase;
+    private java.util.List mEmergencyNumberListFromRadio;
+    private java.util.List mEmergencyNumberListFromTestMode;
+    private final com.android.internal.telephony.LocalLog mEmergencyNumberListLocalLog;
+    private final com.android.internal.telephony.LocalLog mEmergencyNumberListPrefixLocalLog;
+    private final com.android.internal.telephony.LocalLog mEmergencyNumberListRadioLocalLog;
+    private final com.android.internal.telephony.LocalLog mEmergencyNumberListTestModeLocalLog;
+    private java.util.List mEmergencyNumberListWithPrefix;
+    private java.lang.String[] mEmergencyNumberPrefix;
+    private android.content.BroadcastReceiver mIntentReceiver;
+    public boolean mIsCountrySetByAnotherSub;
+    private final com.android.internal.telephony.Phone mPhone;
+
+    static void <clinit>()
+    {
+        java.lang.Class $r0;
+        java.lang.String $r1;
+
+        <com.android.internal.telephony.emergency.EmergencyNumberTracker: int RESET_EMERGENCY_NUMBER_TEST_MODE> = 3;
+
+        <com.android.internal.telephony.emergency.EmergencyNumberTracker: int REMOVE_EMERGENCY_NUMBER_TEST_MODE> = 2;
+
+        <com.android.internal.telephony.emergency.EmergencyNumberTracker: int INVALID_DATABASE_VERSION> = -1;
+
+        <com.android.internal.telephony.emergency.EmergencyNumberTracker: int EVENT_UPDATE_OTA_EMERGENCY_NUMBER_DB> = 5;
+
+        <com.android.internal.telephony.emergency.EmergencyNumberTracker: int EVENT_UPDATE_EMERGENCY_NUMBER_TEST_MODE> = 3;
+
+        <com.android.internal.telephony.emergency.EmergencyNumberTracker: int EVENT_UPDATE_EMERGENCY_NUMBER_PREFIX> = 4;
+
+        <com.android.internal.telephony.emergency.EmergencyNumberTracker: int EVENT_UPDATE_DB_COUNTRY_ISO_CHANGED> = 2;
+
+        <com.android.internal.telephony.emergency.EmergencyNumberTracker: int EVENT_UNSOL_EMERGENCY_NUMBER_LIST> = 1;
+
+        <com.android.internal.telephony.emergency.EmergencyNumberTracker: int EVENT_OVERRIDE_OTA_EMERGENCY_NUMBER_DB_FILE_PATH> = 6;
+
+        <com.android.internal.telephony.emergency.EmergencyNumberTracker: java.lang.String EMERGENCY_NUMBER_DB_OTA_FILE_PATH> = "misc/emergencynumberdb/emergency_number_db";
+
+        <com.android.internal.telephony.emergency.EmergencyNumberTracker: java.lang.String EMERGENCY_NUMBER_DB_OTA_FILE_NAME> = "emergency_number_db";
+
+        <com.android.internal.telephony.emergency.EmergencyNumberTracker: java.lang.String EMERGENCY_NUMBER_DB_ASSETS_FILE> = "eccdata";
+
+        <com.android.internal.telephony.emergency.EmergencyNumberTracker: int ADD_EMERGENCY_NUMBER_TEST_MODE> = 1;
+
+        $r0 = class "Lcom/android/internal/telephony/emergency/EmergencyNumberTracker;";
+
+        $r1 = virtualinvoke $r0.<java.lang.Class: java.lang.String getSimpleName()>();
+
+        <com.android.internal.telephony.emergency.EmergencyNumberTracker: java.lang.String TAG> = $r1;
+
+        <com.android.internal.telephony.emergency.EmergencyNumberTracker: boolean DBG> = 0;
+
+        return;
+    }
+
+    public void <init>(com.android.internal.telephony.Phone, com.android.internal.telephony.CommandsInterface)
+    {
+        com.android.internal.telephony.emergency.EmergencyNumberTracker r0;
+        java.lang.String[] $r1, $r23;
+        java.util.ArrayList $r2, $r3, $r4, $r5, $r6;
+        com.android.internal.telephony.LocalLog $r7, $r8, $r9, $r10, $r11;
+        com.android.internal.telephony.emergency.EmergencyNumberTracker$1 $r12;
+        java.io.File $r13, r32;
+        com.android.internal.telephony.CommandsInterface $r14, r30;
+        android.content.Context $r15, $r19;
+        java.lang.Object $r16;
+        android.content.IntentFilter $r17;
+        com.android.internal.telephony.Phone $r18, $r22, r29, r35;
+        android.content.BroadcastReceiver $r20;
+        int $i0;
+        java.lang.Throwable $r24;
+        java.lang.StringBuilder $r25;
+        java.lang.String $r28;
+        java.io.FileInputStream r31;
+        android.telephony.CarrierConfigManager r36;
+        android.os.PersistableBundle r37;
+
+        r0 := @this: com.android.internal.telephony.emergency.EmergencyNumberTracker;
+
+        r29 := @parameter0: com.android.internal.telephony.Phone;
+
+        r30 := @parameter1: com.android.internal.telephony.CommandsInterface;
+
+        specialinvoke r0.<android.os.Handler: void <init>()>();
+
+        r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.io.FileInputStream mEmergencyNumberDbOtaFileInputStream> = null;
+
+        r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: int mCurrentDatabaseVersion> = -1;
+
+        r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: boolean mIsCountrySetByAnotherSub> = 0;
+
+        $r1 = newarray (java.lang.String)[0];
+
+        r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.lang.String[] mEmergencyNumberPrefix> = $r1;
+
+        $r2 = new java.util.ArrayList;
+
+        specialinvoke $r2.<java.util.ArrayList: void <init>()>();
+
+        r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.util.List mEmergencyNumberListFromDatabase> = $r2;
+
+        $r3 = new java.util.ArrayList;
+
+        specialinvoke $r3.<java.util.ArrayList: void <init>()>();
+
+        r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.util.List mEmergencyNumberListFromRadio> = $r3;
+
+        $r4 = new java.util.ArrayList;
+
+        specialinvoke $r4.<java.util.ArrayList: void <init>()>();
+
+        r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.util.List mEmergencyNumberListWithPrefix> = $r4;
+
+        $r5 = new java.util.ArrayList;
+
+        specialinvoke $r5.<java.util.ArrayList: void <init>()>();
+
+        r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.util.List mEmergencyNumberListFromTestMode> = $r5;
+
+        $r6 = new java.util.ArrayList;
+
+        specialinvoke $r6.<java.util.ArrayList: void <init>()>();
+
+        r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.util.List mEmergencyNumberList> = $r6;
+
+        $r7 = new com.android.internal.telephony.LocalLog;
+
+        specialinvoke $r7.<com.android.internal.telephony.LocalLog: void <init>(int)>(20);
+
+        r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: com.android.internal.telephony.LocalLog mEmergencyNumberListDatabaseLocalLog> = $r7;
+
+        $r8 = new com.android.internal.telephony.LocalLog;
+
+        specialinvoke $r8.<com.android.internal.telephony.LocalLog: void <init>(int)>(20);
+
+        r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: com.android.internal.telephony.LocalLog mEmergencyNumberListRadioLocalLog> = $r8;
+
+        $r9 = new com.android.internal.telephony.LocalLog;
+
+        specialinvoke $r9.<com.android.internal.telephony.LocalLog: void <init>(int)>(20);
+
+        r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: com.android.internal.telephony.LocalLog mEmergencyNumberListPrefixLocalLog> = $r9;
+
+        $r10 = new com.android.internal.telephony.LocalLog;
+
+        specialinvoke $r10.<com.android.internal.telephony.LocalLog: void <init>(int)>(20);
+
+        r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: com.android.internal.telephony.LocalLog mEmergencyNumberListTestModeLocalLog> = $r10;
+
+        $r11 = new com.android.internal.telephony.LocalLog;
+
+        specialinvoke $r11.<com.android.internal.telephony.LocalLog: void <init>(int)>(20);
+
+        r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: com.android.internal.telephony.LocalLog mEmergencyNumberListLocalLog> = $r11;
+
+        $r12 = new com.android.internal.telephony.emergency.EmergencyNumberTracker$1;
+
+        specialinvoke $r12.<com.android.internal.telephony.emergency.EmergencyNumberTracker$1: void <init>(com.android.internal.telephony.emergency.EmergencyNumberTracker)>(r0);
+
+        r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: android.content.BroadcastReceiver mIntentReceiver> = $r12;
+
+        r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: com.android.internal.telephony.Phone mPhone> = r29;
+
+        r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: com.android.internal.telephony.CommandsInterface mCi> = r30;
+
+     label1:
+        r31 = new java.io.FileInputStream;
+
+        r32 = new java.io.File;
+
+        $r13 = staticinvoke <android.os.Environment: java.io.File getDataDirectory()>();
+
+        specialinvoke r32.<java.io.File: void <init>(java.io.File,java.lang.String)>($r13, "misc/emergencynumberdb/emergency_number_db");
+
+        specialinvoke r31.<java.io.FileInputStream: void <init>(java.io.File)>(r32);
+
+        r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.io.FileInputStream mEmergencyNumberDbOtaFileInputStream> = r31;
+
+     label2:
+        goto label4;
+
+     label3:
+        $r24 := @caughtexception;
+
+        $r25 = new java.lang.StringBuilder;
+
+        specialinvoke $r25.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r25.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Initialize ota emergency database file input failure: ");
+
+        virtualinvoke $r25.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r24);
+
+        $r28 = virtualinvoke $r25.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.internal.telephony.emergency.EmergencyNumberTracker: void loge(java.lang.String)>($r28);
+
+     label4:
+        r35 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: com.android.internal.telephony.Phone mPhone>;
+
+        if r35 == null goto label8;
+
+        $r15 = virtualinvoke r35.<com.android.internal.telephony.Phone: android.content.Context getContext()>();
+
+        $r16 = virtualinvoke $r15.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("carrier_config");
+
+        r36 = (android.telephony.CarrierConfigManager) $r16;
+
+        if r36 == null goto label6;
+
+        $r22 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: com.android.internal.telephony.Phone mPhone>;
+
+        $i0 = virtualinvoke $r22.<com.android.internal.telephony.Phone: int getSubId()>();
+
+        r37 = virtualinvoke r36.<android.telephony.CarrierConfigManager: android.os.PersistableBundle getConfigForSubId(int)>($i0);
+
+        if r37 == null goto label5;
+
+        $r23 = virtualinvoke r37.<android.os.PersistableBundle: java.lang.String[] getStringArray(java.lang.String)>("emergency_number_prefix_string_array");
+
+        r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.lang.String[] mEmergencyNumberPrefix> = $r23;
+
+     label5:
+        goto label7;
+
+     label6:
+        staticinvoke <com.android.internal.telephony.emergency.EmergencyNumberTracker: void loge(java.lang.String)>("CarrierConfigManager is null.");
+
+     label7:
+        $r17 = new android.content.IntentFilter;
+
+        specialinvoke $r17.<android.content.IntentFilter: void <init>(java.lang.String)>("android.telephony.action.CARRIER_CONFIG_CHANGED");
+
+        virtualinvoke $r17.<android.content.IntentFilter: void addAction(java.lang.String)>("android.telephony.action.NETWORK_COUNTRY_CHANGED");
+
+        $r18 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: com.android.internal.telephony.Phone mPhone>;
+
+        $r19 = virtualinvoke $r18.<com.android.internal.telephony.Phone: android.content.Context getContext()>();
+
+        $r20 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: android.content.BroadcastReceiver mIntentReceiver>;
+
+        virtualinvoke $r19.<android.content.Context: android.content.Intent registerReceiver(android.content.BroadcastReceiver,android.content.IntentFilter)>($r20, $r17);
+
+        goto label9;
+
+     label8:
+        staticinvoke <com.android.internal.telephony.emergency.EmergencyNumberTracker: void loge(java.lang.String)>("mPhone is null.");
+
+     label9:
+        specialinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: void initializeDatabaseEmergencyNumberList()>();
+
+        $r14 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: com.android.internal.telephony.CommandsInterface mCi>;
+
+        interfaceinvoke $r14.<com.android.internal.telephony.CommandsInterface: void registerForEmergencyNumberList(android.os.Handler,int,java.lang.Object)>(r0, 1, null);
+
+        return;
+
+        catch java.io.FileNotFoundException from label1 to label2 with label3;
+    }
+
+    static void access$000(com.android.internal.telephony.emergency.EmergencyNumberTracker)
+    {
+        com.android.internal.telephony.emergency.EmergencyNumberTracker r0;
+
+        r0 := @parameter0: com.android.internal.telephony.emergency.EmergencyNumberTracker;
+
+        specialinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: void onCarrierConfigChanged()>();
+
+        return;
+    }
+
+    static com.android.internal.telephony.Phone access$100(com.android.internal.telephony.emergency.EmergencyNumberTracker)
+    {
+        com.android.internal.telephony.emergency.EmergencyNumberTracker r0;
+        com.android.internal.telephony.Phone $r1;
+
+        r0 := @parameter0: com.android.internal.telephony.emergency.EmergencyNumberTracker;
+
+        $r1 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: com.android.internal.telephony.Phone mPhone>;
+
+        return $r1;
+    }
+
+    static void access$200(java.lang.String)
+    {
+        java.lang.String r0;
+
+        r0 := @parameter0: java.lang.String;
+
+        staticinvoke <com.android.internal.telephony.emergency.EmergencyNumberTracker: void logd(java.lang.String)>(r0);
+
+        return;
+    }
+
+    static boolean access$300(com.android.internal.telephony.emergency.EmergencyNumberTracker)
+    {
+        com.android.internal.telephony.emergency.EmergencyNumberTracker r0;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.internal.telephony.emergency.EmergencyNumberTracker;
+
+        $z0 = specialinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: boolean isAirplaneModeEnabled()>();
+
+        return $z0;
+    }
+
+    private void cacheEmergencyDatabaseByCountry(java.lang.String)
+    {
+        com.android.internal.telephony.emergency.EmergencyNumberTracker r0;
+        int i0, i1, $i2, $i3, i4, i5, i6, i7, i8, i9, i10;
+        java.util.ArrayList $r2;
+        com.android.internal.telephony.Phone $r3, $r8, $r15;
+        android.content.Context $r4;
+        android.content.res.AssetManager $r5;
+        java.io.InputStream $r6;
+        byte[] $r7;
+        java.lang.String $r9, $r11, $r13, $r16, $r17, $r18, $r27, r29;
+        java.lang.StringBuilder $r10, $r12, $r14, r35, r42;
+        boolean $z0;
+        com.android.phone.ecc.nano.ProtobufEccData$EccInfo $r19;
+        android.telephony.emergency.EmergencyNumber $r20;
+        java.lang.Exception $r21, $r24;
+        java.lang.RuntimeException $r22, $r23, $r28;
+        java.lang.Throwable $r25, $r26;
+        java.io.BufferedInputStream r30, r31, r32;
+        java.util.zip.GZIPInputStream r33;
+        com.android.phone.ecc.nano.ProtobufEccData$AllInfo r34;
+        com.android.phone.ecc.nano.ProtobufEccData$CountryInfo[] r36;
+        com.android.phone.ecc.nano.ProtobufEccData$CountryInfo r37;
+        com.android.phone.ecc.nano.ProtobufEccData$EccInfo[] r38;
+
+        r0 := @this: com.android.internal.telephony.emergency.EmergencyNumberTracker;
+
+        r29 := @parameter0: java.lang.String;
+
+        $r2 = new java.util.ArrayList;
+
+        specialinvoke $r2.<java.util.ArrayList: void <init>()>();
+
+        r30 = null;
+
+        r31 = null;
+
+        i4 = -1;
+
+     label01:
+        r32 = new java.io.BufferedInputStream;
+
+     label02:
+        r30 = null;
+
+        r31 = null;
+
+        i4 = -1;
+
+     label03:
+        $r3 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: com.android.internal.telephony.Phone mPhone>;
+
+        $r4 = virtualinvoke $r3.<com.android.internal.telephony.Phone: android.content.Context getContext()>();
+
+        $r5 = virtualinvoke $r4.<android.content.Context: android.content.res.AssetManager getAssets()>();
+
+        $r6 = virtualinvoke $r5.<android.content.res.AssetManager: java.io.InputStream open(java.lang.String)>("eccdata");
+
+        specialinvoke r32.<java.io.BufferedInputStream: void <init>(java.io.InputStream)>($r6);
+
+     label04:
+        r30 = r32;
+
+        r31 = r32;
+
+        i4 = -1;
+
+     label05:
+        r33 = new java.util.zip.GZIPInputStream;
+
+     label06:
+        r30 = r32;
+
+        r31 = r32;
+
+        i4 = -1;
+
+     label07:
+        specialinvoke r33.<java.util.zip.GZIPInputStream: void <init>(java.io.InputStream)>(r32);
+
+     label08:
+        r30 = r32;
+
+        r31 = r32;
+
+        i4 = -1;
+
+     label09:
+        $r7 = staticinvoke <com.android.internal.telephony.emergency.EmergencyNumberTracker: byte[] readInputStreamToByteArray(java.io.InputStream)>(r33);
+
+        r34 = staticinvoke <com.android.phone.ecc.nano.ProtobufEccData$AllInfo: com.android.phone.ecc.nano.ProtobufEccData$AllInfo parseFrom(byte[])>($r7);
+
+     label10:
+        r30 = r32;
+
+        r31 = r32;
+
+        i4 = -1;
+
+     label11:
+        i5 = r34.<com.android.phone.ecc.nano.ProtobufEccData$AllInfo: int revision>;
+
+     label12:
+        r30 = r32;
+
+        r31 = r32;
+
+        i4 = i5;
+
+     label13:
+        r35 = new java.lang.StringBuilder;
+
+     label14:
+        r30 = r32;
+
+        r31 = r32;
+
+        i4 = i5;
+
+     label15:
+        specialinvoke r35.<java.lang.StringBuilder: void <init>()>();
+
+     label16:
+        r30 = r32;
+
+        r31 = r32;
+
+        i4 = i5;
+
+     label17:
+        virtualinvoke r35.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r29);
+
+     label18:
+        r30 = r32;
+
+        r31 = r32;
+
+        i4 = i5;
+
+     label19:
+        virtualinvoke r35.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" asset emergency database is loaded. Ver: ");
+
+     label20:
+        r30 = r32;
+
+        r31 = r32;
+
+        i4 = i5;
+
+     label21:
+        virtualinvoke r35.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i5);
+
+     label22:
+        r30 = r32;
+
+        r31 = r32;
+
+        i4 = i5;
+
+     label23:
+        virtualinvoke r35.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" Phone Id: ");
+
+     label24:
+        r30 = r32;
+
+        r31 = r32;
+
+        i4 = i5;
+
+     label25:
+        $r8 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: com.android.internal.telephony.Phone mPhone>;
+
+        $i2 = virtualinvoke $r8.<com.android.internal.telephony.Phone: int getPhoneId()>();
+
+        virtualinvoke r35.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i2);
+
+     label26:
+        r30 = r32;
+
+        r31 = r32;
+
+        i4 = i5;
+
+     label27:
+        $r9 = virtualinvoke r35.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.internal.telephony.emergency.EmergencyNumberTracker: void logd(java.lang.String)>($r9);
+
+     label28:
+        r30 = r32;
+
+        r31 = r32;
+
+        i4 = i5;
+
+     label29:
+        r36 = r34.<com.android.phone.ecc.nano.ProtobufEccData$AllInfo: com.android.phone.ecc.nano.ProtobufEccData$CountryInfo[] countries>;
+
+     label30:
+        r30 = r32;
+
+        r31 = r32;
+
+        i4 = i5;
+
+     label31:
+        i0 = lengthof r36;
+
+     label32:
+        i6 = 0;
+
+     label33:
+        if i6 >= i0 goto label44;
+
+        r37 = r36[i6];
+
+        r30 = r32;
+
+        r31 = r32;
+
+        i4 = i5;
+
+     label34:
+        $r17 = r37.<com.android.phone.ecc.nano.ProtobufEccData$CountryInfo: java.lang.String isoCode>;
+
+        $r18 = virtualinvoke r29.<java.lang.String: java.lang.String toUpperCase()>();
+
+        $z0 = virtualinvoke $r17.<java.lang.String: boolean equals(java.lang.Object)>($r18);
+
+        if $z0 == 0 goto label43;
+
+     label35:
+        r30 = r32;
+
+        r31 = r32;
+
+        i4 = i5;
+
+     label36:
+        r38 = r37.<com.android.phone.ecc.nano.ProtobufEccData$CountryInfo: com.android.phone.ecc.nano.ProtobufEccData$EccInfo[] eccs>;
+
+     label37:
+        r30 = r32;
+
+        r31 = r32;
+
+        i4 = i5;
+
+     label38:
+        i1 = lengthof r38;
+
+     label39:
+        i7 = 0;
+
+     label40:
+        if i7 >= i1 goto label43;
+
+        r30 = r32;
+
+        r31 = r32;
+
+        i4 = i5;
+
+     label41:
+        $r19 = r38[i7];
+
+        $r20 = specialinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: android.telephony.emergency.EmergencyNumber convertEmergencyNumberFromEccInfo(com.android.phone.ecc.nano.ProtobufEccData$EccInfo,java.lang.String)>($r19, r29);
+
+        interfaceinvoke $r2.<java.util.List: boolean add(java.lang.Object)>($r20);
+
+     label42:
+        i7 = i7 + 1;
+
+        goto label40;
+
+     label43:
+        i6 = i6 + 1;
+
+        goto label33;
+
+     label44:
+        r30 = r32;
+
+        r31 = r32;
+
+        i4 = i5;
+
+     label45:
+        staticinvoke <android.telephony.emergency.EmergencyNumber: void mergeSameNumbersInEmergencyNumberList(java.util.List)>($r2);
+
+     label46:
+        i8 = i5;
+
+     label47:
+        virtualinvoke r32.<java.io.BufferedInputStream: void close()>();
+
+     label48:
+        i4 = i5;
+
+     label49:
+        i9 = i4;
+
+        goto label67;
+
+     label50:
+        $r24 := @caughtexception;
+
+        i4 = i8;
+
+        goto label49;
+
+     label51:
+        $r22 := @caughtexception;
+
+        throw $r22;
+
+     label52:
+        $r25 := @caughtexception;
+
+        goto label71;
+
+     label53:
+        $r26 := @caughtexception;
+
+        r30 = r31;
+
+     label54:
+        r42 = new java.lang.StringBuilder;
+
+     label55:
+        r30 = r31;
+
+     label56:
+        specialinvoke r42.<java.lang.StringBuilder: void <init>()>();
+
+     label57:
+        r30 = r31;
+
+     label58:
+        virtualinvoke r42.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Cache asset emergency database failure: ");
+
+     label59:
+        r30 = r31;
+
+     label60:
+        virtualinvoke r42.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r26);
+
+     label61:
+        r30 = r31;
+
+     label62:
+        $r27 = virtualinvoke r42.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.internal.telephony.emergency.EmergencyNumberTracker: void loge(java.lang.String)>($r27);
+
+     label63:
+        i9 = i4;
+
+        if r31 == null goto label67;
+
+        i8 = i4;
+
+     label64:
+        virtualinvoke r31.<java.io.BufferedInputStream: void close()>();
+
+     label65:
+        goto label49;
+
+     label66:
+        $r28 := @caughtexception;
+
+        throw $r28;
+
+     label67:
+        i10 = specialinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: int cacheOtaEmergencyNumberDatabase()>();
+
+        if i10 != -1 goto label68;
+
+        if i9 != -1 goto label68;
+
+        $r14 = new java.lang.StringBuilder;
+
+        specialinvoke $r14.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r14.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("No database available. Phone Id: ");
+
+        $r15 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: com.android.internal.telephony.Phone mPhone>;
+
+        $i3 = virtualinvoke $r15.<com.android.internal.telephony.Phone: int getPhoneId()>();
+
+        virtualinvoke $r14.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i3);
+
+        $r16 = virtualinvoke $r14.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.internal.telephony.emergency.EmergencyNumberTracker: void loge(java.lang.String)>($r16);
+
+        return;
+
+     label68:
+        if i9 <= i10 goto label69;
+
+        $r12 = new java.lang.StringBuilder;
+
+        specialinvoke $r12.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Using Asset Emergency database. Version: ");
+
+        virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i9);
+
+        $r13 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.internal.telephony.emergency.EmergencyNumberTracker: void logd(java.lang.String)>($r13);
+
+        r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: int mCurrentDatabaseVersion> = i9;
+
+        r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.util.List mEmergencyNumberListFromDatabase> = $r2;
+
+        goto label70;
+
+     label69:
+        $r10 = new java.lang.StringBuilder;
+
+        specialinvoke $r10.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Using Ota Emergency database. Version: ");
+
+        virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i10);
+
+        $r11 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.internal.telephony.emergency.EmergencyNumberTracker: void logd(java.lang.String)>($r11);
+
+     label70:
+        return;
+
+     label71:
+        if r30 == null goto label76;
+
+     label72:
+        virtualinvoke r30.<java.io.BufferedInputStream: void close()>();
+
+     label73:
+        goto label76;
+
+     label74:
+        $r21 := @caughtexception;
+
+        goto label76;
+
+     label75:
+        $r23 := @caughtexception;
+
+        throw $r23;
+
+     label76:
+        throw $r25;
+
+        catch java.io.IOException from label01 to label02 with label53;
+        catch java.lang.Throwable from label01 to label02 with label52;
+        catch java.io.IOException from label03 to label04 with label53;
+        catch java.lang.Throwable from label03 to label04 with label52;
+        catch java.io.IOException from label05 to label06 with label53;
+        catch java.lang.Throwable from label05 to label06 with label52;
+        catch java.io.IOException from label07 to label08 with label53;
+        catch java.lang.Throwable from label07 to label08 with label52;
+        catch java.io.IOException from label09 to label10 with label53;
+        catch java.lang.Throwable from label09 to label10 with label52;
+        catch java.io.IOException from label11 to label12 with label53;
+        catch java.lang.Throwable from label11 to label12 with label52;
+        catch java.io.IOException from label13 to label14 with label53;
+        catch java.lang.Throwable from label13 to label14 with label52;
+        catch java.io.IOException from label15 to label16 with label53;
+        catch java.lang.Throwable from label15 to label16 with label52;
+        catch java.io.IOException from label17 to label18 with label53;
+        catch java.lang.Throwable from label17 to label18 with label52;
+        catch java.io.IOException from label19 to label20 with label53;
+        catch java.lang.Throwable from label19 to label20 with label52;
+        catch java.io.IOException from label21 to label22 with label53;
+        catch java.lang.Throwable from label21 to label22 with label52;
+        catch java.io.IOException from label23 to label24 with label53;
+        catch java.lang.Throwable from label23 to label24 with label52;
+        catch java.io.IOException from label25 to label26 with label53;
+        catch java.lang.Throwable from label25 to label26 with label52;
+        catch java.io.IOException from label27 to label28 with label53;
+        catch java.lang.Throwable from label27 to label28 with label52;
+        catch java.io.IOException from label29 to label30 with label53;
+        catch java.lang.Throwable from label29 to label30 with label52;
+        catch java.io.IOException from label31 to label32 with label53;
+        catch java.lang.Throwable from label31 to label32 with label52;
+        catch java.io.IOException from label34 to label35 with label53;
+        catch java.lang.Throwable from label34 to label35 with label52;
+        catch java.io.IOException from label36 to label37 with label53;
+        catch java.lang.Throwable from label36 to label37 with label52;
+        catch java.io.IOException from label38 to label39 with label53;
+        catch java.lang.Throwable from label38 to label39 with label52;
+        catch java.io.IOException from label41 to label42 with label53;
+        catch java.lang.Throwable from label41 to label42 with label52;
+        catch java.io.IOException from label45 to label46 with label53;
+        catch java.lang.Throwable from label45 to label46 with label52;
+        catch java.lang.RuntimeException from label47 to label48 with label51;
+        catch java.lang.Exception from label47 to label48 with label50;
+        catch java.lang.Throwable from label54 to label55 with label52;
+        catch java.lang.Throwable from label56 to label57 with label52;
+        catch java.lang.Throwable from label58 to label59 with label52;
+        catch java.lang.Throwable from label60 to label61 with label52;
+        catch java.lang.Throwable from label62 to label63 with label52;
+        catch java.lang.RuntimeException from label64 to label65 with label66;
+        catch java.lang.Exception from label64 to label65 with label50;
+        catch java.lang.RuntimeException from label72 to label73 with label75;
+        catch java.lang.Exception from label72 to label73 with label74;
+    }
+
+    private int cacheOtaEmergencyNumberDatabase()
+    {
+        com.android.internal.telephony.emergency.EmergencyNumberTracker r0;
+        java.io.FileInputStream r2, $r4, $r5;
+        int i0, i1, $i2, i3, i4, i5, i6, i7, i8;
+        java.util.ArrayList $r3;
+        byte[] $r6;
+        java.lang.String $r7, $r8, $r9, $r10, $r11, $r12, $r17;
+        boolean $z0;
+        com.android.phone.ecc.nano.ProtobufEccData$EccInfo $r13;
+        android.telephony.emergency.EmergencyNumber $r14;
+        java.io.File $r15, r26;
+        java.lang.Throwable $r16, $r19;
+        java.lang.RuntimeException $r18, $r22, $r23;
+        java.lang.Exception $r20, $r21;
+        java.io.BufferedInputStream r24, r25, r27;
+        java.util.zip.GZIPInputStream r29;
+        com.android.phone.ecc.nano.ProtobufEccData$AllInfo r30;
+        java.lang.StringBuilder r31, r38;
+        com.android.phone.ecc.nano.ProtobufEccData$CountryInfo[] r32;
+        com.android.phone.ecc.nano.ProtobufEccData$CountryInfo r33;
+        com.android.phone.ecc.nano.ProtobufEccData$EccInfo[] r34;
+
+        r0 := @this: com.android.internal.telephony.emergency.EmergencyNumberTracker;
+
+        $r3 = new java.util.ArrayList;
+
+        specialinvoke $r3.<java.util.ArrayList: void <init>()>();
+
+        r24 = null;
+
+        r25 = null;
+
+        i3 = -1;
+
+     label01:
+        $r4 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.io.FileInputStream mEmergencyNumberDbOtaFileInputStream>;
+
+        if $r4 != null goto label12;
+
+     label02:
+        r24 = null;
+
+        r25 = null;
+
+        i3 = -1;
+
+     label03:
+        r2 = new java.io.FileInputStream;
+
+     label04:
+        r24 = null;
+
+        r25 = null;
+
+        i3 = -1;
+
+     label05:
+        r26 = new java.io.File;
+
+     label06:
+        r24 = null;
+
+        r25 = null;
+
+        i3 = -1;
+
+     label07:
+        $r15 = staticinvoke <android.os.Environment: java.io.File getDataDirectory()>();
+
+        specialinvoke r26.<java.io.File: void <init>(java.io.File,java.lang.String)>($r15, "misc/emergencynumberdb/emergency_number_db");
+
+     label08:
+        r24 = null;
+
+        r25 = null;
+
+        i3 = -1;
+
+     label09:
+        specialinvoke r2.<java.io.FileInputStream: void <init>(java.io.File)>(r26);
+
+     label10:
+        r24 = null;
+
+        r25 = null;
+
+        i3 = -1;
+
+     label11:
+        r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.io.FileInputStream mEmergencyNumberDbOtaFileInputStream> = r2;
+
+     label12:
+        r24 = null;
+
+        r25 = null;
+
+        i3 = -1;
+
+     label13:
+        r27 = new java.io.BufferedInputStream;
+
+     label14:
+        r24 = null;
+
+        r25 = null;
+
+        i3 = -1;
+
+     label15:
+        $r5 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.io.FileInputStream mEmergencyNumberDbOtaFileInputStream>;
+
+        specialinvoke r27.<java.io.BufferedInputStream: void <init>(java.io.InputStream)>($r5);
+
+     label16:
+        r24 = r27;
+
+        r25 = r27;
+
+        i3 = -1;
+
+     label17:
+        r29 = new java.util.zip.GZIPInputStream;
+
+     label18:
+        r24 = r27;
+
+        r25 = r27;
+
+        i3 = -1;
+
+     label19:
+        specialinvoke r29.<java.util.zip.GZIPInputStream: void <init>(java.io.InputStream)>(r27);
+
+     label20:
+        r24 = r27;
+
+        r25 = r27;
+
+        i3 = -1;
+
+     label21:
+        $r6 = staticinvoke <com.android.internal.telephony.emergency.EmergencyNumberTracker: byte[] readInputStreamToByteArray(java.io.InputStream)>(r29);
+
+        r30 = staticinvoke <com.android.phone.ecc.nano.ProtobufEccData$AllInfo: com.android.phone.ecc.nano.ProtobufEccData$AllInfo parseFrom(byte[])>($r6);
+
+     label22:
+        r24 = r27;
+
+        r25 = r27;
+
+        i3 = -1;
+
+     label23:
+        r31 = new java.lang.StringBuilder;
+
+     label24:
+        r24 = r27;
+
+        r25 = r27;
+
+        i3 = -1;
+
+     label25:
+        specialinvoke r31.<java.lang.StringBuilder: void <init>()>();
+
+     label26:
+        r24 = r27;
+
+        r25 = r27;
+
+        i3 = -1;
+
+     label27:
+        $r7 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.lang.String mCountryIso>;
+
+        virtualinvoke r31.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r7);
+
+     label28:
+        r24 = r27;
+
+        r25 = r27;
+
+        i3 = -1;
+
+     label29:
+        virtualinvoke r31.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" ota emergency database is loaded. Ver: ");
+
+     label30:
+        r24 = r27;
+
+        r25 = r27;
+
+        i3 = -1;
+
+     label31:
+        virtualinvoke r31.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(-1);
+
+     label32:
+        r24 = r27;
+
+        r25 = r27;
+
+        i3 = -1;
+
+     label33:
+        $r8 = virtualinvoke r31.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.internal.telephony.emergency.EmergencyNumberTracker: void logd(java.lang.String)>($r8);
+
+     label34:
+        r24 = r27;
+
+        r25 = r27;
+
+        i3 = -1;
+
+     label35:
+        i4 = r30.<com.android.phone.ecc.nano.ProtobufEccData$AllInfo: int revision>;
+
+     label36:
+        r24 = r27;
+
+        r25 = r27;
+
+        i3 = i4;
+
+     label37:
+        r32 = r30.<com.android.phone.ecc.nano.ProtobufEccData$AllInfo: com.android.phone.ecc.nano.ProtobufEccData$CountryInfo[] countries>;
+
+     label38:
+        r24 = r27;
+
+        r25 = r27;
+
+        i3 = i4;
+
+     label39:
+        i0 = lengthof r32;
+
+     label40:
+        i5 = 0;
+
+     label41:
+        if i5 >= i0 goto label52;
+
+        r33 = r32[i5];
+
+        r24 = r27;
+
+        r25 = r27;
+
+        i3 = i4;
+
+     label42:
+        $r10 = r33.<com.android.phone.ecc.nano.ProtobufEccData$CountryInfo: java.lang.String isoCode>;
+
+        $r9 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.lang.String mCountryIso>;
+
+        $r11 = virtualinvoke $r9.<java.lang.String: java.lang.String toUpperCase()>();
+
+        $z0 = virtualinvoke $r10.<java.lang.String: boolean equals(java.lang.Object)>($r11);
+
+        if $z0 == 0 goto label51;
+
+     label43:
+        r24 = r27;
+
+        r25 = r27;
+
+        i3 = i4;
+
+     label44:
+        r34 = r33.<com.android.phone.ecc.nano.ProtobufEccData$CountryInfo: com.android.phone.ecc.nano.ProtobufEccData$EccInfo[] eccs>;
+
+     label45:
+        r24 = r27;
+
+        r25 = r27;
+
+        i3 = i4;
+
+     label46:
+        i1 = lengthof r34;
+
+     label47:
+        i6 = 0;
+
+     label48:
+        if i6 >= i1 goto label51;
+
+        r24 = r27;
+
+        r25 = r27;
+
+        i3 = i4;
+
+     label49:
+        $r13 = r34[i6];
+
+        $r12 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.lang.String mCountryIso>;
+
+        $r14 = specialinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: android.telephony.emergency.EmergencyNumber convertEmergencyNumberFromEccInfo(com.android.phone.ecc.nano.ProtobufEccData$EccInfo,java.lang.String)>($r13, $r12);
+
+        interfaceinvoke $r3.<java.util.List: boolean add(java.lang.Object)>($r14);
+
+     label50:
+        i6 = i6 + 1;
+
+        goto label48;
+
+     label51:
+        i5 = i5 + 1;
+
+        goto label41;
+
+     label52:
+        r24 = r27;
+
+        r25 = r27;
+
+        i3 = i4;
+
+     label53:
+        staticinvoke <android.telephony.emergency.EmergencyNumber: void mergeSameNumbersInEmergencyNumberList(java.util.List)>($r3);
+
+     label54:
+        i7 = i4;
+
+     label55:
+        virtualinvoke r27.<java.io.BufferedInputStream: void close()>();
+
+     label56:
+        i3 = i4;
+
+     label57:
+        i8 = i3;
+
+        goto label75;
+
+     label58:
+        $r21 := @caughtexception;
+
+        i3 = i7;
+
+        goto label57;
+
+     label59:
+        $r22 := @caughtexception;
+
+        throw $r22;
+
+     label60:
+        $r19 := @caughtexception;
+
+        goto label77;
+
+     label61:
+        $r16 := @caughtexception;
+
+        r24 = r25;
+
+     label62:
+        r38 = new java.lang.StringBuilder;
+
+     label63:
+        r24 = r25;
+
+     label64:
+        specialinvoke r38.<java.lang.StringBuilder: void <init>()>();
+
+     label65:
+        r24 = r25;
+
+     label66:
+        virtualinvoke r38.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Cache ota emergency database IOException: ");
+
+     label67:
+        r24 = r25;
+
+     label68:
+        virtualinvoke r38.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r16);
+
+     label69:
+        r24 = r25;
+
+     label70:
+        $r17 = virtualinvoke r38.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.internal.telephony.emergency.EmergencyNumberTracker: void loge(java.lang.String)>($r17);
+
+     label71:
+        i8 = i3;
+
+        if r25 == null goto label75;
+
+        i7 = i3;
+
+     label72:
+        virtualinvoke r25.<java.io.BufferedInputStream: void close()>();
+
+     label73:
+        goto label57;
+
+     label74:
+        $r18 := @caughtexception;
+
+        throw $r18;
+
+     label75:
+        if i8 == -1 goto label76;
+
+        $i2 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: int mCurrentDatabaseVersion>;
+
+        if $i2 >= i8 goto label76;
+
+        r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: int mCurrentDatabaseVersion> = i8;
+
+        r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.util.List mEmergencyNumberListFromDatabase> = $r3;
+
+     label76:
+        return i8;
+
+     label77:
+        if r24 == null goto label82;
+
+     label78:
+        virtualinvoke r24.<java.io.BufferedInputStream: void close()>();
+
+     label79:
+        goto label82;
+
+     label80:
+        $r20 := @caughtexception;
+
+        goto label82;
+
+     label81:
+        $r23 := @caughtexception;
+
+        throw $r23;
+
+     label82:
+        throw $r19;
+
+        catch java.io.IOException from label01 to label02 with label61;
+        catch java.lang.Throwable from label01 to label02 with label60;
+        catch java.io.IOException from label03 to label04 with label61;
+        catch java.lang.Throwable from label03 to label04 with label60;
+        catch java.io.IOException from label05 to label06 with label61;
+        catch java.lang.Throwable from label05 to label06 with label60;
+        catch java.io.IOException from label07 to label08 with label61;
+        catch java.lang.Throwable from label07 to label08 with label60;
+        catch java.io.IOException from label09 to label10 with label61;
+        catch java.lang.Throwable from label09 to label10 with label60;
+        catch java.io.IOException from label11 to label12 with label61;
+        catch java.lang.Throwable from label11 to label12 with label60;
+        catch java.io.IOException from label13 to label14 with label61;
+        catch java.lang.Throwable from label13 to label14 with label60;
+        catch java.io.IOException from label15 to label16 with label61;
+        catch java.lang.Throwable from label15 to label16 with label60;
+        catch java.io.IOException from label17 to label18 with label61;
+        catch java.lang.Throwable from label17 to label18 with label60;
+        catch java.io.IOException from label19 to label20 with label61;
+        catch java.lang.Throwable from label19 to label20 with label60;
+        catch java.io.IOException from label21 to label22 with label61;
+        catch java.lang.Throwable from label21 to label22 with label60;
+        catch java.io.IOException from label23 to label24 with label61;
+        catch java.lang.Throwable from label23 to label24 with label60;
+        catch java.io.IOException from label25 to label26 with label61;
+        catch java.lang.Throwable from label25 to label26 with label60;
+        catch java.io.IOException from label27 to label28 with label61;
+        catch java.lang.Throwable from label27 to label28 with label60;
+        catch java.io.IOException from label29 to label30 with label61;
+        catch java.lang.Throwable from label29 to label30 with label60;
+        catch java.io.IOException from label31 to label32 with label61;
+        catch java.lang.Throwable from label31 to label32 with label60;
+        catch java.io.IOException from label33 to label34 with label61;
+        catch java.lang.Throwable from label33 to label34 with label60;
+        catch java.io.IOException from label35 to label36 with label61;
+        catch java.lang.Throwable from label35 to label36 with label60;
+        catch java.io.IOException from label37 to label38 with label61;
+        catch java.lang.Throwable from label37 to label38 with label60;
+        catch java.io.IOException from label39 to label40 with label61;
+        catch java.lang.Throwable from label39 to label40 with label60;
+        catch java.io.IOException from label42 to label43 with label61;
+        catch java.lang.Throwable from label42 to label43 with label60;
+        catch java.io.IOException from label44 to label45 with label61;
+        catch java.lang.Throwable from label44 to label45 with label60;
+        catch java.io.IOException from label46 to label47 with label61;
+        catch java.lang.Throwable from label46 to label47 with label60;
+        catch java.io.IOException from label49 to label50 with label61;
+        catch java.lang.Throwable from label49 to label50 with label60;
+        catch java.io.IOException from label53 to label54 with label61;
+        catch java.lang.Throwable from label53 to label54 with label60;
+        catch java.lang.RuntimeException from label55 to label56 with label59;
+        catch java.lang.Exception from label55 to label56 with label58;
+        catch java.lang.Throwable from label62 to label63 with label60;
+        catch java.lang.Throwable from label64 to label65 with label60;
+        catch java.lang.Throwable from label66 to label67 with label60;
+        catch java.lang.Throwable from label68 to label69 with label60;
+        catch java.lang.Throwable from label70 to label71 with label60;
+        catch java.lang.RuntimeException from label72 to label73 with label74;
+        catch java.lang.Exception from label72 to label73 with label58;
+        catch java.lang.RuntimeException from label78 to label79 with label81;
+        catch java.lang.Exception from label78 to label79 with label80;
+    }
+
+    private android.telephony.emergency.EmergencyNumber convertEmergencyNumberFromEccInfo(com.android.phone.ecc.nano.ProtobufEccData$EccInfo, java.lang.String)
+    {
+        com.android.internal.telephony.emergency.EmergencyNumberTracker r0;
+        java.lang.String r1, r2, $r3;
+        int i0, i1, i2;
+        boolean $z0;
+        android.telephony.emergency.EmergencyNumber $r4;
+        java.util.ArrayList $r5;
+        com.android.phone.ecc.nano.ProtobufEccData$EccInfo r6;
+        int[] r7;
+        byte b3;
+
+        r0 := @this: com.android.internal.telephony.emergency.EmergencyNumberTracker;
+
+        r6 := @parameter0: com.android.phone.ecc.nano.ProtobufEccData$EccInfo;
+
+        r1 := @parameter1: java.lang.String;
+
+        $r3 = r6.<com.android.phone.ecc.nano.ProtobufEccData$EccInfo: java.lang.String phoneNumber>;
+
+        r2 = virtualinvoke $r3.<java.lang.String: java.lang.String trim()>();
+
+        $z0 = virtualinvoke r2.<java.lang.String: boolean isEmpty()>();
+
+        if $z0 == 0 goto label01;
+
+        staticinvoke <com.android.internal.telephony.emergency.EmergencyNumberTracker: void loge(java.lang.String)>("EccInfo has empty phone number.");
+
+        return null;
+
+     label01:
+        r7 = r6.<com.android.phone.ecc.nano.ProtobufEccData$EccInfo: int[] types>;
+
+        i0 = lengthof r7;
+
+        i2 = 0;
+
+        b3 = 0;
+
+     label02:
+        if i2 >= i0 goto label12;
+
+        i1 = r7[i2];
+
+        if i1 == 1 goto label09;
+
+        if i1 == 2 goto label06;
+
+        if i1 == 3 goto label03;
+
+        goto label11;
+
+     label03:
+        if b3 != 0 goto label04;
+
+        b3 = 4;
+
+        goto label05;
+
+     label04:
+        b3 = b3 | 4;
+
+     label05:
+        goto label11;
+
+     label06:
+        if b3 != 0 goto label07;
+
+        b3 = 2;
+
+        goto label08;
+
+     label07:
+        b3 = b3 | 2;
+
+     label08:
+        goto label11;
+
+     label09:
+        if b3 != 0 goto label10;
+
+        b3 = 1;
+
+        goto label11;
+
+     label10:
+        b3 = b3 | 1;
+
+     label11:
+        i2 = i2 + 1;
+
+        goto label02;
+
+     label12:
+        $r4 = new android.telephony.emergency.EmergencyNumber;
+
+        $r5 = new java.util.ArrayList;
+
+        specialinvoke $r5.<java.util.ArrayList: void <init>()>();
+
+        specialinvoke $r4.<android.telephony.emergency.EmergencyNumber: void <init>(java.lang.String,java.lang.String,java.lang.String,int,java.util.List,int,int)>(r2, r1, "", b3, $r5, 16, 0);
+
+        return $r4;
+    }
+
+    private java.lang.String getCountryIsoForCachingDatabase()
+    {
+        com.android.internal.telephony.emergency.EmergencyNumberTracker r0;
+        com.android.internal.telephony.Phone $r1;
+        java.lang.String $r2;
+        com.android.internal.telephony.ServiceStateTracker r3;
+        com.android.internal.telephony.LocaleTracker r4;
+
+        r0 := @this: com.android.internal.telephony.emergency.EmergencyNumberTracker;
+
+        $r1 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: com.android.internal.telephony.Phone mPhone>;
+
+        r3 = virtualinvoke $r1.<com.android.internal.telephony.Phone: com.android.internal.telephony.ServiceStateTracker getServiceStateTracker()>();
+
+        if r3 == null goto label1;
+
+        r4 = virtualinvoke r3.<com.android.internal.telephony.ServiceStateTracker: com.android.internal.telephony.LocaleTracker getLocaleTracker()>();
+
+        if r4 == null goto label1;
+
+        $r2 = virtualinvoke r4.<com.android.internal.telephony.LocaleTracker: java.lang.String getLastKnownCountryIso()>();
+
+        return $r2;
+
+     label1:
+        return "";
+    }
+
+    private java.util.List getEmergencyNumberListFromEccList()
+    {
+        com.android.internal.telephony.emergency.EmergencyNumberTracker r0;
+        int i0, $i2, $i3, i4, i5, i6, i7;
+        java.lang.String r2, $r11, $r13, r15, r17, r19;
+        boolean z0, $z1;
+        java.util.ArrayList $r3;
+        com.android.internal.telephony.SubscriptionController $r4;
+        com.android.internal.telephony.Phone $r5;
+        java.lang.StringBuilder $r6;
+        java.lang.String[] $r9, r18, r20;
+        java.util.List $r10;
+        android.telephony.emergency.EmergencyNumber $r12, $r14;
+
+        r0 := @this: com.android.internal.telephony.emergency.EmergencyNumberTracker;
+
+        $r3 = new java.util.ArrayList;
+
+        specialinvoke $r3.<java.util.ArrayList: void <init>()>();
+
+        $r4 = staticinvoke <com.android.internal.telephony.SubscriptionController: com.android.internal.telephony.SubscriptionController getInstance()>();
+
+        $r5 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: com.android.internal.telephony.Phone mPhone>;
+
+        $i2 = virtualinvoke $r5.<com.android.internal.telephony.Phone: int getSubId()>();
+
+        i0 = virtualinvoke $r4.<com.android.internal.telephony.SubscriptionController: int getSlotIndex(int)>($i2);
+
+        r15 = "ril.ecclist";
+
+        if i0 > 0 goto label01;
+
+        goto label02;
+
+     label01:
+        $r6 = new java.lang.StringBuilder;
+
+        specialinvoke $r6.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("ril.ecclist");
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        r15 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.String toString()>();
+
+     label02:
+        r2 = staticinvoke <android.os.SystemProperties: java.lang.String get(java.lang.String,java.lang.String)>(r15, "");
+
+        r17 = r2;
+
+        $z1 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>(r2);
+
+        if $z1 == 0 goto label03;
+
+        r17 = staticinvoke <android.os.SystemProperties: java.lang.String get(java.lang.String)>("ro.ril.ecclist");
+
+     label03:
+        z0 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>(r17);
+
+        if z0 != 0 goto label05;
+
+        r18 = virtualinvoke r17.<java.lang.String: java.lang.String[] split(java.lang.String)>(",");
+
+        i4 = lengthof r18;
+
+        i5 = 0;
+
+     label04:
+        if i5 >= i4 goto label05;
+
+        $r13 = r18[i5];
+
+        $r14 = specialinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: android.telephony.emergency.EmergencyNumber getLabeledEmergencyNumberForEcclist(java.lang.String)>($r13);
+
+        interfaceinvoke $r3.<java.util.List: boolean add(java.lang.Object)>($r14);
+
+        i5 = i5 + 1;
+
+        goto label04;
+
+     label05:
+        if i0 >= 0 goto label06;
+
+        r19 = "112,911,000,08,110,118,119,999";
+
+        goto label07;
+
+     label06:
+        r19 = "112,911";
+
+     label07:
+        r20 = virtualinvoke r19.<java.lang.String: java.lang.String[] split(java.lang.String)>(",");
+
+        i6 = lengthof r20;
+
+        i7 = 0;
+
+     label08:
+        if i7 >= i6 goto label09;
+
+        $r11 = r20[i7];
+
+        $r12 = specialinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: android.telephony.emergency.EmergencyNumber getLabeledEmergencyNumberForEcclist(java.lang.String)>($r11);
+
+        interfaceinvoke $r3.<java.util.List: boolean add(java.lang.Object)>($r12);
+
+        i7 = i7 + 1;
+
+        goto label08;
+
+     label09:
+        $r9 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.lang.String[] mEmergencyNumberPrefix>;
+
+        $i3 = lengthof $r9;
+
+        if $i3 == 0 goto label10;
+
+        $r10 = specialinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.util.List getEmergencyNumberListWithPrefix(java.util.List)>($r3);
+
+        interfaceinvoke $r3.<java.util.List: boolean addAll(java.util.Collection)>($r10);
+
+     label10:
+        staticinvoke <android.telephony.emergency.EmergencyNumber: void mergeSameNumbersInEmergencyNumberList(java.util.List)>($r3);
+
+        return $r3;
+    }
+
+    private java.util.List getEmergencyNumberListFromEccListDatabaseAndTest()
+    {
+        com.android.internal.telephony.emergency.EmergencyNumberTracker r0;
+        java.util.List r1, $r5, $r6, $r7, $r8;
+        com.android.internal.telephony.Phone $r2;
+        com.android.internal.telephony.HalVersion $r3, $r4;
+        boolean $z0;
+
+        r0 := @this: com.android.internal.telephony.emergency.EmergencyNumberTracker;
+
+        r1 = specialinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.util.List getEmergencyNumberListFromEccList()>();
+
+        $r2 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: com.android.internal.telephony.Phone mPhone>;
+
+        $r3 = virtualinvoke $r2.<com.android.internal.telephony.Phone: com.android.internal.telephony.HalVersion getHalVersion()>();
+
+        $r4 = new com.android.internal.telephony.HalVersion;
+
+        specialinvoke $r4.<com.android.internal.telephony.HalVersion: void <init>(int,int)>(1, 4);
+
+        $z0 = virtualinvoke $r3.<com.android.internal.telephony.HalVersion: boolean greaterOrEqual(com.android.internal.telephony.HalVersion)>($r4);
+
+        if $z0 == 0 goto label1;
+
+        staticinvoke <com.android.internal.telephony.emergency.EmergencyNumberTracker: void loge(java.lang.String)>("getEmergencyNumberListFromEccListDatabaseAndTest: radio indication is unavailable in 1.4 HAL.");
+
+        $r6 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.util.List mEmergencyNumberListFromDatabase>;
+
+        interfaceinvoke r1.<java.util.List: boolean addAll(java.util.Collection)>($r6);
+
+        $r7 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.util.List mEmergencyNumberListFromDatabase>;
+
+        $r8 = specialinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.util.List getEmergencyNumberListWithPrefix(java.util.List)>($r7);
+
+        interfaceinvoke r1.<java.util.List: boolean addAll(java.util.Collection)>($r8);
+
+     label1:
+        $r5 = virtualinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.util.List getEmergencyNumberListTestMode()>();
+
+        interfaceinvoke r1.<java.util.List: boolean addAll(java.util.Collection)>($r5);
+
+        staticinvoke <android.telephony.emergency.EmergencyNumber: void mergeSameNumbersInEmergencyNumberList(java.util.List)>(r1);
+
+        return r1;
+    }
+
+    private java.util.List getEmergencyNumberListWithPrefix(java.util.List)
+    {
+        com.android.internal.telephony.emergency.EmergencyNumberTracker r0;
+        java.util.Iterator r2;
+        android.telephony.emergency.EmergencyNumber r3, $r13;
+        java.lang.String[] r4;
+        int i0, $i1, $i2, $i3, i4;
+        java.util.ArrayList $r6;
+        boolean $z0, $z1;
+        java.lang.Object $r7;
+        java.lang.String $r8, $r11, $r14, $r15, $r16, r19;
+        java.lang.StringBuilder $r9;
+        java.util.List $r17, r18;
+
+        r0 := @this: com.android.internal.telephony.emergency.EmergencyNumberTracker;
+
+        r18 := @parameter0: java.util.List;
+
+        $r6 = new java.util.ArrayList;
+
+        specialinvoke $r6.<java.util.ArrayList: void <init>()>();
+
+        if r18 == null goto label6;
+
+        r2 = interfaceinvoke r18.<java.util.List: java.util.Iterator iterator()>();
+
+     label1:
+        $z0 = interfaceinvoke r2.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label5;
+
+        $r7 = interfaceinvoke r2.<java.util.Iterator: java.lang.Object next()>();
+
+        r3 = (android.telephony.emergency.EmergencyNumber) $r7;
+
+        r4 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.lang.String[] mEmergencyNumberPrefix>;
+
+        i0 = lengthof r4;
+
+        i4 = 0;
+
+     label2:
+        if i4 >= i0 goto label4;
+
+        r19 = r4[i4];
+
+        $r8 = virtualinvoke r3.<android.telephony.emergency.EmergencyNumber: java.lang.String getNumber()>();
+
+        $z1 = virtualinvoke $r8.<java.lang.String: boolean startsWith(java.lang.String)>(r19);
+
+        if $z1 != 0 goto label3;
+
+        $r9 = new java.lang.StringBuilder;
+
+        specialinvoke $r9.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r19);
+
+        $r11 = virtualinvoke r3.<android.telephony.emergency.EmergencyNumber: java.lang.String getNumber()>();
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r11);
+
+        $r13 = new android.telephony.emergency.EmergencyNumber;
+
+        $r14 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $r15 = virtualinvoke r3.<android.telephony.emergency.EmergencyNumber: java.lang.String getCountryIso()>();
+
+        $r16 = virtualinvoke r3.<android.telephony.emergency.EmergencyNumber: java.lang.String getMnc()>();
+
+        $i1 = virtualinvoke r3.<android.telephony.emergency.EmergencyNumber: int getEmergencyServiceCategoryBitmask()>();
+
+        $r17 = virtualinvoke r3.<android.telephony.emergency.EmergencyNumber: java.util.List getEmergencyUrns()>();
+
+        $i2 = virtualinvoke r3.<android.telephony.emergency.EmergencyNumber: int getEmergencyNumberSourceBitmask()>();
+
+        $i3 = virtualinvoke r3.<android.telephony.emergency.EmergencyNumber: int getEmergencyCallRouting()>();
+
+        specialinvoke $r13.<android.telephony.emergency.EmergencyNumber: void <init>(java.lang.String,java.lang.String,java.lang.String,int,java.util.List,int,int)>($r14, $r15, $r16, $i1, $r17, $i2, $i3);
+
+        interfaceinvoke $r6.<java.util.List: boolean add(java.lang.Object)>($r13);
+
+     label3:
+        i4 = i4 + 1;
+
+        goto label2;
+
+     label4:
+        goto label1;
+
+     label5:
+        goto label6;
+
+     label6:
+        return $r6;
+    }
+
+    private java.lang.String getInitialCountryIso()
+    {
+        com.android.internal.telephony.emergency.EmergencyNumberTracker r0;
+        java.lang.String $r1;
+        com.android.internal.telephony.Phone r2;
+        com.android.internal.telephony.ServiceStateTracker r3;
+        com.android.internal.telephony.LocaleTracker r4;
+
+        r0 := @this: com.android.internal.telephony.emergency.EmergencyNumberTracker;
+
+        r2 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: com.android.internal.telephony.Phone mPhone>;
+
+        if r2 == null goto label2;
+
+        r3 = virtualinvoke r2.<com.android.internal.telephony.Phone: com.android.internal.telephony.ServiceStateTracker getServiceStateTracker()>();
+
+        if r3 == null goto label1;
+
+        r4 = virtualinvoke r3.<com.android.internal.telephony.ServiceStateTracker: com.android.internal.telephony.LocaleTracker getLocaleTracker()>();
+
+        if r4 == null goto label1;
+
+        $r1 = virtualinvoke r4.<com.android.internal.telephony.LocaleTracker: java.lang.String getCurrentCountry()>();
+
+        return $r1;
+
+     label1:
+        goto label3;
+
+     label2:
+        staticinvoke <com.android.internal.telephony.emergency.EmergencyNumberTracker: void loge(java.lang.String)>("getInitialCountryIso mPhone is null.");
+
+     label3:
+        return "";
+    }
+
+    private android.telephony.emergency.EmergencyNumber getLabeledEmergencyNumberForEcclist(java.lang.String)
+    {
+        com.android.internal.telephony.emergency.EmergencyNumberTracker r0;
+        java.lang.String r1, $r7, $r9, $r10, r12;
+        java.util.Iterator r2;
+        java.util.List $r3;
+        boolean $z0, $z1;
+        android.telephony.emergency.EmergencyNumber $r4, $r8, r13;
+        java.util.ArrayList $r5, $r11;
+        java.lang.Object $r6;
+        int $i0;
+
+        r0 := @this: com.android.internal.telephony.emergency.EmergencyNumberTracker;
+
+        r12 := @parameter0: java.lang.String;
+
+        r1 = staticinvoke <android.telephony.PhoneNumberUtils: java.lang.String stripSeparators(java.lang.String)>(r12);
+
+        $r3 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.util.List mEmergencyNumberListFromDatabase>;
+
+        r2 = interfaceinvoke $r3.<java.util.List: java.util.Iterator iterator()>();
+
+     label1:
+        $z0 = interfaceinvoke r2.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label3;
+
+        $r6 = interfaceinvoke r2.<java.util.Iterator: java.lang.Object next()>();
+
+        r13 = (android.telephony.emergency.EmergencyNumber) $r6;
+
+        $r7 = virtualinvoke r13.<android.telephony.emergency.EmergencyNumber: java.lang.String getNumber()>();
+
+        $z1 = virtualinvoke $r7.<java.lang.String: boolean equals(java.lang.Object)>(r1);
+
+        if $z1 == 0 goto label2;
+
+        $r8 = new android.telephony.emergency.EmergencyNumber;
+
+        $r9 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.lang.String mCountryIso>;
+
+        $r10 = virtualinvoke $r9.<java.lang.String: java.lang.String toLowerCase()>();
+
+        $i0 = virtualinvoke r13.<android.telephony.emergency.EmergencyNumber: int getEmergencyServiceCategoryBitmask()>();
+
+        $r11 = new java.util.ArrayList;
+
+        specialinvoke $r11.<java.util.ArrayList: void <init>()>();
+
+        specialinvoke $r8.<android.telephony.emergency.EmergencyNumber: void <init>(java.lang.String,java.lang.String,java.lang.String,int,java.util.List,int,int)>(r1, $r10, "", $i0, $r11, 16, 0);
+
+        return $r8;
+
+     label2:
+        goto label1;
+
+     label3:
+        $r4 = new android.telephony.emergency.EmergencyNumber;
+
+        $r5 = new java.util.ArrayList;
+
+        specialinvoke $r5.<java.util.ArrayList: void <init>()>();
+
+        specialinvoke $r4.<android.telephony.emergency.EmergencyNumber: void <init>(java.lang.String,java.lang.String,java.lang.String,int,java.util.List,int,int)>(r1, "", "", 0, $r5, 0, 0);
+
+        return $r4;
+    }
+
+    private void initializeDatabaseEmergencyNumberList()
+    {
+        com.android.internal.telephony.emergency.EmergencyNumberTracker r0;
+        java.lang.String r1, $r2, $r3, r4;
+        boolean $z0, $z1;
+
+        r0 := @this: com.android.internal.telephony.emergency.EmergencyNumberTracker;
+
+        $r2 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.lang.String mCountryIso>;
+
+        if $r2 != null goto label2;
+
+        $r3 = specialinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.lang.String getInitialCountryIso()>();
+
+        r1 = virtualinvoke $r3.<java.lang.String: java.lang.String toLowerCase()>();
+
+        specialinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: void updateEmergencyCountryIso(java.lang.String)>(r1);
+
+        r4 = r1;
+
+        $z0 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>(r1);
+
+        if $z0 == 0 goto label1;
+
+        r4 = r1;
+
+        $z1 = specialinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: boolean isAirplaneModeEnabled()>();
+
+        if $z1 == 0 goto label1;
+
+        r4 = specialinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.lang.String getCountryIsoForCachingDatabase()>();
+
+     label1:
+        specialinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: void cacheEmergencyDatabaseByCountry(java.lang.String)>(r4);
+
+     label2:
+        return;
+    }
+
+    private boolean isAirplaneModeEnabled()
+    {
+        com.android.internal.telephony.emergency.EmergencyNumberTracker r0;
+        com.android.internal.telephony.ServiceStateTracker r1;
+        com.android.internal.telephony.Phone $r2;
+        android.telephony.ServiceState $r3;
+        int $i0;
+
+        r0 := @this: com.android.internal.telephony.emergency.EmergencyNumberTracker;
+
+        $r2 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: com.android.internal.telephony.Phone mPhone>;
+
+        r1 = virtualinvoke $r2.<com.android.internal.telephony.Phone: com.android.internal.telephony.ServiceStateTracker getServiceStateTracker()>();
+
+        if r1 == null goto label1;
+
+        $r3 = virtualinvoke r1.<com.android.internal.telephony.ServiceStateTracker: android.telephony.ServiceState getServiceState()>();
+
+        $i0 = virtualinvoke $r3.<android.telephony.ServiceState: int getState()>();
+
+        if $i0 != 3 goto label1;
+
+        return 1;
+
+     label1:
+        return 0;
+    }
+
+    private boolean isEmergencyNumberForTest(java.lang.String)
+    {
+        com.android.internal.telephony.emergency.EmergencyNumberTracker r0;
+        java.util.Iterator r1;
+        java.util.List $r2;
+        boolean $z0, $z1;
+        java.lang.Object $r3;
+        android.telephony.emergency.EmergencyNumber $r4;
+        java.lang.String $r5, r6, r7;
+
+        r0 := @this: com.android.internal.telephony.emergency.EmergencyNumberTracker;
+
+        r6 := @parameter0: java.lang.String;
+
+        r7 = staticinvoke <android.telephony.PhoneNumberUtils: java.lang.String stripSeparators(java.lang.String)>(r6);
+
+        $r2 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.util.List mEmergencyNumberListFromTestMode>;
+
+        r1 = interfaceinvoke $r2.<java.util.List: java.util.Iterator iterator()>();
+
+     label1:
+        $z0 = interfaceinvoke r1.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label3;
+
+        $r3 = interfaceinvoke r1.<java.util.Iterator: java.lang.Object next()>();
+
+        $r4 = (android.telephony.emergency.EmergencyNumber) $r3;
+
+        $r5 = virtualinvoke $r4.<android.telephony.emergency.EmergencyNumber: java.lang.String getNumber()>();
+
+        $z1 = virtualinvoke $r5.<java.lang.String: boolean equals(java.lang.Object)>(r7);
+
+        if $z1 == 0 goto label2;
+
+        return 1;
+
+     label2:
+        goto label1;
+
+     label3:
+        return 0;
+    }
+
+    private boolean isEmergencyNumberFromDatabase(java.lang.String)
+    {
+        com.android.internal.telephony.emergency.EmergencyNumberTracker r0;
+        com.android.internal.telephony.Phone $r1;
+        com.android.internal.telephony.HalVersion $r2, $r3;
+        boolean $z0, $z1, $z2, $z3, $z4;
+        java.util.List $r4, $r5, $r6;
+        java.lang.Object $r7, $r10;
+        android.telephony.emergency.EmergencyNumber $r8, $r11;
+        java.lang.String $r9, $r12, r13, r14;
+        java.util.Iterator r15, r16;
+
+        r0 := @this: com.android.internal.telephony.emergency.EmergencyNumberTracker;
+
+        r13 := @parameter0: java.lang.String;
+
+        $r1 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: com.android.internal.telephony.Phone mPhone>;
+
+        $r2 = virtualinvoke $r1.<com.android.internal.telephony.Phone: com.android.internal.telephony.HalVersion getHalVersion()>();
+
+        $r3 = new com.android.internal.telephony.HalVersion;
+
+        specialinvoke $r3.<com.android.internal.telephony.HalVersion: void <init>(int,int)>(1, 4);
+
+        $z0 = virtualinvoke $r2.<com.android.internal.telephony.HalVersion: boolean greaterOrEqual(com.android.internal.telephony.HalVersion)>($r3);
+
+        if $z0 != 0 goto label1;
+
+        return 0;
+
+     label1:
+        r14 = staticinvoke <android.telephony.PhoneNumberUtils: java.lang.String stripSeparators(java.lang.String)>(r13);
+
+        $r4 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.util.List mEmergencyNumberListFromDatabase>;
+
+        r15 = interfaceinvoke $r4.<java.util.List: java.util.Iterator iterator()>();
+
+     label2:
+        $z1 = interfaceinvoke r15.<java.util.Iterator: boolean hasNext()>();
+
+        if $z1 == 0 goto label4;
+
+        $r10 = interfaceinvoke r15.<java.util.Iterator: java.lang.Object next()>();
+
+        $r11 = (android.telephony.emergency.EmergencyNumber) $r10;
+
+        $r12 = virtualinvoke $r11.<android.telephony.emergency.EmergencyNumber: java.lang.String getNumber()>();
+
+        $z4 = virtualinvoke $r12.<java.lang.String: boolean equals(java.lang.Object)>(r14);
+
+        if $z4 == 0 goto label3;
+
+        return 1;
+
+     label3:
+        goto label2;
+
+     label4:
+        $r5 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.util.List mEmergencyNumberListFromDatabase>;
+
+        $r6 = specialinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.util.List getEmergencyNumberListWithPrefix(java.util.List)>($r5);
+
+        r16 = interfaceinvoke $r6.<java.util.List: java.util.Iterator iterator()>();
+
+     label5:
+        $z2 = interfaceinvoke r16.<java.util.Iterator: boolean hasNext()>();
+
+        if $z2 == 0 goto label7;
+
+        $r7 = interfaceinvoke r16.<java.util.Iterator: java.lang.Object next()>();
+
+        $r8 = (android.telephony.emergency.EmergencyNumber) $r7;
+
+        $r9 = virtualinvoke $r8.<android.telephony.emergency.EmergencyNumber: java.lang.String getNumber()>();
+
+        $z3 = virtualinvoke $r9.<java.lang.String: boolean equals(java.lang.Object)>(r14);
+
+        if $z3 == 0 goto label6;
+
+        return 1;
+
+     label6:
+        goto label5;
+
+     label7:
+        return 0;
+    }
+
+    private boolean isEmergencyNumberFromEccList(java.lang.String, boolean)
+    {
+        com.android.internal.telephony.emergency.EmergencyNumberTracker r0;
+        boolean z0, $z1, $z2, $z3, $z4, $z5, $z6, $z7, $z8, $z9, $z10, $z11, $z12, $z13, $z14, $z15, $z16, $z17, $z18;
+        java.lang.String r1, $r11, $r15, $r16, $r17, $r18, $r22, $r23, $r24, $r25, $r26, $r30, $r31, $r32, $r36, $r40, $r44, $r45, $r46, $r47, $r51, r52, r53, r55, r57, r59, r61, r64, r66, r68, r70, r73, r77, r80;
+        com.android.internal.telephony.SubscriptionController $r2;
+        com.android.internal.telephony.Phone $r3;
+        int $i0, i1, i2, i3, i4, i5, i6, i7, i8, i9, i10, i11, i12, i13, i14, i15, i16, i17;
+        java.lang.StringBuilder $r4, $r7, $r19, $r27, $r33, $r37, $r41, $r48;
+        java.lang.String[] r58, r60, r63, r67, r69, r72, r76, r79;
+        com.android.internal.telephony.phonenumbers.ShortNumberInfo r75;
+
+        r0 := @this: com.android.internal.telephony.emergency.EmergencyNumberTracker;
+
+        r52 := @parameter0: java.lang.String;
+
+        z0 := @parameter1: boolean;
+
+        if r52 != null goto label01;
+
+        return 0;
+
+     label01:
+        $z1 = staticinvoke <android.telephony.PhoneNumberUtils: boolean isUriNumber(java.lang.String)>(r52);
+
+        if $z1 == 0 goto label02;
+
+        return 0;
+
+     label02:
+        r1 = staticinvoke <android.telephony.PhoneNumberUtils: java.lang.String extractNetworkPortionAlt(java.lang.String)>(r52);
+
+        $r2 = staticinvoke <com.android.internal.telephony.SubscriptionController: com.android.internal.telephony.SubscriptionController getInstance()>();
+
+        $r3 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: com.android.internal.telephony.Phone mPhone>;
+
+        $i0 = virtualinvoke $r3.<com.android.internal.telephony.Phone: int getSubId()>();
+
+        i1 = virtualinvoke $r2.<com.android.internal.telephony.SubscriptionController: int getSlotIndex(int)>($i0);
+
+        r53 = "ril.ecclist";
+
+        if i1 > 0 goto label03;
+
+        goto label04;
+
+     label03:
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("ril.ecclist");
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i1);
+
+        r53 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+     label04:
+        r55 = staticinvoke <android.os.SystemProperties: java.lang.String get(java.lang.String,java.lang.String)>(r53, "");
+
+        $r7 = new java.lang.StringBuilder;
+
+        specialinvoke $r7.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("slotId:");
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i1);
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" country:");
+
+        $r11 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.lang.String mCountryIso>;
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r11);
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" emergencyNumbers: ");
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r55);
+
+        $r15 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.internal.telephony.emergency.EmergencyNumberTracker: void logd(java.lang.String)>($r15);
+
+        r57 = r55;
+
+        $z2 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>(r55);
+
+        if $z2 == 0 goto label05;
+
+        r57 = staticinvoke <android.os.SystemProperties: java.lang.String get(java.lang.String)>("ro.ril.ecclist");
+
+     label05:
+        $z3 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>(r57);
+
+        if $z3 != 0 goto label17;
+
+        r58 = virtualinvoke r57.<java.lang.String: java.lang.String[] split(java.lang.String)>(",");
+
+        i2 = lengthof r58;
+
+        i3 = 0;
+
+     label06:
+        if i3 >= i2 goto label16;
+
+        r59 = r58[i3];
+
+        if z0 != 0 goto label11;
+
+        $r45 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.lang.String mCountryIso>;
+
+        $z13 = virtualinvoke $r45.<java.lang.String: boolean equals(java.lang.Object)>("br");
+
+        if $z13 != 0 goto label11;
+
+        $r46 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.lang.String mCountryIso>;
+
+        $z14 = virtualinvoke $r46.<java.lang.String: boolean equals(java.lang.Object)>("cl");
+
+        if $z14 != 0 goto label11;
+
+        $r47 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.lang.String mCountryIso>;
+
+        $z15 = virtualinvoke $r47.<java.lang.String: boolean equals(java.lang.Object)>("ni");
+
+        if $z15 == 0 goto label07;
+
+        goto label11;
+
+     label07:
+        $z16 = virtualinvoke r1.<java.lang.String: boolean startsWith(java.lang.String)>(r59);
+
+        if $z16 == 0 goto label08;
+
+        return 1;
+
+     label08:
+        r60 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.lang.String[] mEmergencyNumberPrefix>;
+
+        i4 = lengthof r60;
+
+        i5 = 0;
+
+     label09:
+        if i5 >= i4 goto label15;
+
+        r61 = r60[i5];
+
+        $r48 = new java.lang.StringBuilder;
+
+        specialinvoke $r48.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r48.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r61);
+
+        virtualinvoke $r48.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r59);
+
+        $r51 = virtualinvoke $r48.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $z17 = virtualinvoke r1.<java.lang.String: boolean startsWith(java.lang.String)>($r51);
+
+        if $z17 == 0 goto label10;
+
+        return 1;
+
+     label10:
+        i5 = i5 + 1;
+
+        goto label09;
+
+     label11:
+        $z18 = virtualinvoke r1.<java.lang.String: boolean equals(java.lang.Object)>(r59);
+
+        if $z18 == 0 goto label12;
+
+        return 1;
+
+     label12:
+        r63 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.lang.String[] mEmergencyNumberPrefix>;
+
+        i6 = lengthof r63;
+
+        i7 = 0;
+
+     label13:
+        if i7 >= i6 goto label15;
+
+        r64 = r63[i7];
+
+        $r41 = new java.lang.StringBuilder;
+
+        specialinvoke $r41.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r41.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r64);
+
+        virtualinvoke $r41.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r59);
+
+        $r44 = virtualinvoke $r41.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $z12 = virtualinvoke r1.<java.lang.String: boolean equals(java.lang.Object)>($r44);
+
+        if $z12 == 0 goto label14;
+
+        return 1;
+
+     label14:
+        i7 = i7 + 1;
+
+        goto label13;
+
+     label15:
+        i3 = i3 + 1;
+
+        goto label06;
+
+     label16:
+        return 0;
+
+     label17:
+        staticinvoke <com.android.internal.telephony.emergency.EmergencyNumberTracker: void logd(java.lang.String)>("System property doesn\'t provide any emergency numbers. Use embedded logic for determining ones.");
+
+        if i1 >= 0 goto label18;
+
+        r66 = "112,911,000,08,110,118,119,999";
+
+        goto label19;
+
+     label18:
+        r66 = "112,911";
+
+     label19:
+        r67 = virtualinvoke r66.<java.lang.String: java.lang.String[] split(java.lang.String)>(",");
+
+        i8 = lengthof r67;
+
+        i9 = 0;
+
+     label20:
+        if i9 >= i8 goto label29;
+
+        r68 = r67[i9];
+
+        if z0 == 0 goto label24;
+
+        $z10 = virtualinvoke r1.<java.lang.String: boolean equals(java.lang.Object)>(r68);
+
+        if $z10 == 0 goto label21;
+
+        return 1;
+
+     label21:
+        r69 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.lang.String[] mEmergencyNumberPrefix>;
+
+        i10 = lengthof r69;
+
+        i11 = 0;
+
+     label22:
+        if i11 >= i10 goto label28;
+
+        r70 = r69[i11];
+
+        $r37 = new java.lang.StringBuilder;
+
+        specialinvoke $r37.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r37.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r70);
+
+        virtualinvoke $r37.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r68);
+
+        $r40 = virtualinvoke $r37.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $z11 = virtualinvoke r1.<java.lang.String: boolean equals(java.lang.Object)>($r40);
+
+        if $z11 == 0 goto label23;
+
+        return 1;
+
+     label23:
+        i11 = i11 + 1;
+
+        goto label22;
+
+     label24:
+        $z8 = virtualinvoke r1.<java.lang.String: boolean startsWith(java.lang.String)>(r68);
+
+        if $z8 == 0 goto label25;
+
+        return 1;
+
+     label25:
+        r72 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.lang.String[] mEmergencyNumberPrefix>;
+
+        i12 = lengthof r72;
+
+        i13 = 0;
+
+     label26:
+        if i13 >= i12 goto label28;
+
+        r73 = r72[i13];
+
+        $r33 = new java.lang.StringBuilder;
+
+        specialinvoke $r33.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r33.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r73);
+
+        virtualinvoke $r33.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r68);
+
+        $r36 = virtualinvoke $r33.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $z9 = virtualinvoke r1.<java.lang.String: boolean equals(java.lang.Object)>($r36);
+
+        if $z9 == 0 goto label27;
+
+        return 1;
+
+     label27:
+        i13 = i13 + 1;
+
+        goto label26;
+
+     label28:
+        i9 = i9 + 1;
+
+        goto label20;
+
+     label29:
+        $r16 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.lang.String mCountryIso>;
+
+        if $r16 == null goto label39;
+
+        r75 = staticinvoke <com.android.internal.telephony.phonenumbers.ShortNumberInfo: com.android.internal.telephony.phonenumbers.ShortNumberInfo getInstance()>();
+
+        if z0 == 0 goto label34;
+
+        $r25 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.lang.String mCountryIso>;
+
+        $r26 = virtualinvoke $r25.<java.lang.String: java.lang.String toUpperCase()>();
+
+        $z6 = virtualinvoke r75.<com.android.internal.telephony.phonenumbers.ShortNumberInfo: boolean isEmergencyNumber(java.lang.CharSequence,java.lang.String)>(r1, $r26);
+
+        if $z6 == 0 goto label30;
+
+        return 1;
+
+     label30:
+        r76 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.lang.String[] mEmergencyNumberPrefix>;
+
+        i14 = lengthof r76;
+
+        i15 = 0;
+
+     label31:
+        if i15 >= i14 goto label33;
+
+        r77 = r76[i15];
+
+        $r27 = new java.lang.StringBuilder;
+
+        specialinvoke $r27.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r27.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r77);
+
+        virtualinvoke $r27.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r30 = virtualinvoke $r27.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $r31 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.lang.String mCountryIso>;
+
+        $r32 = virtualinvoke $r31.<java.lang.String: java.lang.String toUpperCase()>();
+
+        $z7 = virtualinvoke r75.<com.android.internal.telephony.phonenumbers.ShortNumberInfo: boolean isEmergencyNumber(java.lang.CharSequence,java.lang.String)>($r30, $r32);
+
+        if $z7 == 0 goto label32;
+
+        return 1;
+
+     label32:
+        i15 = i15 + 1;
+
+        goto label31;
+
+     label33:
+        return 0;
+
+     label34:
+        $r17 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.lang.String mCountryIso>;
+
+        $r18 = virtualinvoke $r17.<java.lang.String: java.lang.String toUpperCase()>();
+
+        $z4 = virtualinvoke r75.<com.android.internal.telephony.phonenumbers.ShortNumberInfo: boolean connectsToEmergencyNumber(java.lang.String,java.lang.String)>(r1, $r18);
+
+        if $z4 == 0 goto label35;
+
+        return 1;
+
+     label35:
+        r79 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.lang.String[] mEmergencyNumberPrefix>;
+
+        i16 = lengthof r79;
+
+        i17 = 0;
+
+     label36:
+        if i17 >= i16 goto label38;
+
+        r80 = r79[i17];
+
+        $r19 = new java.lang.StringBuilder;
+
+        specialinvoke $r19.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r80);
+
+        virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r22 = virtualinvoke $r19.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $r23 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.lang.String mCountryIso>;
+
+        $r24 = virtualinvoke $r23.<java.lang.String: java.lang.String toUpperCase()>();
+
+        $z5 = virtualinvoke r75.<com.android.internal.telephony.phonenumbers.ShortNumberInfo: boolean connectsToEmergencyNumber(java.lang.String,java.lang.String)>($r22, $r24);
+
+        if $z5 == 0 goto label37;
+
+        return 1;
+
+     label37:
+        i17 = i17 + 1;
+
+        goto label36;
+
+     label38:
+        return 0;
+
+     label39:
+        return 0;
+    }
+
+    private static void logd(java.lang.String)
+    {
+        java.lang.String r0, $r1;
+
+        r0 := @parameter0: java.lang.String;
+
+        $r1 = <com.android.internal.telephony.emergency.EmergencyNumberTracker: java.lang.String TAG>;
+
+        staticinvoke <com.android.telephony.Rlog: int d(java.lang.String,java.lang.String)>($r1, r0);
+
+        return;
+    }
+
+    private static void loge(java.lang.String)
+    {
+        java.lang.String r0, $r1;
+
+        r0 := @parameter0: java.lang.String;
+
+        $r1 = <com.android.internal.telephony.emergency.EmergencyNumberTracker: java.lang.String TAG>;
+
+        staticinvoke <com.android.telephony.Rlog: int e(java.lang.String,java.lang.String)>($r1, r0);
+
+        return;
+    }
+
+    private void notifyEmergencyNumberList()
+    {
+        com.android.internal.telephony.emergency.EmergencyNumberTracker r0;
+        java.util.List $r3;
+        com.android.internal.telephony.Phone $r4;
+        java.lang.NullPointerException $r5;
+        java.lang.StringBuilder $r6;
+        java.lang.String $r9;
+
+        r0 := @this: com.android.internal.telephony.emergency.EmergencyNumberTracker;
+
+     label1:
+        $r3 = virtualinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.util.List getEmergencyNumberList()>();
+
+        if $r3 == null goto label2;
+
+        $r4 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: com.android.internal.telephony.Phone mPhone>;
+
+        virtualinvoke $r4.<com.android.internal.telephony.Phone: void notifyEmergencyNumberList()>();
+
+        staticinvoke <com.android.internal.telephony.emergency.EmergencyNumberTracker: void logd(java.lang.String)>("notifyEmergencyNumberList(): notified");
+
+     label2:
+        goto label4;
+
+     label3:
+        $r5 := @caughtexception;
+
+        $r6 = new java.lang.StringBuilder;
+
+        specialinvoke $r6.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("notifyEmergencyNumberList(): failure: Phone already destroyed: ");
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r5);
+
+        $r9 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.internal.telephony.emergency.EmergencyNumberTracker: void loge(java.lang.String)>($r9);
+
+     label4:
+        return;
+
+        catch java.lang.NullPointerException from label1 to label2 with label3;
+    }
+
+    private void onCarrierConfigChanged()
+    {
+        com.android.internal.telephony.emergency.EmergencyNumberTracker r0;
+        android.content.Context $r1;
+        java.lang.Object $r2;
+        com.android.internal.telephony.Phone $r3, r6;
+        int $i0;
+        java.lang.String[] $r4, r9;
+        boolean $z0;
+        android.os.Message $r5;
+        android.telephony.CarrierConfigManager r7;
+        android.os.PersistableBundle r8;
+
+        r0 := @this: com.android.internal.telephony.emergency.EmergencyNumberTracker;
+
+        r6 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: com.android.internal.telephony.Phone mPhone>;
+
+        if r6 == null goto label2;
+
+        $r1 = virtualinvoke r6.<com.android.internal.telephony.Phone: android.content.Context getContext()>();
+
+        $r2 = virtualinvoke $r1.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("carrier_config");
+
+        r7 = (android.telephony.CarrierConfigManager) $r2;
+
+        if r7 == null goto label1;
+
+        $r3 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: com.android.internal.telephony.Phone mPhone>;
+
+        $i0 = virtualinvoke $r3.<com.android.internal.telephony.Phone: int getSubId()>();
+
+        r8 = virtualinvoke r7.<android.telephony.CarrierConfigManager: android.os.PersistableBundle getConfigForSubId(int)>($i0);
+
+        if r8 == null goto label1;
+
+        r9 = virtualinvoke r8.<android.os.PersistableBundle: java.lang.String[] getStringArray(java.lang.String)>("emergency_number_prefix_string_array");
+
+        $r4 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.lang.String[] mEmergencyNumberPrefix>;
+
+        $z0 = staticinvoke <java.util.Arrays: boolean equals(java.lang.Object[],java.lang.Object[])>($r4, r9);
+
+        if $z0 != 0 goto label1;
+
+        $r5 = virtualinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: android.os.Message obtainMessage(int,java.lang.Object)>(4, r9);
+
+        virtualinvoke $r5.<android.os.Message: void sendToTarget()>();
+
+     label1:
+        goto label3;
+
+     label2:
+        staticinvoke <com.android.internal.telephony.emergency.EmergencyNumberTracker: void loge(java.lang.String)>("onCarrierConfigChanged mPhone is null.");
+
+     label3:
+        return;
+    }
+
+    private void overrideOtaEmergencyNumberDbFilePath(android.os.ParcelFileDescriptor)
+    {
+        com.android.internal.telephony.emergency.EmergencyNumberTracker r0;
+        java.lang.StringBuilder $r1, $r8;
+        java.lang.String $r4, $r11;
+        java.io.FileDescriptor $r5;
+        java.io.File $r6, r15;
+        java.lang.Throwable $r7;
+        android.os.ParcelFileDescriptor r12;
+        java.io.FileInputStream r14, r16;
+
+        r0 := @this: com.android.internal.telephony.emergency.EmergencyNumberTracker;
+
+        r12 := @parameter0: android.os.ParcelFileDescriptor;
+
+        $r1 = new java.lang.StringBuilder;
+
+        specialinvoke $r1.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("overrideOtaEmergencyNumberDbFilePath:");
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r12);
+
+        $r4 = virtualinvoke $r1.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.internal.telephony.emergency.EmergencyNumberTracker: void logd(java.lang.String)>($r4);
+
+        if r12 != null goto label3;
+
+     label1:
+        r14 = new java.io.FileInputStream;
+
+        r15 = new java.io.File;
+
+        $r6 = staticinvoke <android.os.Environment: java.io.File getDataDirectory()>();
+
+        specialinvoke r15.<java.io.File: void <init>(java.io.File,java.lang.String)>($r6, "misc/emergencynumberdb/emergency_number_db");
+
+        specialinvoke r14.<java.io.FileInputStream: void <init>(java.io.File)>(r15);
+
+        r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.io.FileInputStream mEmergencyNumberDbOtaFileInputStream> = r14;
+
+     label2:
+        goto label4;
+
+     label3:
+        r16 = new java.io.FileInputStream;
+
+        $r5 = virtualinvoke r12.<android.os.ParcelFileDescriptor: java.io.FileDescriptor getFileDescriptor()>();
+
+        specialinvoke r16.<java.io.FileInputStream: void <init>(java.io.FileDescriptor)>($r5);
+
+        r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.io.FileInputStream mEmergencyNumberDbOtaFileInputStream> = r16;
+
+     label4:
+        goto label6;
+
+     label5:
+        $r7 := @caughtexception;
+
+        $r8 = new java.lang.StringBuilder;
+
+        specialinvoke $r8.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Override ota emergency database failure: ");
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r7);
+
+        $r11 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.internal.telephony.emergency.EmergencyNumberTracker: void loge(java.lang.String)>($r11);
+
+     label6:
+        return;
+
+        catch java.io.FileNotFoundException from label1 to label2 with label5;
+        catch java.io.FileNotFoundException from label3 to label4 with label5;
+    }
+
+    private static byte[] readInputStreamToByteArray(java.io.InputStream) throws java.io.IOException
+    {
+        java.io.InputStream r0;
+        byte[] r2, $r4;
+        int i0, $i1;
+        java.io.ByteArrayOutputStream $r3;
+
+        r0 := @parameter0: java.io.InputStream;
+
+        $r3 = new java.io.ByteArrayOutputStream;
+
+        specialinvoke $r3.<java.io.ByteArrayOutputStream: void <init>()>();
+
+        r2 = newarray (byte)[16384];
+
+     label1:
+        $i1 = lengthof r2;
+
+        i0 = virtualinvoke r0.<java.io.InputStream: int read(byte[],int,int)>(r2, 0, $i1);
+
+        if i0 == -1 goto label2;
+
+        virtualinvoke $r3.<java.io.ByteArrayOutputStream: void write(byte[],int,int)>(r2, 0, i0);
+
+        goto label1;
+
+     label2:
+        virtualinvoke $r3.<java.io.ByteArrayOutputStream: void flush()>();
+
+        $r4 = virtualinvoke $r3.<java.io.ByteArrayOutputStream: byte[] toByteArray()>();
+
+        return $r4;
+    }
+
+    private void updateEmergencyCountryIso(java.lang.String)
+    {
+        com.android.internal.telephony.emergency.EmergencyNumberTracker r0;
+        java.lang.Throwable $r1;
+        java.lang.String r2;
+
+        r0 := @this: com.android.internal.telephony.emergency.EmergencyNumberTracker;
+
+        r2 := @parameter0: java.lang.String;
+
+        entermonitor r0;
+
+     label1:
+        r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.lang.String mCountryIso> = r2;
+
+     label2:
+        exitmonitor r0;
+
+        return;
+
+     label3:
+        $r1 := @caughtexception;
+
+        exitmonitor r0;
+
+        throw $r1;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+    }
+
+    private void updateEmergencyNumberList()
+    {
+        com.android.internal.telephony.emergency.EmergencyNumberTracker r0;
+        com.android.internal.telephony.LocalLog r2;
+        java.util.ArrayList $r4;
+        java.util.List $r5, $r6, $r7, $r9, $r10, $r13, $r16, $r17, $r18, $r19, $r20, $r21;
+        java.lang.String[] $r8;
+        int $i0;
+        boolean $z1;
+        java.lang.StringBuilder $r11;
+        java.lang.String $r15;
+
+        r0 := @this: com.android.internal.telephony.emergency.EmergencyNumberTracker;
+
+        $r4 = new java.util.ArrayList;
+
+        $r5 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.util.List mEmergencyNumberListFromDatabase>;
+
+        specialinvoke $r4.<java.util.ArrayList: void <init>(java.util.Collection)>($r5);
+
+        $r6 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.util.List mEmergencyNumberListFromRadio>;
+
+        interfaceinvoke $r4.<java.util.List: boolean addAll(java.util.Collection)>($r6);
+
+        $r7 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.util.List mEmergencyNumberListWithPrefix>;
+
+        interfaceinvoke $r7.<java.util.List: void clear()>();
+
+        $r8 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.lang.String[] mEmergencyNumberPrefix>;
+
+        $i0 = lengthof $r8;
+
+        if $i0 == 0 goto label1;
+
+        $r17 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.util.List mEmergencyNumberListWithPrefix>;
+
+        $r16 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.util.List mEmergencyNumberListFromRadio>;
+
+        $r18 = specialinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.util.List getEmergencyNumberListWithPrefix(java.util.List)>($r16);
+
+        interfaceinvoke $r17.<java.util.List: boolean addAll(java.util.Collection)>($r18);
+
+        $r20 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.util.List mEmergencyNumberListWithPrefix>;
+
+        $r19 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.util.List mEmergencyNumberListFromDatabase>;
+
+        $r21 = specialinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.util.List getEmergencyNumberListWithPrefix(java.util.List)>($r19);
+
+        interfaceinvoke $r20.<java.util.List: boolean addAll(java.util.Collection)>($r21);
+
+     label1:
+        $z1 = <com.android.internal.telephony.emergency.EmergencyNumberTracker: boolean DBG>;
+
+        if $z1 != 0 goto label2;
+
+        r2 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: com.android.internal.telephony.LocalLog mEmergencyNumberListPrefixLocalLog>;
+
+        $r11 = new java.lang.StringBuilder;
+
+        specialinvoke $r11.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("updateEmergencyNumberList:");
+
+        $r13 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.util.List mEmergencyNumberListWithPrefix>;
+
+        virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r13);
+
+        $r15 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r2.<com.android.internal.telephony.LocalLog: void log(java.lang.String)>($r15);
+
+     label2:
+        $r9 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.util.List mEmergencyNumberListWithPrefix>;
+
+        interfaceinvoke $r4.<java.util.List: boolean addAll(java.util.Collection)>($r9);
+
+        $r10 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.util.List mEmergencyNumberListFromTestMode>;
+
+        interfaceinvoke $r4.<java.util.List: boolean addAll(java.util.Collection)>($r10);
+
+        staticinvoke <android.telephony.emergency.EmergencyNumber: void mergeSameNumbersInEmergencyNumberList(java.util.List)>($r4);
+
+        r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.util.List mEmergencyNumberList> = $r4;
+
+        return;
+    }
+
+    private void updateEmergencyNumberListDatabaseAndNotify(java.lang.String)
+    {
+        com.android.internal.telephony.emergency.EmergencyNumberTracker r0;
+        java.lang.StringBuilder $r1, $r6, $r11, $r16;
+        java.lang.String $r4, $r5, $r10, $r15, $r19, r20, r22;
+        boolean $z0, $z1, $z2, $z3;
+        java.util.List $r8, $r13, $r24;
+        com.android.internal.telephony.LocalLog r25, r27;
+
+        r0 := @this: com.android.internal.telephony.emergency.EmergencyNumberTracker;
+
+        r20 := @parameter0: java.lang.String;
+
+        $r1 = new java.lang.StringBuilder;
+
+        specialinvoke $r1.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("updateEmergencyNumberListDatabaseAndNotify(): receiving countryIso: ");
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r20);
+
+        $r4 = virtualinvoke $r1.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.internal.telephony.emergency.EmergencyNumberTracker: void logd(java.lang.String)>($r4);
+
+        $r5 = virtualinvoke r20.<java.lang.String: java.lang.String toLowerCase()>();
+
+        specialinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: void updateEmergencyCountryIso(java.lang.String)>($r5);
+
+        r22 = r20;
+
+        $z0 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>(r20);
+
+        if $z0 == 0 goto label1;
+
+        r22 = r20;
+
+        $z2 = specialinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: boolean isAirplaneModeEnabled()>();
+
+        if $z2 == 0 goto label1;
+
+        r22 = specialinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.lang.String getCountryIsoForCachingDatabase()>();
+
+        $r16 = new java.lang.StringBuilder;
+
+        specialinvoke $r16.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r16.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("updateEmergencyNumberListDatabaseAndNotify(): using cached APM country ");
+
+        virtualinvoke $r16.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r22);
+
+        $r19 = virtualinvoke $r16.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.internal.telephony.emergency.EmergencyNumberTracker: void logd(java.lang.String)>($r19);
+
+     label1:
+        specialinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: void cacheEmergencyDatabaseByCountry(java.lang.String)>(r22);
+
+        $r24 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.util.List mEmergencyNumberListFromDatabase>;
+
+        specialinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: void writeUpdatedEmergencyNumberListMetrics(java.util.List)>($r24);
+
+        $z3 = <com.android.internal.telephony.emergency.EmergencyNumberTracker: boolean DBG>;
+
+        if $z3 != 0 goto label2;
+
+        r25 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: com.android.internal.telephony.LocalLog mEmergencyNumberListDatabaseLocalLog>;
+
+        $r11 = new java.lang.StringBuilder;
+
+        specialinvoke $r11.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("updateEmergencyNumberListDatabaseAndNotify:");
+
+        $r13 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.util.List mEmergencyNumberListFromDatabase>;
+
+        virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r13);
+
+        $r15 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r25.<com.android.internal.telephony.LocalLog: void log(java.lang.String)>($r15);
+
+     label2:
+        specialinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: void updateEmergencyNumberList()>();
+
+        $z1 = <com.android.internal.telephony.emergency.EmergencyNumberTracker: boolean DBG>;
+
+        if $z1 != 0 goto label3;
+
+        r27 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: com.android.internal.telephony.LocalLog mEmergencyNumberListLocalLog>;
+
+        $r6 = new java.lang.StringBuilder;
+
+        specialinvoke $r6.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("updateEmergencyNumberListDatabaseAndNotify:");
+
+        $r8 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.util.List mEmergencyNumberList>;
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r8);
+
+        $r10 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r27.<com.android.internal.telephony.LocalLog: void log(java.lang.String)>($r10);
+
+     label3:
+        specialinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: void notifyEmergencyNumberList()>();
+
+        return;
+    }
+
+    private void updateEmergencyNumberListTestModeAndNotify(int, android.telephony.emergency.EmergencyNumber)
+    {
+        com.android.internal.telephony.emergency.EmergencyNumberTracker r0;
+        int i0;
+        java.util.List $r1, $r4, $r9, $r12, $r14;
+        boolean $z1, $z2, $z4;
+        java.lang.StringBuilder $r2, $r7;
+        java.lang.String $r6, $r11, $r13;
+        android.telephony.emergency.EmergencyNumber r15;
+        com.android.internal.telephony.LocalLog r16, r18;
+
+        r0 := @this: com.android.internal.telephony.emergency.EmergencyNumberTracker;
+
+        i0 := @parameter0: int;
+
+        r15 := @parameter1: android.telephony.emergency.EmergencyNumber;
+
+        if i0 != 1 goto label1;
+
+        $r13 = virtualinvoke r15.<android.telephony.emergency.EmergencyNumber: java.lang.String getNumber()>();
+
+        $z2 = virtualinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: boolean isEmergencyNumber(java.lang.String,boolean)>($r13, 1);
+
+        if $z2 != 0 goto label3;
+
+        $r14 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.util.List mEmergencyNumberListFromTestMode>;
+
+        interfaceinvoke $r14.<java.util.List: boolean add(java.lang.Object)>(r15);
+
+        goto label3;
+
+     label1:
+        if i0 != 3 goto label2;
+
+        $r12 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.util.List mEmergencyNumberListFromTestMode>;
+
+        interfaceinvoke $r12.<java.util.List: void clear()>();
+
+        goto label3;
+
+     label2:
+        if i0 != 2 goto label6;
+
+        $r1 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.util.List mEmergencyNumberListFromTestMode>;
+
+        interfaceinvoke $r1.<java.util.List: boolean remove(java.lang.Object)>(r15);
+
+     label3:
+        $z4 = <com.android.internal.telephony.emergency.EmergencyNumberTracker: boolean DBG>;
+
+        if $z4 != 0 goto label4;
+
+        r16 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: com.android.internal.telephony.LocalLog mEmergencyNumberListTestModeLocalLog>;
+
+        $r7 = new java.lang.StringBuilder;
+
+        specialinvoke $r7.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("updateEmergencyNumberListTestModeAndNotify:");
+
+        $r9 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.util.List mEmergencyNumberListFromTestMode>;
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r9);
+
+        $r11 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r16.<com.android.internal.telephony.LocalLog: void log(java.lang.String)>($r11);
+
+     label4:
+        specialinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: void updateEmergencyNumberList()>();
+
+        $z1 = <com.android.internal.telephony.emergency.EmergencyNumberTracker: boolean DBG>;
+
+        if $z1 != 0 goto label5;
+
+        r18 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: com.android.internal.telephony.LocalLog mEmergencyNumberListLocalLog>;
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("updateEmergencyNumberListTestModeAndNotify:");
+
+        $r4 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.util.List mEmergencyNumberList>;
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r4);
+
+        $r6 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r18.<com.android.internal.telephony.LocalLog: void log(java.lang.String)>($r6);
+
+     label5:
+        specialinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: void notifyEmergencyNumberList()>();
+
+        return;
+
+     label6:
+        staticinvoke <com.android.internal.telephony.emergency.EmergencyNumberTracker: void loge(java.lang.String)>("updateEmergencyNumberListTestModeAndNotify: Unexpected action in test mode.");
+
+        return;
+    }
+
+    private void updateEmergencyNumberPrefixAndNotify(java.lang.String[])
+    {
+        com.android.internal.telephony.emergency.EmergencyNumberTracker r0;
+        java.lang.StringBuilder $r1, $r6;
+        java.lang.String $r3, $r5, $r10;
+        boolean $z0;
+        java.util.List $r8;
+        java.lang.String[] r11;
+        com.android.internal.telephony.LocalLog r13;
+
+        r0 := @this: com.android.internal.telephony.emergency.EmergencyNumberTracker;
+
+        r11 := @parameter0: java.lang.String[];
+
+        $r1 = new java.lang.StringBuilder;
+
+        specialinvoke $r1.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("updateEmergencyNumberPrefixAndNotify(): receiving emergencyNumberPrefix: ");
+
+        $r3 = staticinvoke <java.util.Arrays: java.lang.String toString(java.lang.Object[])>(r11);
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r3);
+
+        $r5 = virtualinvoke $r1.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.internal.telephony.emergency.EmergencyNumberTracker: void logd(java.lang.String)>($r5);
+
+        r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.lang.String[] mEmergencyNumberPrefix> = r11;
+
+        specialinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: void updateEmergencyNumberList()>();
+
+        $z0 = <com.android.internal.telephony.emergency.EmergencyNumberTracker: boolean DBG>;
+
+        if $z0 != 0 goto label1;
+
+        r13 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: com.android.internal.telephony.LocalLog mEmergencyNumberListLocalLog>;
+
+        $r6 = new java.lang.StringBuilder;
+
+        specialinvoke $r6.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("updateEmergencyNumberPrefixAndNotify:");
+
+        $r8 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.util.List mEmergencyNumberList>;
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r8);
+
+        $r10 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r13.<com.android.internal.telephony.LocalLog: void log(java.lang.String)>($r10);
+
+     label1:
+        specialinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: void notifyEmergencyNumberList()>();
+
+        return;
+    }
+
+    private void updateOtaEmergencyNumberListDatabaseAndNotify()
+    {
+        com.android.internal.telephony.emergency.EmergencyNumberTracker r0;
+        int $i0;
+        java.util.List $r1, $r4, $r9;
+        boolean $z0, $z1;
+        java.lang.StringBuilder $r2, $r7;
+        java.lang.String $r6, $r11;
+        com.android.internal.telephony.LocalLog r12, r14;
+
+        r0 := @this: com.android.internal.telephony.emergency.EmergencyNumberTracker;
+
+        staticinvoke <com.android.internal.telephony.emergency.EmergencyNumberTracker: void logd(java.lang.String)>("updateOtaEmergencyNumberListDatabaseAndNotify(): receiving Emegency Number database OTA update");
+
+        $i0 = specialinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: int cacheOtaEmergencyNumberDatabase()>();
+
+        if $i0 == -1 goto label3;
+
+        $r1 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.util.List mEmergencyNumberListFromDatabase>;
+
+        specialinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: void writeUpdatedEmergencyNumberListMetrics(java.util.List)>($r1);
+
+        $z0 = <com.android.internal.telephony.emergency.EmergencyNumberTracker: boolean DBG>;
+
+        if $z0 != 0 goto label1;
+
+        r12 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: com.android.internal.telephony.LocalLog mEmergencyNumberListDatabaseLocalLog>;
+
+        $r7 = new java.lang.StringBuilder;
+
+        specialinvoke $r7.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("updateOtaEmergencyNumberListDatabaseAndNotify:");
+
+        $r9 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.util.List mEmergencyNumberListFromDatabase>;
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r9);
+
+        $r11 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r12.<com.android.internal.telephony.LocalLog: void log(java.lang.String)>($r11);
+
+     label1:
+        specialinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: void updateEmergencyNumberList()>();
+
+        $z1 = <com.android.internal.telephony.emergency.EmergencyNumberTracker: boolean DBG>;
+
+        if $z1 != 0 goto label2;
+
+        r14 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: com.android.internal.telephony.LocalLog mEmergencyNumberListLocalLog>;
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("updateOtaEmergencyNumberListDatabaseAndNotify:");
+
+        $r4 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.util.List mEmergencyNumberList>;
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r4);
+
+        $r6 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r14.<com.android.internal.telephony.LocalLog: void log(java.lang.String)>($r6);
+
+     label2:
+        specialinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: void notifyEmergencyNumberList()>();
+
+     label3:
+        return;
+    }
+
+    private void updateRadioEmergencyNumberListAndNotify(java.util.List)
+    {
+        com.android.internal.telephony.emergency.EmergencyNumberTracker r0;
+        com.android.internal.telephony.LocalLog r1, r23;
+        java.lang.StringBuilder $r2, $r15, r22, r24;
+        java.lang.String $r5, $r10, $r13, $r19;
+        java.util.List $r6, $r8, r20;
+        boolean $z0, $z1, $z2;
+        java.lang.NullPointerException $r14;
+
+        r0 := @this: com.android.internal.telephony.emergency.EmergencyNumberTracker;
+
+        r20 := @parameter0: java.util.List;
+
+        staticinvoke <java.util.Collections: void sort(java.util.List)>(r20);
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("updateRadioEmergencyNumberListAndNotify(): receiving ");
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r20);
+
+        $r5 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.internal.telephony.emergency.EmergencyNumberTracker: void logd(java.lang.String)>($r5);
+
+        $r6 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.util.List mEmergencyNumberListFromRadio>;
+
+        $z0 = interfaceinvoke r20.<java.util.List: boolean equals(java.lang.Object)>($r6);
+
+        if $z0 != 0 goto label6;
+
+     label1:
+        staticinvoke <android.telephony.emergency.EmergencyNumber: void mergeSameNumbersInEmergencyNumberList(java.util.List)>(r20);
+
+        specialinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: void writeUpdatedEmergencyNumberListMetrics(java.util.List)>(r20);
+
+        r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.util.List mEmergencyNumberListFromRadio> = r20;
+
+        $z1 = <com.android.internal.telephony.emergency.EmergencyNumberTracker: boolean DBG>;
+
+        if $z1 != 0 goto label2;
+
+        r1 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: com.android.internal.telephony.LocalLog mEmergencyNumberListRadioLocalLog>;
+
+        r22 = new java.lang.StringBuilder;
+
+        specialinvoke r22.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r22.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("updateRadioEmergencyNumberList:");
+
+        virtualinvoke r22.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r20);
+
+        $r13 = virtualinvoke r22.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<com.android.internal.telephony.LocalLog: void log(java.lang.String)>($r13);
+
+     label2:
+        specialinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: void updateEmergencyNumberList()>();
+
+        $z2 = <com.android.internal.telephony.emergency.EmergencyNumberTracker: boolean DBG>;
+
+        if $z2 != 0 goto label3;
+
+        r23 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: com.android.internal.telephony.LocalLog mEmergencyNumberListLocalLog>;
+
+        r24 = new java.lang.StringBuilder;
+
+        specialinvoke r24.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r24.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("updateRadioEmergencyNumberListAndNotify:");
+
+        $r8 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.util.List mEmergencyNumberList>;
+
+        virtualinvoke r24.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r8);
+
+        $r10 = virtualinvoke r24.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r23.<com.android.internal.telephony.LocalLog: void log(java.lang.String)>($r10);
+
+     label3:
+        specialinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: void notifyEmergencyNumberList()>();
+
+     label4:
+        goto label6;
+
+     label5:
+        $r14 := @caughtexception;
+
+        $r15 = new java.lang.StringBuilder;
+
+        specialinvoke $r15.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r15.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("updateRadioEmergencyNumberListAndNotify() Phone already destroyed: ");
+
+        virtualinvoke $r15.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r14);
+
+        virtualinvoke $r15.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" EmergencyNumberList not notified");
+
+        $r19 = virtualinvoke $r15.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.internal.telephony.emergency.EmergencyNumberTracker: void loge(java.lang.String)>($r19);
+
+     label6:
+        return;
+
+        catch java.lang.NullPointerException from label1 to label2 with label5;
+        catch java.lang.NullPointerException from label2 to label3 with label5;
+        catch java.lang.NullPointerException from label3 to label4 with label5;
+    }
+
+    private void writeUpdatedEmergencyNumberListMetrics(java.util.List)
+    {
+        com.android.internal.telephony.emergency.EmergencyNumberTracker r0;
+        java.util.Iterator r1;
+        boolean $z0;
+        java.lang.Object $r2;
+        com.android.internal.telephony.metrics.TelephonyMetrics $r3;
+        com.android.internal.telephony.Phone $r4;
+        int $i0, $i1;
+        java.util.List r5;
+        android.telephony.emergency.EmergencyNumber r6;
+
+        r0 := @this: com.android.internal.telephony.emergency.EmergencyNumberTracker;
+
+        r5 := @parameter0: java.util.List;
+
+        if r5 != null goto label1;
+
+        return;
+
+     label1:
+        r1 = interfaceinvoke r5.<java.util.List: java.util.Iterator iterator()>();
+
+     label2:
+        $z0 = interfaceinvoke r1.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label3;
+
+        $r2 = interfaceinvoke r1.<java.util.Iterator: java.lang.Object next()>();
+
+        r6 = (android.telephony.emergency.EmergencyNumber) $r2;
+
+        $r3 = staticinvoke <com.android.internal.telephony.metrics.TelephonyMetrics: com.android.internal.telephony.metrics.TelephonyMetrics getInstance()>();
+
+        $r4 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: com.android.internal.telephony.Phone mPhone>;
+
+        $i0 = virtualinvoke $r4.<com.android.internal.telephony.Phone: int getPhoneId()>();
+
+        $i1 = virtualinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: int getEmergencyNumberDbVersion()>();
+
+        virtualinvoke $r3.<com.android.internal.telephony.metrics.TelephonyMetrics: void writeEmergencyNumberUpdateEvent(int,android.telephony.emergency.EmergencyNumber,int)>($i0, r6, $i1);
+
+        goto label2;
+
+     label3:
+        return;
+    }
+
+    public void dump(java.io.FileDescriptor, java.io.PrintWriter, java.lang.String[])
+    {
+        com.android.internal.telephony.emergency.EmergencyNumberTracker r0;
+        java.lang.String[] r1;
+        int i0, $i1, $i2, $i3;
+        com.android.internal.telephony.IndentingPrintWriter $r3;
+        java.lang.StringBuilder $r4, $r10, $r15, $r36, $r39, $r44;
+        com.android.internal.telephony.Phone $r6, $r35, $r46;
+        com.android.internal.telephony.HalVersion $r7;
+        java.lang.String $r9, $r12, $r14, $r18, $r41, $r43, $r49, r58;
+        com.android.internal.telephony.LocalLog $r20, $r23, $r26, $r29, $r32;
+        com.android.internal.telephony.SubscriptionController $r34;
+        java.util.List $r51;
+        java.io.FileDescriptor r53;
+        java.io.PrintWriter r54;
+
+        r0 := @this: com.android.internal.telephony.emergency.EmergencyNumberTracker;
+
+        r53 := @parameter0: java.io.FileDescriptor;
+
+        r54 := @parameter1: java.io.PrintWriter;
+
+        r1 := @parameter2: java.lang.String[];
+
+        $r3 = new com.android.internal.telephony.IndentingPrintWriter;
+
+        specialinvoke $r3.<com.android.internal.telephony.IndentingPrintWriter: void <init>(java.io.Writer,java.lang.String)>(r54, "  ");
+
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" Hal Version:");
+
+        $r6 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: com.android.internal.telephony.Phone mPhone>;
+
+        $r7 = virtualinvoke $r6.<com.android.internal.telephony.Phone: com.android.internal.telephony.HalVersion getHalVersion()>();
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r7);
+
+        $r9 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke $r3.<com.android.internal.telephony.IndentingPrintWriter: void println(java.lang.String)>($r9);
+
+        virtualinvoke $r3.<com.android.internal.telephony.IndentingPrintWriter: void println(java.lang.String)>(" ========================================= ");
+
+        $r10 = new java.lang.StringBuilder;
+
+        specialinvoke $r10.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" Country Iso:");
+
+        $r12 = virtualinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.lang.String getEmergencyCountryIso()>();
+
+        virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r12);
+
+        $r14 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke $r3.<com.android.internal.telephony.IndentingPrintWriter: void println(java.lang.String)>($r14);
+
+        virtualinvoke $r3.<com.android.internal.telephony.IndentingPrintWriter: void println(java.lang.String)>(" ========================================= ");
+
+        $r15 = new java.lang.StringBuilder;
+
+        specialinvoke $r15.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r15.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" Database Version:");
+
+        $i1 = virtualinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: int getEmergencyNumberDbVersion()>();
+
+        virtualinvoke $r15.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i1);
+
+        $r18 = virtualinvoke $r15.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke $r3.<com.android.internal.telephony.IndentingPrintWriter: void println(java.lang.String)>($r18);
+
+        virtualinvoke $r3.<com.android.internal.telephony.IndentingPrintWriter: void println(java.lang.String)>(" ========================================= ");
+
+        virtualinvoke $r3.<com.android.internal.telephony.IndentingPrintWriter: void println(java.lang.String)>("mEmergencyNumberListDatabaseLocalLog:");
+
+        virtualinvoke $r3.<com.android.internal.telephony.IndentingPrintWriter: com.android.internal.telephony.IndentingPrintWriter increaseIndent()>();
+
+        $r20 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: com.android.internal.telephony.LocalLog mEmergencyNumberListDatabaseLocalLog>;
+
+        virtualinvoke $r20.<com.android.internal.telephony.LocalLog: void dump(java.io.FileDescriptor,java.io.PrintWriter,java.lang.String[])>(r53, r54, r1);
+
+        virtualinvoke $r3.<com.android.internal.telephony.IndentingPrintWriter: com.android.internal.telephony.IndentingPrintWriter decreaseIndent()>();
+
+        virtualinvoke $r3.<com.android.internal.telephony.IndentingPrintWriter: void println(java.lang.String)>(" ========================================= ");
+
+        virtualinvoke $r3.<com.android.internal.telephony.IndentingPrintWriter: void println(java.lang.String)>("mEmergencyNumberListRadioLocalLog:");
+
+        virtualinvoke $r3.<com.android.internal.telephony.IndentingPrintWriter: com.android.internal.telephony.IndentingPrintWriter increaseIndent()>();
+
+        $r23 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: com.android.internal.telephony.LocalLog mEmergencyNumberListRadioLocalLog>;
+
+        virtualinvoke $r23.<com.android.internal.telephony.LocalLog: void dump(java.io.FileDescriptor,java.io.PrintWriter,java.lang.String[])>(r53, r54, r1);
+
+        virtualinvoke $r3.<com.android.internal.telephony.IndentingPrintWriter: com.android.internal.telephony.IndentingPrintWriter decreaseIndent()>();
+
+        virtualinvoke $r3.<com.android.internal.telephony.IndentingPrintWriter: void println(java.lang.String)>(" ========================================= ");
+
+        virtualinvoke $r3.<com.android.internal.telephony.IndentingPrintWriter: void println(java.lang.String)>("mEmergencyNumberListPrefixLocalLog:");
+
+        virtualinvoke $r3.<com.android.internal.telephony.IndentingPrintWriter: com.android.internal.telephony.IndentingPrintWriter increaseIndent()>();
+
+        $r26 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: com.android.internal.telephony.LocalLog mEmergencyNumberListPrefixLocalLog>;
+
+        virtualinvoke $r26.<com.android.internal.telephony.LocalLog: void dump(java.io.FileDescriptor,java.io.PrintWriter,java.lang.String[])>(r53, r54, r1);
+
+        virtualinvoke $r3.<com.android.internal.telephony.IndentingPrintWriter: com.android.internal.telephony.IndentingPrintWriter decreaseIndent()>();
+
+        virtualinvoke $r3.<com.android.internal.telephony.IndentingPrintWriter: void println(java.lang.String)>(" ========================================= ");
+
+        virtualinvoke $r3.<com.android.internal.telephony.IndentingPrintWriter: void println(java.lang.String)>("mEmergencyNumberListTestModeLocalLog:");
+
+        virtualinvoke $r3.<com.android.internal.telephony.IndentingPrintWriter: com.android.internal.telephony.IndentingPrintWriter increaseIndent()>();
+
+        $r29 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: com.android.internal.telephony.LocalLog mEmergencyNumberListTestModeLocalLog>;
+
+        virtualinvoke $r29.<com.android.internal.telephony.LocalLog: void dump(java.io.FileDescriptor,java.io.PrintWriter,java.lang.String[])>(r53, r54, r1);
+
+        virtualinvoke $r3.<com.android.internal.telephony.IndentingPrintWriter: com.android.internal.telephony.IndentingPrintWriter decreaseIndent()>();
+
+        virtualinvoke $r3.<com.android.internal.telephony.IndentingPrintWriter: void println(java.lang.String)>(" ========================================= ");
+
+        virtualinvoke $r3.<com.android.internal.telephony.IndentingPrintWriter: void println(java.lang.String)>("mEmergencyNumberListLocalLog (valid >= 1.4 HAL):");
+
+        virtualinvoke $r3.<com.android.internal.telephony.IndentingPrintWriter: com.android.internal.telephony.IndentingPrintWriter increaseIndent()>();
+
+        $r32 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: com.android.internal.telephony.LocalLog mEmergencyNumberListLocalLog>;
+
+        virtualinvoke $r32.<com.android.internal.telephony.LocalLog: void dump(java.io.FileDescriptor,java.io.PrintWriter,java.lang.String[])>(r53, r54, r1);
+
+        virtualinvoke $r3.<com.android.internal.telephony.IndentingPrintWriter: com.android.internal.telephony.IndentingPrintWriter decreaseIndent()>();
+
+        virtualinvoke $r3.<com.android.internal.telephony.IndentingPrintWriter: void println(java.lang.String)>(" ========================================= ");
+
+        $r34 = staticinvoke <com.android.internal.telephony.SubscriptionController: com.android.internal.telephony.SubscriptionController getInstance()>();
+
+        $r35 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: com.android.internal.telephony.Phone mPhone>;
+
+        $i2 = virtualinvoke $r35.<com.android.internal.telephony.Phone: int getSubId()>();
+
+        i0 = virtualinvoke $r34.<com.android.internal.telephony.SubscriptionController: int getSlotIndex(int)>($i2);
+
+        r58 = "ril.ecclist";
+
+        if i0 > 0 goto label1;
+
+        goto label2;
+
+     label1:
+        $r36 = new java.lang.StringBuilder;
+
+        specialinvoke $r36.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r36.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("ril.ecclist");
+
+        virtualinvoke $r36.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        r58 = virtualinvoke $r36.<java.lang.StringBuilder: java.lang.String toString()>();
+
+     label2:
+        $r39 = new java.lang.StringBuilder;
+
+        specialinvoke $r39.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r39.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" ril.ecclist: ");
+
+        $r41 = staticinvoke <android.os.SystemProperties: java.lang.String get(java.lang.String,java.lang.String)>(r58, "");
+
+        virtualinvoke $r39.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r41);
+
+        $r43 = virtualinvoke $r39.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke $r3.<com.android.internal.telephony.IndentingPrintWriter: void println(java.lang.String)>($r43);
+
+        virtualinvoke $r3.<com.android.internal.telephony.IndentingPrintWriter: void println(java.lang.String)>(" ========================================= ");
+
+        $r44 = new java.lang.StringBuilder;
+
+        specialinvoke $r44.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r44.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Emergency Number List for Phone(");
+
+        $r46 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: com.android.internal.telephony.Phone mPhone>;
+
+        $i3 = virtualinvoke $r46.<com.android.internal.telephony.Phone: int getPhoneId()>();
+
+        virtualinvoke $r44.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i3);
+
+        virtualinvoke $r44.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(")");
+
+        $r49 = virtualinvoke $r44.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke $r3.<com.android.internal.telephony.IndentingPrintWriter: void println(java.lang.String)>($r49);
+
+        virtualinvoke $r3.<com.android.internal.telephony.IndentingPrintWriter: com.android.internal.telephony.IndentingPrintWriter increaseIndent()>();
+
+        $r51 = virtualinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.util.List getEmergencyNumberList()>();
+
+        virtualinvoke $r3.<com.android.internal.telephony.IndentingPrintWriter: void println(java.lang.Object)>($r51);
+
+        virtualinvoke $r3.<com.android.internal.telephony.IndentingPrintWriter: com.android.internal.telephony.IndentingPrintWriter decreaseIndent()>();
+
+        virtualinvoke $r3.<com.android.internal.telephony.IndentingPrintWriter: void println(java.lang.String)>(" ========================================= ");
+
+        virtualinvoke $r3.<com.android.internal.telephony.IndentingPrintWriter: void flush()>();
+
+        return;
+    }
+
+    public void executeEmergencyNumberTestModeCommand(int, android.telephony.emergency.EmergencyNumber)
+    {
+        com.android.internal.telephony.emergency.EmergencyNumberTracker r0;
+        int i0;
+        android.telephony.emergency.EmergencyNumber r1;
+        android.os.Message $r2;
+
+        r0 := @this: com.android.internal.telephony.emergency.EmergencyNumberTracker;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: android.telephony.emergency.EmergencyNumber;
+
+        $r2 = virtualinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: android.os.Message obtainMessage(int,int,int,java.lang.Object)>(3, i0, 0, r1);
+
+        virtualinvoke $r2.<android.os.Message: void sendToTarget()>();
+
+        return;
+    }
+
+    public int getEmergencyCallRouting(java.lang.String)
+    {
+        com.android.internal.telephony.emergency.EmergencyNumberTracker r0;
+        java.lang.String r1, $r5, r6;
+        android.telephony.emergency.EmergencyNumber r2;
+        java.util.List $r3;
+        boolean $z0, $z1, $z2;
+        java.lang.Object $r4;
+        int $i0;
+        java.util.Iterator r7;
+
+        r0 := @this: com.android.internal.telephony.emergency.EmergencyNumberTracker;
+
+        r6 := @parameter0: java.lang.String;
+
+        r1 = staticinvoke <android.telephony.PhoneNumberUtils: java.lang.String stripSeparators(java.lang.String)>(r6);
+
+        $r3 = virtualinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.util.List getEmergencyNumberList()>();
+
+        r7 = interfaceinvoke $r3.<java.util.List: java.util.Iterator iterator()>();
+
+     label1:
+        $z0 = interfaceinvoke r7.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label3;
+
+        $r4 = interfaceinvoke r7.<java.util.Iterator: java.lang.Object next()>();
+
+        r2 = (android.telephony.emergency.EmergencyNumber) $r4;
+
+        $r5 = virtualinvoke r2.<android.telephony.emergency.EmergencyNumber: java.lang.String getNumber()>();
+
+        $z1 = virtualinvoke $r5.<java.lang.String: boolean equals(java.lang.Object)>(r1);
+
+        if $z1 == 0 goto label2;
+
+        $z2 = virtualinvoke r2.<android.telephony.emergency.EmergencyNumber: boolean isFromSources(int)>(16);
+
+        if $z2 == 0 goto label2;
+
+        $i0 = virtualinvoke r2.<android.telephony.emergency.EmergencyNumber: int getEmergencyCallRouting()>();
+
+        return $i0;
+
+     label2:
+        goto label1;
+
+     label3:
+        return 0;
+    }
+
+    public java.lang.String getEmergencyCountryIso()
+    {
+        com.android.internal.telephony.emergency.EmergencyNumberTracker r0;
+        java.lang.String $r1;
+
+        r0 := @this: com.android.internal.telephony.emergency.EmergencyNumberTracker;
+
+        $r1 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.lang.String mCountryIso>;
+
+        return $r1;
+    }
+
+    public android.telephony.emergency.EmergencyNumber getEmergencyNumber(java.lang.String)
+    {
+        com.android.internal.telephony.emergency.EmergencyNumberTracker r0;
+        java.util.Iterator r1;
+        android.telephony.emergency.EmergencyNumber r2;
+        java.util.List $r3;
+        boolean $z0, $z1;
+        java.lang.Object $r4;
+        java.lang.String $r5, r6, r7;
+
+        r0 := @this: com.android.internal.telephony.emergency.EmergencyNumberTracker;
+
+        r6 := @parameter0: java.lang.String;
+
+        r7 = staticinvoke <android.telephony.PhoneNumberUtils: java.lang.String stripSeparators(java.lang.String)>(r6);
+
+        $r3 = virtualinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.util.List getEmergencyNumberList()>();
+
+        r1 = interfaceinvoke $r3.<java.util.List: java.util.Iterator iterator()>();
+
+     label1:
+        $z0 = interfaceinvoke r1.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label3;
+
+        $r4 = interfaceinvoke r1.<java.util.Iterator: java.lang.Object next()>();
+
+        r2 = (android.telephony.emergency.EmergencyNumber) $r4;
+
+        $r5 = virtualinvoke r2.<android.telephony.emergency.EmergencyNumber: java.lang.String getNumber()>();
+
+        $z1 = virtualinvoke $r5.<java.lang.String: boolean equals(java.lang.Object)>(r7);
+
+        if $z1 == 0 goto label2;
+
+        return r2;
+
+     label2:
+        goto label1;
+
+     label3:
+        return null;
+    }
+
+    public int getEmergencyNumberDbVersion()
+    {
+        com.android.internal.telephony.emergency.EmergencyNumberTracker r0;
+        int $i0;
+
+        r0 := @this: com.android.internal.telephony.emergency.EmergencyNumberTracker;
+
+        $i0 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: int mCurrentDatabaseVersion>;
+
+        return $i0;
+    }
+
+    public java.util.List getEmergencyNumberList()
+    {
+        com.android.internal.telephony.emergency.EmergencyNumberTracker r0;
+        java.util.List $r1, $r2, $r3, $r4;
+        boolean $z0;
+
+        r0 := @this: com.android.internal.telephony.emergency.EmergencyNumberTracker;
+
+        $r1 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.util.List mEmergencyNumberListFromRadio>;
+
+        $z0 = interfaceinvoke $r1.<java.util.List: boolean isEmpty()>();
+
+        if $z0 != 0 goto label1;
+
+        $r3 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.util.List mEmergencyNumberList>;
+
+        $r4 = staticinvoke <java.util.Collections: java.util.List unmodifiableList(java.util.List)>($r3);
+
+        return $r4;
+
+     label1:
+        $r2 = specialinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.util.List getEmergencyNumberListFromEccListDatabaseAndTest()>();
+
+        return $r2;
+    }
+
+    public java.util.List getEmergencyNumberListTestMode()
+    {
+        com.android.internal.telephony.emergency.EmergencyNumberTracker r0;
+        java.util.List $r1, $r2;
+
+        r0 := @this: com.android.internal.telephony.emergency.EmergencyNumberTracker;
+
+        $r1 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.util.List mEmergencyNumberListFromTestMode>;
+
+        $r2 = staticinvoke <java.util.Collections: java.util.List unmodifiableList(java.util.List)>($r1);
+
+        return $r2;
+    }
+
+    public int getEmergencyServiceCategories(java.lang.String)
+    {
+        com.android.internal.telephony.emergency.EmergencyNumberTracker r0;
+        java.lang.String r1, $r5, r6;
+        java.util.Iterator r2;
+        java.util.List $r3;
+        boolean $z0, $z1, $z2, $z3;
+        java.lang.Object $r4;
+        int $i0;
+        android.telephony.emergency.EmergencyNumber r7;
+
+        r0 := @this: com.android.internal.telephony.emergency.EmergencyNumberTracker;
+
+        r6 := @parameter0: java.lang.String;
+
+        r1 = staticinvoke <android.telephony.PhoneNumberUtils: java.lang.String stripSeparators(java.lang.String)>(r6);
+
+        $r3 = virtualinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.util.List getEmergencyNumberList()>();
+
+        r2 = interfaceinvoke $r3.<java.util.List: java.util.Iterator iterator()>();
+
+     label1:
+        $z0 = interfaceinvoke r2.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label4;
+
+        $r4 = interfaceinvoke r2.<java.util.Iterator: java.lang.Object next()>();
+
+        r7 = (android.telephony.emergency.EmergencyNumber) $r4;
+
+        $r5 = virtualinvoke r7.<android.telephony.emergency.EmergencyNumber: java.lang.String getNumber()>();
+
+        $z1 = virtualinvoke $r5.<java.lang.String: boolean equals(java.lang.Object)>(r1);
+
+        if $z1 == 0 goto label3;
+
+        $z2 = virtualinvoke r7.<android.telephony.emergency.EmergencyNumber: boolean isFromSources(int)>(1);
+
+        if $z2 != 0 goto label2;
+
+        $z3 = virtualinvoke r7.<android.telephony.emergency.EmergencyNumber: boolean isFromSources(int)>(2);
+
+        if $z3 == 0 goto label3;
+
+     label2:
+        $i0 = virtualinvoke r7.<android.telephony.emergency.EmergencyNumber: int getEmergencyServiceCategoryBitmask()>();
+
+        return $i0;
+
+     label3:
+        goto label1;
+
+     label4:
+        return 0;
+    }
+
+    public java.util.List getRadioEmergencyNumberList()
+    {
+        com.android.internal.telephony.emergency.EmergencyNumberTracker r0;
+        java.util.ArrayList $r1;
+        java.util.List $r2;
+
+        r0 := @this: com.android.internal.telephony.emergency.EmergencyNumberTracker;
+
+        $r1 = new java.util.ArrayList;
+
+        $r2 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.util.List mEmergencyNumberListFromRadio>;
+
+        specialinvoke $r1.<java.util.ArrayList: void <init>(java.util.Collection)>($r2);
+
+        return $r1;
+    }
+
+    public void handleMessage(android.os.Message)
+    {
+        com.android.internal.telephony.emergency.EmergencyNumberTracker r0;
+        android.os.AsyncResult r1;
+        int $i0, $i1, $i2;
+        java.lang.Object $r2, $r3, $r5, $r6, $r8, $r9, $r11, $r12, $r14, $r15, $r16, $r23;
+        android.os.ParcelFileDescriptor $r4;
+        java.lang.String[] $r7;
+        android.telephony.emergency.EmergencyNumber $r10;
+        java.lang.String $r13, $r21;
+        java.lang.StringBuilder $r17;
+        java.lang.Throwable $r19, $r22;
+        java.util.List $r24;
+        android.os.Message r25;
+
+        r0 := @this: com.android.internal.telephony.emergency.EmergencyNumberTracker;
+
+        r25 := @parameter0: android.os.Message;
+
+        $i0 = r25.<android.os.Message: int what>;
+
+        tableswitch($i0)
+        {
+            case 1: goto label11;
+            case 2: goto label09;
+            case 3: goto label07;
+            case 4: goto label05;
+            case 5: goto label04;
+            case 6: goto label02;
+            default: goto label01;
+        };
+
+     label01:
+        goto label14;
+
+     label02:
+        $r2 = r25.<android.os.Message: java.lang.Object obj>;
+
+        if $r2 != null goto label03;
+
+        specialinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: void overrideOtaEmergencyNumberDbFilePath(android.os.ParcelFileDescriptor)>(null);
+
+        goto label14;
+
+     label03:
+        $r3 = r25.<android.os.Message: java.lang.Object obj>;
+
+        $r4 = (android.os.ParcelFileDescriptor) $r3;
+
+        specialinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: void overrideOtaEmergencyNumberDbFilePath(android.os.ParcelFileDescriptor)>($r4);
+
+        goto label14;
+
+     label04:
+        specialinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: void updateOtaEmergencyNumberListDatabaseAndNotify()>();
+
+        goto label14;
+
+     label05:
+        $r5 = r25.<android.os.Message: java.lang.Object obj>;
+
+        if $r5 != null goto label06;
+
+        staticinvoke <com.android.internal.telephony.emergency.EmergencyNumberTracker: void loge(java.lang.String)>("EVENT_UPDATE_EMERGENCY_NUMBER_PREFIX: Result from onCarrierConfigChanged is null.");
+
+        goto label14;
+
+     label06:
+        $r6 = r25.<android.os.Message: java.lang.Object obj>;
+
+        $r7 = (java.lang.String[]) $r6;
+
+        specialinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: void updateEmergencyNumberPrefixAndNotify(java.lang.String[])>($r7);
+
+        goto label14;
+
+     label07:
+        $r8 = r25.<android.os.Message: java.lang.Object obj>;
+
+        if $r8 != null goto label08;
+
+        $i2 = r25.<android.os.Message: int arg1>;
+
+        if $i2 == 3 goto label08;
+
+        staticinvoke <com.android.internal.telephony.emergency.EmergencyNumberTracker: void loge(java.lang.String)>("EVENT_UPDATE_EMERGENCY_NUMBER_TEST_MODE: Result from executeEmergencyNumberTestModeCommand is null.");
+
+        goto label14;
+
+     label08:
+        $i1 = r25.<android.os.Message: int arg1>;
+
+        $r9 = r25.<android.os.Message: java.lang.Object obj>;
+
+        $r10 = (android.telephony.emergency.EmergencyNumber) $r9;
+
+        specialinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: void updateEmergencyNumberListTestModeAndNotify(int,android.telephony.emergency.EmergencyNumber)>($i1, $r10);
+
+        goto label14;
+
+     label09:
+        $r11 = r25.<android.os.Message: java.lang.Object obj>;
+
+        if $r11 != null goto label10;
+
+        staticinvoke <com.android.internal.telephony.emergency.EmergencyNumberTracker: void loge(java.lang.String)>("EVENT_UPDATE_DB_COUNTRY_ISO_CHANGED: Result from UpdateCountryIso is null.");
+
+        goto label14;
+
+     label10:
+        $r12 = r25.<android.os.Message: java.lang.Object obj>;
+
+        $r13 = (java.lang.String) $r12;
+
+        specialinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: void updateEmergencyNumberListDatabaseAndNotify(java.lang.String)>($r13);
+
+        goto label14;
+
+     label11:
+        $r14 = r25.<android.os.Message: java.lang.Object obj>;
+
+        r1 = (android.os.AsyncResult) $r14;
+
+        $r15 = r1.<android.os.AsyncResult: java.lang.Object result>;
+
+        if $r15 != null goto label12;
+
+        staticinvoke <com.android.internal.telephony.emergency.EmergencyNumberTracker: void loge(java.lang.String)>("EVENT_UNSOL_EMERGENCY_NUMBER_LIST: Result from RIL is null.");
+
+        goto label14;
+
+     label12:
+        $r16 = r1.<android.os.AsyncResult: java.lang.Object result>;
+
+        if $r16 == null goto label13;
+
+        $r22 = r1.<android.os.AsyncResult: java.lang.Throwable exception>;
+
+        if $r22 != null goto label13;
+
+        $r23 = r1.<android.os.AsyncResult: java.lang.Object result>;
+
+        $r24 = (java.util.List) $r23;
+
+        specialinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: void updateRadioEmergencyNumberListAndNotify(java.util.List)>($r24);
+
+        goto label14;
+
+     label13:
+        $r17 = new java.lang.StringBuilder;
+
+        specialinvoke $r17.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r17.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("EVENT_UNSOL_EMERGENCY_NUMBER_LIST: Exception from RIL : ");
+
+        $r19 = r1.<android.os.AsyncResult: java.lang.Throwable exception>;
+
+        virtualinvoke $r17.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r19);
+
+        $r21 = virtualinvoke $r17.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.internal.telephony.emergency.EmergencyNumberTracker: void loge(java.lang.String)>($r21);
+
+     label14:
+        return;
+    }
+
+    public boolean isEmergencyNumber(java.lang.String, boolean)
+    {
+        com.android.internal.telephony.emergency.EmergencyNumberTracker r0;
+        java.lang.String r1, $r6, $r7, $r8, $r9, $r10, r11;
+        android.telephony.emergency.EmergencyNumber r2;
+        java.util.List $r3, $r4;
+        boolean $z1, $z2, $z3, $z4, $z5, $z6, $z7, $z8, $z9, $z10, z11, z12;
+        java.lang.Object $r5;
+        java.util.Iterator r12;
+
+        r0 := @this: com.android.internal.telephony.emergency.EmergencyNumberTracker;
+
+        r11 := @parameter0: java.lang.String;
+
+        z11 := @parameter1: boolean;
+
+        if r11 != null goto label01;
+
+        return 0;
+
+     label01:
+        r1 = staticinvoke <android.telephony.PhoneNumberUtils: java.lang.String stripSeparators(java.lang.String)>(r11);
+
+        $r3 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.util.List mEmergencyNumberListFromRadio>;
+
+        $z1 = interfaceinvoke $r3.<java.util.List: boolean isEmpty()>();
+
+        if $z1 != 0 goto label09;
+
+        $r4 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.util.List mEmergencyNumberList>;
+
+        r12 = interfaceinvoke $r4.<java.util.List: java.util.Iterator iterator()>();
+
+     label02:
+        $z5 = interfaceinvoke r12.<java.util.Iterator: boolean hasNext()>();
+
+        if $z5 == 0 goto label08;
+
+        $r5 = interfaceinvoke r12.<java.util.Iterator: java.lang.Object next()>();
+
+        r2 = (android.telephony.emergency.EmergencyNumber) $r5;
+
+        $r6 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.lang.String mCountryIso>;
+
+        $z6 = virtualinvoke $r6.<java.lang.String: boolean equals(java.lang.Object)>("br");
+
+        if $z6 != 0 goto label04;
+
+        $r9 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.lang.String mCountryIso>;
+
+        $z9 = virtualinvoke $r9.<java.lang.String: boolean equals(java.lang.Object)>("cl");
+
+        if $z9 != 0 goto label04;
+
+        $r10 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.lang.String mCountryIso>;
+
+        $z10 = virtualinvoke $r10.<java.lang.String: boolean equals(java.lang.Object)>("ni");
+
+        if $z10 == 0 goto label03;
+
+        goto label04;
+
+     label03:
+        goto label05;
+
+     label04:
+        z11 = 1;
+
+     label05:
+        if z11 == 0 goto label06;
+
+        $r8 = virtualinvoke r2.<android.telephony.emergency.EmergencyNumber: java.lang.String getNumber()>();
+
+        $z8 = virtualinvoke $r8.<java.lang.String: boolean equals(java.lang.Object)>(r1);
+
+        if $z8 == 0 goto label07;
+
+        return 1;
+
+     label06:
+        $r7 = virtualinvoke r2.<android.telephony.emergency.EmergencyNumber: java.lang.String getNumber()>();
+
+        $z7 = virtualinvoke r1.<java.lang.String: boolean startsWith(java.lang.String)>($r7);
+
+        if $z7 == 0 goto label07;
+
+        return 1;
+
+     label07:
+        goto label02;
+
+     label08:
+        return 0;
+
+     label09:
+        $z2 = specialinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: boolean isEmergencyNumberFromEccList(java.lang.String,boolean)>(r1, z11);
+
+        if $z2 != 0 goto label10;
+
+        $z3 = specialinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: boolean isEmergencyNumberFromDatabase(java.lang.String)>(r1);
+
+        if $z3 != 0 goto label10;
+
+        z12 = 0;
+
+        $z4 = specialinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: boolean isEmergencyNumberForTest(java.lang.String)>(r1);
+
+        if $z4 == 0 goto label11;
+
+     label10:
+        z12 = 1;
+
+     label11:
+        return z12;
+    }
+
+    public void resetOtaEmergencyNumberDbFilePath()
+    {
+        com.android.internal.telephony.emergency.EmergencyNumberTracker r0;
+        android.os.Message $r1;
+
+        r0 := @this: com.android.internal.telephony.emergency.EmergencyNumberTracker;
+
+        $r1 = virtualinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: android.os.Message obtainMessage(int,java.lang.Object)>(6, null);
+
+        virtualinvoke $r1.<android.os.Message: void sendToTarget()>();
+
+        return;
+    }
+
+    public void updateEmergencyCountryIsoAllPhones(java.lang.String)
+    {
+        com.android.internal.telephony.emergency.EmergencyNumberTracker r0, $r4, r7;
+        java.lang.String r1, $r5;
+        com.android.internal.telephony.Phone[] r2;
+        int i0, $i1, $i2, i3;
+        com.android.internal.telephony.Phone $r3, r6;
+        boolean $z0, $z1;
+
+        r0 := @this: com.android.internal.telephony.emergency.EmergencyNumberTracker;
+
+        r1 := @parameter0: java.lang.String;
+
+        i3 = 0;
+
+        r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: boolean mIsCountrySetByAnotherSub> = 0;
+
+        virtualinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: void updateEmergencyNumberDatabaseCountryChange(java.lang.String)>(r1);
+
+        r2 = staticinvoke <com.android.internal.telephony.PhoneFactory: com.android.internal.telephony.Phone[] getPhones()>();
+
+        i0 = lengthof r2;
+
+     label1:
+        if i3 >= i0 goto label5;
+
+        r6 = r2[i3];
+
+        $i1 = virtualinvoke r6.<com.android.internal.telephony.Phone: int getPhoneId()>();
+
+        $r3 = r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: com.android.internal.telephony.Phone mPhone>;
+
+        $i2 = virtualinvoke $r3.<com.android.internal.telephony.Phone: int getPhoneId()>();
+
+        if $i1 != $i2 goto label2;
+
+        goto label4;
+
+     label2:
+        if r6 == null goto label4;
+
+        $r4 = virtualinvoke r6.<com.android.internal.telephony.Phone: com.android.internal.telephony.emergency.EmergencyNumberTracker getEmergencyNumberTracker()>();
+
+        if $r4 == null goto label4;
+
+        r7 = virtualinvoke r6.<com.android.internal.telephony.Phone: com.android.internal.telephony.emergency.EmergencyNumberTracker getEmergencyNumberTracker()>();
+
+        $r5 = virtualinvoke r7.<com.android.internal.telephony.emergency.EmergencyNumberTracker: java.lang.String getEmergencyCountryIso()>();
+
+        $z0 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>($r5);
+
+        if $z0 != 0 goto label3;
+
+        $z1 = r7.<com.android.internal.telephony.emergency.EmergencyNumberTracker: boolean mIsCountrySetByAnotherSub>;
+
+        if $z1 == 0 goto label4;
+
+     label3:
+        r7.<com.android.internal.telephony.emergency.EmergencyNumberTracker: boolean mIsCountrySetByAnotherSub> = 1;
+
+        virtualinvoke r7.<com.android.internal.telephony.emergency.EmergencyNumberTracker: void updateEmergencyNumberDatabaseCountryChange(java.lang.String)>(r1);
+
+     label4:
+        i3 = i3 + 1;
+
+        goto label1;
+
+     label5:
+        return;
+    }
+
+    public void updateEmergencyNumberDatabaseCountryChange(java.lang.String)
+    {
+        com.android.internal.telephony.emergency.EmergencyNumberTracker r0;
+        java.lang.String r1;
+        android.os.Message $r2;
+
+        r0 := @this: com.android.internal.telephony.emergency.EmergencyNumberTracker;
+
+        r1 := @parameter0: java.lang.String;
+
+        $r2 = virtualinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: android.os.Message obtainMessage(int,java.lang.Object)>(2, r1);
+
+        virtualinvoke $r2.<android.os.Message: void sendToTarget()>();
+
+        return;
+    }
+
+    public void updateOtaEmergencyNumberDatabase()
+    {
+        com.android.internal.telephony.emergency.EmergencyNumberTracker r0;
+        android.os.Message $r1;
+
+        r0 := @this: com.android.internal.telephony.emergency.EmergencyNumberTracker;
+
+        $r1 = virtualinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: android.os.Message obtainMessage(int)>(5);
+
+        virtualinvoke $r1.<android.os.Message: void sendToTarget()>();
+
+        return;
+    }
+
+    public void updateOtaEmergencyNumberDbFilePath(android.os.ParcelFileDescriptor)
+    {
+        com.android.internal.telephony.emergency.EmergencyNumberTracker r0;
+        android.os.ParcelFileDescriptor r1;
+        android.os.Message $r2;
+
+        r0 := @this: com.android.internal.telephony.emergency.EmergencyNumberTracker;
+
+        r1 := @parameter0: android.os.ParcelFileDescriptor;
+
+        $r2 = virtualinvoke r0.<com.android.internal.telephony.emergency.EmergencyNumberTracker: android.os.Message obtainMessage(int,java.lang.Object)>(6, r1);
+
+        virtualinvoke $r2.<android.os.Message: void sendToTarget()>();
+
+        return;
+    }
+}

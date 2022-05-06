@@ -1,0 +1,2047 @@
+final class android.app.SharedPreferencesImpl extends java.lang.Object implements android.content.SharedPreferences
+{
+    private static final long CALLBACK_ON_CLEAR_CHANGE;
+    private static final java.lang.Object CONTENT;
+    private static final boolean DEBUG;
+    private static final long MAX_FSYNC_DURATION_MILLIS;
+    private static final java.lang.String TAG;
+    private final java.io.File mBackupFile;
+    private long mCurrentMemoryStateGeneration;
+    private long mDiskStateGeneration;
+    private int mDiskWritesInFlight;
+    private final java.io.File mFile;
+    private final java.util.WeakHashMap mListeners;
+    private boolean mLoaded;
+    private final java.lang.Object mLock;
+    private java.util.Map mMap;
+    private final int mMode;
+    private int mNumSync;
+    private long mStatSize;
+    private android.system.StructTimespec mStatTimestamp;
+    private final com.android.internal.util.ExponentiallyBucketedHistogram mSyncTimes;
+    private java.lang.Throwable mThrowable;
+    private final java.lang.Object mWritingToDiskLock;
+
+    static void <clinit>()
+    {
+        java.lang.Object $r0;
+
+        <android.app.SharedPreferencesImpl: java.lang.String TAG> = "SharedPreferencesImpl";
+
+        <android.app.SharedPreferencesImpl: long MAX_FSYNC_DURATION_MILLIS> = 256L;
+
+        <android.app.SharedPreferencesImpl: boolean DEBUG> = 0;
+
+        <android.app.SharedPreferencesImpl: long CALLBACK_ON_CLEAR_CHANGE> = 119147584L;
+
+        $r0 = new java.lang.Object;
+
+        specialinvoke $r0.<java.lang.Object: void <init>()>();
+
+        <android.app.SharedPreferencesImpl: java.lang.Object CONTENT> = $r0;
+
+        return;
+    }
+
+    void <init>(java.io.File, int)
+    {
+        android.app.SharedPreferencesImpl r0;
+        java.io.File r1, $r6;
+        int i0;
+        java.lang.Object $r2, $r3;
+        java.util.WeakHashMap $r4;
+        com.android.internal.util.ExponentiallyBucketedHistogram $r5;
+
+        r0 := @this: android.app.SharedPreferencesImpl;
+
+        r1 := @parameter0: java.io.File;
+
+        i0 := @parameter1: int;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        $r2 = new java.lang.Object;
+
+        specialinvoke $r2.<java.lang.Object: void <init>()>();
+
+        r0.<android.app.SharedPreferencesImpl: java.lang.Object mLock> = $r2;
+
+        $r3 = new java.lang.Object;
+
+        specialinvoke $r3.<java.lang.Object: void <init>()>();
+
+        r0.<android.app.SharedPreferencesImpl: java.lang.Object mWritingToDiskLock> = $r3;
+
+        r0.<android.app.SharedPreferencesImpl: int mDiskWritesInFlight> = 0;
+
+        r0.<android.app.SharedPreferencesImpl: boolean mLoaded> = 0;
+
+        $r4 = new java.util.WeakHashMap;
+
+        specialinvoke $r4.<java.util.WeakHashMap: void <init>()>();
+
+        r0.<android.app.SharedPreferencesImpl: java.util.WeakHashMap mListeners> = $r4;
+
+        $r5 = new com.android.internal.util.ExponentiallyBucketedHistogram;
+
+        specialinvoke $r5.<com.android.internal.util.ExponentiallyBucketedHistogram: void <init>(int)>(16);
+
+        r0.<android.app.SharedPreferencesImpl: com.android.internal.util.ExponentiallyBucketedHistogram mSyncTimes> = $r5;
+
+        r0.<android.app.SharedPreferencesImpl: int mNumSync> = 0;
+
+        r0.<android.app.SharedPreferencesImpl: java.io.File mFile> = r1;
+
+        $r6 = staticinvoke <android.app.SharedPreferencesImpl: java.io.File makeBackupFile(java.io.File)>(r1);
+
+        r0.<android.app.SharedPreferencesImpl: java.io.File mBackupFile> = $r6;
+
+        r0.<android.app.SharedPreferencesImpl: int mMode> = i0;
+
+        r0.<android.app.SharedPreferencesImpl: boolean mLoaded> = 0;
+
+        r0.<android.app.SharedPreferencesImpl: java.util.Map mMap> = null;
+
+        r0.<android.app.SharedPreferencesImpl: java.lang.Throwable mThrowable> = null;
+
+        specialinvoke r0.<android.app.SharedPreferencesImpl: void startLoadFromDisk()>();
+
+        return;
+    }
+
+    static void access$000(android.app.SharedPreferencesImpl)
+    {
+        android.app.SharedPreferencesImpl r0;
+
+        r0 := @parameter0: android.app.SharedPreferencesImpl;
+
+        specialinvoke r0.<android.app.SharedPreferencesImpl: void loadFromDisk()>();
+
+        return;
+    }
+
+    static void access$100(android.app.SharedPreferencesImpl, android.app.SharedPreferencesImpl$MemoryCommitResult, java.lang.Runnable)
+    {
+        android.app.SharedPreferencesImpl r0;
+        android.app.SharedPreferencesImpl$MemoryCommitResult r1;
+        java.lang.Runnable r2;
+
+        r0 := @parameter0: android.app.SharedPreferencesImpl;
+
+        r1 := @parameter1: android.app.SharedPreferencesImpl$MemoryCommitResult;
+
+        r2 := @parameter2: java.lang.Runnable;
+
+        specialinvoke r0.<android.app.SharedPreferencesImpl: void enqueueDiskWrite(android.app.SharedPreferencesImpl$MemoryCommitResult,java.lang.Runnable)>(r1, r2);
+
+        return;
+    }
+
+    static java.lang.Object access$200(android.app.SharedPreferencesImpl)
+    {
+        android.app.SharedPreferencesImpl r0;
+        java.lang.Object $r1;
+
+        r0 := @parameter0: android.app.SharedPreferencesImpl;
+
+        $r1 = r0.<android.app.SharedPreferencesImpl: java.lang.Object mLock>;
+
+        return $r1;
+    }
+
+    static int access$300(android.app.SharedPreferencesImpl)
+    {
+        android.app.SharedPreferencesImpl r0;
+        int $i0;
+
+        r0 := @parameter0: android.app.SharedPreferencesImpl;
+
+        $i0 = r0.<android.app.SharedPreferencesImpl: int mDiskWritesInFlight>;
+
+        return $i0;
+    }
+
+    static int access$308(android.app.SharedPreferencesImpl)
+    {
+        android.app.SharedPreferencesImpl r0;
+        int i0, $i1;
+
+        r0 := @parameter0: android.app.SharedPreferencesImpl;
+
+        i0 = r0.<android.app.SharedPreferencesImpl: int mDiskWritesInFlight>;
+
+        $i1 = i0 + 1;
+
+        r0.<android.app.SharedPreferencesImpl: int mDiskWritesInFlight> = $i1;
+
+        return i0;
+    }
+
+    static int access$310(android.app.SharedPreferencesImpl)
+    {
+        android.app.SharedPreferencesImpl r0;
+        int i0, $i1;
+
+        r0 := @parameter0: android.app.SharedPreferencesImpl;
+
+        i0 = r0.<android.app.SharedPreferencesImpl: int mDiskWritesInFlight>;
+
+        $i1 = i0 - 1;
+
+        r0.<android.app.SharedPreferencesImpl: int mDiskWritesInFlight> = $i1;
+
+        return i0;
+    }
+
+    static java.util.Map access$400(android.app.SharedPreferencesImpl)
+    {
+        android.app.SharedPreferencesImpl r0;
+        java.util.Map $r1;
+
+        r0 := @parameter0: android.app.SharedPreferencesImpl;
+
+        $r1 = r0.<android.app.SharedPreferencesImpl: java.util.Map mMap>;
+
+        return $r1;
+    }
+
+    static java.util.Map access$402(android.app.SharedPreferencesImpl, java.util.Map)
+    {
+        android.app.SharedPreferencesImpl r0;
+        java.util.Map r1;
+
+        r0 := @parameter0: android.app.SharedPreferencesImpl;
+
+        r1 := @parameter1: java.util.Map;
+
+        r0.<android.app.SharedPreferencesImpl: java.util.Map mMap> = r1;
+
+        return r1;
+    }
+
+    static java.util.WeakHashMap access$500(android.app.SharedPreferencesImpl)
+    {
+        android.app.SharedPreferencesImpl r0;
+        java.util.WeakHashMap $r1;
+
+        r0 := @parameter0: android.app.SharedPreferencesImpl;
+
+        $r1 = r0.<android.app.SharedPreferencesImpl: java.util.WeakHashMap mListeners>;
+
+        return $r1;
+    }
+
+    static long access$600(android.app.SharedPreferencesImpl)
+    {
+        android.app.SharedPreferencesImpl r0;
+        long $l0;
+
+        r0 := @parameter0: android.app.SharedPreferencesImpl;
+
+        $l0 = r0.<android.app.SharedPreferencesImpl: long mCurrentMemoryStateGeneration>;
+
+        return $l0;
+    }
+
+    static long access$608(android.app.SharedPreferencesImpl)
+    {
+        android.app.SharedPreferencesImpl r0;
+        long l0, $l1;
+
+        r0 := @parameter0: android.app.SharedPreferencesImpl;
+
+        l0 = r0.<android.app.SharedPreferencesImpl: long mCurrentMemoryStateGeneration>;
+
+        $l1 = 1L + l0;
+
+        r0.<android.app.SharedPreferencesImpl: long mCurrentMemoryStateGeneration> = $l1;
+
+        return l0;
+    }
+
+    static java.lang.Object access$800(android.app.SharedPreferencesImpl)
+    {
+        android.app.SharedPreferencesImpl r0;
+        java.lang.Object $r1;
+
+        r0 := @parameter0: android.app.SharedPreferencesImpl;
+
+        $r1 = r0.<android.app.SharedPreferencesImpl: java.lang.Object mWritingToDiskLock>;
+
+        return $r1;
+    }
+
+    static void access$900(android.app.SharedPreferencesImpl, android.app.SharedPreferencesImpl$MemoryCommitResult, boolean)
+    {
+        android.app.SharedPreferencesImpl r0;
+        android.app.SharedPreferencesImpl$MemoryCommitResult r1;
+        boolean z0;
+
+        r0 := @parameter0: android.app.SharedPreferencesImpl;
+
+        r1 := @parameter1: android.app.SharedPreferencesImpl$MemoryCommitResult;
+
+        z0 := @parameter2: boolean;
+
+        specialinvoke r0.<android.app.SharedPreferencesImpl: void writeToFile(android.app.SharedPreferencesImpl$MemoryCommitResult,boolean)>(r1, z0);
+
+        return;
+    }
+
+    private void awaitLoadedLocked()
+    {
+        android.app.SharedPreferencesImpl r0;
+        boolean $z0, $z1;
+        java.lang.Throwable $r2, $r4, $r7;
+        java.lang.IllegalStateException $r3;
+        java.lang.Object $r5;
+        dalvik.system.BlockGuard$Policy $r6;
+
+        r0 := @this: android.app.SharedPreferencesImpl;
+
+        $z0 = r0.<android.app.SharedPreferencesImpl: boolean mLoaded>;
+
+        if $z0 != 0 goto label1;
+
+        $r6 = staticinvoke <dalvik.system.BlockGuard: dalvik.system.BlockGuard$Policy getThreadPolicy()>();
+
+        interfaceinvoke $r6.<dalvik.system.BlockGuard$Policy: void onReadFromDisk()>();
+
+     label1:
+        $z1 = r0.<android.app.SharedPreferencesImpl: boolean mLoaded>;
+
+        if $z1 != 0 goto label6;
+
+     label2:
+        $r5 = r0.<android.app.SharedPreferencesImpl: java.lang.Object mLock>;
+
+        virtualinvoke $r5.<java.lang.Object: void wait()>();
+
+     label3:
+        goto label5;
+
+     label4:
+        $r7 := @caughtexception;
+
+     label5:
+        goto label1;
+
+     label6:
+        $r2 = r0.<android.app.SharedPreferencesImpl: java.lang.Throwable mThrowable>;
+
+        if $r2 != null goto label7;
+
+        return;
+
+     label7:
+        $r3 = new java.lang.IllegalStateException;
+
+        $r4 = r0.<android.app.SharedPreferencesImpl: java.lang.Throwable mThrowable>;
+
+        specialinvoke $r3.<java.lang.IllegalStateException: void <init>(java.lang.Throwable)>($r4);
+
+        throw $r3;
+
+        catch java.lang.InterruptedException from label2 to label3 with label4;
+    }
+
+    private static java.io.FileOutputStream createFileOutputStream(java.io.File)
+    {
+        java.lang.Throwable $r1, $r4;
+        java.lang.StringBuilder $r2, $r6;
+        java.lang.String $r3, $r5, $r7;
+        boolean $z0;
+        java.io.File r8, r11;
+        java.io.FileOutputStream r9, r10, r13;
+
+        r8 := @parameter0: java.io.File;
+
+     label1:
+        r9 = new java.io.FileOutputStream;
+
+        specialinvoke r9.<java.io.FileOutputStream: void <init>(java.io.File)>(r8);
+
+     label2:
+        r10 = r9;
+
+        goto label8;
+
+     label3:
+        $r4 := @caughtexception;
+
+        r11 = virtualinvoke r8.<java.io.File: java.io.File getParentFile()>();
+
+        $z0 = virtualinvoke r11.<java.io.File: boolean mkdir()>();
+
+        if $z0 != 0 goto label4;
+
+        $r6 = new java.lang.StringBuilder;
+
+        specialinvoke $r6.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Couldn\'t create directory for SharedPreferences file ");
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r8);
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>("SharedPreferencesImpl", $r7);
+
+        return null;
+
+     label4:
+        $r5 = virtualinvoke r11.<java.io.File: java.lang.String getPath()>();
+
+        staticinvoke <android.os.FileUtils: int setPermissions(java.lang.String,int,int,int)>($r5, 505, -1, -1);
+
+     label5:
+        r13 = new java.io.FileOutputStream;
+
+        specialinvoke r13.<java.io.FileOutputStream: void <init>(java.io.File)>(r8);
+
+     label6:
+        r10 = r13;
+
+        goto label8;
+
+     label7:
+        $r1 := @caughtexception;
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Couldn\'t create SharedPreferences file ");
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r8);
+
+        $r3 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("SharedPreferencesImpl", $r3, $r1);
+
+        r10 = null;
+
+     label8:
+        return r10;
+
+        catch java.io.FileNotFoundException from label1 to label2 with label3;
+        catch java.io.FileNotFoundException from label5 to label6 with label7;
+    }
+
+    private void enqueueDiskWrite(android.app.SharedPreferencesImpl$MemoryCommitResult, java.lang.Runnable)
+    {
+        android.app.SharedPreferencesImpl r0;
+        android.app.SharedPreferencesImpl$2 $r1;
+        int $i0;
+        java.lang.Throwable $r2;
+        android.app.SharedPreferencesImpl$MemoryCommitResult r3;
+        java.lang.Runnable r4;
+        boolean z0, z1, z2;
+        java.lang.Object r6;
+
+        r0 := @this: android.app.SharedPreferencesImpl;
+
+        r3 := @parameter0: android.app.SharedPreferencesImpl$MemoryCommitResult;
+
+        r4 := @parameter1: java.lang.Runnable;
+
+        z0 = 0;
+
+        if r4 != null goto label01;
+
+        z1 = 1;
+
+        goto label02;
+
+     label01:
+        z1 = 0;
+
+     label02:
+        $r1 = new android.app.SharedPreferencesImpl$2;
+
+        specialinvoke $r1.<android.app.SharedPreferencesImpl$2: void <init>(android.app.SharedPreferencesImpl,android.app.SharedPreferencesImpl$MemoryCommitResult,boolean,java.lang.Runnable)>(r0, r3, z1, r4);
+
+        if z1 == 0 goto label11;
+
+        r6 = r0.<android.app.SharedPreferencesImpl: java.lang.Object mLock>;
+
+        entermonitor r6;
+
+     label03:
+        $i0 = r0.<android.app.SharedPreferencesImpl: int mDiskWritesInFlight>;
+
+        if $i0 != 1 goto label05;
+
+     label04:
+        z2 = 1;
+
+        goto label06;
+
+     label05:
+        z2 = 0;
+
+     label06:
+        exitmonitor r6;
+
+     label07:
+        if z2 == 0 goto label11;
+
+        interfaceinvoke $r1.<java.lang.Runnable: void run()>();
+
+        return;
+
+     label08:
+        $r2 := @caughtexception;
+
+     label09:
+        exitmonitor r6;
+
+     label10:
+        throw $r2;
+
+     label11:
+        if z1 != 0 goto label12;
+
+        z0 = 1;
+
+     label12:
+        staticinvoke <android.app.QueuedWork: void queue(java.lang.Runnable,boolean)>($r1, z0);
+
+        return;
+
+        catch java.lang.Throwable from label03 to label04 with label08;
+        catch java.lang.Throwable from label06 to label07 with label08;
+        catch java.lang.Throwable from label09 to label10 with label08;
+    }
+
+    private boolean hasFileChangedUnexpectedly()
+    {
+        android.app.SharedPreferencesImpl r0;
+        int i0;
+        dalvik.system.BlockGuard$Policy $r1;
+        java.io.File $r2;
+        java.lang.String $r3;
+        android.system.StructTimespec $r4, $r5;
+        boolean $z0, z1;
+        long $l1, $l2;
+        byte $b3;
+        java.lang.Throwable $r6, $r7, $r8;
+        java.lang.Object r9, r11;
+        android.system.StructStat r10;
+
+        r0 := @this: android.app.SharedPreferencesImpl;
+
+        r9 = r0.<android.app.SharedPreferencesImpl: java.lang.Object mLock>;
+
+        entermonitor r9;
+
+     label01:
+        i0 = r0.<android.app.SharedPreferencesImpl: int mDiskWritesInFlight>;
+
+     label02:
+        z1 = 0;
+
+        if i0 <= 0 goto label05;
+
+     label03:
+        exitmonitor r9;
+
+     label04:
+        return 0;
+
+     label05:
+        exitmonitor r9;
+
+     label06:
+        $r1 = staticinvoke <dalvik.system.BlockGuard: dalvik.system.BlockGuard$Policy getThreadPolicy()>();
+
+        interfaceinvoke $r1.<dalvik.system.BlockGuard$Policy: void onReadFromDisk()>();
+
+        $r2 = r0.<android.app.SharedPreferencesImpl: java.io.File mFile>;
+
+        $r3 = virtualinvoke $r2.<java.io.File: java.lang.String getPath()>();
+
+        r10 = staticinvoke <android.system.Os: android.system.StructStat stat(java.lang.String)>($r3);
+
+     label07:
+        r11 = r0.<android.app.SharedPreferencesImpl: java.lang.Object mLock>;
+
+        entermonitor r11;
+
+     label08:
+        $r5 = r10.<android.system.StructStat: android.system.StructTimespec st_mtim>;
+
+        $r4 = r0.<android.app.SharedPreferencesImpl: android.system.StructTimespec mStatTimestamp>;
+
+        $z0 = virtualinvoke $r5.<android.system.StructTimespec: boolean equals(java.lang.Object)>($r4);
+
+        if $z0 == 0 goto label10;
+
+     label09:
+        $l2 = r0.<android.app.SharedPreferencesImpl: long mStatSize>;
+
+        $l1 = r10.<android.system.StructStat: long st_size>;
+
+        $b3 = $l2 cmp $l1;
+
+        if $b3 == 0 goto label11;
+
+     label10:
+        z1 = 1;
+
+     label11:
+        exitmonitor r11;
+
+     label12:
+        return z1;
+
+     label13:
+        $r6 := @caughtexception;
+
+     label14:
+        exitmonitor r11;
+
+     label15:
+        throw $r6;
+
+     label16:
+        $r8 := @caughtexception;
+
+        return 1;
+
+     label17:
+        $r7 := @caughtexception;
+
+     label18:
+        exitmonitor r9;
+
+     label19:
+        throw $r7;
+
+        catch java.lang.Throwable from label01 to label02 with label17;
+        catch java.lang.Throwable from label03 to label04 with label17;
+        catch java.lang.Throwable from label05 to label06 with label17;
+        catch android.system.ErrnoException from label06 to label07 with label16;
+        catch java.lang.Throwable from label08 to label09 with label13;
+        catch java.lang.Throwable from label09 to label10 with label13;
+        catch java.lang.Throwable from label11 to label12 with label13;
+        catch java.lang.Throwable from label14 to label15 with label13;
+        catch java.lang.Throwable from label18 to label19 with label17;
+    }
+
+    private void loadFromDisk()
+    {
+        android.app.SharedPreferencesImpl r0;
+        boolean z0, $z1, $z2, $z3, $z4;
+        java.io.File $r1, $r2, $r4, $r5, $r7, $r9, $r10, $r11, $r13, $r31, $r34;
+        android.system.StructTimespec $r3;
+        long $l0;
+        java.lang.StringBuilder $r6, r44;
+        java.lang.String $r8, $r14, $r15, $r32;
+        java.lang.Exception $r12;
+        java.lang.Throwable $r16, $r17, $r18, $r19, $r20, $r22, $r23, r45;
+        java.lang.Object $r21, r24, r47, r50;
+        java.util.HashMap r26, r29, r30, r39, r48;
+        android.system.StructStat r27, r28, r33, r46;
+        java.io.BufferedInputStream r35, r36, r37, r41;
+        java.io.FileInputStream r38;
+
+        r0 := @this: android.app.SharedPreferencesImpl;
+
+        r24 = r0.<android.app.SharedPreferencesImpl: java.lang.Object mLock>;
+
+        entermonitor r24;
+
+     label01:
+        $z1 = r0.<android.app.SharedPreferencesImpl: boolean mLoaded>;
+
+        if $z1 == 0 goto label03;
+
+        exitmonitor r24;
+
+     label02:
+        return;
+
+     label03:
+        $r1 = r0.<android.app.SharedPreferencesImpl: java.io.File mBackupFile>;
+
+        $z2 = virtualinvoke $r1.<java.io.File: boolean exists()>();
+
+        if $z2 == 0 goto label04;
+
+        $r9 = r0.<android.app.SharedPreferencesImpl: java.io.File mFile>;
+
+        virtualinvoke $r9.<java.io.File: boolean delete()>();
+
+        $r11 = r0.<android.app.SharedPreferencesImpl: java.io.File mBackupFile>;
+
+        $r10 = r0.<android.app.SharedPreferencesImpl: java.io.File mFile>;
+
+        virtualinvoke $r11.<java.io.File: boolean renameTo(java.io.File)>($r10);
+
+     label04:
+        exitmonitor r24;
+
+     label05:
+        $r2 = r0.<android.app.SharedPreferencesImpl: java.io.File mFile>;
+
+        $z3 = virtualinvoke $r2.<java.io.File: boolean exists()>();
+
+        if $z3 == 0 goto label06;
+
+        $r5 = r0.<android.app.SharedPreferencesImpl: java.io.File mFile>;
+
+        $z4 = virtualinvoke $r5.<java.io.File: boolean canRead()>();
+
+        if $z4 != 0 goto label06;
+
+        $r6 = new java.lang.StringBuilder;
+
+        specialinvoke $r6.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Attempt to read preferences file ");
+
+        $r7 = r0.<android.app.SharedPreferencesImpl: java.io.File mFile>;
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r7);
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" without permission");
+
+        $r8 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("SharedPreferencesImpl", $r8);
+
+     label06:
+        r26 = null;
+
+        r27 = null;
+
+        r28 = null;
+
+        r29 = null;
+
+        r30 = null;
+
+     label07:
+        $r31 = r0.<android.app.SharedPreferencesImpl: java.io.File mFile>;
+
+        $r32 = virtualinvoke $r31.<java.io.File: java.lang.String getPath()>();
+
+        r33 = staticinvoke <android.system.Os: android.system.StructStat stat(java.lang.String)>($r32);
+
+     label08:
+        r29 = null;
+
+        r28 = r33;
+
+        r30 = null;
+
+        r27 = r33;
+
+     label09:
+        $r34 = r0.<android.app.SharedPreferencesImpl: java.io.File mFile>;
+
+        z0 = virtualinvoke $r34.<java.io.File: boolean canRead()>();
+
+     label10:
+        r27 = r33;
+
+        if z0 == 0 goto label42;
+
+        r35 = null;
+
+        r36 = null;
+
+     label11:
+        r37 = new java.io.BufferedInputStream;
+
+     label12:
+        r35 = null;
+
+        r36 = null;
+
+     label13:
+        r38 = new java.io.FileInputStream;
+
+     label14:
+        r35 = null;
+
+        r36 = null;
+
+     label15:
+        $r4 = r0.<android.app.SharedPreferencesImpl: java.io.File mFile>;
+
+        specialinvoke r38.<java.io.FileInputStream: void <init>(java.io.File)>($r4);
+
+     label16:
+        r35 = null;
+
+        r36 = null;
+
+     label17:
+        specialinvoke r37.<java.io.BufferedInputStream: void <init>(java.io.InputStream,int)>(r38, 16384);
+
+     label18:
+        r35 = r37;
+
+        r36 = r37;
+
+     label19:
+        r39 = staticinvoke <com.android.internal.util.XmlUtils: java.util.HashMap readMapXml(java.io.InputStream)>(r37);
+
+     label20:
+        r41 = r37;
+
+        r26 = r39;
+
+     label21:
+        r29 = r26;
+
+        r28 = r33;
+
+        r30 = r26;
+
+        r27 = r33;
+
+     label22:
+        staticinvoke <libcore.io.IoUtils: void closeQuietly(java.lang.AutoCloseable)>(r41);
+
+     label23:
+        r27 = r33;
+
+        goto label42;
+
+     label24:
+        $r16 := @caughtexception;
+
+        goto label36;
+
+     label25:
+        $r12 := @caughtexception;
+
+        r35 = r36;
+
+     label26:
+        r44 = new java.lang.StringBuilder;
+
+     label27:
+        r35 = r36;
+
+     label28:
+        specialinvoke r44.<java.lang.StringBuilder: void <init>()>();
+
+     label29:
+        r35 = r36;
+
+     label30:
+        virtualinvoke r44.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Cannot read ");
+
+     label31:
+        r35 = r36;
+
+     label32:
+        $r13 = r0.<android.app.SharedPreferencesImpl: java.io.File mFile>;
+
+        $r14 = virtualinvoke $r13.<java.io.File: java.lang.String getAbsolutePath()>();
+
+        virtualinvoke r44.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r14);
+
+     label33:
+        r35 = r36;
+
+     label34:
+        $r15 = virtualinvoke r44.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String,java.lang.Throwable)>("SharedPreferencesImpl", $r15, $r12);
+
+     label35:
+        r26 = null;
+
+        r41 = r36;
+
+        goto label21;
+
+     label36:
+        r29 = null;
+
+        r28 = r33;
+
+        r30 = null;
+
+        r27 = r33;
+
+     label37:
+        staticinvoke <libcore.io.IoUtils: void closeQuietly(java.lang.AutoCloseable)>(r35);
+
+     label38:
+        r29 = null;
+
+        r28 = r33;
+
+        r30 = null;
+
+        r27 = r33;
+
+     label39:
+        throw $r16;
+
+     label40:
+        $r19 := @caughtexception;
+
+        r45 = $r19;
+
+        r46 = r28;
+
+        goto label43;
+
+     label41:
+        $r23 := @caughtexception;
+
+        r26 = r30;
+
+     label42:
+        r46 = r27;
+
+        r29 = r26;
+
+        r45 = null;
+
+     label43:
+        r47 = r0.<android.app.SharedPreferencesImpl: java.lang.Object mLock>;
+
+        entermonitor r47;
+
+     label44:
+        r0.<android.app.SharedPreferencesImpl: boolean mLoaded> = 1;
+
+        r0.<android.app.SharedPreferencesImpl: java.lang.Throwable mThrowable> = r45;
+
+     label45:
+        if r45 != null goto label57;
+
+        if r29 == null goto label48;
+
+     label46:
+        r0.<android.app.SharedPreferencesImpl: java.util.Map mMap> = r29;
+
+        $r3 = r46.<android.system.StructStat: android.system.StructTimespec st_mtim>;
+
+        r0.<android.app.SharedPreferencesImpl: android.system.StructTimespec mStatTimestamp> = $r3;
+
+        $l0 = r46.<android.system.StructStat: long st_size>;
+
+        r0.<android.app.SharedPreferencesImpl: long mStatSize> = $l0;
+
+     label47:
+        goto label57;
+
+     label48:
+        r48 = new java.util.HashMap;
+
+        specialinvoke r48.<java.util.HashMap: void <init>()>();
+
+        r0.<android.app.SharedPreferencesImpl: java.util.Map mMap> = r48;
+
+     label49:
+        goto label57;
+
+     label50:
+        $r17 := @caughtexception;
+
+     label51:
+        r0.<android.app.SharedPreferencesImpl: java.lang.Throwable mThrowable> = $r17;
+
+     label52:
+        r50 = r0.<android.app.SharedPreferencesImpl: java.lang.Object mLock>;
+
+     label53:
+        goto label58;
+
+     label54:
+        $r20 := @caughtexception;
+
+     label55:
+        $r21 = r0.<android.app.SharedPreferencesImpl: java.lang.Object mLock>;
+
+        virtualinvoke $r21.<java.lang.Object: void notifyAll()>();
+
+     label56:
+        throw $r20;
+
+     label57:
+        r50 = r0.<android.app.SharedPreferencesImpl: java.lang.Object mLock>;
+
+     label58:
+        virtualinvoke r50.<java.lang.Object: void notifyAll()>();
+
+     label59:
+        exitmonitor r47;
+
+     label60:
+        return;
+
+     label61:
+        $r22 := @caughtexception;
+
+     label62:
+        exitmonitor r47;
+
+     label63:
+        throw $r22;
+
+     label64:
+        $r18 := @caughtexception;
+
+     label65:
+        exitmonitor r24;
+
+     label66:
+        throw $r18;
+
+        catch java.lang.Throwable from label01 to label02 with label64;
+        catch java.lang.Throwable from label03 to label04 with label64;
+        catch java.lang.Throwable from label04 to label05 with label64;
+        catch android.system.ErrnoException from label07 to label08 with label41;
+        catch java.lang.Throwable from label07 to label08 with label40;
+        catch android.system.ErrnoException from label09 to label10 with label41;
+        catch java.lang.Throwable from label09 to label10 with label40;
+        catch java.lang.Exception from label11 to label12 with label25;
+        catch java.lang.Throwable from label11 to label12 with label24;
+        catch java.lang.Exception from label13 to label14 with label25;
+        catch java.lang.Throwable from label13 to label14 with label24;
+        catch java.lang.Exception from label15 to label16 with label25;
+        catch java.lang.Throwable from label15 to label16 with label24;
+        catch java.lang.Exception from label17 to label18 with label25;
+        catch java.lang.Throwable from label17 to label18 with label24;
+        catch java.lang.Exception from label19 to label20 with label25;
+        catch java.lang.Throwable from label19 to label20 with label24;
+        catch android.system.ErrnoException from label22 to label23 with label41;
+        catch java.lang.Throwable from label22 to label23 with label40;
+        catch java.lang.Throwable from label26 to label27 with label24;
+        catch java.lang.Throwable from label28 to label29 with label24;
+        catch java.lang.Throwable from label30 to label31 with label24;
+        catch java.lang.Throwable from label32 to label33 with label24;
+        catch java.lang.Throwable from label34 to label35 with label24;
+        catch android.system.ErrnoException from label37 to label38 with label41;
+        catch java.lang.Throwable from label37 to label38 with label40;
+        catch android.system.ErrnoException from label39 to label40 with label41;
+        catch java.lang.Throwable from label39 to label40 with label40;
+        catch java.lang.Throwable from label44 to label45 with label61;
+        catch java.lang.Throwable from label46 to label47 with label50;
+        catch java.lang.Throwable from label48 to label49 with label50;
+        catch java.lang.Throwable from label51 to label52 with label54;
+        catch java.lang.Throwable from label52 to label53 with label61;
+        catch java.lang.Throwable from label55 to label56 with label61;
+        catch java.lang.Throwable from label56 to label57 with label61;
+        catch java.lang.Throwable from label57 to label58 with label61;
+        catch java.lang.Throwable from label58 to label59 with label61;
+        catch java.lang.Throwable from label59 to label60 with label61;
+        catch java.lang.Throwable from label62 to label63 with label61;
+        catch java.lang.Throwable from label65 to label66 with label64;
+    }
+
+    static java.io.File makeBackupFile(java.io.File)
+    {
+        java.io.File r0, $r6;
+        java.lang.StringBuilder $r2;
+        java.lang.String $r3, $r7;
+
+        r0 := @parameter0: java.io.File;
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        $r3 = virtualinvoke r0.<java.io.File: java.lang.String getPath()>();
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r3);
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(".bak");
+
+        $r6 = new java.io.File;
+
+        $r7 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r6.<java.io.File: void <init>(java.lang.String)>($r7);
+
+        return $r6;
+    }
+
+    private void startLoadFromDisk()
+    {
+        android.app.SharedPreferencesImpl r0;
+        java.lang.Object r1;
+        android.app.SharedPreferencesImpl$1 $r3;
+        java.lang.Throwable $r4;
+
+        r0 := @this: android.app.SharedPreferencesImpl;
+
+        r1 = r0.<android.app.SharedPreferencesImpl: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        r0.<android.app.SharedPreferencesImpl: boolean mLoaded> = 0;
+
+        exitmonitor r1;
+
+     label2:
+        $r3 = new android.app.SharedPreferencesImpl$1;
+
+        specialinvoke $r3.<android.app.SharedPreferencesImpl$1: void <init>(android.app.SharedPreferencesImpl,java.lang.String)>(r0, "SharedPreferencesImpl-load");
+
+        virtualinvoke $r3.<android.app.SharedPreferencesImpl$1: void start()>();
+
+        return;
+
+     label3:
+        $r4 := @caughtexception;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        throw $r4;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    private void writeToFile(android.app.SharedPreferencesImpl$MemoryCommitResult, boolean)
+    {
+        android.app.SharedPreferencesImpl r0;
+        boolean z0, $z2, $z5, $z7, $z8, $z9, z10;
+        long l0, $l2, $l3, $l8, $l9, $l12, l17, l18, l19;
+        java.io.File $r1, $r3, $r5, $r8, $r11, $r15, $r16, $r17, $r18, $r21, $r24, $r28, $r29, $r32, $r44;
+        java.util.Map $r2;
+        java.lang.String $r4, $r6, $r14, $r26, $r34;
+        int $i1, $i4, $i5, $i6, i20;
+        android.system.StructTimespec $r7;
+        com.android.internal.util.ExponentiallyBucketedHistogram $r9, r50;
+        byte $b7, $b10, $b13;
+        java.lang.StringBuilder $r19, $r30, r51;
+        java.lang.Throwable $r27, $r35, $r36, $r37, $r38, $r39, r42;
+        android.app.SharedPreferencesImpl$MemoryCommitResult r40;
+        java.lang.Object r41, r47;
+        java.io.FileOutputStream r45;
+        android.system.StructStat r46;
+
+        r0 := @this: android.app.SharedPreferencesImpl;
+
+        r40 := @parameter0: android.app.SharedPreferencesImpl$MemoryCommitResult;
+
+        z0 := @parameter1: boolean;
+
+        $r1 = r0.<android.app.SharedPreferencesImpl: java.io.File mFile>;
+
+        $z2 = virtualinvoke $r1.<java.io.File: boolean exists()>();
+
+        if $z2 == 0 goto label15;
+
+        z10 = 0;
+
+        $l9 = r0.<android.app.SharedPreferencesImpl: long mDiskStateGeneration>;
+
+        $l8 = r40.<android.app.SharedPreferencesImpl$MemoryCommitResult: long memoryStateGeneration>;
+
+        $b10 = $l9 cmp $l8;
+
+        if $b10 >= 0 goto label11;
+
+        if z0 == 0 goto label01;
+
+        z10 = 1;
+
+        goto label12;
+
+     label01:
+        r41 = r0.<android.app.SharedPreferencesImpl: java.lang.Object mLock>;
+
+        entermonitor r41;
+
+     label02:
+        l17 = r0.<android.app.SharedPreferencesImpl: long mCurrentMemoryStateGeneration>;
+
+     label03:
+        $l12 = r40.<android.app.SharedPreferencesImpl$MemoryCommitResult: long memoryStateGeneration>;
+
+        $b13 = l17 cmp $l12;
+
+        if $b13 != 0 goto label05;
+
+     label04:
+        z10 = 1;
+
+     label05:
+        exitmonitor r41;
+
+     label06:
+        goto label12;
+
+     label07:
+        $r35 := @caughtexception;
+
+        r42 = $r35;
+
+        goto label09;
+
+     label08:
+        $r39 := @caughtexception;
+
+        r42 = $r39;
+
+     label09:
+        exitmonitor r41;
+
+     label10:
+        throw r42;
+
+     label11:
+        z10 = 0;
+
+     label12:
+        if z10 != 0 goto label13;
+
+        virtualinvoke r40.<android.app.SharedPreferencesImpl$MemoryCommitResult: void setDiskWriteResult(boolean,boolean)>(0, 1);
+
+        return;
+
+     label13:
+        $r15 = r0.<android.app.SharedPreferencesImpl: java.io.File mBackupFile>;
+
+        $z5 = virtualinvoke $r15.<java.io.File: boolean exists()>();
+
+        if $z5 != 0 goto label14;
+
+        $r18 = r0.<android.app.SharedPreferencesImpl: java.io.File mFile>;
+
+        $r17 = r0.<android.app.SharedPreferencesImpl: java.io.File mBackupFile>;
+
+        $z7 = virtualinvoke $r18.<java.io.File: boolean renameTo(java.io.File)>($r17);
+
+        if $z7 != 0 goto label15;
+
+        $r19 = new java.lang.StringBuilder;
+
+        specialinvoke $r19.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Couldn\'t rename file ");
+
+        $r21 = r0.<android.app.SharedPreferencesImpl: java.io.File mFile>;
+
+        virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r21);
+
+        virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" to backup file ");
+
+        $r24 = r0.<android.app.SharedPreferencesImpl: java.io.File mBackupFile>;
+
+        virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r24);
+
+        $r26 = virtualinvoke $r19.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>("SharedPreferencesImpl", $r26);
+
+        virtualinvoke r40.<android.app.SharedPreferencesImpl$MemoryCommitResult: void setDiskWriteResult(boolean,boolean)>(0, 0);
+
+        return;
+
+     label14:
+        $r16 = r0.<android.app.SharedPreferencesImpl: java.io.File mFile>;
+
+        virtualinvoke $r16.<java.io.File: boolean delete()>();
+
+        goto label15;
+
+     label15:
+        $r44 = r0.<android.app.SharedPreferencesImpl: java.io.File mFile>;
+
+        r45 = staticinvoke <android.app.SharedPreferencesImpl: java.io.FileOutputStream createFileOutputStream(java.io.File)>($r44);
+
+     label16:
+        if r45 != null goto label19;
+
+     label17:
+        virtualinvoke r40.<android.app.SharedPreferencesImpl$MemoryCommitResult: void setDiskWriteResult(boolean,boolean)>(0, 0);
+
+     label18:
+        return;
+
+     label19:
+        $r2 = r40.<android.app.SharedPreferencesImpl$MemoryCommitResult: java.util.Map mapToWriteToDisk>;
+
+        staticinvoke <com.android.internal.util.XmlUtils: void writeMapXml(java.util.Map,java.io.OutputStream)>($r2, r45);
+
+        l18 = staticinvoke <java.lang.System: long currentTimeMillis()>();
+
+        staticinvoke <android.os.FileUtils: boolean sync(java.io.FileOutputStream)>(r45);
+
+        l0 = staticinvoke <java.lang.System: long currentTimeMillis()>();
+
+        virtualinvoke r45.<java.io.FileOutputStream: void close()>();
+
+        $r3 = r0.<android.app.SharedPreferencesImpl: java.io.File mFile>;
+
+        $r4 = virtualinvoke $r3.<java.io.File: java.lang.String getPath()>();
+
+        $i1 = r0.<android.app.SharedPreferencesImpl: int mMode>;
+
+        staticinvoke <android.app.ContextImpl: void setFilePermissionsFromMode(java.lang.String,int,int)>($r4, $i1, 0);
+
+     label20:
+        $r5 = r0.<android.app.SharedPreferencesImpl: java.io.File mFile>;
+
+        $r6 = virtualinvoke $r5.<java.io.File: java.lang.String getPath()>();
+
+        r46 = staticinvoke <android.system.Os: android.system.StructStat stat(java.lang.String)>($r6);
+
+        r47 = r0.<android.app.SharedPreferencesImpl: java.lang.Object mLock>;
+
+        entermonitor r47;
+
+     label21:
+        $r7 = r46.<android.system.StructStat: android.system.StructTimespec st_mtim>;
+
+        r0.<android.app.SharedPreferencesImpl: android.system.StructTimespec mStatTimestamp> = $r7;
+
+        $l2 = r46.<android.system.StructStat: long st_size>;
+
+        r0.<android.app.SharedPreferencesImpl: long mStatSize> = $l2;
+
+        exitmonitor r47;
+
+     label22:
+        goto label27;
+
+     label23:
+        $r37 := @caughtexception;
+
+     label24:
+        exitmonitor r47;
+
+     label25:
+        throw $r37;
+
+     label26:
+        $r36 := @caughtexception;
+
+     label27:
+        $r8 = r0.<android.app.SharedPreferencesImpl: java.io.File mBackupFile>;
+
+        virtualinvoke $r8.<java.io.File: boolean delete()>();
+
+        $l3 = r40.<android.app.SharedPreferencesImpl$MemoryCommitResult: long memoryStateGeneration>;
+
+        r0.<android.app.SharedPreferencesImpl: long mDiskStateGeneration> = $l3;
+
+        virtualinvoke r40.<android.app.SharedPreferencesImpl$MemoryCommitResult: void setDiskWriteResult(boolean,boolean)>(1, 1);
+
+     label28:
+        l19 = l0 - l18;
+
+     label29:
+        $r9 = r0.<android.app.SharedPreferencesImpl: com.android.internal.util.ExponentiallyBucketedHistogram mSyncTimes>;
+
+        $i4 = (int) l19;
+
+        virtualinvoke $r9.<com.android.internal.util.ExponentiallyBucketedHistogram: void add(int)>($i4);
+
+        $i5 = r0.<android.app.SharedPreferencesImpl: int mNumSync>;
+
+        i20 = $i5 + 1;
+
+        r0.<android.app.SharedPreferencesImpl: int mNumSync> = i20;
+
+     label30:
+        $i6 = i20 % 1024;
+
+        if $i6 == 0 goto label31;
+
+        $b7 = l19 cmp 256L;
+
+        if $b7 <= 0 goto label32;
+
+     label31:
+        r50 = r0.<android.app.SharedPreferencesImpl: com.android.internal.util.ExponentiallyBucketedHistogram mSyncTimes>;
+
+        r51 = new java.lang.StringBuilder;
+
+        specialinvoke r51.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r51.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Time required to fsync ");
+
+        $r11 = r0.<android.app.SharedPreferencesImpl: java.io.File mFile>;
+
+        virtualinvoke r51.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r11);
+
+        virtualinvoke r51.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(": ");
+
+        $r14 = virtualinvoke r51.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r50.<com.android.internal.util.ExponentiallyBucketedHistogram: void log(java.lang.String,java.lang.CharSequence)>("SharedPreferencesImpl", $r14);
+
+     label32:
+        return;
+
+     label33:
+        $r38 := @caughtexception;
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String,java.lang.Throwable)>("SharedPreferencesImpl", "writeToFile: Got exception:", $r38);
+
+        goto label35;
+
+     label34:
+        $r27 := @caughtexception;
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String,java.lang.Throwable)>("SharedPreferencesImpl", "writeToFile: Got exception:", $r27);
+
+     label35:
+        $r28 = r0.<android.app.SharedPreferencesImpl: java.io.File mFile>;
+
+        $z8 = virtualinvoke $r28.<java.io.File: boolean exists()>();
+
+        if $z8 == 0 goto label36;
+
+        $r29 = r0.<android.app.SharedPreferencesImpl: java.io.File mFile>;
+
+        $z9 = virtualinvoke $r29.<java.io.File: boolean delete()>();
+
+        if $z9 != 0 goto label36;
+
+        $r30 = new java.lang.StringBuilder;
+
+        specialinvoke $r30.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r30.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Couldn\'t clean up partially-written file ");
+
+        $r32 = r0.<android.app.SharedPreferencesImpl: java.io.File mFile>;
+
+        virtualinvoke $r30.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r32);
+
+        $r34 = virtualinvoke $r30.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>("SharedPreferencesImpl", $r34);
+
+     label36:
+        virtualinvoke r40.<android.app.SharedPreferencesImpl$MemoryCommitResult: void setDiskWriteResult(boolean,boolean)>(0, 0);
+
+        return;
+
+        catch java.lang.Throwable from label02 to label03 with label08;
+        catch java.lang.Throwable from label03 to label04 with label07;
+        catch java.lang.Throwable from label05 to label06 with label07;
+        catch java.lang.Throwable from label09 to label10 with label07;
+        catch org.xmlpull.v1.XmlPullParserException from label15 to label16 with label34;
+        catch java.io.IOException from label15 to label16 with label33;
+        catch org.xmlpull.v1.XmlPullParserException from label17 to label18 with label34;
+        catch java.io.IOException from label17 to label18 with label33;
+        catch org.xmlpull.v1.XmlPullParserException from label19 to label20 with label34;
+        catch java.io.IOException from label19 to label20 with label33;
+        catch android.system.ErrnoException from label20 to label21 with label26;
+        catch org.xmlpull.v1.XmlPullParserException from label20 to label21 with label34;
+        catch java.io.IOException from label20 to label21 with label33;
+        catch java.lang.Throwable from label21 to label22 with label23;
+        catch java.lang.Throwable from label24 to label25 with label23;
+        catch android.system.ErrnoException from label25 to label26 with label26;
+        catch org.xmlpull.v1.XmlPullParserException from label25 to label26 with label34;
+        catch java.io.IOException from label25 to label26 with label33;
+        catch org.xmlpull.v1.XmlPullParserException from label27 to label28 with label34;
+        catch java.io.IOException from label27 to label28 with label33;
+        catch org.xmlpull.v1.XmlPullParserException from label29 to label30 with label34;
+        catch java.io.IOException from label29 to label30 with label33;
+        catch org.xmlpull.v1.XmlPullParserException from label31 to label32 with label34;
+        catch java.io.IOException from label31 to label32 with label33;
+    }
+
+    public boolean contains(java.lang.String)
+    {
+        android.app.SharedPreferencesImpl r0;
+        java.lang.Object r1;
+        boolean z0;
+        java.util.Map $r2;
+        java.lang.Throwable $r3;
+        java.lang.String r4;
+
+        r0 := @this: android.app.SharedPreferencesImpl;
+
+        r4 := @parameter0: java.lang.String;
+
+        r1 = r0.<android.app.SharedPreferencesImpl: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        specialinvoke r0.<android.app.SharedPreferencesImpl: void awaitLoadedLocked()>();
+
+        $r2 = r0.<android.app.SharedPreferencesImpl: java.util.Map mMap>;
+
+        z0 = interfaceinvoke $r2.<java.util.Map: boolean containsKey(java.lang.Object)>(r4);
+
+        exitmonitor r1;
+
+     label2:
+        return z0;
+
+     label3:
+        $r3 := @caughtexception;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        throw $r3;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    public android.content.SharedPreferences$Editor edit()
+    {
+        android.app.SharedPreferencesImpl r0;
+        java.lang.Object r1;
+        android.app.SharedPreferencesImpl$EditorImpl $r3;
+        java.lang.Throwable $r4;
+
+        r0 := @this: android.app.SharedPreferencesImpl;
+
+        r1 = r0.<android.app.SharedPreferencesImpl: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        specialinvoke r0.<android.app.SharedPreferencesImpl: void awaitLoadedLocked()>();
+
+        exitmonitor r1;
+
+     label2:
+        $r3 = new android.app.SharedPreferencesImpl$EditorImpl;
+
+        specialinvoke $r3.<android.app.SharedPreferencesImpl$EditorImpl: void <init>(android.app.SharedPreferencesImpl)>(r0);
+
+        return $r3;
+
+     label3:
+        $r4 := @caughtexception;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        throw $r4;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    public java.util.Map getAll()
+    {
+        android.app.SharedPreferencesImpl r0;
+        java.lang.Object r1;
+        java.util.Map $r2;
+        java.lang.Throwable $r3;
+        java.util.HashMap r4;
+
+        r0 := @this: android.app.SharedPreferencesImpl;
+
+        r1 = r0.<android.app.SharedPreferencesImpl: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        specialinvoke r0.<android.app.SharedPreferencesImpl: void awaitLoadedLocked()>();
+
+        r4 = new java.util.HashMap;
+
+        $r2 = r0.<android.app.SharedPreferencesImpl: java.util.Map mMap>;
+
+        specialinvoke r4.<java.util.HashMap: void <init>(java.util.Map)>($r2);
+
+        exitmonitor r1;
+
+     label2:
+        return r4;
+
+     label3:
+        $r3 := @caughtexception;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        throw $r3;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    public boolean getBoolean(java.lang.String, boolean)
+    {
+        android.app.SharedPreferencesImpl r0;
+        java.lang.Object r1, $r3;
+        java.util.Map $r2;
+        java.lang.Throwable $r4;
+        java.lang.String r5;
+        boolean z0;
+        java.lang.Boolean r6;
+
+        r0 := @this: android.app.SharedPreferencesImpl;
+
+        r5 := @parameter0: java.lang.String;
+
+        z0 := @parameter1: boolean;
+
+        r1 = r0.<android.app.SharedPreferencesImpl: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        specialinvoke r0.<android.app.SharedPreferencesImpl: void awaitLoadedLocked()>();
+
+        $r2 = r0.<android.app.SharedPreferencesImpl: java.util.Map mMap>;
+
+        $r3 = interfaceinvoke $r2.<java.util.Map: java.lang.Object get(java.lang.Object)>(r5);
+
+        r6 = (java.lang.Boolean) $r3;
+
+     label2:
+        if r6 == null goto label5;
+
+     label3:
+        z0 = virtualinvoke r6.<java.lang.Boolean: boolean booleanValue()>();
+
+     label4:
+        goto label5;
+
+     label5:
+        exitmonitor r1;
+
+     label6:
+        return z0;
+
+     label7:
+        $r4 := @caughtexception;
+
+     label8:
+        exitmonitor r1;
+
+     label9:
+        throw $r4;
+
+        catch java.lang.Throwable from label1 to label2 with label7;
+        catch java.lang.Throwable from label3 to label4 with label7;
+        catch java.lang.Throwable from label5 to label6 with label7;
+        catch java.lang.Throwable from label8 to label9 with label7;
+    }
+
+    public float getFloat(java.lang.String, float)
+    {
+        android.app.SharedPreferencesImpl r0;
+        java.lang.Object r1, $r3;
+        java.util.Map $r2;
+        java.lang.Throwable $r4;
+        java.lang.String r5;
+        float f0;
+        java.lang.Float r6;
+
+        r0 := @this: android.app.SharedPreferencesImpl;
+
+        r5 := @parameter0: java.lang.String;
+
+        f0 := @parameter1: float;
+
+        r1 = r0.<android.app.SharedPreferencesImpl: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        specialinvoke r0.<android.app.SharedPreferencesImpl: void awaitLoadedLocked()>();
+
+        $r2 = r0.<android.app.SharedPreferencesImpl: java.util.Map mMap>;
+
+        $r3 = interfaceinvoke $r2.<java.util.Map: java.lang.Object get(java.lang.Object)>(r5);
+
+        r6 = (java.lang.Float) $r3;
+
+     label2:
+        if r6 == null goto label5;
+
+     label3:
+        f0 = virtualinvoke r6.<java.lang.Float: float floatValue()>();
+
+     label4:
+        goto label5;
+
+     label5:
+        exitmonitor r1;
+
+     label6:
+        return f0;
+
+     label7:
+        $r4 := @caughtexception;
+
+     label8:
+        exitmonitor r1;
+
+     label9:
+        throw $r4;
+
+        catch java.lang.Throwable from label1 to label2 with label7;
+        catch java.lang.Throwable from label3 to label4 with label7;
+        catch java.lang.Throwable from label5 to label6 with label7;
+        catch java.lang.Throwable from label8 to label9 with label7;
+    }
+
+    public int getInt(java.lang.String, int)
+    {
+        android.app.SharedPreferencesImpl r0;
+        java.lang.Object r1, $r3;
+        java.util.Map $r2;
+        java.lang.Throwable $r4;
+        java.lang.String r5;
+        int i0;
+        java.lang.Integer r6;
+
+        r0 := @this: android.app.SharedPreferencesImpl;
+
+        r5 := @parameter0: java.lang.String;
+
+        i0 := @parameter1: int;
+
+        r1 = r0.<android.app.SharedPreferencesImpl: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        specialinvoke r0.<android.app.SharedPreferencesImpl: void awaitLoadedLocked()>();
+
+        $r2 = r0.<android.app.SharedPreferencesImpl: java.util.Map mMap>;
+
+        $r3 = interfaceinvoke $r2.<java.util.Map: java.lang.Object get(java.lang.Object)>(r5);
+
+        r6 = (java.lang.Integer) $r3;
+
+     label2:
+        if r6 == null goto label5;
+
+     label3:
+        i0 = virtualinvoke r6.<java.lang.Integer: int intValue()>();
+
+     label4:
+        goto label5;
+
+     label5:
+        exitmonitor r1;
+
+     label6:
+        return i0;
+
+     label7:
+        $r4 := @caughtexception;
+
+     label8:
+        exitmonitor r1;
+
+     label9:
+        throw $r4;
+
+        catch java.lang.Throwable from label1 to label2 with label7;
+        catch java.lang.Throwable from label3 to label4 with label7;
+        catch java.lang.Throwable from label5 to label6 with label7;
+        catch java.lang.Throwable from label8 to label9 with label7;
+    }
+
+    public long getLong(java.lang.String, long)
+    {
+        android.app.SharedPreferencesImpl r0;
+        java.lang.Object r1, $r3;
+        java.util.Map $r2;
+        java.lang.Throwable $r4;
+        java.lang.String r5;
+        long l0;
+        java.lang.Long r6;
+
+        r0 := @this: android.app.SharedPreferencesImpl;
+
+        r5 := @parameter0: java.lang.String;
+
+        l0 := @parameter1: long;
+
+        r1 = r0.<android.app.SharedPreferencesImpl: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        specialinvoke r0.<android.app.SharedPreferencesImpl: void awaitLoadedLocked()>();
+
+        $r2 = r0.<android.app.SharedPreferencesImpl: java.util.Map mMap>;
+
+        $r3 = interfaceinvoke $r2.<java.util.Map: java.lang.Object get(java.lang.Object)>(r5);
+
+        r6 = (java.lang.Long) $r3;
+
+     label2:
+        if r6 == null goto label5;
+
+     label3:
+        l0 = virtualinvoke r6.<java.lang.Long: long longValue()>();
+
+     label4:
+        goto label5;
+
+     label5:
+        exitmonitor r1;
+
+     label6:
+        return l0;
+
+     label7:
+        $r4 := @caughtexception;
+
+     label8:
+        exitmonitor r1;
+
+     label9:
+        throw $r4;
+
+        catch java.lang.Throwable from label1 to label2 with label7;
+        catch java.lang.Throwable from label3 to label4 with label7;
+        catch java.lang.Throwable from label5 to label6 with label7;
+        catch java.lang.Throwable from label8 to label9 with label7;
+    }
+
+    public java.lang.String getString(java.lang.String, java.lang.String)
+    {
+        android.app.SharedPreferencesImpl r0;
+        java.lang.String r1, r6, r7;
+        java.lang.Object r2, $r4;
+        java.util.Map $r3;
+        java.lang.Throwable $r5;
+
+        r0 := @this: android.app.SharedPreferencesImpl;
+
+        r6 := @parameter0: java.lang.String;
+
+        r1 := @parameter1: java.lang.String;
+
+        r2 = r0.<android.app.SharedPreferencesImpl: java.lang.Object mLock>;
+
+        entermonitor r2;
+
+     label1:
+        specialinvoke r0.<android.app.SharedPreferencesImpl: void awaitLoadedLocked()>();
+
+        $r3 = r0.<android.app.SharedPreferencesImpl: java.util.Map mMap>;
+
+        $r4 = interfaceinvoke $r3.<java.util.Map: java.lang.Object get(java.lang.Object)>(r6);
+
+        r7 = (java.lang.String) $r4;
+
+     label2:
+        if r7 == null goto label3;
+
+        goto label4;
+
+     label3:
+        r7 = r1;
+
+     label4:
+        exitmonitor r2;
+
+     label5:
+        return r7;
+
+     label6:
+        $r5 := @caughtexception;
+
+     label7:
+        exitmonitor r2;
+
+     label8:
+        throw $r5;
+
+        catch java.lang.Throwable from label1 to label2 with label6;
+        catch java.lang.Throwable from label4 to label5 with label6;
+        catch java.lang.Throwable from label7 to label8 with label6;
+    }
+
+    public java.util.Set getStringSet(java.lang.String, java.util.Set)
+    {
+        android.app.SharedPreferencesImpl r0;
+        java.util.Set r1, r7;
+        java.lang.Object r2, $r4;
+        java.util.Map $r3;
+        java.lang.Throwable $r5;
+        java.lang.String r6;
+
+        r0 := @this: android.app.SharedPreferencesImpl;
+
+        r6 := @parameter0: java.lang.String;
+
+        r1 := @parameter1: java.util.Set;
+
+        r2 = r0.<android.app.SharedPreferencesImpl: java.lang.Object mLock>;
+
+        entermonitor r2;
+
+     label1:
+        specialinvoke r0.<android.app.SharedPreferencesImpl: void awaitLoadedLocked()>();
+
+        $r3 = r0.<android.app.SharedPreferencesImpl: java.util.Map mMap>;
+
+        $r4 = interfaceinvoke $r3.<java.util.Map: java.lang.Object get(java.lang.Object)>(r6);
+
+        r7 = (java.util.Set) $r4;
+
+     label2:
+        if r7 == null goto label3;
+
+        goto label4;
+
+     label3:
+        r7 = r1;
+
+     label4:
+        exitmonitor r2;
+
+     label5:
+        return r7;
+
+     label6:
+        $r5 := @caughtexception;
+
+     label7:
+        exitmonitor r2;
+
+     label8:
+        throw $r5;
+
+        catch java.lang.Throwable from label1 to label2 with label6;
+        catch java.lang.Throwable from label4 to label5 with label6;
+        catch java.lang.Throwable from label7 to label8 with label6;
+    }
+
+    public void registerOnSharedPreferenceChangeListener(android.content.SharedPreferences$OnSharedPreferenceChangeListener)
+    {
+        android.app.SharedPreferencesImpl r0;
+        java.lang.Object r1, $r2;
+        java.util.WeakHashMap $r3;
+        java.lang.Throwable $r5;
+        android.content.SharedPreferences$OnSharedPreferenceChangeListener r6;
+
+        r0 := @this: android.app.SharedPreferencesImpl;
+
+        r6 := @parameter0: android.content.SharedPreferences$OnSharedPreferenceChangeListener;
+
+        r1 = r0.<android.app.SharedPreferencesImpl: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        $r3 = r0.<android.app.SharedPreferencesImpl: java.util.WeakHashMap mListeners>;
+
+        $r2 = <android.app.SharedPreferencesImpl: java.lang.Object CONTENT>;
+
+        virtualinvoke $r3.<java.util.WeakHashMap: java.lang.Object put(java.lang.Object,java.lang.Object)>(r6, $r2);
+
+        exitmonitor r1;
+
+     label2:
+        return;
+
+     label3:
+        $r5 := @caughtexception;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        throw $r5;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    void startReloadIfChangedUnexpectedly()
+    {
+        android.app.SharedPreferencesImpl r0;
+        java.lang.Object r1;
+        boolean $z0;
+        java.lang.Throwable $r3;
+
+        r0 := @this: android.app.SharedPreferencesImpl;
+
+        r1 = r0.<android.app.SharedPreferencesImpl: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        $z0 = specialinvoke r0.<android.app.SharedPreferencesImpl: boolean hasFileChangedUnexpectedly()>();
+
+        if $z0 != 0 goto label3;
+
+        exitmonitor r1;
+
+     label2:
+        return;
+
+     label3:
+        specialinvoke r0.<android.app.SharedPreferencesImpl: void startLoadFromDisk()>();
+
+        exitmonitor r1;
+
+     label4:
+        return;
+
+     label5:
+        $r3 := @caughtexception;
+
+     label6:
+        exitmonitor r1;
+
+     label7:
+        throw $r3;
+
+        catch java.lang.Throwable from label1 to label2 with label5;
+        catch java.lang.Throwable from label3 to label4 with label5;
+        catch java.lang.Throwable from label6 to label7 with label5;
+    }
+
+    public void unregisterOnSharedPreferenceChangeListener(android.content.SharedPreferences$OnSharedPreferenceChangeListener)
+    {
+        android.app.SharedPreferencesImpl r0;
+        java.lang.Object r1;
+        java.util.WeakHashMap $r2;
+        java.lang.Throwable $r4;
+        android.content.SharedPreferences$OnSharedPreferenceChangeListener r5;
+
+        r0 := @this: android.app.SharedPreferencesImpl;
+
+        r5 := @parameter0: android.content.SharedPreferences$OnSharedPreferenceChangeListener;
+
+        r1 = r0.<android.app.SharedPreferencesImpl: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        $r2 = r0.<android.app.SharedPreferencesImpl: java.util.WeakHashMap mListeners>;
+
+        virtualinvoke $r2.<java.util.WeakHashMap: java.lang.Object remove(java.lang.Object)>(r5);
+
+        exitmonitor r1;
+
+     label2:
+        return;
+
+     label3:
+        $r4 := @caughtexception;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        throw $r4;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+}

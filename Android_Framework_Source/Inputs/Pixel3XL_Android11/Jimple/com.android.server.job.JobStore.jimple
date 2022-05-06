@@ -1,0 +1,1100 @@
+public final class com.android.server.job.JobStore extends java.lang.Object
+{
+    private static final boolean DEBUG;
+    private static final int JOBS_FILE_VERSION;
+    private static final long JOB_PERSIST_DELAY;
+    private static final java.lang.String TAG;
+    private static final java.lang.String XML_TAG_EXTRAS;
+    private static final java.lang.String XML_TAG_ONEOFF;
+    private static final java.lang.String XML_TAG_PARAMS_CONSTRAINTS;
+    private static final java.lang.String XML_TAG_PERIODIC;
+    private static com.android.server.job.JobStore sSingleton;
+    private static final java.lang.Object sSingletonLock;
+    final android.content.Context mContext;
+    private final android.os.Handler mIoHandler;
+    final com.android.server.job.JobStore$JobSet mJobSet;
+    private final android.util.AtomicFile mJobsFile;
+    final java.lang.Object mLock;
+    private com.android.server.job.JobSchedulerInternal$JobStorePersistStats mPersistInfo;
+    private boolean mRtcGood;
+    private boolean mWriteInProgress;
+    private final java.lang.Runnable mWriteRunnable;
+    final java.lang.Object mWriteScheduleLock;
+    private boolean mWriteScheduled;
+    private final long mXmlTimestamp;
+
+    static void <clinit>()
+    {
+        boolean $z0;
+        java.lang.Object $r0;
+
+        <com.android.server.job.JobStore: java.lang.String XML_TAG_PERIODIC> = "periodic";
+
+        <com.android.server.job.JobStore: java.lang.String XML_TAG_PARAMS_CONSTRAINTS> = "constraints";
+
+        <com.android.server.job.JobStore: java.lang.String XML_TAG_ONEOFF> = "one-off";
+
+        <com.android.server.job.JobStore: java.lang.String XML_TAG_EXTRAS> = "extras";
+
+        <com.android.server.job.JobStore: java.lang.String TAG> = "JobStore";
+
+        <com.android.server.job.JobStore: long JOB_PERSIST_DELAY> = 2000L;
+
+        <com.android.server.job.JobStore: int JOBS_FILE_VERSION> = 0;
+
+        $z0 = <com.android.server.job.JobSchedulerService: boolean DEBUG>;
+
+        <com.android.server.job.JobStore: boolean DEBUG> = $z0;
+
+        $r0 = new java.lang.Object;
+
+        specialinvoke $r0.<java.lang.Object: void <init>()>();
+
+        <com.android.server.job.JobStore: java.lang.Object sSingletonLock> = $r0;
+
+        return;
+    }
+
+    private void <init>(android.content.Context, java.lang.Object, java.io.File)
+    {
+        com.android.server.job.JobStore r0;
+        java.lang.Object r1, $r6;
+        java.io.File r2, $r7, $r8, $r10;
+        android.os.Handler $r3;
+        com.android.server.job.JobSchedulerInternal$JobStorePersistStats $r4;
+        com.android.server.job.JobStore$1 $r5;
+        android.util.AtomicFile $r9, $r12;
+        com.android.server.job.JobStore$JobSet $r11, $r14;
+        long $l0, $l1, $l2;
+        java.time.Clock $r13;
+        byte $b3;
+        android.content.Context r15;
+        boolean z1;
+
+        r0 := @this: com.android.server.job.JobStore;
+
+        r15 := @parameter0: android.content.Context;
+
+        r1 := @parameter1: java.lang.Object;
+
+        r2 := @parameter2: java.io.File;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        $r3 = staticinvoke <com.android.server.IoThread: android.os.Handler getHandler()>();
+
+        r0.<com.android.server.job.JobStore: android.os.Handler mIoHandler> = $r3;
+
+        $r4 = new com.android.server.job.JobSchedulerInternal$JobStorePersistStats;
+
+        specialinvoke $r4.<com.android.server.job.JobSchedulerInternal$JobStorePersistStats: void <init>()>();
+
+        r0.<com.android.server.job.JobStore: com.android.server.job.JobSchedulerInternal$JobStorePersistStats mPersistInfo> = $r4;
+
+        $r5 = new com.android.server.job.JobStore$1;
+
+        specialinvoke $r5.<com.android.server.job.JobStore$1: void <init>(com.android.server.job.JobStore)>(r0);
+
+        r0.<com.android.server.job.JobStore: java.lang.Runnable mWriteRunnable> = $r5;
+
+        r0.<com.android.server.job.JobStore: java.lang.Object mLock> = r1;
+
+        $r6 = new java.lang.Object;
+
+        specialinvoke $r6.<java.lang.Object: void <init>()>();
+
+        r0.<com.android.server.job.JobStore: java.lang.Object mWriteScheduleLock> = $r6;
+
+        r0.<com.android.server.job.JobStore: android.content.Context mContext> = r15;
+
+        $r7 = new java.io.File;
+
+        $r8 = new java.io.File;
+
+        specialinvoke $r8.<java.io.File: void <init>(java.io.File,java.lang.String)>(r2, "system");
+
+        specialinvoke $r7.<java.io.File: void <init>(java.io.File,java.lang.String)>($r8, "job");
+
+        virtualinvoke $r7.<java.io.File: boolean mkdirs()>();
+
+        $r9 = new android.util.AtomicFile;
+
+        $r10 = new java.io.File;
+
+        specialinvoke $r10.<java.io.File: void <init>(java.io.File,java.lang.String)>($r7, "jobs.xml");
+
+        specialinvoke $r9.<android.util.AtomicFile: void <init>(java.io.File,java.lang.String)>($r10, "jobs");
+
+        r0.<com.android.server.job.JobStore: android.util.AtomicFile mJobsFile> = $r9;
+
+        $r11 = new com.android.server.job.JobStore$JobSet;
+
+        specialinvoke $r11.<com.android.server.job.JobStore$JobSet: void <init>()>();
+
+        r0.<com.android.server.job.JobStore: com.android.server.job.JobStore$JobSet mJobSet> = $r11;
+
+        $r12 = r0.<com.android.server.job.JobStore: android.util.AtomicFile mJobsFile>;
+
+        $l0 = virtualinvoke $r12.<android.util.AtomicFile: long getLastModifiedTime()>();
+
+        r0.<com.android.server.job.JobStore: long mXmlTimestamp> = $l0;
+
+        $r13 = <com.android.server.job.JobSchedulerService: java.time.Clock sSystemClock>;
+
+        $l1 = virtualinvoke $r13.<java.time.Clock: long millis()>();
+
+        $l2 = r0.<com.android.server.job.JobStore: long mXmlTimestamp>;
+
+        $b3 = $l1 cmp $l2;
+
+        if $b3 <= 0 goto label1;
+
+        z1 = 1;
+
+        goto label2;
+
+     label1:
+        z1 = 0;
+
+     label2:
+        r0.<com.android.server.job.JobStore: boolean mRtcGood> = z1;
+
+        $r14 = r0.<com.android.server.job.JobStore: com.android.server.job.JobStore$JobSet mJobSet>;
+
+        virtualinvoke r0.<com.android.server.job.JobStore: void readJobMapFromDisk(com.android.server.job.JobStore$JobSet,boolean)>($r14, z1);
+
+        return;
+    }
+
+    static boolean access$002(com.android.server.job.JobStore, boolean)
+    {
+        com.android.server.job.JobStore r0;
+        boolean z0;
+
+        r0 := @parameter0: com.android.server.job.JobStore;
+
+        z0 := @parameter1: boolean;
+
+        r0.<com.android.server.job.JobStore: boolean mWriteScheduled> = z0;
+
+        return z0;
+    }
+
+    static boolean access$100()
+    {
+        boolean $z0;
+
+        $z0 = <com.android.server.job.JobStore: boolean DEBUG>;
+
+        return $z0;
+    }
+
+    static boolean access$202(com.android.server.job.JobStore, boolean)
+    {
+        com.android.server.job.JobStore r0;
+        boolean z0;
+
+        r0 := @parameter0: com.android.server.job.JobStore;
+
+        z0 := @parameter1: boolean;
+
+        r0.<com.android.server.job.JobStore: boolean mWriteInProgress> = z0;
+
+        return z0;
+    }
+
+    static boolean access$300(com.android.server.job.controllers.JobStatus)
+    {
+        com.android.server.job.controllers.JobStatus r0;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.server.job.controllers.JobStatus;
+
+        $z0 = staticinvoke <com.android.server.job.JobStore: boolean isSyncJob(com.android.server.job.controllers.JobStatus)>(r0);
+
+        return $z0;
+    }
+
+    static android.util.AtomicFile access$400(com.android.server.job.JobStore)
+    {
+        com.android.server.job.JobStore r0;
+        android.util.AtomicFile $r1;
+
+        r0 := @parameter0: com.android.server.job.JobStore;
+
+        $r1 = r0.<com.android.server.job.JobStore: android.util.AtomicFile mJobsFile>;
+
+        return $r1;
+    }
+
+    static com.android.server.job.JobSchedulerInternal$JobStorePersistStats access$500(com.android.server.job.JobStore)
+    {
+        com.android.server.job.JobStore r0;
+        com.android.server.job.JobSchedulerInternal$JobStorePersistStats $r1;
+
+        r0 := @parameter0: com.android.server.job.JobStore;
+
+        $r1 = r0.<com.android.server.job.JobStore: com.android.server.job.JobSchedulerInternal$JobStorePersistStats mPersistInfo>;
+
+        return $r1;
+    }
+
+    static android.util.Pair access$600(android.util.Pair, long)
+    {
+        android.util.Pair r0, $r1;
+        long l0;
+
+        r0 := @parameter0: android.util.Pair;
+
+        l0 := @parameter1: long;
+
+        $r1 = staticinvoke <com.android.server.job.JobStore: android.util.Pair convertRtcBoundsToElapsed(android.util.Pair,long)>(r0, l0);
+
+        return $r1;
+    }
+
+    private static android.util.Pair convertRtcBoundsToElapsed(android.util.Pair, long)
+    {
+        android.util.Pair r0, $r8;
+        long l0, l1, $l3, $l6, $l7, $l8, $l9, $l10, $l11, l12, l13, l14;
+        java.time.Clock $r1;
+        java.lang.Object $r2, $r4, $r9, $r11;
+        java.lang.Long $r3, $r5, $r6, $r7, $r10, $r12;
+        byte $b4, $b5;
+
+        r0 := @parameter0: android.util.Pair;
+
+        l12 := @parameter1: long;
+
+        $r1 = <com.android.server.job.JobSchedulerService: java.time.Clock sSystemClock>;
+
+        l0 = virtualinvoke $r1.<java.time.Clock: long millis()>();
+
+        $r2 = r0.<android.util.Pair: java.lang.Object first>;
+
+        $r3 = (java.lang.Long) $r2;
+
+        $l3 = virtualinvoke $r3.<java.lang.Long: long longValue()>();
+
+        $b4 = $l3 cmp 0L;
+
+        if $b4 <= 0 goto label1;
+
+        $r11 = r0.<android.util.Pair: java.lang.Object first>;
+
+        $r12 = (java.lang.Long) $r11;
+
+        $l9 = virtualinvoke $r12.<java.lang.Long: long longValue()>();
+
+        $l10 = $l9 - l0;
+
+        $l11 = staticinvoke <java.lang.Math: long max(long,long)>($l10, 0L);
+
+        l13 = $l11 + l12;
+
+        goto label2;
+
+     label1:
+        l13 = 0L;
+
+     label2:
+        $r4 = r0.<android.util.Pair: java.lang.Object second>;
+
+        $r5 = (java.lang.Long) $r4;
+
+        l1 = virtualinvoke $r5.<java.lang.Long: long longValue()>();
+
+        $b5 = l1 cmp 9223372036854775807L;
+
+        if $b5 >= 0 goto label3;
+
+        $r9 = r0.<android.util.Pair: java.lang.Object second>;
+
+        $r10 = (java.lang.Long) $r9;
+
+        $l6 = virtualinvoke $r10.<java.lang.Long: long longValue()>();
+
+        $l7 = $l6 - l0;
+
+        $l8 = staticinvoke <java.lang.Math: long max(long,long)>($l7, 0L);
+
+        l14 = l12 + $l8;
+
+        goto label4;
+
+     label3:
+        l14 = 9223372036854775807L;
+
+     label4:
+        $r6 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>(l13);
+
+        $r7 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>(l14);
+
+        $r8 = staticinvoke <android.util.Pair: android.util.Pair create(java.lang.Object,java.lang.Object)>($r6, $r7);
+
+        return $r8;
+    }
+
+    static com.android.server.job.JobStore initAndGet(com.android.server.job.JobSchedulerService)
+    {
+        java.lang.Object r0, $r4;
+        com.android.server.job.JobStore r1, $r2, r8;
+        android.content.Context $r3;
+        java.io.File $r5;
+        java.lang.Throwable $r6;
+        com.android.server.job.JobSchedulerService r7;
+
+        r7 := @parameter0: com.android.server.job.JobSchedulerService;
+
+        r0 = <com.android.server.job.JobStore: java.lang.Object sSingletonLock>;
+
+        entermonitor r0;
+
+     label1:
+        $r2 = <com.android.server.job.JobStore: com.android.server.job.JobStore sSingleton>;
+
+        if $r2 != null goto label2;
+
+        r1 = new com.android.server.job.JobStore;
+
+        $r3 = virtualinvoke r7.<com.android.server.job.JobSchedulerService: android.content.Context getContext()>();
+
+        $r4 = virtualinvoke r7.<com.android.server.job.JobSchedulerService: java.lang.Object getLock()>();
+
+        $r5 = staticinvoke <android.os.Environment: java.io.File getDataDirectory()>();
+
+        specialinvoke r1.<com.android.server.job.JobStore: void <init>(android.content.Context,java.lang.Object,java.io.File)>($r3, $r4, $r5);
+
+        <com.android.server.job.JobStore: com.android.server.job.JobStore sSingleton> = r1;
+
+     label2:
+        r8 = <com.android.server.job.JobStore: com.android.server.job.JobStore sSingleton>;
+
+        exitmonitor r0;
+
+     label3:
+        return r8;
+
+     label4:
+        $r6 := @caughtexception;
+
+     label5:
+        exitmonitor r0;
+
+     label6:
+        throw $r6;
+
+        catch java.lang.Throwable from label1 to label2 with label4;
+        catch java.lang.Throwable from label2 to label3 with label4;
+        catch java.lang.Throwable from label5 to label6 with label4;
+    }
+
+    public static com.android.server.job.JobStore initAndGetForTesting(android.content.Context, java.io.File)
+    {
+        java.io.File r0;
+        com.android.server.job.JobStore $r1;
+        java.lang.Object $r2;
+        android.content.Context r3;
+
+        r3 := @parameter0: android.content.Context;
+
+        r0 := @parameter1: java.io.File;
+
+        $r1 = new com.android.server.job.JobStore;
+
+        $r2 = new java.lang.Object;
+
+        specialinvoke $r2.<java.lang.Object: void <init>()>();
+
+        specialinvoke $r1.<com.android.server.job.JobStore: void <init>(android.content.Context,java.lang.Object,java.io.File)>(r3, $r2, r0);
+
+        virtualinvoke $r1.<com.android.server.job.JobStore: void clear()>();
+
+        return $r1;
+    }
+
+    private static boolean isSyncJob(com.android.server.job.controllers.JobStatus)
+    {
+        com.android.server.job.controllers.JobStatus r0;
+        java.lang.Class $r1;
+        java.lang.String $r2, $r4;
+        android.content.ComponentName $r3;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.server.job.controllers.JobStatus;
+
+        $r1 = class "Lcom/android/server/content/SyncJobService;";
+
+        $r2 = virtualinvoke $r1.<java.lang.Class: java.lang.String getName()>();
+
+        $r3 = virtualinvoke r0.<com.android.server.job.controllers.JobStatus: android.content.ComponentName getServiceComponent()>();
+
+        $r4 = virtualinvoke $r3.<android.content.ComponentName: java.lang.String getClassName()>();
+
+        $z0 = virtualinvoke $r2.<java.lang.String: boolean equals(java.lang.Object)>($r4);
+
+        return $z0;
+    }
+
+    static void lambda$getRtcCorrectedJobsLocked$0(long, java.util.ArrayList, java.util.ArrayList, com.android.server.job.controllers.JobStatus)
+    {
+        long l0, $l1, $l2, $l3, $l4;
+        java.util.ArrayList r0, r1;
+        com.android.server.job.controllers.JobStatus r2, $r3;
+        java.lang.Object $r4, $r6;
+        java.lang.Long $r5, $r7;
+        android.util.Pair r8, r9;
+
+        l0 := @parameter0: long;
+
+        r0 := @parameter1: java.util.ArrayList;
+
+        r1 := @parameter2: java.util.ArrayList;
+
+        r2 := @parameter3: com.android.server.job.controllers.JobStatus;
+
+        r8 = virtualinvoke r2.<com.android.server.job.controllers.JobStatus: android.util.Pair getPersistedUtcTimes()>();
+
+        if r8 == null goto label1;
+
+        r9 = staticinvoke <com.android.server.job.JobStore: android.util.Pair convertRtcBoundsToElapsed(android.util.Pair,long)>(r8, l0);
+
+        $r3 = new com.android.server.job.controllers.JobStatus;
+
+        $r4 = r9.<android.util.Pair: java.lang.Object first>;
+
+        $r5 = (java.lang.Long) $r4;
+
+        $l1 = virtualinvoke $r5.<java.lang.Long: long longValue()>();
+
+        $r6 = r9.<android.util.Pair: java.lang.Object second>;
+
+        $r7 = (java.lang.Long) $r6;
+
+        $l2 = virtualinvoke $r7.<java.lang.Long: long longValue()>();
+
+        $l3 = virtualinvoke r2.<com.android.server.job.controllers.JobStatus: long getLastSuccessfulRunTime()>();
+
+        $l4 = virtualinvoke r2.<com.android.server.job.controllers.JobStatus: long getLastFailedRunTime()>();
+
+        specialinvoke $r3.<com.android.server.job.controllers.JobStatus: void <init>(com.android.server.job.controllers.JobStatus,long,long,int,long,long)>(r2, $l1, $l2, 0, $l3, $l4);
+
+        virtualinvoke $r3.<com.android.server.job.controllers.JobStatus: void prepareLocked()>();
+
+        virtualinvoke r0.<java.util.ArrayList: boolean add(java.lang.Object)>($r3);
+
+        virtualinvoke r1.<java.util.ArrayList: boolean add(java.lang.Object)>(r2);
+
+        goto label1;
+
+     label1:
+        return;
+    }
+
+    private void maybeWriteStatusToDiskAsync()
+    {
+        com.android.server.job.JobStore r0;
+        java.lang.Object r1;
+        boolean $z0, $z1;
+        java.lang.Runnable $r3;
+        android.os.Handler $r4;
+        java.lang.Throwable $r5;
+
+        r0 := @this: com.android.server.job.JobStore;
+
+        r1 = r0.<com.android.server.job.JobStore: java.lang.Object mWriteScheduleLock>;
+
+        entermonitor r1;
+
+     label1:
+        $z0 = r0.<com.android.server.job.JobStore: boolean mWriteScheduled>;
+
+        if $z0 != 0 goto label3;
+
+        $z1 = <com.android.server.job.JobStore: boolean DEBUG>;
+
+        if $z1 == 0 goto label2;
+
+        staticinvoke <android.util.Slog: int v(java.lang.String,java.lang.String)>("JobStore", "Scheduling persist of jobs to disk.");
+
+     label2:
+        $r4 = r0.<com.android.server.job.JobStore: android.os.Handler mIoHandler>;
+
+        $r3 = r0.<com.android.server.job.JobStore: java.lang.Runnable mWriteRunnable>;
+
+        virtualinvoke $r4.<android.os.Handler: boolean postDelayed(java.lang.Runnable,long)>($r3, 2000L);
+
+        r0.<com.android.server.job.JobStore: boolean mWriteInProgress> = 1;
+
+        r0.<com.android.server.job.JobStore: boolean mWriteScheduled> = 1;
+
+     label3:
+        exitmonitor r1;
+
+     label4:
+        return;
+
+     label5:
+        $r5 := @caughtexception;
+
+     label6:
+        exitmonitor r1;
+
+     label7:
+        throw $r5;
+
+        catch java.lang.Throwable from label1 to label2 with label5;
+        catch java.lang.Throwable from label2 to label3 with label5;
+        catch java.lang.Throwable from label3 to label4 with label5;
+        catch java.lang.Throwable from label6 to label7 with label5;
+    }
+
+    public boolean add(com.android.server.job.controllers.JobStatus)
+    {
+        com.android.server.job.JobStore r0;
+        com.android.server.job.controllers.JobStatus r1;
+        boolean z0, $z2, $z3;
+        com.android.server.job.JobStore$JobSet $r3, $r4;
+        java.lang.StringBuilder $r5;
+        java.lang.String $r8;
+
+        r0 := @this: com.android.server.job.JobStore;
+
+        r1 := @parameter0: com.android.server.job.controllers.JobStatus;
+
+        $r3 = r0.<com.android.server.job.JobStore: com.android.server.job.JobStore$JobSet mJobSet>;
+
+        z0 = virtualinvoke $r3.<com.android.server.job.JobStore$JobSet: boolean remove(com.android.server.job.controllers.JobStatus)>(r1);
+
+        $r4 = r0.<com.android.server.job.JobStore: com.android.server.job.JobStore$JobSet mJobSet>;
+
+        virtualinvoke $r4.<com.android.server.job.JobStore$JobSet: boolean add(com.android.server.job.controllers.JobStatus)>(r1);
+
+        $z2 = virtualinvoke r1.<com.android.server.job.controllers.JobStatus: boolean isPersisted()>();
+
+        if $z2 == 0 goto label1;
+
+        specialinvoke r0.<com.android.server.job.JobStore: void maybeWriteStatusToDiskAsync()>();
+
+     label1:
+        $z3 = <com.android.server.job.JobStore: boolean DEBUG>;
+
+        if $z3 == 0 goto label2;
+
+        $r5 = new java.lang.StringBuilder;
+
+        specialinvoke $r5.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Added job status to store: ");
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r1);
+
+        $r8 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("JobStore", $r8);
+
+     label2:
+        return z0;
+    }
+
+    public void clear()
+    {
+        com.android.server.job.JobStore r0;
+        com.android.server.job.JobStore$JobSet $r1;
+
+        r0 := @this: com.android.server.job.JobStore;
+
+        $r1 = r0.<com.android.server.job.JobStore: com.android.server.job.JobStore$JobSet mJobSet>;
+
+        virtualinvoke $r1.<com.android.server.job.JobStore$JobSet: void clear()>();
+
+        specialinvoke r0.<com.android.server.job.JobStore: void maybeWriteStatusToDiskAsync()>();
+
+        return;
+    }
+
+    public boolean clockNowValidToInflate(long)
+    {
+        com.android.server.job.JobStore r0;
+        long l0, $l1;
+        byte $b2;
+        boolean z0;
+
+        r0 := @this: com.android.server.job.JobStore;
+
+        l0 := @parameter0: long;
+
+        $l1 = r0.<com.android.server.job.JobStore: long mXmlTimestamp>;
+
+        $b2 = l0 cmp $l1;
+
+        if $b2 < 0 goto label1;
+
+        z0 = 1;
+
+        goto label2;
+
+     label1:
+        z0 = 0;
+
+     label2:
+        return z0;
+    }
+
+    boolean containsJob(com.android.server.job.controllers.JobStatus)
+    {
+        com.android.server.job.JobStore r0;
+        com.android.server.job.controllers.JobStatus r1;
+        com.android.server.job.JobStore$JobSet $r2;
+        boolean $z0;
+
+        r0 := @this: com.android.server.job.JobStore;
+
+        r1 := @parameter0: com.android.server.job.controllers.JobStatus;
+
+        $r2 = r0.<com.android.server.job.JobStore: com.android.server.job.JobStore$JobSet mJobSet>;
+
+        $z0 = virtualinvoke $r2.<com.android.server.job.JobStore$JobSet: boolean contains(com.android.server.job.controllers.JobStatus)>(r1);
+
+        return $z0;
+    }
+
+    public int countJobsForUid(int)
+    {
+        com.android.server.job.JobStore r0;
+        int i0, $i1;
+        com.android.server.job.JobStore$JobSet $r1;
+
+        r0 := @this: com.android.server.job.JobStore;
+
+        i0 := @parameter0: int;
+
+        $r1 = r0.<com.android.server.job.JobStore: com.android.server.job.JobStore$JobSet mJobSet>;
+
+        $i1 = virtualinvoke $r1.<com.android.server.job.JobStore$JobSet: int countJobsForUid(int)>(i0);
+
+        return $i1;
+    }
+
+    public void forEachJob(int, java.util.function.Consumer)
+    {
+        com.android.server.job.JobStore r0;
+        int i0;
+        java.util.function.Consumer r1;
+        com.android.server.job.JobStore$JobSet $r2;
+
+        r0 := @this: com.android.server.job.JobStore;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: java.util.function.Consumer;
+
+        $r2 = r0.<com.android.server.job.JobStore: com.android.server.job.JobStore$JobSet mJobSet>;
+
+        virtualinvoke $r2.<com.android.server.job.JobStore$JobSet: void forEachJob(int,java.util.function.Consumer)>(i0, r1);
+
+        return;
+    }
+
+    public void forEachJob(java.util.function.Consumer)
+    {
+        com.android.server.job.JobStore r0;
+        java.util.function.Consumer r1;
+        com.android.server.job.JobStore$JobSet $r2;
+
+        r0 := @this: com.android.server.job.JobStore;
+
+        r1 := @parameter0: java.util.function.Consumer;
+
+        $r2 = r0.<com.android.server.job.JobStore: com.android.server.job.JobStore$JobSet mJobSet>;
+
+        virtualinvoke $r2.<com.android.server.job.JobStore$JobSet: void forEachJob(java.util.function.Predicate,java.util.function.Consumer)>(null, r1);
+
+        return;
+    }
+
+    public void forEachJob(java.util.function.Predicate, java.util.function.Consumer)
+    {
+        com.android.server.job.JobStore r0;
+        java.util.function.Predicate r1;
+        java.util.function.Consumer r2;
+        com.android.server.job.JobStore$JobSet $r3;
+
+        r0 := @this: com.android.server.job.JobStore;
+
+        r1 := @parameter0: java.util.function.Predicate;
+
+        r2 := @parameter1: java.util.function.Consumer;
+
+        $r3 = r0.<com.android.server.job.JobStore: com.android.server.job.JobStore$JobSet mJobSet>;
+
+        virtualinvoke $r3.<com.android.server.job.JobStore$JobSet: void forEachJob(java.util.function.Predicate,java.util.function.Consumer)>(r1, r2);
+
+        return;
+    }
+
+    public void forEachJobForSourceUid(int, java.util.function.Consumer)
+    {
+        com.android.server.job.JobStore r0;
+        int i0;
+        java.util.function.Consumer r1;
+        com.android.server.job.JobStore$JobSet $r2;
+
+        r0 := @this: com.android.server.job.JobStore;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: java.util.function.Consumer;
+
+        $r2 = r0.<com.android.server.job.JobStore: com.android.server.job.JobStore$JobSet mJobSet>;
+
+        virtualinvoke $r2.<com.android.server.job.JobStore$JobSet: void forEachJobForSourceUid(int,java.util.function.Consumer)>(i0, r1);
+
+        return;
+    }
+
+    public com.android.server.job.controllers.JobStatus getJobByUidAndJobId(int, int)
+    {
+        com.android.server.job.JobStore r0;
+        int i0, i1;
+        com.android.server.job.JobStore$JobSet $r1;
+        com.android.server.job.controllers.JobStatus $r2;
+
+        r0 := @this: com.android.server.job.JobStore;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        $r1 = r0.<com.android.server.job.JobStore: com.android.server.job.JobStore$JobSet mJobSet>;
+
+        $r2 = virtualinvoke $r1.<com.android.server.job.JobStore$JobSet: com.android.server.job.controllers.JobStatus get(int,int)>(i0, i1);
+
+        return $r2;
+    }
+
+    public java.util.List getJobsByUid(int)
+    {
+        com.android.server.job.JobStore r0;
+        int i0;
+        com.android.server.job.JobStore$JobSet $r1;
+        java.util.List $r2;
+
+        r0 := @this: com.android.server.job.JobStore;
+
+        i0 := @parameter0: int;
+
+        $r1 = r0.<com.android.server.job.JobStore: com.android.server.job.JobStore$JobSet mJobSet>;
+
+        $r2 = virtualinvoke $r1.<com.android.server.job.JobStore$JobSet: java.util.List getJobsByUid(int)>(i0);
+
+        return $r2;
+    }
+
+    public java.util.List getJobsByUser(int)
+    {
+        com.android.server.job.JobStore r0;
+        int i0;
+        com.android.server.job.JobStore$JobSet $r1;
+        java.util.List $r2;
+
+        r0 := @this: com.android.server.job.JobStore;
+
+        i0 := @parameter0: int;
+
+        $r1 = r0.<com.android.server.job.JobStore: com.android.server.job.JobStore$JobSet mJobSet>;
+
+        $r2 = virtualinvoke $r1.<com.android.server.job.JobStore$JobSet: java.util.List getJobsByUser(int)>(i0);
+
+        return $r2;
+    }
+
+    public com.android.server.job.JobSchedulerInternal$JobStorePersistStats getPersistStats()
+    {
+        com.android.server.job.JobStore r0;
+        com.android.server.job.JobSchedulerInternal$JobStorePersistStats $r1;
+
+        r0 := @this: com.android.server.job.JobStore;
+
+        $r1 = r0.<com.android.server.job.JobStore: com.android.server.job.JobSchedulerInternal$JobStorePersistStats mPersistInfo>;
+
+        return $r1;
+    }
+
+    public void getRtcCorrectedJobsLocked(java.util.ArrayList, java.util.ArrayList)
+    {
+        com.android.server.job.JobStore r0;
+        java.util.ArrayList r1, r2;
+        com.android.server.job._$$Lambda$JobStore$apkqpwp0Wau6LvC_MCNG2GidMkM $r3;
+        java.time.Clock $r4;
+        long $l0;
+
+        r0 := @this: com.android.server.job.JobStore;
+
+        r1 := @parameter0: java.util.ArrayList;
+
+        r2 := @parameter1: java.util.ArrayList;
+
+        $r3 = new com.android.server.job._$$Lambda$JobStore$apkqpwp0Wau6LvC_MCNG2GidMkM;
+
+        $r4 = <com.android.server.job.JobSchedulerService: java.time.Clock sElapsedRealtimeClock>;
+
+        $l0 = virtualinvoke $r4.<java.time.Clock: long millis()>();
+
+        specialinvoke $r3.<com.android.server.job._$$Lambda$JobStore$apkqpwp0Wau6LvC_MCNG2GidMkM: void <init>(long,java.util.ArrayList,java.util.ArrayList)>($l0, r1, r2);
+
+        virtualinvoke r0.<com.android.server.job.JobStore: void forEachJob(java.util.function.Consumer)>($r3);
+
+        return;
+    }
+
+    public boolean jobTimesInflatedValid()
+    {
+        com.android.server.job.JobStore r0;
+        boolean $z0;
+
+        r0 := @this: com.android.server.job.JobStore;
+
+        $z0 = r0.<com.android.server.job.JobStore: boolean mRtcGood>;
+
+        return $z0;
+    }
+
+    public void readJobMapFromDisk(com.android.server.job.JobStore$JobSet, boolean)
+    {
+        com.android.server.job.JobStore r0;
+        com.android.server.job.JobStore$JobSet r1;
+        boolean z0;
+        com.android.server.job.JobStore$ReadJobMapFromDiskRunnable $r2;
+
+        r0 := @this: com.android.server.job.JobStore;
+
+        r1 := @parameter0: com.android.server.job.JobStore$JobSet;
+
+        z0 := @parameter1: boolean;
+
+        $r2 = new com.android.server.job.JobStore$ReadJobMapFromDiskRunnable;
+
+        specialinvoke $r2.<com.android.server.job.JobStore$ReadJobMapFromDiskRunnable: void <init>(com.android.server.job.JobStore,com.android.server.job.JobStore$JobSet,boolean)>(r0, r1, z0);
+
+        virtualinvoke $r2.<com.android.server.job.JobStore$ReadJobMapFromDiskRunnable: void run()>();
+
+        return;
+    }
+
+    public boolean remove(com.android.server.job.controllers.JobStatus, boolean)
+    {
+        com.android.server.job.JobStore r0;
+        com.android.server.job.controllers.JobStatus r1;
+        boolean z0, z1, $z2, $z3;
+        com.android.server.job.JobStore$JobSet $r3;
+        java.lang.StringBuilder $r4;
+        java.lang.String $r7;
+
+        r0 := @this: com.android.server.job.JobStore;
+
+        r1 := @parameter0: com.android.server.job.controllers.JobStatus;
+
+        z0 := @parameter1: boolean;
+
+        $r3 = r0.<com.android.server.job.JobStore: com.android.server.job.JobStore$JobSet mJobSet>;
+
+        z1 = virtualinvoke $r3.<com.android.server.job.JobStore$JobSet: boolean remove(com.android.server.job.controllers.JobStatus)>(r1);
+
+        if z1 != 0 goto label2;
+
+        $z3 = <com.android.server.job.JobStore: boolean DEBUG>;
+
+        if $z3 == 0 goto label1;
+
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Couldn\'t remove job: didn\'t exist: ");
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r1);
+
+        $r7 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("JobStore", $r7);
+
+     label1:
+        return 0;
+
+     label2:
+        if z0 == 0 goto label3;
+
+        $z2 = virtualinvoke r1.<com.android.server.job.controllers.JobStatus: boolean isPersisted()>();
+
+        if $z2 == 0 goto label3;
+
+        specialinvoke r0.<com.android.server.job.JobStore: void maybeWriteStatusToDiskAsync()>();
+
+     label3:
+        return z1;
+    }
+
+    public void removeJobsOfNonUsers(int[])
+    {
+        com.android.server.job.JobStore r0;
+        int[] r1;
+        com.android.server.job.JobStore$JobSet $r2;
+
+        r0 := @this: com.android.server.job.JobStore;
+
+        r1 := @parameter0: int[];
+
+        $r2 = r0.<com.android.server.job.JobStore: com.android.server.job.JobStore$JobSet mJobSet>;
+
+        virtualinvoke $r2.<com.android.server.job.JobStore$JobSet: void removeJobsOfNonUsers(int[])>(r1);
+
+        return;
+    }
+
+    public int size()
+    {
+        com.android.server.job.JobStore r0;
+        com.android.server.job.JobStore$JobSet $r1;
+        int $i0;
+
+        r0 := @this: com.android.server.job.JobStore;
+
+        $r1 = r0.<com.android.server.job.JobStore: com.android.server.job.JobStore$JobSet mJobSet>;
+
+        $i0 = virtualinvoke $r1.<com.android.server.job.JobStore$JobSet: int size()>();
+
+        return $i0;
+    }
+
+    public boolean waitForWriteToCompleteForTesting(long)
+    {
+        com.android.server.job.JobStore r0;
+        long l0, l1, l2, $l3, $l5, $l6;
+        java.lang.Object r1, $r2;
+        boolean $z0;
+        byte $b4;
+        java.lang.Throwable $r3, $r4;
+
+        r0 := @this: com.android.server.job.JobStore;
+
+        l0 := @parameter0: long;
+
+        l1 = staticinvoke <android.os.SystemClock: long uptimeMillis()>();
+
+        r1 = r0.<com.android.server.job.JobStore: java.lang.Object mWriteScheduleLock>;
+
+        entermonitor r1;
+
+     label01:
+        $z0 = r0.<com.android.server.job.JobStore: boolean mWriteInProgress>;
+
+        if $z0 == 0 goto label08;
+
+        l2 = staticinvoke <android.os.SystemClock: long uptimeMillis()>();
+
+     label02:
+        $l3 = l1 + l0;
+
+        $b4 = l2 cmp $l3;
+
+        if $b4 < 0 goto label05;
+
+     label03:
+        exitmonitor r1;
+
+     label04:
+        return 0;
+
+     label05:
+        $r2 = r0.<com.android.server.job.JobStore: java.lang.Object mWriteScheduleLock>;
+
+        $l5 = l2 - l1;
+
+        $l6 = $l5 + l0;
+
+        virtualinvoke $r2.<java.lang.Object: void wait(long)>($l6);
+
+     label06:
+        goto label01;
+
+     label07:
+        $r3 := @caughtexception;
+
+     label08:
+        exitmonitor r1;
+
+     label09:
+        return 1;
+
+     label10:
+        $r4 := @caughtexception;
+
+     label11:
+        exitmonitor r1;
+
+     label12:
+        throw $r4;
+
+        catch java.lang.Throwable from label01 to label02 with label10;
+        catch java.lang.Throwable from label03 to label04 with label10;
+        catch java.lang.InterruptedException from label05 to label06 with label07;
+        catch java.lang.Throwable from label05 to label06 with label10;
+        catch java.lang.Throwable from label08 to label09 with label10;
+        catch java.lang.Throwable from label11 to label12 with label10;
+    }
+
+    public void writeStatusToDiskForTesting()
+    {
+        com.android.server.job.JobStore r0;
+        java.lang.Object r1;
+        boolean $z0;
+        java.lang.Runnable $r2;
+        java.lang.Throwable $r3;
+        java.lang.IllegalStateException r4;
+
+        r0 := @this: com.android.server.job.JobStore;
+
+        r1 = r0.<com.android.server.job.JobStore: java.lang.Object mWriteScheduleLock>;
+
+        entermonitor r1;
+
+     label1:
+        $z0 = r0.<com.android.server.job.JobStore: boolean mWriteScheduled>;
+
+        if $z0 != 0 goto label3;
+
+        r0.<com.android.server.job.JobStore: boolean mWriteInProgress> = 1;
+
+        r0.<com.android.server.job.JobStore: boolean mWriteScheduled> = 1;
+
+        $r2 = r0.<com.android.server.job.JobStore: java.lang.Runnable mWriteRunnable>;
+
+        interfaceinvoke $r2.<java.lang.Runnable: void run()>();
+
+        exitmonitor r1;
+
+     label2:
+        return;
+
+     label3:
+        r4 = new java.lang.IllegalStateException;
+
+        specialinvoke r4.<java.lang.IllegalStateException: void <init>(java.lang.String)>("An asynchronous write is already scheduled.");
+
+        throw r4;
+
+     label4:
+        $r3 := @caughtexception;
+
+     label5:
+        exitmonitor r1;
+
+     label6:
+        throw $r3;
+
+        catch java.lang.Throwable from label1 to label2 with label4;
+        catch java.lang.Throwable from label3 to label4 with label4;
+        catch java.lang.Throwable from label5 to label6 with label4;
+    }
+}

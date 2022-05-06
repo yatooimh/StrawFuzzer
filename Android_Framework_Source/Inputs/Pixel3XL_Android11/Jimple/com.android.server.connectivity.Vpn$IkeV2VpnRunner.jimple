@@ -1,0 +1,948 @@
+class com.android.server.connectivity.Vpn$IkeV2VpnRunner extends com.android.server.connectivity.Vpn$VpnRunner implements com.android.server.connectivity.Vpn$IkeV2VpnRunnerCallback
+{
+    private static final java.lang.String TAG;
+    private android.net.Network mActiveNetwork;
+    private final java.util.concurrent.ExecutorService mExecutor;
+    private final android.net.IpSecManager mIpSecManager;
+    private boolean mIsRunning;
+    private final android.net.ConnectivityManager$NetworkCallback mNetworkCallback;
+    private final android.net.Ikev2VpnProfile mProfile;
+    private android.net.ipsec.ike.IkeSession mSession;
+    private android.net.IpSecManager$IpSecTunnelInterface mTunnelIface;
+    final com.android.server.connectivity.Vpn this$0;
+
+    void <init>(com.android.server.connectivity.Vpn, android.net.Ikev2VpnProfile)
+    {
+        com.android.server.connectivity.Vpn$IkeV2VpnRunner r0;
+        com.android.server.connectivity.Vpn r1;
+        android.net.Ikev2VpnProfile r2;
+        java.util.concurrent.ExecutorService $r3;
+        android.content.Context $r4;
+        java.lang.Object $r5;
+        android.net.IpSecManager $r6;
+        com.android.server.connectivity.VpnIkev2Utils$Ikev2VpnNetworkCallback $r7;
+
+        r0 := @this: com.android.server.connectivity.Vpn$IkeV2VpnRunner;
+
+        r1 := @parameter0: com.android.server.connectivity.Vpn;
+
+        r2 := @parameter1: android.net.Ikev2VpnProfile;
+
+        r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: com.android.server.connectivity.Vpn this$0> = r1;
+
+        specialinvoke r0.<com.android.server.connectivity.Vpn$VpnRunner: void <init>(com.android.server.connectivity.Vpn,java.lang.String)>(r1, "IkeV2VpnRunner");
+
+        $r3 = staticinvoke <java.util.concurrent.Executors: java.util.concurrent.ExecutorService newSingleThreadExecutor()>();
+
+        r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: java.util.concurrent.ExecutorService mExecutor> = $r3;
+
+        r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: boolean mIsRunning> = 1;
+
+        r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: android.net.Ikev2VpnProfile mProfile> = r2;
+
+        $r4 = staticinvoke <com.android.server.connectivity.Vpn: android.content.Context access$500(com.android.server.connectivity.Vpn)>(r1);
+
+        $r5 = virtualinvoke $r4.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("ipsec");
+
+        $r6 = (android.net.IpSecManager) $r5;
+
+        r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: android.net.IpSecManager mIpSecManager> = $r6;
+
+        $r7 = new com.android.server.connectivity.VpnIkev2Utils$Ikev2VpnNetworkCallback;
+
+        specialinvoke $r7.<com.android.server.connectivity.VpnIkev2Utils$Ikev2VpnNetworkCallback: void <init>(java.lang.String,com.android.server.connectivity.Vpn$IkeV2VpnRunnerCallback)>("IkeV2VpnRunner", r0);
+
+        r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: android.net.ConnectivityManager$NetworkCallback mNetworkCallback> = $r7;
+
+        return;
+    }
+
+    private boolean isActiveNetwork(android.net.Network)
+    {
+        com.android.server.connectivity.Vpn$IkeV2VpnRunner r0;
+        android.net.Network r1, $r2;
+        boolean $z0, $z1, z2;
+
+        r0 := @this: com.android.server.connectivity.Vpn$IkeV2VpnRunner;
+
+        r1 := @parameter0: android.net.Network;
+
+        $r2 = r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: android.net.Network mActiveNetwork>;
+
+        $z0 = staticinvoke <java.util.Objects: boolean equals(java.lang.Object,java.lang.Object)>($r2, r1);
+
+        if $z0 == 0 goto label1;
+
+        $z1 = r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: boolean mIsRunning>;
+
+        if $z1 == 0 goto label1;
+
+        z2 = 1;
+
+        goto label2;
+
+     label1:
+        z2 = 0;
+
+     label2:
+        return z2;
+    }
+
+    private void resetIkeState()
+    {
+        com.android.server.connectivity.Vpn$IkeV2VpnRunner r0;
+        android.net.IpSecManager$IpSecTunnelInterface r1;
+        android.net.ipsec.ike.IkeSession r2;
+
+        r0 := @this: com.android.server.connectivity.Vpn$IkeV2VpnRunner;
+
+        r1 = r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: android.net.IpSecManager$IpSecTunnelInterface mTunnelIface>;
+
+        if r1 == null goto label1;
+
+        virtualinvoke r1.<android.net.IpSecManager$IpSecTunnelInterface: void close()>();
+
+        r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: android.net.IpSecManager$IpSecTunnelInterface mTunnelIface> = null;
+
+     label1:
+        r2 = r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: android.net.ipsec.ike.IkeSession mSession>;
+
+        if r2 == null goto label2;
+
+        virtualinvoke r2.<android.net.ipsec.ike.IkeSession: void kill()>();
+
+        r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: android.net.ipsec.ike.IkeSession mSession> = null;
+
+     label2:
+        return;
+    }
+
+    private void shutdownVpnRunner()
+    {
+        com.android.server.connectivity.Vpn$IkeV2VpnRunner r0;
+        com.android.server.connectivity.Vpn $r1;
+        android.content.Context $r2;
+        android.net.ConnectivityManager $r3;
+        android.net.ConnectivityManager$NetworkCallback $r4;
+        java.util.concurrent.ExecutorService $r5;
+
+        r0 := @this: com.android.server.connectivity.Vpn$IkeV2VpnRunner;
+
+        r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: android.net.Network mActiveNetwork> = null;
+
+        r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: boolean mIsRunning> = 0;
+
+        specialinvoke r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: void resetIkeState()>();
+
+        $r1 = r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: com.android.server.connectivity.Vpn this$0>;
+
+        $r2 = staticinvoke <com.android.server.connectivity.Vpn: android.content.Context access$500(com.android.server.connectivity.Vpn)>($r1);
+
+        $r3 = staticinvoke <android.net.ConnectivityManager: android.net.ConnectivityManager 'from'(android.content.Context)>($r2);
+
+        $r4 = r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: android.net.ConnectivityManager$NetworkCallback mNetworkCallback>;
+
+        virtualinvoke $r3.<android.net.ConnectivityManager: void unregisterNetworkCallback(android.net.ConnectivityManager$NetworkCallback)>($r4);
+
+        $r5 = r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: java.util.concurrent.ExecutorService mExecutor>;
+
+        interfaceinvoke $r5.<java.util.concurrent.ExecutorService: void shutdown()>();
+
+        return;
+    }
+
+    public void exitVpnRunner()
+    {
+        com.android.server.connectivity.Vpn$IkeV2VpnRunner r0;
+        com.android.server.connectivity._$$Lambda$Vpn$IkeV2VpnRunner$0RmJtG6Gdg0ZcfLScxY7rW57WDc $r1;
+        java.util.concurrent.ExecutorService $r2;
+
+        r0 := @this: com.android.server.connectivity.Vpn$IkeV2VpnRunner;
+
+        $r2 = r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: java.util.concurrent.ExecutorService mExecutor>;
+
+        $r1 = new com.android.server.connectivity._$$Lambda$Vpn$IkeV2VpnRunner$0RmJtG6Gdg0ZcfLScxY7rW57WDc;
+
+        specialinvoke $r1.<com.android.server.connectivity._$$Lambda$Vpn$IkeV2VpnRunner$0RmJtG6Gdg0ZcfLScxY7rW57WDc: void <init>(com.android.server.connectivity.Vpn$IkeV2VpnRunner)>(r0);
+
+        interfaceinvoke $r2.<java.util.concurrent.ExecutorService: void execute(java.lang.Runnable)>($r1);
+
+        return;
+    }
+
+    public void lambda$exitVpnRunner$1$Vpn$IkeV2VpnRunner()
+    {
+        com.android.server.connectivity.Vpn$IkeV2VpnRunner r0;
+
+        r0 := @this: com.android.server.connectivity.Vpn$IkeV2VpnRunner;
+
+        specialinvoke r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: void shutdownVpnRunner()>();
+
+        return;
+    }
+
+    public void lambda$onDefaultNetworkChanged$0$Vpn$IkeV2VpnRunner(android.net.Network)
+    {
+        com.android.server.connectivity.Vpn$IkeV2VpnRunner r0;
+        android.net.Network r1;
+        com.android.server.connectivity.Vpn$Ikev2SessionCreator r2;
+        android.content.Context r3, $r7;
+        java.util.concurrent.ExecutorService r4;
+        com.android.server.connectivity.VpnIkev2Utils$ChildSessionCallbackImpl r5;
+        boolean $z0;
+        com.android.server.connectivity.Vpn $r6, $r13, $r17, $r18;
+        android.net.Ikev2VpnProfile $r8, $r9;
+        java.util.List $r10;
+        android.net.IpSecManager $r11;
+        android.net.IpSecManager$IpSecTunnelInterface $r12, $r15;
+        android.os.INetworkManagementService $r14;
+        java.lang.String $r16, $r22, $r28;
+        android.net.ipsec.ike.IkeSession $r19;
+        java.lang.Exception $r23;
+        java.lang.StringBuilder $r24, r33;
+        android.net.ipsec.ike.IkeSessionParams r29;
+        android.net.ipsec.ike.ChildSessionParams r30;
+        java.net.InetAddress r31;
+        com.android.server.connectivity.VpnIkev2Utils$IkeSessionCallbackImpl r32;
+
+        r0 := @this: com.android.server.connectivity.Vpn$IkeV2VpnRunner;
+
+        r1 := @parameter0: android.net.Network;
+
+     label1:
+        $z0 = r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: boolean mIsRunning>;
+
+        if $z0 != 0 goto label3;
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("IkeV2VpnRunner", "onDefaultNetworkChanged after exit");
+
+     label2:
+        return;
+
+     label3:
+        specialinvoke r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: void resetIkeState()>();
+
+        r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: android.net.Network mActiveNetwork> = r1;
+
+        $r6 = r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: com.android.server.connectivity.Vpn this$0>;
+
+        $r7 = staticinvoke <com.android.server.connectivity.Vpn: android.content.Context access$500(com.android.server.connectivity.Vpn)>($r6);
+
+        $r8 = r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: android.net.Ikev2VpnProfile mProfile>;
+
+        r29 = staticinvoke <com.android.server.connectivity.VpnIkev2Utils: android.net.ipsec.ike.IkeSessionParams buildIkeSessionParams(android.content.Context,android.net.Ikev2VpnProfile,android.net.Network)>($r7, $r8, r1);
+
+        $r9 = r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: android.net.Ikev2VpnProfile mProfile>;
+
+        $r10 = virtualinvoke $r9.<android.net.Ikev2VpnProfile: java.util.List getAllowedAlgorithms()>();
+
+        r30 = staticinvoke <com.android.server.connectivity.VpnIkev2Utils: android.net.ipsec.ike.ChildSessionParams buildChildSessionParams(java.util.List)>($r10);
+
+        r31 = staticinvoke <java.net.InetAddress: java.net.InetAddress getLocalHost()>();
+
+        $r11 = r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: android.net.IpSecManager mIpSecManager>;
+
+        $r12 = virtualinvoke $r11.<android.net.IpSecManager: android.net.IpSecManager$IpSecTunnelInterface createIpSecTunnelInterface(java.net.InetAddress,java.net.InetAddress,android.net.Network)>(r31, r31, r1);
+
+        r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: android.net.IpSecManager$IpSecTunnelInterface mTunnelIface> = $r12;
+
+        $r13 = r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: com.android.server.connectivity.Vpn this$0>;
+
+        $r14 = staticinvoke <com.android.server.connectivity.Vpn: android.os.INetworkManagementService access$1100(com.android.server.connectivity.Vpn)>($r13);
+
+        $r15 = r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: android.net.IpSecManager$IpSecTunnelInterface mTunnelIface>;
+
+        $r16 = virtualinvoke $r15.<android.net.IpSecManager$IpSecTunnelInterface: java.lang.String getInterfaceName()>();
+
+        interfaceinvoke $r14.<android.os.INetworkManagementService: void setInterfaceUp(java.lang.String)>($r16);
+
+        $r17 = r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: com.android.server.connectivity.Vpn this$0>;
+
+        r2 = staticinvoke <com.android.server.connectivity.Vpn: com.android.server.connectivity.Vpn$Ikev2SessionCreator access$1200(com.android.server.connectivity.Vpn)>($r17);
+
+        $r18 = r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: com.android.server.connectivity.Vpn this$0>;
+
+        r3 = staticinvoke <com.android.server.connectivity.Vpn: android.content.Context access$500(com.android.server.connectivity.Vpn)>($r18);
+
+        r4 = r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: java.util.concurrent.ExecutorService mExecutor>;
+
+        r32 = new com.android.server.connectivity.VpnIkev2Utils$IkeSessionCallbackImpl;
+
+        specialinvoke r32.<com.android.server.connectivity.VpnIkev2Utils$IkeSessionCallbackImpl: void <init>(java.lang.String,com.android.server.connectivity.Vpn$IkeV2VpnRunnerCallback,android.net.Network)>("IkeV2VpnRunner", r0, r1);
+
+        r5 = new com.android.server.connectivity.VpnIkev2Utils$ChildSessionCallbackImpl;
+
+        specialinvoke r5.<com.android.server.connectivity.VpnIkev2Utils$ChildSessionCallbackImpl: void <init>(java.lang.String,com.android.server.connectivity.Vpn$IkeV2VpnRunnerCallback,android.net.Network)>("IkeV2VpnRunner", r0, r1);
+
+        $r19 = virtualinvoke r2.<com.android.server.connectivity.Vpn$Ikev2SessionCreator: android.net.ipsec.ike.IkeSession createIkeSession(android.content.Context,android.net.ipsec.ike.IkeSessionParams,android.net.ipsec.ike.ChildSessionParams,java.util.concurrent.Executor,android.net.ipsec.ike.IkeSessionCallback,android.net.ipsec.ike.ChildSessionCallback)>(r3, r29, r30, r4, r32, r5);
+
+        r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: android.net.ipsec.ike.IkeSession mSession> = $r19;
+
+        r33 = new java.lang.StringBuilder;
+
+        specialinvoke r33.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r33.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Ike Session started for network ");
+
+        virtualinvoke r33.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r1);
+
+        $r22 = virtualinvoke r33.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("IkeV2VpnRunner", $r22);
+
+     label4:
+        goto label6;
+
+     label5:
+        $r23 := @caughtexception;
+
+        $r24 = new java.lang.StringBuilder;
+
+        specialinvoke $r24.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r24.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Setup failed for network ");
+
+        virtualinvoke $r24.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r1);
+
+        virtualinvoke $r24.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(". Aborting");
+
+        $r28 = virtualinvoke $r24.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int i(java.lang.String,java.lang.String,java.lang.Throwable)>("IkeV2VpnRunner", $r28, $r23);
+
+        virtualinvoke r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: void onSessionLost(android.net.Network)>(r1);
+
+     label6:
+        return;
+
+        catch java.lang.Exception from label1 to label2 with label5;
+        catch java.lang.Exception from label3 to label4 with label5;
+    }
+
+    public void onChildOpened(android.net.Network, android.net.ipsec.ike.ChildSessionConfiguration)
+    {
+        com.android.server.connectivity.Vpn$IkeV2VpnRunner r0;
+        android.net.Network r1;
+        int i0, $i1;
+        java.util.Collection r2;
+        java.util.Iterator r3, r65;
+        android.net.LinkAddress r4;
+        boolean $z0, $z1, $z2, $z6;
+        android.net.IpSecManager$IpSecTunnelInterface $r5, $r48;
+        android.net.Ikev2VpnProfile $r6;
+        java.util.List $r7, $r8, $r19, $r22, $r25, $r28, $r31, $r34, $r37, r63;
+        com.android.server.connectivity.Vpn $r9, $r11, $r13, $r14, $r17, $r20, $r23, $r26, $r29, $r32, $r35, $r38, $r39, $r40, $r41, $r42, $r43, r66;
+        com.android.internal.net.VpnConfig $r12, $r15, $r18, $r21, $r24, $r27, $r30, $r33, $r36, r67;
+        java.lang.String $r16, $r46, $r53, $r59, r62;
+        java.lang.Object $r44, $r47;
+        java.net.InetAddress $r45, $r49;
+        java.lang.StringBuilder $r50, $r56;
+        java.lang.Throwable $r54;
+        java.lang.Exception $r55;
+        android.net.ipsec.ike.ChildSessionConfiguration r60;
+        java.util.ArrayList r64, r68;
+        android.net.NetworkAgent r69;
+        android.net.LinkProperties r70;
+
+        r0 := @this: com.android.server.connectivity.Vpn$IkeV2VpnRunner;
+
+        r1 := @parameter0: android.net.Network;
+
+        r60 := @parameter1: android.net.ipsec.ike.ChildSessionConfiguration;
+
+        $z0 = specialinvoke r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: boolean isActiveNetwork(android.net.Network)>(r1);
+
+        if $z0 != 0 goto label01;
+
+        $r50 = new java.lang.StringBuilder;
+
+        specialinvoke $r50.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r50.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("onOpened called for obsolete network ");
+
+        virtualinvoke $r50.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r1);
+
+        $r53 = virtualinvoke $r50.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("IkeV2VpnRunner", $r53);
+
+        return;
+
+     label01:
+        $r5 = r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: android.net.IpSecManager$IpSecTunnelInterface mTunnelIface>;
+
+        r62 = virtualinvoke $r5.<android.net.IpSecManager$IpSecTunnelInterface: java.lang.String getInterfaceName()>();
+
+        $r6 = r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: android.net.Ikev2VpnProfile mProfile>;
+
+        i0 = virtualinvoke $r6.<android.net.Ikev2VpnProfile: int getMaxMtu()>();
+
+        r63 = virtualinvoke r60.<android.net.ipsec.ike.ChildSessionConfiguration: java.util.List getInternalAddresses()>();
+
+        r64 = new java.util.ArrayList;
+
+        specialinvoke r64.<java.util.ArrayList: void <init>()>();
+
+     label02:
+        $r7 = virtualinvoke r60.<android.net.ipsec.ike.ChildSessionConfiguration: java.util.List getOutboundTrafficSelectors()>();
+
+        r2 = staticinvoke <com.android.server.connectivity.VpnIkev2Utils: java.util.Collection getRoutesFromTrafficSelectors(java.util.List)>($r7);
+
+        r3 = interfaceinvoke r63.<java.util.List: java.util.Iterator iterator()>();
+
+     label03:
+        $z1 = interfaceinvoke r3.<java.util.Iterator: boolean hasNext()>();
+
+        if $z1 == 0 goto label05;
+
+        $r47 = interfaceinvoke r3.<java.util.Iterator: java.lang.Object next()>();
+
+        r4 = (android.net.LinkAddress) $r47;
+
+        $r48 = r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: android.net.IpSecManager$IpSecTunnelInterface mTunnelIface>;
+
+        $r49 = virtualinvoke r4.<android.net.LinkAddress: java.net.InetAddress getAddress()>();
+
+        $i1 = virtualinvoke r4.<android.net.LinkAddress: int getPrefixLength()>();
+
+        virtualinvoke $r48.<android.net.IpSecManager$IpSecTunnelInterface: void addAddress(java.net.InetAddress,int)>($r49, $i1);
+
+     label04:
+        goto label03;
+
+     label05:
+        $r8 = virtualinvoke r60.<android.net.ipsec.ike.ChildSessionConfiguration: java.util.List getInternalDnsServers()>();
+
+        r65 = interfaceinvoke $r8.<java.util.List: java.util.Iterator iterator()>();
+
+     label06:
+        $z2 = interfaceinvoke r65.<java.util.Iterator: boolean hasNext()>();
+
+        if $z2 == 0 goto label08;
+
+        $r44 = interfaceinvoke r65.<java.util.Iterator: java.lang.Object next()>();
+
+        $r45 = (java.net.InetAddress) $r44;
+
+        $r46 = virtualinvoke $r45.<java.net.InetAddress: java.lang.String getHostAddress()>();
+
+        interfaceinvoke r64.<java.util.List: boolean add(java.lang.Object)>($r46);
+
+     label07:
+        goto label06;
+
+     label08:
+        r66 = r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: com.android.server.connectivity.Vpn this$0>;
+
+        entermonitor r66;
+
+     label09:
+        $r9 = r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: com.android.server.connectivity.Vpn this$0>;
+
+        staticinvoke <com.android.server.connectivity.Vpn: java.lang.String access$202(com.android.server.connectivity.Vpn,java.lang.String)>($r9, r62);
+
+        $r11 = r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: com.android.server.connectivity.Vpn this$0>;
+
+        $r12 = $r11.<com.android.server.connectivity.Vpn: com.android.internal.net.VpnConfig mConfig>;
+
+        $r12.<com.android.internal.net.VpnConfig: int mtu> = i0;
+
+        $r13 = r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: com.android.server.connectivity.Vpn this$0>;
+
+        $r15 = $r13.<com.android.server.connectivity.Vpn: com.android.internal.net.VpnConfig mConfig>;
+
+        $r14 = r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: com.android.server.connectivity.Vpn this$0>;
+
+        $r16 = staticinvoke <com.android.server.connectivity.Vpn: java.lang.String access$200(com.android.server.connectivity.Vpn)>($r14);
+
+        $r15.<com.android.internal.net.VpnConfig: java.lang.String interfaze> = $r16;
+
+        $r17 = r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: com.android.server.connectivity.Vpn this$0>;
+
+        $r18 = $r17.<com.android.server.connectivity.Vpn: com.android.internal.net.VpnConfig mConfig>;
+
+        $r19 = $r18.<com.android.internal.net.VpnConfig: java.util.List addresses>;
+
+        interfaceinvoke $r19.<java.util.List: void clear()>();
+
+        $r20 = r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: com.android.server.connectivity.Vpn this$0>;
+
+        $r21 = $r20.<com.android.server.connectivity.Vpn: com.android.internal.net.VpnConfig mConfig>;
+
+        $r22 = $r21.<com.android.internal.net.VpnConfig: java.util.List addresses>;
+
+        interfaceinvoke $r22.<java.util.List: boolean addAll(java.util.Collection)>(r63);
+
+        $r23 = r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: com.android.server.connectivity.Vpn this$0>;
+
+        $r24 = $r23.<com.android.server.connectivity.Vpn: com.android.internal.net.VpnConfig mConfig>;
+
+        $r25 = $r24.<com.android.internal.net.VpnConfig: java.util.List routes>;
+
+        interfaceinvoke $r25.<java.util.List: void clear()>();
+
+        $r26 = r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: com.android.server.connectivity.Vpn this$0>;
+
+        $r27 = $r26.<com.android.server.connectivity.Vpn: com.android.internal.net.VpnConfig mConfig>;
+
+        $r28 = $r27.<com.android.internal.net.VpnConfig: java.util.List routes>;
+
+        interfaceinvoke $r28.<java.util.List: boolean addAll(java.util.Collection)>(r2);
+
+        $r29 = r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: com.android.server.connectivity.Vpn this$0>;
+
+        $r30 = $r29.<com.android.server.connectivity.Vpn: com.android.internal.net.VpnConfig mConfig>;
+
+        $r31 = $r30.<com.android.internal.net.VpnConfig: java.util.List dnsServers>;
+
+        if $r31 != null goto label10;
+
+        $r43 = r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: com.android.server.connectivity.Vpn this$0>;
+
+        r67 = $r43.<com.android.server.connectivity.Vpn: com.android.internal.net.VpnConfig mConfig>;
+
+        r68 = new java.util.ArrayList;
+
+        specialinvoke r68.<java.util.ArrayList: void <init>()>();
+
+        r67.<com.android.internal.net.VpnConfig: java.util.List dnsServers> = r68;
+
+     label10:
+        $r32 = r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: com.android.server.connectivity.Vpn this$0>;
+
+        $r33 = $r32.<com.android.server.connectivity.Vpn: com.android.internal.net.VpnConfig mConfig>;
+
+        $r34 = $r33.<com.android.internal.net.VpnConfig: java.util.List dnsServers>;
+
+        interfaceinvoke $r34.<java.util.List: void clear()>();
+
+        $r35 = r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: com.android.server.connectivity.Vpn this$0>;
+
+        $r36 = $r35.<com.android.server.connectivity.Vpn: com.android.internal.net.VpnConfig mConfig>;
+
+        $r37 = $r36.<com.android.internal.net.VpnConfig: java.util.List dnsServers>;
+
+        interfaceinvoke $r37.<java.util.List: boolean addAll(java.util.Collection)>(r64);
+
+        $r38 = r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: com.android.server.connectivity.Vpn this$0>;
+
+        r69 = $r38.<com.android.server.connectivity.Vpn: android.net.NetworkAgent mNetworkAgent>;
+
+     label11:
+        if r69 != null goto label15;
+
+     label12:
+        $r40 = r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: com.android.server.connectivity.Vpn this$0>;
+
+        $z6 = staticinvoke <com.android.server.connectivity.Vpn: boolean access$700(com.android.server.connectivity.Vpn)>($r40);
+
+        if $z6 == 0 goto label13;
+
+        $r42 = r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: com.android.server.connectivity.Vpn this$0>;
+
+        staticinvoke <com.android.server.connectivity.Vpn: void access$800(com.android.server.connectivity.Vpn)>($r42);
+
+     label13:
+        $r41 = r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: com.android.server.connectivity.Vpn this$0>;
+
+        staticinvoke <com.android.server.connectivity.Vpn: void access$900(com.android.server.connectivity.Vpn)>($r41);
+
+        exitmonitor r66;
+
+     label14:
+        return;
+
+     label15:
+        $r39 = r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: com.android.server.connectivity.Vpn this$0>;
+
+        r70 = staticinvoke <com.android.server.connectivity.Vpn: android.net.LinkProperties access$1000(com.android.server.connectivity.Vpn)>($r39);
+
+        exitmonitor r66;
+
+     label16:
+        virtualinvoke r69.<android.net.NetworkAgent: void sendLinkProperties(android.net.LinkProperties)>(r70);
+
+     label17:
+        goto label22;
+
+     label18:
+        $r54 := @caughtexception;
+
+     label19:
+        exitmonitor r66;
+
+     label20:
+        throw $r54;
+
+     label21:
+        $r55 := @caughtexception;
+
+        $r56 = new java.lang.StringBuilder;
+
+        specialinvoke $r56.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r56.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Error in ChildOpened for network ");
+
+        virtualinvoke $r56.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r1);
+
+        $r59 = virtualinvoke $r56.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String,java.lang.Throwable)>("IkeV2VpnRunner", $r59, $r55);
+
+        virtualinvoke r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: void onSessionLost(android.net.Network)>(r1);
+
+     label22:
+        return;
+
+        catch java.lang.Exception from label01 to label02 with label21;
+        catch java.lang.Exception from label02 to label03 with label21;
+        catch java.lang.Exception from label03 to label04 with label21;
+        catch java.lang.Exception from label05 to label06 with label21;
+        catch java.lang.Exception from label06 to label07 with label21;
+        catch java.lang.Exception from label08 to label09 with label21;
+        catch java.lang.Throwable from label09 to label10 with label18;
+        catch java.lang.Throwable from label10 to label11 with label18;
+        catch java.lang.Throwable from label12 to label13 with label18;
+        catch java.lang.Throwable from label13 to label14 with label18;
+        catch java.lang.Throwable from label15 to label16 with label18;
+        catch java.lang.Exception from label16 to label17 with label21;
+        catch java.lang.Throwable from label19 to label20 with label18;
+        catch java.lang.Exception from label20 to label21 with label21;
+    }
+
+    public void onChildTransformCreated(android.net.Network, android.net.IpSecTransform, int)
+    {
+        com.android.server.connectivity.Vpn$IkeV2VpnRunner r0;
+        android.net.Network r1;
+        int i0;
+        boolean $z0;
+        android.net.IpSecManager$IpSecTunnelInterface $r3;
+        android.net.IpSecManager $r4;
+        java.lang.StringBuilder $r5, $r10;
+        java.lang.String $r8, $r13;
+        java.lang.Throwable $r9;
+        android.net.IpSecTransform r14;
+
+        r0 := @this: com.android.server.connectivity.Vpn$IkeV2VpnRunner;
+
+        r1 := @parameter0: android.net.Network;
+
+        r14 := @parameter1: android.net.IpSecTransform;
+
+        i0 := @parameter2: int;
+
+        $z0 = specialinvoke r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: boolean isActiveNetwork(android.net.Network)>(r1);
+
+        if $z0 != 0 goto label1;
+
+        $r5 = new java.lang.StringBuilder;
+
+        specialinvoke $r5.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("ChildTransformCreated for obsolete network ");
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r1);
+
+        $r8 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("IkeV2VpnRunner", $r8);
+
+        return;
+
+     label1:
+        $r4 = r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: android.net.IpSecManager mIpSecManager>;
+
+        $r3 = r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: android.net.IpSecManager$IpSecTunnelInterface mTunnelIface>;
+
+        virtualinvoke $r4.<android.net.IpSecManager: void applyTunnelModeTransform(android.net.IpSecManager$IpSecTunnelInterface,int,android.net.IpSecTransform)>($r3, i0, r14);
+
+     label2:
+        goto label4;
+
+     label3:
+        $r9 := @caughtexception;
+
+        $r10 = new java.lang.StringBuilder;
+
+        specialinvoke $r10.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Transform application failed for network ");
+
+        virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r1);
+
+        $r13 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String,java.lang.Throwable)>("IkeV2VpnRunner", $r13, $r9);
+
+        virtualinvoke r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: void onSessionLost(android.net.Network)>(r1);
+
+     label4:
+        return;
+
+        catch java.io.IOException from label1 to label2 with label3;
+    }
+
+    public void onDefaultNetworkChanged(android.net.Network)
+    {
+        com.android.server.connectivity.Vpn$IkeV2VpnRunner r0;
+        android.net.Network r1;
+        java.lang.StringBuilder $r3;
+        java.lang.String $r6;
+        com.android.server.connectivity._$$Lambda$Vpn$IkeV2VpnRunner$Vw9WuTNdMyzPRFxG1a3IH2Qv9vc $r7;
+        java.util.concurrent.ExecutorService $r8;
+
+        r0 := @this: com.android.server.connectivity.Vpn$IkeV2VpnRunner;
+
+        r1 := @parameter0: android.net.Network;
+
+        $r3 = new java.lang.StringBuilder;
+
+        specialinvoke $r3.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Starting IKEv2/IPsec session on new network: ");
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r1);
+
+        $r6 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("IkeV2VpnRunner", $r6);
+
+        $r8 = r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: java.util.concurrent.ExecutorService mExecutor>;
+
+        $r7 = new com.android.server.connectivity._$$Lambda$Vpn$IkeV2VpnRunner$Vw9WuTNdMyzPRFxG1a3IH2Qv9vc;
+
+        specialinvoke $r7.<com.android.server.connectivity._$$Lambda$Vpn$IkeV2VpnRunner$Vw9WuTNdMyzPRFxG1a3IH2Qv9vc: void <init>(com.android.server.connectivity.Vpn$IkeV2VpnRunner,android.net.Network)>(r0, r1);
+
+        interfaceinvoke $r8.<java.util.concurrent.ExecutorService: void execute(java.lang.Runnable)>($r7);
+
+        return;
+    }
+
+    public void onSessionLost(android.net.Network)
+    {
+        com.android.server.connectivity.Vpn$IkeV2VpnRunner r0;
+        java.util.Iterator r1;
+        android.net.RouteInfo r2, r43;
+        java.util.List r3, $r16, $r19, $r22;
+        boolean $z0, $z1;
+        java.lang.StringBuilder $r4, $r33;
+        java.lang.String $r7, $r36;
+        com.android.server.connectivity.Vpn $r8, $r10, $r12, $r14, $r17, $r20, $r23, $r25, $r26, $r30, r41;
+        com.android.internal.net.VpnConfig $r11, $r13, $r15, $r18, $r21, $r31;
+        android.net.NetworkAgent $r24, $r27;
+        android.net.LinkProperties $r28;
+        java.lang.Object $r29;
+        android.net.IpPrefix $r32;
+        java.lang.Throwable $r37;
+        android.net.Network r38;
+        java.util.ArrayList r42;
+
+        r0 := @this: com.android.server.connectivity.Vpn$IkeV2VpnRunner;
+
+        r38 := @parameter0: android.net.Network;
+
+        $z0 = specialinvoke r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: boolean isActiveNetwork(android.net.Network)>(r38);
+
+        if $z0 != 0 goto label01;
+
+        $r33 = new java.lang.StringBuilder;
+
+        specialinvoke $r33.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r33.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("onSessionLost() called for obsolete network ");
+
+        virtualinvoke $r33.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r38);
+
+        $r36 = virtualinvoke $r33.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("IkeV2VpnRunner", $r36);
+
+        return;
+
+     label01:
+        r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: android.net.Network mActiveNetwork> = null;
+
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Resetting state for network: ");
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r38);
+
+        $r7 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("IkeV2VpnRunner", $r7);
+
+        r41 = r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: com.android.server.connectivity.Vpn this$0>;
+
+        entermonitor r41;
+
+     label02:
+        $r8 = r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: com.android.server.connectivity.Vpn this$0>;
+
+        staticinvoke <com.android.server.connectivity.Vpn: java.lang.String access$202(com.android.server.connectivity.Vpn,java.lang.String)>($r8, null);
+
+        $r10 = r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: com.android.server.connectivity.Vpn this$0>;
+
+        $r11 = $r10.<com.android.server.connectivity.Vpn: com.android.internal.net.VpnConfig mConfig>;
+
+        $r11.<com.android.internal.net.VpnConfig: java.lang.String interfaze> = null;
+
+        $r12 = r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: com.android.server.connectivity.Vpn this$0>;
+
+        $r13 = $r12.<com.android.server.connectivity.Vpn: com.android.internal.net.VpnConfig mConfig>;
+
+        if $r13 == null goto label06;
+
+        $r14 = r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: com.android.server.connectivity.Vpn this$0>;
+
+        $r15 = $r14.<com.android.server.connectivity.Vpn: com.android.internal.net.VpnConfig mConfig>;
+
+        $r16 = $r15.<com.android.internal.net.VpnConfig: java.util.List routes>;
+
+        if $r16 == null goto label06;
+
+        r42 = new java.util.ArrayList;
+
+        $r17 = r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: com.android.server.connectivity.Vpn this$0>;
+
+        $r18 = $r17.<com.android.server.connectivity.Vpn: com.android.internal.net.VpnConfig mConfig>;
+
+        $r19 = $r18.<com.android.internal.net.VpnConfig: java.util.List routes>;
+
+        specialinvoke r42.<java.util.ArrayList: void <init>(java.util.Collection)>($r19);
+
+        $r20 = r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: com.android.server.connectivity.Vpn this$0>;
+
+        $r21 = $r20.<com.android.server.connectivity.Vpn: com.android.internal.net.VpnConfig mConfig>;
+
+        $r22 = $r21.<com.android.internal.net.VpnConfig: java.util.List routes>;
+
+        interfaceinvoke $r22.<java.util.List: void clear()>();
+
+        r1 = interfaceinvoke r42.<java.util.List: java.util.Iterator iterator()>();
+
+     label03:
+        $z1 = interfaceinvoke r1.<java.util.Iterator: boolean hasNext()>();
+
+        if $z1 == 0 goto label05;
+
+        $r29 = interfaceinvoke r1.<java.util.Iterator: java.lang.Object next()>();
+
+        r2 = (android.net.RouteInfo) $r29;
+
+        $r30 = r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: com.android.server.connectivity.Vpn this$0>;
+
+        $r31 = $r30.<com.android.server.connectivity.Vpn: com.android.internal.net.VpnConfig mConfig>;
+
+        r3 = $r31.<com.android.internal.net.VpnConfig: java.util.List routes>;
+
+        r43 = new android.net.RouteInfo;
+
+        $r32 = virtualinvoke r2.<android.net.RouteInfo: android.net.IpPrefix getDestination()>();
+
+        specialinvoke r43.<android.net.RouteInfo: void <init>(android.net.IpPrefix,int)>($r32, 7);
+
+        interfaceinvoke r3.<java.util.List: boolean add(java.lang.Object)>(r43);
+
+     label04:
+        goto label03;
+
+     label05:
+        $r23 = r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: com.android.server.connectivity.Vpn this$0>;
+
+        $r24 = $r23.<com.android.server.connectivity.Vpn: android.net.NetworkAgent mNetworkAgent>;
+
+        if $r24 == null goto label06;
+
+        $r25 = r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: com.android.server.connectivity.Vpn this$0>;
+
+        $r27 = $r25.<com.android.server.connectivity.Vpn: android.net.NetworkAgent mNetworkAgent>;
+
+        $r26 = r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: com.android.server.connectivity.Vpn this$0>;
+
+        $r28 = staticinvoke <com.android.server.connectivity.Vpn: android.net.LinkProperties access$1000(com.android.server.connectivity.Vpn)>($r26);
+
+        virtualinvoke $r27.<android.net.NetworkAgent: void sendLinkProperties(android.net.LinkProperties)>($r28);
+
+     label06:
+        exitmonitor r41;
+
+     label07:
+        specialinvoke r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: void resetIkeState()>();
+
+        return;
+
+     label08:
+        $r37 := @caughtexception;
+
+     label09:
+        exitmonitor r41;
+
+     label10:
+        throw $r37;
+
+        catch java.lang.Throwable from label02 to label03 with label08;
+        catch java.lang.Throwable from label03 to label04 with label08;
+        catch java.lang.Throwable from label05 to label06 with label08;
+        catch java.lang.Throwable from label06 to label07 with label08;
+        catch java.lang.Throwable from label09 to label10 with label08;
+    }
+
+    public void run()
+    {
+        com.android.server.connectivity.Vpn$IkeV2VpnRunner r0;
+        android.net.ConnectivityManager r1;
+        com.android.server.connectivity.Vpn $r2;
+        android.content.Context $r3;
+        android.net.Ikev2VpnProfile $r4;
+        boolean $z0;
+        android.net.ConnectivityManager$NetworkCallback $r5;
+        android.net.NetworkRequest$Builder $r6, $r7, $r8;
+        android.net.NetworkRequest r9;
+
+        r0 := @this: com.android.server.connectivity.Vpn$IkeV2VpnRunner;
+
+        $r2 = r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: com.android.server.connectivity.Vpn this$0>;
+
+        $r3 = staticinvoke <com.android.server.connectivity.Vpn: android.content.Context access$500(com.android.server.connectivity.Vpn)>($r2);
+
+        r1 = staticinvoke <android.net.ConnectivityManager: android.net.ConnectivityManager 'from'(android.content.Context)>($r3);
+
+        $r4 = r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: android.net.Ikev2VpnProfile mProfile>;
+
+        $z0 = virtualinvoke $r4.<android.net.Ikev2VpnProfile: boolean isRestrictedToTestNetworks()>();
+
+        if $z0 == 0 goto label1;
+
+        $r6 = new android.net.NetworkRequest$Builder;
+
+        specialinvoke $r6.<android.net.NetworkRequest$Builder: void <init>()>();
+
+        $r7 = virtualinvoke $r6.<android.net.NetworkRequest$Builder: android.net.NetworkRequest$Builder clearCapabilities()>();
+
+        $r8 = virtualinvoke $r7.<android.net.NetworkRequest$Builder: android.net.NetworkRequest$Builder addTransportType(int)>(7);
+
+        r9 = virtualinvoke $r8.<android.net.NetworkRequest$Builder: android.net.NetworkRequest build()>();
+
+        goto label2;
+
+     label1:
+        r9 = virtualinvoke r1.<android.net.ConnectivityManager: android.net.NetworkRequest getDefaultRequest()>();
+
+     label2:
+        $r5 = r0.<com.android.server.connectivity.Vpn$IkeV2VpnRunner: android.net.ConnectivityManager$NetworkCallback mNetworkCallback>;
+
+        virtualinvoke r1.<android.net.ConnectivityManager: void requestNetwork(android.net.NetworkRequest,android.net.ConnectivityManager$NetworkCallback)>(r9, $r5);
+
+        return;
+    }
+
+    public static void <clinit>()
+    {
+        <com.android.server.connectivity.Vpn$IkeV2VpnRunner: java.lang.String TAG> = "IkeV2VpnRunner";
+
+        return;
+    }
+}

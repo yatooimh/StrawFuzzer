@@ -1,0 +1,1056 @@
+class com.android.server.pm.UserDataPreparer extends java.lang.Object
+{
+    private static final java.lang.String TAG;
+    private static final java.lang.String XATTR_SERIAL;
+    private final android.content.Context mContext;
+    private final java.lang.Object mInstallLock;
+    private final com.android.server.pm.Installer mInstaller;
+    private final boolean mOnlyCore;
+
+    void <init>(com.android.server.pm.Installer, java.lang.Object, android.content.Context, boolean)
+    {
+        com.android.server.pm.UserDataPreparer r0;
+        com.android.server.pm.Installer r1;
+        java.lang.Object r2;
+        android.content.Context r3;
+        boolean z0;
+
+        r0 := @this: com.android.server.pm.UserDataPreparer;
+
+        r1 := @parameter0: com.android.server.pm.Installer;
+
+        r2 := @parameter1: java.lang.Object;
+
+        r3 := @parameter2: android.content.Context;
+
+        z0 := @parameter3: boolean;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        r0.<com.android.server.pm.UserDataPreparer: java.lang.Object mInstallLock> = r2;
+
+        r0.<com.android.server.pm.UserDataPreparer: android.content.Context mContext> = r3;
+
+        r0.<com.android.server.pm.UserDataPreparer: boolean mOnlyCore> = z0;
+
+        r0.<com.android.server.pm.UserDataPreparer: com.android.server.pm.Installer mInstaller> = r1;
+
+        return;
+    }
+
+    static int getSerialNumber(java.io.File) throws java.io.IOException
+    {
+        int i0, $i1, $i2;
+        java.lang.String $r1, $r5, r14;
+        java.lang.Throwable $r2, $r6;
+        java.io.IOException $r7, r16;
+        java.io.File r8;
+        byte[] r9;
+        java.lang.StringBuilder r15;
+        android.system.ErrnoException r17, r18;
+
+        r8 := @parameter0: java.io.File;
+
+     label1:
+        $r1 = virtualinvoke r8.<java.io.File: java.lang.String getAbsolutePath()>();
+
+        r9 = staticinvoke <android.system.Os: byte[] getxattr(java.lang.String,java.lang.String)>($r1, "user.serial");
+
+        r14 = new java.lang.String;
+
+        specialinvoke r14.<java.lang.String: void <init>(byte[])>(r9);
+
+     label2:
+        i0 = staticinvoke <java.lang.Integer: int parseInt(java.lang.String)>(r14);
+
+     label3:
+        return i0;
+
+     label4:
+        $r2 := @caughtexception;
+
+     label5:
+        r16 = new java.io.IOException;
+
+        r15 = new java.lang.StringBuilder;
+
+        specialinvoke r15.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r15.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Bad serial number: ");
+
+        virtualinvoke r15.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r14);
+
+        $r5 = virtualinvoke r15.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r16.<java.io.IOException: void <init>(java.lang.String)>($r5);
+
+        throw r16;
+
+     label6:
+        $r6 := @caughtexception;
+
+        r17 = (android.system.ErrnoException) $r6;
+
+        $i2 = r17.<android.system.ErrnoException: int errno>;
+
+        $i1 = <android.system.OsConstants: int ENODATA>;
+
+        if $i2 != $i1 goto label7;
+
+        return -1;
+
+     label7:
+        r18 = (android.system.ErrnoException) $r6;
+
+        $r7 = virtualinvoke r18.<android.system.ErrnoException: java.io.IOException rethrowAsIOException()>();
+
+        throw $r7;
+
+        catch android.system.ErrnoException from label1 to label2 with label6;
+        catch java.lang.NumberFormatException from label2 to label3 with label4;
+        catch android.system.ErrnoException from label2 to label3 with label6;
+        catch android.system.ErrnoException from label5 to label6 with label6;
+    }
+
+    private void prepareUserDataLI(java.lang.String, int, int, int, boolean)
+    {
+        com.android.server.pm.UserDataPreparer r0;
+        java.lang.String r1, $r10, $r12, $r15, $r25, r29;
+        int i0, i1, i2, $i3, $i5, $i6, $i7;
+        boolean z0, $z1, $z2, $z3, $z4;
+        android.content.Context $r2;
+        java.lang.Object $r3;
+        java.io.File $r11, $r13, $r14, $r16;
+        java.lang.Exception $r17;
+        java.lang.StringBuilder $r18, r28, r30;
+        android.os.storage.StorageManager r26;
+        com.android.server.pm.Installer $r27;
+
+        r0 := @this: com.android.server.pm.UserDataPreparer;
+
+        r1 := @parameter0: java.lang.String;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        i2 := @parameter3: int;
+
+        z0 := @parameter4: boolean;
+
+        $r2 = r0.<com.android.server.pm.UserDataPreparer: android.content.Context mContext>;
+
+        $r3 = virtualinvoke $r2.<android.content.Context: java.lang.Object getSystemService(java.lang.Class)>(class "Landroid/os/storage/StorageManager;");
+
+        r26 = (android.os.storage.StorageManager) $r3;
+
+     label01:
+        virtualinvoke r26.<android.os.storage.StorageManager: void prepareUserStorage(java.lang.String,int,int,int)>(r1, i0, i1, i2);
+
+     label02:
+        $i3 = i2 & 1;
+
+        if $i3 == 0 goto label04;
+
+     label03:
+        $z3 = r0.<com.android.server.pm.UserDataPreparer: boolean mOnlyCore>;
+
+        if $z3 != 0 goto label04;
+
+        $r14 = virtualinvoke r0.<com.android.server.pm.UserDataPreparer: java.io.File getDataUserDeDirectory(java.lang.String,int)>(r1, i0);
+
+        virtualinvoke r0.<com.android.server.pm.UserDataPreparer: void enforceSerialNumber(java.io.File,int)>($r14, i1);
+
+        $r15 = <android.os.storage.StorageManager: java.lang.String UUID_PRIVATE_INTERNAL>;
+
+        $z4 = staticinvoke <java.util.Objects: boolean equals(java.lang.Object,java.lang.Object)>(r1, $r15);
+
+        if $z4 == 0 goto label04;
+
+        $r16 = virtualinvoke r0.<com.android.server.pm.UserDataPreparer: java.io.File getDataSystemDeDirectory(int)>(i0);
+
+        virtualinvoke r0.<com.android.server.pm.UserDataPreparer: void enforceSerialNumber(java.io.File,int)>($r16, i1);
+
+     label04:
+        $i6 = i2 & 2;
+
+        if $i6 == 0 goto label06;
+
+     label05:
+        $z1 = r0.<com.android.server.pm.UserDataPreparer: boolean mOnlyCore>;
+
+        if $z1 != 0 goto label06;
+
+        $r11 = virtualinvoke r0.<com.android.server.pm.UserDataPreparer: java.io.File getDataUserCeDirectory(java.lang.String,int)>(r1, i0);
+
+        virtualinvoke r0.<com.android.server.pm.UserDataPreparer: void enforceSerialNumber(java.io.File,int)>($r11, i1);
+
+        $r12 = <android.os.storage.StorageManager: java.lang.String UUID_PRIVATE_INTERNAL>;
+
+        $z2 = staticinvoke <java.util.Objects: boolean equals(java.lang.Object,java.lang.Object)>(r1, $r12);
+
+        if $z2 == 0 goto label06;
+
+        $r13 = virtualinvoke r0.<com.android.server.pm.UserDataPreparer: java.io.File getDataSystemCeDirectory(int)>(i0);
+
+        virtualinvoke r0.<com.android.server.pm.UserDataPreparer: void enforceSerialNumber(java.io.File,int)>($r13, i1);
+
+     label06:
+        $r27 = r0.<com.android.server.pm.UserDataPreparer: com.android.server.pm.Installer mInstaller>;
+
+        virtualinvoke $r27.<com.android.server.pm.Installer: void createUserData(java.lang.String,int,int,int)>(r1, i0, i1, i2);
+
+     label07:
+        $i7 = i2 & 2;
+
+        if $i7 == 0 goto label09;
+
+        if i0 != 0 goto label09;
+
+     label08:
+        r28 = new java.lang.StringBuilder;
+
+        specialinvoke r28.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r28.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("sys.user.");
+
+        virtualinvoke r28.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        virtualinvoke r28.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(".ce_available");
+
+        r29 = virtualinvoke r28.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        r30 = new java.lang.StringBuilder;
+
+        specialinvoke r30.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r30.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Setting property: ");
+
+        virtualinvoke r30.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r29);
+
+        virtualinvoke r30.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("=true");
+
+        $r10 = virtualinvoke r30.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("UserDataPreparer", $r10);
+
+        staticinvoke <android.os.SystemProperties: void set(java.lang.String,java.lang.String)>(r29, "true");
+
+     label09:
+        goto label11;
+
+     label10:
+        $r17 := @caughtexception;
+
+        $r18 = new java.lang.StringBuilder;
+
+        specialinvoke $r18.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r18.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Destroying user ");
+
+        virtualinvoke $r18.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        virtualinvoke $r18.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" on volume ");
+
+        virtualinvoke $r18.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        virtualinvoke $r18.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" because we failed to prepare: ");
+
+        virtualinvoke $r18.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r17);
+
+        $r25 = virtualinvoke $r18.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.server.pm.PackageManagerServiceUtils: void logCriticalInfo(int,java.lang.String)>(5, $r25);
+
+        virtualinvoke r0.<com.android.server.pm.UserDataPreparer: void destroyUserDataLI(java.lang.String,int,int)>(r1, i0, i2);
+
+        if z0 == 0 goto label11;
+
+        $i5 = i2 | 1;
+
+        specialinvoke r0.<com.android.server.pm.UserDataPreparer: void prepareUserDataLI(java.lang.String,int,int,int,boolean)>(r1, i0, i1, $i5, 0);
+
+     label11:
+        return;
+
+        catch java.lang.Exception from label01 to label02 with label10;
+        catch java.lang.Exception from label03 to label04 with label10;
+        catch java.lang.Exception from label05 to label06 with label10;
+        catch java.lang.Exception from label06 to label07 with label10;
+        catch java.lang.Exception from label08 to label09 with label10;
+    }
+
+    private static void setSerialNumber(java.io.File, int) throws java.io.IOException
+    {
+        int i0, $i1;
+        byte[] r0;
+        java.lang.String $r1, $r3;
+        java.nio.charset.Charset $r2;
+        java.lang.Throwable $r4;
+        java.io.IOException $r5;
+        java.io.File r6;
+        android.system.ErrnoException r8;
+
+        r6 := @parameter0: java.io.File;
+
+        i0 := @parameter1: int;
+
+     label1:
+        $r1 = staticinvoke <java.lang.Integer: java.lang.String toString(int)>(i0);
+
+        $r2 = <java.nio.charset.StandardCharsets: java.nio.charset.Charset UTF_8>;
+
+        r0 = virtualinvoke $r1.<java.lang.String: byte[] getBytes(java.nio.charset.Charset)>($r2);
+
+        $r3 = virtualinvoke r6.<java.io.File: java.lang.String getAbsolutePath()>();
+
+        $i1 = <android.system.OsConstants: int XATTR_CREATE>;
+
+        staticinvoke <android.system.Os: void setxattr(java.lang.String,java.lang.String,byte[],int)>($r3, "user.serial", r0, $i1);
+
+     label2:
+        return;
+
+     label3:
+        $r4 := @caughtexception;
+
+        r8 = (android.system.ErrnoException) $r4;
+
+        $r5 = virtualinvoke r8.<android.system.ErrnoException: java.io.IOException rethrowAsIOException()>();
+
+        throw $r5;
+
+        catch android.system.ErrnoException from label1 to label2 with label3;
+    }
+
+    void destroyUserData(int, int)
+    {
+        com.android.server.pm.UserDataPreparer r0;
+        int i0, i1;
+        java.lang.Object r1, $r3, $r6;
+        android.content.Context $r2;
+        android.os.storage.StorageManager $r4;
+        java.util.List $r5;
+        boolean $z0;
+        android.os.storage.VolumeInfo $r7;
+        java.lang.String $r8;
+        java.lang.Throwable $r9;
+        java.util.Iterator r10;
+
+        r0 := @this: com.android.server.pm.UserDataPreparer;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        r1 = r0.<com.android.server.pm.UserDataPreparer: java.lang.Object mInstallLock>;
+
+        entermonitor r1;
+
+     label1:
+        $r2 = r0.<com.android.server.pm.UserDataPreparer: android.content.Context mContext>;
+
+        $r3 = virtualinvoke $r2.<android.content.Context: java.lang.Object getSystemService(java.lang.Class)>(class "Landroid/os/storage/StorageManager;");
+
+        $r4 = (android.os.storage.StorageManager) $r3;
+
+        $r5 = virtualinvoke $r4.<android.os.storage.StorageManager: java.util.List getWritablePrivateVolumes()>();
+
+        r10 = interfaceinvoke $r5.<java.util.List: java.util.Iterator iterator()>();
+
+     label2:
+        $z0 = interfaceinvoke r10.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label4;
+
+        $r6 = interfaceinvoke r10.<java.util.Iterator: java.lang.Object next()>();
+
+        $r7 = (android.os.storage.VolumeInfo) $r6;
+
+        $r8 = virtualinvoke $r7.<android.os.storage.VolumeInfo: java.lang.String getFsUuid()>();
+
+        virtualinvoke r0.<com.android.server.pm.UserDataPreparer: void destroyUserDataLI(java.lang.String,int,int)>($r8, i0, i1);
+
+     label3:
+        goto label2;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        return;
+
+     label6:
+        $r9 := @caughtexception;
+
+     label7:
+        exitmonitor r1;
+
+     label8:
+        throw $r9;
+
+        catch java.lang.Throwable from label1 to label2 with label6;
+        catch java.lang.Throwable from label2 to label3 with label6;
+        catch java.lang.Throwable from label4 to label5 with label6;
+        catch java.lang.Throwable from label7 to label8 with label6;
+    }
+
+    void destroyUserDataLI(java.lang.String, int, int)
+    {
+        com.android.server.pm.UserDataPreparer r0;
+        java.lang.String r1, $r6, $r18;
+        int i0, i1, $i2, $i3;
+        android.content.Context $r3;
+        java.lang.Object $r4;
+        com.android.server.pm.Installer $r5;
+        boolean $z0;
+        java.io.File $r7, $r8, $r9;
+        java.lang.Exception $r10;
+        java.lang.StringBuilder $r11;
+        android.os.storage.StorageManager r19;
+
+        r0 := @this: com.android.server.pm.UserDataPreparer;
+
+        r1 := @parameter0: java.lang.String;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        $r3 = r0.<com.android.server.pm.UserDataPreparer: android.content.Context mContext>;
+
+        $r4 = virtualinvoke $r3.<android.content.Context: java.lang.Object getSystemService(java.lang.Class)>(class "Landroid/os/storage/StorageManager;");
+
+        r19 = (android.os.storage.StorageManager) $r4;
+
+     label1:
+        $r5 = r0.<com.android.server.pm.UserDataPreparer: com.android.server.pm.Installer mInstaller>;
+
+        virtualinvoke $r5.<com.android.server.pm.Installer: void destroyUserData(java.lang.String,int,int)>(r1, i0, i1);
+
+        $r6 = <android.os.storage.StorageManager: java.lang.String UUID_PRIVATE_INTERNAL>;
+
+        $z0 = staticinvoke <java.util.Objects: boolean equals(java.lang.Object,java.lang.Object)>(r1, $r6);
+
+        if $z0 == 0 goto label6;
+
+     label2:
+        $i2 = i1 & 1;
+
+        if $i2 == 0 goto label4;
+
+     label3:
+        $r8 = virtualinvoke r0.<com.android.server.pm.UserDataPreparer: java.io.File getUserSystemDirectory(int)>(i0);
+
+        staticinvoke <android.os.FileUtils: boolean deleteContentsAndDir(java.io.File)>($r8);
+
+        $r9 = virtualinvoke r0.<com.android.server.pm.UserDataPreparer: java.io.File getDataSystemDeDirectory(int)>(i0);
+
+        staticinvoke <android.os.FileUtils: boolean deleteContentsAndDir(java.io.File)>($r9);
+
+     label4:
+        $i3 = i1 & 2;
+
+        if $i3 == 0 goto label6;
+
+     label5:
+        $r7 = virtualinvoke r0.<com.android.server.pm.UserDataPreparer: java.io.File getDataSystemCeDirectory(int)>(i0);
+
+        staticinvoke <android.os.FileUtils: boolean deleteContentsAndDir(java.io.File)>($r7);
+
+     label6:
+        virtualinvoke r19.<android.os.storage.StorageManager: void destroyUserStorage(java.lang.String,int,int)>(r1, i0, i1);
+
+     label7:
+        goto label9;
+
+     label8:
+        $r10 := @caughtexception;
+
+        $r11 = new java.lang.StringBuilder;
+
+        specialinvoke $r11.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Failed to destroy user ");
+
+        virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" on volume ");
+
+        virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(": ");
+
+        virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r10);
+
+        $r18 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.server.pm.PackageManagerServiceUtils: void logCriticalInfo(int,java.lang.String)>(5, $r18);
+
+     label9:
+        return;
+
+        catch java.lang.Exception from label1 to label2 with label8;
+        catch java.lang.Exception from label3 to label4 with label8;
+        catch java.lang.Exception from label5 to label6 with label8;
+        catch java.lang.Exception from label6 to label7 with label8;
+    }
+
+    void enforceSerialNumber(java.io.File, int) throws java.io.IOException
+    {
+        com.android.server.pm.UserDataPreparer r0;
+        int i0, i1;
+        boolean $z0;
+        java.lang.StringBuilder $r2, $r8, $r15, $r21;
+        java.lang.String $r7, $r14, $r19, $r24;
+        java.io.IOException $r13;
+        java.lang.Throwable $r20;
+        java.io.File r25;
+
+        r0 := @this: com.android.server.pm.UserDataPreparer;
+
+        r25 := @parameter0: java.io.File;
+
+        i0 := @parameter1: int;
+
+        $z0 = virtualinvoke r0.<com.android.server.pm.UserDataPreparer: boolean isFileEncryptedEmulatedOnly()>();
+
+        if $z0 == 0 goto label1;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("UserDataPreparer", "Device is emulating FBE; assuming current serial number is valid");
+
+        return;
+
+     label1:
+        i1 = staticinvoke <com.android.server.pm.UserDataPreparer: int getSerialNumber(java.io.File)>(r25);
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Found ");
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r25);
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" with serial number ");
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i1);
+
+        $r7 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int v(java.lang.String,java.lang.String)>("UserDataPreparer", $r7);
+
+        if i1 != -1 goto label5;
+
+        $r15 = new java.lang.StringBuilder;
+
+        specialinvoke $r15.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r15.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Serial number missing on ");
+
+        virtualinvoke $r15.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r25);
+
+        virtualinvoke $r15.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("; assuming current is valid");
+
+        $r19 = virtualinvoke $r15.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("UserDataPreparer", $r19);
+
+     label2:
+        staticinvoke <com.android.server.pm.UserDataPreparer: void setSerialNumber(java.io.File,int)>(r25, i0);
+
+     label3:
+        goto label6;
+
+     label4:
+        $r20 := @caughtexception;
+
+        $r21 = new java.lang.StringBuilder;
+
+        specialinvoke $r21.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r21.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Failed to set serial number on ");
+
+        virtualinvoke $r21.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r25);
+
+        $r24 = virtualinvoke $r21.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String,java.lang.Throwable)>("UserDataPreparer", $r24, $r20);
+
+        goto label3;
+
+     label5:
+        if i1 != i0 goto label7;
+
+     label6:
+        return;
+
+     label7:
+        $r8 = new java.lang.StringBuilder;
+
+        specialinvoke $r8.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Found serial number ");
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i1);
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" doesn\'t match expected ");
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r13 = new java.io.IOException;
+
+        $r14 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r13.<java.io.IOException: void <init>(java.lang.String)>($r14);
+
+        throw $r13;
+
+        catch java.io.IOException from label2 to label3 with label4;
+    }
+
+    protected java.io.File getDataMiscCeDirectory(int)
+    {
+        com.android.server.pm.UserDataPreparer r0;
+        int i0;
+        java.io.File $r1;
+
+        r0 := @this: com.android.server.pm.UserDataPreparer;
+
+        i0 := @parameter0: int;
+
+        $r1 = staticinvoke <android.os.Environment: java.io.File getDataMiscCeDirectory(int)>(i0);
+
+        return $r1;
+    }
+
+    protected java.io.File getDataMiscDeDirectory(int)
+    {
+        com.android.server.pm.UserDataPreparer r0;
+        int i0;
+        java.io.File $r1;
+
+        r0 := @this: com.android.server.pm.UserDataPreparer;
+
+        i0 := @parameter0: int;
+
+        $r1 = staticinvoke <android.os.Environment: java.io.File getDataMiscDeDirectory(int)>(i0);
+
+        return $r1;
+    }
+
+    protected java.io.File getDataSystemCeDirectory(int)
+    {
+        com.android.server.pm.UserDataPreparer r0;
+        int i0;
+        java.io.File $r1;
+
+        r0 := @this: com.android.server.pm.UserDataPreparer;
+
+        i0 := @parameter0: int;
+
+        $r1 = staticinvoke <android.os.Environment: java.io.File getDataSystemCeDirectory(int)>(i0);
+
+        return $r1;
+    }
+
+    protected java.io.File getDataSystemDeDirectory(int)
+    {
+        com.android.server.pm.UserDataPreparer r0;
+        int i0;
+        java.io.File $r1;
+
+        r0 := @this: com.android.server.pm.UserDataPreparer;
+
+        i0 := @parameter0: int;
+
+        $r1 = staticinvoke <android.os.Environment: java.io.File getDataSystemDeDirectory(int)>(i0);
+
+        return $r1;
+    }
+
+    protected java.io.File getDataUserCeDirectory(java.lang.String, int)
+    {
+        com.android.server.pm.UserDataPreparer r0;
+        java.lang.String r1;
+        int i0;
+        java.io.File $r2;
+
+        r0 := @this: com.android.server.pm.UserDataPreparer;
+
+        r1 := @parameter0: java.lang.String;
+
+        i0 := @parameter1: int;
+
+        $r2 = staticinvoke <android.os.Environment: java.io.File getDataUserCeDirectory(java.lang.String,int)>(r1, i0);
+
+        return $r2;
+    }
+
+    protected java.io.File getDataUserDeDirectory(java.lang.String, int)
+    {
+        com.android.server.pm.UserDataPreparer r0;
+        java.lang.String r1;
+        int i0;
+        java.io.File $r2;
+
+        r0 := @this: com.android.server.pm.UserDataPreparer;
+
+        r1 := @parameter0: java.lang.String;
+
+        i0 := @parameter1: int;
+
+        $r2 = staticinvoke <android.os.Environment: java.io.File getDataUserDeDirectory(java.lang.String,int)>(r1, i0);
+
+        return $r2;
+    }
+
+    protected java.io.File getUserSystemDirectory(int)
+    {
+        com.android.server.pm.UserDataPreparer r0;
+        int i0;
+        java.io.File $r1;
+
+        r0 := @this: com.android.server.pm.UserDataPreparer;
+
+        i0 := @parameter0: int;
+
+        $r1 = staticinvoke <android.os.Environment: java.io.File getUserSystemDirectory(int)>(i0);
+
+        return $r1;
+    }
+
+    protected boolean isFileEncryptedEmulatedOnly()
+    {
+        com.android.server.pm.UserDataPreparer r0;
+        boolean $z0;
+
+        r0 := @this: com.android.server.pm.UserDataPreparer;
+
+        $z0 = staticinvoke <android.os.storage.StorageManager: boolean isFileEncryptedEmulatedOnly()>();
+
+        return $z0;
+    }
+
+    void prepareUserData(int, int, int)
+    {
+        com.android.server.pm.UserDataPreparer r0;
+        int i0, i1, i2;
+        java.lang.Object r1, $r3, $r6;
+        android.content.Context $r2;
+        android.os.storage.StorageManager $r4;
+        java.util.List $r5;
+        boolean $z0;
+        android.os.storage.VolumeInfo $r7;
+        java.lang.String $r8;
+        java.lang.Throwable $r9;
+        java.util.Iterator r10;
+
+        r0 := @this: com.android.server.pm.UserDataPreparer;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        i2 := @parameter2: int;
+
+        r1 = r0.<com.android.server.pm.UserDataPreparer: java.lang.Object mInstallLock>;
+
+        entermonitor r1;
+
+     label1:
+        $r2 = r0.<com.android.server.pm.UserDataPreparer: android.content.Context mContext>;
+
+        $r3 = virtualinvoke $r2.<android.content.Context: java.lang.Object getSystemService(java.lang.Class)>(class "Landroid/os/storage/StorageManager;");
+
+        $r4 = (android.os.storage.StorageManager) $r3;
+
+        $r5 = virtualinvoke $r4.<android.os.storage.StorageManager: java.util.List getWritablePrivateVolumes()>();
+
+        r10 = interfaceinvoke $r5.<java.util.List: java.util.Iterator iterator()>();
+
+     label2:
+        $z0 = interfaceinvoke r10.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label4;
+
+        $r6 = interfaceinvoke r10.<java.util.Iterator: java.lang.Object next()>();
+
+        $r7 = (android.os.storage.VolumeInfo) $r6;
+
+        $r8 = virtualinvoke $r7.<android.os.storage.VolumeInfo: java.lang.String getFsUuid()>();
+
+        specialinvoke r0.<com.android.server.pm.UserDataPreparer: void prepareUserDataLI(java.lang.String,int,int,int,boolean)>($r8, i0, i1, i2, 1);
+
+     label3:
+        goto label2;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        return;
+
+     label6:
+        $r9 := @caughtexception;
+
+     label7:
+        exitmonitor r1;
+
+     label8:
+        throw $r9;
+
+        catch java.lang.Throwable from label1 to label2 with label6;
+        catch java.lang.Throwable from label2 to label3 with label6;
+        catch java.lang.Throwable from label4 to label5 with label6;
+        catch java.lang.Throwable from label7 to label8 with label6;
+    }
+
+    void reconcileUsers(java.lang.String, java.util.List)
+    {
+        com.android.server.pm.UserDataPreparer r0;
+        java.lang.String r1;
+        java.util.List r2;
+        java.util.ArrayList $r4;
+        java.io.File $r5, $r7, $r9, $r11, $r13;
+        java.io.File[] $r6, $r8, $r10, $r12, $r14;
+
+        r0 := @this: com.android.server.pm.UserDataPreparer;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 := @parameter1: java.util.List;
+
+        $r4 = new java.util.ArrayList;
+
+        specialinvoke $r4.<java.util.ArrayList: void <init>()>();
+
+        $r5 = staticinvoke <android.os.Environment: java.io.File getDataUserDeDirectory(java.lang.String)>(r1);
+
+        $r6 = staticinvoke <android.os.FileUtils: java.io.File[] listFilesOrEmpty(java.io.File)>($r5);
+
+        staticinvoke <java.util.Collections: boolean addAll(java.util.Collection,java.lang.Object[])>($r4, $r6);
+
+        $r7 = staticinvoke <android.os.Environment: java.io.File getDataUserCeDirectory(java.lang.String)>(r1);
+
+        $r8 = staticinvoke <android.os.FileUtils: java.io.File[] listFilesOrEmpty(java.io.File)>($r7);
+
+        staticinvoke <java.util.Collections: boolean addAll(java.util.Collection,java.lang.Object[])>($r4, $r8);
+
+        $r9 = staticinvoke <android.os.Environment: java.io.File getDataSystemDeDirectory()>();
+
+        $r10 = staticinvoke <android.os.FileUtils: java.io.File[] listFilesOrEmpty(java.io.File)>($r9);
+
+        staticinvoke <java.util.Collections: boolean addAll(java.util.Collection,java.lang.Object[])>($r4, $r10);
+
+        $r11 = staticinvoke <android.os.Environment: java.io.File getDataSystemCeDirectory()>();
+
+        $r12 = staticinvoke <android.os.FileUtils: java.io.File[] listFilesOrEmpty(java.io.File)>($r11);
+
+        staticinvoke <java.util.Collections: boolean addAll(java.util.Collection,java.lang.Object[])>($r4, $r12);
+
+        $r13 = staticinvoke <android.os.Environment: java.io.File getDataMiscCeDirectory()>();
+
+        $r14 = staticinvoke <android.os.FileUtils: java.io.File[] listFilesOrEmpty(java.io.File)>($r13);
+
+        staticinvoke <java.util.Collections: boolean addAll(java.util.Collection,java.lang.Object[])>($r4, $r14);
+
+        virtualinvoke r0.<com.android.server.pm.UserDataPreparer: void reconcileUsers(java.lang.String,java.util.List,java.util.List)>(r1, r2, $r4);
+
+        return;
+    }
+
+    void reconcileUsers(java.lang.String, java.util.List, java.util.List)
+    {
+        com.android.server.pm.UserDataPreparer r0;
+        int i0, $i1, $i2, i4, i5;
+        android.util.SparseArray $r3;
+        java.lang.Object $r4, $r6, $r12, r35;
+        boolean $z0, $z1, $z2, z4;
+        java.lang.String $r5, $r11, $r20, $r25, r26;
+        java.lang.StringBuilder $r7, $r15, $r22;
+        java.lang.Throwable $r13, $r14, $r21;
+        java.util.List r27, r28;
+        android.content.pm.UserInfo r29, r32;
+        java.util.Iterator r30;
+        java.io.File r31;
+
+        r0 := @this: com.android.server.pm.UserDataPreparer;
+
+        r26 := @parameter0: java.lang.String;
+
+        r27 := @parameter1: java.util.List;
+
+        r28 := @parameter2: java.util.List;
+
+        i4 = interfaceinvoke r27.<java.util.List: int size()>();
+
+        $r3 = new android.util.SparseArray;
+
+        specialinvoke $r3.<android.util.SparseArray: void <init>(int)>(i4);
+
+        i5 = 0;
+
+     label01:
+        if i5 >= i4 goto label02;
+
+        $r12 = interfaceinvoke r27.<java.util.List: java.lang.Object get(int)>(i5);
+
+        r29 = (android.content.pm.UserInfo) $r12;
+
+        $i2 = r29.<android.content.pm.UserInfo: int id>;
+
+        virtualinvoke $r3.<android.util.SparseArray: void put(int,java.lang.Object)>($i2, r29);
+
+        i5 = i5 + 1;
+
+        goto label01;
+
+     label02:
+        r30 = interfaceinvoke r28.<java.util.List: java.util.Iterator iterator()>();
+
+     label03:
+        $z2 = interfaceinvoke r30.<java.util.Iterator: boolean hasNext()>();
+
+        if $z2 == 0 goto label18;
+
+        $r4 = interfaceinvoke r30.<java.util.Iterator: java.lang.Object next()>();
+
+        r31 = (java.io.File) $r4;
+
+        $z0 = virtualinvoke r31.<java.io.File: boolean isDirectory()>();
+
+        if $z0 != 0 goto label04;
+
+        goto label03;
+
+     label04:
+        $r5 = virtualinvoke r31.<java.io.File: java.lang.String getName()>();
+
+        i0 = staticinvoke <java.lang.Integer: int parseInt(java.lang.String)>($r5);
+
+        $r6 = virtualinvoke $r3.<android.util.SparseArray: java.lang.Object get(int)>(i0);
+
+        r32 = (android.content.pm.UserInfo) $r6;
+
+     label05:
+        if r32 != null goto label06;
+
+        $r7 = new java.lang.StringBuilder;
+
+        specialinvoke $r7.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Destroying user directory ");
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r31);
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" because no matching user was found");
+
+        $r11 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.server.pm.PackageManagerServiceUtils: void logCriticalInfo(int,java.lang.String)>(5, $r11);
+
+        z4 = 1;
+
+        goto label10;
+
+     label06:
+        z4 = 0;
+
+        $z1 = r0.<com.android.server.pm.UserDataPreparer: boolean mOnlyCore>;
+
+        if $z1 != 0 goto label10;
+
+     label07:
+        $i1 = r32.<android.content.pm.UserInfo: int serialNumber>;
+
+        virtualinvoke r0.<com.android.server.pm.UserDataPreparer: void enforceSerialNumber(java.io.File,int)>(r31, $i1);
+
+     label08:
+        z4 = 0;
+
+        goto label10;
+
+     label09:
+        $r14 := @caughtexception;
+
+        $r15 = new java.lang.StringBuilder;
+
+        specialinvoke $r15.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r15.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Destroying user directory ");
+
+        virtualinvoke $r15.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r31);
+
+        virtualinvoke $r15.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" because we failed to enforce serial number: ");
+
+        virtualinvoke $r15.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r14);
+
+        $r20 = virtualinvoke $r15.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.server.pm.PackageManagerServiceUtils: void logCriticalInfo(int,java.lang.String)>(5, $r20);
+
+        z4 = 1;
+
+     label10:
+        if z4 == 0 goto label16;
+
+        r35 = r0.<com.android.server.pm.UserDataPreparer: java.lang.Object mInstallLock>;
+
+        entermonitor r35;
+
+     label11:
+        virtualinvoke r0.<com.android.server.pm.UserDataPreparer: void destroyUserDataLI(java.lang.String,int,int)>(r26, i0, 3);
+
+        exitmonitor r35;
+
+     label12:
+        goto label16;
+
+     label13:
+        $r13 := @caughtexception;
+
+     label14:
+        exitmonitor r35;
+
+     label15:
+        throw $r13;
+
+     label16:
+        goto label03;
+
+     label17:
+        $r21 := @caughtexception;
+
+        $r22 = new java.lang.StringBuilder;
+
+        specialinvoke $r22.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r22.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Invalid user directory ");
+
+        virtualinvoke $r22.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r31);
+
+        $r25 = virtualinvoke $r22.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("UserDataPreparer", $r25);
+
+        goto label03;
+
+     label18:
+        return;
+
+        catch java.lang.NumberFormatException from label04 to label05 with label17;
+        catch java.io.IOException from label07 to label08 with label09;
+        catch java.lang.Throwable from label11 to label12 with label13;
+        catch java.lang.Throwable from label14 to label15 with label13;
+    }
+
+    public static void <clinit>()
+    {
+        <com.android.server.pm.UserDataPreparer: java.lang.String XATTR_SERIAL> = "user.serial";
+
+        <com.android.server.pm.UserDataPreparer: java.lang.String TAG> = "UserDataPreparer";
+
+        return;
+    }
+}

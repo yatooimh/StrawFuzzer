@@ -1,0 +1,2590 @@
+public class com.android.server.AppStateTracker extends java.lang.Object
+{
+    private static final boolean DEBUG;
+    private static final java.lang.String TAG;
+    static final int TARGET_OP;
+    final android.util.SparseBooleanArray mActiveUids;
+    android.app.ActivityManagerInternal mActivityManagerInternal;
+    android.app.AppOpsManager mAppOpsManager;
+    com.android.internal.app.IAppOpsService mAppOpsService;
+    com.android.server.usage.AppStandbyInternal mAppStandbyInternal;
+    boolean mBatterySaverEnabled;
+    private final android.content.Context mContext;
+    private final android.util.SparseSetArray mExemptedPackages;
+    com.android.server.AppStateTracker$FeatureFlagsObserver mFlagsObserver;
+    boolean mForceAllAppStandbyForSmallBattery;
+    boolean mForceAllAppsStandby;
+    boolean mForcedAppStandbyEnabled;
+    final android.util.SparseBooleanArray mForegroundUids;
+    private final com.android.server.AppStateTracker$MyHandler mHandler;
+    android.app.IActivityManager mIActivityManager;
+    boolean mIsPluggedIn;
+    final android.util.ArraySet mListeners;
+    private final java.lang.Object mLock;
+    android.os.PowerManagerInternal mPowerManagerInternal;
+    private int[] mPowerWhitelistedAllAppIds;
+    private int[] mPowerWhitelistedUserAppIds;
+    final android.util.ArraySet mRunAnyRestrictedPackages;
+    com.android.server.AppStateTracker$StandbyTracker mStandbyTracker;
+    boolean mStarted;
+    private final com.android.internal.util.StatLogger mStatLogger;
+    private int[] mTempWhitelistedAppIds;
+
+    public void <init>(android.content.Context, android.os.Looper)
+    {
+        com.android.server.AppStateTracker r0;
+        android.content.Context r1;
+        android.os.Looper r2;
+        int[] r3, $r8;
+        java.lang.Object $r4;
+        android.util.ArraySet $r5, $r10;
+        android.util.SparseBooleanArray $r6, $r7;
+        android.util.SparseSetArray $r9;
+        com.android.internal.util.StatLogger $r11;
+        java.lang.String[] $r12;
+        com.android.server.AppStateTracker$MyHandler $r13;
+
+        r0 := @this: com.android.server.AppStateTracker;
+
+        r1 := @parameter0: android.content.Context;
+
+        r2 := @parameter1: android.os.Looper;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        $r4 = new java.lang.Object;
+
+        specialinvoke $r4.<java.lang.Object: void <init>()>();
+
+        r0.<com.android.server.AppStateTracker: java.lang.Object mLock> = $r4;
+
+        $r5 = new android.util.ArraySet;
+
+        specialinvoke $r5.<android.util.ArraySet: void <init>()>();
+
+        r0.<com.android.server.AppStateTracker: android.util.ArraySet mRunAnyRestrictedPackages> = $r5;
+
+        $r6 = new android.util.SparseBooleanArray;
+
+        specialinvoke $r6.<android.util.SparseBooleanArray: void <init>()>();
+
+        r0.<com.android.server.AppStateTracker: android.util.SparseBooleanArray mActiveUids> = $r6;
+
+        $r7 = new android.util.SparseBooleanArray;
+
+        specialinvoke $r7.<android.util.SparseBooleanArray: void <init>()>();
+
+        r0.<com.android.server.AppStateTracker: android.util.SparseBooleanArray mForegroundUids> = $r7;
+
+        r3 = newarray (int)[0];
+
+        r0.<com.android.server.AppStateTracker: int[] mPowerWhitelistedAllAppIds> = r3;
+
+        $r8 = newarray (int)[0];
+
+        r0.<com.android.server.AppStateTracker: int[] mPowerWhitelistedUserAppIds> = $r8;
+
+        r0.<com.android.server.AppStateTracker: int[] mTempWhitelistedAppIds> = r3;
+
+        $r9 = new android.util.SparseSetArray;
+
+        specialinvoke $r9.<android.util.SparseSetArray: void <init>()>();
+
+        r0.<com.android.server.AppStateTracker: android.util.SparseSetArray mExemptedPackages> = $r9;
+
+        $r10 = new android.util.ArraySet;
+
+        specialinvoke $r10.<android.util.ArraySet: void <init>()>();
+
+        r0.<com.android.server.AppStateTracker: android.util.ArraySet mListeners> = $r10;
+
+        $r11 = new com.android.internal.util.StatLogger;
+
+        $r12 = newarray (java.lang.String)[11];
+
+        $r12[0] = "UID_FG_STATE_CHANGED";
+
+        $r12[1] = "UID_ACTIVE_STATE_CHANGED";
+
+        $r12[2] = "RUN_ANY_CHANGED";
+
+        $r12[3] = "ALL_UNWHITELISTED";
+
+        $r12[4] = "ALL_WHITELIST_CHANGED";
+
+        $r12[5] = "TEMP_WHITELIST_CHANGED";
+
+        $r12[6] = "EXEMPT_CHANGED";
+
+        $r12[7] = "FORCE_ALL_CHANGED";
+
+        $r12[8] = "FORCE_APP_STANDBY_FEATURE_FLAG_CHANGED";
+
+        $r12[9] = "IS_UID_ACTIVE_CACHED";
+
+        $r12[10] = "IS_UID_ACTIVE_RAW";
+
+        specialinvoke $r11.<com.android.internal.util.StatLogger: void <init>(java.lang.String[])>($r12);
+
+        r0.<com.android.server.AppStateTracker: com.android.internal.util.StatLogger mStatLogger> = $r11;
+
+        r0.<com.android.server.AppStateTracker: android.content.Context mContext> = r1;
+
+        $r13 = new com.android.server.AppStateTracker$MyHandler;
+
+        specialinvoke $r13.<com.android.server.AppStateTracker$MyHandler: void <init>(com.android.server.AppStateTracker,android.os.Looper)>(r0, r2);
+
+        r0.<com.android.server.AppStateTracker: com.android.server.AppStateTracker$MyHandler mHandler> = $r13;
+
+        return;
+    }
+
+    static android.content.Context access$000(com.android.server.AppStateTracker)
+    {
+        com.android.server.AppStateTracker r0;
+        android.content.Context $r1;
+
+        r0 := @parameter0: com.android.server.AppStateTracker;
+
+        $r1 = r0.<com.android.server.AppStateTracker: android.content.Context mContext>;
+
+        return $r1;
+    }
+
+    static java.lang.Object access$100(com.android.server.AppStateTracker)
+    {
+        com.android.server.AppStateTracker r0;
+        java.lang.Object $r1;
+
+        r0 := @parameter0: com.android.server.AppStateTracker;
+
+        $r1 = r0.<com.android.server.AppStateTracker: java.lang.Object mLock>;
+
+        return $r1;
+    }
+
+    static boolean access$1800(android.util.SparseBooleanArray, int, boolean)
+    {
+        android.util.SparseBooleanArray r0;
+        int i0;
+        boolean z0, $z1;
+
+        r0 := @parameter0: android.util.SparseBooleanArray;
+
+        i0 := @parameter1: int;
+
+        z0 := @parameter2: boolean;
+
+        $z1 = staticinvoke <com.android.server.AppStateTracker: boolean removeUidFromArray(android.util.SparseBooleanArray,int,boolean)>(r0, i0, z0);
+
+        return $z1;
+    }
+
+    static boolean access$1900(android.util.SparseBooleanArray, int)
+    {
+        android.util.SparseBooleanArray r0;
+        int i0;
+        boolean $z0;
+
+        r0 := @parameter0: android.util.SparseBooleanArray;
+
+        i0 := @parameter1: int;
+
+        $z0 = staticinvoke <com.android.server.AppStateTracker: boolean addUidToArray(android.util.SparseBooleanArray,int)>(r0, i0);
+
+        return $z0;
+    }
+
+    static com.android.server.AppStateTracker$MyHandler access$200(com.android.server.AppStateTracker)
+    {
+        com.android.server.AppStateTracker r0;
+        com.android.server.AppStateTracker$MyHandler $r1;
+
+        r0 := @parameter0: com.android.server.AppStateTracker;
+
+        $r1 = r0.<com.android.server.AppStateTracker: com.android.server.AppStateTracker$MyHandler mHandler>;
+
+        return $r1;
+    }
+
+    static void access$300(com.android.server.AppStateTracker)
+    {
+        com.android.server.AppStateTracker r0;
+
+        r0 := @parameter0: com.android.server.AppStateTracker;
+
+        specialinvoke r0.<com.android.server.AppStateTracker: void updateForceAllAppStandbyState()>();
+
+        return;
+    }
+
+    static android.util.SparseSetArray access$700(com.android.server.AppStateTracker)
+    {
+        com.android.server.AppStateTracker r0;
+        android.util.SparseSetArray $r1;
+
+        r0 := @parameter0: com.android.server.AppStateTracker;
+
+        $r1 = r0.<com.android.server.AppStateTracker: android.util.SparseSetArray mExemptedPackages>;
+
+        return $r1;
+    }
+
+    static com.android.internal.util.StatLogger access$800(com.android.server.AppStateTracker)
+    {
+        com.android.server.AppStateTracker r0;
+        com.android.internal.util.StatLogger $r1;
+
+        r0 := @parameter0: com.android.server.AppStateTracker;
+
+        $r1 = r0.<com.android.server.AppStateTracker: com.android.internal.util.StatLogger mStatLogger>;
+
+        return $r1;
+    }
+
+    static com.android.server.AppStateTracker$Listener[] access$900(com.android.server.AppStateTracker)
+    {
+        com.android.server.AppStateTracker r0;
+        com.android.server.AppStateTracker$Listener[] $r1;
+
+        r0 := @parameter0: com.android.server.AppStateTracker;
+
+        $r1 = specialinvoke r0.<com.android.server.AppStateTracker: com.android.server.AppStateTracker$Listener[] cloneListeners()>();
+
+        return $r1;
+    }
+
+    private static boolean addUidToArray(android.util.SparseBooleanArray, int)
+    {
+        android.util.SparseBooleanArray r0;
+        int i0;
+        boolean $z0, $z1;
+
+        r0 := @parameter0: android.util.SparseBooleanArray;
+
+        i0 := @parameter1: int;
+
+        $z0 = staticinvoke <android.os.UserHandle: boolean isCore(int)>(i0);
+
+        if $z0 == 0 goto label1;
+
+        return 0;
+
+     label1:
+        $z1 = virtualinvoke r0.<android.util.SparseBooleanArray: boolean get(int)>(i0);
+
+        if $z1 == 0 goto label2;
+
+        return 0;
+
+     label2:
+        virtualinvoke r0.<android.util.SparseBooleanArray: void put(int,boolean)>(i0, 1);
+
+        return 1;
+    }
+
+    private void cleanUpArrayForUser(android.util.SparseBooleanArray, int)
+    {
+        com.android.server.AppStateTracker r0;
+        android.util.SparseBooleanArray r1;
+        int i0, $i1, $i2, $i3, i4;
+
+        r0 := @this: com.android.server.AppStateTracker;
+
+        r1 := @parameter0: android.util.SparseBooleanArray;
+
+        i0 := @parameter1: int;
+
+        $i1 = virtualinvoke r1.<android.util.SparseBooleanArray: int size()>();
+
+        i4 = $i1 - 1;
+
+     label1:
+        if i4 < 0 goto label3;
+
+        $i2 = virtualinvoke r1.<android.util.SparseBooleanArray: int keyAt(int)>(i4);
+
+        $i3 = staticinvoke <android.os.UserHandle: int getUserId(int)>($i2);
+
+        if $i3 != i0 goto label2;
+
+        virtualinvoke r1.<android.util.SparseBooleanArray: void removeAt(int)>(i4);
+
+     label2:
+        i4 = i4 + -1;
+
+        goto label1;
+
+     label3:
+        return;
+    }
+
+    private com.android.server.AppStateTracker$Listener[] cloneListeners()
+    {
+        com.android.server.AppStateTracker r0;
+        java.lang.Object r1;
+        android.util.ArraySet $r2, $r3;
+        int $i0;
+        com.android.server.AppStateTracker$Listener[] $r4, r7;
+        java.lang.Object[] $r5;
+        java.lang.Throwable $r6;
+
+        r0 := @this: com.android.server.AppStateTracker;
+
+        r1 = r0.<com.android.server.AppStateTracker: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        $r3 = r0.<com.android.server.AppStateTracker: android.util.ArraySet mListeners>;
+
+        $r2 = r0.<com.android.server.AppStateTracker: android.util.ArraySet mListeners>;
+
+        $i0 = virtualinvoke $r2.<android.util.ArraySet: int size()>();
+
+        $r4 = newarray (com.android.server.AppStateTracker$Listener)[$i0];
+
+        $r5 = virtualinvoke $r3.<android.util.ArraySet: java.lang.Object[] toArray(java.lang.Object[])>($r4);
+
+        r7 = (com.android.server.AppStateTracker$Listener[]) $r5;
+
+        exitmonitor r1;
+
+     label2:
+        return r7;
+
+     label3:
+        $r6 := @caughtexception;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        throw $r6;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    private void dumpUids(java.io.PrintWriter, android.util.SparseBooleanArray)
+    {
+        com.android.server.AppStateTracker r0;
+        java.io.PrintWriter r1;
+        android.util.SparseBooleanArray r2;
+        int $i0, $i1, i2;
+        boolean $z0;
+        java.lang.String $r3, r4, r5;
+
+        r0 := @this: com.android.server.AppStateTracker;
+
+        r1 := @parameter0: java.io.PrintWriter;
+
+        r2 := @parameter1: android.util.SparseBooleanArray;
+
+        virtualinvoke r1.<java.io.PrintWriter: void print(java.lang.String)>("[");
+
+        r4 = "";
+
+        i2 = 0;
+
+     label1:
+        $i0 = virtualinvoke r2.<android.util.SparseBooleanArray: int size()>();
+
+        if i2 >= $i0 goto label3;
+
+        r5 = r4;
+
+        $z0 = virtualinvoke r2.<android.util.SparseBooleanArray: boolean valueAt(int)>(i2);
+
+        if $z0 == 0 goto label2;
+
+        virtualinvoke r1.<java.io.PrintWriter: void print(java.lang.String)>(r4);
+
+        $i1 = virtualinvoke r2.<android.util.SparseBooleanArray: int keyAt(int)>(i2);
+
+        $r3 = staticinvoke <android.os.UserHandle: java.lang.String formatUid(int)>($i1);
+
+        virtualinvoke r1.<java.io.PrintWriter: void print(java.lang.String)>($r3);
+
+        r5 = " ";
+
+     label2:
+        i2 = i2 + 1;
+
+        r4 = r5;
+
+        goto label1;
+
+     label3:
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>("]");
+
+        return;
+    }
+
+    private int findForcedAppStandbyUidPackageIndexLocked(int, java.lang.String)
+    {
+        com.android.server.AppStateTracker r0;
+        int i0, i1, $i2, $i3, i4;
+        java.lang.String r1;
+        android.util.Pair r2, $r11;
+        android.util.ArraySet $r3, $r4, $r9;
+        java.lang.Object $r5, $r6, $r8;
+        java.lang.Integer $r7, $r10;
+        boolean $z0;
+
+        r0 := @this: com.android.server.AppStateTracker;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: java.lang.String;
+
+        $r3 = r0.<com.android.server.AppStateTracker: android.util.ArraySet mRunAnyRestrictedPackages>;
+
+        i1 = virtualinvoke $r3.<android.util.ArraySet: int size()>();
+
+        if i1 <= 8 goto label1;
+
+        $r9 = r0.<com.android.server.AppStateTracker: android.util.ArraySet mRunAnyRestrictedPackages>;
+
+        $r10 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i0);
+
+        $r11 = staticinvoke <android.util.Pair: android.util.Pair create(java.lang.Object,java.lang.Object)>($r10, r1);
+
+        $i3 = virtualinvoke $r9.<android.util.ArraySet: int indexOf(java.lang.Object)>($r11);
+
+        return $i3;
+
+     label1:
+        i4 = 0;
+
+     label2:
+        if i4 >= i1 goto label4;
+
+        $r4 = r0.<com.android.server.AppStateTracker: android.util.ArraySet mRunAnyRestrictedPackages>;
+
+        $r5 = virtualinvoke $r4.<android.util.ArraySet: java.lang.Object valueAt(int)>(i4);
+
+        r2 = (android.util.Pair) $r5;
+
+        $r6 = r2.<android.util.Pair: java.lang.Object first>;
+
+        $r7 = (java.lang.Integer) $r6;
+
+        $i2 = virtualinvoke $r7.<java.lang.Integer: int intValue()>();
+
+        if $i2 != i0 goto label3;
+
+        $r8 = r2.<android.util.Pair: java.lang.Object second>;
+
+        $z0 = virtualinvoke r1.<java.lang.String: boolean equals(java.lang.Object)>($r8);
+
+        if $z0 == 0 goto label3;
+
+        return i4;
+
+     label3:
+        i4 = i4 + 1;
+
+        goto label2;
+
+     label4:
+        return -1;
+    }
+
+    static boolean isAnyAppIdUnwhitelisted(int[], int[])
+    {
+        int[] r0, r1;
+        int i0, $i1, i2, i3, $i4, i5;
+        boolean z0, z1;
+
+        r0 := @parameter0: int[];
+
+        r1 := @parameter1: int[];
+
+        i2 = 0;
+
+        i3 = 0;
+
+     label01:
+        $i4 = lengthof r0;
+
+        if i2 < $i4 goto label02;
+
+        z0 = 1;
+
+        goto label03;
+
+     label02:
+        z0 = 0;
+
+     label03:
+        $i1 = lengthof r1;
+
+        if i3 < $i1 goto label04;
+
+        z1 = 1;
+
+        goto label05;
+
+     label04:
+        z1 = 0;
+
+     label05:
+        if z0 != 0 goto label09;
+
+        if z1 == 0 goto label06;
+
+        goto label09;
+
+     label06:
+        i0 = r0[i2];
+
+        i5 = r1[i3];
+
+        if i0 != i5 goto label07;
+
+        i2 = i2 + 1;
+
+        i3 = i3 + 1;
+
+        goto label01;
+
+     label07:
+        if i0 >= i5 goto label08;
+
+        return 1;
+
+     label08:
+        i3 = i3 + 1;
+
+        goto label01;
+
+     label09:
+        if z0 == 0 goto label10;
+
+        return 0;
+
+     label10:
+        return z1;
+    }
+
+    private boolean isRestricted(int, java.lang.String, boolean, boolean)
+    {
+        com.android.server.AppStateTracker r0;
+        boolean z0, $z1, $z2, $z3, $z4, $z5, $z6, $z7, $z8, z9, z10;
+        java.lang.Object r1;
+        int i0, i1, i2;
+        int[] $r2, $r6;
+        com.android.server.usage.AppStandbyInternal $r3, $r4;
+        android.util.SparseSetArray $r5;
+        java.lang.Throwable $r7;
+        java.lang.String r8;
+
+        r0 := @this: com.android.server.AppStateTracker;
+
+        i1 := @parameter0: int;
+
+        r8 := @parameter1: java.lang.String;
+
+        z9 := @parameter2: boolean;
+
+        z0 := @parameter3: boolean;
+
+        $z1 = virtualinvoke r0.<com.android.server.AppStateTracker: boolean isUidActive(int)>(i1);
+
+        if $z1 == 0 goto label01;
+
+        return 0;
+
+     label01:
+        r1 = r0.<com.android.server.AppStateTracker: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label02:
+        i0 = staticinvoke <android.os.UserHandle: int getAppId(int)>(i1);
+
+        $r2 = r0.<com.android.server.AppStateTracker: int[] mPowerWhitelistedAllAppIds>;
+
+        $z2 = staticinvoke <com.android.internal.util.ArrayUtils: boolean contains(int[],int)>($r2, i0);
+
+        if $z2 == 0 goto label04;
+
+        exitmonitor r1;
+
+     label03:
+        return 0;
+
+     label04:
+        if z9 == 0 goto label07;
+
+     label05:
+        $r6 = r0.<com.android.server.AppStateTracker: int[] mTempWhitelistedAppIds>;
+
+        $z8 = staticinvoke <com.android.internal.util.ArrayUtils: boolean contains(int[],int)>($r6, i0);
+
+        if $z8 == 0 goto label07;
+
+        exitmonitor r1;
+
+     label06:
+        return 0;
+
+     label07:
+        $z3 = r0.<com.android.server.AppStateTracker: boolean mForcedAppStandbyEnabled>;
+
+        if $z3 == 0 goto label09;
+
+        $z7 = virtualinvoke r0.<com.android.server.AppStateTracker: boolean isRunAnyRestrictedLocked(int,java.lang.String)>(i1, r8);
+
+        if $z7 == 0 goto label09;
+
+        exitmonitor r1;
+
+     label08:
+        return 1;
+
+     label09:
+        if z0 == 0 goto label12;
+
+     label10:
+        exitmonitor r1;
+
+     label11:
+        return 0;
+
+     label12:
+        i2 = staticinvoke <android.os.UserHandle: int getUserId(int)>(i1);
+
+        $r3 = r0.<com.android.server.AppStateTracker: com.android.server.usage.AppStandbyInternal mAppStandbyInternal>;
+
+        $z4 = interfaceinvoke $r3.<com.android.server.usage.AppStandbyInternal: boolean isAppIdleEnabled()>();
+
+        if $z4 == 0 goto label14;
+
+        $r4 = r0.<com.android.server.AppStateTracker: com.android.server.usage.AppStandbyInternal mAppStandbyInternal>;
+
+        $z5 = interfaceinvoke $r4.<com.android.server.usage.AppStandbyInternal: boolean isInParole()>();
+
+        if $z5 != 0 goto label14;
+
+        $r5 = r0.<com.android.server.AppStateTracker: android.util.SparseSetArray mExemptedPackages>;
+
+        $z6 = virtualinvoke $r5.<android.util.SparseSetArray: boolean contains(int,java.lang.Object)>(i2, r8);
+
+        if $z6 == 0 goto label14;
+
+        exitmonitor r1;
+
+     label13:
+        return 0;
+
+     label14:
+        z10 = r0.<com.android.server.AppStateTracker: boolean mForceAllAppsStandby>;
+
+        exitmonitor r1;
+
+     label15:
+        return z10;
+
+     label16:
+        $r7 := @caughtexception;
+
+     label17:
+        exitmonitor r1;
+
+     label18:
+        throw $r7;
+
+        catch java.lang.Throwable from label02 to label03 with label16;
+        catch java.lang.Throwable from label05 to label06 with label16;
+        catch java.lang.Throwable from label07 to label08 with label16;
+        catch java.lang.Throwable from label10 to label11 with label16;
+        catch java.lang.Throwable from label12 to label13 with label16;
+        catch java.lang.Throwable from label14 to label15 with label16;
+        catch java.lang.Throwable from label17 to label18 with label16;
+    }
+
+    private void refreshForcedAppStandbyUidPackagesLocked()
+    {
+        com.android.server.AppStateTracker r0;
+        java.util.List r1, r3;
+        int i0, $i1, $i2, $i3, $i4, i5, i6;
+        android.app.AppOpsManager$PackageOps r2, $r10;
+        android.app.AppOpsManager$OpEntry r4;
+        android.util.ArraySet $r5, $r12;
+        int[] $r6;
+        android.app.AppOpsManager $r7;
+        java.lang.Object $r8, $r9, $r11;
+        java.lang.Integer $r13;
+        java.lang.String $r14;
+        android.util.Pair $r15;
+
+        r0 := @this: com.android.server.AppStateTracker;
+
+        $r5 = r0.<com.android.server.AppStateTracker: android.util.ArraySet mRunAnyRestrictedPackages>;
+
+        virtualinvoke $r5.<android.util.ArraySet: void clear()>();
+
+        $r7 = r0.<com.android.server.AppStateTracker: android.app.AppOpsManager mAppOpsManager>;
+
+        $r6 = newarray (int)[1];
+
+        $r6[0] = 70;
+
+        r1 = virtualinvoke $r7.<android.app.AppOpsManager: java.util.List getPackagesForOps(int[])>($r6);
+
+        if r1 != null goto label1;
+
+        return;
+
+     label1:
+        i0 = interfaceinvoke r1.<java.util.List: int size()>();
+
+        i5 = 0;
+
+     label2:
+        if i5 >= i0 goto label7;
+
+        $r8 = interfaceinvoke r1.<java.util.List: java.lang.Object get(int)>(i5);
+
+        r2 = (android.app.AppOpsManager$PackageOps) $r8;
+
+        $r9 = interfaceinvoke r1.<java.util.List: java.lang.Object get(int)>(i5);
+
+        $r10 = (android.app.AppOpsManager$PackageOps) $r9;
+
+        r3 = virtualinvoke $r10.<android.app.AppOpsManager$PackageOps: java.util.List getOps()>();
+
+        i6 = 0;
+
+     label3:
+        $i1 = interfaceinvoke r3.<java.util.List: int size()>();
+
+        if i6 >= $i1 goto label6;
+
+        $r11 = interfaceinvoke r3.<java.util.List: java.lang.Object get(int)>(i6);
+
+        r4 = (android.app.AppOpsManager$OpEntry) $r11;
+
+        $i2 = virtualinvoke r4.<android.app.AppOpsManager$OpEntry: int getOp()>();
+
+        if $i2 == 70 goto label4;
+
+        goto label5;
+
+     label4:
+        $i3 = virtualinvoke r4.<android.app.AppOpsManager$OpEntry: int getMode()>();
+
+        if $i3 == 0 goto label5;
+
+        $r12 = r0.<com.android.server.AppStateTracker: android.util.ArraySet mRunAnyRestrictedPackages>;
+
+        $i4 = virtualinvoke r2.<android.app.AppOpsManager$PackageOps: int getUid()>();
+
+        $r13 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i4);
+
+        $r14 = virtualinvoke r2.<android.app.AppOpsManager$PackageOps: java.lang.String getPackageName()>();
+
+        $r15 = staticinvoke <android.util.Pair: android.util.Pair create(java.lang.Object,java.lang.Object)>($r13, $r14);
+
+        virtualinvoke $r12.<android.util.ArraySet: boolean add(java.lang.Object)>($r15);
+
+     label5:
+        i6 = i6 + 1;
+
+        goto label3;
+
+     label6:
+        i5 = i5 + 1;
+
+        goto label2;
+
+     label7:
+        return;
+    }
+
+    private static boolean removeUidFromArray(android.util.SparseBooleanArray, int, boolean)
+    {
+        android.util.SparseBooleanArray r0;
+        int i0;
+        boolean z0, $z1, $z2;
+
+        r0 := @parameter0: android.util.SparseBooleanArray;
+
+        i0 := @parameter1: int;
+
+        z0 := @parameter2: boolean;
+
+        $z1 = staticinvoke <android.os.UserHandle: boolean isCore(int)>(i0);
+
+        if $z1 == 0 goto label1;
+
+        return 0;
+
+     label1:
+        $z2 = virtualinvoke r0.<android.util.SparseBooleanArray: boolean get(int)>(i0);
+
+        if $z2 != 0 goto label2;
+
+        return 0;
+
+     label2:
+        if z0 == 0 goto label3;
+
+        virtualinvoke r0.<android.util.SparseBooleanArray: void delete(int)>(i0);
+
+        goto label4;
+
+     label3:
+        virtualinvoke r0.<android.util.SparseBooleanArray: void put(int,boolean)>(i0, 0);
+
+     label4:
+        return 1;
+    }
+
+    private void toggleForceAllAppsStandbyLocked(boolean)
+    {
+        com.android.server.AppStateTracker r0;
+        boolean z0, $z1;
+        com.android.server.AppStateTracker$MyHandler $r1;
+
+        r0 := @this: com.android.server.AppStateTracker;
+
+        z0 := @parameter0: boolean;
+
+        $z1 = r0.<com.android.server.AppStateTracker: boolean mForceAllAppsStandby>;
+
+        if z0 != $z1 goto label1;
+
+        return;
+
+     label1:
+        r0.<com.android.server.AppStateTracker: boolean mForceAllAppsStandby> = z0;
+
+        $r1 = r0.<com.android.server.AppStateTracker: com.android.server.AppStateTracker$MyHandler mHandler>;
+
+        virtualinvoke $r1.<com.android.server.AppStateTracker$MyHandler: void notifyForceAllAppsStandbyChanged()>();
+
+        return;
+    }
+
+    private void updateForceAllAppStandbyState()
+    {
+        com.android.server.AppStateTracker r0;
+        java.lang.Object r1;
+        boolean $z0, $z1, $z2, $z3, z4;
+        java.lang.Throwable $r3;
+
+        r0 := @this: com.android.server.AppStateTracker;
+
+        r1 = r0.<com.android.server.AppStateTracker: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label01:
+        $z0 = r0.<com.android.server.AppStateTracker: boolean mForceAllAppStandbyForSmallBattery>;
+
+        if $z0 == 0 goto label06;
+
+        $z2 = virtualinvoke r0.<com.android.server.AppStateTracker: boolean isSmallBatteryDevice()>();
+
+        if $z2 == 0 goto label06;
+
+        $z3 = r0.<com.android.server.AppStateTracker: boolean mIsPluggedIn>;
+
+        if $z3 != 0 goto label03;
+
+     label02:
+        z4 = 1;
+
+        goto label04;
+
+     label03:
+        z4 = 0;
+
+     label04:
+        specialinvoke r0.<com.android.server.AppStateTracker: void toggleForceAllAppsStandbyLocked(boolean)>(z4);
+
+     label05:
+        goto label07;
+
+     label06:
+        $z1 = r0.<com.android.server.AppStateTracker: boolean mBatterySaverEnabled>;
+
+        specialinvoke r0.<com.android.server.AppStateTracker: void toggleForceAllAppsStandbyLocked(boolean)>($z1);
+
+     label07:
+        exitmonitor r1;
+
+     label08:
+        return;
+
+     label09:
+        $r3 := @caughtexception;
+
+     label10:
+        exitmonitor r1;
+
+     label11:
+        throw $r3;
+
+        catch java.lang.Throwable from label01 to label02 with label09;
+        catch java.lang.Throwable from label04 to label05 with label09;
+        catch java.lang.Throwable from label06 to label07 with label09;
+        catch java.lang.Throwable from label07 to label08 with label09;
+        catch java.lang.Throwable from label10 to label11 with label09;
+    }
+
+    public void addListener(com.android.server.AppStateTracker$Listener)
+    {
+        com.android.server.AppStateTracker r0;
+        java.lang.Object r1;
+        android.util.ArraySet $r2;
+        java.lang.Throwable $r3;
+        com.android.server.AppStateTracker$Listener r4;
+
+        r0 := @this: com.android.server.AppStateTracker;
+
+        r4 := @parameter0: com.android.server.AppStateTracker$Listener;
+
+        r1 = r0.<com.android.server.AppStateTracker: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        $r2 = r0.<com.android.server.AppStateTracker: android.util.ArraySet mListeners>;
+
+        virtualinvoke $r2.<android.util.ArraySet: boolean add(java.lang.Object)>(r4);
+
+        exitmonitor r1;
+
+     label2:
+        return;
+
+     label3:
+        $r3 := @caughtexception;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        throw $r3;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    public boolean areAlarmsRestricted(int, java.lang.String, boolean)
+    {
+        com.android.server.AppStateTracker r0;
+        int i0;
+        java.lang.String r1;
+        boolean z0, $z1;
+
+        r0 := @this: com.android.server.AppStateTracker;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: java.lang.String;
+
+        z0 := @parameter2: boolean;
+
+        $z1 = specialinvoke r0.<com.android.server.AppStateTracker: boolean isRestricted(int,java.lang.String,boolean,boolean)>(i0, r1, 0, z0);
+
+        return $z1;
+    }
+
+    public boolean areForegroundServicesRestricted(int, java.lang.String)
+    {
+        com.android.server.AppStateTracker r0;
+        int i0;
+        java.lang.Object r1;
+        boolean z0;
+        java.lang.Throwable $r2;
+        java.lang.String r3;
+
+        r0 := @this: com.android.server.AppStateTracker;
+
+        i0 := @parameter0: int;
+
+        r3 := @parameter1: java.lang.String;
+
+        r1 = r0.<com.android.server.AppStateTracker: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        z0 = virtualinvoke r0.<com.android.server.AppStateTracker: boolean isRunAnyRestrictedLocked(int,java.lang.String)>(i0, r3);
+
+        exitmonitor r1;
+
+     label2:
+        return z0;
+
+     label3:
+        $r2 := @caughtexception;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        throw $r2;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    public boolean areJobsRestricted(int, java.lang.String, boolean)
+    {
+        com.android.server.AppStateTracker r0;
+        int i0;
+        java.lang.String r1;
+        boolean z0, $z1;
+
+        r0 := @this: com.android.server.AppStateTracker;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: java.lang.String;
+
+        z0 := @parameter2: boolean;
+
+        $z1 = specialinvoke r0.<com.android.server.AppStateTracker: boolean isRestricted(int,java.lang.String,boolean,boolean)>(i0, r1, 1, z0);
+
+        return $z1;
+    }
+
+    public void dump(com.android.internal.util.IndentingPrintWriter)
+    {
+        com.android.server.AppStateTracker r0;
+        java.lang.Object r1, $r21, $r22, $r25, $r32;
+        java.util.Iterator r2;
+        boolean $z0, $z1, $z2, $z3, $z4, $z5;
+        java.lang.String $r5, $r9, $r11, $r13, $r24, $r26, $r33;
+        android.util.SparseBooleanArray $r6, $r7;
+        int[] $r8, $r10, $r12;
+        android.util.SparseSetArray $r15, $r27, $r29, $r31;
+        int $i0, $i1, $i2, $i3, i4, i5;
+        android.util.ArraySet $r18;
+        com.android.internal.util.StatLogger $r20;
+        java.lang.Integer $r23;
+        java.lang.Throwable $r34;
+        com.android.internal.util.IndentingPrintWriter r35;
+        java.lang.StringBuilder r36;
+        android.util.Pair r37;
+
+        r0 := @this: com.android.server.AppStateTracker;
+
+        r35 := @parameter0: com.android.internal.util.IndentingPrintWriter;
+
+        r1 = r0.<com.android.server.AppStateTracker: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label01:
+        r36 = new java.lang.StringBuilder;
+
+        specialinvoke r36.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r36.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Forced App Standby Feature enabled: ");
+
+        $z0 = r0.<com.android.server.AppStateTracker: boolean mForcedAppStandbyEnabled>;
+
+        virtualinvoke r36.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>($z0);
+
+        $r5 = virtualinvoke r36.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r35.<com.android.internal.util.IndentingPrintWriter: void println(java.lang.String)>($r5);
+
+        virtualinvoke r35.<com.android.internal.util.IndentingPrintWriter: void print(java.lang.String)>("Force all apps standby: ");
+
+        $z1 = virtualinvoke r0.<com.android.server.AppStateTracker: boolean isForceAllAppsStandbyEnabled()>();
+
+        virtualinvoke r35.<com.android.internal.util.IndentingPrintWriter: void println(boolean)>($z1);
+
+        virtualinvoke r35.<com.android.internal.util.IndentingPrintWriter: void print(java.lang.String)>("Small Battery Device: ");
+
+        $z2 = virtualinvoke r0.<com.android.server.AppStateTracker: boolean isSmallBatteryDevice()>();
+
+        virtualinvoke r35.<com.android.internal.util.IndentingPrintWriter: void println(boolean)>($z2);
+
+        virtualinvoke r35.<com.android.internal.util.IndentingPrintWriter: void print(java.lang.String)>("Force all apps standby for small battery device: ");
+
+        $z3 = r0.<com.android.server.AppStateTracker: boolean mForceAllAppStandbyForSmallBattery>;
+
+        virtualinvoke r35.<com.android.internal.util.IndentingPrintWriter: void println(boolean)>($z3);
+
+        virtualinvoke r35.<com.android.internal.util.IndentingPrintWriter: void print(java.lang.String)>("Plugged In: ");
+
+        $z4 = r0.<com.android.server.AppStateTracker: boolean mIsPluggedIn>;
+
+        virtualinvoke r35.<com.android.internal.util.IndentingPrintWriter: void println(boolean)>($z4);
+
+        virtualinvoke r35.<com.android.internal.util.IndentingPrintWriter: void print(java.lang.String)>("Active uids: ");
+
+        $r6 = r0.<com.android.server.AppStateTracker: android.util.SparseBooleanArray mActiveUids>;
+
+        specialinvoke r0.<com.android.server.AppStateTracker: void dumpUids(java.io.PrintWriter,android.util.SparseBooleanArray)>(r35, $r6);
+
+        virtualinvoke r35.<com.android.internal.util.IndentingPrintWriter: void print(java.lang.String)>("Foreground uids: ");
+
+        $r7 = r0.<com.android.server.AppStateTracker: android.util.SparseBooleanArray mForegroundUids>;
+
+        specialinvoke r0.<com.android.server.AppStateTracker: void dumpUids(java.io.PrintWriter,android.util.SparseBooleanArray)>(r35, $r7);
+
+        virtualinvoke r35.<com.android.internal.util.IndentingPrintWriter: void print(java.lang.String)>("Except-idle + user whitelist appids: ");
+
+        $r8 = r0.<com.android.server.AppStateTracker: int[] mPowerWhitelistedAllAppIds>;
+
+        $r9 = staticinvoke <java.util.Arrays: java.lang.String toString(int[])>($r8);
+
+        virtualinvoke r35.<com.android.internal.util.IndentingPrintWriter: void println(java.lang.String)>($r9);
+
+        virtualinvoke r35.<com.android.internal.util.IndentingPrintWriter: void print(java.lang.String)>("User whitelist appids: ");
+
+        $r10 = r0.<com.android.server.AppStateTracker: int[] mPowerWhitelistedUserAppIds>;
+
+        $r11 = staticinvoke <java.util.Arrays: java.lang.String toString(int[])>($r10);
+
+        virtualinvoke r35.<com.android.internal.util.IndentingPrintWriter: void println(java.lang.String)>($r11);
+
+        virtualinvoke r35.<com.android.internal.util.IndentingPrintWriter: void print(java.lang.String)>("Temp whitelist appids: ");
+
+        $r12 = r0.<com.android.server.AppStateTracker: int[] mTempWhitelistedAppIds>;
+
+        $r13 = staticinvoke <java.util.Arrays: java.lang.String toString(int[])>($r12);
+
+        virtualinvoke r35.<com.android.internal.util.IndentingPrintWriter: void println(java.lang.String)>($r13);
+
+        virtualinvoke r35.<com.android.internal.util.IndentingPrintWriter: void println(java.lang.String)>("Exempted packages:");
+
+        virtualinvoke r35.<com.android.internal.util.IndentingPrintWriter: com.android.internal.util.IndentingPrintWriter increaseIndent()>();
+
+     label02:
+        i4 = 0;
+
+     label03:
+        $r15 = r0.<com.android.server.AppStateTracker: android.util.SparseSetArray mExemptedPackages>;
+
+        $i0 = virtualinvoke $r15.<android.util.SparseSetArray: int size()>();
+
+        if i4 >= $i0 goto label09;
+
+        virtualinvoke r35.<com.android.internal.util.IndentingPrintWriter: void print(java.lang.String)>("User ");
+
+        $r27 = r0.<com.android.server.AppStateTracker: android.util.SparseSetArray mExemptedPackages>;
+
+        $i2 = virtualinvoke $r27.<android.util.SparseSetArray: int keyAt(int)>(i4);
+
+        virtualinvoke r35.<com.android.internal.util.IndentingPrintWriter: void print(int)>($i2);
+
+        virtualinvoke r35.<com.android.internal.util.IndentingPrintWriter: void println()>();
+
+        virtualinvoke r35.<com.android.internal.util.IndentingPrintWriter: com.android.internal.util.IndentingPrintWriter increaseIndent()>();
+
+     label04:
+        i5 = 0;
+
+     label05:
+        $r29 = r0.<com.android.server.AppStateTracker: android.util.SparseSetArray mExemptedPackages>;
+
+        $i3 = virtualinvoke $r29.<android.util.SparseSetArray: int sizeAt(int)>(i4);
+
+        if i5 >= $i3 goto label07;
+
+        $r31 = r0.<com.android.server.AppStateTracker: android.util.SparseSetArray mExemptedPackages>;
+
+        $r32 = virtualinvoke $r31.<android.util.SparseSetArray: java.lang.Object valueAt(int,int)>(i4, i5);
+
+        $r33 = (java.lang.String) $r32;
+
+        virtualinvoke r35.<com.android.internal.util.IndentingPrintWriter: void print(java.lang.String)>($r33);
+
+        virtualinvoke r35.<com.android.internal.util.IndentingPrintWriter: void println()>();
+
+     label06:
+        i5 = i5 + 1;
+
+        goto label05;
+
+     label07:
+        virtualinvoke r35.<com.android.internal.util.IndentingPrintWriter: com.android.internal.util.IndentingPrintWriter decreaseIndent()>();
+
+     label08:
+        i4 = i4 + 1;
+
+        goto label03;
+
+     label09:
+        virtualinvoke r35.<com.android.internal.util.IndentingPrintWriter: com.android.internal.util.IndentingPrintWriter decreaseIndent()>();
+
+        virtualinvoke r35.<com.android.internal.util.IndentingPrintWriter: void println()>();
+
+        virtualinvoke r35.<com.android.internal.util.IndentingPrintWriter: void println(java.lang.String)>("Restricted packages:");
+
+        virtualinvoke r35.<com.android.internal.util.IndentingPrintWriter: com.android.internal.util.IndentingPrintWriter increaseIndent()>();
+
+        $r18 = r0.<com.android.server.AppStateTracker: android.util.ArraySet mRunAnyRestrictedPackages>;
+
+        r2 = virtualinvoke $r18.<android.util.ArraySet: java.util.Iterator iterator()>();
+
+     label10:
+        $z5 = interfaceinvoke r2.<java.util.Iterator: boolean hasNext()>();
+
+        if $z5 == 0 goto label12;
+
+        $r21 = interfaceinvoke r2.<java.util.Iterator: java.lang.Object next()>();
+
+        r37 = (android.util.Pair) $r21;
+
+        $r22 = r37.<android.util.Pair: java.lang.Object first>;
+
+        $r23 = (java.lang.Integer) $r22;
+
+        $i1 = virtualinvoke $r23.<java.lang.Integer: int intValue()>();
+
+        $r24 = staticinvoke <android.os.UserHandle: java.lang.String formatUid(int)>($i1);
+
+        virtualinvoke r35.<com.android.internal.util.IndentingPrintWriter: void print(java.lang.String)>($r24);
+
+        virtualinvoke r35.<com.android.internal.util.IndentingPrintWriter: void print(java.lang.String)>(" ");
+
+        $r25 = r37.<android.util.Pair: java.lang.Object second>;
+
+        $r26 = (java.lang.String) $r25;
+
+        virtualinvoke r35.<com.android.internal.util.IndentingPrintWriter: void print(java.lang.String)>($r26);
+
+        virtualinvoke r35.<com.android.internal.util.IndentingPrintWriter: void println()>();
+
+     label11:
+        goto label10;
+
+     label12:
+        virtualinvoke r35.<com.android.internal.util.IndentingPrintWriter: com.android.internal.util.IndentingPrintWriter decreaseIndent()>();
+
+        $r20 = r0.<com.android.server.AppStateTracker: com.android.internal.util.StatLogger mStatLogger>;
+
+        virtualinvoke $r20.<com.android.internal.util.StatLogger: void dump(com.android.internal.util.IndentingPrintWriter)>(r35);
+
+        exitmonitor r1;
+
+     label13:
+        return;
+
+     label14:
+        $r34 := @caughtexception;
+
+     label15:
+        exitmonitor r1;
+
+     label16:
+        throw $r34;
+
+        catch java.lang.Throwable from label01 to label02 with label14;
+        catch java.lang.Throwable from label03 to label04 with label14;
+        catch java.lang.Throwable from label05 to label06 with label14;
+        catch java.lang.Throwable from label07 to label08 with label14;
+        catch java.lang.Throwable from label09 to label10 with label14;
+        catch java.lang.Throwable from label10 to label11 with label14;
+        catch java.lang.Throwable from label12 to label13 with label14;
+        catch java.lang.Throwable from label15 to label16 with label14;
+    }
+
+    public void dump(java.io.PrintWriter, java.lang.String)
+    {
+        com.android.server.AppStateTracker r0;
+        java.io.PrintWriter r1;
+        java.lang.String r2;
+        com.android.internal.util.IndentingPrintWriter $r3, $r4;
+
+        r0 := @this: com.android.server.AppStateTracker;
+
+        r1 := @parameter0: java.io.PrintWriter;
+
+        r2 := @parameter1: java.lang.String;
+
+        $r3 = new com.android.internal.util.IndentingPrintWriter;
+
+        specialinvoke $r3.<com.android.internal.util.IndentingPrintWriter: void <init>(java.io.Writer,java.lang.String)>(r1, "  ");
+
+        $r4 = virtualinvoke $r3.<com.android.internal.util.IndentingPrintWriter: com.android.internal.util.IndentingPrintWriter setIndent(java.lang.String)>(r2);
+
+        virtualinvoke r0.<com.android.server.AppStateTracker: void dump(com.android.internal.util.IndentingPrintWriter)>($r4);
+
+        return;
+    }
+
+    public void dumpProto(android.util.proto.ProtoOutputStream, long)
+    {
+        com.android.server.AppStateTracker r0;
+        java.lang.Object r1, $r8, $r9, $r11, $r16;
+        java.util.Iterator r2;
+        boolean $z0, $z1, $z2, $z3, $z4, $z5, $z6, $z7;
+        android.util.SparseBooleanArray $r3, $r4, $r18, $r19, $r20, $r21;
+        int $i0, $i1, $i2, $i3, $i4, $i5, $i6, $i7, $i8, $i9, $i10, i13, i14, i15, i17, i18, i19, i20, i21, i22, i23;
+        android.util.SparseSetArray $r5, $r13, $r14, $r15;
+        android.util.ArraySet $r6;
+        com.android.internal.util.StatLogger $r7;
+        java.lang.Integer $r10;
+        java.lang.String $r12, $r17;
+        java.lang.Throwable $r22;
+        android.util.proto.ProtoOutputStream r23;
+        long l11, l12, l24, l25;
+        int[] r24, r25, r26;
+        android.util.Pair r27;
+
+        r0 := @this: com.android.server.AppStateTracker;
+
+        r23 := @parameter0: android.util.proto.ProtoOutputStream;
+
+        l11 := @parameter1: long;
+
+        r1 = r0.<com.android.server.AppStateTracker: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label01:
+        l12 = virtualinvoke r23.<android.util.proto.ProtoOutputStream: long start(long)>(l11);
+
+        $z0 = r0.<com.android.server.AppStateTracker: boolean mForcedAppStandbyEnabled>;
+
+        virtualinvoke r23.<android.util.proto.ProtoOutputStream: void write(long,boolean)>(1133871366157L, $z0);
+
+        $z1 = virtualinvoke r0.<com.android.server.AppStateTracker: boolean isForceAllAppsStandbyEnabled()>();
+
+        virtualinvoke r23.<android.util.proto.ProtoOutputStream: void write(long,boolean)>(1133871366145L, $z1);
+
+        $z2 = virtualinvoke r0.<com.android.server.AppStateTracker: boolean isSmallBatteryDevice()>();
+
+        virtualinvoke r23.<android.util.proto.ProtoOutputStream: void write(long,boolean)>(1133871366150L, $z2);
+
+        $z3 = r0.<com.android.server.AppStateTracker: boolean mForceAllAppStandbyForSmallBattery>;
+
+        virtualinvoke r23.<android.util.proto.ProtoOutputStream: void write(long,boolean)>(1133871366151L, $z3);
+
+        $z4 = r0.<com.android.server.AppStateTracker: boolean mIsPluggedIn>;
+
+        virtualinvoke r23.<android.util.proto.ProtoOutputStream: void write(long,boolean)>(1133871366152L, $z4);
+
+     label02:
+        i13 = 0;
+
+     label03:
+        $r3 = r0.<com.android.server.AppStateTracker: android.util.SparseBooleanArray mActiveUids>;
+
+        $i0 = virtualinvoke $r3.<android.util.SparseBooleanArray: int size()>();
+
+        if i13 >= $i0 goto label05;
+
+        $r20 = r0.<com.android.server.AppStateTracker: android.util.SparseBooleanArray mActiveUids>;
+
+        $z7 = virtualinvoke $r20.<android.util.SparseBooleanArray: boolean valueAt(int)>(i13);
+
+        if $z7 == 0 goto label04;
+
+        $r21 = r0.<com.android.server.AppStateTracker: android.util.SparseBooleanArray mActiveUids>;
+
+        $i10 = virtualinvoke $r21.<android.util.SparseBooleanArray: int keyAt(int)>(i13);
+
+        virtualinvoke r23.<android.util.proto.ProtoOutputStream: void write(long,int)>(2220498092034L, $i10);
+
+     label04:
+        i13 = i13 + 1;
+
+        goto label03;
+
+     label05:
+        i14 = 0;
+
+     label06:
+        $r4 = r0.<com.android.server.AppStateTracker: android.util.SparseBooleanArray mForegroundUids>;
+
+        $i1 = virtualinvoke $r4.<android.util.SparseBooleanArray: int size()>();
+
+        if i14 >= $i1 goto label08;
+
+        $r18 = r0.<com.android.server.AppStateTracker: android.util.SparseBooleanArray mForegroundUids>;
+
+        $z6 = virtualinvoke $r18.<android.util.SparseBooleanArray: boolean valueAt(int)>(i14);
+
+        if $z6 == 0 goto label07;
+
+        $r19 = r0.<com.android.server.AppStateTracker: android.util.SparseBooleanArray mForegroundUids>;
+
+        $i9 = virtualinvoke $r19.<android.util.SparseBooleanArray: int keyAt(int)>(i14);
+
+        virtualinvoke r23.<android.util.proto.ProtoOutputStream: void write(long,int)>(2220498092043L, $i9);
+
+     label07:
+        i14 = i14 + 1;
+
+        goto label06;
+
+     label08:
+        r24 = r0.<com.android.server.AppStateTracker: int[] mPowerWhitelistedAllAppIds>;
+
+        i15 = lengthof r24;
+
+     label09:
+        i17 = 0;
+
+     label10:
+        if i17 >= i15 goto label13;
+
+     label11:
+        $i8 = r24[i17];
+
+        virtualinvoke r23.<android.util.proto.ProtoOutputStream: void write(long,int)>(2220498092035L, $i8);
+
+     label12:
+        i17 = i17 + 1;
+
+        goto label10;
+
+     label13:
+        r25 = r0.<com.android.server.AppStateTracker: int[] mPowerWhitelistedUserAppIds>;
+
+        i18 = lengthof r25;
+
+     label14:
+        i19 = 0;
+
+     label15:
+        if i19 >= i18 goto label18;
+
+     label16:
+        $i7 = r25[i19];
+
+        virtualinvoke r23.<android.util.proto.ProtoOutputStream: void write(long,int)>(2220498092044L, $i7);
+
+     label17:
+        i19 = i19 + 1;
+
+        goto label15;
+
+     label18:
+        r26 = r0.<com.android.server.AppStateTracker: int[] mTempWhitelistedAppIds>;
+
+        i20 = lengthof r26;
+
+     label19:
+        i21 = 0;
+
+     label20:
+        if i21 >= i20 goto label23;
+
+     label21:
+        $i6 = r26[i21];
+
+        virtualinvoke r23.<android.util.proto.ProtoOutputStream: void write(long,int)>(2220498092036L, $i6);
+
+     label22:
+        i21 = i21 + 1;
+
+        goto label20;
+
+     label23:
+        i22 = 0;
+
+     label24:
+        $r5 = r0.<com.android.server.AppStateTracker: android.util.SparseSetArray mExemptedPackages>;
+
+        $i2 = virtualinvoke $r5.<android.util.SparseSetArray: int size()>();
+
+        if i22 >= $i2 goto label29;
+
+     label25:
+        i23 = 0;
+
+     label26:
+        $r13 = r0.<com.android.server.AppStateTracker: android.util.SparseSetArray mExemptedPackages>;
+
+        $i4 = virtualinvoke $r13.<android.util.SparseSetArray: int sizeAt(int)>(i22);
+
+        if i23 >= $i4 goto label28;
+
+        l24 = virtualinvoke r23.<android.util.proto.ProtoOutputStream: long start(long)>(2246267895818L);
+
+        $r14 = r0.<com.android.server.AppStateTracker: android.util.SparseSetArray mExemptedPackages>;
+
+        $i5 = virtualinvoke $r14.<android.util.SparseSetArray: int keyAt(int)>(i22);
+
+        virtualinvoke r23.<android.util.proto.ProtoOutputStream: void write(long,int)>(1120986464257L, $i5);
+
+        $r15 = r0.<com.android.server.AppStateTracker: android.util.SparseSetArray mExemptedPackages>;
+
+        $r16 = virtualinvoke $r15.<android.util.SparseSetArray: java.lang.Object valueAt(int,int)>(i22, i23);
+
+        $r17 = (java.lang.String) $r16;
+
+        virtualinvoke r23.<android.util.proto.ProtoOutputStream: void write(long,java.lang.String)>(1138166333442L, $r17);
+
+        virtualinvoke r23.<android.util.proto.ProtoOutputStream: void end(long)>(l24);
+
+     label27:
+        i23 = i23 + 1;
+
+        goto label26;
+
+     label28:
+        i22 = i22 + 1;
+
+        goto label24;
+
+     label29:
+        $r6 = r0.<com.android.server.AppStateTracker: android.util.ArraySet mRunAnyRestrictedPackages>;
+
+        r2 = virtualinvoke $r6.<android.util.ArraySet: java.util.Iterator iterator()>();
+
+     label30:
+        $z5 = interfaceinvoke r2.<java.util.Iterator: boolean hasNext()>();
+
+        if $z5 == 0 goto label32;
+
+        $r8 = interfaceinvoke r2.<java.util.Iterator: java.lang.Object next()>();
+
+        r27 = (android.util.Pair) $r8;
+
+        l25 = virtualinvoke r23.<android.util.proto.ProtoOutputStream: long start(long)>(2246267895813L);
+
+        $r9 = r27.<android.util.Pair: java.lang.Object first>;
+
+        $r10 = (java.lang.Integer) $r9;
+
+        $i3 = virtualinvoke $r10.<java.lang.Integer: int intValue()>();
+
+        virtualinvoke r23.<android.util.proto.ProtoOutputStream: void write(long,int)>(1120986464257L, $i3);
+
+        $r11 = r27.<android.util.Pair: java.lang.Object second>;
+
+        $r12 = (java.lang.String) $r11;
+
+        virtualinvoke r23.<android.util.proto.ProtoOutputStream: void write(long,java.lang.String)>(1138166333442L, $r12);
+
+        virtualinvoke r23.<android.util.proto.ProtoOutputStream: void end(long)>(l25);
+
+     label31:
+        goto label30;
+
+     label32:
+        $r7 = r0.<com.android.server.AppStateTracker: com.android.internal.util.StatLogger mStatLogger>;
+
+        virtualinvoke $r7.<com.android.internal.util.StatLogger: void dumpProto(android.util.proto.ProtoOutputStream,long)>(r23, 1146756268041L);
+
+        virtualinvoke r23.<android.util.proto.ProtoOutputStream: void end(long)>(l12);
+
+        exitmonitor r1;
+
+     label33:
+        return;
+
+     label34:
+        $r22 := @caughtexception;
+
+     label35:
+        exitmonitor r1;
+
+     label36:
+        throw $r22;
+
+        catch java.lang.Throwable from label01 to label02 with label34;
+        catch java.lang.Throwable from label03 to label04 with label34;
+        catch java.lang.Throwable from label06 to label07 with label34;
+        catch java.lang.Throwable from label08 to label09 with label34;
+        catch java.lang.Throwable from label11 to label12 with label34;
+        catch java.lang.Throwable from label13 to label14 with label34;
+        catch java.lang.Throwable from label16 to label17 with label34;
+        catch java.lang.Throwable from label18 to label19 with label34;
+        catch java.lang.Throwable from label21 to label22 with label34;
+        catch java.lang.Throwable from label24 to label25 with label34;
+        catch java.lang.Throwable from label26 to label27 with label34;
+        catch java.lang.Throwable from label29 to label30 with label34;
+        catch java.lang.Throwable from label30 to label31 with label34;
+        catch java.lang.Throwable from label32 to label33 with label34;
+        catch java.lang.Throwable from label35 to label36 with label34;
+    }
+
+    void handleUserRemoved(int)
+    {
+        com.android.server.AppStateTracker r0;
+        int i0, $i1, $i2, $i3, i4;
+        java.lang.Object r1, $r8, $r10;
+        android.util.ArraySet $r3, $r7, $r12;
+        android.util.SparseBooleanArray $r4, $r5;
+        android.util.SparseSetArray $r6;
+        android.util.Pair $r9;
+        java.lang.Integer $r11;
+        java.lang.Throwable $r14;
+
+        r0 := @this: com.android.server.AppStateTracker;
+
+        i0 := @parameter0: int;
+
+        r1 = r0.<com.android.server.AppStateTracker: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        $r3 = r0.<com.android.server.AppStateTracker: android.util.ArraySet mRunAnyRestrictedPackages>;
+
+        $i1 = virtualinvoke $r3.<android.util.ArraySet: int size()>();
+
+        i4 = $i1 - 1;
+
+     label2:
+        if i4 < 0 goto label5;
+
+     label3:
+        $r7 = r0.<com.android.server.AppStateTracker: android.util.ArraySet mRunAnyRestrictedPackages>;
+
+        $r8 = virtualinvoke $r7.<android.util.ArraySet: java.lang.Object valueAt(int)>(i4);
+
+        $r9 = (android.util.Pair) $r8;
+
+        $r10 = $r9.<android.util.Pair: java.lang.Object first>;
+
+        $r11 = (java.lang.Integer) $r10;
+
+        $i2 = virtualinvoke $r11.<java.lang.Integer: int intValue()>();
+
+        $i3 = staticinvoke <android.os.UserHandle: int getUserId(int)>($i2);
+
+        if $i3 != i0 goto label4;
+
+        $r12 = r0.<com.android.server.AppStateTracker: android.util.ArraySet mRunAnyRestrictedPackages>;
+
+        virtualinvoke $r12.<android.util.ArraySet: java.lang.Object removeAt(int)>(i4);
+
+     label4:
+        i4 = i4 + -1;
+
+        goto label2;
+
+     label5:
+        $r4 = r0.<com.android.server.AppStateTracker: android.util.SparseBooleanArray mActiveUids>;
+
+        specialinvoke r0.<com.android.server.AppStateTracker: void cleanUpArrayForUser(android.util.SparseBooleanArray,int)>($r4, i0);
+
+        $r5 = r0.<com.android.server.AppStateTracker: android.util.SparseBooleanArray mForegroundUids>;
+
+        specialinvoke r0.<com.android.server.AppStateTracker: void cleanUpArrayForUser(android.util.SparseBooleanArray,int)>($r5, i0);
+
+        $r6 = r0.<com.android.server.AppStateTracker: android.util.SparseSetArray mExemptedPackages>;
+
+        virtualinvoke $r6.<android.util.SparseSetArray: void remove(int)>(i0);
+
+        exitmonitor r1;
+
+     label6:
+        return;
+
+     label7:
+        $r14 := @caughtexception;
+
+     label8:
+        exitmonitor r1;
+
+     label9:
+        throw $r14;
+
+        catch java.lang.Throwable from label1 to label2 with label7;
+        catch java.lang.Throwable from label3 to label4 with label7;
+        catch java.lang.Throwable from label5 to label6 with label7;
+        catch java.lang.Throwable from label8 to label9 with label7;
+    }
+
+    android.app.ActivityManagerInternal injectActivityManagerInternal()
+    {
+        com.android.server.AppStateTracker r0;
+        java.lang.Object $r1;
+        android.app.ActivityManagerInternal $r2;
+
+        r0 := @this: com.android.server.AppStateTracker;
+
+        $r1 = staticinvoke <com.android.server.LocalServices: java.lang.Object getService(java.lang.Class)>(class "Landroid/app/ActivityManagerInternal;");
+
+        $r2 = (android.app.ActivityManagerInternal) $r1;
+
+        return $r2;
+    }
+
+    android.app.AppOpsManager injectAppOpsManager()
+    {
+        com.android.server.AppStateTracker r0;
+        android.content.Context $r1;
+        java.lang.Object $r2;
+        android.app.AppOpsManager $r3;
+
+        r0 := @this: com.android.server.AppStateTracker;
+
+        $r1 = r0.<com.android.server.AppStateTracker: android.content.Context mContext>;
+
+        $r2 = virtualinvoke $r1.<android.content.Context: java.lang.Object getSystemService(java.lang.Class)>(class "Landroid/app/AppOpsManager;");
+
+        $r3 = (android.app.AppOpsManager) $r2;
+
+        return $r3;
+    }
+
+    com.android.server.usage.AppStandbyInternal injectAppStandbyInternal()
+    {
+        com.android.server.AppStateTracker r0;
+        java.lang.Object $r1;
+        com.android.server.usage.AppStandbyInternal $r2;
+
+        r0 := @this: com.android.server.AppStateTracker;
+
+        $r1 = staticinvoke <com.android.server.LocalServices: java.lang.Object getService(java.lang.Class)>(class "Lcom/android/server/usage/AppStandbyInternal;");
+
+        $r2 = (com.android.server.usage.AppStandbyInternal) $r1;
+
+        return $r2;
+    }
+
+    int injectGetGlobalSettingInt(java.lang.String, int)
+    {
+        com.android.server.AppStateTracker r0;
+        java.lang.String r1;
+        int i0, $i1;
+        android.content.Context $r2;
+        android.content.ContentResolver $r3;
+
+        r0 := @this: com.android.server.AppStateTracker;
+
+        r1 := @parameter0: java.lang.String;
+
+        i0 := @parameter1: int;
+
+        $r2 = r0.<com.android.server.AppStateTracker: android.content.Context mContext>;
+
+        $r3 = virtualinvoke $r2.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        $i1 = staticinvoke <android.provider.Settings$Global: int getInt(android.content.ContentResolver,java.lang.String,int)>($r3, r1, i0);
+
+        return $i1;
+    }
+
+    android.app.IActivityManager injectIActivityManager()
+    {
+        com.android.server.AppStateTracker r0;
+        android.app.IActivityManager $r1;
+
+        r0 := @this: com.android.server.AppStateTracker;
+
+        $r1 = staticinvoke <android.app.ActivityManager: android.app.IActivityManager getService()>();
+
+        return $r1;
+    }
+
+    com.android.internal.app.IAppOpsService injectIAppOpsService()
+    {
+        com.android.server.AppStateTracker r0;
+        android.os.IBinder $r1;
+        com.android.internal.app.IAppOpsService $r2;
+
+        r0 := @this: com.android.server.AppStateTracker;
+
+        $r1 = staticinvoke <android.os.ServiceManager: android.os.IBinder getService(java.lang.String)>("appops");
+
+        $r2 = staticinvoke <com.android.internal.app.IAppOpsService$Stub: com.android.internal.app.IAppOpsService asInterface(android.os.IBinder)>($r1);
+
+        return $r2;
+    }
+
+    android.os.PowerManagerInternal injectPowerManagerInternal()
+    {
+        com.android.server.AppStateTracker r0;
+        java.lang.Object $r1;
+        android.os.PowerManagerInternal $r2;
+
+        r0 := @this: com.android.server.AppStateTracker;
+
+        $r1 = staticinvoke <com.android.server.LocalServices: java.lang.Object getService(java.lang.Class)>(class "Landroid/os/PowerManagerInternal;");
+
+        $r2 = (android.os.PowerManagerInternal) $r1;
+
+        return $r2;
+    }
+
+    boolean isForceAllAppsStandbyEnabled()
+    {
+        com.android.server.AppStateTracker r0;
+        java.lang.Object r1;
+        boolean z0;
+        java.lang.Throwable $r3;
+
+        r0 := @this: com.android.server.AppStateTracker;
+
+        r1 = r0.<com.android.server.AppStateTracker: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        z0 = r0.<com.android.server.AppStateTracker: boolean mForceAllAppsStandby>;
+
+        exitmonitor r1;
+
+     label2:
+        return z0;
+
+     label3:
+        $r3 := @caughtexception;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        throw $r3;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    public boolean isRunAnyInBackgroundAppOpsAllowed(int, java.lang.String)
+    {
+        com.android.server.AppStateTracker r0;
+        int i0;
+        java.lang.Object r1;
+        boolean $z0, z1;
+        java.lang.Throwable $r2;
+        java.lang.String r3;
+
+        r0 := @this: com.android.server.AppStateTracker;
+
+        i0 := @parameter0: int;
+
+        r3 := @parameter1: java.lang.String;
+
+        r1 = r0.<com.android.server.AppStateTracker: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        $z0 = virtualinvoke r0.<com.android.server.AppStateTracker: boolean isRunAnyRestrictedLocked(int,java.lang.String)>(i0, r3);
+
+        if $z0 != 0 goto label3;
+
+     label2:
+        z1 = 1;
+
+        goto label4;
+
+     label3:
+        z1 = 0;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        return z1;
+
+     label6:
+        $r2 := @caughtexception;
+
+     label7:
+        exitmonitor r1;
+
+     label8:
+        throw $r2;
+
+        catch java.lang.Throwable from label1 to label2 with label6;
+        catch java.lang.Throwable from label4 to label5 with label6;
+        catch java.lang.Throwable from label7 to label8 with label6;
+    }
+
+    boolean isRunAnyRestrictedLocked(int, java.lang.String)
+    {
+        com.android.server.AppStateTracker r0;
+        int i0, $i1;
+        java.lang.String r1;
+        boolean z0;
+
+        r0 := @this: com.android.server.AppStateTracker;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: java.lang.String;
+
+        $i1 = specialinvoke r0.<com.android.server.AppStateTracker: int findForcedAppStandbyUidPackageIndexLocked(int,java.lang.String)>(i0, r1);
+
+        if $i1 < 0 goto label1;
+
+        z0 = 1;
+
+        goto label2;
+
+     label1:
+        z0 = 0;
+
+     label2:
+        return z0;
+    }
+
+    boolean isSmallBatteryDevice()
+    {
+        com.android.server.AppStateTracker r0;
+        boolean $z0;
+
+        r0 := @this: com.android.server.AppStateTracker;
+
+        $z0 = staticinvoke <android.app.ActivityManager: boolean isSmallBatteryDevice()>();
+
+        return $z0;
+    }
+
+    public boolean isUidActive(int)
+    {
+        com.android.server.AppStateTracker r0;
+        int i0;
+        java.lang.Object r1;
+        boolean z0, $z1;
+        android.util.SparseBooleanArray $r3;
+        java.lang.Throwable $r4;
+
+        r0 := @this: com.android.server.AppStateTracker;
+
+        i0 := @parameter0: int;
+
+        $z1 = staticinvoke <android.os.UserHandle: boolean isCore(int)>(i0);
+
+        if $z1 == 0 goto label1;
+
+        return 1;
+
+     label1:
+        r1 = r0.<com.android.server.AppStateTracker: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label2:
+        $r3 = r0.<com.android.server.AppStateTracker: android.util.SparseBooleanArray mActiveUids>;
+
+        z0 = virtualinvoke $r3.<android.util.SparseBooleanArray: boolean get(int)>(i0);
+
+        exitmonitor r1;
+
+     label3:
+        return z0;
+
+     label4:
+        $r4 := @caughtexception;
+
+     label5:
+        exitmonitor r1;
+
+     label6:
+        throw $r4;
+
+        catch java.lang.Throwable from label2 to label3 with label4;
+        catch java.lang.Throwable from label5 to label6 with label4;
+    }
+
+    public boolean isUidActiveSynced(int)
+    {
+        com.android.server.AppStateTracker r0;
+        int i0;
+        long l1;
+        boolean z0, $z1;
+        com.android.internal.util.StatLogger $r1, $r3;
+        android.app.ActivityManagerInternal $r2;
+
+        r0 := @this: com.android.server.AppStateTracker;
+
+        i0 := @parameter0: int;
+
+        $z1 = virtualinvoke r0.<com.android.server.AppStateTracker: boolean isUidActive(int)>(i0);
+
+        if $z1 == 0 goto label1;
+
+        return 1;
+
+     label1:
+        $r1 = r0.<com.android.server.AppStateTracker: com.android.internal.util.StatLogger mStatLogger>;
+
+        l1 = virtualinvoke $r1.<com.android.internal.util.StatLogger: long getTime()>();
+
+        $r2 = r0.<com.android.server.AppStateTracker: android.app.ActivityManagerInternal mActivityManagerInternal>;
+
+        z0 = virtualinvoke $r2.<android.app.ActivityManagerInternal: boolean isUidActive(int)>(i0);
+
+        $r3 = r0.<com.android.server.AppStateTracker: com.android.internal.util.StatLogger mStatLogger>;
+
+        virtualinvoke $r3.<com.android.internal.util.StatLogger: long logDurationStat(int,long)>(10, l1);
+
+        return z0;
+    }
+
+    public boolean isUidInForeground(int)
+    {
+        com.android.server.AppStateTracker r0;
+        int i0;
+        java.lang.Object r1;
+        boolean z0, $z1;
+        android.util.SparseBooleanArray $r3;
+        java.lang.Throwable $r4;
+
+        r0 := @this: com.android.server.AppStateTracker;
+
+        i0 := @parameter0: int;
+
+        $z1 = staticinvoke <android.os.UserHandle: boolean isCore(int)>(i0);
+
+        if $z1 == 0 goto label1;
+
+        return 1;
+
+     label1:
+        r1 = r0.<com.android.server.AppStateTracker: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label2:
+        $r3 = r0.<com.android.server.AppStateTracker: android.util.SparseBooleanArray mForegroundUids>;
+
+        z0 = virtualinvoke $r3.<android.util.SparseBooleanArray: boolean get(int)>(i0);
+
+        exitmonitor r1;
+
+     label3:
+        return z0;
+
+     label4:
+        $r4 := @caughtexception;
+
+     label5:
+        exitmonitor r1;
+
+     label6:
+        throw $r4;
+
+        catch java.lang.Throwable from label2 to label3 with label4;
+        catch java.lang.Throwable from label5 to label6 with label4;
+    }
+
+    public boolean isUidPowerSaveUserWhitelisted(int)
+    {
+        com.android.server.AppStateTracker r0;
+        int i0, $i1;
+        java.lang.Object r1;
+        boolean z0;
+        int[] $r3;
+        java.lang.Throwable $r4;
+
+        r0 := @this: com.android.server.AppStateTracker;
+
+        i0 := @parameter0: int;
+
+        r1 = r0.<com.android.server.AppStateTracker: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        $r3 = r0.<com.android.server.AppStateTracker: int[] mPowerWhitelistedUserAppIds>;
+
+        $i1 = staticinvoke <android.os.UserHandle: int getAppId(int)>(i0);
+
+        z0 = staticinvoke <com.android.internal.util.ArrayUtils: boolean contains(int[],int)>($r3, $i1);
+
+        exitmonitor r1;
+
+     label2:
+        return z0;
+
+     label3:
+        $r4 := @caughtexception;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        throw $r4;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    public boolean isUidPowerSaveWhitelisted(int)
+    {
+        com.android.server.AppStateTracker r0;
+        int i0, $i1;
+        java.lang.Object r1;
+        boolean z0;
+        int[] $r3;
+        java.lang.Throwable $r4;
+
+        r0 := @this: com.android.server.AppStateTracker;
+
+        i0 := @parameter0: int;
+
+        r1 = r0.<com.android.server.AppStateTracker: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        $r3 = r0.<com.android.server.AppStateTracker: int[] mPowerWhitelistedAllAppIds>;
+
+        $i1 = staticinvoke <android.os.UserHandle: int getAppId(int)>(i0);
+
+        z0 = staticinvoke <com.android.internal.util.ArrayUtils: boolean contains(int[],int)>($r3, $i1);
+
+        exitmonitor r1;
+
+     label2:
+        return z0;
+
+     label3:
+        $r4 := @caughtexception;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        throw $r4;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    public boolean isUidTempPowerSaveWhitelisted(int)
+    {
+        com.android.server.AppStateTracker r0;
+        int i0, $i1;
+        java.lang.Object r1;
+        boolean z0;
+        int[] $r3;
+        java.lang.Throwable $r4;
+
+        r0 := @this: com.android.server.AppStateTracker;
+
+        i0 := @parameter0: int;
+
+        r1 = r0.<com.android.server.AppStateTracker: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        $r3 = r0.<com.android.server.AppStateTracker: int[] mTempWhitelistedAppIds>;
+
+        $i1 = staticinvoke <android.os.UserHandle: int getAppId(int)>(i0);
+
+        z0 = staticinvoke <com.android.internal.util.ArrayUtils: boolean contains(int[],int)>($r3, $i1);
+
+        exitmonitor r1;
+
+     label2:
+        return z0;
+
+     label3:
+        $r4 := @caughtexception;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        throw $r4;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    public void lambda$onSystemServicesReady$0$AppStateTracker(android.os.PowerSaveState)
+    {
+        com.android.server.AppStateTracker r0;
+        java.lang.Object r1;
+        boolean $z0;
+        java.lang.Throwable $r2;
+        android.os.PowerSaveState r3;
+
+        r0 := @this: com.android.server.AppStateTracker;
+
+        r3 := @parameter0: android.os.PowerSaveState;
+
+        r1 = r0.<com.android.server.AppStateTracker: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        $z0 = r3.<android.os.PowerSaveState: boolean batterySaverEnabled>;
+
+        r0.<com.android.server.AppStateTracker: boolean mBatterySaverEnabled> = $z0;
+
+        specialinvoke r0.<com.android.server.AppStateTracker: void updateForceAllAppStandbyState()>();
+
+        exitmonitor r1;
+
+     label2:
+        return;
+
+     label3:
+        $r2 := @caughtexception;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        throw $r2;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    public void onSystemServicesReady()
+    {
+        com.android.server.AppStateTracker r0;
+        java.lang.Object r1;
+        com.android.server.AppStateTracker$MyReceiver r2;
+        boolean $z0, $z1, $z2, $z3;
+        android.app.IActivityManager $r4, r23, r31;
+        android.app.ActivityManagerInternal $r6, r24;
+        android.app.AppOpsManager $r8, r25;
+        com.android.internal.app.IAppOpsService $r10, r26, r33;
+        android.os.PowerManagerInternal $r12, $r19, r27, r38;
+        com.android.server.usage.AppStandbyInternal $r14, $r17, r28;
+        com.android.server.AppStateTracker$FeatureFlagsObserver $r15, $r16, r29;
+        android.os.PowerSaveState $r20;
+        java.lang.Throwable $r21;
+        android.os.RemoteException $r22;
+        com.android.server.AppStateTracker$StandbyTracker r30;
+        com.android.server.AppStateTracker$UidObserver r32;
+        com.android.server.AppStateTracker$AppOpsWatcher r34;
+        android.content.IntentFilter r36;
+        android.content.Context r37;
+        com.android.server._$$Lambda$AppStateTracker$zzioY8jvEm_1GnJ13CUiQGauPEE r39;
+
+        r0 := @this: com.android.server.AppStateTracker;
+
+        r1 = r0.<com.android.server.AppStateTracker: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label01:
+        $z0 = r0.<com.android.server.AppStateTracker: boolean mStarted>;
+
+        if $z0 == 0 goto label03;
+
+        exitmonitor r1;
+
+     label02:
+        return;
+
+     label03:
+        r0.<com.android.server.AppStateTracker: boolean mStarted> = 1;
+
+        r23 = virtualinvoke r0.<com.android.server.AppStateTracker: android.app.IActivityManager injectIActivityManager()>();
+
+        staticinvoke <java.util.Objects: java.lang.Object requireNonNull(java.lang.Object)>(r23);
+
+        $r4 = (android.app.IActivityManager) r23;
+
+        r0.<com.android.server.AppStateTracker: android.app.IActivityManager mIActivityManager> = $r4;
+
+        r24 = virtualinvoke r0.<com.android.server.AppStateTracker: android.app.ActivityManagerInternal injectActivityManagerInternal()>();
+
+        staticinvoke <java.util.Objects: java.lang.Object requireNonNull(java.lang.Object)>(r24);
+
+        $r6 = (android.app.ActivityManagerInternal) r24;
+
+        r0.<com.android.server.AppStateTracker: android.app.ActivityManagerInternal mActivityManagerInternal> = $r6;
+
+        r25 = virtualinvoke r0.<com.android.server.AppStateTracker: android.app.AppOpsManager injectAppOpsManager()>();
+
+        staticinvoke <java.util.Objects: java.lang.Object requireNonNull(java.lang.Object)>(r25);
+
+        $r8 = (android.app.AppOpsManager) r25;
+
+        r0.<com.android.server.AppStateTracker: android.app.AppOpsManager mAppOpsManager> = $r8;
+
+        r26 = virtualinvoke r0.<com.android.server.AppStateTracker: com.android.internal.app.IAppOpsService injectIAppOpsService()>();
+
+        staticinvoke <java.util.Objects: java.lang.Object requireNonNull(java.lang.Object)>(r26);
+
+        $r10 = (com.android.internal.app.IAppOpsService) r26;
+
+        r0.<com.android.server.AppStateTracker: com.android.internal.app.IAppOpsService mAppOpsService> = $r10;
+
+        r27 = virtualinvoke r0.<com.android.server.AppStateTracker: android.os.PowerManagerInternal injectPowerManagerInternal()>();
+
+        staticinvoke <java.util.Objects: java.lang.Object requireNonNull(java.lang.Object)>(r27);
+
+        $r12 = (android.os.PowerManagerInternal) r27;
+
+        r0.<com.android.server.AppStateTracker: android.os.PowerManagerInternal mPowerManagerInternal> = $r12;
+
+        r28 = virtualinvoke r0.<com.android.server.AppStateTracker: com.android.server.usage.AppStandbyInternal injectAppStandbyInternal()>();
+
+        staticinvoke <java.util.Objects: java.lang.Object requireNonNull(java.lang.Object)>(r28);
+
+        $r14 = (com.android.server.usage.AppStandbyInternal) r28;
+
+        r0.<com.android.server.AppStateTracker: com.android.server.usage.AppStandbyInternal mAppStandbyInternal> = $r14;
+
+        r29 = new com.android.server.AppStateTracker$FeatureFlagsObserver;
+
+        specialinvoke r29.<com.android.server.AppStateTracker$FeatureFlagsObserver: void <init>(com.android.server.AppStateTracker)>(r0);
+
+        r0.<com.android.server.AppStateTracker: com.android.server.AppStateTracker$FeatureFlagsObserver mFlagsObserver> = r29;
+
+        virtualinvoke r29.<com.android.server.AppStateTracker$FeatureFlagsObserver: void register()>();
+
+        $r15 = r0.<com.android.server.AppStateTracker: com.android.server.AppStateTracker$FeatureFlagsObserver mFlagsObserver>;
+
+        $z1 = virtualinvoke $r15.<com.android.server.AppStateTracker$FeatureFlagsObserver: boolean isForcedAppStandbyEnabled()>();
+
+        r0.<com.android.server.AppStateTracker: boolean mForcedAppStandbyEnabled> = $z1;
+
+        $r16 = r0.<com.android.server.AppStateTracker: com.android.server.AppStateTracker$FeatureFlagsObserver mFlagsObserver>;
+
+        $z2 = virtualinvoke $r16.<com.android.server.AppStateTracker$FeatureFlagsObserver: boolean isForcedAppStandbyForSmallBatteryEnabled()>();
+
+        r0.<com.android.server.AppStateTracker: boolean mForceAllAppStandbyForSmallBattery> = $z2;
+
+        r30 = new com.android.server.AppStateTracker$StandbyTracker;
+
+        specialinvoke r30.<com.android.server.AppStateTracker$StandbyTracker: void <init>(com.android.server.AppStateTracker)>(r0);
+
+        r0.<com.android.server.AppStateTracker: com.android.server.AppStateTracker$StandbyTracker mStandbyTracker> = r30;
+
+        $r17 = r0.<com.android.server.AppStateTracker: com.android.server.usage.AppStandbyInternal mAppStandbyInternal>;
+
+        interfaceinvoke $r17.<com.android.server.usage.AppStandbyInternal: void addListener(com.android.server.usage.AppStandbyInternal$AppIdleStateChangeListener)>(r30);
+
+     label04:
+        r31 = r0.<com.android.server.AppStateTracker: android.app.IActivityManager mIActivityManager>;
+
+        r32 = new com.android.server.AppStateTracker$UidObserver;
+
+        specialinvoke r32.<com.android.server.AppStateTracker$UidObserver: void <init>(com.android.server.AppStateTracker,com.android.server.AppStateTracker$1)>(r0, null);
+
+        interfaceinvoke r31.<android.app.IActivityManager: void registerUidObserver(android.app.IUidObserver,int,int,java.lang.String)>(r32, 15, -1, null);
+
+        r33 = r0.<com.android.server.AppStateTracker: com.android.internal.app.IAppOpsService mAppOpsService>;
+
+        r34 = new com.android.server.AppStateTracker$AppOpsWatcher;
+
+        specialinvoke r34.<com.android.server.AppStateTracker$AppOpsWatcher: void <init>(com.android.server.AppStateTracker,com.android.server.AppStateTracker$1)>(r0, null);
+
+        interfaceinvoke r33.<com.android.internal.app.IAppOpsService: void startWatchingMode(int,java.lang.String,com.android.internal.app.IAppOpsCallback)>(70, null, r34);
+
+     label05:
+        goto label07;
+
+     label06:
+        $r22 := @caughtexception;
+
+     label07:
+        r36 = new android.content.IntentFilter;
+
+        specialinvoke r36.<android.content.IntentFilter: void <init>()>();
+
+        virtualinvoke r36.<android.content.IntentFilter: void addAction(java.lang.String)>("android.intent.action.USER_REMOVED");
+
+        virtualinvoke r36.<android.content.IntentFilter: void addAction(java.lang.String)>("android.intent.action.BATTERY_CHANGED");
+
+        virtualinvoke r36.<android.content.IntentFilter: void addAction(java.lang.String)>("android.intent.action.PACKAGE_REMOVED");
+
+        r37 = r0.<com.android.server.AppStateTracker: android.content.Context mContext>;
+
+        r2 = new com.android.server.AppStateTracker$MyReceiver;
+
+        specialinvoke r2.<com.android.server.AppStateTracker$MyReceiver: void <init>(com.android.server.AppStateTracker,com.android.server.AppStateTracker$1)>(r0, null);
+
+        virtualinvoke r37.<android.content.Context: android.content.Intent registerReceiver(android.content.BroadcastReceiver,android.content.IntentFilter)>(r2, r36);
+
+        specialinvoke r0.<com.android.server.AppStateTracker: void refreshForcedAppStandbyUidPackagesLocked()>();
+
+        r38 = r0.<com.android.server.AppStateTracker: android.os.PowerManagerInternal mPowerManagerInternal>;
+
+        r39 = new com.android.server._$$Lambda$AppStateTracker$zzioY8jvEm_1GnJ13CUiQGauPEE;
+
+        specialinvoke r39.<com.android.server._$$Lambda$AppStateTracker$zzioY8jvEm_1GnJ13CUiQGauPEE: void <init>(com.android.server.AppStateTracker)>(r0);
+
+        virtualinvoke r38.<android.os.PowerManagerInternal: void registerLowPowerModeObserver(int,java.util.function.Consumer)>(11, r39);
+
+        $r19 = r0.<com.android.server.AppStateTracker: android.os.PowerManagerInternal mPowerManagerInternal>;
+
+        $r20 = virtualinvoke $r19.<android.os.PowerManagerInternal: android.os.PowerSaveState getLowPowerState(int)>(11);
+
+        $z3 = $r20.<android.os.PowerSaveState: boolean batterySaverEnabled>;
+
+        r0.<com.android.server.AppStateTracker: boolean mBatterySaverEnabled> = $z3;
+
+        specialinvoke r0.<com.android.server.AppStateTracker: void updateForceAllAppStandbyState()>();
+
+        exitmonitor r1;
+
+     label08:
+        return;
+
+     label09:
+        $r21 := @caughtexception;
+
+     label10:
+        exitmonitor r1;
+
+     label11:
+        throw $r21;
+
+        catch java.lang.Throwable from label01 to label02 with label09;
+        catch java.lang.Throwable from label03 to label04 with label09;
+        catch android.os.RemoteException from label04 to label05 with label06;
+        catch java.lang.Throwable from label04 to label05 with label09;
+        catch java.lang.Throwable from label07 to label08 with label09;
+        catch java.lang.Throwable from label10 to label11 with label09;
+    }
+
+    public void setPowerSaveWhitelistAppIds(int[], int[], int[])
+    {
+        com.android.server.AppStateTracker r0;
+        int[] r1, r2, r4, r5, $r6, r11, $r12;
+        java.lang.Object r3;
+        boolean $z0, $z1, $z2;
+        com.android.server.AppStateTracker$MyHandler $r7, $r8, $r9;
+        java.lang.Throwable $r10;
+
+        r0 := @this: com.android.server.AppStateTracker;
+
+        r11 := @parameter0: int[];
+
+        r1 := @parameter1: int[];
+
+        r2 := @parameter2: int[];
+
+        r3 = r0.<com.android.server.AppStateTracker: java.lang.Object mLock>;
+
+        entermonitor r3;
+
+     label1:
+        r4 = r0.<com.android.server.AppStateTracker: int[] mPowerWhitelistedAllAppIds>;
+
+        r5 = r0.<com.android.server.AppStateTracker: int[] mTempWhitelistedAppIds>;
+
+        r0.<com.android.server.AppStateTracker: int[] mPowerWhitelistedAllAppIds> = r11;
+
+        r0.<com.android.server.AppStateTracker: int[] mTempWhitelistedAppIds> = r2;
+
+        r0.<com.android.server.AppStateTracker: int[] mPowerWhitelistedUserAppIds> = r1;
+
+        $z0 = staticinvoke <com.android.server.AppStateTracker: boolean isAnyAppIdUnwhitelisted(int[],int[])>(r4, r11);
+
+        if $z0 == 0 goto label3;
+
+        $r9 = r0.<com.android.server.AppStateTracker: com.android.server.AppStateTracker$MyHandler mHandler>;
+
+        virtualinvoke $r9.<com.android.server.AppStateTracker$MyHandler: void notifyAllUnwhitelisted()>();
+
+     label2:
+        goto label4;
+
+     label3:
+        $r6 = r0.<com.android.server.AppStateTracker: int[] mPowerWhitelistedAllAppIds>;
+
+        $z1 = staticinvoke <java.util.Arrays: boolean equals(int[],int[])>(r4, $r6);
+
+        if $z1 != 0 goto label4;
+
+        $r8 = r0.<com.android.server.AppStateTracker: com.android.server.AppStateTracker$MyHandler mHandler>;
+
+        virtualinvoke $r8.<com.android.server.AppStateTracker$MyHandler: void notifyAllWhitelistChanged()>();
+
+     label4:
+        $r12 = r0.<com.android.server.AppStateTracker: int[] mTempWhitelistedAppIds>;
+
+        $z2 = staticinvoke <java.util.Arrays: boolean equals(int[],int[])>(r5, $r12);
+
+        if $z2 != 0 goto label5;
+
+        $r7 = r0.<com.android.server.AppStateTracker: com.android.server.AppStateTracker$MyHandler mHandler>;
+
+        virtualinvoke $r7.<com.android.server.AppStateTracker$MyHandler: void notifyTempWhitelistChanged()>();
+
+     label5:
+        exitmonitor r3;
+
+     label6:
+        return;
+
+     label7:
+        $r10 := @caughtexception;
+
+     label8:
+        exitmonitor r3;
+
+     label9:
+        throw $r10;
+
+        catch java.lang.Throwable from label1 to label2 with label7;
+        catch java.lang.Throwable from label3 to label4 with label7;
+        catch java.lang.Throwable from label4 to label5 with label7;
+        catch java.lang.Throwable from label5 to label6 with label7;
+        catch java.lang.Throwable from label8 to label9 with label7;
+    }
+
+    boolean updateForcedAppStandbyUidPackageLocked(int, java.lang.String, boolean)
+    {
+        com.android.server.AppStateTracker r0;
+        int i0, i1;
+        java.lang.String r1;
+        boolean z0, z2;
+        android.util.ArraySet $r2, $r4;
+        java.lang.Integer $r5;
+        android.util.Pair $r6;
+
+        r0 := @this: com.android.server.AppStateTracker;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: java.lang.String;
+
+        z0 := @parameter2: boolean;
+
+        i1 = specialinvoke r0.<com.android.server.AppStateTracker: int findForcedAppStandbyUidPackageIndexLocked(int,java.lang.String)>(i0, r1);
+
+        if i1 < 0 goto label1;
+
+        z2 = 1;
+
+        goto label2;
+
+     label1:
+        z2 = 0;
+
+     label2:
+        if z2 != z0 goto label3;
+
+        return 0;
+
+     label3:
+        if z0 == 0 goto label4;
+
+        $r4 = r0.<com.android.server.AppStateTracker: android.util.ArraySet mRunAnyRestrictedPackages>;
+
+        $r5 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i0);
+
+        $r6 = staticinvoke <android.util.Pair: android.util.Pair create(java.lang.Object,java.lang.Object)>($r5, r1);
+
+        virtualinvoke $r4.<android.util.ArraySet: boolean add(java.lang.Object)>($r6);
+
+        goto label5;
+
+     label4:
+        $r2 = r0.<com.android.server.AppStateTracker: android.util.ArraySet mRunAnyRestrictedPackages>;
+
+        virtualinvoke $r2.<android.util.ArraySet: java.lang.Object removeAt(int)>(i1);
+
+     label5:
+        return 1;
+    }
+
+    public static void <clinit>()
+    {
+        <com.android.server.AppStateTracker: int TARGET_OP> = 70;
+
+        <com.android.server.AppStateTracker: java.lang.String TAG> = "AppStateTracker";
+
+        <com.android.server.AppStateTracker: boolean DEBUG> = 0;
+
+        return;
+    }
+}

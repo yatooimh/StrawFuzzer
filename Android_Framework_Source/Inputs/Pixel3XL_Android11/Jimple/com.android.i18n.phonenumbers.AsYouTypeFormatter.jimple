@@ -1,0 +1,1752 @@
+public class com.android.i18n.phonenumbers.AsYouTypeFormatter extends java.lang.Object
+{
+    private static final java.util.regex.Pattern DIGIT_PATTERN;
+    private static final java.lang.String DIGIT_PLACEHOLDER;
+    private static final java.util.regex.Pattern ELIGIBLE_FORMAT_PATTERN;
+    private static final com.android.i18n.phonenumbers.Phonemetadata$PhoneMetadata EMPTY_METADATA;
+    private static final int MIN_LEADING_DIGITS_LENGTH;
+    private static final java.util.regex.Pattern NATIONAL_PREFIX_SEPARATORS_PATTERN;
+    private static final char SEPARATOR_BEFORE_NATIONAL_NUMBER;
+    private boolean ableToFormat;
+    private java.lang.StringBuilder accruedInput;
+    private java.lang.StringBuilder accruedInputWithoutFormatting;
+    private java.lang.String currentFormattingPattern;
+    private com.android.i18n.phonenumbers.Phonemetadata$PhoneMetadata currentMetadata;
+    private java.lang.String currentOutput;
+    private java.lang.String defaultCountry;
+    private com.android.i18n.phonenumbers.Phonemetadata$PhoneMetadata defaultMetadata;
+    private java.lang.String extractedNationalPrefix;
+    private java.lang.StringBuilder formattingTemplate;
+    private boolean inputHasFormatting;
+    private boolean isCompleteNumber;
+    private boolean isExpectingCountryCallingCode;
+    private int lastMatchPosition;
+    private java.lang.StringBuilder nationalNumber;
+    private int originalPosition;
+    private final com.android.i18n.phonenumbers.PhoneNumberUtil phoneUtil;
+    private int positionToRemember;
+    private java.util.List possibleFormats;
+    private java.lang.StringBuilder prefixBeforeNationalNumber;
+    private com.android.i18n.phonenumbers.internal.RegexCache regexCache;
+    private boolean shouldAddSpaceAfterNationalPrefix;
+
+    static void <clinit>()
+    {
+        com.android.i18n.phonenumbers.Phonemetadata$PhoneMetadata $r0, $r1;
+        java.util.regex.Pattern $r2, $r3, $r4;
+
+        <com.android.i18n.phonenumbers.AsYouTypeFormatter: char SEPARATOR_BEFORE_NATIONAL_NUMBER> = 32;
+
+        <com.android.i18n.phonenumbers.AsYouTypeFormatter: int MIN_LEADING_DIGITS_LENGTH> = 3;
+
+        <com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.String DIGIT_PLACEHOLDER> = "\u2008";
+
+        $r0 = new com.android.i18n.phonenumbers.Phonemetadata$PhoneMetadata;
+
+        specialinvoke $r0.<com.android.i18n.phonenumbers.Phonemetadata$PhoneMetadata: void <init>()>();
+
+        $r1 = virtualinvoke $r0.<com.android.i18n.phonenumbers.Phonemetadata$PhoneMetadata: com.android.i18n.phonenumbers.Phonemetadata$PhoneMetadata setInternationalPrefix(java.lang.String)>("NA");
+
+        <com.android.i18n.phonenumbers.AsYouTypeFormatter: com.android.i18n.phonenumbers.Phonemetadata$PhoneMetadata EMPTY_METADATA> = $r1;
+
+        $r2 = staticinvoke <java.util.regex.Pattern: java.util.regex.Pattern compile(java.lang.String)>("[-x\u2010-\u2015\u2212\u30fc\uff0d-\uff0f \u00a0\u00ad\u200b\u2060\u3000()\uff08\uff09\uff3b\uff3d.\\[\\]/~\u2053\u223c\uff5e]*(\\$\\d[-x\u2010-\u2015\u2212\u30fc\uff0d-\uff0f \u00a0\u00ad\u200b\u2060\u3000()\uff08\uff09\uff3b\uff3d.\\[\\]/~\u2053\u223c\uff5e]*)+");
+
+        <com.android.i18n.phonenumbers.AsYouTypeFormatter: java.util.regex.Pattern ELIGIBLE_FORMAT_PATTERN> = $r2;
+
+        $r3 = staticinvoke <java.util.regex.Pattern: java.util.regex.Pattern compile(java.lang.String)>("[- ]");
+
+        <com.android.i18n.phonenumbers.AsYouTypeFormatter: java.util.regex.Pattern NATIONAL_PREFIX_SEPARATORS_PATTERN> = $r3;
+
+        $r4 = staticinvoke <java.util.regex.Pattern: java.util.regex.Pattern compile(java.lang.String)>("\u2008");
+
+        <com.android.i18n.phonenumbers.AsYouTypeFormatter: java.util.regex.Pattern DIGIT_PATTERN> = $r4;
+
+        return;
+    }
+
+    void <init>(java.lang.String)
+    {
+        com.android.i18n.phonenumbers.AsYouTypeFormatter r0;
+        java.lang.StringBuilder $r1, $r2, $r3, $r5, $r6;
+        com.android.i18n.phonenumbers.PhoneNumberUtil $r4;
+        java.util.ArrayList $r7;
+        com.android.i18n.phonenumbers.internal.RegexCache $r8;
+        java.lang.String r9;
+        com.android.i18n.phonenumbers.Phonemetadata$PhoneMetadata r10;
+
+        r0 := @this: com.android.i18n.phonenumbers.AsYouTypeFormatter;
+
+        r9 := @parameter0: java.lang.String;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.String currentOutput> = "";
+
+        $r1 = new java.lang.StringBuilder;
+
+        specialinvoke $r1.<java.lang.StringBuilder: void <init>()>();
+
+        r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder formattingTemplate> = $r1;
+
+        r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.String currentFormattingPattern> = "";
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder accruedInput> = $r2;
+
+        $r3 = new java.lang.StringBuilder;
+
+        specialinvoke $r3.<java.lang.StringBuilder: void <init>()>();
+
+        r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder accruedInputWithoutFormatting> = $r3;
+
+        r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: boolean ableToFormat> = 1;
+
+        r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: boolean inputHasFormatting> = 0;
+
+        r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: boolean isCompleteNumber> = 0;
+
+        r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: boolean isExpectingCountryCallingCode> = 0;
+
+        $r4 = staticinvoke <com.android.i18n.phonenumbers.PhoneNumberUtil: com.android.i18n.phonenumbers.PhoneNumberUtil getInstance()>();
+
+        r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: com.android.i18n.phonenumbers.PhoneNumberUtil phoneUtil> = $r4;
+
+        r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: int lastMatchPosition> = 0;
+
+        r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: int originalPosition> = 0;
+
+        r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: int positionToRemember> = 0;
+
+        $r5 = new java.lang.StringBuilder;
+
+        specialinvoke $r5.<java.lang.StringBuilder: void <init>()>();
+
+        r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder prefixBeforeNationalNumber> = $r5;
+
+        r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: boolean shouldAddSpaceAfterNationalPrefix> = 0;
+
+        r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.String extractedNationalPrefix> = "";
+
+        $r6 = new java.lang.StringBuilder;
+
+        specialinvoke $r6.<java.lang.StringBuilder: void <init>()>();
+
+        r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder nationalNumber> = $r6;
+
+        $r7 = new java.util.ArrayList;
+
+        specialinvoke $r7.<java.util.ArrayList: void <init>()>();
+
+        r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.util.List possibleFormats> = $r7;
+
+        $r8 = new com.android.i18n.phonenumbers.internal.RegexCache;
+
+        specialinvoke $r8.<com.android.i18n.phonenumbers.internal.RegexCache: void <init>(int)>(64);
+
+        r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: com.android.i18n.phonenumbers.internal.RegexCache regexCache> = $r8;
+
+        r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.String defaultCountry> = r9;
+
+        r10 = specialinvoke r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: com.android.i18n.phonenumbers.Phonemetadata$PhoneMetadata getMetadataForRegion(java.lang.String)>(r9);
+
+        r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: com.android.i18n.phonenumbers.Phonemetadata$PhoneMetadata currentMetadata> = r10;
+
+        r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: com.android.i18n.phonenumbers.Phonemetadata$PhoneMetadata defaultMetadata> = r10;
+
+        return;
+    }
+
+    private boolean ableToExtractLongerNdd()
+    {
+        com.android.i18n.phonenumbers.AsYouTypeFormatter r0;
+        int i0, $i1;
+        java.lang.String $r1, $r2, $r3, $r4, $r7;
+        boolean $z0, $z1;
+        java.lang.StringBuilder $r5, $r8, $r9;
+
+        r0 := @this: com.android.i18n.phonenumbers.AsYouTypeFormatter;
+
+        $r1 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.String extractedNationalPrefix>;
+
+        $i1 = virtualinvoke $r1.<java.lang.String: int length()>();
+
+        if $i1 <= 0 goto label1;
+
+        $r5 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder nationalNumber>;
+
+        $r4 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.String extractedNationalPrefix>;
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder insert(int,java.lang.String)>(0, $r4);
+
+        $r8 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder prefixBeforeNationalNumber>;
+
+        $r7 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.String extractedNationalPrefix>;
+
+        i0 = virtualinvoke $r8.<java.lang.StringBuilder: int lastIndexOf(java.lang.String)>($r7);
+
+        $r9 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder prefixBeforeNationalNumber>;
+
+        virtualinvoke $r9.<java.lang.StringBuilder: void setLength(int)>(i0);
+
+     label1:
+        $r2 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.String extractedNationalPrefix>;
+
+        $r3 = specialinvoke r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.String removeNationalPrefixFromNationalNumber()>();
+
+        $z0 = virtualinvoke $r2.<java.lang.String: boolean equals(java.lang.Object)>($r3);
+
+        $z1 = $z0 ^ 1;
+
+        return $z1;
+    }
+
+    private java.lang.String appendNationalNumber(java.lang.String)
+    {
+        com.android.i18n.phonenumbers.AsYouTypeFormatter r0;
+        java.lang.String r1, $r7, $r12, $r17;
+        int i0, $i1;
+        java.lang.StringBuilder $r2, $r5, $r6, $r8, $r14, $r16;
+        boolean $z0;
+        char $c2;
+
+        r0 := @this: com.android.i18n.phonenumbers.AsYouTypeFormatter;
+
+        r1 := @parameter0: java.lang.String;
+
+        $r2 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder prefixBeforeNationalNumber>;
+
+        i0 = virtualinvoke $r2.<java.lang.StringBuilder: int length()>();
+
+        $z0 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: boolean shouldAddSpaceAfterNationalPrefix>;
+
+        if $z0 == 0 goto label1;
+
+        if i0 <= 0 goto label1;
+
+        $r5 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder prefixBeforeNationalNumber>;
+
+        $i1 = i0 - 1;
+
+        $c2 = virtualinvoke $r5.<java.lang.StringBuilder: char charAt(int)>($i1);
+
+        if $c2 == 32 goto label1;
+
+        $r6 = new java.lang.StringBuilder;
+
+        specialinvoke $r6.<java.lang.StringBuilder: void <init>()>();
+
+        $r7 = new java.lang.String;
+
+        $r8 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder prefixBeforeNationalNumber>;
+
+        specialinvoke $r7.<java.lang.String: void <init>(java.lang.StringBuilder)>($r8);
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r7);
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(char)>(32);
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r12 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        return $r12;
+
+     label1:
+        $r14 = new java.lang.StringBuilder;
+
+        specialinvoke $r14.<java.lang.StringBuilder: void <init>()>();
+
+        $r16 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder prefixBeforeNationalNumber>;
+
+        virtualinvoke $r14.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r16);
+
+        virtualinvoke $r14.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r17 = virtualinvoke $r14.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        return $r17;
+    }
+
+    private java.lang.String attemptToChooseFormattingPattern()
+    {
+        com.android.i18n.phonenumbers.AsYouTypeFormatter r0;
+        java.lang.StringBuilder $r1, $r2, $r5, $r7;
+        int $i0, $i1;
+        java.lang.String $r3, $r4, $r6, r8, r9;
+        boolean $z0;
+
+        r0 := @this: com.android.i18n.phonenumbers.AsYouTypeFormatter;
+
+        $r1 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder nationalNumber>;
+
+        $i0 = virtualinvoke $r1.<java.lang.StringBuilder: int length()>();
+
+        if $i0 < 3 goto label4;
+
+        $r5 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder nationalNumber>;
+
+        $r6 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: void getAvailableFormats(java.lang.String)>($r6);
+
+        r8 = virtualinvoke r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.String attemptToFormatAccruedDigits()>();
+
+        $i1 = virtualinvoke r8.<java.lang.String: int length()>();
+
+        if $i1 <= 0 goto label1;
+
+        return r8;
+
+     label1:
+        $z0 = specialinvoke r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: boolean maybeCreateNewTemplate()>();
+
+        if $z0 == 0 goto label2;
+
+        r9 = specialinvoke r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.String inputAccruedNationalNumber()>();
+
+        goto label3;
+
+     label2:
+        $r7 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder accruedInput>;
+
+        r9 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.String toString()>();
+
+     label3:
+        return r9;
+
+     label4:
+        $r2 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder nationalNumber>;
+
+        $r3 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $r4 = specialinvoke r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.String appendNationalNumber(java.lang.String)>($r3);
+
+        return $r4;
+    }
+
+    private java.lang.String attemptToChoosePatternWithPrefixExtracted()
+    {
+        com.android.i18n.phonenumbers.AsYouTypeFormatter r0;
+        java.util.List $r1;
+        java.lang.StringBuilder $r2;
+        java.lang.String $r3;
+
+        r0 := @this: com.android.i18n.phonenumbers.AsYouTypeFormatter;
+
+        r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: boolean ableToFormat> = 1;
+
+        r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: boolean isExpectingCountryCallingCode> = 0;
+
+        $r1 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.util.List possibleFormats>;
+
+        interfaceinvoke $r1.<java.util.List: void clear()>();
+
+        r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: int lastMatchPosition> = 0;
+
+        $r2 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder formattingTemplate>;
+
+        virtualinvoke $r2.<java.lang.StringBuilder: void setLength(int)>(0);
+
+        r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.String currentFormattingPattern> = "";
+
+        $r3 = specialinvoke r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.String attemptToChooseFormattingPattern()>();
+
+        return $r3;
+    }
+
+    private boolean attemptToExtractCountryCallingCode()
+    {
+        com.android.i18n.phonenumbers.AsYouTypeFormatter r0;
+        int i0, $i1;
+        java.lang.String r1, $r10, $r11, r18;
+        java.lang.StringBuilder $r2, $r3, $r4, $r6, $r7, r19;
+        com.android.i18n.phonenumbers.PhoneNumberUtil $r5, $r9, $r15;
+        boolean $z0, $z1;
+        com.android.i18n.phonenumbers.Phonemetadata$PhoneMetadata $r14, $r16;
+
+        r0 := @this: com.android.i18n.phonenumbers.AsYouTypeFormatter;
+
+        $r2 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder nationalNumber>;
+
+        $i1 = virtualinvoke $r2.<java.lang.StringBuilder: int length()>();
+
+        if $i1 != 0 goto label1;
+
+        return 0;
+
+     label1:
+        $r3 = new java.lang.StringBuilder;
+
+        specialinvoke $r3.<java.lang.StringBuilder: void <init>()>();
+
+        $r5 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: com.android.i18n.phonenumbers.PhoneNumberUtil phoneUtil>;
+
+        $r4 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder nationalNumber>;
+
+        i0 = virtualinvoke $r5.<com.android.i18n.phonenumbers.PhoneNumberUtil: int extractCountryCode(java.lang.StringBuilder,java.lang.StringBuilder)>($r4, $r3);
+
+        if i0 != 0 goto label2;
+
+        return 0;
+
+     label2:
+        $r6 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder nationalNumber>;
+
+        virtualinvoke $r6.<java.lang.StringBuilder: void setLength(int)>(0);
+
+        $r7 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder nationalNumber>;
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.CharSequence)>($r3);
+
+        $r9 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: com.android.i18n.phonenumbers.PhoneNumberUtil phoneUtil>;
+
+        r18 = virtualinvoke $r9.<com.android.i18n.phonenumbers.PhoneNumberUtil: java.lang.String getRegionCodeForCountryCode(int)>(i0);
+
+        $r10 = "001";
+
+        $z0 = virtualinvoke $r10.<java.lang.String: boolean equals(java.lang.Object)>(r18);
+
+        if $z0 == 0 goto label3;
+
+        $r15 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: com.android.i18n.phonenumbers.PhoneNumberUtil phoneUtil>;
+
+        $r16 = virtualinvoke $r15.<com.android.i18n.phonenumbers.PhoneNumberUtil: com.android.i18n.phonenumbers.Phonemetadata$PhoneMetadata getMetadataForNonGeographicalRegion(int)>(i0);
+
+        r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: com.android.i18n.phonenumbers.Phonemetadata$PhoneMetadata currentMetadata> = $r16;
+
+        goto label4;
+
+     label3:
+        $r11 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.String defaultCountry>;
+
+        $z1 = virtualinvoke r18.<java.lang.String: boolean equals(java.lang.Object)>($r11);
+
+        if $z1 != 0 goto label4;
+
+        $r14 = specialinvoke r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: com.android.i18n.phonenumbers.Phonemetadata$PhoneMetadata getMetadataForRegion(java.lang.String)>(r18);
+
+        r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: com.android.i18n.phonenumbers.Phonemetadata$PhoneMetadata currentMetadata> = $r14;
+
+     label4:
+        r1 = staticinvoke <java.lang.Integer: java.lang.String toString(int)>(i0);
+
+        r19 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder prefixBeforeNationalNumber>;
+
+        virtualinvoke r19.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        virtualinvoke r19.<java.lang.StringBuilder: java.lang.StringBuilder append(char)>(32);
+
+        r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.String extractedNationalPrefix> = "";
+
+        return 1;
+    }
+
+    private boolean attemptToExtractIdd()
+    {
+        com.android.i18n.phonenumbers.AsYouTypeFormatter r0;
+        int i0;
+        java.lang.StringBuilder $r2, $r9, $r10, $r11, $r12, $r15, $r16, $r17, $r20, $r21;
+        com.android.i18n.phonenumbers.Phonemetadata$PhoneMetadata $r4;
+        java.lang.String $r5, $r7, $r13, $r18;
+        java.util.regex.Pattern $r8;
+        boolean $z0;
+        char $c1;
+        com.android.i18n.phonenumbers.internal.RegexCache r23;
+        java.util.regex.Matcher r24;
+
+        r0 := @this: com.android.i18n.phonenumbers.AsYouTypeFormatter;
+
+        r23 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: com.android.i18n.phonenumbers.internal.RegexCache regexCache>;
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("\\+|");
+
+        $r4 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: com.android.i18n.phonenumbers.Phonemetadata$PhoneMetadata currentMetadata>;
+
+        $r5 = virtualinvoke $r4.<com.android.i18n.phonenumbers.Phonemetadata$PhoneMetadata: java.lang.String getInternationalPrefix()>();
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r5);
+
+        $r7 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $r8 = virtualinvoke r23.<com.android.i18n.phonenumbers.internal.RegexCache: java.util.regex.Pattern getPatternForRegex(java.lang.String)>($r7);
+
+        $r9 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder accruedInputWithoutFormatting>;
+
+        r24 = virtualinvoke $r8.<java.util.regex.Pattern: java.util.regex.Matcher matcher(java.lang.CharSequence)>($r9);
+
+        $z0 = virtualinvoke r24.<java.util.regex.Matcher: boolean lookingAt()>();
+
+        if $z0 == 0 goto label2;
+
+        r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: boolean isCompleteNumber> = 1;
+
+        i0 = virtualinvoke r24.<java.util.regex.Matcher: int end()>();
+
+        $r10 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder nationalNumber>;
+
+        virtualinvoke $r10.<java.lang.StringBuilder: void setLength(int)>(0);
+
+        $r12 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder nationalNumber>;
+
+        $r11 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder accruedInputWithoutFormatting>;
+
+        $r13 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.String substring(int)>(i0);
+
+        virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r13);
+
+        $r15 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder prefixBeforeNationalNumber>;
+
+        virtualinvoke $r15.<java.lang.StringBuilder: void setLength(int)>(0);
+
+        $r17 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder prefixBeforeNationalNumber>;
+
+        $r16 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder accruedInputWithoutFormatting>;
+
+        $r18 = virtualinvoke $r16.<java.lang.StringBuilder: java.lang.String substring(int,int)>(0, i0);
+
+        virtualinvoke $r17.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r18);
+
+        $r20 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder accruedInputWithoutFormatting>;
+
+        $c1 = virtualinvoke $r20.<java.lang.StringBuilder: char charAt(int)>(0);
+
+        if $c1 == 43 goto label1;
+
+        $r21 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder prefixBeforeNationalNumber>;
+
+        virtualinvoke $r21.<java.lang.StringBuilder: java.lang.StringBuilder append(char)>(32);
+
+     label1:
+        return 1;
+
+     label2:
+        return 0;
+    }
+
+    private boolean createFormattingTemplate(com.android.i18n.phonenumbers.Phonemetadata$NumberFormat)
+    {
+        com.android.i18n.phonenumbers.AsYouTypeFormatter r0;
+        java.lang.String r1, $r3, r7;
+        java.lang.StringBuilder $r2, $r4;
+        int $i0;
+        com.android.i18n.phonenumbers.Phonemetadata$NumberFormat r6;
+
+        r0 := @this: com.android.i18n.phonenumbers.AsYouTypeFormatter;
+
+        r6 := @parameter0: com.android.i18n.phonenumbers.Phonemetadata$NumberFormat;
+
+        r1 = virtualinvoke r6.<com.android.i18n.phonenumbers.Phonemetadata$NumberFormat: java.lang.String getPattern()>();
+
+        $r2 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder formattingTemplate>;
+
+        virtualinvoke $r2.<java.lang.StringBuilder: void setLength(int)>(0);
+
+        $r3 = virtualinvoke r6.<com.android.i18n.phonenumbers.Phonemetadata$NumberFormat: java.lang.String getFormat()>();
+
+        r7 = specialinvoke r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.String getFormattingTemplate(java.lang.String,java.lang.String)>(r1, $r3);
+
+        $i0 = virtualinvoke r7.<java.lang.String: int length()>();
+
+        if $i0 <= 0 goto label1;
+
+        $r4 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder formattingTemplate>;
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r7);
+
+        return 1;
+
+     label1:
+        return 0;
+    }
+
+    private void getAvailableFormats(java.lang.String)
+    {
+        com.android.i18n.phonenumbers.AsYouTypeFormatter r0;
+        java.lang.String r1, $r5, $r7, $r8, $r11, $r14, $r16;
+        java.util.Iterator r2;
+        boolean $z0, $z2, $z3, $z4, $z5, $z6, $z7, z8, $z9, $z10;
+        com.android.i18n.phonenumbers.Phonemetadata$PhoneMetadata $r3, $r9, $r10;
+        java.lang.Object $r4;
+        int $i0, $i1, $i2, $i3;
+        java.util.List $r6, r12;
+        com.android.i18n.phonenumbers.Phonemetadata$NumberFormat r13;
+        java.util.regex.Pattern $r15;
+        java.util.regex.Matcher $r17;
+
+        r0 := @this: com.android.i18n.phonenumbers.AsYouTypeFormatter;
+
+        r1 := @parameter0: java.lang.String;
+
+        $z0 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: boolean isCompleteNumber>;
+
+        if $z0 == 0 goto label1;
+
+        $r11 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.String extractedNationalPrefix>;
+
+        $i2 = virtualinvoke $r11.<java.lang.String: int length()>();
+
+        if $i2 != 0 goto label1;
+
+        z8 = 1;
+
+        goto label2;
+
+     label1:
+        z8 = 0;
+
+     label2:
+        if z8 == 0 goto label3;
+
+        $r9 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: com.android.i18n.phonenumbers.Phonemetadata$PhoneMetadata currentMetadata>;
+
+        $i1 = virtualinvoke $r9.<com.android.i18n.phonenumbers.Phonemetadata$PhoneMetadata: int intlNumberFormatSize()>();
+
+        if $i1 <= 0 goto label3;
+
+        $r10 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: com.android.i18n.phonenumbers.Phonemetadata$PhoneMetadata currentMetadata>;
+
+        r12 = virtualinvoke $r10.<com.android.i18n.phonenumbers.Phonemetadata$PhoneMetadata: java.util.List intlNumberFormats()>();
+
+        goto label4;
+
+     label3:
+        $r3 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: com.android.i18n.phonenumbers.Phonemetadata$PhoneMetadata currentMetadata>;
+
+        r12 = virtualinvoke $r3.<com.android.i18n.phonenumbers.Phonemetadata$PhoneMetadata: java.util.List numberFormats()>();
+
+     label4:
+        r2 = interfaceinvoke r12.<java.util.List: java.util.Iterator iterator()>();
+
+     label5:
+        $z9 = interfaceinvoke r2.<java.util.Iterator: boolean hasNext()>();
+
+        if $z9 == 0 goto label9;
+
+        $r4 = interfaceinvoke r2.<java.util.Iterator: java.lang.Object next()>();
+
+        r13 = (com.android.i18n.phonenumbers.Phonemetadata$NumberFormat) $r4;
+
+        $r5 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.String extractedNationalPrefix>;
+
+        $i0 = virtualinvoke $r5.<java.lang.String: int length()>();
+
+        if $i0 <= 0 goto label6;
+
+        $r8 = virtualinvoke r13.<com.android.i18n.phonenumbers.Phonemetadata$NumberFormat: java.lang.String getNationalPrefixFormattingRule()>();
+
+        $z5 = staticinvoke <com.android.i18n.phonenumbers.PhoneNumberUtil: boolean formattingRuleHasFirstGroupOnly(java.lang.String)>($r8);
+
+        if $z5 == 0 goto label6;
+
+        $z6 = virtualinvoke r13.<com.android.i18n.phonenumbers.Phonemetadata$NumberFormat: boolean getNationalPrefixOptionalWhenFormatting()>();
+
+        if $z6 != 0 goto label6;
+
+        $z7 = virtualinvoke r13.<com.android.i18n.phonenumbers.Phonemetadata$NumberFormat: boolean hasDomesticCarrierCodeFormattingRule()>();
+
+        if $z7 != 0 goto label6;
+
+        goto label5;
+
+     label6:
+        $r14 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.String extractedNationalPrefix>;
+
+        $i3 = virtualinvoke $r14.<java.lang.String: int length()>();
+
+        if $i3 != 0 goto label7;
+
+        $z2 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: boolean isCompleteNumber>;
+
+        if $z2 != 0 goto label7;
+
+        $r7 = virtualinvoke r13.<com.android.i18n.phonenumbers.Phonemetadata$NumberFormat: java.lang.String getNationalPrefixFormattingRule()>();
+
+        $z3 = staticinvoke <com.android.i18n.phonenumbers.PhoneNumberUtil: boolean formattingRuleHasFirstGroupOnly(java.lang.String)>($r7);
+
+        if $z3 != 0 goto label7;
+
+        $z4 = virtualinvoke r13.<com.android.i18n.phonenumbers.Phonemetadata$NumberFormat: boolean getNationalPrefixOptionalWhenFormatting()>();
+
+        if $z4 != 0 goto label7;
+
+        goto label5;
+
+     label7:
+        $r15 = <com.android.i18n.phonenumbers.AsYouTypeFormatter: java.util.regex.Pattern ELIGIBLE_FORMAT_PATTERN>;
+
+        $r16 = virtualinvoke r13.<com.android.i18n.phonenumbers.Phonemetadata$NumberFormat: java.lang.String getFormat()>();
+
+        $r17 = virtualinvoke $r15.<java.util.regex.Pattern: java.util.regex.Matcher matcher(java.lang.CharSequence)>($r16);
+
+        $z10 = virtualinvoke $r17.<java.util.regex.Matcher: boolean matches()>();
+
+        if $z10 == 0 goto label8;
+
+        $r6 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.util.List possibleFormats>;
+
+        interfaceinvoke $r6.<java.util.List: boolean add(java.lang.Object)>(r13);
+
+     label8:
+        goto label5;
+
+     label9:
+        specialinvoke r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: void narrowDownPossibleFormats(java.lang.String)>(r1);
+
+        return;
+    }
+
+    private java.lang.String getFormattingTemplate(java.lang.String, java.lang.String)
+    {
+        com.android.i18n.phonenumbers.AsYouTypeFormatter r0;
+        java.lang.String r1, r2, $r6, $r7, r9;
+        com.android.i18n.phonenumbers.internal.RegexCache $r3;
+        java.util.regex.Pattern $r4;
+        int $i0, $i1;
+        java.lang.StringBuilder $r5;
+        java.util.regex.Matcher r8;
+
+        r0 := @this: com.android.i18n.phonenumbers.AsYouTypeFormatter;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 := @parameter1: java.lang.String;
+
+        $r3 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: com.android.i18n.phonenumbers.internal.RegexCache regexCache>;
+
+        $r4 = virtualinvoke $r3.<com.android.i18n.phonenumbers.internal.RegexCache: java.util.regex.Pattern getPatternForRegex(java.lang.String)>(r1);
+
+        r8 = virtualinvoke $r4.<java.util.regex.Pattern: java.util.regex.Matcher matcher(java.lang.CharSequence)>("999999999999999");
+
+        virtualinvoke r8.<java.util.regex.Matcher: boolean find()>();
+
+        r9 = virtualinvoke r8.<java.util.regex.Matcher: java.lang.String group()>();
+
+        $i0 = virtualinvoke r9.<java.lang.String: int length()>();
+
+        $r5 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder nationalNumber>;
+
+        $i1 = virtualinvoke $r5.<java.lang.StringBuilder: int length()>();
+
+        if $i0 >= $i1 goto label1;
+
+        return "";
+
+     label1:
+        $r6 = virtualinvoke r9.<java.lang.String: java.lang.String replaceAll(java.lang.String,java.lang.String)>(r1, r2);
+
+        $r7 = virtualinvoke $r6.<java.lang.String: java.lang.String replaceAll(java.lang.String,java.lang.String)>("9", "\u2008");
+
+        return $r7;
+    }
+
+    private com.android.i18n.phonenumbers.Phonemetadata$PhoneMetadata getMetadataForRegion(java.lang.String)
+    {
+        com.android.i18n.phonenumbers.AsYouTypeFormatter r0;
+        int i0;
+        com.android.i18n.phonenumbers.PhoneNumberUtil $r1, $r2, $r3;
+        com.android.i18n.phonenumbers.Phonemetadata$PhoneMetadata $r4, r7;
+        java.lang.String r5, r6;
+
+        r0 := @this: com.android.i18n.phonenumbers.AsYouTypeFormatter;
+
+        r5 := @parameter0: java.lang.String;
+
+        $r1 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: com.android.i18n.phonenumbers.PhoneNumberUtil phoneUtil>;
+
+        i0 = virtualinvoke $r1.<com.android.i18n.phonenumbers.PhoneNumberUtil: int getCountryCodeForRegion(java.lang.String)>(r5);
+
+        $r2 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: com.android.i18n.phonenumbers.PhoneNumberUtil phoneUtil>;
+
+        r6 = virtualinvoke $r2.<com.android.i18n.phonenumbers.PhoneNumberUtil: java.lang.String getRegionCodeForCountryCode(int)>(i0);
+
+        $r3 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: com.android.i18n.phonenumbers.PhoneNumberUtil phoneUtil>;
+
+        r7 = virtualinvoke $r3.<com.android.i18n.phonenumbers.PhoneNumberUtil: com.android.i18n.phonenumbers.Phonemetadata$PhoneMetadata getMetadataForRegion(java.lang.String)>(r6);
+
+        if r7 == null goto label1;
+
+        return r7;
+
+     label1:
+        $r4 = <com.android.i18n.phonenumbers.AsYouTypeFormatter: com.android.i18n.phonenumbers.Phonemetadata$PhoneMetadata EMPTY_METADATA>;
+
+        return $r4;
+    }
+
+    private java.lang.String inputAccruedNationalNumber()
+    {
+        com.android.i18n.phonenumbers.AsYouTypeFormatter r0;
+        int i0, i2;
+        java.lang.StringBuilder $r1, $r2, $r4, $r5;
+        java.lang.String $r3, r6, r7;
+        boolean $z0;
+        char $c1;
+
+        r0 := @this: com.android.i18n.phonenumbers.AsYouTypeFormatter;
+
+        $r1 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder nationalNumber>;
+
+        i0 = virtualinvoke $r1.<java.lang.StringBuilder: int length()>();
+
+        if i0 <= 0 goto label5;
+
+        r6 = "";
+
+        i2 = 0;
+
+     label1:
+        if i2 >= i0 goto label2;
+
+        $r5 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder nationalNumber>;
+
+        $c1 = virtualinvoke $r5.<java.lang.StringBuilder: char charAt(int)>(i2);
+
+        r6 = specialinvoke r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.String inputDigitHelper(char)>($c1);
+
+        i2 = i2 + 1;
+
+        goto label1;
+
+     label2:
+        $z0 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: boolean ableToFormat>;
+
+        if $z0 == 0 goto label3;
+
+        r7 = specialinvoke r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.String appendNationalNumber(java.lang.String)>(r6);
+
+        goto label4;
+
+     label3:
+        $r4 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder accruedInput>;
+
+        r7 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+     label4:
+        return r7;
+
+     label5:
+        $r2 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder prefixBeforeNationalNumber>;
+
+        $r3 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        return $r3;
+    }
+
+    private java.lang.String inputDigitHelper(char)
+    {
+        com.android.i18n.phonenumbers.AsYouTypeFormatter r0;
+        char c0;
+        java.util.regex.Matcher r1;
+        java.lang.String r2, $r7, $r8, $r12;
+        int i1, $i2, $i3, $i4, $i5;
+        java.lang.StringBuilder $r3, $r6, $r9, $r11;
+        java.util.regex.Pattern $r4;
+        boolean $z0;
+        java.util.List $r5;
+
+        r0 := @this: com.android.i18n.phonenumbers.AsYouTypeFormatter;
+
+        c0 := @parameter0: char;
+
+        $r4 = <com.android.i18n.phonenumbers.AsYouTypeFormatter: java.util.regex.Pattern DIGIT_PATTERN>;
+
+        $r3 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder formattingTemplate>;
+
+        r1 = virtualinvoke $r4.<java.util.regex.Pattern: java.util.regex.Matcher matcher(java.lang.CharSequence)>($r3);
+
+        $i2 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: int lastMatchPosition>;
+
+        $z0 = virtualinvoke r1.<java.util.regex.Matcher: boolean find(int)>($i2);
+
+        if $z0 == 0 goto label1;
+
+        $r8 = staticinvoke <java.lang.Character: java.lang.String toString(char)>(c0);
+
+        r2 = virtualinvoke r1.<java.util.regex.Matcher: java.lang.String replaceFirst(java.lang.String)>($r8);
+
+        $r9 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder formattingTemplate>;
+
+        $i4 = virtualinvoke r2.<java.lang.String: int length()>();
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder replace(int,int,java.lang.String)>(0, $i4, r2);
+
+        i1 = virtualinvoke r1.<java.util.regex.Matcher: int start()>();
+
+        r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: int lastMatchPosition> = i1;
+
+        $r11 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder formattingTemplate>;
+
+        $i5 = i1 + 1;
+
+        $r12 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.String substring(int,int)>(0, $i5);
+
+        return $r12;
+
+     label1:
+        $r5 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.util.List possibleFormats>;
+
+        $i3 = interfaceinvoke $r5.<java.util.List: int size()>();
+
+        if $i3 != 1 goto label2;
+
+        r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: boolean ableToFormat> = 0;
+
+     label2:
+        r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.String currentFormattingPattern> = "";
+
+        $r6 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder accruedInput>;
+
+        $r7 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        return $r7;
+    }
+
+    private java.lang.String inputDigitWithOptionToRememberPosition(char, boolean)
+    {
+        com.android.i18n.phonenumbers.AsYouTypeFormatter r0;
+        boolean z0, $z1, $z2, $z3, $z4, $z5, $z6, $z7, $z8, $z9, $z10, $z11;
+        java.lang.String r1, $r5, $r6, $r8, $r10, $r12, $r17, $r19, $r21, $r24, $r25, $r27, r30, r31, $r33;
+        java.lang.StringBuilder $r2, $r4, $r9, $r11, $r13, $r14, $r16, $r20, $r22, $r26, $r28, $r32;
+        java.util.List $r7;
+        int $i0, $i1, $i2, i5;
+        char c3, c4;
+
+        r0 := @this: com.android.i18n.phonenumbers.AsYouTypeFormatter;
+
+        c3 := @parameter0: char;
+
+        z0 := @parameter1: boolean;
+
+        $r2 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder accruedInput>;
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(char)>(c3);
+
+        if z0 == 0 goto label01;
+
+        $r28 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder accruedInput>;
+
+        $i2 = virtualinvoke $r28.<java.lang.StringBuilder: int length()>();
+
+        r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: int originalPosition> = $i2;
+
+     label01:
+        $z1 = specialinvoke r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: boolean isDigitOrLeadingPlusSign(char)>(c3);
+
+        if $z1 != 0 goto label02;
+
+        r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: boolean ableToFormat> = 0;
+
+        r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: boolean inputHasFormatting> = 1;
+
+        goto label03;
+
+     label02:
+        c4 = specialinvoke r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: char normalizeAndAccrueDigitsAndPlusSign(char,boolean)>(c3, z0);
+
+        c3 = c4;
+
+     label03:
+        $z2 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: boolean ableToFormat>;
+
+        if $z2 != 0 goto label07;
+
+        $z8 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: boolean inputHasFormatting>;
+
+        if $z8 == 0 goto label04;
+
+        $r26 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder accruedInput>;
+
+        $r27 = virtualinvoke $r26.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        return $r27;
+
+     label04:
+        $z9 = specialinvoke r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: boolean attemptToExtractIdd()>();
+
+        if $z9 == 0 goto label05;
+
+        $z11 = specialinvoke r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: boolean attemptToExtractCountryCallingCode()>();
+
+        if $z11 == 0 goto label06;
+
+        $r25 = specialinvoke r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.String attemptToChoosePatternWithPrefixExtracted()>();
+
+        return $r25;
+
+     label05:
+        $z10 = specialinvoke r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: boolean ableToExtractLongerNdd()>();
+
+        if $z10 == 0 goto label06;
+
+        $r22 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder prefixBeforeNationalNumber>;
+
+        virtualinvoke $r22.<java.lang.StringBuilder: java.lang.StringBuilder append(char)>(32);
+
+        $r24 = specialinvoke r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.String attemptToChoosePatternWithPrefixExtracted()>();
+
+        return $r24;
+
+     label06:
+        $r20 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder accruedInput>;
+
+        $r21 = virtualinvoke $r20.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        return $r21;
+
+     label07:
+        $r4 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder accruedInputWithoutFormatting>;
+
+        i5 = virtualinvoke $r4.<java.lang.StringBuilder: int length()>();
+
+        if i5 == 0 goto label18;
+
+        if i5 == 1 goto label18;
+
+        if i5 == 2 goto label18;
+
+        if i5 == 3 goto label08;
+
+        goto label09;
+
+     label08:
+        $z3 = specialinvoke r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: boolean attemptToExtractIdd()>();
+
+        if $z3 == 0 goto label17;
+
+        r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: boolean isExpectingCountryCallingCode> = 1;
+
+     label09:
+        $z4 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: boolean isExpectingCountryCallingCode>;
+
+        if $z4 == 0 goto label11;
+
+        $z7 = specialinvoke r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: boolean attemptToExtractCountryCallingCode()>();
+
+        if $z7 == 0 goto label10;
+
+        r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: boolean isExpectingCountryCallingCode> = 0;
+
+     label10:
+        $r13 = new java.lang.StringBuilder;
+
+        specialinvoke $r13.<java.lang.StringBuilder: void <init>()>();
+
+        $r14 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder prefixBeforeNationalNumber>;
+
+        virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r14);
+
+        $r16 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder nationalNumber>;
+
+        $r17 = virtualinvoke $r16.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r17);
+
+        $r19 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        return $r19;
+
+     label11:
+        $r7 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.util.List possibleFormats>;
+
+        $i0 = interfaceinvoke $r7.<java.util.List: int size()>();
+
+        if $i0 <= 0 goto label16;
+
+        r30 = specialinvoke r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.String inputDigitHelper(char)>(c3);
+
+        r1 = virtualinvoke r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.String attemptToFormatAccruedDigits()>();
+
+        $i1 = virtualinvoke r1.<java.lang.String: int length()>();
+
+        if $i1 <= 0 goto label12;
+
+        return r1;
+
+     label12:
+        $r9 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder nationalNumber>;
+
+        $r10 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: void narrowDownPossibleFormats(java.lang.String)>($r10);
+
+        $z5 = specialinvoke r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: boolean maybeCreateNewTemplate()>();
+
+        if $z5 == 0 goto label13;
+
+        $r12 = specialinvoke r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.String inputAccruedNationalNumber()>();
+
+        return $r12;
+
+     label13:
+        $z6 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: boolean ableToFormat>;
+
+        if $z6 == 0 goto label14;
+
+        r31 = specialinvoke r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.String appendNationalNumber(java.lang.String)>(r30);
+
+        goto label15;
+
+     label14:
+        $r11 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder accruedInput>;
+
+        r31 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.String toString()>();
+
+     label15:
+        return r31;
+
+     label16:
+        $r8 = specialinvoke r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.String attemptToChooseFormattingPattern()>();
+
+        return $r8;
+
+     label17:
+        $r5 = specialinvoke r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.String removeNationalPrefixFromNationalNumber()>();
+
+        r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.String extractedNationalPrefix> = $r5;
+
+        $r6 = specialinvoke r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.String attemptToChooseFormattingPattern()>();
+
+        return $r6;
+
+     label18:
+        $r32 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder accruedInput>;
+
+        $r33 = virtualinvoke $r32.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        return $r33;
+    }
+
+    private boolean isDigitOrLeadingPlusSign(char)
+    {
+        com.android.i18n.phonenumbers.AsYouTypeFormatter r0;
+        char c0;
+        boolean z0, $z1, z2;
+        java.lang.StringBuilder $r1;
+        int $i1;
+        java.util.regex.Pattern $r2;
+        java.lang.String $r3;
+        java.util.regex.Matcher $r4;
+
+        r0 := @this: com.android.i18n.phonenumbers.AsYouTypeFormatter;
+
+        c0 := @parameter0: char;
+
+        z0 = staticinvoke <java.lang.Character: boolean isDigit(char)>(c0);
+
+        z2 = 1;
+
+        if z0 != 0 goto label2;
+
+        $r1 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder accruedInput>;
+
+        $i1 = virtualinvoke $r1.<java.lang.StringBuilder: int length()>();
+
+        if $i1 != 1 goto label1;
+
+        $r2 = <com.android.i18n.phonenumbers.PhoneNumberUtil: java.util.regex.Pattern PLUS_CHARS_PATTERN>;
+
+        $r3 = staticinvoke <java.lang.Character: java.lang.String toString(char)>(c0);
+
+        $r4 = virtualinvoke $r2.<java.util.regex.Pattern: java.util.regex.Matcher matcher(java.lang.CharSequence)>($r3);
+
+        $z1 = virtualinvoke $r4.<java.util.regex.Matcher: boolean matches()>();
+
+        if $z1 == 0 goto label1;
+
+        goto label2;
+
+     label1:
+        z2 = 0;
+
+        goto label2;
+
+     label2:
+        return z2;
+    }
+
+    private boolean isNanpaNumberWithNationalPrefix()
+    {
+        com.android.i18n.phonenumbers.AsYouTypeFormatter r0;
+        int i0;
+        com.android.i18n.phonenumbers.Phonemetadata$PhoneMetadata $r1;
+        java.lang.StringBuilder $r2, $r3, $r4;
+        char $c1, $c2, $c3;
+        boolean z0;
+
+        r0 := @this: com.android.i18n.phonenumbers.AsYouTypeFormatter;
+
+        $r1 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: com.android.i18n.phonenumbers.Phonemetadata$PhoneMetadata currentMetadata>;
+
+        i0 = virtualinvoke $r1.<com.android.i18n.phonenumbers.Phonemetadata$PhoneMetadata: int getCountryCode()>();
+
+        z0 = 0;
+
+        if i0 != 1 goto label1;
+
+        $r2 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder nationalNumber>;
+
+        $c1 = virtualinvoke $r2.<java.lang.StringBuilder: char charAt(int)>(0);
+
+        if $c1 != 49 goto label1;
+
+        $r3 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder nationalNumber>;
+
+        $c2 = virtualinvoke $r3.<java.lang.StringBuilder: char charAt(int)>(1);
+
+        if $c2 == 48 goto label1;
+
+        $r4 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder nationalNumber>;
+
+        $c3 = virtualinvoke $r4.<java.lang.StringBuilder: char charAt(int)>(1);
+
+        if $c3 == 49 goto label1;
+
+        z0 = 1;
+
+        goto label1;
+
+     label1:
+        return z0;
+    }
+
+    private boolean maybeCreateNewTemplate()
+    {
+        com.android.i18n.phonenumbers.AsYouTypeFormatter r0;
+        java.util.Iterator r1;
+        com.android.i18n.phonenumbers.Phonemetadata$NumberFormat r2;
+        java.lang.String r3, $r6, $r8;
+        java.util.List $r4;
+        boolean $z0, $z1, $z2, $z3;
+        java.lang.Object $r5;
+        java.util.regex.Pattern $r7;
+        java.util.regex.Matcher $r9;
+
+        r0 := @this: com.android.i18n.phonenumbers.AsYouTypeFormatter;
+
+        $r4 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.util.List possibleFormats>;
+
+        r1 = interfaceinvoke $r4.<java.util.List: java.util.Iterator iterator()>();
+
+     label1:
+        $z0 = interfaceinvoke r1.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label4;
+
+        $r5 = interfaceinvoke r1.<java.util.Iterator: java.lang.Object next()>();
+
+        r2 = (com.android.i18n.phonenumbers.Phonemetadata$NumberFormat) $r5;
+
+        r3 = virtualinvoke r2.<com.android.i18n.phonenumbers.Phonemetadata$NumberFormat: java.lang.String getPattern()>();
+
+        $r6 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.String currentFormattingPattern>;
+
+        $z1 = virtualinvoke $r6.<java.lang.String: boolean equals(java.lang.Object)>(r3);
+
+        if $z1 == 0 goto label2;
+
+        return 0;
+
+     label2:
+        $z2 = specialinvoke r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: boolean createFormattingTemplate(com.android.i18n.phonenumbers.Phonemetadata$NumberFormat)>(r2);
+
+        if $z2 == 0 goto label3;
+
+        r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.String currentFormattingPattern> = r3;
+
+        $r7 = <com.android.i18n.phonenumbers.AsYouTypeFormatter: java.util.regex.Pattern NATIONAL_PREFIX_SEPARATORS_PATTERN>;
+
+        $r8 = virtualinvoke r2.<com.android.i18n.phonenumbers.Phonemetadata$NumberFormat: java.lang.String getNationalPrefixFormattingRule()>();
+
+        $r9 = virtualinvoke $r7.<java.util.regex.Pattern: java.util.regex.Matcher matcher(java.lang.CharSequence)>($r8);
+
+        $z3 = virtualinvoke $r9.<java.util.regex.Matcher: boolean find()>();
+
+        r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: boolean shouldAddSpaceAfterNationalPrefix> = $z3;
+
+        r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: int lastMatchPosition> = 0;
+
+        return 1;
+
+     label3:
+        interfaceinvoke r1.<java.util.Iterator: void remove()>();
+
+        goto label1;
+
+     label4:
+        r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: boolean ableToFormat> = 0;
+
+        return 0;
+    }
+
+    private void narrowDownPossibleFormats(java.lang.String)
+    {
+        com.android.i18n.phonenumbers.AsYouTypeFormatter r0;
+        java.lang.String r1, $r7;
+        int i0, i1, $i2, $i3, $i4, $i5;
+        java.util.Iterator r2;
+        com.android.i18n.phonenumbers.Phonemetadata$NumberFormat r3;
+        java.util.List $r4;
+        java.lang.Object $r5;
+        com.android.i18n.phonenumbers.internal.RegexCache $r6;
+        java.util.regex.Pattern $r8;
+        java.util.regex.Matcher $r9;
+        boolean $z0, $z1;
+
+        r0 := @this: com.android.i18n.phonenumbers.AsYouTypeFormatter;
+
+        r1 := @parameter0: java.lang.String;
+
+        i0 = virtualinvoke r1.<java.lang.String: int length()>();
+
+        $r4 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.util.List possibleFormats>;
+
+        r2 = interfaceinvoke $r4.<java.util.List: java.util.Iterator iterator()>();
+
+     label1:
+        $z1 = interfaceinvoke r2.<java.util.Iterator: boolean hasNext()>();
+
+        if $z1 == 0 goto label4;
+
+        $r5 = interfaceinvoke r2.<java.util.Iterator: java.lang.Object next()>();
+
+        r3 = (com.android.i18n.phonenumbers.Phonemetadata$NumberFormat) $r5;
+
+        $i2 = virtualinvoke r3.<com.android.i18n.phonenumbers.Phonemetadata$NumberFormat: int leadingDigitsPatternSize()>();
+
+        if $i2 != 0 goto label2;
+
+        goto label1;
+
+     label2:
+        $i3 = i0 - 3;
+
+        $i4 = virtualinvoke r3.<com.android.i18n.phonenumbers.Phonemetadata$NumberFormat: int leadingDigitsPatternSize()>();
+
+        $i5 = $i4 - 1;
+
+        i1 = staticinvoke <java.lang.Math: int min(int,int)>($i3, $i5);
+
+        $r6 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: com.android.i18n.phonenumbers.internal.RegexCache regexCache>;
+
+        $r7 = virtualinvoke r3.<com.android.i18n.phonenumbers.Phonemetadata$NumberFormat: java.lang.String getLeadingDigitsPattern(int)>(i1);
+
+        $r8 = virtualinvoke $r6.<com.android.i18n.phonenumbers.internal.RegexCache: java.util.regex.Pattern getPatternForRegex(java.lang.String)>($r7);
+
+        $r9 = virtualinvoke $r8.<java.util.regex.Pattern: java.util.regex.Matcher matcher(java.lang.CharSequence)>(r1);
+
+        $z0 = virtualinvoke $r9.<java.util.regex.Matcher: boolean lookingAt()>();
+
+        if $z0 != 0 goto label3;
+
+        interfaceinvoke r2.<java.util.Iterator: void remove()>();
+
+     label3:
+        goto label1;
+
+     label4:
+        return;
+    }
+
+    private char normalizeAndAccrueDigitsAndPlusSign(char, boolean)
+    {
+        com.android.i18n.phonenumbers.AsYouTypeFormatter r0;
+        boolean z0;
+        int $i0, $i1;
+        java.lang.StringBuilder $r1, $r3, $r5, $r6;
+        char c2, c4, c5;
+
+        r0 := @this: com.android.i18n.phonenumbers.AsYouTypeFormatter;
+
+        c2 := @parameter0: char;
+
+        z0 := @parameter1: boolean;
+
+        if c2 != 43 goto label1;
+
+        $r6 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder accruedInputWithoutFormatting>;
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(char)>(c2);
+
+        c4 = c2;
+
+        goto label2;
+
+     label1:
+        $i0 = staticinvoke <java.lang.Character: int digit(char,int)>(c2, 10);
+
+        c5 = staticinvoke <java.lang.Character: char forDigit(int,int)>($i0, 10);
+
+        $r1 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder accruedInputWithoutFormatting>;
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(char)>(c5);
+
+        $r3 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder nationalNumber>;
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(char)>(c5);
+
+        c4 = c5;
+
+     label2:
+        if z0 == 0 goto label3;
+
+        $r5 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder accruedInputWithoutFormatting>;
+
+        $i1 = virtualinvoke $r5.<java.lang.StringBuilder: int length()>();
+
+        r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: int positionToRemember> = $i1;
+
+     label3:
+        return c4;
+    }
+
+    private java.lang.String removeNationalPrefixFromNationalNumber()
+    {
+        com.android.i18n.phonenumbers.AsYouTypeFormatter r0;
+        boolean $z0, $z1, $z2;
+        com.android.i18n.phonenumbers.Phonemetadata$PhoneMetadata $r1, $r3;
+        com.android.i18n.phonenumbers.internal.RegexCache $r4;
+        java.lang.String $r5, $r10, r17;
+        java.util.regex.Pattern $r6;
+        java.lang.StringBuilder $r7, $r8, $r9, r14, $r16, $r18;
+        int $i1, i2;
+        java.util.regex.Matcher r15;
+
+        r0 := @this: com.android.i18n.phonenumbers.AsYouTypeFormatter;
+
+        $z0 = specialinvoke r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: boolean isNanpaNumberWithNationalPrefix()>();
+
+        if $z0 == 0 goto label1;
+
+        i2 = 1;
+
+        r14 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder prefixBeforeNationalNumber>;
+
+        virtualinvoke r14.<java.lang.StringBuilder: java.lang.StringBuilder append(char)>(49);
+
+        virtualinvoke r14.<java.lang.StringBuilder: java.lang.StringBuilder append(char)>(32);
+
+        r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: boolean isCompleteNumber> = 1;
+
+        goto label2;
+
+     label1:
+        i2 = 0;
+
+        $r1 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: com.android.i18n.phonenumbers.Phonemetadata$PhoneMetadata currentMetadata>;
+
+        $z1 = virtualinvoke $r1.<com.android.i18n.phonenumbers.Phonemetadata$PhoneMetadata: boolean hasNationalPrefixForParsing()>();
+
+        if $z1 == 0 goto label2;
+
+        $r4 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: com.android.i18n.phonenumbers.internal.RegexCache regexCache>;
+
+        $r3 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: com.android.i18n.phonenumbers.Phonemetadata$PhoneMetadata currentMetadata>;
+
+        $r5 = virtualinvoke $r3.<com.android.i18n.phonenumbers.Phonemetadata$PhoneMetadata: java.lang.String getNationalPrefixForParsing()>();
+
+        $r6 = virtualinvoke $r4.<com.android.i18n.phonenumbers.internal.RegexCache: java.util.regex.Pattern getPatternForRegex(java.lang.String)>($r5);
+
+        $r7 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder nationalNumber>;
+
+        r15 = virtualinvoke $r6.<java.util.regex.Pattern: java.util.regex.Matcher matcher(java.lang.CharSequence)>($r7);
+
+        i2 = 0;
+
+        $z2 = virtualinvoke r15.<java.util.regex.Matcher: boolean lookingAt()>();
+
+        if $z2 == 0 goto label2;
+
+        i2 = 0;
+
+        $i1 = virtualinvoke r15.<java.util.regex.Matcher: int end()>();
+
+        if $i1 <= 0 goto label2;
+
+        r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: boolean isCompleteNumber> = 1;
+
+        i2 = virtualinvoke r15.<java.util.regex.Matcher: int end()>();
+
+        $r9 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder prefixBeforeNationalNumber>;
+
+        $r8 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder nationalNumber>;
+
+        $r10 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.String substring(int,int)>(0, i2);
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r10);
+
+     label2:
+        $r16 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder nationalNumber>;
+
+        r17 = virtualinvoke $r16.<java.lang.StringBuilder: java.lang.String substring(int,int)>(0, i2);
+
+        $r18 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder nationalNumber>;
+
+        virtualinvoke $r18.<java.lang.StringBuilder: java.lang.StringBuilder delete(int,int)>(0, i2);
+
+        return r17;
+    }
+
+    java.lang.String attemptToFormatAccruedDigits()
+    {
+        com.android.i18n.phonenumbers.AsYouTypeFormatter r0;
+        java.util.Iterator r1;
+        java.util.regex.Matcher r2, $r11;
+        java.util.List $r3;
+        boolean $z0, $z1, $z2, $z3;
+        java.lang.Object $r4;
+        com.android.i18n.phonenumbers.internal.RegexCache $r5;
+        java.lang.String $r6, $r10, $r12, $r13, $r14, r17;
+        java.util.regex.Pattern $r7, $r9;
+        java.lang.StringBuilder $r8, $r15;
+        com.android.i18n.phonenumbers.Phonemetadata$NumberFormat r16;
+
+        r0 := @this: com.android.i18n.phonenumbers.AsYouTypeFormatter;
+
+        $r3 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.util.List possibleFormats>;
+
+        r1 = interfaceinvoke $r3.<java.util.List: java.util.Iterator iterator()>();
+
+     label1:
+        $z0 = interfaceinvoke r1.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label3;
+
+        $r4 = interfaceinvoke r1.<java.util.Iterator: java.lang.Object next()>();
+
+        r16 = (com.android.i18n.phonenumbers.Phonemetadata$NumberFormat) $r4;
+
+        $r5 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: com.android.i18n.phonenumbers.internal.RegexCache regexCache>;
+
+        $r6 = virtualinvoke r16.<com.android.i18n.phonenumbers.Phonemetadata$NumberFormat: java.lang.String getPattern()>();
+
+        $r7 = virtualinvoke $r5.<com.android.i18n.phonenumbers.internal.RegexCache: java.util.regex.Pattern getPatternForRegex(java.lang.String)>($r6);
+
+        $r8 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder nationalNumber>;
+
+        r2 = virtualinvoke $r7.<java.util.regex.Pattern: java.util.regex.Matcher matcher(java.lang.CharSequence)>($r8);
+
+        $z1 = virtualinvoke r2.<java.util.regex.Matcher: boolean matches()>();
+
+        if $z1 == 0 goto label2;
+
+        $r9 = <com.android.i18n.phonenumbers.AsYouTypeFormatter: java.util.regex.Pattern NATIONAL_PREFIX_SEPARATORS_PATTERN>;
+
+        $r10 = virtualinvoke r16.<com.android.i18n.phonenumbers.Phonemetadata$NumberFormat: java.lang.String getNationalPrefixFormattingRule()>();
+
+        $r11 = virtualinvoke $r9.<java.util.regex.Pattern: java.util.regex.Matcher matcher(java.lang.CharSequence)>($r10);
+
+        $z2 = virtualinvoke $r11.<java.util.regex.Matcher: boolean find()>();
+
+        r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: boolean shouldAddSpaceAfterNationalPrefix> = $z2;
+
+        $r12 = virtualinvoke r16.<com.android.i18n.phonenumbers.Phonemetadata$NumberFormat: java.lang.String getFormat()>();
+
+        $r13 = virtualinvoke r2.<java.util.regex.Matcher: java.lang.String replaceAll(java.lang.String)>($r12);
+
+        r17 = specialinvoke r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.String appendNationalNumber(java.lang.String)>($r13);
+
+        $r14 = staticinvoke <com.android.i18n.phonenumbers.PhoneNumberUtil: java.lang.String normalizeDiallableCharsOnly(java.lang.CharSequence)>(r17);
+
+        $r15 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder accruedInputWithoutFormatting>;
+
+        $z3 = virtualinvoke $r14.<java.lang.String: boolean contentEquals(java.lang.CharSequence)>($r15);
+
+        if $z3 == 0 goto label2;
+
+        return r17;
+
+     label2:
+        goto label1;
+
+     label3:
+        return "";
+    }
+
+    public void clear()
+    {
+        com.android.i18n.phonenumbers.AsYouTypeFormatter r0;
+        java.lang.StringBuilder $r1, $r2, $r3, $r4, $r5;
+        java.util.List $r6;
+        com.android.i18n.phonenumbers.Phonemetadata$PhoneMetadata $r7, $r8, $r10;
+        boolean $z0;
+        java.lang.String $r9;
+
+        r0 := @this: com.android.i18n.phonenumbers.AsYouTypeFormatter;
+
+        r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.String currentOutput> = "";
+
+        $r1 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder accruedInput>;
+
+        virtualinvoke $r1.<java.lang.StringBuilder: void setLength(int)>(0);
+
+        $r2 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder accruedInputWithoutFormatting>;
+
+        virtualinvoke $r2.<java.lang.StringBuilder: void setLength(int)>(0);
+
+        $r3 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder formattingTemplate>;
+
+        virtualinvoke $r3.<java.lang.StringBuilder: void setLength(int)>(0);
+
+        r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: int lastMatchPosition> = 0;
+
+        r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.String currentFormattingPattern> = "";
+
+        $r4 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder prefixBeforeNationalNumber>;
+
+        virtualinvoke $r4.<java.lang.StringBuilder: void setLength(int)>(0);
+
+        r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.String extractedNationalPrefix> = "";
+
+        $r5 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder nationalNumber>;
+
+        virtualinvoke $r5.<java.lang.StringBuilder: void setLength(int)>(0);
+
+        r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: boolean ableToFormat> = 1;
+
+        r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: boolean inputHasFormatting> = 0;
+
+        r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: int positionToRemember> = 0;
+
+        r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: int originalPosition> = 0;
+
+        r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: boolean isCompleteNumber> = 0;
+
+        r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: boolean isExpectingCountryCallingCode> = 0;
+
+        $r6 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.util.List possibleFormats>;
+
+        interfaceinvoke $r6.<java.util.List: void clear()>();
+
+        r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: boolean shouldAddSpaceAfterNationalPrefix> = 0;
+
+        $r8 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: com.android.i18n.phonenumbers.Phonemetadata$PhoneMetadata currentMetadata>;
+
+        $r7 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: com.android.i18n.phonenumbers.Phonemetadata$PhoneMetadata defaultMetadata>;
+
+        $z0 = virtualinvoke $r8.<java.lang.Object: boolean equals(java.lang.Object)>($r7);
+
+        if $z0 != 0 goto label1;
+
+        $r9 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.String defaultCountry>;
+
+        $r10 = specialinvoke r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: com.android.i18n.phonenumbers.Phonemetadata$PhoneMetadata getMetadataForRegion(java.lang.String)>($r9);
+
+        r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: com.android.i18n.phonenumbers.Phonemetadata$PhoneMetadata currentMetadata> = $r10;
+
+     label1:
+        return;
+    }
+
+    java.lang.String getExtractedNationalPrefix()
+    {
+        com.android.i18n.phonenumbers.AsYouTypeFormatter r0;
+        java.lang.String $r1;
+
+        r0 := @this: com.android.i18n.phonenumbers.AsYouTypeFormatter;
+
+        $r1 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.String extractedNationalPrefix>;
+
+        return $r1;
+    }
+
+    public int getRememberedPosition()
+    {
+        com.android.i18n.phonenumbers.AsYouTypeFormatter r0;
+        boolean $z0;
+        int $i0, $i1, $i4, i5, i6, i7;
+        java.lang.String $r1, $r3;
+        java.lang.StringBuilder $r2;
+        char $c2, $c3;
+
+        r0 := @this: com.android.i18n.phonenumbers.AsYouTypeFormatter;
+
+        $z0 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: boolean ableToFormat>;
+
+        if $z0 != 0 goto label1;
+
+        $i4 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: int originalPosition>;
+
+        return $i4;
+
+     label1:
+        i5 = 0;
+
+        i6 = 0;
+
+     label2:
+        $i0 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: int positionToRemember>;
+
+        if i5 >= $i0 goto label4;
+
+        $r1 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.String currentOutput>;
+
+        $i1 = virtualinvoke $r1.<java.lang.String: int length()>();
+
+        if i6 >= $i1 goto label4;
+
+        i7 = i5;
+
+        $r2 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.StringBuilder accruedInputWithoutFormatting>;
+
+        $c2 = virtualinvoke $r2.<java.lang.StringBuilder: char charAt(int)>(i5);
+
+        $r3 = r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.String currentOutput>;
+
+        $c3 = virtualinvoke $r3.<java.lang.String: char charAt(int)>(i6);
+
+        if $c2 != $c3 goto label3;
+
+        i7 = i5 + 1;
+
+     label3:
+        i6 = i6 + 1;
+
+        i5 = i7;
+
+        goto label2;
+
+     label4:
+        return i6;
+    }
+
+    public java.lang.String inputDigit(char)
+    {
+        com.android.i18n.phonenumbers.AsYouTypeFormatter r0;
+        char c0;
+        java.lang.String r1;
+
+        r0 := @this: com.android.i18n.phonenumbers.AsYouTypeFormatter;
+
+        c0 := @parameter0: char;
+
+        r1 = specialinvoke r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.String inputDigitWithOptionToRememberPosition(char,boolean)>(c0, 0);
+
+        r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.String currentOutput> = r1;
+
+        return r1;
+    }
+
+    public java.lang.String inputDigitAndRememberPosition(char)
+    {
+        com.android.i18n.phonenumbers.AsYouTypeFormatter r0;
+        char c0;
+        java.lang.String r1;
+
+        r0 := @this: com.android.i18n.phonenumbers.AsYouTypeFormatter;
+
+        c0 := @parameter0: char;
+
+        r1 = specialinvoke r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.String inputDigitWithOptionToRememberPosition(char,boolean)>(c0, 1);
+
+        r0.<com.android.i18n.phonenumbers.AsYouTypeFormatter: java.lang.String currentOutput> = r1;
+
+        return r1;
+    }
+}

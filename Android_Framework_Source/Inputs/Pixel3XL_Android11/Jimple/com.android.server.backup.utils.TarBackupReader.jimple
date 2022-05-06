@@ -1,0 +1,2098 @@
+public class com.android.server.backup.utils.TarBackupReader extends java.lang.Object
+{
+    private static final int TAR_HEADER_LENGTH_FILESIZE;
+    private static final int TAR_HEADER_LENGTH_MODE;
+    private static final int TAR_HEADER_LENGTH_MODTIME;
+    private static final int TAR_HEADER_LENGTH_PATH;
+    private static final int TAR_HEADER_LENGTH_PATH_PREFIX;
+    private static final int TAR_HEADER_LONG_RADIX;
+    private static final int TAR_HEADER_OFFSET_FILESIZE;
+    private static final int TAR_HEADER_OFFSET_MODE;
+    private static final int TAR_HEADER_OFFSET_MODTIME;
+    private static final int TAR_HEADER_OFFSET_PATH;
+    private static final int TAR_HEADER_OFFSET_PATH_PREFIX;
+    private static final int TAR_HEADER_OFFSET_TYPE_CHAR;
+    private final com.android.server.backup.utils.BytesReadListener mBytesReadListener;
+    private final java.io.InputStream mInputStream;
+    private android.app.backup.IBackupManagerMonitor mMonitor;
+    private byte[] mWidgetData;
+
+    public void <init>(java.io.InputStream, com.android.server.backup.utils.BytesReadListener, android.app.backup.IBackupManagerMonitor)
+    {
+        com.android.server.backup.utils.TarBackupReader r0;
+        java.io.InputStream r1;
+        com.android.server.backup.utils.BytesReadListener r2;
+        android.app.backup.IBackupManagerMonitor r3;
+
+        r0 := @this: com.android.server.backup.utils.TarBackupReader;
+
+        r1 := @parameter0: java.io.InputStream;
+
+        r2 := @parameter1: com.android.server.backup.utils.BytesReadListener;
+
+        r3 := @parameter2: android.app.backup.IBackupManagerMonitor;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        r0.<com.android.server.backup.utils.TarBackupReader: byte[] mWidgetData> = null;
+
+        r0.<com.android.server.backup.utils.TarBackupReader: java.io.InputStream mInputStream> = r1;
+
+        r0.<com.android.server.backup.utils.TarBackupReader: com.android.server.backup.utils.BytesReadListener mBytesReadListener> = r2;
+
+        r0.<com.android.server.backup.utils.TarBackupReader: android.app.backup.IBackupManagerMonitor mMonitor> = r3;
+
+        return;
+    }
+
+    private static int extractLine(byte[], int, java.lang.String[]) throws java.io.IOException
+    {
+        byte[] r0;
+        int i0, i1, $i2, $i3, i5;
+        java.lang.String[] r1;
+        java.io.IOException $r2;
+        java.lang.String $r3;
+        byte $b4;
+
+        r0 := @parameter0: byte[];
+
+        i0 := @parameter1: int;
+
+        r1 := @parameter2: java.lang.String[];
+
+        i1 = lengthof r0;
+
+        if i0 >= i1 goto label4;
+
+        i5 = i0;
+
+     label1:
+        if i5 >= i1 goto label3;
+
+        $b4 = r0[i5];
+
+        if $b4 != 10 goto label2;
+
+        goto label3;
+
+     label2:
+        i5 = i5 + 1;
+
+        goto label1;
+
+     label3:
+        $r3 = new java.lang.String;
+
+        $i2 = i5 - i0;
+
+        specialinvoke $r3.<java.lang.String: void <init>(byte[],int,int)>(r0, i0, $i2);
+
+        r1[0] = $r3;
+
+        $i3 = i5 + 1;
+
+        return $i3;
+
+     label4:
+        $r2 = new java.io.IOException;
+
+        specialinvoke $r2.<java.io.IOException: void <init>(java.lang.String)>("Incomplete data");
+
+        throw $r2;
+    }
+
+    private static long extractRadix(byte[], int, int, int) throws java.io.IOException
+    {
+        int i0, i1, i2, $i4, $i6, $i7, $i9, i13;
+        byte b3;
+        java.lang.StringBuilder $r0;
+        char $c5;
+        java.io.IOException $r5;
+        java.lang.String $r6;
+        long $l8, $l10, $l11, l12;
+        byte[] r7;
+
+        r7 := @parameter0: byte[];
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        i2 := @parameter3: int;
+
+        l12 = 0L;
+
+        i13 = i0;
+
+     label1:
+        $i4 = i0 + i1;
+
+        if i13 >= $i4 goto label4;
+
+        b3 = r7[i13];
+
+        if b3 == 0 goto label4;
+
+        if b3 != 32 goto label2;
+
+        goto label4;
+
+     label2:
+        if b3 < 48 goto label3;
+
+        $i6 = i2 + 48;
+
+        $i7 = $i6 - 1;
+
+        if b3 > $i7 goto label3;
+
+        $l8 = (long) i2;
+
+        $l11 = $l8 * l12;
+
+        $i9 = b3 - 48;
+
+        $l10 = (long) $i9;
+
+        l12 = $l11 + $l10;
+
+        i13 = i13 + 1;
+
+        goto label1;
+
+     label3:
+        $r0 = new java.lang.StringBuilder;
+
+        specialinvoke $r0.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r0.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Invalid number in header: \'");
+
+        $c5 = (char) b3;
+
+        virtualinvoke $r0.<java.lang.StringBuilder: java.lang.StringBuilder append(char)>($c5);
+
+        virtualinvoke $r0.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("\' for radix ");
+
+        virtualinvoke $r0.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i2);
+
+        $r5 = new java.io.IOException;
+
+        $r6 = virtualinvoke $r0.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r5.<java.io.IOException: void <init>(java.lang.String)>($r6);
+
+        throw $r5;
+
+     label4:
+        return l12;
+    }
+
+    private static java.lang.String extractString(byte[], int, int) throws java.io.IOException
+    {
+        byte[] r0;
+        int i0, i1, $i2, $i3, i5;
+        java.lang.String $r1;
+        byte $b4;
+
+        r0 := @parameter0: byte[];
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        i5 = i0;
+
+     label1:
+        $i2 = i0 + i1;
+
+        if i5 >= $i2 goto label2;
+
+        $b4 = r0[i5];
+
+        if $b4 == 0 goto label2;
+
+        i5 = i5 + 1;
+
+        goto label1;
+
+     label2:
+        $r1 = new java.lang.String;
+
+        $i3 = i5 - i0;
+
+        specialinvoke $r1.<java.lang.String: void <init>(byte[],int,int,java.lang.String)>(r0, i0, $i3, "US-ASCII");
+
+        return $r1;
+    }
+
+    private static void hexLog(byte[])
+    {
+        byte[] r0;
+        java.lang.StringBuilder $r2;
+        java.lang.Object[] $r3, $r8;
+        java.lang.Integer $r4;
+        java.lang.String $r5, $r7, $r10;
+        int $i1, i3, i4, i5, i6;
+        byte $b2;
+        java.lang.Byte $r9;
+
+        r0 := @parameter0: byte[];
+
+        i3 = 0;
+
+        i4 = lengthof r0;
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>(int)>(64);
+
+     label1:
+        if i4 <= 0 goto label6;
+
+        $r3 = newarray (java.lang.Object)[1];
+
+        $r4 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i3);
+
+        $r3[0] = $r4;
+
+        $r5 = staticinvoke <java.lang.String: java.lang.String format(java.lang.String,java.lang.Object[])>("%04x   ", $r3);
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r5);
+
+        i5 = 16;
+
+        if i4 <= 16 goto label2;
+
+        goto label3;
+
+     label2:
+        i5 = i4;
+
+     label3:
+        i6 = 0;
+
+     label4:
+        if i6 >= i5 goto label5;
+
+        $r8 = newarray (java.lang.Object)[1];
+
+        $i1 = i3 + i6;
+
+        $b2 = r0[$i1];
+
+        $r9 = staticinvoke <java.lang.Byte: java.lang.Byte valueOf(byte)>($b2);
+
+        $r8[0] = $r9;
+
+        $r10 = staticinvoke <java.lang.String: java.lang.String format(java.lang.String,java.lang.Object[])>("%02x ", $r8);
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r10);
+
+        i6 = i6 + 1;
+
+        goto label4;
+
+     label5:
+        $r7 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("hexdump", $r7);
+
+        virtualinvoke $r2.<java.lang.StringBuilder: void setLength(int)>(0);
+
+        i4 = i4 - i5;
+
+        i3 = i3 + i5;
+
+        goto label1;
+
+     label6:
+        return;
+    }
+
+    private static int readExactly(java.io.InputStream, byte[], int, int) throws java.io.IOException
+    {
+        java.io.InputStream r0;
+        byte[] r1;
+        int i0, i1, i2, $i3, $i4, i5;
+        java.lang.IllegalArgumentException $r2;
+
+        r0 := @parameter0: java.io.InputStream;
+
+        r1 := @parameter1: byte[];
+
+        i0 := @parameter2: int;
+
+        i1 := @parameter3: int;
+
+        if i1 <= 0 goto label4;
+
+        i5 = 0;
+
+     label1:
+        if i5 >= i1 goto label3;
+
+        $i4 = i0 + i5;
+
+        $i3 = i1 - i5;
+
+        i2 = virtualinvoke r0.<java.io.InputStream: int read(byte[],int,int)>(r1, $i4, $i3);
+
+        if i2 > 0 goto label2;
+
+        goto label3;
+
+     label2:
+        i5 = i5 + i2;
+
+        goto label1;
+
+     label3:
+        return i5;
+
+     label4:
+        $r2 = new java.lang.IllegalArgumentException;
+
+        specialinvoke $r2.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>("size must be > 0");
+
+        throw $r2;
+    }
+
+    private boolean readPaxExtendedHeader(com.android.server.backup.FileMetadata) throws java.io.IOException
+    {
+        com.android.server.backup.utils.TarBackupReader r0;
+        com.android.server.backup.FileMetadata r1;
+        int i0, i1, i2, i3, $i12, $i13, $i14, $i15, $i16, $i17, $i20, $i22, $i24, $i25, $i26, $i27, i31, i32, i33;
+        long $l4, $l6, $l8, $l9, $l10, $l11, $l18, $l19, $l21, $l29;
+        byte $b5, $b23, $b30;
+        java.lang.StringBuilder $r3, $r8, $r22;
+        java.lang.String $r7, $r12, $r18, $r19, $r20, $r21, $r25;
+        java.io.IOException $r11, $r14, $r16, $r17;
+        java.io.InputStream $r13;
+        com.android.server.backup.utils.BytesReadListener $r15;
+        boolean $z0, $z1;
+        byte[] r26;
+
+        r0 := @this: com.android.server.backup.utils.TarBackupReader;
+
+        r1 := @parameter0: com.android.server.backup.FileMetadata;
+
+        $l4 = r1.<com.android.server.backup.FileMetadata: long size>;
+
+        $b5 = $l4 cmp 32768L;
+
+        if $b5 > 0 goto label13;
+
+        $l9 = r1.<com.android.server.backup.FileMetadata: long size>;
+
+        $l10 = $l9 + 511L;
+
+        $l11 = $l10 >> 9;
+
+        $i12 = (int) $l11;
+
+        $i13 = $i12 * 512;
+
+        r26 = newarray (byte)[$i13];
+
+        $r13 = r0.<com.android.server.backup.utils.TarBackupReader: java.io.InputStream mInputStream>;
+
+        $i14 = lengthof r26;
+
+        $i15 = staticinvoke <com.android.server.backup.utils.TarBackupReader: int readExactly(java.io.InputStream,byte[],int,int)>($r13, r26, 0, $i14);
+
+        $i16 = lengthof r26;
+
+        if $i15 < $i16 goto label12;
+
+        $r15 = r0.<com.android.server.backup.utils.TarBackupReader: com.android.server.backup.utils.BytesReadListener mBytesReadListener>;
+
+        $i17 = lengthof r26;
+
+        $l18 = (long) $i17;
+
+        interfaceinvoke $r15.<com.android.server.backup.utils.BytesReadListener: void onBytesRead(long)>($l18);
+
+        $l19 = r1.<com.android.server.backup.FileMetadata: long size>;
+
+        i0 = (int) $l19;
+
+        i31 = 0;
+
+     label01:
+        i32 = i31 + 1;
+
+     label02:
+        if i32 >= i0 goto label03;
+
+        $b30 = r26[i32];
+
+        if $b30 == 32 goto label03;
+
+        i32 = i32 + 1;
+
+        goto label02;
+
+     label03:
+        if i32 >= i0 goto label11;
+
+        $i20 = i32 - i31;
+
+        $l21 = staticinvoke <com.android.server.backup.utils.TarBackupReader: long extractRadix(byte[],int,int,int)>(r26, i31, $i20, 10);
+
+        i1 = (int) $l21;
+
+        i2 = i32 + 1;
+
+        $i22 = i31 + i1;
+
+        i3 = $i22 - 1;
+
+        i33 = i2 + 1;
+
+     label04:
+        $b23 = r26[i33];
+
+        if $b23 == 61 goto label05;
+
+        if i33 > i3 goto label05;
+
+        i33 = i33 + 1;
+
+        goto label04;
+
+     label05:
+        if i33 > i3 goto label10;
+
+        $r18 = new java.lang.String;
+
+        $i24 = i33 - i2;
+
+        specialinvoke $r18.<java.lang.String: void <init>(byte[],int,int,java.lang.String)>(r26, i2, $i24, "UTF-8");
+
+        $r19 = new java.lang.String;
+
+        $i27 = i33 + 1;
+
+        $i25 = i3 - i33;
+
+        $i26 = $i25 - 1;
+
+        specialinvoke $r19.<java.lang.String: void <init>(byte[],int,int,java.lang.String)>(r26, $i27, $i26, "UTF-8");
+
+        $r20 = "path";
+
+        $z0 = virtualinvoke $r20.<java.lang.String: boolean equals(java.lang.Object)>($r18);
+
+        if $z0 == 0 goto label06;
+
+        r1.<com.android.server.backup.FileMetadata: java.lang.String path> = $r19;
+
+        goto label08;
+
+     label06:
+        $r21 = "size";
+
+        $z1 = virtualinvoke $r21.<java.lang.String: boolean equals(java.lang.Object)>($r18);
+
+        if $z1 == 0 goto label07;
+
+        $l29 = staticinvoke <java.lang.Long: long parseLong(java.lang.String)>($r19);
+
+        r1.<com.android.server.backup.FileMetadata: long size> = $l29;
+
+        goto label08;
+
+     label07:
+        $r22 = new java.lang.StringBuilder;
+
+        specialinvoke $r22.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r22.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Unhandled pax key: ");
+
+        virtualinvoke $r22.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i2);
+
+        $r25 = virtualinvoke $r22.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("BackupManagerService", $r25);
+
+     label08:
+        i31 = i31 + i1;
+
+        if i31 < i0 goto label09;
+
+        return 1;
+
+     label09:
+        goto label01;
+
+     label10:
+        $r17 = new java.io.IOException;
+
+        specialinvoke $r17.<java.io.IOException: void <init>(java.lang.String)>("Invalid pax declaration");
+
+        throw $r17;
+
+     label11:
+        $r16 = new java.io.IOException;
+
+        specialinvoke $r16.<java.io.IOException: void <init>(java.lang.String)>("Invalid pax data");
+
+        throw $r16;
+
+     label12:
+        $r14 = new java.io.IOException;
+
+        specialinvoke $r14.<java.io.IOException: void <init>(java.lang.String)>("Unable to read full pax header");
+
+        throw $r14;
+
+     label13:
+        $r3 = new java.lang.StringBuilder;
+
+        specialinvoke $r3.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Suspiciously large pax header size ");
+
+        $l6 = r1.<com.android.server.backup.FileMetadata: long size>;
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l6);
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" - aborting");
+
+        $r7 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("BackupManagerService", $r7);
+
+        $r8 = new java.lang.StringBuilder;
+
+        specialinvoke $r8.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Sanity failure: pax header size ");
+
+        $l8 = r1.<com.android.server.backup.FileMetadata: long size>;
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l8);
+
+        $r11 = new java.io.IOException;
+
+        $r12 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r11.<java.io.IOException: void <init>(java.lang.String)>($r12);
+
+        throw $r11;
+    }
+
+    private boolean readTarHeader(byte[]) throws java.io.IOException
+    {
+        com.android.server.backup.utils.TarBackupReader r0;
+        byte[] r1;
+        int i0;
+        java.io.InputStream $r2;
+        java.io.IOException $r3;
+        com.android.server.backup.utils.BytesReadListener $r4;
+
+        r0 := @this: com.android.server.backup.utils.TarBackupReader;
+
+        r1 := @parameter0: byte[];
+
+        $r2 = r0.<com.android.server.backup.utils.TarBackupReader: java.io.InputStream mInputStream>;
+
+        i0 = staticinvoke <com.android.server.backup.utils.TarBackupReader: int readExactly(java.io.InputStream,byte[],int,int)>($r2, r1, 0, 512);
+
+        if i0 != 0 goto label1;
+
+        return 0;
+
+     label1:
+        if i0 < 512 goto label2;
+
+        $r4 = r0.<com.android.server.backup.utils.TarBackupReader: com.android.server.backup.utils.BytesReadListener mBytesReadListener>;
+
+        interfaceinvoke $r4.<com.android.server.backup.utils.BytesReadListener: void onBytesRead(long)>(512L);
+
+        return 1;
+
+     label2:
+        $r3 = new java.io.IOException;
+
+        specialinvoke $r3.<java.io.IOException: void <init>(java.lang.String)>("Unable to read full block header");
+
+        throw $r3;
+    }
+
+    public com.android.server.backup.restore.RestorePolicy chooseRestorePolicy(android.content.pm.PackageManager, boolean, com.android.server.backup.FileMetadata, android.content.pm.Signature[], android.content.pm.PackageManagerInternal, int)
+    {
+        com.android.server.backup.utils.TarBackupReader r0;
+        boolean z0, $z1, $z2, $z3;
+        com.android.server.backup.FileMetadata r1;
+        int i0, $i1, $i2, $i5, $i7, $i8;
+        com.android.server.backup.restore.RestorePolicy r2, $r54, r74, $r88;
+        android.content.pm.ApplicationInfo $r3, $r21, $r28, $r45;
+        java.lang.String $r5, $r8, $r13, $r16, $r17, $r23, $r25, $r32, $r40, $r46, $r48, $r51, $r61, $r64, r71, r86;
+        android.app.backup.IBackupManagerMonitor $r9, $r10, $r18, $r20, $r26, $r27, $r34, $r41, $r42, $r43, $r44, $r52, $r53, $r57, $r58, r77;
+        java.lang.StringBuilder $r11, $r59, r73, r75, r76, r78, r80;
+        android.os.Bundle $r19, $r33, $r56, r87;
+        long $l9, $l10, $l12, $l14, $l15, $l16;
+        byte $b11;
+        android.content.pm.PackageManager$NameNotFoundException $r55, $r65, $r66, $r67;
+        android.content.pm.PackageManager r68;
+        android.content.pm.Signature[] r69;
+        android.content.pm.PackageManagerInternal r70;
+        android.content.pm.PackageInfo r72;
+
+        r0 := @this: com.android.server.backup.utils.TarBackupReader;
+
+        r68 := @parameter0: android.content.pm.PackageManager;
+
+        z0 := @parameter1: boolean;
+
+        r1 := @parameter2: com.android.server.backup.FileMetadata;
+
+        r69 := @parameter3: android.content.pm.Signature[];
+
+        r70 := @parameter4: android.content.pm.PackageManagerInternal;
+
+        i0 := @parameter5: int;
+
+        if r69 != null goto label01;
+
+        $r54 = <com.android.server.backup.restore.RestorePolicy: com.android.server.backup.restore.RestorePolicy IGNORE>;
+
+        return $r54;
+
+     label01:
+        r2 = <com.android.server.backup.restore.RestorePolicy: com.android.server.backup.restore.RestorePolicy IGNORE>;
+
+     label02:
+        r71 = r1.<com.android.server.backup.FileMetadata: java.lang.String packageName>;
+
+     label03:
+        r72 = virtualinvoke r68.<android.content.pm.PackageManager: android.content.pm.PackageInfo getPackageInfoAsUser(java.lang.String,int,int)>(r71, 134217728, i0);
+
+        $r3 = r72.<android.content.pm.PackageInfo: android.content.pm.ApplicationInfo applicationInfo>;
+
+        $i1 = $r3.<android.content.pm.ApplicationInfo: int flags>;
+
+        $i2 = 32768 & $i1;
+
+        if $i2 == 0 goto label20;
+
+        $r21 = r72.<android.content.pm.PackageInfo: android.content.pm.ApplicationInfo applicationInfo>;
+
+        $i5 = $r21.<android.content.pm.ApplicationInfo: int uid>;
+
+        $z2 = staticinvoke <android.os.UserHandle: boolean isCore(int)>($i5);
+
+        if $z2 == 0 goto label07;
+
+        $r45 = r72.<android.content.pm.PackageInfo: android.content.pm.ApplicationInfo applicationInfo>;
+
+        $r46 = $r45.<android.content.pm.ApplicationInfo: java.lang.String backupAgentName>;
+
+        if $r46 == null goto label05;
+
+     label04:
+        goto label07;
+
+     label05:
+        r73 = new java.lang.StringBuilder;
+
+        specialinvoke r73.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r73.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Package ");
+
+        $r48 = r1.<com.android.server.backup.FileMetadata: java.lang.String packageName>;
+
+        virtualinvoke r73.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r48);
+
+        virtualinvoke r73.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" is system level with no agent");
+
+        $r51 = virtualinvoke r73.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("BackupManagerService", $r51);
+
+        $r52 = r0.<com.android.server.backup.utils.TarBackupReader: android.app.backup.IBackupManagerMonitor mMonitor>;
+
+        $r53 = staticinvoke <com.android.server.backup.utils.BackupManagerMonitorUtils: android.app.backup.IBackupManagerMonitor monitorEvent(android.app.backup.IBackupManagerMonitor,int,android.content.pm.PackageInfo,int,android.os.Bundle)>($r52, 38, r72, 2, null);
+
+        r0.<com.android.server.backup.utils.TarBackupReader: android.app.backup.IBackupManagerMonitor mMonitor> = $r53;
+
+     label06:
+        r74 = r2;
+
+        goto label22;
+
+     label07:
+        $z3 = staticinvoke <com.android.server.backup.utils.AppBackupUtils: boolean signaturesMatch(android.content.pm.Signature[],android.content.pm.PackageInfo,android.content.pm.PackageManagerInternal)>(r69, r72, r70);
+
+        if $z3 == 0 goto label17;
+
+        $r28 = r72.<android.content.pm.PackageInfo: android.content.pm.ApplicationInfo applicationInfo>;
+
+        $i7 = $r28.<android.content.pm.ApplicationInfo: int flags>;
+
+        $i8 = $i7 & 131072;
+
+        if $i8 == 0 goto label09;
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("BackupManagerService", "Package has restoreAnyVersion; taking data");
+
+        $r43 = r0.<com.android.server.backup.utils.TarBackupReader: android.app.backup.IBackupManagerMonitor mMonitor>;
+
+        $r44 = staticinvoke <com.android.server.backup.utils.BackupManagerMonitorUtils: android.app.backup.IBackupManagerMonitor monitorEvent(android.app.backup.IBackupManagerMonitor,int,android.content.pm.PackageInfo,int,android.os.Bundle)>($r43, 34, r72, 3, null);
+
+        r0.<com.android.server.backup.utils.TarBackupReader: android.app.backup.IBackupManagerMonitor mMonitor> = $r44;
+
+        r74 = <com.android.server.backup.restore.RestorePolicy: com.android.server.backup.restore.RestorePolicy ACCEPT>;
+
+     label08:
+        goto label22;
+
+     label09:
+        $l9 = virtualinvoke r72.<android.content.pm.PackageInfo: long getLongVersionCode()>();
+
+        $l10 = r1.<com.android.server.backup.FileMetadata: long version>;
+
+        $b11 = $l9 cmp $l10;
+
+        if $b11 < 0 goto label11;
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("BackupManagerService", "Sig + version match; taking data");
+
+        r74 = <com.android.server.backup.restore.RestorePolicy: com.android.server.backup.restore.RestorePolicy ACCEPT>;
+
+        $r41 = r0.<com.android.server.backup.utils.TarBackupReader: android.app.backup.IBackupManagerMonitor mMonitor>;
+
+        $r42 = staticinvoke <com.android.server.backup.utils.BackupManagerMonitorUtils: android.app.backup.IBackupManagerMonitor monitorEvent(android.app.backup.IBackupManagerMonitor,int,android.content.pm.PackageInfo,int,android.os.Bundle)>($r41, 35, r72, 3, null);
+
+        r0.<com.android.server.backup.utils.TarBackupReader: android.app.backup.IBackupManagerMonitor mMonitor> = $r42;
+
+     label10:
+        goto label22;
+
+     label11:
+        if z0 == 0 goto label14;
+
+     label12:
+        r75 = new java.lang.StringBuilder;
+
+        specialinvoke r75.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r75.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Data version ");
+
+        $l15 = r1.<com.android.server.backup.FileMetadata: long version>;
+
+        virtualinvoke r75.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l15);
+
+        virtualinvoke r75.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" is newer than installed version ");
+
+        $l16 = virtualinvoke r72.<android.content.pm.PackageInfo: long getLongVersionCode()>();
+
+        virtualinvoke r75.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l16);
+
+        virtualinvoke r75.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" - requiring apk");
+
+        $r40 = virtualinvoke r75.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("BackupManagerService", $r40);
+
+        r74 = <com.android.server.backup.restore.RestorePolicy: com.android.server.backup.restore.RestorePolicy ACCEPT_IF_APK>;
+
+     label13:
+        goto label22;
+
+     label14:
+        r76 = new java.lang.StringBuilder;
+
+        specialinvoke r76.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r76.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Data requires newer version ");
+
+        $l12 = r1.<com.android.server.backup.FileMetadata: long version>;
+
+        virtualinvoke r76.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l12);
+
+        virtualinvoke r76.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("; ignoring");
+
+        $r32 = virtualinvoke r76.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("BackupManagerService", $r32);
+
+        r77 = r0.<com.android.server.backup.utils.TarBackupReader: android.app.backup.IBackupManagerMonitor mMonitor>;
+
+     label15:
+        $l14 = r1.<com.android.server.backup.FileMetadata: long version>;
+
+        $r33 = staticinvoke <com.android.server.backup.utils.BackupManagerMonitorUtils: android.os.Bundle putMonitoringExtra(android.os.Bundle,java.lang.String,long)>(null, "android.app.backup.extra.LOG_OLD_VERSION", $l14);
+
+        $r34 = staticinvoke <com.android.server.backup.utils.BackupManagerMonitorUtils: android.app.backup.IBackupManagerMonitor monitorEvent(android.app.backup.IBackupManagerMonitor,int,android.content.pm.PackageInfo,int,android.os.Bundle)>(r77, 36, r72, 3, $r33);
+
+        r0.<com.android.server.backup.utils.TarBackupReader: android.app.backup.IBackupManagerMonitor mMonitor> = $r34;
+
+        r74 = <com.android.server.backup.restore.RestorePolicy: com.android.server.backup.restore.RestorePolicy IGNORE>;
+
+     label16:
+        goto label22;
+
+     label17:
+        r78 = new java.lang.StringBuilder;
+
+        specialinvoke r78.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r78.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Restore manifest signatures do not match installed application for ");
+
+        $r23 = r1.<com.android.server.backup.FileMetadata: java.lang.String packageName>;
+
+        virtualinvoke r78.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r23);
+
+        $r25 = virtualinvoke r78.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("BackupManagerService", $r25);
+
+        $r26 = r0.<com.android.server.backup.utils.TarBackupReader: android.app.backup.IBackupManagerMonitor mMonitor>;
+
+        $r27 = staticinvoke <com.android.server.backup.utils.BackupManagerMonitorUtils: android.app.backup.IBackupManagerMonitor monitorEvent(android.app.backup.IBackupManagerMonitor,int,android.content.pm.PackageInfo,int,android.os.Bundle)>($r26, 37, r72, 3, null);
+
+        r0.<com.android.server.backup.utils.TarBackupReader: android.app.backup.IBackupManagerMonitor mMonitor> = $r27;
+
+     label18:
+        r74 = r2;
+
+        goto label22;
+
+     label19:
+        $r65 := @caughtexception;
+
+        goto label26;
+
+     label20:
+        r80 = new java.lang.StringBuilder;
+
+        specialinvoke r80.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r80.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Restore manifest from ");
+
+        $r5 = r1.<com.android.server.backup.FileMetadata: java.lang.String packageName>;
+
+        virtualinvoke r80.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r5);
+
+        virtualinvoke r80.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" but allowBackup=false");
+
+        $r8 = virtualinvoke r80.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("BackupManagerService", $r8);
+
+        $r9 = r0.<com.android.server.backup.utils.TarBackupReader: android.app.backup.IBackupManagerMonitor mMonitor>;
+
+        $r10 = staticinvoke <com.android.server.backup.utils.BackupManagerMonitorUtils: android.app.backup.IBackupManagerMonitor monitorEvent(android.app.backup.IBackupManagerMonitor,int,android.content.pm.PackageInfo,int,android.os.Bundle)>($r9, 39, r72, 3, null);
+
+        r0.<com.android.server.backup.utils.TarBackupReader: android.app.backup.IBackupManagerMonitor mMonitor> = $r10;
+
+     label21:
+        r74 = r2;
+
+     label22:
+        goto label29;
+
+     label23:
+        $r67 := @caughtexception;
+
+        goto label26;
+
+     label24:
+        $r55 := @caughtexception;
+
+        goto label26;
+
+     label25:
+        $r66 := @caughtexception;
+
+     label26:
+        if z0 == 0 goto label27;
+
+        $r59 = new java.lang.StringBuilder;
+
+        specialinvoke $r59.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r59.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Package ");
+
+        $r61 = r1.<com.android.server.backup.FileMetadata: java.lang.String packageName>;
+
+        virtualinvoke $r59.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r61);
+
+        virtualinvoke $r59.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" not installed; requiring apk in dataset");
+
+        $r64 = virtualinvoke $r59.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("BackupManagerService", $r64);
+
+        r74 = <com.android.server.backup.restore.RestorePolicy: com.android.server.backup.restore.RestorePolicy ACCEPT_IF_APK>;
+
+        goto label28;
+
+     label27:
+        r74 = <com.android.server.backup.restore.RestorePolicy: com.android.server.backup.restore.RestorePolicy IGNORE>;
+
+     label28:
+        r86 = r1.<com.android.server.backup.FileMetadata: java.lang.String packageName>;
+
+        $r56 = staticinvoke <com.android.server.backup.utils.BackupManagerMonitorUtils: android.os.Bundle putMonitoringExtra(android.os.Bundle,java.lang.String,java.lang.String)>(null, "android.app.backup.extra.LOG_EVENT_PACKAGE_NAME", r86);
+
+        r87 = staticinvoke <com.android.server.backup.utils.BackupManagerMonitorUtils: android.os.Bundle putMonitoringExtra(android.os.Bundle,java.lang.String,boolean)>($r56, "android.app.backup.extra.LOG_POLICY_ALLOW_APKS", z0);
+
+        $r57 = r0.<com.android.server.backup.utils.TarBackupReader: android.app.backup.IBackupManagerMonitor mMonitor>;
+
+        $r58 = staticinvoke <com.android.server.backup.utils.BackupManagerMonitorUtils: android.app.backup.IBackupManagerMonitor monitorEvent(android.app.backup.IBackupManagerMonitor,int,android.content.pm.PackageInfo,int,android.os.Bundle)>($r57, 40, null, 3, r87);
+
+        r0.<com.android.server.backup.utils.TarBackupReader: android.app.backup.IBackupManagerMonitor mMonitor> = $r58;
+
+     label29:
+        $r88 = <com.android.server.backup.restore.RestorePolicy: com.android.server.backup.restore.RestorePolicy ACCEPT_IF_APK>;
+
+        if r74 != $r88 goto label30;
+
+        $z1 = r1.<com.android.server.backup.FileMetadata: boolean hasApk>;
+
+        if $z1 != 0 goto label30;
+
+        $r11 = new java.lang.StringBuilder;
+
+        specialinvoke $r11.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Cannot restore package ");
+
+        $r13 = r1.<com.android.server.backup.FileMetadata: java.lang.String packageName>;
+
+        virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r13);
+
+        virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" without the matching .apk");
+
+        $r16 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("BackupManagerService", $r16);
+
+        $r18 = r0.<com.android.server.backup.utils.TarBackupReader: android.app.backup.IBackupManagerMonitor mMonitor>;
+
+        $r17 = r1.<com.android.server.backup.FileMetadata: java.lang.String packageName>;
+
+        $r19 = staticinvoke <com.android.server.backup.utils.BackupManagerMonitorUtils: android.os.Bundle putMonitoringExtra(android.os.Bundle,java.lang.String,java.lang.String)>(null, "android.app.backup.extra.LOG_EVENT_PACKAGE_NAME", $r17);
+
+        $r20 = staticinvoke <com.android.server.backup.utils.BackupManagerMonitorUtils: android.app.backup.IBackupManagerMonitor monitorEvent(android.app.backup.IBackupManagerMonitor,int,android.content.pm.PackageInfo,int,android.os.Bundle)>($r18, 41, null, 3, $r19);
+
+        r0.<com.android.server.backup.utils.TarBackupReader: android.app.backup.IBackupManagerMonitor mMonitor> = $r20;
+
+     label30:
+        return r74;
+
+        catch android.content.pm.PackageManager$NameNotFoundException from label02 to label03 with label25;
+        catch android.content.pm.PackageManager$NameNotFoundException from label03 to label04 with label24;
+        catch android.content.pm.PackageManager$NameNotFoundException from label05 to label06 with label24;
+        catch android.content.pm.PackageManager$NameNotFoundException from label07 to label08 with label19;
+        catch android.content.pm.PackageManager$NameNotFoundException from label09 to label10 with label19;
+        catch android.content.pm.PackageManager$NameNotFoundException from label12 to label13 with label19;
+        catch android.content.pm.PackageManager$NameNotFoundException from label14 to label15 with label19;
+        catch android.content.pm.PackageManager$NameNotFoundException from label15 to label16 with label23;
+        catch android.content.pm.PackageManager$NameNotFoundException from label17 to label18 with label23;
+        catch android.content.pm.PackageManager$NameNotFoundException from label20 to label21 with label23;
+    }
+
+    public android.app.backup.IBackupManagerMonitor getMonitor()
+    {
+        com.android.server.backup.utils.TarBackupReader r0;
+        android.app.backup.IBackupManagerMonitor $r1;
+
+        r0 := @this: com.android.server.backup.utils.TarBackupReader;
+
+        $r1 = r0.<com.android.server.backup.utils.TarBackupReader: android.app.backup.IBackupManagerMonitor mMonitor>;
+
+        return $r1;
+    }
+
+    public byte[] getWidgetData()
+    {
+        com.android.server.backup.utils.TarBackupReader r0;
+        byte[] $r1;
+
+        r0 := @this: com.android.server.backup.utils.TarBackupReader;
+
+        $r1 = r0.<com.android.server.backup.utils.TarBackupReader: byte[] mWidgetData>;
+
+        return $r1;
+    }
+
+    public android.content.pm.Signature[] readAppManifestAndReturnSignatures(com.android.server.backup.FileMetadata) throws java.io.IOException
+    {
+        com.android.server.backup.utils.TarBackupReader r0;
+        byte[] r1;
+        int i0, $i5, $i7, $i8, $i16, $i19, i23, i24, i25, i26, i27, i28, i29, i30, i31;
+        long $l1, $l3, $l4, $l6, $l9, $l10, $l12, $l14, $l17;
+        byte $b2, $b11;
+        java.lang.String $r6, $r10, $r14, $r16, $r17, $r21, $r23, $r27, $r28, $r32, $r33, $r34, $r35, $r36, $r38, $r40, $r41, $r46, $r50, $r52, $r53, $r58, r61, r62;
+        java.io.InputStream $r7;
+        com.android.server.backup.utils.BytesReadListener $r9;
+        android.os.Bundle $r18, $r29, $r43, $r55, r66, r68;
+        android.app.backup.IBackupManagerMonitor $r19, $r20, $r30, $r31, $r42, $r44, $r54, $r56;
+        boolean $z0, $z1;
+        java.lang.Throwable $r47, $r57;
+        com.android.server.backup.FileMetadata r59;
+        java.lang.String[] r60;
+        android.content.pm.Signature[] r63;
+        android.content.pm.Signature r73;
+        java.lang.StringBuilder r74, r75, r76, r77, r79;
+        java.io.IOException r78, r80;
+        java.lang.IllegalArgumentException r81;
+
+        r0 := @this: com.android.server.backup.utils.TarBackupReader;
+
+        r59 := @parameter0: com.android.server.backup.FileMetadata;
+
+        $l1 = r59.<com.android.server.backup.FileMetadata: long size>;
+
+        $b2 = $l1 cmp 65536L;
+
+        if $b2 > 0 goto label26;
+
+        $l4 = r59.<com.android.server.backup.FileMetadata: long size>;
+
+        $i5 = (int) $l4;
+
+        r1 = newarray (byte)[$i5];
+
+        $r7 = r0.<com.android.server.backup.utils.TarBackupReader: java.io.InputStream mInputStream>;
+
+        $l6 = r59.<com.android.server.backup.FileMetadata: long size>;
+
+        $i7 = (int) $l6;
+
+        $i8 = staticinvoke <com.android.server.backup.utils.TarBackupReader: int readExactly(java.io.InputStream,byte[],int,int)>($r7, r1, 0, $i7);
+
+        $l10 = (long) $i8;
+
+        $l9 = r59.<com.android.server.backup.FileMetadata: long size>;
+
+        $b11 = $l10 cmp $l9;
+
+        if $b11 != 0 goto label25;
+
+        $r9 = r0.<com.android.server.backup.utils.TarBackupReader: com.android.server.backup.utils.BytesReadListener mBytesReadListener>;
+
+        $l12 = r59.<com.android.server.backup.FileMetadata: long size>;
+
+        interfaceinvoke $r9.<com.android.server.backup.utils.BytesReadListener: void onBytesRead(long)>($l12);
+
+        r60 = newarray (java.lang.String)[1];
+
+     label01:
+        i23 = staticinvoke <com.android.server.backup.utils.TarBackupReader: int extractLine(byte[],int,java.lang.String[])>(r1, 0, r60);
+
+        $r10 = r60[0];
+
+        i24 = staticinvoke <java.lang.Integer: int parseInt(java.lang.String)>($r10);
+
+     label02:
+        if i24 != 1 goto label20;
+
+     label03:
+        i25 = staticinvoke <com.android.server.backup.utils.TarBackupReader: int extractLine(byte[],int,java.lang.String[])>(r1, i23, r60);
+
+     label04:
+        r61 = r60[0];
+
+     label05:
+        $r21 = r59.<com.android.server.backup.FileMetadata: java.lang.String packageName>;
+
+        $z0 = virtualinvoke r61.<java.lang.String: boolean equals(java.lang.Object)>($r21);
+
+        if $z0 == 0 goto label18;
+
+        i26 = staticinvoke <com.android.server.backup.utils.TarBackupReader: int extractLine(byte[],int,java.lang.String[])>(r1, i25, r60);
+
+        $r32 = r60[0];
+
+        $i16 = staticinvoke <java.lang.Integer: int parseInt(java.lang.String)>($r32);
+
+        $l17 = (long) $i16;
+
+        r59.<com.android.server.backup.FileMetadata: long version> = $l17;
+
+        i27 = staticinvoke <com.android.server.backup.utils.TarBackupReader: int extractLine(byte[],int,java.lang.String[])>(r1, i26, r60);
+
+        $r33 = r60[0];
+
+        staticinvoke <java.lang.Integer: int parseInt(java.lang.String)>($r33);
+
+        i28 = staticinvoke <com.android.server.backup.utils.TarBackupReader: int extractLine(byte[],int,java.lang.String[])>(r1, i27, r60);
+
+        $r34 = r60[0];
+
+        $i19 = virtualinvoke $r34.<java.lang.String: int length()>();
+
+        if $i19 <= 0 goto label07;
+
+     label06:
+        r62 = r60[0];
+
+        goto label08;
+
+     label07:
+        r62 = null;
+
+     label08:
+        r59.<com.android.server.backup.FileMetadata: java.lang.String installerPackageName> = r62;
+
+        i29 = staticinvoke <com.android.server.backup.utils.TarBackupReader: int extractLine(byte[],int,java.lang.String[])>(r1, i28, r60);
+
+        $r35 = r60[0];
+
+        $z1 = virtualinvoke $r35.<java.lang.String: boolean equals(java.lang.Object)>("1");
+
+        r59.<com.android.server.backup.FileMetadata: boolean hasApk> = $z1;
+
+        i30 = staticinvoke <com.android.server.backup.utils.TarBackupReader: int extractLine(byte[],int,java.lang.String[])>(r1, i29, r60);
+
+        $r36 = r60[0];
+
+        i0 = staticinvoke <java.lang.Integer: int parseInt(java.lang.String)>($r36);
+
+     label09:
+        if i0 <= 0 goto label16;
+
+     label10:
+        r63 = newarray (android.content.pm.Signature)[i0];
+
+     label11:
+        i31 = 0;
+
+     label12:
+        if i31 >= i0 goto label15;
+
+     label13:
+        i30 = staticinvoke <com.android.server.backup.utils.TarBackupReader: int extractLine(byte[],int,java.lang.String[])>(r1, i30, r60);
+
+        r73 = new android.content.pm.Signature;
+
+        $r46 = r60[0];
+
+        specialinvoke r73.<android.content.pm.Signature: void <init>(java.lang.String)>($r46);
+
+        r63[i31] = r73;
+
+     label14:
+        i31 = i31 + 1;
+
+        goto label12;
+
+     label15:
+        return r63;
+
+     label16:
+        r74 = new java.lang.StringBuilder;
+
+        specialinvoke r74.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r74.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Missing signature on backed-up package ");
+
+        $r38 = r59.<com.android.server.backup.FileMetadata: java.lang.String packageName>;
+
+        virtualinvoke r74.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r38);
+
+        $r40 = virtualinvoke r74.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("BackupManagerService", $r40);
+
+        $r42 = r0.<com.android.server.backup.utils.TarBackupReader: android.app.backup.IBackupManagerMonitor mMonitor>;
+
+        $r41 = r59.<com.android.server.backup.FileMetadata: java.lang.String packageName>;
+
+        $r43 = staticinvoke <com.android.server.backup.utils.BackupManagerMonitorUtils: android.os.Bundle putMonitoringExtra(android.os.Bundle,java.lang.String,java.lang.String)>(null, "android.app.backup.extra.LOG_EVENT_PACKAGE_NAME", $r41);
+
+        $r44 = staticinvoke <com.android.server.backup.utils.BackupManagerMonitorUtils: android.app.backup.IBackupManagerMonitor monitorEvent(android.app.backup.IBackupManagerMonitor,int,android.content.pm.PackageInfo,int,android.os.Bundle)>($r42, 42, null, 3, $r43);
+
+        r0.<com.android.server.backup.utils.TarBackupReader: android.app.backup.IBackupManagerMonitor mMonitor> = $r44;
+
+     label17:
+        goto label19;
+
+     label18:
+        r75 = new java.lang.StringBuilder;
+
+        specialinvoke r75.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r75.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Expected package ");
+
+        $r23 = r59.<com.android.server.backup.FileMetadata: java.lang.String packageName>;
+
+        virtualinvoke r75.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r23);
+
+        virtualinvoke r75.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" but restore manifest claims ");
+
+        virtualinvoke r75.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r61);
+
+        $r27 = virtualinvoke r75.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("BackupManagerService", $r27);
+
+        $r28 = r59.<com.android.server.backup.FileMetadata: java.lang.String packageName>;
+
+        $r29 = staticinvoke <com.android.server.backup.utils.BackupManagerMonitorUtils: android.os.Bundle putMonitoringExtra(android.os.Bundle,java.lang.String,java.lang.String)>(null, "android.app.backup.extra.LOG_EVENT_PACKAGE_NAME", $r28);
+
+        r66 = staticinvoke <com.android.server.backup.utils.BackupManagerMonitorUtils: android.os.Bundle putMonitoringExtra(android.os.Bundle,java.lang.String,java.lang.String)>($r29, "android.app.backup.extra.LOG_MANIFEST_PACKAGE_NAME", r61);
+
+        $r30 = r0.<com.android.server.backup.utils.TarBackupReader: android.app.backup.IBackupManagerMonitor mMonitor>;
+
+        $r31 = staticinvoke <com.android.server.backup.utils.BackupManagerMonitorUtils: android.app.backup.IBackupManagerMonitor monitorEvent(android.app.backup.IBackupManagerMonitor,int,android.content.pm.PackageInfo,int,android.os.Bundle)>($r30, 43, null, 3, r66);
+
+        r0.<com.android.server.backup.utils.TarBackupReader: android.app.backup.IBackupManagerMonitor mMonitor> = $r31;
+
+     label19:
+        goto label24;
+
+     label20:
+        r76 = new java.lang.StringBuilder;
+
+        specialinvoke r76.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r76.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Unknown restore manifest version ");
+
+        virtualinvoke r76.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i24);
+
+        virtualinvoke r76.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" for package ");
+
+        $r14 = r59.<com.android.server.backup.FileMetadata: java.lang.String packageName>;
+
+        virtualinvoke r76.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r14);
+
+        $r16 = virtualinvoke r76.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("BackupManagerService", $r16);
+
+        $r17 = r59.<com.android.server.backup.FileMetadata: java.lang.String packageName>;
+
+        $r18 = staticinvoke <com.android.server.backup.utils.BackupManagerMonitorUtils: android.os.Bundle putMonitoringExtra(android.os.Bundle,java.lang.String,java.lang.String)>(null, "android.app.backup.extra.LOG_EVENT_PACKAGE_NAME", $r17);
+
+        $l14 = (long) i24;
+
+        r68 = staticinvoke <com.android.server.backup.utils.BackupManagerMonitorUtils: android.os.Bundle putMonitoringExtra(android.os.Bundle,java.lang.String,long)>($r18, "android.app.backup.extra.LOG_EVENT_PACKAGE_VERSION", $l14);
+
+        $r19 = r0.<com.android.server.backup.utils.TarBackupReader: android.app.backup.IBackupManagerMonitor mMonitor>;
+
+        $r20 = staticinvoke <com.android.server.backup.utils.BackupManagerMonitorUtils: android.app.backup.IBackupManagerMonitor monitorEvent(android.app.backup.IBackupManagerMonitor,int,android.content.pm.PackageInfo,int,android.os.Bundle)>($r19, 44, null, 3, r68);
+
+        r0.<com.android.server.backup.utils.TarBackupReader: android.app.backup.IBackupManagerMonitor mMonitor> = $r20;
+
+     label21:
+        goto label24;
+
+     label22:
+        $r57 := @caughtexception;
+
+        r81 = (java.lang.IllegalArgumentException) $r57;
+
+        $r58 = virtualinvoke r81.<java.lang.IllegalArgumentException: java.lang.String getMessage()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("BackupManagerService", $r58);
+
+        goto label24;
+
+     label23:
+        $r47 := @caughtexception;
+
+        r77 = new java.lang.StringBuilder;
+
+        specialinvoke r77.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r77.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Corrupt restore manifest for package ");
+
+        $r50 = r59.<com.android.server.backup.FileMetadata: java.lang.String packageName>;
+
+        virtualinvoke r77.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r50);
+
+        $r52 = virtualinvoke r77.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("BackupManagerService", $r52);
+
+        $r54 = r0.<com.android.server.backup.utils.TarBackupReader: android.app.backup.IBackupManagerMonitor mMonitor>;
+
+        $r53 = r59.<com.android.server.backup.FileMetadata: java.lang.String packageName>;
+
+        $r55 = staticinvoke <com.android.server.backup.utils.BackupManagerMonitorUtils: android.os.Bundle putMonitoringExtra(android.os.Bundle,java.lang.String,java.lang.String)>(null, "android.app.backup.extra.LOG_EVENT_PACKAGE_NAME", $r53);
+
+        $r56 = staticinvoke <com.android.server.backup.utils.BackupManagerMonitorUtils: android.app.backup.IBackupManagerMonitor monitorEvent(android.app.backup.IBackupManagerMonitor,int,android.content.pm.PackageInfo,int,android.os.Bundle)>($r54, 46, null, 3, $r55);
+
+        r0.<com.android.server.backup.utils.TarBackupReader: android.app.backup.IBackupManagerMonitor mMonitor> = $r56;
+
+     label24:
+        return null;
+
+     label25:
+        r78 = new java.io.IOException;
+
+        specialinvoke r78.<java.io.IOException: void <init>(java.lang.String)>("Unexpected EOF in manifest");
+
+        throw r78;
+
+     label26:
+        r79 = new java.lang.StringBuilder;
+
+        specialinvoke r79.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r79.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Restore manifest too big; corrupt? size=");
+
+        $l3 = r59.<com.android.server.backup.FileMetadata: long size>;
+
+        virtualinvoke r79.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l3);
+
+        r80 = new java.io.IOException;
+
+        $r6 = virtualinvoke r79.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r80.<java.io.IOException: void <init>(java.lang.String)>($r6);
+
+        throw r80;
+
+        catch java.lang.NumberFormatException from label01 to label02 with label23;
+        catch java.lang.IllegalArgumentException from label01 to label02 with label22;
+        catch java.lang.NumberFormatException from label03 to label04 with label23;
+        catch java.lang.IllegalArgumentException from label03 to label04 with label22;
+        catch java.lang.NumberFormatException from label05 to label06 with label23;
+        catch java.lang.IllegalArgumentException from label05 to label06 with label22;
+        catch java.lang.NumberFormatException from label08 to label09 with label23;
+        catch java.lang.IllegalArgumentException from label08 to label09 with label22;
+        catch java.lang.NumberFormatException from label10 to label11 with label23;
+        catch java.lang.IllegalArgumentException from label10 to label11 with label22;
+        catch java.lang.NumberFormatException from label13 to label14 with label23;
+        catch java.lang.IllegalArgumentException from label13 to label14 with label22;
+        catch java.lang.NumberFormatException from label16 to label17 with label23;
+        catch java.lang.IllegalArgumentException from label16 to label17 with label22;
+        catch java.lang.NumberFormatException from label18 to label19 with label23;
+        catch java.lang.IllegalArgumentException from label18 to label19 with label22;
+        catch java.lang.NumberFormatException from label20 to label21 with label23;
+        catch java.lang.IllegalArgumentException from label20 to label21 with label22;
+    }
+
+    public void readMetadata(com.android.server.backup.FileMetadata) throws java.io.IOException
+    {
+        com.android.server.backup.utils.TarBackupReader r0;
+        long $l0, $l2, $l3, $l5, $l8, $l9, $l11, $l13, $l18;
+        byte $b1, $b10;
+        java.lang.StringBuilder $r1, $r10, $r19, $r32, $r40;
+        java.io.IOException $r4, $r7, $r38;
+        java.lang.String $r5, $r9, $r13, $r14, $r18, $r21, $r25, $r26, $r34, $r39, $r42, $r45, $r47, r51;
+        int $i4, $i6, $i7, $i15, $i16, $i17, i22, i23, i24, i25, i26;
+        java.io.InputStream $r6;
+        com.android.server.backup.utils.BytesReadListener $r8;
+        android.os.Bundle $r15, $r27, r58, r60;
+        android.app.backup.IBackupManagerMonitor $r16, $r17, $r28, $r29;
+        boolean $z0;
+        java.io.ByteArrayInputStream $r30;
+        java.io.DataInputStream $r31;
+        com.android.server.backup.FileMetadata r48;
+        byte[] r49, r55;
+        java.lang.String[] r50;
+
+        r0 := @this: com.android.server.backup.utils.TarBackupReader;
+
+        r48 := @parameter0: com.android.server.backup.FileMetadata;
+
+        $l0 = r48.<com.android.server.backup.FileMetadata: long size>;
+
+        $b1 = $l0 cmp 65536L;
+
+        if $b1 > 0 goto label11;
+
+        $l3 = r48.<com.android.server.backup.FileMetadata: long size>;
+
+        $i4 = (int) $l3;
+
+        r49 = newarray (byte)[$i4];
+
+        $r6 = r0.<com.android.server.backup.utils.TarBackupReader: java.io.InputStream mInputStream>;
+
+        $l5 = r48.<com.android.server.backup.FileMetadata: long size>;
+
+        $i6 = (int) $l5;
+
+        $i7 = staticinvoke <com.android.server.backup.utils.TarBackupReader: int readExactly(java.io.InputStream,byte[],int,int)>($r6, r49, 0, $i6);
+
+        $l9 = (long) $i7;
+
+        $l8 = r48.<com.android.server.backup.FileMetadata: long size>;
+
+        $b10 = $l9 cmp $l8;
+
+        if $b10 != 0 goto label10;
+
+        $r8 = r0.<com.android.server.backup.utils.TarBackupReader: com.android.server.backup.utils.BytesReadListener mBytesReadListener>;
+
+        $l11 = r48.<com.android.server.backup.FileMetadata: long size>;
+
+        interfaceinvoke $r8.<com.android.server.backup.utils.BytesReadListener: void onBytesRead(long)>($l11);
+
+        r50 = newarray (java.lang.String)[1];
+
+        i22 = staticinvoke <com.android.server.backup.utils.TarBackupReader: int extractLine(byte[],int,java.lang.String[])>(r49, 0, r50);
+
+        $r9 = r50[0];
+
+        i23 = staticinvoke <java.lang.Integer: int parseInt(java.lang.String)>($r9);
+
+        if i23 != 1 goto label08;
+
+        i24 = staticinvoke <com.android.server.backup.utils.TarBackupReader: int extractLine(byte[],int,java.lang.String[])>(r49, i22, r50);
+
+        r51 = r50[0];
+
+        $r18 = r48.<com.android.server.backup.FileMetadata: java.lang.String packageName>;
+
+        $z0 = virtualinvoke $r18.<java.lang.String: boolean equals(java.lang.Object)>(r51);
+
+        if $z0 == 0 goto label06;
+
+        $r30 = new java.io.ByteArrayInputStream;
+
+        $i15 = lengthof r49;
+
+        $i16 = $i15 - i24;
+
+        specialinvoke $r30.<java.io.ByteArrayInputStream: void <init>(byte[],int,int)>(r49, i24, $i16);
+
+        $r31 = new java.io.DataInputStream;
+
+        specialinvoke $r31.<java.io.DataInputStream: void <init>(java.io.InputStream)>($r30);
+
+     label01:
+        $i17 = virtualinvoke $r30.<java.io.ByteArrayInputStream: int available()>();
+
+        if $i17 <= 0 goto label05;
+
+        i25 = virtualinvoke $r31.<java.io.DataInputStream: int readInt()>();
+
+        i26 = virtualinvoke $r31.<java.io.DataInputStream: int readInt()>();
+
+        if i26 > 65536 goto label04;
+
+        if i25 == 33549569 goto label02;
+
+        $r40 = new java.lang.StringBuilder;
+
+        specialinvoke $r40.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r40.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Ignoring metadata blob ");
+
+        $r42 = staticinvoke <java.lang.Integer: java.lang.String toHexString(int)>(i25);
+
+        virtualinvoke $r40.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r42);
+
+        virtualinvoke $r40.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" for ");
+
+        $r45 = r48.<com.android.server.backup.FileMetadata: java.lang.String packageName>;
+
+        virtualinvoke $r40.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r45);
+
+        $r47 = virtualinvoke $r40.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("BackupManagerService", $r47);
+
+        virtualinvoke $r31.<java.io.DataInputStream: int skipBytes(int)>(i26);
+
+        goto label03;
+
+     label02:
+        r55 = newarray (byte)[i26];
+
+        r0.<com.android.server.backup.utils.TarBackupReader: byte[] mWidgetData> = r55;
+
+        virtualinvoke $r31.<java.io.DataInputStream: int read(byte[])>(r55);
+
+     label03:
+        goto label01;
+
+     label04:
+        $r32 = new java.lang.StringBuilder;
+
+        specialinvoke $r32.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r32.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Datum ");
+
+        $r34 = staticinvoke <java.lang.Integer: java.lang.String toHexString(int)>(i25);
+
+        virtualinvoke $r32.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r34);
+
+        virtualinvoke $r32.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" too big; corrupt? size=");
+
+        $l18 = r48.<com.android.server.backup.FileMetadata: long size>;
+
+        virtualinvoke $r32.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l18);
+
+        $r38 = new java.io.IOException;
+
+        $r39 = virtualinvoke $r32.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r38.<java.io.IOException: void <init>(java.lang.String)>($r39);
+
+        throw $r38;
+
+     label05:
+        goto label07;
+
+     label06:
+        $r19 = new java.lang.StringBuilder;
+
+        specialinvoke $r19.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Metadata mismatch: package ");
+
+        $r21 = r48.<com.android.server.backup.FileMetadata: java.lang.String packageName>;
+
+        virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r21);
+
+        virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" but widget data for ");
+
+        virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r51);
+
+        $r25 = virtualinvoke $r19.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("BackupManagerService", $r25);
+
+        $r26 = r48.<com.android.server.backup.FileMetadata: java.lang.String packageName>;
+
+        $r27 = staticinvoke <com.android.server.backup.utils.BackupManagerMonitorUtils: android.os.Bundle putMonitoringExtra(android.os.Bundle,java.lang.String,java.lang.String)>(null, "android.app.backup.extra.LOG_EVENT_PACKAGE_NAME", $r26);
+
+        r58 = staticinvoke <com.android.server.backup.utils.BackupManagerMonitorUtils: android.os.Bundle putMonitoringExtra(android.os.Bundle,java.lang.String,java.lang.String)>($r27, "android.app.backup.extra.LOG_WIDGET_PACKAGE_NAME", r51);
+
+        $r28 = r0.<com.android.server.backup.utils.TarBackupReader: android.app.backup.IBackupManagerMonitor mMonitor>;
+
+        $r29 = staticinvoke <com.android.server.backup.utils.BackupManagerMonitorUtils: android.app.backup.IBackupManagerMonitor monitorEvent(android.app.backup.IBackupManagerMonitor,int,android.content.pm.PackageInfo,int,android.os.Bundle)>($r28, 47, null, 3, r58);
+
+        r0.<com.android.server.backup.utils.TarBackupReader: android.app.backup.IBackupManagerMonitor mMonitor> = $r29;
+
+     label07:
+        goto label09;
+
+     label08:
+        $r10 = new java.lang.StringBuilder;
+
+        specialinvoke $r10.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Unsupported metadata version ");
+
+        virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i23);
+
+        $r13 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("BackupManagerService", $r13);
+
+        $r14 = r48.<com.android.server.backup.FileMetadata: java.lang.String packageName>;
+
+        $r15 = staticinvoke <com.android.server.backup.utils.BackupManagerMonitorUtils: android.os.Bundle putMonitoringExtra(android.os.Bundle,java.lang.String,java.lang.String)>(null, "android.app.backup.extra.LOG_EVENT_PACKAGE_NAME", $r14);
+
+        $l13 = (long) i23;
+
+        r60 = staticinvoke <com.android.server.backup.utils.BackupManagerMonitorUtils: android.os.Bundle putMonitoringExtra(android.os.Bundle,java.lang.String,long)>($r15, "android.app.backup.extra.LOG_EVENT_PACKAGE_VERSION", $l13);
+
+        $r16 = r0.<com.android.server.backup.utils.TarBackupReader: android.app.backup.IBackupManagerMonitor mMonitor>;
+
+        $r17 = staticinvoke <com.android.server.backup.utils.BackupManagerMonitorUtils: android.app.backup.IBackupManagerMonitor monitorEvent(android.app.backup.IBackupManagerMonitor,int,android.content.pm.PackageInfo,int,android.os.Bundle)>($r16, 48, null, 3, r60);
+
+        r0.<com.android.server.backup.utils.TarBackupReader: android.app.backup.IBackupManagerMonitor mMonitor> = $r17;
+
+     label09:
+        return;
+
+     label10:
+        $r7 = new java.io.IOException;
+
+        specialinvoke $r7.<java.io.IOException: void <init>(java.lang.String)>("Unexpected EOF in widget data");
+
+        throw $r7;
+
+     label11:
+        $r1 = new java.lang.StringBuilder;
+
+        specialinvoke $r1.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Metadata too big; corrupt? size=");
+
+        $l2 = r48.<com.android.server.backup.FileMetadata: long size>;
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l2);
+
+        $r4 = new java.io.IOException;
+
+        $r5 = virtualinvoke $r1.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r4.<java.io.IOException: void <init>(java.lang.String)>($r5);
+
+        throw $r4;
+    }
+
+    public com.android.server.backup.FileMetadata readTarHeaders() throws java.io.IOException
+    {
+        com.android.server.backup.utils.TarBackupReader r0;
+        byte b0, $b13, b17;
+        boolean z0, $z1, $z2, $z3, $z4, z5, $z6;
+        long $l1, $l2, $l3, $l12;
+        java.lang.String $r1, $r2, $r3, $r4, $r5, $r6, $r7, $r8, $r10, $r12, $r13, $r14, $r15, $r16, $r17, $r18, $r19, $r21, $r23, $r24, $r25, $r26, $r27, $r28, $r29, $r30, $r32, $r34, $r37, $r40, $r41, $r42, $r45, $r46, $r49, $r53, $r55, r58, $r65, $r66, $r67;
+        int $i4, $i5, $i6, $i7, $i8, $i9, $i15, $i18, i19, i20;
+        java.lang.Throwable $r50;
+        byte[] r56;
+        com.android.server.backup.FileMetadata r57, r75;
+        java.lang.StringBuilder r76, r77, r79, r80, r82, r83, r85, r87;
+        java.io.IOException r78, r81, r84, r86, r88;
+
+        r0 := @this: com.android.server.backup.utils.TarBackupReader;
+
+        r56 = newarray (byte)[512];
+
+        r57 = null;
+
+        $z1 = specialinvoke r0.<com.android.server.backup.utils.TarBackupReader: boolean readTarHeader(byte[])>(r56);
+
+        if $z1 == 0 goto label28;
+
+     label01:
+        r75 = new com.android.server.backup.FileMetadata;
+
+        r57 = r75;
+
+        specialinvoke r75.<com.android.server.backup.FileMetadata: void <init>()>();
+
+     label02:
+        $l1 = staticinvoke <com.android.server.backup.utils.TarBackupReader: long extractRadix(byte[],int,int,int)>(r56, 124, 12, 8);
+
+        r75.<com.android.server.backup.FileMetadata: long size> = $l1;
+
+        $l2 = staticinvoke <com.android.server.backup.utils.TarBackupReader: long extractRadix(byte[],int,int,int)>(r56, 136, 12, 8);
+
+        r75.<com.android.server.backup.FileMetadata: long mtime> = $l2;
+
+        $l3 = staticinvoke <com.android.server.backup.utils.TarBackupReader: long extractRadix(byte[],int,int,int)>(r56, 100, 8, 8);
+
+        r75.<com.android.server.backup.FileMetadata: long mode> = $l3;
+
+        $r1 = staticinvoke <com.android.server.backup.utils.TarBackupReader: java.lang.String extractString(byte[],int,int)>(r56, 345, 155);
+
+        r75.<com.android.server.backup.FileMetadata: java.lang.String path> = $r1;
+
+        r58 = staticinvoke <com.android.server.backup.utils.TarBackupReader: java.lang.String extractString(byte[],int,int)>(r56, 0, 100);
+
+        $i4 = virtualinvoke r58.<java.lang.String: int length()>();
+
+        if $i4 <= 0 goto label04;
+
+        $r41 = r75.<com.android.server.backup.FileMetadata: java.lang.String path>;
+
+        $i15 = virtualinvoke $r41.<java.lang.String: int length()>();
+
+        if $i15 <= 0 goto label03;
+
+        r76 = new java.lang.StringBuilder;
+
+        specialinvoke r76.<java.lang.StringBuilder: void <init>()>();
+
+        $r46 = r75.<com.android.server.backup.FileMetadata: java.lang.String path>;
+
+        virtualinvoke r76.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r46);
+
+        virtualinvoke r76.<java.lang.StringBuilder: java.lang.StringBuilder append(char)>(47);
+
+        $r49 = virtualinvoke r76.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        r75.<com.android.server.backup.FileMetadata: java.lang.String path> = $r49;
+
+     label03:
+        r77 = new java.lang.StringBuilder;
+
+        specialinvoke r77.<java.lang.StringBuilder: void <init>()>();
+
+        $r42 = r75.<com.android.server.backup.FileMetadata: java.lang.String path>;
+
+        virtualinvoke r77.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r42);
+
+        virtualinvoke r77.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r58);
+
+        $r45 = virtualinvoke r77.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        r75.<com.android.server.backup.FileMetadata: java.lang.String path> = $r45;
+
+     label04:
+        b0 = r56[156];
+
+        b17 = b0;
+
+        if b0 != 120 goto label10;
+
+     label05:
+        z0 = specialinvoke r0.<com.android.server.backup.utils.TarBackupReader: boolean readPaxExtendedHeader(com.android.server.backup.FileMetadata)>(r75);
+
+     label06:
+        z5 = z0;
+
+        if z0 == 0 goto label08;
+
+     label07:
+        z5 = specialinvoke r0.<com.android.server.backup.utils.TarBackupReader: boolean readTarHeader(byte[])>(r56);
+
+     label08:
+        if z5 == 0 goto label09;
+
+        b17 = r56[156];
+
+        goto label10;
+
+     label09:
+        r78 = new java.io.IOException;
+
+        specialinvoke r78.<java.io.IOException: void <init>(java.lang.String)>("Bad or missing pax header");
+
+        throw r78;
+
+     label10:
+        if b17 == 0 goto label26;
+
+        if b17 == 48 goto label14;
+
+        if b17 != 53 goto label13;
+
+     label11:
+        r75.<com.android.server.backup.FileMetadata: int type> = 2;
+
+        $l12 = r75.<com.android.server.backup.FileMetadata: long size>;
+
+        $b13 = $l12 cmp 0L;
+
+        if $b13 == 0 goto label15;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("BackupManagerService", "Directory entry with nonzero size in header");
+
+        r75.<com.android.server.backup.FileMetadata: long size> = 0L;
+
+     label12:
+        goto label15;
+
+     label13:
+        r79 = new java.lang.StringBuilder;
+
+        specialinvoke r79.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r79.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Unknown tar entity type: ");
+
+        virtualinvoke r79.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(b17);
+
+        $r37 = virtualinvoke r79.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("BackupManagerService", $r37);
+
+        r81 = new java.io.IOException;
+
+        r80 = new java.lang.StringBuilder;
+
+        specialinvoke r80.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r80.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Unknown entity type ");
+
+        virtualinvoke r80.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(b17);
+
+        $r40 = virtualinvoke r80.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r81.<java.io.IOException: void <init>(java.lang.String)>($r40);
+
+        throw r81;
+
+     label14:
+        r75.<com.android.server.backup.FileMetadata: int type> = 1;
+
+     label15:
+        $r65 = "shared/";
+
+        $r66 = r75.<com.android.server.backup.FileMetadata: java.lang.String path>;
+
+        $r67 = "shared/";
+
+        $i18 = virtualinvoke $r67.<java.lang.String: int length()>();
+
+        $z6 = virtualinvoke $r65.<java.lang.String: boolean regionMatches(int,java.lang.String,int,int)>(0, $r66, 0, $i18);
+
+        if $z6 == 0 goto label17;
+
+        $r29 = r75.<com.android.server.backup.FileMetadata: java.lang.String path>;
+
+        $r28 = "shared/";
+
+        $i9 = virtualinvoke $r28.<java.lang.String: int length()>();
+
+        $r30 = virtualinvoke $r29.<java.lang.String: java.lang.String substring(int)>($i9);
+
+        r75.<com.android.server.backup.FileMetadata: java.lang.String path> = $r30;
+
+        r75.<com.android.server.backup.FileMetadata: java.lang.String packageName> = "com.android.sharedstoragebackup";
+
+        r75.<com.android.server.backup.FileMetadata: java.lang.String domain> = "shared";
+
+        r82 = new java.lang.StringBuilder;
+
+        specialinvoke r82.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r82.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("File in shared storage: ");
+
+        $r32 = r75.<com.android.server.backup.FileMetadata: java.lang.String path>;
+
+        virtualinvoke r82.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r32);
+
+        $r34 = virtualinvoke r82.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("BackupManagerService", $r34);
+
+     label16:
+        goto label25;
+
+     label17:
+        $r3 = "apps/";
+
+        $r4 = r75.<com.android.server.backup.FileMetadata: java.lang.String path>;
+
+        $r2 = "apps/";
+
+        $i5 = virtualinvoke $r2.<java.lang.String: int length()>();
+
+        $z2 = virtualinvoke $r3.<java.lang.String: boolean regionMatches(int,java.lang.String,int,int)>(0, $r4, 0, $i5);
+
+        if $z2 == 0 goto label25;
+
+        $r6 = r75.<com.android.server.backup.FileMetadata: java.lang.String path>;
+
+        $r5 = "apps/";
+
+        $i6 = virtualinvoke $r5.<java.lang.String: int length()>();
+
+        $r7 = virtualinvoke $r6.<java.lang.String: java.lang.String substring(int)>($i6);
+
+        r75.<com.android.server.backup.FileMetadata: java.lang.String path> = $r7;
+
+        $r8 = r75.<com.android.server.backup.FileMetadata: java.lang.String path>;
+
+        i19 = virtualinvoke $r8.<java.lang.String: int indexOf(int)>(47);
+
+     label18:
+        if i19 < 0 goto label24;
+
+     label19:
+        $r13 = r75.<com.android.server.backup.FileMetadata: java.lang.String path>;
+
+        $r14 = virtualinvoke $r13.<java.lang.String: java.lang.String substring(int,int)>(0, i19);
+
+        r75.<com.android.server.backup.FileMetadata: java.lang.String packageName> = $r14;
+
+        $r15 = r75.<com.android.server.backup.FileMetadata: java.lang.String path>;
+
+        $i7 = i19 + 1;
+
+        $r16 = virtualinvoke $r15.<java.lang.String: java.lang.String substring(int)>($i7);
+
+        r75.<com.android.server.backup.FileMetadata: java.lang.String path> = $r16;
+
+        $r17 = r75.<com.android.server.backup.FileMetadata: java.lang.String path>;
+
+        $z3 = virtualinvoke $r17.<java.lang.String: boolean equals(java.lang.Object)>("_manifest");
+
+        if $z3 != 0 goto label25;
+
+        $r18 = r75.<com.android.server.backup.FileMetadata: java.lang.String path>;
+
+        $z4 = virtualinvoke $r18.<java.lang.String: boolean equals(java.lang.Object)>("_meta");
+
+        if $z4 != 0 goto label25;
+
+        $r19 = r75.<com.android.server.backup.FileMetadata: java.lang.String path>;
+
+        i20 = virtualinvoke $r19.<java.lang.String: int indexOf(int)>(47);
+
+     label20:
+        if i20 < 0 goto label23;
+
+     label21:
+        $r24 = r75.<com.android.server.backup.FileMetadata: java.lang.String path>;
+
+        $r25 = virtualinvoke $r24.<java.lang.String: java.lang.String substring(int,int)>(0, i20);
+
+        r75.<com.android.server.backup.FileMetadata: java.lang.String domain> = $r25;
+
+        $r26 = r75.<com.android.server.backup.FileMetadata: java.lang.String path>;
+
+        $i8 = i20 + 1;
+
+        $r27 = virtualinvoke $r26.<java.lang.String: java.lang.String substring(int)>($i8);
+
+        r75.<com.android.server.backup.FileMetadata: java.lang.String path> = $r27;
+
+     label22:
+        goto label25;
+
+     label23:
+        r84 = new java.io.IOException;
+
+        r83 = new java.lang.StringBuilder;
+
+        specialinvoke r83.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r83.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Illegal semantic path in non-manifest ");
+
+        $r21 = r75.<com.android.server.backup.FileMetadata: java.lang.String path>;
+
+        virtualinvoke r83.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r21);
+
+        $r23 = virtualinvoke r83.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r84.<java.io.IOException: void <init>(java.lang.String)>($r23);
+
+        throw r84;
+
+     label24:
+        r86 = new java.io.IOException;
+
+        r85 = new java.lang.StringBuilder;
+
+        specialinvoke r85.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r85.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Illegal semantic path in ");
+
+        $r10 = r75.<com.android.server.backup.FileMetadata: java.lang.String path>;
+
+        virtualinvoke r85.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r10);
+
+        $r12 = virtualinvoke r85.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r86.<java.io.IOException: void <init>(java.lang.String)>($r12);
+
+        throw r86;
+
+     label25:
+        goto label28;
+
+     label26:
+        return null;
+
+     label27:
+        $r50 := @caughtexception;
+
+        r87 = new java.lang.StringBuilder;
+
+        specialinvoke r87.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r87.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Parse error in header: ");
+
+        r88 = (java.io.IOException) $r50;
+
+        $r53 = virtualinvoke r88.<java.io.IOException: java.lang.String getMessage()>();
+
+        virtualinvoke r87.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r53);
+
+        $r55 = virtualinvoke r87.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("BackupManagerService", $r55);
+
+        throw $r50;
+
+     label28:
+        return r57;
+
+        catch java.io.IOException from label01 to label02 with label27;
+        catch java.io.IOException from label02 to label03 with label27;
+        catch java.io.IOException from label03 to label04 with label27;
+        catch java.io.IOException from label05 to label06 with label27;
+        catch java.io.IOException from label07 to label08 with label27;
+        catch java.io.IOException from label09 to label10 with label27;
+        catch java.io.IOException from label11 to label12 with label27;
+        catch java.io.IOException from label13 to label14 with label27;
+        catch java.io.IOException from label14 to label15 with label27;
+        catch java.io.IOException from label15 to label16 with label27;
+        catch java.io.IOException from label17 to label18 with label27;
+        catch java.io.IOException from label19 to label20 with label27;
+        catch java.io.IOException from label21 to label22 with label27;
+        catch java.io.IOException from label23 to label24 with label27;
+        catch java.io.IOException from label24 to label25 with label27;
+    }
+
+    public void skipTarPadding(long) throws java.io.IOException
+    {
+        com.android.server.backup.utils.TarBackupReader r0;
+        int i0, $i3, $i4;
+        byte[] r1;
+        long $l1, $l5, l6, l7;
+        byte $b2;
+        java.io.InputStream $r2;
+        java.io.IOException $r3;
+        com.android.server.backup.utils.BytesReadListener $r4;
+
+        r0 := @this: com.android.server.backup.utils.TarBackupReader;
+
+        l6 := @parameter0: long;
+
+        $l1 = l6 + 512L;
+
+        l7 = $l1 % 512L;
+
+        $b2 = l7 cmp 0L;
+
+        if $b2 <= 0 goto label2;
+
+        $i3 = (int) l7;
+
+        i0 = 512 - $i3;
+
+        r1 = newarray (byte)[i0];
+
+        $r2 = r0.<com.android.server.backup.utils.TarBackupReader: java.io.InputStream mInputStream>;
+
+        $i4 = staticinvoke <com.android.server.backup.utils.TarBackupReader: int readExactly(java.io.InputStream,byte[],int,int)>($r2, r1, 0, i0);
+
+        if $i4 != i0 goto label1;
+
+        $r4 = r0.<com.android.server.backup.utils.TarBackupReader: com.android.server.backup.utils.BytesReadListener mBytesReadListener>;
+
+        $l5 = (long) i0;
+
+        interfaceinvoke $r4.<com.android.server.backup.utils.BytesReadListener: void onBytesRead(long)>($l5);
+
+        goto label2;
+
+     label1:
+        $r3 = new java.io.IOException;
+
+        specialinvoke $r3.<java.io.IOException: void <init>(java.lang.String)>("Unexpected EOF in padding");
+
+        throw $r3;
+
+     label2:
+        return;
+    }
+
+    public static void <clinit>()
+    {
+        <com.android.server.backup.utils.TarBackupReader: int TAR_HEADER_OFFSET_TYPE_CHAR> = 156;
+
+        <com.android.server.backup.utils.TarBackupReader: int TAR_HEADER_OFFSET_PATH_PREFIX> = 345;
+
+        <com.android.server.backup.utils.TarBackupReader: int TAR_HEADER_OFFSET_PATH> = 0;
+
+        <com.android.server.backup.utils.TarBackupReader: int TAR_HEADER_OFFSET_MODTIME> = 136;
+
+        <com.android.server.backup.utils.TarBackupReader: int TAR_HEADER_OFFSET_MODE> = 100;
+
+        <com.android.server.backup.utils.TarBackupReader: int TAR_HEADER_OFFSET_FILESIZE> = 124;
+
+        <com.android.server.backup.utils.TarBackupReader: int TAR_HEADER_LONG_RADIX> = 8;
+
+        <com.android.server.backup.utils.TarBackupReader: int TAR_HEADER_LENGTH_PATH_PREFIX> = 155;
+
+        <com.android.server.backup.utils.TarBackupReader: int TAR_HEADER_LENGTH_PATH> = 100;
+
+        <com.android.server.backup.utils.TarBackupReader: int TAR_HEADER_LENGTH_MODTIME> = 12;
+
+        <com.android.server.backup.utils.TarBackupReader: int TAR_HEADER_LENGTH_MODE> = 8;
+
+        <com.android.server.backup.utils.TarBackupReader: int TAR_HEADER_LENGTH_FILESIZE> = 12;
+
+        return;
+    }
+}

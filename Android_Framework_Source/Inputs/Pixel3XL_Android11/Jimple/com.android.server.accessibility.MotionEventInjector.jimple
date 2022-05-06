@@ -1,0 +1,1743 @@
+public class com.android.server.accessibility.MotionEventInjector extends com.android.server.accessibility.BaseEventStreamTransformation implements android.os.Handler$Callback
+{
+    private static final int EVENT_BUTTON_STATE;
+    private static final int EVENT_DEVICE_ID;
+    private static final int EVENT_EDGE_FLAGS;
+    private static final int EVENT_FLAGS;
+    private static final int EVENT_META_STATE;
+    private static final int EVENT_SOURCE;
+    private static final float EVENT_X_PRECISION;
+    private static final float EVENT_Y_PRECISION;
+    private static final java.lang.String LOG_TAG;
+    private static final int MESSAGE_INJECT_EVENTS;
+    private static final int MESSAGE_SEND_MOTION_EVENT;
+    private static android.view.MotionEvent$PointerCoords[] sPointerCoords;
+    private static android.view.MotionEvent$PointerProperties[] sPointerProps;
+    private long mDownTime;
+    private final android.os.Handler mHandler;
+    private boolean mIsDestroyed;
+    private long mLastScheduledEventTime;
+    private android.accessibilityservice.GestureDescription$TouchPoint[] mLastTouchPoints;
+    private int mNumLastTouchPoints;
+    private final android.util.SparseArray mOpenGesturesInProgress;
+    private android.util.IntArray mSequencesInProgress;
+    private android.accessibilityservice.IAccessibilityServiceClient mServiceInterfaceForCurrentGesture;
+    private android.util.SparseIntArray mStrokeIdToPointerId;
+
+    public void <init>(android.os.Handler)
+    {
+        com.android.server.accessibility.MotionEventInjector r0;
+        android.os.Handler r1;
+        android.util.SparseArray $r2;
+        android.util.IntArray $r3;
+        android.util.SparseIntArray $r4;
+
+        r0 := @this: com.android.server.accessibility.MotionEventInjector;
+
+        r1 := @parameter0: android.os.Handler;
+
+        specialinvoke r0.<com.android.server.accessibility.BaseEventStreamTransformation: void <init>()>();
+
+        $r2 = new android.util.SparseArray;
+
+        specialinvoke $r2.<android.util.SparseArray: void <init>()>();
+
+        r0.<com.android.server.accessibility.MotionEventInjector: android.util.SparseArray mOpenGesturesInProgress> = $r2;
+
+        $r3 = new android.util.IntArray;
+
+        specialinvoke $r3.<android.util.IntArray: void <init>(int)>(5);
+
+        r0.<com.android.server.accessibility.MotionEventInjector: android.util.IntArray mSequencesInProgress> = $r3;
+
+        r0.<com.android.server.accessibility.MotionEventInjector: boolean mIsDestroyed> = 0;
+
+        $r4 = new android.util.SparseIntArray;
+
+        specialinvoke $r4.<android.util.SparseIntArray: void <init>(int)>(5);
+
+        r0.<com.android.server.accessibility.MotionEventInjector: android.util.SparseIntArray mStrokeIdToPointerId> = $r4;
+
+        r0.<com.android.server.accessibility.MotionEventInjector: android.os.Handler mHandler> = r1;
+
+        return;
+    }
+
+    public void <init>(android.os.Looper)
+    {
+        com.android.server.accessibility.MotionEventInjector r0;
+        android.os.Looper r1;
+        android.util.SparseArray $r2;
+        android.util.IntArray $r3;
+        android.util.SparseIntArray $r4;
+        android.os.Handler $r5;
+
+        r0 := @this: com.android.server.accessibility.MotionEventInjector;
+
+        r1 := @parameter0: android.os.Looper;
+
+        specialinvoke r0.<com.android.server.accessibility.BaseEventStreamTransformation: void <init>()>();
+
+        $r2 = new android.util.SparseArray;
+
+        specialinvoke $r2.<android.util.SparseArray: void <init>()>();
+
+        r0.<com.android.server.accessibility.MotionEventInjector: android.util.SparseArray mOpenGesturesInProgress> = $r2;
+
+        $r3 = new android.util.IntArray;
+
+        specialinvoke $r3.<android.util.IntArray: void <init>(int)>(5);
+
+        r0.<com.android.server.accessibility.MotionEventInjector: android.util.IntArray mSequencesInProgress> = $r3;
+
+        r0.<com.android.server.accessibility.MotionEventInjector: boolean mIsDestroyed> = 0;
+
+        $r4 = new android.util.SparseIntArray;
+
+        specialinvoke $r4.<android.util.SparseIntArray: void <init>(int)>(5);
+
+        r0.<com.android.server.accessibility.MotionEventInjector: android.util.SparseIntArray mStrokeIdToPointerId> = $r4;
+
+        $r5 = new android.os.Handler;
+
+        specialinvoke $r5.<android.os.Handler: void <init>(android.os.Looper,android.os.Handler$Callback)>(r1, r0);
+
+        r0.<com.android.server.accessibility.MotionEventInjector: android.os.Handler mHandler> = $r5;
+
+        return;
+    }
+
+    private void appendDownEvents(java.util.List, android.accessibilityservice.GestureDescription$TouchPoint[], int, long)
+    {
+        com.android.server.accessibility.MotionEventInjector r0;
+        java.util.List r1;
+        android.accessibilityservice.GestureDescription$TouchPoint[] r2, r3;
+        int i0, $i2, $i3, $i4, $i5, $i6, i8, i9;
+        long l1, $l7;
+        android.accessibilityservice.GestureDescription$TouchPoint $r4, $r5, $r6;
+        boolean $z0;
+        android.view.MotionEvent $r7;
+        byte b10;
+
+        r0 := @this: com.android.server.accessibility.MotionEventInjector;
+
+        r1 := @parameter0: java.util.List;
+
+        r2 := @parameter1: android.accessibilityservice.GestureDescription$TouchPoint[];
+
+        i0 := @parameter2: int;
+
+        l1 := @parameter3: long;
+
+        r3 = specialinvoke r0.<com.android.server.accessibility.MotionEventInjector: android.accessibilityservice.GestureDescription$TouchPoint[] getLastTouchPoints()>();
+
+        i8 = 0;
+
+     label1:
+        if i8 >= i0 goto label6;
+
+        $r4 = r2[i8];
+
+        $z0 = $r4.<android.accessibilityservice.GestureDescription$TouchPoint: boolean mIsStartOfPath>;
+
+        if $z0 == 0 goto label5;
+
+        i9 = r0.<com.android.server.accessibility.MotionEventInjector: int mNumLastTouchPoints>;
+
+        $i2 = i9 + 1;
+
+        r0.<com.android.server.accessibility.MotionEventInjector: int mNumLastTouchPoints> = $i2;
+
+        $r6 = r3[i9];
+
+        $r5 = r2[i8];
+
+        virtualinvoke $r6.<android.accessibilityservice.GestureDescription$TouchPoint: void copyFrom(android.accessibilityservice.GestureDescription$TouchPoint)>($r5);
+
+        $i3 = r0.<com.android.server.accessibility.MotionEventInjector: int mNumLastTouchPoints>;
+
+        if $i3 != 1 goto label2;
+
+        b10 = 0;
+
+        goto label3;
+
+     label2:
+        b10 = 5;
+
+     label3:
+        if b10 != 0 goto label4;
+
+        r0.<com.android.server.accessibility.MotionEventInjector: long mDownTime> = l1;
+
+        goto label4;
+
+     label4:
+        $l7 = r0.<com.android.server.accessibility.MotionEventInjector: long mDownTime>;
+
+        $i4 = i8 << 8;
+
+        $i6 = b10 | $i4;
+
+        $i5 = r0.<com.android.server.accessibility.MotionEventInjector: int mNumLastTouchPoints>;
+
+        $r7 = specialinvoke r0.<com.android.server.accessibility.MotionEventInjector: android.view.MotionEvent obtainMotionEvent(long,long,int,android.accessibilityservice.GestureDescription$TouchPoint[],int)>($l7, l1, $i6, r3, $i5);
+
+        interfaceinvoke r1.<java.util.List: boolean add(java.lang.Object)>($r7);
+
+        goto label5;
+
+     label5:
+        i8 = i8 + 1;
+
+        goto label1;
+
+     label6:
+        return;
+    }
+
+    private void appendMoveEventIfNeeded(java.util.List, android.accessibilityservice.GestureDescription$TouchPoint[], int, long)
+    {
+        com.android.server.accessibility.MotionEventInjector r0;
+        java.util.List r1;
+        android.accessibilityservice.GestureDescription$TouchPoint[] r2, r3;
+        int i0, i2, $i3, $i5, $i6, i9;
+        long l1, $l4;
+        android.view.MotionEvent $r4;
+        android.accessibilityservice.GestureDescription$TouchPoint $r5, $r6, $r7, $r8, $r9, $r10, $r11;
+        float $f0, $f1, $f2, $f3;
+        byte $b7, $b8;
+        boolean z1, z2, z3;
+
+        r0 := @this: com.android.server.accessibility.MotionEventInjector;
+
+        r1 := @parameter0: java.util.List;
+
+        r2 := @parameter1: android.accessibilityservice.GestureDescription$TouchPoint[];
+
+        i0 := @parameter2: int;
+
+        l1 := @parameter3: long;
+
+        z1 = 0;
+
+        r3 = specialinvoke r0.<com.android.server.accessibility.MotionEventInjector: android.accessibilityservice.GestureDescription$TouchPoint[] getLastTouchPoints()>();
+
+        i9 = 0;
+
+     label1:
+        if i9 >= i0 goto label6;
+
+        $i6 = r0.<com.android.server.accessibility.MotionEventInjector: int mNumLastTouchPoints>;
+
+        $r5 = r2[i9];
+
+        $i5 = $r5.<android.accessibilityservice.GestureDescription$TouchPoint: int mStrokeId>;
+
+        i2 = staticinvoke <com.android.server.accessibility.MotionEventInjector: int findPointByStrokeId(android.accessibilityservice.GestureDescription$TouchPoint[],int,int)>(r3, $i6, $i5);
+
+        z2 = z1;
+
+        if i2 < 0 goto label5;
+
+        $r6 = r3[i2];
+
+        $f1 = $r6.<android.accessibilityservice.GestureDescription$TouchPoint: float mX>;
+
+        $r7 = r2[i9];
+
+        $f0 = $r7.<android.accessibilityservice.GestureDescription$TouchPoint: float mX>;
+
+        $b7 = $f1 cmpl $f0;
+
+        if $b7 != 0 goto label3;
+
+        $r8 = r3[i2];
+
+        $f3 = $r8.<android.accessibilityservice.GestureDescription$TouchPoint: float mY>;
+
+        $r9 = r2[i9];
+
+        $f2 = $r9.<android.accessibilityservice.GestureDescription$TouchPoint: float mY>;
+
+        $b8 = $f3 cmpl $f2;
+
+        if $b8 == 0 goto label2;
+
+        goto label3;
+
+     label2:
+        z3 = 0;
+
+        goto label4;
+
+     label3:
+        z3 = 1;
+
+     label4:
+        z2 = z1 | z3;
+
+        $r10 = r3[i2];
+
+        $r11 = r2[i9];
+
+        virtualinvoke $r10.<android.accessibilityservice.GestureDescription$TouchPoint: void copyFrom(android.accessibilityservice.GestureDescription$TouchPoint)>($r11);
+
+     label5:
+        i9 = i9 + 1;
+
+        z1 = z2;
+
+        goto label1;
+
+     label6:
+        if z1 == 0 goto label7;
+
+        $l4 = r0.<com.android.server.accessibility.MotionEventInjector: long mDownTime>;
+
+        $i3 = r0.<com.android.server.accessibility.MotionEventInjector: int mNumLastTouchPoints>;
+
+        $r4 = specialinvoke r0.<com.android.server.accessibility.MotionEventInjector: android.view.MotionEvent obtainMotionEvent(long,long,int,android.accessibilityservice.GestureDescription$TouchPoint[],int)>($l4, l1, 2, r3, $i3);
+
+        interfaceinvoke r1.<java.util.List: boolean add(java.lang.Object)>($r4);
+
+     label7:
+        return;
+    }
+
+    private void appendUpEvents(java.util.List, android.accessibilityservice.GestureDescription$TouchPoint[], int, long)
+    {
+        com.android.server.accessibility.MotionEventInjector r0;
+        java.util.List r1;
+        android.accessibilityservice.GestureDescription$TouchPoint[] r2, r3, $r8;
+        int i0, i2, $i3, $i4, $i5, $i6, $i7, $i9, i10, i11, i13, i14, $i15, i16;
+        long l1, $l8;
+        android.accessibilityservice.GestureDescription$TouchPoint $r4, $r5, $r9, $r10;
+        boolean $z0;
+        android.view.MotionEvent $r6;
+        android.util.SparseIntArray $r7;
+        byte b12;
+
+        r0 := @this: com.android.server.accessibility.MotionEventInjector;
+
+        r1 := @parameter0: java.util.List;
+
+        r2 := @parameter1: android.accessibilityservice.GestureDescription$TouchPoint[];
+
+        i0 := @parameter2: int;
+
+        l1 := @parameter3: long;
+
+        r3 = specialinvoke r0.<com.android.server.accessibility.MotionEventInjector: android.accessibilityservice.GestureDescription$TouchPoint[] getLastTouchPoints()>();
+
+        i10 = 0;
+
+     label1:
+        if i10 >= i0 goto label8;
+
+        $r4 = r2[i10];
+
+        $z0 = $r4.<android.accessibilityservice.GestureDescription$TouchPoint: boolean mIsEndOfPath>;
+
+        if $z0 == 0 goto label7;
+
+        $i4 = r0.<com.android.server.accessibility.MotionEventInjector: int mNumLastTouchPoints>;
+
+        $r5 = r2[i10];
+
+        $i3 = $r5.<android.accessibilityservice.GestureDescription$TouchPoint: int mStrokeId>;
+
+        i11 = staticinvoke <com.android.server.accessibility.MotionEventInjector: int findPointByStrokeId(android.accessibilityservice.GestureDescription$TouchPoint[],int,int)>(r3, $i4, $i3);
+
+        if i11 >= 0 goto label2;
+
+        goto label7;
+
+     label2:
+        i2 = r0.<com.android.server.accessibility.MotionEventInjector: int mNumLastTouchPoints>;
+
+        b12 = 1;
+
+        if i2 != 1 goto label3;
+
+        goto label4;
+
+     label3:
+        b12 = 6;
+
+     label4:
+        $l8 = r0.<com.android.server.accessibility.MotionEventInjector: long mDownTime>;
+
+        $i5 = i11 << 8;
+
+        $i7 = b12 | $i5;
+
+        $i6 = r0.<com.android.server.accessibility.MotionEventInjector: int mNumLastTouchPoints>;
+
+        $r6 = specialinvoke r0.<com.android.server.accessibility.MotionEventInjector: android.view.MotionEvent obtainMotionEvent(long,long,int,android.accessibilityservice.GestureDescription$TouchPoint[],int)>($l8, l1, $i7, r3, $i6);
+
+        interfaceinvoke r1.<java.util.List: boolean add(java.lang.Object)>($r6);
+
+        i13 = i11;
+
+     label5:
+        i14 = r0.<com.android.server.accessibility.MotionEventInjector: int mNumLastTouchPoints>;
+
+        $i15 = i14 - 1;
+
+        if i13 >= $i15 goto label6;
+
+        $r10 = r3[i13];
+
+        $r8 = r0.<com.android.server.accessibility.MotionEventInjector: android.accessibilityservice.GestureDescription$TouchPoint[] mLastTouchPoints>;
+
+        $i9 = i13 + 1;
+
+        $r9 = $r8[$i9];
+
+        virtualinvoke $r10.<android.accessibilityservice.GestureDescription$TouchPoint: void copyFrom(android.accessibilityservice.GestureDescription$TouchPoint)>($r9);
+
+        i13 = i13 + 1;
+
+        goto label5;
+
+     label6:
+        i16 = i14 - 1;
+
+        r0.<com.android.server.accessibility.MotionEventInjector: int mNumLastTouchPoints> = i16;
+
+        if i16 != 0 goto label7;
+
+        $r7 = r0.<com.android.server.accessibility.MotionEventInjector: android.util.SparseIntArray mStrokeIdToPointerId>;
+
+        virtualinvoke $r7.<android.util.SparseIntArray: void clear()>();
+
+        goto label7;
+
+     label7:
+        i10 = i10 + 1;
+
+        goto label1;
+
+     label8:
+        return;
+    }
+
+    private void cancelAnyGestureInProgress(int)
+    {
+        com.android.server.accessibility.MotionEventInjector r0;
+        int i0;
+        long l1;
+        android.view.MotionEvent r1;
+        com.android.server.accessibility.EventStreamTransformation $r2;
+        android.util.SparseArray $r3, $r8;
+        java.lang.Boolean $r4, $r6, $r9;
+        java.lang.Object $r5;
+        boolean $z0;
+        android.accessibilityservice.GestureDescription$TouchPoint[] $r7;
+
+        r0 := @this: com.android.server.accessibility.MotionEventInjector;
+
+        i0 := @parameter0: int;
+
+        $r2 = virtualinvoke r0.<com.android.server.accessibility.MotionEventInjector: com.android.server.accessibility.EventStreamTransformation getNext()>();
+
+        if $r2 == null goto label1;
+
+        $r3 = r0.<com.android.server.accessibility.MotionEventInjector: android.util.SparseArray mOpenGesturesInProgress>;
+
+        $r4 = staticinvoke <java.lang.Boolean: java.lang.Boolean valueOf(boolean)>(0);
+
+        $r5 = virtualinvoke $r3.<android.util.SparseArray: java.lang.Object get(int,java.lang.Object)>(i0, $r4);
+
+        $r6 = (java.lang.Boolean) $r5;
+
+        $z0 = virtualinvoke $r6.<java.lang.Boolean: boolean booleanValue()>();
+
+        if $z0 == 0 goto label1;
+
+        l1 = staticinvoke <android.os.SystemClock: long uptimeMillis()>();
+
+        $r7 = specialinvoke r0.<com.android.server.accessibility.MotionEventInjector: android.accessibilityservice.GestureDescription$TouchPoint[] getLastTouchPoints()>();
+
+        r1 = specialinvoke r0.<com.android.server.accessibility.MotionEventInjector: android.view.MotionEvent obtainMotionEvent(long,long,int,android.accessibilityservice.GestureDescription$TouchPoint[],int)>(l1, l1, 3, $r7, 1);
+
+        specialinvoke r0.<com.android.server.accessibility.MotionEventInjector: void sendMotionEventToNext(android.view.MotionEvent,android.view.MotionEvent,int)>(r1, r1, 1073741824);
+
+        $r8 = r0.<com.android.server.accessibility.MotionEventInjector: android.util.SparseArray mOpenGesturesInProgress>;
+
+        $r9 = staticinvoke <java.lang.Boolean: java.lang.Boolean valueOf(boolean)>(0);
+
+        virtualinvoke $r8.<android.util.SparseArray: void put(int,java.lang.Object)>(i0, $r9);
+
+     label1:
+        return;
+    }
+
+    private void cancelAnyPendingInjectedEvents()
+    {
+        com.android.server.accessibility.MotionEventInjector r0;
+        android.os.Handler $r1, $r2;
+        boolean $z0;
+        int $i0, $i1, $i2, i3;
+        android.util.IntArray $r3, $r4, $r6;
+        android.accessibilityservice.IAccessibilityServiceClient $r5;
+        android.util.SparseIntArray $r7;
+
+        r0 := @this: com.android.server.accessibility.MotionEventInjector;
+
+        $r1 = r0.<com.android.server.accessibility.MotionEventInjector: android.os.Handler mHandler>;
+
+        $z0 = virtualinvoke $r1.<android.os.Handler: boolean hasMessages(int)>(1);
+
+        if $z0 == 0 goto label3;
+
+        $r2 = r0.<com.android.server.accessibility.MotionEventInjector: android.os.Handler mHandler>;
+
+        virtualinvoke $r2.<android.os.Handler: void removeMessages(int)>(1);
+
+        specialinvoke r0.<com.android.server.accessibility.MotionEventInjector: void cancelAnyGestureInProgress(int)>(4098);
+
+        $r3 = r0.<com.android.server.accessibility.MotionEventInjector: android.util.IntArray mSequencesInProgress>;
+
+        $i1 = virtualinvoke $r3.<android.util.IntArray: int size()>();
+
+        i3 = $i1 - 1;
+
+     label1:
+        if i3 < 0 goto label2;
+
+        $r5 = r0.<com.android.server.accessibility.MotionEventInjector: android.accessibilityservice.IAccessibilityServiceClient mServiceInterfaceForCurrentGesture>;
+
+        $r4 = r0.<com.android.server.accessibility.MotionEventInjector: android.util.IntArray mSequencesInProgress>;
+
+        $i2 = virtualinvoke $r4.<android.util.IntArray: int get(int)>(i3);
+
+        specialinvoke r0.<com.android.server.accessibility.MotionEventInjector: void notifyService(android.accessibilityservice.IAccessibilityServiceClient,int,boolean)>($r5, $i2, 0);
+
+        $r6 = r0.<com.android.server.accessibility.MotionEventInjector: android.util.IntArray mSequencesInProgress>;
+
+        virtualinvoke $r6.<android.util.IntArray: void remove(int)>(i3);
+
+        i3 = i3 + -1;
+
+        goto label1;
+
+     label2:
+        goto label4;
+
+     label3:
+        $i0 = r0.<com.android.server.accessibility.MotionEventInjector: int mNumLastTouchPoints>;
+
+        if $i0 == 0 goto label4;
+
+        specialinvoke r0.<com.android.server.accessibility.MotionEventInjector: void cancelAnyGestureInProgress(int)>(4098);
+
+     label4:
+        r0.<com.android.server.accessibility.MotionEventInjector: int mNumLastTouchPoints> = 0;
+
+        $r7 = r0.<com.android.server.accessibility.MotionEventInjector: android.util.SparseIntArray mStrokeIdToPointerId>;
+
+        virtualinvoke $r7.<android.util.SparseIntArray: void clear()>();
+
+        return;
+    }
+
+    private static int findPointByStrokeId(android.accessibilityservice.GestureDescription$TouchPoint[], int, int)
+    {
+        android.accessibilityservice.GestureDescription$TouchPoint[] r0;
+        int i0, i1, $i2, i3;
+        android.accessibilityservice.GestureDescription$TouchPoint $r1;
+
+        r0 := @parameter0: android.accessibilityservice.GestureDescription$TouchPoint[];
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        i3 = 0;
+
+     label1:
+        if i3 >= i0 goto label3;
+
+        $r1 = r0[i3];
+
+        $i2 = $r1.<android.accessibilityservice.GestureDescription$TouchPoint: int mStrokeId>;
+
+        if $i2 != i1 goto label2;
+
+        return i3;
+
+     label2:
+        i3 = i3 + 1;
+
+        goto label1;
+
+     label3:
+        return -1;
+    }
+
+    private android.accessibilityservice.GestureDescription$TouchPoint[] getLastTouchPoints()
+    {
+        com.android.server.accessibility.MotionEventInjector r0;
+        int i0, i1;
+        android.accessibilityservice.GestureDescription$TouchPoint[] $r1, $r2, $r3, $r5;
+        android.accessibilityservice.GestureDescription$TouchPoint $r4;
+
+        r0 := @this: com.android.server.accessibility.MotionEventInjector;
+
+        $r1 = r0.<com.android.server.accessibility.MotionEventInjector: android.accessibilityservice.GestureDescription$TouchPoint[] mLastTouchPoints>;
+
+        if $r1 != null goto label2;
+
+        i0 = staticinvoke <android.accessibilityservice.GestureDescription: int getMaxStrokeCount()>();
+
+        $r3 = newarray (android.accessibilityservice.GestureDescription$TouchPoint)[i0];
+
+        r0.<com.android.server.accessibility.MotionEventInjector: android.accessibilityservice.GestureDescription$TouchPoint[] mLastTouchPoints> = $r3;
+
+        i1 = 0;
+
+     label1:
+        if i1 >= i0 goto label2;
+
+        $r5 = r0.<com.android.server.accessibility.MotionEventInjector: android.accessibilityservice.GestureDescription$TouchPoint[] mLastTouchPoints>;
+
+        $r4 = new android.accessibilityservice.GestureDescription$TouchPoint;
+
+        specialinvoke $r4.<android.accessibilityservice.GestureDescription$TouchPoint: void <init>()>();
+
+        $r5[i1] = $r4;
+
+        i1 = i1 + 1;
+
+        goto label1;
+
+     label2:
+        $r2 = r0.<com.android.server.accessibility.MotionEventInjector: android.accessibilityservice.GestureDescription$TouchPoint[] mLastTouchPoints>;
+
+        return $r2;
+    }
+
+    private java.util.List getMotionEventsFromGestureSteps(java.util.List, long)
+    {
+        com.android.server.accessibility.MotionEventInjector r0;
+        java.util.List r1;
+        long l0, $l4, $l5, $l6, $l7, $l8, $l9;
+        android.accessibilityservice.GestureDescription$TouchPoint[] r3, $r7, $r8, $r9;
+        android.accessibilityservice.GestureDescription$GestureStep r4;
+        int i1, $i2, $i3, i10;
+        java.util.ArrayList $r5;
+        java.lang.Object $r6;
+
+        r0 := @this: com.android.server.accessibility.MotionEventInjector;
+
+        r1 := @parameter0: java.util.List;
+
+        l0 := @parameter1: long;
+
+        $r5 = new java.util.ArrayList;
+
+        specialinvoke $r5.<java.util.ArrayList: void <init>()>();
+
+        r3 = specialinvoke r0.<com.android.server.accessibility.MotionEventInjector: android.accessibilityservice.GestureDescription$TouchPoint[] getLastTouchPoints()>();
+
+        i10 = 0;
+
+     label1:
+        $i2 = interfaceinvoke r1.<java.util.List: int size()>();
+
+        if i10 >= $i2 goto label3;
+
+        $r6 = interfaceinvoke r1.<java.util.List: java.lang.Object get(int)>(i10);
+
+        r4 = (android.accessibilityservice.GestureDescription$GestureStep) $r6;
+
+        i1 = r4.<android.accessibilityservice.GestureDescription$GestureStep: int numTouchPoints>;
+
+        $i3 = lengthof r3;
+
+        if i1 <= $i3 goto label2;
+
+        r0.<com.android.server.accessibility.MotionEventInjector: int mNumLastTouchPoints> = 0;
+
+        interfaceinvoke $r5.<java.util.List: void clear()>();
+
+        return $r5;
+
+     label2:
+        $r7 = r4.<android.accessibilityservice.GestureDescription$GestureStep: android.accessibilityservice.GestureDescription$TouchPoint[] touchPoints>;
+
+        $l4 = r4.<android.accessibilityservice.GestureDescription$GestureStep: long timeSinceGestureStart>;
+
+        $l5 = l0 + $l4;
+
+        specialinvoke r0.<com.android.server.accessibility.MotionEventInjector: void appendMoveEventIfNeeded(java.util.List,android.accessibilityservice.GestureDescription$TouchPoint[],int,long)>($r5, $r7, i1, $l5);
+
+        $r8 = r4.<android.accessibilityservice.GestureDescription$GestureStep: android.accessibilityservice.GestureDescription$TouchPoint[] touchPoints>;
+
+        $l6 = r4.<android.accessibilityservice.GestureDescription$GestureStep: long timeSinceGestureStart>;
+
+        $l7 = l0 + $l6;
+
+        specialinvoke r0.<com.android.server.accessibility.MotionEventInjector: void appendUpEvents(java.util.List,android.accessibilityservice.GestureDescription$TouchPoint[],int,long)>($r5, $r8, i1, $l7);
+
+        $r9 = r4.<android.accessibilityservice.GestureDescription$GestureStep: android.accessibilityservice.GestureDescription$TouchPoint[] touchPoints>;
+
+        $l8 = r4.<android.accessibilityservice.GestureDescription$GestureStep: long timeSinceGestureStart>;
+
+        $l9 = l0 + $l8;
+
+        specialinvoke r0.<com.android.server.accessibility.MotionEventInjector: void appendDownEvents(java.util.List,android.accessibilityservice.GestureDescription$TouchPoint[],int,long)>($r5, $r9, i1, $l9);
+
+        i10 = i10 + 1;
+
+        goto label1;
+
+     label3:
+        return $r5;
+    }
+
+    private int getUnusedPointerId()
+    {
+        com.android.server.accessibility.MotionEventInjector r0;
+        int i0, $i1, i2;
+        android.util.SparseIntArray $r1;
+
+        r0 := @this: com.android.server.accessibility.MotionEventInjector;
+
+        i2 = 0;
+
+     label1:
+        $r1 = r0.<com.android.server.accessibility.MotionEventInjector: android.util.SparseIntArray mStrokeIdToPointerId>;
+
+        $i1 = virtualinvoke $r1.<android.util.SparseIntArray: int indexOfValue(int)>(i2);
+
+        if $i1 < 0 goto label2;
+
+        i0 = i2 + 1;
+
+        i2 = i0;
+
+        if i0 < 10 goto label1;
+
+        return 10;
+
+     label2:
+        return i2;
+    }
+
+    private void injectEventsMainThread(java.util.List, android.accessibilityservice.IAccessibilityServiceClient, int, int)
+    {
+        com.android.server.accessibility.MotionEventInjector r0;
+        int i0, $i2, $i3, $i4, $i5, i11, i13;
+        boolean z0, $z1, $z2, $z4;
+        long l1, $l6, $l7, $l8, $l9, l12;
+        java.util.List r1, r14;
+        com.android.server.accessibility.EventStreamTransformation $r2;
+        android.util.IntArray $r3, $r4;
+        java.lang.Object $r5;
+        android.os.Handler $r6, $r7;
+        android.accessibilityservice.IAccessibilityServiceClient $r8, r15;
+        android.os.RemoteException $r9;
+        java.lang.StringBuilder $r10;
+        java.lang.String $r13;
+        android.view.MotionEvent r20;
+        byte b14;
+        android.os.Message r21;
+
+        r0 := @this: com.android.server.accessibility.MotionEventInjector;
+
+        r14 := @parameter0: java.util.List;
+
+        r15 := @parameter1: android.accessibilityservice.IAccessibilityServiceClient;
+
+        i11 := @parameter2: int;
+
+        i0 := @parameter3: int;
+
+        $z1 = r0.<com.android.server.accessibility.MotionEventInjector: boolean mIsDestroyed>;
+
+        if $z1 == 0 goto label05;
+
+     label01:
+        interfaceinvoke r15.<android.accessibilityservice.IAccessibilityServiceClient: void onPerformGestureResult(int,boolean)>(i11, 0);
+
+     label02:
+        goto label04;
+
+     label03:
+        $r9 := @caughtexception;
+
+        $r10 = new java.lang.StringBuilder;
+
+        specialinvoke $r10.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Error sending status with mIsDestroyed to ");
+
+        virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r15);
+
+        $r13 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("MotionEventInjector", $r13, $r9);
+
+     label04:
+        return;
+
+     label05:
+        $r2 = virtualinvoke r0.<com.android.server.accessibility.MotionEventInjector: com.android.server.accessibility.EventStreamTransformation getNext()>();
+
+        if $r2 != null goto label06;
+
+        specialinvoke r0.<com.android.server.accessibility.MotionEventInjector: void notifyService(android.accessibilityservice.IAccessibilityServiceClient,int,boolean)>(r15, i11, 0);
+
+        return;
+
+     label06:
+        z0 = specialinvoke r0.<com.android.server.accessibility.MotionEventInjector: boolean newGestureTriesToContinueOldOne(java.util.List)>(r14);
+
+        if z0 == 0 goto label08;
+
+        $r8 = r0.<com.android.server.accessibility.MotionEventInjector: android.accessibilityservice.IAccessibilityServiceClient mServiceInterfaceForCurrentGesture>;
+
+        if r15 != $r8 goto label07;
+
+        $z4 = specialinvoke r0.<com.android.server.accessibility.MotionEventInjector: boolean prepareToContinueOldGesture(java.util.List)>(r14);
+
+        if $z4 != 0 goto label08;
+
+     label07:
+        specialinvoke r0.<com.android.server.accessibility.MotionEventInjector: void cancelAnyPendingInjectedEvents()>();
+
+        specialinvoke r0.<com.android.server.accessibility.MotionEventInjector: void notifyService(android.accessibilityservice.IAccessibilityServiceClient,int,boolean)>(r15, i11, 0);
+
+        return;
+
+     label08:
+        if z0 != 0 goto label09;
+
+        specialinvoke r0.<com.android.server.accessibility.MotionEventInjector: void cancelAnyPendingInjectedEvents()>();
+
+        specialinvoke r0.<com.android.server.accessibility.MotionEventInjector: void cancelAnyGestureInProgress(int)>(4098);
+
+     label09:
+        r0.<com.android.server.accessibility.MotionEventInjector: android.accessibilityservice.IAccessibilityServiceClient mServiceInterfaceForCurrentGesture> = r15;
+
+        l1 = staticinvoke <android.os.SystemClock: long uptimeMillis()>();
+
+        $r3 = r0.<com.android.server.accessibility.MotionEventInjector: android.util.IntArray mSequencesInProgress>;
+
+        $i2 = virtualinvoke $r3.<android.util.IntArray: int size()>();
+
+        if $i2 != 0 goto label10;
+
+        l12 = l1;
+
+        goto label11;
+
+     label10:
+        l12 = r0.<com.android.server.accessibility.MotionEventInjector: long mLastScheduledEventTime>;
+
+     label11:
+        r1 = specialinvoke r0.<com.android.server.accessibility.MotionEventInjector: java.util.List getMotionEventsFromGestureSteps(java.util.List,long)>(r14, l12);
+
+        $z2 = interfaceinvoke r1.<java.util.List: boolean isEmpty()>();
+
+        if $z2 == 0 goto label12;
+
+        specialinvoke r0.<com.android.server.accessibility.MotionEventInjector: void notifyService(android.accessibilityservice.IAccessibilityServiceClient,int,boolean)>(r15, i11, 0);
+
+        return;
+
+     label12:
+        $r4 = r0.<com.android.server.accessibility.MotionEventInjector: android.util.IntArray mSequencesInProgress>;
+
+        virtualinvoke $r4.<android.util.IntArray: void add(int)>(i11);
+
+        i13 = 0;
+
+     label13:
+        $i3 = interfaceinvoke r1.<java.util.List: int size()>();
+
+        if i13 >= $i3 goto label16;
+
+        $r5 = interfaceinvoke r1.<java.util.List: java.lang.Object get(int)>(i13);
+
+        r20 = (android.view.MotionEvent) $r5;
+
+        virtualinvoke r20.<android.view.MotionEvent: void setDisplayId(int)>(i0);
+
+        $i4 = interfaceinvoke r1.<java.util.List: int size()>();
+
+        $i5 = $i4 - 1;
+
+        if i13 != $i5 goto label14;
+
+        b14 = 1;
+
+        goto label15;
+
+     label14:
+        b14 = 0;
+
+     label15:
+        $r6 = r0.<com.android.server.accessibility.MotionEventInjector: android.os.Handler mHandler>;
+
+        r21 = virtualinvoke $r6.<android.os.Handler: android.os.Message obtainMessage(int,int,int,java.lang.Object)>(1, b14, 0, r20);
+
+        $l6 = virtualinvoke r20.<android.view.MotionEvent: long getEventTime()>();
+
+        r0.<com.android.server.accessibility.MotionEventInjector: long mLastScheduledEventTime> = $l6;
+
+        $r7 = r0.<com.android.server.accessibility.MotionEventInjector: android.os.Handler mHandler>;
+
+        $l7 = virtualinvoke r20.<android.view.MotionEvent: long getEventTime()>();
+
+        $l8 = $l7 - l1;
+
+        $l9 = staticinvoke <java.lang.Math: long max(long,long)>(0L, $l8);
+
+        virtualinvoke $r7.<android.os.Handler: boolean sendMessageDelayed(android.os.Message,long)>(r21, $l9);
+
+        i13 = i13 + 1;
+
+        goto label13;
+
+     label16:
+        return;
+
+        catch android.os.RemoteException from label01 to label02 with label03;
+    }
+
+    private boolean newGestureTriesToContinueOldOne(java.util.List)
+    {
+        com.android.server.accessibility.MotionEventInjector r0;
+        boolean $z0, $z1;
+        java.lang.Object $r1;
+        int $i0, i1;
+        android.accessibilityservice.GestureDescription$TouchPoint[] $r2;
+        android.accessibilityservice.GestureDescription$TouchPoint $r3;
+        java.util.List r4;
+        android.accessibilityservice.GestureDescription$GestureStep r5;
+
+        r0 := @this: com.android.server.accessibility.MotionEventInjector;
+
+        r4 := @parameter0: java.util.List;
+
+        $z0 = interfaceinvoke r4.<java.util.List: boolean isEmpty()>();
+
+        if $z0 == 0 goto label1;
+
+        return 0;
+
+     label1:
+        $r1 = interfaceinvoke r4.<java.util.List: java.lang.Object get(int)>(0);
+
+        r5 = (android.accessibilityservice.GestureDescription$GestureStep) $r1;
+
+        i1 = 0;
+
+     label2:
+        $i0 = r5.<android.accessibilityservice.GestureDescription$GestureStep: int numTouchPoints>;
+
+        if i1 >= $i0 goto label4;
+
+        $r2 = r5.<android.accessibilityservice.GestureDescription$GestureStep: android.accessibilityservice.GestureDescription$TouchPoint[] touchPoints>;
+
+        $r3 = $r2[i1];
+
+        $z1 = $r3.<android.accessibilityservice.GestureDescription$TouchPoint: boolean mIsStartOfPath>;
+
+        if $z1 != 0 goto label3;
+
+        return 1;
+
+     label3:
+        i1 = i1 + 1;
+
+        goto label2;
+
+     label4:
+        return 0;
+    }
+
+    private void notifyService(android.accessibilityservice.IAccessibilityServiceClient, int, boolean)
+    {
+        com.android.server.accessibility.MotionEventInjector r0;
+        int i0;
+        boolean z0;
+        android.os.RemoteException $r2;
+        java.lang.StringBuilder $r3;
+        android.accessibilityservice.IAccessibilityServiceClient $r5, r8;
+        java.lang.String $r7;
+
+        r0 := @this: com.android.server.accessibility.MotionEventInjector;
+
+        r8 := @parameter0: android.accessibilityservice.IAccessibilityServiceClient;
+
+        i0 := @parameter1: int;
+
+        z0 := @parameter2: boolean;
+
+     label1:
+        interfaceinvoke r8.<android.accessibilityservice.IAccessibilityServiceClient: void onPerformGestureResult(int,boolean)>(i0, z0);
+
+     label2:
+        goto label4;
+
+     label3:
+        $r2 := @caughtexception;
+
+        $r3 = new java.lang.StringBuilder;
+
+        specialinvoke $r3.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Error sending motion event injection status to ");
+
+        $r5 = r0.<com.android.server.accessibility.MotionEventInjector: android.accessibilityservice.IAccessibilityServiceClient mServiceInterfaceForCurrentGesture>;
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r5);
+
+        $r7 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("MotionEventInjector", $r7, $r2);
+
+     label4:
+        return;
+
+        catch android.os.RemoteException from label1 to label2 with label3;
+    }
+
+    private android.view.MotionEvent obtainMotionEvent(long, long, int, android.accessibilityservice.GestureDescription$TouchPoint[], int)
+    {
+        com.android.server.accessibility.MotionEventInjector r0;
+        long l0, l1;
+        int i2, i3, i4, $i5, $i6, $i7, $i8, i9, i10, i11, i12;
+        android.accessibilityservice.GestureDescription$TouchPoint[] r1;
+        android.view.MotionEvent$PointerCoords[] $r2, $r4, $r13, $r15, $r17, $r19, $r22, $r30, r31;
+        android.view.MotionEvent$PointerProperties[] $r3, $r5, $r9, $r11, $r28, r32;
+        android.view.MotionEvent $r6;
+        android.accessibilityservice.GestureDescription$TouchPoint $r7, $r20, $r23, $r25;
+        android.util.SparseIntArray $r8, $r26;
+        android.view.MotionEvent$PointerProperties $r10, $r12, $r27;
+        android.view.MotionEvent$PointerCoords $r14, $r16, $r18, $r21, $r24, $r29;
+        float $f0, $f1;
+
+        r0 := @this: com.android.server.accessibility.MotionEventInjector;
+
+        l0 := @parameter0: long;
+
+        l1 := @parameter1: long;
+
+        i2 := @parameter2: int;
+
+        r1 := @parameter3: android.accessibilityservice.GestureDescription$TouchPoint[];
+
+        i3 := @parameter4: int;
+
+        r31 = <com.android.server.accessibility.MotionEventInjector: android.view.MotionEvent$PointerCoords[] sPointerCoords>;
+
+        if r31 == null goto label1;
+
+        $i8 = lengthof r31;
+
+        if $i8 >= i3 goto label3;
+
+     label1:
+        $r2 = newarray (android.view.MotionEvent$PointerCoords)[i3];
+
+        <com.android.server.accessibility.MotionEventInjector: android.view.MotionEvent$PointerCoords[] sPointerCoords> = $r2;
+
+        i9 = 0;
+
+     label2:
+        if i9 >= i3 goto label3;
+
+        $r30 = <com.android.server.accessibility.MotionEventInjector: android.view.MotionEvent$PointerCoords[] sPointerCoords>;
+
+        $r29 = new android.view.MotionEvent$PointerCoords;
+
+        specialinvoke $r29.<android.view.MotionEvent$PointerCoords: void <init>()>();
+
+        $r30[i9] = $r29;
+
+        i9 = i9 + 1;
+
+        goto label2;
+
+     label3:
+        r32 = <com.android.server.accessibility.MotionEventInjector: android.view.MotionEvent$PointerProperties[] sPointerProps>;
+
+        if r32 == null goto label4;
+
+        $i7 = lengthof r32;
+
+        if $i7 >= i3 goto label6;
+
+     label4:
+        $r3 = newarray (android.view.MotionEvent$PointerProperties)[i3];
+
+        <com.android.server.accessibility.MotionEventInjector: android.view.MotionEvent$PointerProperties[] sPointerProps> = $r3;
+
+        i10 = 0;
+
+     label5:
+        if i10 >= i3 goto label6;
+
+        $r28 = <com.android.server.accessibility.MotionEventInjector: android.view.MotionEvent$PointerProperties[] sPointerProps>;
+
+        $r27 = new android.view.MotionEvent$PointerProperties;
+
+        specialinvoke $r27.<android.view.MotionEvent$PointerProperties: void <init>()>();
+
+        $r28[i10] = $r27;
+
+        i10 = i10 + 1;
+
+        goto label5;
+
+     label6:
+        i11 = 0;
+
+     label7:
+        if i11 >= i3 goto label9;
+
+        $r8 = r0.<com.android.server.accessibility.MotionEventInjector: android.util.SparseIntArray mStrokeIdToPointerId>;
+
+        $r7 = r1[i11];
+
+        $i5 = $r7.<android.accessibilityservice.GestureDescription$TouchPoint: int mStrokeId>;
+
+        i4 = virtualinvoke $r8.<android.util.SparseIntArray: int get(int,int)>($i5, -1);
+
+        i12 = i4;
+
+        if i4 != -1 goto label8;
+
+        i12 = specialinvoke r0.<com.android.server.accessibility.MotionEventInjector: int getUnusedPointerId()>();
+
+        $r26 = r0.<com.android.server.accessibility.MotionEventInjector: android.util.SparseIntArray mStrokeIdToPointerId>;
+
+        $r25 = r1[i11];
+
+        $i6 = $r25.<android.accessibilityservice.GestureDescription$TouchPoint: int mStrokeId>;
+
+        virtualinvoke $r26.<android.util.SparseIntArray: void put(int,int)>($i6, i12);
+
+     label8:
+        $r9 = <com.android.server.accessibility.MotionEventInjector: android.view.MotionEvent$PointerProperties[] sPointerProps>;
+
+        $r10 = $r9[i11];
+
+        $r10.<android.view.MotionEvent$PointerProperties: int id> = i12;
+
+        $r11 = <com.android.server.accessibility.MotionEventInjector: android.view.MotionEvent$PointerProperties[] sPointerProps>;
+
+        $r12 = $r11[i11];
+
+        $r12.<android.view.MotionEvent$PointerProperties: int toolType> = 0;
+
+        $r13 = <com.android.server.accessibility.MotionEventInjector: android.view.MotionEvent$PointerCoords[] sPointerCoords>;
+
+        $r14 = $r13[i11];
+
+        virtualinvoke $r14.<android.view.MotionEvent$PointerCoords: void clear()>();
+
+        $r15 = <com.android.server.accessibility.MotionEventInjector: android.view.MotionEvent$PointerCoords[] sPointerCoords>;
+
+        $r16 = $r15[i11];
+
+        $r16.<android.view.MotionEvent$PointerCoords: float pressure> = 1.0F;
+
+        $r17 = <com.android.server.accessibility.MotionEventInjector: android.view.MotionEvent$PointerCoords[] sPointerCoords>;
+
+        $r18 = $r17[i11];
+
+        $r18.<android.view.MotionEvent$PointerCoords: float size> = 1.0F;
+
+        $r19 = <com.android.server.accessibility.MotionEventInjector: android.view.MotionEvent$PointerCoords[] sPointerCoords>;
+
+        $r21 = $r19[i11];
+
+        $r20 = r1[i11];
+
+        $f0 = $r20.<android.accessibilityservice.GestureDescription$TouchPoint: float mX>;
+
+        $r21.<android.view.MotionEvent$PointerCoords: float x> = $f0;
+
+        $r22 = <com.android.server.accessibility.MotionEventInjector: android.view.MotionEvent$PointerCoords[] sPointerCoords>;
+
+        $r24 = $r22[i11];
+
+        $r23 = r1[i11];
+
+        $f1 = $r23.<android.accessibilityservice.GestureDescription$TouchPoint: float mY>;
+
+        $r24.<android.view.MotionEvent$PointerCoords: float y> = $f1;
+
+        i11 = i11 + 1;
+
+        goto label7;
+
+     label9:
+        $r5 = <com.android.server.accessibility.MotionEventInjector: android.view.MotionEvent$PointerProperties[] sPointerProps>;
+
+        $r4 = <com.android.server.accessibility.MotionEventInjector: android.view.MotionEvent$PointerCoords[] sPointerCoords>;
+
+        $r6 = staticinvoke <android.view.MotionEvent: android.view.MotionEvent obtain(long,long,int,int,android.view.MotionEvent$PointerProperties[],android.view.MotionEvent$PointerCoords[],int,int,float,float,int,int,int,int)>(l0, l1, i2, i3, $r5, $r4, 0, 0, 1.0F, 1.0F, 0, 0, 4098, 0);
+
+        return $r6;
+    }
+
+    private boolean prepareToContinueOldGesture(java.util.List)
+    {
+        com.android.server.accessibility.MotionEventInjector r0;
+        boolean z0, $z1, $z2, $z3, z4;
+        android.accessibilityservice.GestureDescription$TouchPoint[] $r1, $r3, $r5, $r8, $r9, $r15, $r17, $r19, $r25, $r40;
+        int $i0, $i1, $i2, $i3, $i4, $i5, $i6, $i10, i13, i14, i15, i16, i17, i18, i19;
+        java.lang.Object $r2;
+        android.accessibilityservice.GestureDescription$TouchPoint $r4, $r10, $r16, $r18, $r20, r35, $r41;
+        android.util.SparseIntArray $r6, $r7;
+        float $f0, $f1, $f2, $f3;
+        byte $b8, $b9;
+        java.lang.StringBuilder $r21, $r29, $r38;
+        java.util.List $r26, r33;
+        java.lang.String $r28, $r32, $r42;
+        android.accessibilityservice.GestureDescription$GestureStep r34;
+
+        r0 := @this: com.android.server.accessibility.MotionEventInjector;
+
+        r33 := @parameter0: java.util.List;
+
+        z0 = interfaceinvoke r33.<java.util.List: boolean isEmpty()>();
+
+        z4 = 0;
+
+        if z0 != 0 goto label13;
+
+        $r1 = r0.<com.android.server.accessibility.MotionEventInjector: android.accessibilityservice.GestureDescription$TouchPoint[] mLastTouchPoints>;
+
+        if $r1 == null goto label13;
+
+        $i0 = r0.<com.android.server.accessibility.MotionEventInjector: int mNumLastTouchPoints>;
+
+        if $i0 != 0 goto label01;
+
+        goto label13;
+
+     label01:
+        $r2 = interfaceinvoke r33.<java.util.List: java.lang.Object get(int)>(0);
+
+        r34 = (android.accessibilityservice.GestureDescription$GestureStep) $r2;
+
+        i13 = 0;
+
+        i14 = 0;
+
+     label02:
+        $i1 = r34.<android.accessibilityservice.GestureDescription$GestureStep: int numTouchPoints>;
+
+        if i14 >= $i1 goto label08;
+
+        $r5 = r34.<android.accessibilityservice.GestureDescription$GestureStep: android.accessibilityservice.GestureDescription$TouchPoint[] touchPoints>;
+
+        r35 = $r5[i14];
+
+        $z2 = r35.<android.accessibilityservice.GestureDescription$TouchPoint: boolean mIsStartOfPath>;
+
+        if $z2 != 0 goto label07;
+
+        $r6 = r0.<com.android.server.accessibility.MotionEventInjector: android.util.SparseIntArray mStrokeIdToPointerId>;
+
+        $i3 = r35.<android.accessibilityservice.GestureDescription$TouchPoint: int mContinuedStrokeId>;
+
+        i15 = virtualinvoke $r6.<android.util.SparseIntArray: int get(int,int)>($i3, -1);
+
+        if i15 != -1 goto label03;
+
+        $r29 = new java.lang.StringBuilder;
+
+        specialinvoke $r29.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r29.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Can\'t continue gesture due to unknown continued stroke id in ");
+
+        virtualinvoke $r29.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r35);
+
+        $r32 = virtualinvoke $r29.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("MotionEventInjector", $r32);
+
+        return 0;
+
+     label03:
+        $r7 = r0.<com.android.server.accessibility.MotionEventInjector: android.util.SparseIntArray mStrokeIdToPointerId>;
+
+        $i4 = r35.<android.accessibilityservice.GestureDescription$TouchPoint: int mStrokeId>;
+
+        virtualinvoke $r7.<android.util.SparseIntArray: void put(int,int)>($i4, i15);
+
+        $r8 = r0.<com.android.server.accessibility.MotionEventInjector: android.accessibilityservice.GestureDescription$TouchPoint[] mLastTouchPoints>;
+
+        $i6 = r0.<com.android.server.accessibility.MotionEventInjector: int mNumLastTouchPoints>;
+
+        $i5 = r35.<android.accessibilityservice.GestureDescription$TouchPoint: int mContinuedStrokeId>;
+
+        i16 = staticinvoke <com.android.server.accessibility.MotionEventInjector: int findPointByStrokeId(android.accessibilityservice.GestureDescription$TouchPoint[],int,int)>($r8, $i6, $i5);
+
+        if i16 >= 0 goto label04;
+
+        $r21 = new java.lang.StringBuilder;
+
+        specialinvoke $r21.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r21.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Can\'t continue gesture due continued gesture id of ");
+
+        virtualinvoke $r21.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r35);
+
+        virtualinvoke $r21.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" not matching any previous strokes in ");
+
+        $r25 = r0.<com.android.server.accessibility.MotionEventInjector: android.accessibilityservice.GestureDescription$TouchPoint[] mLastTouchPoints>;
+
+        $r26 = staticinvoke <java.util.Arrays: java.util.List asList(java.lang.Object[])>($r25);
+
+        virtualinvoke $r21.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r26);
+
+        $r28 = virtualinvoke $r21.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("MotionEventInjector", $r28);
+
+        return 0;
+
+     label04:
+        $r9 = r0.<com.android.server.accessibility.MotionEventInjector: android.accessibilityservice.GestureDescription$TouchPoint[] mLastTouchPoints>;
+
+        $r10 = $r9[i16];
+
+        $z3 = $r10.<android.accessibilityservice.GestureDescription$TouchPoint: boolean mIsEndOfPath>;
+
+        if $z3 != 0 goto label06;
+
+        $r15 = r0.<com.android.server.accessibility.MotionEventInjector: android.accessibilityservice.GestureDescription$TouchPoint[] mLastTouchPoints>;
+
+        $r16 = $r15[i16];
+
+        $f1 = $r16.<android.accessibilityservice.GestureDescription$TouchPoint: float mX>;
+
+        $f0 = r35.<android.accessibilityservice.GestureDescription$TouchPoint: float mX>;
+
+        $b8 = $f1 cmpl $f0;
+
+        if $b8 != 0 goto label06;
+
+        $r17 = r0.<com.android.server.accessibility.MotionEventInjector: android.accessibilityservice.GestureDescription$TouchPoint[] mLastTouchPoints>;
+
+        $r18 = $r17[i16];
+
+        $f3 = $r18.<android.accessibilityservice.GestureDescription$TouchPoint: float mY>;
+
+        $f2 = r35.<android.accessibilityservice.GestureDescription$TouchPoint: float mY>;
+
+        $b9 = $f3 cmpl $f2;
+
+        if $b9 == 0 goto label05;
+
+        goto label06;
+
+     label05:
+        $r19 = r0.<com.android.server.accessibility.MotionEventInjector: android.accessibilityservice.GestureDescription$TouchPoint[] mLastTouchPoints>;
+
+        $r20 = $r19[i16];
+
+        $i10 = r35.<android.accessibilityservice.GestureDescription$TouchPoint: int mStrokeId>;
+
+        $r20.<android.accessibilityservice.GestureDescription$TouchPoint: int mStrokeId> = $i10;
+
+        goto label07;
+
+     label06:
+        $r38 = new java.lang.StringBuilder;
+
+        specialinvoke $r38.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r38.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Can\'t continue gesture due to points mismatch between ");
+
+        $r40 = r0.<com.android.server.accessibility.MotionEventInjector: android.accessibilityservice.GestureDescription$TouchPoint[] mLastTouchPoints>;
+
+        $r41 = $r40[i16];
+
+        virtualinvoke $r38.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r41);
+
+        virtualinvoke $r38.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" and ");
+
+        virtualinvoke $r38.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r35);
+
+        $r42 = virtualinvoke $r38.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("MotionEventInjector", $r42);
+
+        return 0;
+
+     label07:
+        i13 = i13 + 1;
+
+        i14 = i14 + 1;
+
+        goto label02;
+
+     label08:
+        i17 = 0;
+
+        i18 = i13;
+
+     label09:
+        $i2 = r0.<com.android.server.accessibility.MotionEventInjector: int mNumLastTouchPoints>;
+
+        if i17 >= $i2 goto label11;
+
+        i19 = i18;
+
+        $r3 = r0.<com.android.server.accessibility.MotionEventInjector: android.accessibilityservice.GestureDescription$TouchPoint[] mLastTouchPoints>;
+
+        $r4 = $r3[i17];
+
+        $z1 = $r4.<android.accessibilityservice.GestureDescription$TouchPoint: boolean mIsEndOfPath>;
+
+        if $z1 != 0 goto label10;
+
+        i19 = i18 - 1;
+
+     label10:
+        i17 = i17 + 1;
+
+        i18 = i19;
+
+        goto label09;
+
+     label11:
+        if i18 != 0 goto label12;
+
+        z4 = 1;
+
+     label12:
+        return z4;
+
+     label13:
+        return 0;
+    }
+
+    private void sendMotionEventToNext(android.view.MotionEvent, android.view.MotionEvent, int)
+    {
+        com.android.server.accessibility.MotionEventInjector r0;
+        android.view.MotionEvent r1, r2;
+        int i0, $i1, $i2, $i3, $i4, $i5;
+        com.android.server.accessibility.EventStreamTransformation $r3;
+        android.util.SparseArray $r4, $r6;
+        java.lang.Boolean $r5, $r7;
+
+        r0 := @this: com.android.server.accessibility.MotionEventInjector;
+
+        r1 := @parameter0: android.view.MotionEvent;
+
+        r2 := @parameter1: android.view.MotionEvent;
+
+        i0 := @parameter2: int;
+
+        $r3 = virtualinvoke r0.<com.android.server.accessibility.MotionEventInjector: com.android.server.accessibility.EventStreamTransformation getNext()>();
+
+        if $r3 == null goto label3;
+
+        specialinvoke r0.<com.android.server.accessibility.BaseEventStreamTransformation: void onMotionEvent(android.view.MotionEvent,android.view.MotionEvent,int)>(r1, r2, i0);
+
+        $i1 = virtualinvoke r1.<android.view.MotionEvent: int getActionMasked()>();
+
+        if $i1 != 0 goto label1;
+
+        $r6 = r0.<com.android.server.accessibility.MotionEventInjector: android.util.SparseArray mOpenGesturesInProgress>;
+
+        $i5 = virtualinvoke r1.<android.view.MotionEvent: int getSource()>();
+
+        $r7 = staticinvoke <java.lang.Boolean: java.lang.Boolean valueOf(boolean)>(1);
+
+        virtualinvoke $r6.<android.util.SparseArray: void put(int,java.lang.Object)>($i5, $r7);
+
+     label1:
+        $i2 = virtualinvoke r1.<android.view.MotionEvent: int getActionMasked()>();
+
+        if $i2 == 1 goto label2;
+
+        $i4 = virtualinvoke r1.<android.view.MotionEvent: int getActionMasked()>();
+
+        if $i4 != 3 goto label3;
+
+     label2:
+        $r4 = r0.<com.android.server.accessibility.MotionEventInjector: android.util.SparseArray mOpenGesturesInProgress>;
+
+        $i3 = virtualinvoke r1.<android.view.MotionEvent: int getSource()>();
+
+        $r5 = staticinvoke <java.lang.Boolean: java.lang.Boolean valueOf(boolean)>(0);
+
+        virtualinvoke $r4.<android.util.SparseArray: void put(int,java.lang.Object)>($i3, $r5);
+
+     label3:
+        return;
+    }
+
+    public void clearEvents(int)
+    {
+        com.android.server.accessibility.MotionEventInjector r0;
+        int i0;
+        android.os.Handler $r1;
+        boolean $z0;
+        android.util.SparseArray $r2;
+        java.lang.Boolean $r3;
+
+        r0 := @this: com.android.server.accessibility.MotionEventInjector;
+
+        i0 := @parameter0: int;
+
+        $r1 = r0.<com.android.server.accessibility.MotionEventInjector: android.os.Handler mHandler>;
+
+        $z0 = virtualinvoke $r1.<android.os.Handler: boolean hasMessages(int)>(1);
+
+        if $z0 != 0 goto label1;
+
+        $r2 = r0.<com.android.server.accessibility.MotionEventInjector: android.util.SparseArray mOpenGesturesInProgress>;
+
+        $r3 = staticinvoke <java.lang.Boolean: java.lang.Boolean valueOf(boolean)>(0);
+
+        virtualinvoke $r2.<android.util.SparseArray: void put(int,java.lang.Object)>(i0, $r3);
+
+     label1:
+        return;
+    }
+
+    public boolean handleMessage(android.os.Message)
+    {
+        com.android.server.accessibility.MotionEventInjector r0;
+        int $i0, $i1, $i2, $i3, $i4, $i6, $i7;
+        java.lang.Object $r1, $r9, $r10, $r11;
+        android.util.IntArray $r2, $r4;
+        android.accessibilityservice.IAccessibilityServiceClient $r3, $r12;
+        java.lang.StringBuilder $r5;
+        java.lang.String $r8;
+        java.util.List $r13;
+        android.os.Message r14;
+        com.android.internal.os.SomeArgs r15;
+        android.view.MotionEvent r17;
+        boolean z0;
+
+        r0 := @this: com.android.server.accessibility.MotionEventInjector;
+
+        r14 := @parameter0: android.os.Message;
+
+        $i0 = r14.<android.os.Message: int what>;
+
+        if $i0 != 2 goto label1;
+
+        $r9 = r14.<android.os.Message: java.lang.Object obj>;
+
+        r15 = (com.android.internal.os.SomeArgs) $r9;
+
+        $r10 = r15.<com.android.internal.os.SomeArgs: java.lang.Object arg1>;
+
+        $r13 = (java.util.List) $r10;
+
+        $r11 = r15.<com.android.internal.os.SomeArgs: java.lang.Object arg2>;
+
+        $r12 = (android.accessibilityservice.IAccessibilityServiceClient) $r11;
+
+        $i7 = r15.<com.android.internal.os.SomeArgs: int argi1>;
+
+        $i6 = r15.<com.android.internal.os.SomeArgs: int argi2>;
+
+        specialinvoke r0.<com.android.server.accessibility.MotionEventInjector: void injectEventsMainThread(java.util.List,android.accessibilityservice.IAccessibilityServiceClient,int,int)>($r13, $r12, $i7, $i6);
+
+        virtualinvoke r15.<com.android.internal.os.SomeArgs: void recycle()>();
+
+        return 1;
+
+     label1:
+        $i1 = r14.<android.os.Message: int what>;
+
+        if $i1 == 1 goto label2;
+
+        $r5 = new java.lang.StringBuilder;
+
+        specialinvoke $r5.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Unknown message: ");
+
+        $i4 = r14.<android.os.Message: int what>;
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i4);
+
+        $r8 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("MotionEventInjector", $r8);
+
+        return 0;
+
+     label2:
+        $r1 = r14.<android.os.Message: java.lang.Object obj>;
+
+        r17 = (android.view.MotionEvent) $r1;
+
+        specialinvoke r0.<com.android.server.accessibility.MotionEventInjector: void sendMotionEventToNext(android.view.MotionEvent,android.view.MotionEvent,int)>(r17, r17, 1073741824);
+
+        $i2 = r14.<android.os.Message: int arg1>;
+
+        if $i2 == 0 goto label3;
+
+        z0 = 1;
+
+        goto label4;
+
+     label3:
+        z0 = 0;
+
+     label4:
+        if z0 == 0 goto label5;
+
+        $r3 = r0.<com.android.server.accessibility.MotionEventInjector: android.accessibilityservice.IAccessibilityServiceClient mServiceInterfaceForCurrentGesture>;
+
+        $r2 = r0.<com.android.server.accessibility.MotionEventInjector: android.util.IntArray mSequencesInProgress>;
+
+        $i3 = virtualinvoke $r2.<android.util.IntArray: int get(int)>(0);
+
+        specialinvoke r0.<com.android.server.accessibility.MotionEventInjector: void notifyService(android.accessibilityservice.IAccessibilityServiceClient,int,boolean)>($r3, $i3, 1);
+
+        $r4 = r0.<com.android.server.accessibility.MotionEventInjector: android.util.IntArray mSequencesInProgress>;
+
+        virtualinvoke $r4.<android.util.IntArray: void remove(int)>(0);
+
+     label5:
+        return 1;
+    }
+
+    public void injectEvents(java.util.List, android.accessibilityservice.IAccessibilityServiceClient, int, int)
+    {
+        com.android.server.accessibility.MotionEventInjector r0;
+        android.accessibilityservice.IAccessibilityServiceClient r1;
+        int i0, i1;
+        com.android.internal.os.SomeArgs r2;
+        android.os.Message $r3;
+        java.util.List r4;
+        android.os.Handler r5;
+
+        r0 := @this: com.android.server.accessibility.MotionEventInjector;
+
+        r4 := @parameter0: java.util.List;
+
+        r1 := @parameter1: android.accessibilityservice.IAccessibilityServiceClient;
+
+        i0 := @parameter2: int;
+
+        i1 := @parameter3: int;
+
+        r2 = staticinvoke <com.android.internal.os.SomeArgs: com.android.internal.os.SomeArgs obtain()>();
+
+        r2.<com.android.internal.os.SomeArgs: java.lang.Object arg1> = r4;
+
+        r2.<com.android.internal.os.SomeArgs: java.lang.Object arg2> = r1;
+
+        r2.<com.android.internal.os.SomeArgs: int argi1> = i0;
+
+        r2.<com.android.internal.os.SomeArgs: int argi2> = i1;
+
+        r5 = r0.<com.android.server.accessibility.MotionEventInjector: android.os.Handler mHandler>;
+
+        $r3 = virtualinvoke r5.<android.os.Handler: android.os.Message obtainMessage(int,java.lang.Object)>(2, r2);
+
+        virtualinvoke r5.<android.os.Handler: boolean sendMessage(android.os.Message)>($r3);
+
+        return;
+    }
+
+    public void onDestroy()
+    {
+        com.android.server.accessibility.MotionEventInjector r0;
+
+        r0 := @this: com.android.server.accessibility.MotionEventInjector;
+
+        specialinvoke r0.<com.android.server.accessibility.MotionEventInjector: void cancelAnyPendingInjectedEvents()>();
+
+        r0.<com.android.server.accessibility.MotionEventInjector: boolean mIsDestroyed> = 1;
+
+        return;
+    }
+
+    public void onMotionEvent(android.view.MotionEvent, android.view.MotionEvent, int)
+    {
+        com.android.server.accessibility.MotionEventInjector r0;
+        android.view.MotionEvent r1, r2;
+        int i0, $i1;
+        boolean $z0, $z1;
+        android.util.SparseArray $r3;
+        java.lang.Boolean $r4, $r6;
+        java.lang.Object $r5;
+
+        r0 := @this: com.android.server.accessibility.MotionEventInjector;
+
+        r1 := @parameter0: android.view.MotionEvent;
+
+        r2 := @parameter1: android.view.MotionEvent;
+
+        i0 := @parameter2: int;
+
+        $z0 = virtualinvoke r1.<android.view.MotionEvent: boolean isFromSource(int)>(8194);
+
+        if $z0 == 0 goto label1;
+
+        $i1 = virtualinvoke r1.<android.view.MotionEvent: int getActionMasked()>();
+
+        if $i1 != 7 goto label1;
+
+        $r3 = r0.<com.android.server.accessibility.MotionEventInjector: android.util.SparseArray mOpenGesturesInProgress>;
+
+        $r4 = staticinvoke <java.lang.Boolean: java.lang.Boolean valueOf(boolean)>(0);
+
+        $r5 = virtualinvoke $r3.<android.util.SparseArray: java.lang.Object get(int,java.lang.Object)>(4098, $r4);
+
+        $r6 = (java.lang.Boolean) $r5;
+
+        $z1 = virtualinvoke $r6.<java.lang.Boolean: boolean booleanValue()>();
+
+        if $z1 == 0 goto label1;
+
+        return;
+
+     label1:
+        specialinvoke r0.<com.android.server.accessibility.MotionEventInjector: void cancelAnyPendingInjectedEvents()>();
+
+        specialinvoke r0.<com.android.server.accessibility.MotionEventInjector: void sendMotionEventToNext(android.view.MotionEvent,android.view.MotionEvent,int)>(r1, r2, i0);
+
+        return;
+    }
+
+    public static void <clinit>()
+    {
+        <com.android.server.accessibility.MotionEventInjector: int MESSAGE_SEND_MOTION_EVENT> = 1;
+
+        <com.android.server.accessibility.MotionEventInjector: int MESSAGE_INJECT_EVENTS> = 2;
+
+        <com.android.server.accessibility.MotionEventInjector: java.lang.String LOG_TAG> = "MotionEventInjector";
+
+        <com.android.server.accessibility.MotionEventInjector: float EVENT_Y_PRECISION> = 1.0F;
+
+        <com.android.server.accessibility.MotionEventInjector: float EVENT_X_PRECISION> = 1.0F;
+
+        <com.android.server.accessibility.MotionEventInjector: int EVENT_SOURCE> = 4098;
+
+        <com.android.server.accessibility.MotionEventInjector: int EVENT_META_STATE> = 0;
+
+        <com.android.server.accessibility.MotionEventInjector: int EVENT_FLAGS> = 0;
+
+        <com.android.server.accessibility.MotionEventInjector: int EVENT_EDGE_FLAGS> = 0;
+
+        <com.android.server.accessibility.MotionEventInjector: int EVENT_DEVICE_ID> = 0;
+
+        <com.android.server.accessibility.MotionEventInjector: int EVENT_BUTTON_STATE> = 0;
+
+        return;
+    }
+}

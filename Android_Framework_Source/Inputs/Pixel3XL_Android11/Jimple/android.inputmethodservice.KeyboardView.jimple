@@ -1,0 +1,4128 @@
+public class android.inputmethodservice.KeyboardView extends android.view.View implements android.view.View$OnClickListener
+{
+    private static final int DEBOUNCE_TIME;
+    private static final boolean DEBUG;
+    private static final int DELAY_AFTER_PREVIEW;
+    private static final int DELAY_BEFORE_PREVIEW;
+    private static final int[] KEY_DELETE;
+    private static final int LONGPRESS_TIMEOUT;
+    private static final int[] LONG_PRESSABLE_STATE_SET;
+    private static int MAX_NEARBY_KEYS;
+    private static final int MSG_LONGPRESS;
+    private static final int MSG_REMOVE_PREVIEW;
+    private static final int MSG_REPEAT;
+    private static final int MSG_SHOW_PREVIEW;
+    private static final int MULTITAP_INTERVAL;
+    private static final int NOT_A_KEY;
+    private static final int REPEAT_INTERVAL;
+    private static final int REPEAT_START_DELAY;
+    private boolean mAbortKey;
+    private android.view.accessibility.AccessibilityManager mAccessibilityManager;
+    private android.media.AudioManager mAudioManager;
+    private float mBackgroundDimAmount;
+    private android.graphics.Bitmap mBuffer;
+    private android.graphics.Canvas mCanvas;
+    private android.graphics.Rect mClipRegion;
+    private final int[] mCoordinates;
+    private int mCurrentKey;
+    private int mCurrentKeyIndex;
+    private long mCurrentKeyTime;
+    private android.graphics.Rect mDirtyRect;
+    private boolean mDisambiguateSwipe;
+    private int[] mDistances;
+    private int mDownKey;
+    private long mDownTime;
+    private boolean mDrawPending;
+    private android.view.GestureDetector mGestureDetector;
+    android.os.Handler mHandler;
+    private boolean mHeadsetRequiredToHearPasswordsAnnounced;
+    private boolean mInMultiTap;
+    private android.inputmethodservice.Keyboard$Key mInvalidatedKey;
+    private android.graphics.drawable.Drawable mKeyBackground;
+    private int[] mKeyIndices;
+    private int mKeyTextColor;
+    private int mKeyTextSize;
+    private android.inputmethodservice.Keyboard mKeyboard;
+    private android.inputmethodservice.KeyboardView$OnKeyboardActionListener mKeyboardActionListener;
+    private boolean mKeyboardChanged;
+    private android.inputmethodservice.Keyboard$Key[] mKeys;
+    private int mLabelTextSize;
+    private int mLastCodeX;
+    private int mLastCodeY;
+    private int mLastKey;
+    private long mLastKeyTime;
+    private long mLastMoveTime;
+    private int mLastSentIndex;
+    private long mLastTapTime;
+    private int mLastX;
+    private int mLastY;
+    private android.inputmethodservice.KeyboardView mMiniKeyboard;
+    private java.util.Map mMiniKeyboardCache;
+    private android.view.View mMiniKeyboardContainer;
+    private int mMiniKeyboardOffsetX;
+    private int mMiniKeyboardOffsetY;
+    private boolean mMiniKeyboardOnScreen;
+    private int mOldPointerCount;
+    private float mOldPointerX;
+    private float mOldPointerY;
+    private android.graphics.Rect mPadding;
+    private android.graphics.Paint mPaint;
+    private android.widget.PopupWindow mPopupKeyboard;
+    private int mPopupLayout;
+    private android.view.View mPopupParent;
+    private int mPopupPreviewX;
+    private int mPopupPreviewY;
+    private int mPopupX;
+    private int mPopupY;
+    private boolean mPossiblePoly;
+    private boolean mPreviewCentered;
+    private int mPreviewHeight;
+    private java.lang.StringBuilder mPreviewLabel;
+    private int mPreviewOffset;
+    private android.widget.PopupWindow mPreviewPopup;
+    private android.widget.TextView mPreviewText;
+    private int mPreviewTextSizeLarge;
+    private boolean mProximityCorrectOn;
+    private int mProximityThreshold;
+    private int mRepeatKeyIndex;
+    private int mShadowColor;
+    private float mShadowRadius;
+    private boolean mShowPreview;
+    private boolean mShowTouchPoints;
+    private int mStartX;
+    private int mStartY;
+    private int mSwipeThreshold;
+    private android.inputmethodservice.KeyboardView$SwipeTracker mSwipeTracker;
+    private int mTapCount;
+    private int mVerticalCorrection;
+
+    static void <clinit>()
+    {
+        int[] $r0, $r1;
+        int $i0;
+
+        <android.inputmethodservice.KeyboardView: int REPEAT_START_DELAY> = 400;
+
+        <android.inputmethodservice.KeyboardView: int REPEAT_INTERVAL> = 50;
+
+        <android.inputmethodservice.KeyboardView: int NOT_A_KEY> = -1;
+
+        <android.inputmethodservice.KeyboardView: int MULTITAP_INTERVAL> = 800;
+
+        <android.inputmethodservice.KeyboardView: int MSG_SHOW_PREVIEW> = 1;
+
+        <android.inputmethodservice.KeyboardView: int MSG_REPEAT> = 3;
+
+        <android.inputmethodservice.KeyboardView: int MSG_REMOVE_PREVIEW> = 2;
+
+        <android.inputmethodservice.KeyboardView: int MSG_LONGPRESS> = 4;
+
+        <android.inputmethodservice.KeyboardView: int DELAY_BEFORE_PREVIEW> = 0;
+
+        <android.inputmethodservice.KeyboardView: int DELAY_AFTER_PREVIEW> = 70;
+
+        <android.inputmethodservice.KeyboardView: boolean DEBUG> = 0;
+
+        <android.inputmethodservice.KeyboardView: int DEBOUNCE_TIME> = 70;
+
+        $r0 = newarray (int)[1];
+
+        $r0[0] = -5;
+
+        <android.inputmethodservice.KeyboardView: int[] KEY_DELETE> = $r0;
+
+        $r1 = newarray (int)[1];
+
+        $r1[0] = 16843324;
+
+        <android.inputmethodservice.KeyboardView: int[] LONG_PRESSABLE_STATE_SET> = $r1;
+
+        $i0 = staticinvoke <android.view.ViewConfiguration: int getLongPressTimeout()>();
+
+        <android.inputmethodservice.KeyboardView: int LONGPRESS_TIMEOUT> = $i0;
+
+        <android.inputmethodservice.KeyboardView: int MAX_NEARBY_KEYS> = 12;
+
+        return;
+    }
+
+    public void <init>(android.content.Context, android.util.AttributeSet)
+    {
+        android.inputmethodservice.KeyboardView r0;
+        android.content.Context r1;
+        android.util.AttributeSet r2;
+
+        r0 := @this: android.inputmethodservice.KeyboardView;
+
+        r1 := @parameter0: android.content.Context;
+
+        r2 := @parameter1: android.util.AttributeSet;
+
+        specialinvoke r0.<android.inputmethodservice.KeyboardView: void <init>(android.content.Context,android.util.AttributeSet,int)>(r1, r2, 17956963);
+
+        return;
+    }
+
+    public void <init>(android.content.Context, android.util.AttributeSet, int)
+    {
+        android.inputmethodservice.KeyboardView r0;
+        android.content.Context r1;
+        android.util.AttributeSet r2;
+        int i0;
+
+        r0 := @this: android.inputmethodservice.KeyboardView;
+
+        r1 := @parameter0: android.content.Context;
+
+        r2 := @parameter1: android.util.AttributeSet;
+
+        i0 := @parameter2: int;
+
+        specialinvoke r0.<android.inputmethodservice.KeyboardView: void <init>(android.content.Context,android.util.AttributeSet,int,int)>(r1, r2, i0, 0);
+
+        return;
+    }
+
+    public void <init>(android.content.Context, android.util.AttributeSet, int, int)
+    {
+        android.inputmethodservice.KeyboardView r0;
+        android.content.Context r1, $r13;
+        android.view.LayoutInflater r2;
+        int i0, i1, $i2, $i3, $i4, $i5, $i6, $i7, $i8, $i9, $i10, $i11, $i12, i13, i14, i15, i16;
+        int[] $r3, $r4, $r7, $r10, $r12;
+        android.graphics.Rect $r5, $r9, $r23, $r25;
+        android.inputmethodservice.KeyboardView$SwipeTracker $r6;
+        java.lang.StringBuilder $r8;
+        java.lang.Object $r11, $r31;
+        android.content.res.TypedArray $r14, r39;
+        float $f0, $f1, $f2, $f3, $f4, $f5;
+        android.widget.PopupWindow $r15, $r16, $r17, $r35, $r36;
+        android.graphics.Paint $r18, $r19, $r21, $r22;
+        android.graphics.Paint$Align $r20;
+        java.util.HashMap $r24;
+        android.graphics.drawable.Drawable $r26, $r37;
+        android.content.res.Resources $r27, $r29;
+        android.util.DisplayMetrics $r28;
+        boolean $z1;
+        android.view.accessibility.AccessibilityManager $r30;
+        android.media.AudioManager $r32;
+        android.view.View $r33;
+        android.widget.TextView $r34, r40;
+        android.util.AttributeSet r38;
+
+        r0 := @this: android.inputmethodservice.KeyboardView;
+
+        r1 := @parameter0: android.content.Context;
+
+        r38 := @parameter1: android.util.AttributeSet;
+
+        i13 := @parameter2: int;
+
+        i14 := @parameter3: int;
+
+        specialinvoke r0.<android.view.View: void <init>(android.content.Context,android.util.AttributeSet,int,int)>(r1, r38, i13, i14);
+
+        r0.<android.inputmethodservice.KeyboardView: int mCurrentKeyIndex> = -1;
+
+        $r3 = newarray (int)[2];
+
+        r0.<android.inputmethodservice.KeyboardView: int[] mCoordinates> = $r3;
+
+        r0.<android.inputmethodservice.KeyboardView: boolean mPreviewCentered> = 0;
+
+        r0.<android.inputmethodservice.KeyboardView: boolean mShowPreview> = 1;
+
+        r0.<android.inputmethodservice.KeyboardView: boolean mShowTouchPoints> = 1;
+
+        r0.<android.inputmethodservice.KeyboardView: int mCurrentKey> = -1;
+
+        r0.<android.inputmethodservice.KeyboardView: int mDownKey> = -1;
+
+        $r4 = newarray (int)[12];
+
+        r0.<android.inputmethodservice.KeyboardView: int[] mKeyIndices> = $r4;
+
+        r0.<android.inputmethodservice.KeyboardView: int mRepeatKeyIndex> = -1;
+
+        $r5 = new android.graphics.Rect;
+
+        specialinvoke $r5.<android.graphics.Rect: void <init>(int,int,int,int)>(0, 0, 0, 0);
+
+        r0.<android.inputmethodservice.KeyboardView: android.graphics.Rect mClipRegion> = $r5;
+
+        $r6 = new android.inputmethodservice.KeyboardView$SwipeTracker;
+
+        specialinvoke $r6.<android.inputmethodservice.KeyboardView$SwipeTracker: void <init>(android.inputmethodservice.KeyboardView$1)>(null);
+
+        r0.<android.inputmethodservice.KeyboardView: android.inputmethodservice.KeyboardView$SwipeTracker mSwipeTracker> = $r6;
+
+        r0.<android.inputmethodservice.KeyboardView: int mOldPointerCount> = 1;
+
+        $i2 = <android.inputmethodservice.KeyboardView: int MAX_NEARBY_KEYS>;
+
+        $r7 = newarray (int)[$i2];
+
+        r0.<android.inputmethodservice.KeyboardView: int[] mDistances> = $r7;
+
+        $r8 = new java.lang.StringBuilder;
+
+        specialinvoke $r8.<java.lang.StringBuilder: void <init>(int)>(1);
+
+        r0.<android.inputmethodservice.KeyboardView: java.lang.StringBuilder mPreviewLabel> = $r8;
+
+        $r9 = new android.graphics.Rect;
+
+        specialinvoke $r9.<android.graphics.Rect: void <init>()>();
+
+        r0.<android.inputmethodservice.KeyboardView: android.graphics.Rect mDirtyRect> = $r9;
+
+        $r10 = <android.R$styleable: int[] KeyboardView>;
+
+        r39 = virtualinvoke r1.<android.content.Context: android.content.res.TypedArray obtainStyledAttributes(android.util.AttributeSet,int[],int,int)>(r38, $r10, i13, i14);
+
+        $r11 = virtualinvoke r1.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("layout_inflater");
+
+        r2 = (android.view.LayoutInflater) $r11;
+
+        i15 = 0;
+
+        i0 = virtualinvoke r39.<android.content.res.TypedArray: int getIndexCount()>();
+
+        i16 = 0;
+
+     label01:
+        if i16 >= i0 goto label15;
+
+        i1 = virtualinvoke r39.<android.content.res.TypedArray: int getIndex(int)>(i16);
+
+        tableswitch(i1)
+        {
+            case 0: goto label13;
+            case 1: goto label12;
+            case 2: goto label11;
+            case 3: goto label10;
+            case 4: goto label09;
+            case 5: goto label08;
+            case 6: goto label07;
+            case 7: goto label06;
+            case 8: goto label05;
+            case 9: goto label04;
+            case 10: goto label03;
+            default: goto label02;
+        };
+
+     label02:
+        goto label14;
+
+     label03:
+        $i5 = virtualinvoke r39.<android.content.res.TypedArray: int getResourceId(int,int)>(i1, 0);
+
+        r0.<android.inputmethodservice.KeyboardView: int mPopupLayout> = $i5;
+
+        goto label14;
+
+     label04:
+        $i6 = virtualinvoke r39.<android.content.res.TypedArray: int getDimensionPixelOffset(int,int)>(i1, 0);
+
+        r0.<android.inputmethodservice.KeyboardView: int mVerticalCorrection> = $i6;
+
+        goto label14;
+
+     label05:
+        $i7 = virtualinvoke r39.<android.content.res.TypedArray: int getDimensionPixelSize(int,int)>(i1, 80);
+
+        r0.<android.inputmethodservice.KeyboardView: int mPreviewHeight> = $i7;
+
+        goto label14;
+
+     label06:
+        $i8 = virtualinvoke r39.<android.content.res.TypedArray: int getDimensionPixelOffset(int,int)>(i1, 0);
+
+        r0.<android.inputmethodservice.KeyboardView: int mPreviewOffset> = $i8;
+
+        goto label14;
+
+     label07:
+        i15 = virtualinvoke r39.<android.content.res.TypedArray: int getResourceId(int,int)>(i1, 0);
+
+        goto label14;
+
+     label08:
+        $i9 = virtualinvoke r39.<android.content.res.TypedArray: int getColor(int,int)>(i1, -16777216);
+
+        r0.<android.inputmethodservice.KeyboardView: int mKeyTextColor> = $i9;
+
+        goto label14;
+
+     label09:
+        $i10 = virtualinvoke r39.<android.content.res.TypedArray: int getDimensionPixelSize(int,int)>(i1, 14);
+
+        r0.<android.inputmethodservice.KeyboardView: int mLabelTextSize> = $i10;
+
+        goto label14;
+
+     label10:
+        $i11 = virtualinvoke r39.<android.content.res.TypedArray: int getDimensionPixelSize(int,int)>(i1, 18);
+
+        r0.<android.inputmethodservice.KeyboardView: int mKeyTextSize> = $i11;
+
+        goto label14;
+
+     label11:
+        $r37 = virtualinvoke r39.<android.content.res.TypedArray: android.graphics.drawable.Drawable getDrawable(int)>(i1);
+
+        r0.<android.inputmethodservice.KeyboardView: android.graphics.drawable.Drawable mKeyBackground> = $r37;
+
+        goto label14;
+
+     label12:
+        $f5 = virtualinvoke r39.<android.content.res.TypedArray: float getFloat(int,float)>(i1, 0.0F);
+
+        r0.<android.inputmethodservice.KeyboardView: float mShadowRadius> = $f5;
+
+        goto label14;
+
+     label13:
+        $i12 = virtualinvoke r39.<android.content.res.TypedArray: int getColor(int,int)>(i1, 0);
+
+        r0.<android.inputmethodservice.KeyboardView: int mShadowColor> = $i12;
+
+     label14:
+        i16 = i16 + 1;
+
+        goto label01;
+
+     label15:
+        $r13 = r0.<android.inputmethodservice.KeyboardView: android.content.Context mContext>;
+
+        $r12 = <com.android.internal.R$styleable: int[] Theme>;
+
+        $r14 = virtualinvoke $r13.<android.content.Context: android.content.res.TypedArray obtainStyledAttributes(int[])>($r12);
+
+        $f0 = virtualinvoke $r14.<android.content.res.TypedArray: float getFloat(int,float)>(2, 0.5F);
+
+        r0.<android.inputmethodservice.KeyboardView: float mBackgroundDimAmount> = $f0;
+
+        $r15 = new android.widget.PopupWindow;
+
+        specialinvoke $r15.<android.widget.PopupWindow: void <init>(android.content.Context)>(r1);
+
+        r0.<android.inputmethodservice.KeyboardView: android.widget.PopupWindow mPreviewPopup> = $r15;
+
+        if i15 == 0 goto label16;
+
+        $r33 = virtualinvoke r2.<android.view.LayoutInflater: android.view.View inflate(int,android.view.ViewGroup)>(i15, null);
+
+        r40 = (android.widget.TextView) $r33;
+
+        r0.<android.inputmethodservice.KeyboardView: android.widget.TextView mPreviewText> = r40;
+
+        $f4 = virtualinvoke r40.<android.widget.TextView: float getTextSize()>();
+
+        $i4 = (int) $f4;
+
+        r0.<android.inputmethodservice.KeyboardView: int mPreviewTextSizeLarge> = $i4;
+
+        $r35 = r0.<android.inputmethodservice.KeyboardView: android.widget.PopupWindow mPreviewPopup>;
+
+        $r34 = r0.<android.inputmethodservice.KeyboardView: android.widget.TextView mPreviewText>;
+
+        virtualinvoke $r35.<android.widget.PopupWindow: void setContentView(android.view.View)>($r34);
+
+        $r36 = r0.<android.inputmethodservice.KeyboardView: android.widget.PopupWindow mPreviewPopup>;
+
+        virtualinvoke $r36.<android.widget.PopupWindow: void setBackgroundDrawable(android.graphics.drawable.Drawable)>(null);
+
+        goto label17;
+
+     label16:
+        r0.<android.inputmethodservice.KeyboardView: boolean mShowPreview> = 0;
+
+     label17:
+        $r16 = r0.<android.inputmethodservice.KeyboardView: android.widget.PopupWindow mPreviewPopup>;
+
+        virtualinvoke $r16.<android.widget.PopupWindow: void setTouchable(boolean)>(0);
+
+        $r17 = new android.widget.PopupWindow;
+
+        specialinvoke $r17.<android.widget.PopupWindow: void <init>(android.content.Context)>(r1);
+
+        r0.<android.inputmethodservice.KeyboardView: android.widget.PopupWindow mPopupKeyboard> = $r17;
+
+        virtualinvoke $r17.<android.widget.PopupWindow: void setBackgroundDrawable(android.graphics.drawable.Drawable)>(null);
+
+        r0.<android.inputmethodservice.KeyboardView: android.view.View mPopupParent> = r0;
+
+        $r18 = new android.graphics.Paint;
+
+        specialinvoke $r18.<android.graphics.Paint: void <init>()>();
+
+        r0.<android.inputmethodservice.KeyboardView: android.graphics.Paint mPaint> = $r18;
+
+        virtualinvoke $r18.<android.graphics.Paint: void setAntiAlias(boolean)>(1);
+
+        $r19 = r0.<android.inputmethodservice.KeyboardView: android.graphics.Paint mPaint>;
+
+        $f1 = (float) 0;
+
+        virtualinvoke $r19.<android.graphics.Paint: void setTextSize(float)>($f1);
+
+        $r21 = r0.<android.inputmethodservice.KeyboardView: android.graphics.Paint mPaint>;
+
+        $r20 = <android.graphics.Paint$Align: android.graphics.Paint$Align CENTER>;
+
+        virtualinvoke $r21.<android.graphics.Paint: void setTextAlign(android.graphics.Paint$Align)>($r20);
+
+        $r22 = r0.<android.inputmethodservice.KeyboardView: android.graphics.Paint mPaint>;
+
+        virtualinvoke $r22.<android.graphics.Paint: void setAlpha(int)>(255);
+
+        $r23 = new android.graphics.Rect;
+
+        specialinvoke $r23.<android.graphics.Rect: void <init>(int,int,int,int)>(0, 0, 0, 0);
+
+        r0.<android.inputmethodservice.KeyboardView: android.graphics.Rect mPadding> = $r23;
+
+        $r24 = new java.util.HashMap;
+
+        specialinvoke $r24.<java.util.HashMap: void <init>()>();
+
+        r0.<android.inputmethodservice.KeyboardView: java.util.Map mMiniKeyboardCache> = $r24;
+
+        $r26 = r0.<android.inputmethodservice.KeyboardView: android.graphics.drawable.Drawable mKeyBackground>;
+
+        $r25 = r0.<android.inputmethodservice.KeyboardView: android.graphics.Rect mPadding>;
+
+        virtualinvoke $r26.<android.graphics.drawable.Drawable: boolean getPadding(android.graphics.Rect)>($r25);
+
+        $r27 = virtualinvoke r0.<android.inputmethodservice.KeyboardView: android.content.res.Resources getResources()>();
+
+        $r28 = virtualinvoke $r27.<android.content.res.Resources: android.util.DisplayMetrics getDisplayMetrics()>();
+
+        $f2 = $r28.<android.util.DisplayMetrics: float density>;
+
+        $f3 = $f2 * 500.0F;
+
+        $i3 = (int) $f3;
+
+        r0.<android.inputmethodservice.KeyboardView: int mSwipeThreshold> = $i3;
+
+        $r29 = virtualinvoke r0.<android.inputmethodservice.KeyboardView: android.content.res.Resources getResources()>();
+
+        $z1 = virtualinvoke $r29.<android.content.res.Resources: boolean getBoolean(int)>(17891557);
+
+        r0.<android.inputmethodservice.KeyboardView: boolean mDisambiguateSwipe> = $z1;
+
+        $r30 = staticinvoke <android.view.accessibility.AccessibilityManager: android.view.accessibility.AccessibilityManager getInstance(android.content.Context)>(r1);
+
+        r0.<android.inputmethodservice.KeyboardView: android.view.accessibility.AccessibilityManager mAccessibilityManager> = $r30;
+
+        $r31 = virtualinvoke r1.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("audio");
+
+        $r32 = (android.media.AudioManager) $r31;
+
+        r0.<android.inputmethodservice.KeyboardView: android.media.AudioManager mAudioManager> = $r32;
+
+        specialinvoke r0.<android.inputmethodservice.KeyboardView: void resetMultiTap()>();
+
+        return;
+    }
+
+    static void access$100(android.inputmethodservice.KeyboardView, int)
+    {
+        android.inputmethodservice.KeyboardView r0;
+        int i0;
+
+        r0 := @parameter0: android.inputmethodservice.KeyboardView;
+
+        i0 := @parameter1: int;
+
+        specialinvoke r0.<android.inputmethodservice.KeyboardView: void showKey(int)>(i0);
+
+        return;
+    }
+
+    static int access$1000(android.inputmethodservice.KeyboardView)
+    {
+        android.inputmethodservice.KeyboardView r0;
+        int $i0;
+
+        r0 := @parameter0: android.inputmethodservice.KeyboardView;
+
+        $i0 = r0.<android.inputmethodservice.KeyboardView: int mStartX>;
+
+        return $i0;
+    }
+
+    static int access$1100(android.inputmethodservice.KeyboardView)
+    {
+        android.inputmethodservice.KeyboardView r0;
+        int $i0;
+
+        r0 := @parameter0: android.inputmethodservice.KeyboardView;
+
+        $i0 = r0.<android.inputmethodservice.KeyboardView: int mStartY>;
+
+        return $i0;
+    }
+
+    static void access$1200(android.inputmethodservice.KeyboardView, int, int, int, long)
+    {
+        android.inputmethodservice.KeyboardView r0;
+        int i0, i1, i2;
+        long l3;
+
+        r0 := @parameter0: android.inputmethodservice.KeyboardView;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        i2 := @parameter3: int;
+
+        l3 := @parameter4: long;
+
+        specialinvoke r0.<android.inputmethodservice.KeyboardView: void detectAndSendKey(int,int,int,long)>(i0, i1, i2, l3);
+
+        return;
+    }
+
+    static android.inputmethodservice.KeyboardView$OnKeyboardActionListener access$1300(android.inputmethodservice.KeyboardView)
+    {
+        android.inputmethodservice.KeyboardView r0;
+        android.inputmethodservice.KeyboardView$OnKeyboardActionListener $r1;
+
+        r0 := @parameter0: android.inputmethodservice.KeyboardView;
+
+        $r1 = r0.<android.inputmethodservice.KeyboardView: android.inputmethodservice.KeyboardView$OnKeyboardActionListener mKeyboardActionListener>;
+
+        return $r1;
+    }
+
+    static void access$1400(android.inputmethodservice.KeyboardView)
+    {
+        android.inputmethodservice.KeyboardView r0;
+
+        r0 := @parameter0: android.inputmethodservice.KeyboardView;
+
+        specialinvoke r0.<android.inputmethodservice.KeyboardView: void dismissPopupKeyboard()>();
+
+        return;
+    }
+
+    static android.widget.TextView access$200(android.inputmethodservice.KeyboardView)
+    {
+        android.inputmethodservice.KeyboardView r0;
+        android.widget.TextView $r1;
+
+        r0 := @parameter0: android.inputmethodservice.KeyboardView;
+
+        $r1 = r0.<android.inputmethodservice.KeyboardView: android.widget.TextView mPreviewText>;
+
+        return $r1;
+    }
+
+    static boolean access$300(android.inputmethodservice.KeyboardView)
+    {
+        android.inputmethodservice.KeyboardView r0;
+        boolean $z0;
+
+        r0 := @parameter0: android.inputmethodservice.KeyboardView;
+
+        $z0 = specialinvoke r0.<android.inputmethodservice.KeyboardView: boolean repeatKey()>();
+
+        return $z0;
+    }
+
+    static boolean access$400(android.inputmethodservice.KeyboardView, android.view.MotionEvent)
+    {
+        android.inputmethodservice.KeyboardView r0;
+        android.view.MotionEvent r1;
+        boolean $z0;
+
+        r0 := @parameter0: android.inputmethodservice.KeyboardView;
+
+        r1 := @parameter1: android.view.MotionEvent;
+
+        $z0 = specialinvoke r0.<android.inputmethodservice.KeyboardView: boolean openPopupIfRequired(android.view.MotionEvent)>(r1);
+
+        return $z0;
+    }
+
+    static boolean access$500(android.inputmethodservice.KeyboardView)
+    {
+        android.inputmethodservice.KeyboardView r0;
+        boolean $z0;
+
+        r0 := @parameter0: android.inputmethodservice.KeyboardView;
+
+        $z0 = r0.<android.inputmethodservice.KeyboardView: boolean mPossiblePoly>;
+
+        return $z0;
+    }
+
+    static android.inputmethodservice.KeyboardView$SwipeTracker access$600(android.inputmethodservice.KeyboardView)
+    {
+        android.inputmethodservice.KeyboardView r0;
+        android.inputmethodservice.KeyboardView$SwipeTracker $r1;
+
+        r0 := @parameter0: android.inputmethodservice.KeyboardView;
+
+        $r1 = r0.<android.inputmethodservice.KeyboardView: android.inputmethodservice.KeyboardView$SwipeTracker mSwipeTracker>;
+
+        return $r1;
+    }
+
+    static int access$700(android.inputmethodservice.KeyboardView)
+    {
+        android.inputmethodservice.KeyboardView r0;
+        int $i0;
+
+        r0 := @parameter0: android.inputmethodservice.KeyboardView;
+
+        $i0 = r0.<android.inputmethodservice.KeyboardView: int mSwipeThreshold>;
+
+        return $i0;
+    }
+
+    static boolean access$800(android.inputmethodservice.KeyboardView)
+    {
+        android.inputmethodservice.KeyboardView r0;
+        boolean $z0;
+
+        r0 := @parameter0: android.inputmethodservice.KeyboardView;
+
+        $z0 = r0.<android.inputmethodservice.KeyboardView: boolean mDisambiguateSwipe>;
+
+        return $z0;
+    }
+
+    static int access$900(android.inputmethodservice.KeyboardView)
+    {
+        android.inputmethodservice.KeyboardView r0;
+        int $i0;
+
+        r0 := @parameter0: android.inputmethodservice.KeyboardView;
+
+        $i0 = r0.<android.inputmethodservice.KeyboardView: int mDownKey>;
+
+        return $i0;
+    }
+
+    private java.lang.CharSequence adjustCase(java.lang.CharSequence)
+    {
+        android.inputmethodservice.KeyboardView r0;
+        java.lang.CharSequence r1, r5;
+        android.inputmethodservice.Keyboard $r2;
+        boolean $z0, $z1;
+        int $i0;
+        char $c1;
+        java.lang.String $r3;
+        java.lang.Object r4;
+
+        r0 := @this: android.inputmethodservice.KeyboardView;
+
+        r1 := @parameter0: java.lang.CharSequence;
+
+        r4 = r1;
+
+        $r2 = r0.<android.inputmethodservice.KeyboardView: android.inputmethodservice.Keyboard mKeyboard>;
+
+        $z0 = virtualinvoke $r2.<android.inputmethodservice.Keyboard: boolean isShifted()>();
+
+        if $z0 == 0 goto label1;
+
+        r4 = r1;
+
+        if r1 == null goto label1;
+
+        r4 = r1;
+
+        $i0 = interfaceinvoke r1.<java.lang.CharSequence: int length()>();
+
+        if $i0 >= 3 goto label1;
+
+        r4 = r1;
+
+        $c1 = interfaceinvoke r1.<java.lang.CharSequence: char charAt(int)>(0);
+
+        $z1 = staticinvoke <java.lang.Character: boolean isLowerCase(char)>($c1);
+
+        if $z1 == 0 goto label1;
+
+        $r3 = interfaceinvoke r1.<java.lang.CharSequence: java.lang.String toString()>();
+
+        r4 = virtualinvoke $r3.<java.lang.String: java.lang.String toUpperCase()>();
+
+     label1:
+        r5 = (java.lang.CharSequence) r4;
+
+        return r5;
+    }
+
+    private void checkMultiTap(long, int)
+    {
+        android.inputmethodservice.KeyboardView r0;
+        long l0, $l3, $l4, $l7, $l8;
+        int i1, $i2, $i6, $i10, $i11, $i12, $i13, $i14;
+        android.inputmethodservice.Keyboard$Key r1;
+        android.inputmethodservice.Keyboard$Key[] $r2;
+        int[] $r3, $r4;
+        byte $b5, $b9;
+
+        r0 := @this: android.inputmethodservice.KeyboardView;
+
+        l0 := @parameter0: long;
+
+        i1 := @parameter1: int;
+
+        if i1 != -1 goto label1;
+
+        return;
+
+     label1:
+        $r2 = r0.<android.inputmethodservice.KeyboardView: android.inputmethodservice.Keyboard$Key[] mKeys>;
+
+        r1 = $r2[i1];
+
+        $r3 = r1.<android.inputmethodservice.Keyboard$Key: int[] codes>;
+
+        $i2 = lengthof $r3;
+
+        if $i2 <= 1 goto label3;
+
+        r0.<android.inputmethodservice.KeyboardView: boolean mInMultiTap> = 1;
+
+        $l7 = r0.<android.inputmethodservice.KeyboardView: long mLastTapTime>;
+
+        $l8 = $l7 + 800L;
+
+        $b9 = l0 cmp $l8;
+
+        if $b9 >= 0 goto label2;
+
+        $i10 = r0.<android.inputmethodservice.KeyboardView: int mLastSentIndex>;
+
+        if i1 != $i10 goto label2;
+
+        $i11 = r0.<android.inputmethodservice.KeyboardView: int mTapCount>;
+
+        $i13 = $i11 + 1;
+
+        $r4 = r1.<android.inputmethodservice.Keyboard$Key: int[] codes>;
+
+        $i12 = lengthof $r4;
+
+        $i14 = $i13 % $i12;
+
+        r0.<android.inputmethodservice.KeyboardView: int mTapCount> = $i14;
+
+        return;
+
+     label2:
+        r0.<android.inputmethodservice.KeyboardView: int mTapCount> = -1;
+
+        return;
+
+     label3:
+        $l3 = r0.<android.inputmethodservice.KeyboardView: long mLastTapTime>;
+
+        $l4 = $l3 + 800L;
+
+        $b5 = l0 cmp $l4;
+
+        if $b5 > 0 goto label4;
+
+        $i6 = r0.<android.inputmethodservice.KeyboardView: int mLastSentIndex>;
+
+        if i1 == $i6 goto label5;
+
+     label4:
+        specialinvoke r0.<android.inputmethodservice.KeyboardView: void resetMultiTap()>();
+
+     label5:
+        return;
+    }
+
+    private void computeProximityThreshold(android.inputmethodservice.Keyboard)
+    {
+        android.inputmethodservice.KeyboardView r0;
+        android.inputmethodservice.Keyboard$Key[] r1;
+        int i0, $i1, $i2, $i3, $i4, $i5, $i6, i7, i8, i9;
+        float $f0, $f1, $f2, $f3;
+        android.inputmethodservice.Keyboard r2;
+        android.inputmethodservice.Keyboard$Key r3;
+
+        r0 := @this: android.inputmethodservice.KeyboardView;
+
+        r2 := @parameter0: android.inputmethodservice.Keyboard;
+
+        if r2 != null goto label1;
+
+        return;
+
+     label1:
+        r1 = r0.<android.inputmethodservice.KeyboardView: android.inputmethodservice.Keyboard$Key[] mKeys>;
+
+        if r1 != null goto label2;
+
+        return;
+
+     label2:
+        i0 = lengthof r1;
+
+        i7 = 0;
+
+        i8 = 0;
+
+     label3:
+        if i8 >= i0 goto label4;
+
+        r3 = r1[i8];
+
+        $i3 = r3.<android.inputmethodservice.Keyboard$Key: int width>;
+
+        $i2 = r3.<android.inputmethodservice.Keyboard$Key: int height>;
+
+        $i4 = staticinvoke <java.lang.Math: int min(int,int)>($i3, $i2);
+
+        $i5 = r3.<android.inputmethodservice.Keyboard$Key: int gap>;
+
+        $i6 = $i4 + $i5;
+
+        i7 = i7 + $i6;
+
+        i8 = i8 + 1;
+
+        goto label3;
+
+     label4:
+        if i7 < 0 goto label6;
+
+        if i0 != 0 goto label5;
+
+        goto label6;
+
+     label5:
+        $f0 = (float) i7;
+
+        $f2 = $f0 * 1.4F;
+
+        $f1 = (float) i0;
+
+        $f3 = $f2 / $f1;
+
+        i9 = (int) $f3;
+
+        r0.<android.inputmethodservice.KeyboardView: int mProximityThreshold> = i9;
+
+        $i1 = i9 * i9;
+
+        r0.<android.inputmethodservice.KeyboardView: int mProximityThreshold> = $i1;
+
+        return;
+
+     label6:
+        return;
+    }
+
+    private void detectAndSendKey(int, int, int, long)
+    {
+        android.inputmethodservice.KeyboardView r0;
+        int i0, i1, i3, $i4, $i5, $i7, $i8, i9, i10;
+        long l2;
+        int[] r1, $r3, $r4, $r5;
+        java.lang.CharSequence $r2, $r7;
+        boolean $z0;
+        android.inputmethodservice.KeyboardView$OnKeyboardActionListener $r6, $r8, $r9, $r12, $r13;
+        android.inputmethodservice.Keyboard$Key[] r10;
+        android.inputmethodservice.Keyboard$Key r11;
+
+        r0 := @this: android.inputmethodservice.KeyboardView;
+
+        i0 := @parameter0: int;
+
+        i9 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        l2 := @parameter3: long;
+
+        if i0 == -1 goto label6;
+
+        r10 = r0.<android.inputmethodservice.KeyboardView: android.inputmethodservice.Keyboard$Key[] mKeys>;
+
+        $i4 = lengthof r10;
+
+        if i0 >= $i4 goto label6;
+
+        r11 = r10[i0];
+
+        $r2 = r11.<android.inputmethodservice.Keyboard$Key: java.lang.CharSequence text>;
+
+        if $r2 == null goto label1;
+
+        $r8 = r0.<android.inputmethodservice.KeyboardView: android.inputmethodservice.KeyboardView$OnKeyboardActionListener mKeyboardActionListener>;
+
+        $r7 = r11.<android.inputmethodservice.Keyboard$Key: java.lang.CharSequence text>;
+
+        interfaceinvoke $r8.<android.inputmethodservice.KeyboardView$OnKeyboardActionListener: void onText(java.lang.CharSequence)>($r7);
+
+        $r9 = r0.<android.inputmethodservice.KeyboardView: android.inputmethodservice.KeyboardView$OnKeyboardActionListener mKeyboardActionListener>;
+
+        interfaceinvoke $r9.<android.inputmethodservice.KeyboardView$OnKeyboardActionListener: void onRelease(int)>(-1);
+
+        goto label5;
+
+     label1:
+        $r3 = r11.<android.inputmethodservice.Keyboard$Key: int[] codes>;
+
+        i3 = $r3[0];
+
+        $i5 = <android.inputmethodservice.KeyboardView: int MAX_NEARBY_KEYS>;
+
+        r1 = newarray (int)[$i5];
+
+        staticinvoke <java.util.Arrays: void fill(int[],int)>(r1, -1);
+
+        specialinvoke r0.<android.inputmethodservice.KeyboardView: int getKeyIndices(int,int,int[])>(i9, i1, r1);
+
+        i10 = i3;
+
+        $z0 = r0.<android.inputmethodservice.KeyboardView: boolean mInMultiTap>;
+
+        if $z0 == 0 goto label4;
+
+        $i7 = r0.<android.inputmethodservice.KeyboardView: int mTapCount>;
+
+        if $i7 == -1 goto label2;
+
+        $r6 = r0.<android.inputmethodservice.KeyboardView: android.inputmethodservice.KeyboardView$OnKeyboardActionListener mKeyboardActionListener>;
+
+        $r5 = <android.inputmethodservice.KeyboardView: int[] KEY_DELETE>;
+
+        interfaceinvoke $r6.<android.inputmethodservice.KeyboardView$OnKeyboardActionListener: void onKey(int,int[])>(-5, $r5);
+
+        goto label3;
+
+     label2:
+        r0.<android.inputmethodservice.KeyboardView: int mTapCount> = 0;
+
+     label3:
+        $r4 = r11.<android.inputmethodservice.Keyboard$Key: int[] codes>;
+
+        $i8 = r0.<android.inputmethodservice.KeyboardView: int mTapCount>;
+
+        i10 = $r4[$i8];
+
+     label4:
+        $r12 = r0.<android.inputmethodservice.KeyboardView: android.inputmethodservice.KeyboardView$OnKeyboardActionListener mKeyboardActionListener>;
+
+        interfaceinvoke $r12.<android.inputmethodservice.KeyboardView$OnKeyboardActionListener: void onKey(int,int[])>(i10, r1);
+
+        $r13 = r0.<android.inputmethodservice.KeyboardView: android.inputmethodservice.KeyboardView$OnKeyboardActionListener mKeyboardActionListener>;
+
+        interfaceinvoke $r13.<android.inputmethodservice.KeyboardView$OnKeyboardActionListener: void onRelease(int)>(i10);
+
+     label5:
+        r0.<android.inputmethodservice.KeyboardView: int mLastSentIndex> = i0;
+
+        r0.<android.inputmethodservice.KeyboardView: long mLastTapTime> = l2;
+
+     label6:
+        return;
+    }
+
+    private void dismissPopupKeyboard()
+    {
+        android.inputmethodservice.KeyboardView r0;
+        android.widget.PopupWindow $r1, $r2;
+        boolean $z0;
+
+        r0 := @this: android.inputmethodservice.KeyboardView;
+
+        $r1 = r0.<android.inputmethodservice.KeyboardView: android.widget.PopupWindow mPopupKeyboard>;
+
+        $z0 = virtualinvoke $r1.<android.widget.PopupWindow: boolean isShowing()>();
+
+        if $z0 == 0 goto label1;
+
+        $r2 = r0.<android.inputmethodservice.KeyboardView: android.widget.PopupWindow mPopupKeyboard>;
+
+        virtualinvoke $r2.<android.widget.PopupWindow: void dismiss()>();
+
+        r0.<android.inputmethodservice.KeyboardView: boolean mMiniKeyboardOnScreen> = 0;
+
+        virtualinvoke r0.<android.inputmethodservice.KeyboardView: void invalidateAllKeys()>();
+
+     label1:
+        return;
+    }
+
+    private int getKeyIndices(int, int, int[])
+    {
+        android.inputmethodservice.KeyboardView r0;
+        int i0, i1, $i2, $i3, $i4, $i5, $i6, $i7, $i8, $i9, $i10, $i11, $i12, $i13, $i14, $i15, $i16, $i17, $i18, i19, i20, i21, i22, i23, i27, i28, i29, i31, i32, i33, i34, i35, i36;
+        int[] r1, r3, r5, $r6, $r8, $r9, $r10, $r11;
+        android.inputmethodservice.Keyboard$Key[] r2;
+        android.inputmethodservice.Keyboard$Key r4;
+        boolean z0, $z1;
+        android.inputmethodservice.Keyboard $r7;
+
+        r0 := @this: android.inputmethodservice.KeyboardView;
+
+        i19 := @parameter0: int;
+
+        i0 := @parameter1: int;
+
+        r1 := @parameter2: int[];
+
+        r2 = r0.<android.inputmethodservice.KeyboardView: android.inputmethodservice.Keyboard$Key[] mKeys>;
+
+        i20 = -1;
+
+        i21 = -1;
+
+        $i2 = r0.<android.inputmethodservice.KeyboardView: int mProximityThreshold>;
+
+        i22 = $i2 + 1;
+
+        $r6 = r0.<android.inputmethodservice.KeyboardView: int[] mDistances>;
+
+        staticinvoke <java.util.Arrays: void fill(int[],int)>($r6, 2147483647);
+
+        $r7 = r0.<android.inputmethodservice.KeyboardView: android.inputmethodservice.Keyboard mKeyboard>;
+
+        r3 = virtualinvoke $r7.<android.inputmethodservice.Keyboard: int[] getNearestKeys(int,int)>(i19, i0);
+
+        i1 = lengthof r3;
+
+        i23 = 0;
+
+     label01:
+        if i23 >= i1 goto label14;
+
+        $i3 = r3[i23];
+
+        r4 = r2[$i3];
+
+        z0 = virtualinvoke r4.<android.inputmethodservice.Keyboard$Key: boolean isInside(int,int)>(i19, i0);
+
+        i27 = i20;
+
+        if z0 == 0 goto label02;
+
+        i27 = r3[i23];
+
+     label02:
+        i28 = 0;
+
+        $z1 = r0.<android.inputmethodservice.KeyboardView: boolean mProximityCorrectOn>;
+
+        if $z1 == 0 goto label03;
+
+        i29 = virtualinvoke r4.<android.inputmethodservice.Keyboard$Key: int squaredDistanceFrom(int,int)>(i19, i0);
+
+        i28 = i29;
+
+        $i18 = r0.<android.inputmethodservice.KeyboardView: int mProximityThreshold>;
+
+        if i29 < $i18 goto label04;
+
+        i28 = i29;
+
+     label03:
+        if z0 == 0 goto label12;
+
+     label04:
+        $r8 = r4.<android.inputmethodservice.Keyboard$Key: int[] codes>;
+
+        $i4 = $r8[0];
+
+        if $i4 <= 32 goto label12;
+
+        $r9 = r4.<android.inputmethodservice.Keyboard$Key: int[] codes>;
+
+        i31 = lengthof $r9;
+
+        i32 = i21;
+
+        i33 = i22;
+
+        if i28 >= i22 goto label05;
+
+        i33 = i28;
+
+        i32 = r3[i23];
+
+     label05:
+        if r1 != null goto label06;
+
+        i22 = i33;
+
+        goto label13;
+
+     label06:
+        i34 = 0;
+
+     label07:
+        r5 = r0.<android.inputmethodservice.KeyboardView: int[] mDistances>;
+
+        $i5 = lengthof r5;
+
+        if i34 >= $i5 goto label11;
+
+        $i6 = r5[i34];
+
+        if $i6 <= i28 goto label10;
+
+        $i10 = i34 + i31;
+
+        $i7 = lengthof r5;
+
+        $i8 = $i7 - i34;
+
+        $i9 = $i8 - i31;
+
+        staticinvoke <java.lang.System: void arraycopy(java.lang.Object,int,java.lang.Object,int,int)>(r5, i34, r5, $i10, $i9);
+
+        $i14 = i34 + i31;
+
+        $i11 = lengthof r1;
+
+        $i12 = $i11 - i34;
+
+        $i13 = $i12 - i31;
+
+        staticinvoke <java.lang.System: void arraycopy(java.lang.Object,int,java.lang.Object,int,int)>(r1, i34, r1, $i14, $i13);
+
+        i35 = 0;
+
+     label08:
+        if i35 >= i31 goto label09;
+
+        $i16 = i34 + i35;
+
+        $r10 = r4.<android.inputmethodservice.Keyboard$Key: int[] codes>;
+
+        $i15 = $r10[i35];
+
+        r1[$i16] = $i15;
+
+        $r11 = r0.<android.inputmethodservice.KeyboardView: int[] mDistances>;
+
+        $i17 = i34 + i35;
+
+        $r11[$i17] = i28;
+
+        i35 = i35 + 1;
+
+        goto label08;
+
+     label09:
+        i22 = i33;
+
+        goto label13;
+
+     label10:
+        i34 = i34 + 1;
+
+        goto label07;
+
+     label11:
+        i22 = i33;
+
+        goto label13;
+
+     label12:
+        i32 = i21;
+
+     label13:
+        i23 = i23 + 1;
+
+        i20 = i27;
+
+        i21 = i32;
+
+        goto label01;
+
+     label14:
+        i36 = i20;
+
+        if i20 != -1 goto label15;
+
+        i36 = i21;
+
+     label15:
+        return i36;
+    }
+
+    private java.lang.CharSequence getPreviewText(android.inputmethodservice.Keyboard$Key)
+    {
+        android.inputmethodservice.KeyboardView r0;
+        int i0, $i1, i3;
+        boolean $z0;
+        java.lang.CharSequence $r1, $r2, $r5;
+        char $c2;
+        java.lang.StringBuilder $r4, r7, r8;
+        android.inputmethodservice.Keyboard$Key r6;
+        int[] r9;
+
+        r0 := @this: android.inputmethodservice.KeyboardView;
+
+        r6 := @parameter0: android.inputmethodservice.Keyboard$Key;
+
+        $z0 = r0.<android.inputmethodservice.KeyboardView: boolean mInMultiTap>;
+
+        if $z0 == 0 goto label3;
+
+        r7 = r0.<android.inputmethodservice.KeyboardView: java.lang.StringBuilder mPreviewLabel>;
+
+        i3 = 0;
+
+        virtualinvoke r7.<java.lang.StringBuilder: void setLength(int)>(0);
+
+        r8 = r0.<android.inputmethodservice.KeyboardView: java.lang.StringBuilder mPreviewLabel>;
+
+        r9 = r6.<android.inputmethodservice.Keyboard$Key: int[] codes>;
+
+        i0 = r0.<android.inputmethodservice.KeyboardView: int mTapCount>;
+
+        if i0 >= 0 goto label1;
+
+        goto label2;
+
+     label1:
+        i3 = i0;
+
+     label2:
+        $i1 = r9[i3];
+
+        $c2 = (char) $i1;
+
+        virtualinvoke r8.<java.lang.StringBuilder: java.lang.StringBuilder append(char)>($c2);
+
+        $r4 = r0.<android.inputmethodservice.KeyboardView: java.lang.StringBuilder mPreviewLabel>;
+
+        $r5 = specialinvoke r0.<android.inputmethodservice.KeyboardView: java.lang.CharSequence adjustCase(java.lang.CharSequence)>($r4);
+
+        return $r5;
+
+     label3:
+        $r1 = r6.<android.inputmethodservice.Keyboard$Key: java.lang.CharSequence label>;
+
+        $r2 = specialinvoke r0.<android.inputmethodservice.KeyboardView: java.lang.CharSequence adjustCase(java.lang.CharSequence)>($r1);
+
+        return $r2;
+    }
+
+    private void initGestureDetector()
+    {
+        android.inputmethodservice.KeyboardView r0;
+        android.view.GestureDetector $r2, $r3;
+        android.content.Context $r4;
+        android.inputmethodservice.KeyboardView$2 $r5;
+
+        r0 := @this: android.inputmethodservice.KeyboardView;
+
+        $r2 = r0.<android.inputmethodservice.KeyboardView: android.view.GestureDetector mGestureDetector>;
+
+        if $r2 != null goto label1;
+
+        $r3 = new android.view.GestureDetector;
+
+        $r4 = virtualinvoke r0.<android.inputmethodservice.KeyboardView: android.content.Context getContext()>();
+
+        $r5 = new android.inputmethodservice.KeyboardView$2;
+
+        specialinvoke $r5.<android.inputmethodservice.KeyboardView$2: void <init>(android.inputmethodservice.KeyboardView)>(r0);
+
+        specialinvoke $r3.<android.view.GestureDetector: void <init>(android.content.Context,android.view.GestureDetector$OnGestureListener)>($r4, $r5);
+
+        r0.<android.inputmethodservice.KeyboardView: android.view.GestureDetector mGestureDetector> = $r3;
+
+        virtualinvoke $r3.<android.view.GestureDetector: void setIsLongpressEnabled(boolean)>(0);
+
+     label1:
+        return;
+    }
+
+    private void onBufferDraw()
+    {
+        android.inputmethodservice.KeyboardView r0;
+        android.graphics.Canvas r1, $r9, $r11, $r33;
+        android.graphics.Paint r2;
+        android.graphics.drawable.Drawable r3, $r17, $r18, $r19, $r20, $r21, $r22, $r23;
+        android.graphics.Rect r4, r7, $r10, $r12, r36;
+        int i0, i1, i2, i3, i4, $i6, $i7, $i8, $i9, $i10, $i11, $i12, $i13, $i14, $i15, $i16, $i17, $i18, $i19, $i20, $i21, $i22, $i23, $i24, $i25, $i26, $i27, $i28, $i29, $i30, $i31, $i32, $i33, $i34, $i35, $i36, $i37, $i38, $i39, $i40, $i41, $i42, $i43, $i44, $i45, $i46, $i47, $i48, $i49, $i50, $i51, $i52, $i53, $i54, $i55, $i56, $i57, $i58, $i59, $i60, $i61, $i62, $i63, $i64, $i65, $i66, $i67, $i68, $i69, $i70, i71, $i72, $i73, $i74, $i75, $i76, $i77, $i78, $i79, $i80, $i81, $i82, $i83, $i84, $i85, $i86, $i87, $i88, $i89, $i90, $i91, $i92, $i93, $i94, $i95, $i96, $i97;
+        android.inputmethodservice.Keyboard$Key r5, r6;
+        android.graphics.Bitmap $r8, $r29, r30, $r32, $r34;
+        boolean $z1, $z3, $z4, $z5, z6;
+        float $f0, $f1, $f2, $f3, $f4, $f5, $f6, $f7, $f8, $f9, $f10, $f11, $f12, $f13, $f14, $f15, $f16, $f17, $f18, $f19, $f20, $f21, $f22, $f23;
+        int[] $r13, $r26;
+        java.lang.CharSequence $r14, $r15, $r16;
+        android.graphics.Typeface $r24, $r27;
+        android.graphics.Bitmap$Config $r31;
+        android.inputmethodservice.Keyboard $r35;
+        android.inputmethodservice.Keyboard$Key[] r37;
+        android.graphics.PorterDuff$Mode $r38;
+        java.lang.String r39;
+
+        r0 := @this: android.inputmethodservice.KeyboardView;
+
+        $r8 = r0.<android.inputmethodservice.KeyboardView: android.graphics.Bitmap mBuffer>;
+
+        if $r8 == null goto label01;
+
+        $z5 = r0.<android.inputmethodservice.KeyboardView: boolean mKeyboardChanged>;
+
+        if $z5 == 0 goto label04;
+
+     label01:
+        r30 = r0.<android.inputmethodservice.KeyboardView: android.graphics.Bitmap mBuffer>;
+
+        if r30 == null goto label02;
+
+        $z4 = r0.<android.inputmethodservice.KeyboardView: boolean mKeyboardChanged>;
+
+        if $z4 == 0 goto label03;
+
+        $i63 = virtualinvoke r30.<android.graphics.Bitmap: int getWidth()>();
+
+        $i64 = virtualinvoke r0.<android.inputmethodservice.KeyboardView: int getWidth()>();
+
+        if $i63 != $i64 goto label02;
+
+        $r29 = r0.<android.inputmethodservice.KeyboardView: android.graphics.Bitmap mBuffer>;
+
+        $i65 = virtualinvoke $r29.<android.graphics.Bitmap: int getHeight()>();
+
+        $i66 = virtualinvoke r0.<android.inputmethodservice.KeyboardView: int getHeight()>();
+
+        if $i65 == $i66 goto label03;
+
+     label02:
+        $i67 = virtualinvoke r0.<android.inputmethodservice.KeyboardView: int getWidth()>();
+
+        $i68 = staticinvoke <java.lang.Math: int max(int,int)>(1, $i67);
+
+        $i69 = virtualinvoke r0.<android.inputmethodservice.KeyboardView: int getHeight()>();
+
+        $i70 = staticinvoke <java.lang.Math: int max(int,int)>(1, $i69);
+
+        $r31 = <android.graphics.Bitmap$Config: android.graphics.Bitmap$Config ARGB_8888>;
+
+        $r32 = staticinvoke <android.graphics.Bitmap: android.graphics.Bitmap createBitmap(int,int,android.graphics.Bitmap$Config)>($i68, $i70, $r31);
+
+        r0.<android.inputmethodservice.KeyboardView: android.graphics.Bitmap mBuffer> = $r32;
+
+        $r33 = new android.graphics.Canvas;
+
+        $r34 = r0.<android.inputmethodservice.KeyboardView: android.graphics.Bitmap mBuffer>;
+
+        specialinvoke $r33.<android.graphics.Canvas: void <init>(android.graphics.Bitmap)>($r34);
+
+        r0.<android.inputmethodservice.KeyboardView: android.graphics.Canvas mCanvas> = $r33;
+
+     label03:
+        virtualinvoke r0.<android.inputmethodservice.KeyboardView: void invalidateAllKeys()>();
+
+        r0.<android.inputmethodservice.KeyboardView: boolean mKeyboardChanged> = 0;
+
+     label04:
+        $r35 = r0.<android.inputmethodservice.KeyboardView: android.inputmethodservice.Keyboard mKeyboard>;
+
+        if $r35 != null goto label05;
+
+        return;
+
+     label05:
+        $r9 = r0.<android.inputmethodservice.KeyboardView: android.graphics.Canvas mCanvas>;
+
+        virtualinvoke $r9.<android.graphics.Canvas: int save()>();
+
+        r1 = r0.<android.inputmethodservice.KeyboardView: android.graphics.Canvas mCanvas>;
+
+        $r10 = r0.<android.inputmethodservice.KeyboardView: android.graphics.Rect mDirtyRect>;
+
+        virtualinvoke r1.<android.graphics.Canvas: boolean clipRect(android.graphics.Rect)>($r10);
+
+        r2 = r0.<android.inputmethodservice.KeyboardView: android.graphics.Paint mPaint>;
+
+        r3 = r0.<android.inputmethodservice.KeyboardView: android.graphics.drawable.Drawable mKeyBackground>;
+
+        r36 = r0.<android.inputmethodservice.KeyboardView: android.graphics.Rect mClipRegion>;
+
+        r4 = r0.<android.inputmethodservice.KeyboardView: android.graphics.Rect mPadding>;
+
+        i0 = r0.<android.inputmethodservice.KeyboardView: int mPaddingLeft>;
+
+        i1 = r0.<android.inputmethodservice.KeyboardView: int mPaddingTop>;
+
+        r37 = r0.<android.inputmethodservice.KeyboardView: android.inputmethodservice.Keyboard$Key[] mKeys>;
+
+        r5 = r0.<android.inputmethodservice.KeyboardView: android.inputmethodservice.Keyboard$Key mInvalidatedKey>;
+
+        $i6 = r0.<android.inputmethodservice.KeyboardView: int mKeyTextColor>;
+
+        virtualinvoke r2.<android.graphics.Paint: void setColor(int)>($i6);
+
+        if r5 == null goto label06;
+
+        $z3 = virtualinvoke r1.<android.graphics.Canvas: boolean getClipBounds(android.graphics.Rect)>(r36);
+
+        if $z3 == 0 goto label06;
+
+        $i43 = r5.<android.inputmethodservice.Keyboard$Key: int x>;
+
+        $i44 = $i43 + i0;
+
+        $i46 = $i44 - 1;
+
+        $i45 = r36.<android.graphics.Rect: int left>;
+
+        if $i46 > $i45 goto label06;
+
+        $i47 = r5.<android.inputmethodservice.Keyboard$Key: int y>;
+
+        $i48 = $i47 + i1;
+
+        $i50 = $i48 - 1;
+
+        $i49 = r36.<android.graphics.Rect: int top>;
+
+        if $i50 > $i49 goto label06;
+
+        $i52 = r5.<android.inputmethodservice.Keyboard$Key: int x>;
+
+        $i51 = r5.<android.inputmethodservice.Keyboard$Key: int width>;
+
+        $i53 = $i52 + $i51;
+
+        $i54 = $i53 + i0;
+
+        $i56 = $i54 + 1;
+
+        $i55 = r36.<android.graphics.Rect: int right>;
+
+        if $i56 < $i55 goto label06;
+
+        $i58 = r5.<android.inputmethodservice.Keyboard$Key: int y>;
+
+        $i57 = r5.<android.inputmethodservice.Keyboard$Key: int height>;
+
+        $i59 = $i58 + $i57;
+
+        $i60 = $i59 + i1;
+
+        $i62 = $i60 + 1;
+
+        $i61 = r36.<android.graphics.Rect: int bottom>;
+
+        if $i62 < $i61 goto label06;
+
+        z6 = 1;
+
+        goto label07;
+
+     label06:
+        z6 = 0;
+
+     label07:
+        $r38 = <android.graphics.PorterDuff$Mode: android.graphics.PorterDuff$Mode CLEAR>;
+
+        virtualinvoke r1.<android.graphics.Canvas: void drawColor(int,android.graphics.PorterDuff$Mode)>(0, $r38);
+
+        i2 = lengthof r37;
+
+        i71 = 0;
+
+     label08:
+        if i71 >= i2 goto label20;
+
+        r6 = r37[i71];
+
+        if z6 == 0 goto label09;
+
+        if r5 == r6 goto label09;
+
+        goto label19;
+
+     label09:
+        $r13 = virtualinvoke r6.<android.inputmethodservice.Keyboard$Key: int[] getCurrentDrawableState()>();
+
+        virtualinvoke r3.<android.graphics.drawable.Drawable: boolean setState(int[])>($r13);
+
+        $r14 = r6.<android.inputmethodservice.Keyboard$Key: java.lang.CharSequence label>;
+
+        if $r14 != null goto label10;
+
+        r39 = null;
+
+        goto label11;
+
+     label10:
+        $r15 = r6.<android.inputmethodservice.Keyboard$Key: java.lang.CharSequence label>;
+
+        $r16 = specialinvoke r0.<android.inputmethodservice.KeyboardView: java.lang.CharSequence adjustCase(java.lang.CharSequence)>($r15);
+
+        r39 = interfaceinvoke $r16.<java.lang.CharSequence: java.lang.String toString()>();
+
+     label11:
+        r7 = virtualinvoke r3.<android.graphics.drawable.Drawable: android.graphics.Rect getBounds()>();
+
+        $i12 = r6.<android.inputmethodservice.Keyboard$Key: int width>;
+
+        $i11 = r7.<android.graphics.Rect: int right>;
+
+        if $i12 != $i11 goto label13;
+
+        $i42 = r6.<android.inputmethodservice.Keyboard$Key: int height>;
+
+        $i41 = r7.<android.graphics.Rect: int bottom>;
+
+        if $i42 == $i41 goto label12;
+
+        goto label13;
+
+     label12:
+        goto label14;
+
+     label13:
+        $i14 = r6.<android.inputmethodservice.Keyboard$Key: int width>;
+
+        $i13 = r6.<android.inputmethodservice.Keyboard$Key: int height>;
+
+        virtualinvoke r3.<android.graphics.drawable.Drawable: void setBounds(int,int,int,int)>(0, 0, $i14, $i13);
+
+     label14:
+        $i72 = r6.<android.inputmethodservice.Keyboard$Key: int x>;
+
+        $i73 = $i72 + i0;
+
+        $f10 = (float) $i73;
+
+        $i74 = r6.<android.inputmethodservice.Keyboard$Key: int y>;
+
+        $i75 = $i74 + i1;
+
+        $f11 = (float) $i75;
+
+        virtualinvoke r1.<android.graphics.Canvas: void translate(float,float)>($f10, $f11);
+
+        virtualinvoke r3.<android.graphics.drawable.Drawable: void draw(android.graphics.Canvas)>(r1);
+
+        if r39 == null goto label17;
+
+        $i37 = virtualinvoke r39.<java.lang.String: int length()>();
+
+        if $i37 <= 1 goto label15;
+
+        $r26 = r6.<android.inputmethodservice.Keyboard$Key: int[] codes>;
+
+        $i39 = lengthof $r26;
+
+        if $i39 >= 2 goto label15;
+
+        $i40 = r0.<android.inputmethodservice.KeyboardView: int mLabelTextSize>;
+
+        $f9 = (float) $i40;
+
+        virtualinvoke r2.<android.graphics.Paint: void setTextSize(float)>($f9);
+
+        $r27 = <android.graphics.Typeface: android.graphics.Typeface DEFAULT_BOLD>;
+
+        virtualinvoke r2.<android.graphics.Paint: android.graphics.Typeface setTypeface(android.graphics.Typeface)>($r27);
+
+        goto label16;
+
+     label15:
+        $i38 = r0.<android.inputmethodservice.KeyboardView: int mKeyTextSize>;
+
+        $f8 = (float) $i38;
+
+        virtualinvoke r2.<android.graphics.Paint: void setTextSize(float)>($f8);
+
+        $r24 = <android.graphics.Typeface: android.graphics.Typeface DEFAULT>;
+
+        virtualinvoke r2.<android.graphics.Paint: android.graphics.Typeface setTypeface(android.graphics.Typeface)>($r24);
+
+     label16:
+        $f12 = r0.<android.inputmethodservice.KeyboardView: float mShadowRadius>;
+
+        $i76 = r0.<android.inputmethodservice.KeyboardView: int mShadowColor>;
+
+        virtualinvoke r2.<android.graphics.Paint: void setShadowLayer(float,float,float,int)>($f12, 0.0F, 0.0F, $i76);
+
+        $i77 = r6.<android.inputmethodservice.Keyboard$Key: int width>;
+
+        $i78 = r4.<android.graphics.Rect: int left>;
+
+        $i79 = $i77 - $i78;
+
+        $i80 = r4.<android.graphics.Rect: int right>;
+
+        $i81 = $i79 - $i80;
+
+        $i82 = $i81 / 2;
+
+        $i83 = r4.<android.graphics.Rect: int left>;
+
+        $i84 = $i82 + $i83;
+
+        $f13 = (float) $i84;
+
+        $i85 = r6.<android.inputmethodservice.Keyboard$Key: int height>;
+
+        $i86 = r4.<android.graphics.Rect: int top>;
+
+        $i87 = $i85 - $i86;
+
+        $i88 = r4.<android.graphics.Rect: int bottom>;
+
+        $i89 = $i87 - $i88;
+
+        $i90 = $i89 / 2;
+
+        $f14 = (float) $i90;
+
+        $f15 = virtualinvoke r2.<android.graphics.Paint: float getTextSize()>();
+
+        $f16 = virtualinvoke r2.<android.graphics.Paint: float descent()>();
+
+        $f17 = $f15 - $f16;
+
+        $f18 = $f17 / 2.0F;
+
+        $f19 = $f14 + $f18;
+
+        $i91 = r4.<android.graphics.Rect: int top>;
+
+        $f20 = (float) $i91;
+
+        $f21 = $f19 + $f20;
+
+        virtualinvoke r1.<android.graphics.Canvas: void drawText(java.lang.String,float,float,android.graphics.Paint)>(r39, $f13, $f21, r2);
+
+        virtualinvoke r2.<android.graphics.Paint: void setShadowLayer(float,float,float,int)>(0.0F, 0.0F, 0.0F, 0);
+
+        goto label18;
+
+     label17:
+        $r17 = r6.<android.inputmethodservice.Keyboard$Key: android.graphics.drawable.Drawable icon>;
+
+        if $r17 == null goto label18;
+
+        $i16 = r6.<android.inputmethodservice.Keyboard$Key: int width>;
+
+        $i15 = r4.<android.graphics.Rect: int left>;
+
+        $i18 = $i16 - $i15;
+
+        $i17 = r4.<android.graphics.Rect: int right>;
+
+        $i19 = $i18 - $i17;
+
+        $r18 = r6.<android.inputmethodservice.Keyboard$Key: android.graphics.drawable.Drawable icon>;
+
+        $i20 = virtualinvoke $r18.<android.graphics.drawable.Drawable: int getIntrinsicWidth()>();
+
+        $i21 = $i19 - $i20;
+
+        $i23 = $i21 / 2;
+
+        $i22 = r4.<android.graphics.Rect: int left>;
+
+        i3 = $i23 + $i22;
+
+        $i25 = r6.<android.inputmethodservice.Keyboard$Key: int height>;
+
+        $i24 = r4.<android.graphics.Rect: int top>;
+
+        $i27 = $i25 - $i24;
+
+        $i26 = r4.<android.graphics.Rect: int bottom>;
+
+        $i28 = $i27 - $i26;
+
+        $r19 = r6.<android.inputmethodservice.Keyboard$Key: android.graphics.drawable.Drawable icon>;
+
+        $i29 = virtualinvoke $r19.<android.graphics.drawable.Drawable: int getIntrinsicHeight()>();
+
+        $i30 = $i28 - $i29;
+
+        $i32 = $i30 / 2;
+
+        $i31 = r4.<android.graphics.Rect: int top>;
+
+        i4 = $i32 + $i31;
+
+        $f5 = (float) i3;
+
+        $f4 = (float) i4;
+
+        virtualinvoke r1.<android.graphics.Canvas: void translate(float,float)>($f5, $f4);
+
+        $r21 = r6.<android.inputmethodservice.Keyboard$Key: android.graphics.drawable.Drawable icon>;
+
+        $r20 = r6.<android.inputmethodservice.Keyboard$Key: android.graphics.drawable.Drawable icon>;
+
+        $i33 = virtualinvoke $r20.<android.graphics.drawable.Drawable: int getIntrinsicWidth()>();
+
+        $r22 = r6.<android.inputmethodservice.Keyboard$Key: android.graphics.drawable.Drawable icon>;
+
+        $i34 = virtualinvoke $r22.<android.graphics.drawable.Drawable: int getIntrinsicHeight()>();
+
+        virtualinvoke $r21.<android.graphics.drawable.Drawable: void setBounds(int,int,int,int)>(0, 0, $i33, $i34);
+
+        $r23 = r6.<android.inputmethodservice.Keyboard$Key: android.graphics.drawable.Drawable icon>;
+
+        virtualinvoke $r23.<android.graphics.drawable.Drawable: void draw(android.graphics.Canvas)>(r1);
+
+        $i35 = neg i3;
+
+        $f7 = (float) $i35;
+
+        $i36 = neg i4;
+
+        $f6 = (float) $i36;
+
+        virtualinvoke r1.<android.graphics.Canvas: void translate(float,float)>($f7, $f6);
+
+        goto label18;
+
+     label18:
+        $i92 = r6.<android.inputmethodservice.Keyboard$Key: int x>;
+
+        $i93 = neg $i92;
+
+        $i94 = $i93 - i0;
+
+        $f22 = (float) $i94;
+
+        $i95 = r6.<android.inputmethodservice.Keyboard$Key: int y>;
+
+        $i96 = neg $i95;
+
+        $i97 = $i96 - i1;
+
+        $f23 = (float) $i97;
+
+        virtualinvoke r1.<android.graphics.Canvas: void translate(float,float)>($f22, $f23);
+
+     label19:
+        i71 = i71 + 1;
+
+        goto label08;
+
+     label20:
+        r0.<android.inputmethodservice.KeyboardView: android.inputmethodservice.Keyboard$Key mInvalidatedKey> = null;
+
+        $z1 = r0.<android.inputmethodservice.KeyboardView: boolean mMiniKeyboardOnScreen>;
+
+        if $z1 == 0 goto label21;
+
+        $f0 = r0.<android.inputmethodservice.KeyboardView: float mBackgroundDimAmount>;
+
+        $f1 = $f0 * 255.0F;
+
+        $i7 = (int) $f1;
+
+        $i8 = $i7 << 24;
+
+        virtualinvoke r2.<android.graphics.Paint: void setColor(int)>($i8);
+
+        $i9 = virtualinvoke r0.<android.inputmethodservice.KeyboardView: int getWidth()>();
+
+        $f2 = (float) $i9;
+
+        $i10 = virtualinvoke r0.<android.inputmethodservice.KeyboardView: int getHeight()>();
+
+        $f3 = (float) $i10;
+
+        virtualinvoke r1.<android.graphics.Canvas: void drawRect(float,float,float,float,android.graphics.Paint)>(0.0F, 0.0F, $f2, $f3, r2);
+
+        goto label21;
+
+     label21:
+        $r11 = r0.<android.inputmethodservice.KeyboardView: android.graphics.Canvas mCanvas>;
+
+        virtualinvoke $r11.<android.graphics.Canvas: void restore()>();
+
+        r0.<android.inputmethodservice.KeyboardView: boolean mDrawPending> = 0;
+
+        $r12 = r0.<android.inputmethodservice.KeyboardView: android.graphics.Rect mDirtyRect>;
+
+        virtualinvoke $r12.<android.graphics.Rect: void setEmpty()>();
+
+        return;
+    }
+
+    private boolean onModifiedTouchEvent(android.view.MotionEvent, boolean)
+    {
+        android.inputmethodservice.KeyboardView r0;
+        boolean z0, $z1, $z2, $z4, $z7, $z8, $z9, $z11, z12;
+        long l0, $l7, $l11, $l12, $l13, $l14, $l15, $l19, $l20, $l21, $l22, $l24, $l29, $l30, $l31, $l32, $l33, $l34, $l35, $l36, $l37, $l38, l48, l52;
+        float $f0, $f1;
+        int $i1, $i2, $i3, $i4, $i5, $i6, $i8, $i9, $i10, $i17, $i23, $i25, $i26, $i27, $i28, $i39, i40, i41, i42, i43, i44, i45, i46, $i47, i49, $i50, i51, i53, $i54;
+        android.inputmethodservice.KeyboardView$SwipeTracker $r1, $r16;
+        android.os.Handler $r2, $r3, $r6, $r7, $r11, $r12, $r13, $r14, $r15;
+        android.inputmethodservice.Keyboard$Key[] $r4, $r8;
+        android.inputmethodservice.Keyboard$Key $r5, $r9;
+        int[] $r10, $r20;
+        byte $b16, $b18;
+        android.view.MotionEvent r17;
+        android.view.GestureDetector $r18;
+        android.os.Message r19, r22, r23;
+        android.inputmethodservice.KeyboardView$OnKeyboardActionListener r21;
+
+        r0 := @this: android.inputmethodservice.KeyboardView;
+
+        r17 := @parameter0: android.view.MotionEvent;
+
+        z0 := @parameter1: boolean;
+
+        $f0 = virtualinvoke r17.<android.view.MotionEvent: float getX()>();
+
+        $i2 = (int) $f0;
+
+        $i1 = r0.<android.inputmethodservice.KeyboardView: int mPaddingLeft>;
+
+        i40 = $i2 - $i1;
+
+        $f1 = virtualinvoke r17.<android.view.MotionEvent: float getY()>();
+
+        $i4 = (int) $f1;
+
+        $i3 = r0.<android.inputmethodservice.KeyboardView: int mPaddingTop>;
+
+        i41 = $i4 - $i3;
+
+        i42 = r0.<android.inputmethodservice.KeyboardView: int mVerticalCorrection>;
+
+        i43 = i41;
+
+        $i5 = neg i42;
+
+        if i41 < $i5 goto label01;
+
+        i43 = i41 + i42;
+
+     label01:
+        i44 = virtualinvoke r17.<android.view.MotionEvent: int getAction()>();
+
+        l0 = virtualinvoke r17.<android.view.MotionEvent: long getEventTime()>();
+
+        i45 = specialinvoke r0.<android.inputmethodservice.KeyboardView: int getKeyIndices(int,int,int[])>(i40, i43, null);
+
+        r0.<android.inputmethodservice.KeyboardView: boolean mPossiblePoly> = z0;
+
+        if i44 != 0 goto label02;
+
+        $r16 = r0.<android.inputmethodservice.KeyboardView: android.inputmethodservice.KeyboardView$SwipeTracker mSwipeTracker>;
+
+        virtualinvoke $r16.<android.inputmethodservice.KeyboardView$SwipeTracker: void clear()>();
+
+     label02:
+        $r1 = r0.<android.inputmethodservice.KeyboardView: android.inputmethodservice.KeyboardView$SwipeTracker mSwipeTracker>;
+
+        virtualinvoke $r1.<android.inputmethodservice.KeyboardView$SwipeTracker: void addMovement(android.view.MotionEvent)>(r17);
+
+        $z1 = r0.<android.inputmethodservice.KeyboardView: boolean mAbortKey>;
+
+        if $z1 == 0 goto label03;
+
+        if i44 == 0 goto label03;
+
+        if i44 == 3 goto label03;
+
+        return 1;
+
+     label03:
+        $r18 = r0.<android.inputmethodservice.KeyboardView: android.view.GestureDetector mGestureDetector>;
+
+        $z11 = virtualinvoke $r18.<android.view.GestureDetector: boolean onTouchEvent(android.view.MotionEvent)>(r17);
+
+        if $z11 == 0 goto label04;
+
+        specialinvoke r0.<android.inputmethodservice.KeyboardView: void showPreview(int)>(-1);
+
+        $r14 = r0.<android.inputmethodservice.KeyboardView: android.os.Handler mHandler>;
+
+        virtualinvoke $r14.<android.os.Handler: void removeMessages(int)>(3);
+
+        $r15 = r0.<android.inputmethodservice.KeyboardView: android.os.Handler mHandler>;
+
+        virtualinvoke $r15.<android.os.Handler: void removeMessages(int)>(4);
+
+        return 1;
+
+     label04:
+        $z2 = r0.<android.inputmethodservice.KeyboardView: boolean mMiniKeyboardOnScreen>;
+
+        if $z2 == 0 goto label05;
+
+        if i44 == 3 goto label05;
+
+        return 1;
+
+     label05:
+        if i44 == 0 goto label18;
+
+        if i44 == 1 goto label13;
+
+        if i44 == 2 goto label07;
+
+        if i44 == 3 goto label06;
+
+        goto label23;
+
+     label06:
+        specialinvoke r0.<android.inputmethodservice.KeyboardView: void removeMessages()>();
+
+        specialinvoke r0.<android.inputmethodservice.KeyboardView: void dismissPopupKeyboard()>();
+
+        r0.<android.inputmethodservice.KeyboardView: boolean mAbortKey> = 1;
+
+        specialinvoke r0.<android.inputmethodservice.KeyboardView: void showPreview(int)>(-1);
+
+        $i39 = r0.<android.inputmethodservice.KeyboardView: int mCurrentKey>;
+
+        virtualinvoke r0.<android.inputmethodservice.KeyboardView: void invalidateKey(int)>($i39);
+
+        goto label23;
+
+     label07:
+        if i45 == -1 goto label10;
+
+        i46 = r0.<android.inputmethodservice.KeyboardView: int mCurrentKey>;
+
+        if i46 != -1 goto label08;
+
+        r0.<android.inputmethodservice.KeyboardView: int mCurrentKey> = i45;
+
+        $l37 = r0.<android.inputmethodservice.KeyboardView: long mDownTime>;
+
+        $l38 = l0 - $l37;
+
+        r0.<android.inputmethodservice.KeyboardView: long mCurrentKeyTime> = $l38;
+
+        goto label10;
+
+     label08:
+        if i45 != i46 goto label09;
+
+        $l35 = r0.<android.inputmethodservice.KeyboardView: long mCurrentKeyTime>;
+
+        $l33 = r0.<android.inputmethodservice.KeyboardView: long mLastMoveTime>;
+
+        $l34 = l0 - $l33;
+
+        $l36 = $l35 + $l34;
+
+        r0.<android.inputmethodservice.KeyboardView: long mCurrentKeyTime> = $l36;
+
+        z12 = 1;
+
+        goto label11;
+
+     label09:
+        $i25 = r0.<android.inputmethodservice.KeyboardView: int mRepeatKeyIndex>;
+
+        if $i25 != -1 goto label10;
+
+        specialinvoke r0.<android.inputmethodservice.KeyboardView: void resetMultiTap()>();
+
+        $i26 = r0.<android.inputmethodservice.KeyboardView: int mCurrentKey>;
+
+        r0.<android.inputmethodservice.KeyboardView: int mLastKey> = $i26;
+
+        $i27 = r0.<android.inputmethodservice.KeyboardView: int mLastX>;
+
+        r0.<android.inputmethodservice.KeyboardView: int mLastCodeX> = $i27;
+
+        $i28 = r0.<android.inputmethodservice.KeyboardView: int mLastY>;
+
+        r0.<android.inputmethodservice.KeyboardView: int mLastCodeY> = $i28;
+
+        $l29 = r0.<android.inputmethodservice.KeyboardView: long mCurrentKeyTime>;
+
+        $l31 = $l29 + l0;
+
+        $l30 = r0.<android.inputmethodservice.KeyboardView: long mLastMoveTime>;
+
+        $l32 = $l31 - $l30;
+
+        r0.<android.inputmethodservice.KeyboardView: long mLastKeyTime> = $l32;
+
+        r0.<android.inputmethodservice.KeyboardView: int mCurrentKey> = i45;
+
+        r0.<android.inputmethodservice.KeyboardView: long mCurrentKeyTime> = 0L;
+
+        goto label10;
+
+     label10:
+        z12 = 0;
+
+     label11:
+        if z12 != 0 goto label12;
+
+        $r11 = r0.<android.inputmethodservice.KeyboardView: android.os.Handler mHandler>;
+
+        virtualinvoke $r11.<android.os.Handler: void removeMessages(int)>(4);
+
+        if i45 == -1 goto label12;
+
+        $r12 = r0.<android.inputmethodservice.KeyboardView: android.os.Handler mHandler>;
+
+        r19 = virtualinvoke $r12.<android.os.Handler: android.os.Message obtainMessage(int,java.lang.Object)>(4, r17);
+
+        $r13 = r0.<android.inputmethodservice.KeyboardView: android.os.Handler mHandler>;
+
+        $i23 = <android.inputmethodservice.KeyboardView: int LONGPRESS_TIMEOUT>;
+
+        $l24 = (long) $i23;
+
+        virtualinvoke $r13.<android.os.Handler: boolean sendMessageDelayed(android.os.Message,long)>(r19, $l24);
+
+     label12:
+        $i47 = r0.<android.inputmethodservice.KeyboardView: int mCurrentKey>;
+
+        specialinvoke r0.<android.inputmethodservice.KeyboardView: void showPreview(int)>($i47);
+
+        r0.<android.inputmethodservice.KeyboardView: long mLastMoveTime> = l0;
+
+        goto label23;
+
+     label13:
+        specialinvoke r0.<android.inputmethodservice.KeyboardView: void removeMessages()>();
+
+        $i9 = r0.<android.inputmethodservice.KeyboardView: int mCurrentKey>;
+
+        if i45 != $i9 goto label14;
+
+        $l21 = r0.<android.inputmethodservice.KeyboardView: long mCurrentKeyTime>;
+
+        $l19 = r0.<android.inputmethodservice.KeyboardView: long mLastMoveTime>;
+
+        $l20 = l0 - $l19;
+
+        $l22 = $l21 + $l20;
+
+        r0.<android.inputmethodservice.KeyboardView: long mCurrentKeyTime> = $l22;
+
+        goto label15;
+
+     label14:
+        specialinvoke r0.<android.inputmethodservice.KeyboardView: void resetMultiTap()>();
+
+        $i10 = r0.<android.inputmethodservice.KeyboardView: int mCurrentKey>;
+
+        r0.<android.inputmethodservice.KeyboardView: int mLastKey> = $i10;
+
+        $l11 = r0.<android.inputmethodservice.KeyboardView: long mCurrentKeyTime>;
+
+        $l13 = $l11 + l0;
+
+        $l12 = r0.<android.inputmethodservice.KeyboardView: long mLastMoveTime>;
+
+        $l14 = $l13 - $l12;
+
+        r0.<android.inputmethodservice.KeyboardView: long mLastKeyTime> = $l14;
+
+        r0.<android.inputmethodservice.KeyboardView: int mCurrentKey> = i45;
+
+        r0.<android.inputmethodservice.KeyboardView: long mCurrentKeyTime> = 0L;
+
+     label15:
+        l48 = r0.<android.inputmethodservice.KeyboardView: long mCurrentKeyTime>;
+
+        $l15 = r0.<android.inputmethodservice.KeyboardView: long mLastKeyTime>;
+
+        $b16 = l48 cmp $l15;
+
+        if $b16 >= 0 goto label16;
+
+        $b18 = l48 cmp 70L;
+
+        if $b18 >= 0 goto label16;
+
+        i49 = r0.<android.inputmethodservice.KeyboardView: int mLastKey>;
+
+        if i49 == -1 goto label16;
+
+        r0.<android.inputmethodservice.KeyboardView: int mCurrentKey> = i49;
+
+        i40 = r0.<android.inputmethodservice.KeyboardView: int mLastCodeX>;
+
+        i43 = r0.<android.inputmethodservice.KeyboardView: int mLastCodeY>;
+
+        goto label16;
+
+     label16:
+        specialinvoke r0.<android.inputmethodservice.KeyboardView: void showPreview(int)>(-1);
+
+        $r20 = r0.<android.inputmethodservice.KeyboardView: int[] mKeyIndices>;
+
+        staticinvoke <java.util.Arrays: void fill(int[],int)>($r20, -1);
+
+        $i50 = r0.<android.inputmethodservice.KeyboardView: int mRepeatKeyIndex>;
+
+        if $i50 != -1 goto label17;
+
+        $z8 = r0.<android.inputmethodservice.KeyboardView: boolean mMiniKeyboardOnScreen>;
+
+        if $z8 != 0 goto label17;
+
+        $z9 = r0.<android.inputmethodservice.KeyboardView: boolean mAbortKey>;
+
+        if $z9 != 0 goto label17;
+
+        $i17 = r0.<android.inputmethodservice.KeyboardView: int mCurrentKey>;
+
+        specialinvoke r0.<android.inputmethodservice.KeyboardView: void detectAndSendKey(int,int,int,long)>($i17, i40, i43, l0);
+
+     label17:
+        virtualinvoke r0.<android.inputmethodservice.KeyboardView: void invalidateKey(int)>(i45);
+
+        r0.<android.inputmethodservice.KeyboardView: int mRepeatKeyIndex> = -1;
+
+        goto label23;
+
+     label18:
+        i51 = 0;
+
+        r0.<android.inputmethodservice.KeyboardView: boolean mAbortKey> = 0;
+
+        r0.<android.inputmethodservice.KeyboardView: int mStartX> = i40;
+
+        r0.<android.inputmethodservice.KeyboardView: int mStartY> = i43;
+
+        r0.<android.inputmethodservice.KeyboardView: int mLastCodeX> = i40;
+
+        r0.<android.inputmethodservice.KeyboardView: int mLastCodeY> = i43;
+
+        r0.<android.inputmethodservice.KeyboardView: long mLastKeyTime> = 0L;
+
+        r0.<android.inputmethodservice.KeyboardView: long mCurrentKeyTime> = 0L;
+
+        r0.<android.inputmethodservice.KeyboardView: int mLastKey> = -1;
+
+        r0.<android.inputmethodservice.KeyboardView: int mCurrentKey> = i45;
+
+        r0.<android.inputmethodservice.KeyboardView: int mDownKey> = i45;
+
+        l52 = virtualinvoke r17.<android.view.MotionEvent: long getEventTime()>();
+
+        r0.<android.inputmethodservice.KeyboardView: long mDownTime> = l52;
+
+        r0.<android.inputmethodservice.KeyboardView: long mLastMoveTime> = l52;
+
+        specialinvoke r0.<android.inputmethodservice.KeyboardView: void checkMultiTap(long,int)>(l0, i45);
+
+        r21 = r0.<android.inputmethodservice.KeyboardView: android.inputmethodservice.KeyboardView$OnKeyboardActionListener mKeyboardActionListener>;
+
+        if i45 == -1 goto label19;
+
+        $r8 = r0.<android.inputmethodservice.KeyboardView: android.inputmethodservice.Keyboard$Key[] mKeys>;
+
+        $r9 = $r8[i45];
+
+        $r10 = $r9.<android.inputmethodservice.Keyboard$Key: int[] codes>;
+
+        i51 = $r10[0];
+
+        goto label19;
+
+     label19:
+        interfaceinvoke r21.<android.inputmethodservice.KeyboardView$OnKeyboardActionListener: void onPress(int)>(i51);
+
+        i53 = r0.<android.inputmethodservice.KeyboardView: int mCurrentKey>;
+
+        if i53 < 0 goto label21;
+
+        $r4 = r0.<android.inputmethodservice.KeyboardView: android.inputmethodservice.Keyboard$Key[] mKeys>;
+
+        $r5 = $r4[i53];
+
+        $z4 = $r5.<android.inputmethodservice.Keyboard$Key: boolean repeatable>;
+
+        if $z4 == 0 goto label21;
+
+        $i8 = r0.<android.inputmethodservice.KeyboardView: int mCurrentKey>;
+
+        r0.<android.inputmethodservice.KeyboardView: int mRepeatKeyIndex> = $i8;
+
+        $r6 = r0.<android.inputmethodservice.KeyboardView: android.os.Handler mHandler>;
+
+        r22 = virtualinvoke $r6.<android.os.Handler: android.os.Message obtainMessage(int)>(3);
+
+        $r7 = r0.<android.inputmethodservice.KeyboardView: android.os.Handler mHandler>;
+
+        virtualinvoke $r7.<android.os.Handler: boolean sendMessageDelayed(android.os.Message,long)>(r22, 400L);
+
+        specialinvoke r0.<android.inputmethodservice.KeyboardView: boolean repeatKey()>();
+
+        $z7 = r0.<android.inputmethodservice.KeyboardView: boolean mAbortKey>;
+
+        if $z7 == 0 goto label20;
+
+        r0.<android.inputmethodservice.KeyboardView: int mRepeatKeyIndex> = -1;
+
+        goto label23;
+
+     label20:
+        goto label21;
+
+     label21:
+        $i54 = r0.<android.inputmethodservice.KeyboardView: int mCurrentKey>;
+
+        if $i54 == -1 goto label22;
+
+        $r2 = r0.<android.inputmethodservice.KeyboardView: android.os.Handler mHandler>;
+
+        r23 = virtualinvoke $r2.<android.os.Handler: android.os.Message obtainMessage(int,java.lang.Object)>(4, r17);
+
+        $r3 = r0.<android.inputmethodservice.KeyboardView: android.os.Handler mHandler>;
+
+        $i6 = <android.inputmethodservice.KeyboardView: int LONGPRESS_TIMEOUT>;
+
+        $l7 = (long) $i6;
+
+        virtualinvoke $r3.<android.os.Handler: boolean sendMessageDelayed(android.os.Message,long)>(r23, $l7);
+
+     label22:
+        specialinvoke r0.<android.inputmethodservice.KeyboardView: void showPreview(int)>(i45);
+
+     label23:
+        r0.<android.inputmethodservice.KeyboardView: int mLastX> = i40;
+
+        r0.<android.inputmethodservice.KeyboardView: int mLastY> = i43;
+
+        return 1;
+    }
+
+    private boolean openPopupIfRequired(android.view.MotionEvent)
+    {
+        android.inputmethodservice.KeyboardView r0;
+        int i0, $i1, $i2;
+        boolean z0;
+        android.inputmethodservice.Keyboard$Key $r1;
+        android.view.MotionEvent r2;
+        android.inputmethodservice.Keyboard$Key[] r3;
+
+        r0 := @this: android.inputmethodservice.KeyboardView;
+
+        r2 := @parameter0: android.view.MotionEvent;
+
+        $i1 = r0.<android.inputmethodservice.KeyboardView: int mPopupLayout>;
+
+        if $i1 != 0 goto label1;
+
+        return 0;
+
+     label1:
+        i0 = r0.<android.inputmethodservice.KeyboardView: int mCurrentKey>;
+
+        if i0 < 0 goto label4;
+
+        r3 = r0.<android.inputmethodservice.KeyboardView: android.inputmethodservice.Keyboard$Key[] mKeys>;
+
+        $i2 = lengthof r3;
+
+        if i0 < $i2 goto label2;
+
+        goto label4;
+
+     label2:
+        $r1 = r3[i0];
+
+        z0 = virtualinvoke r0.<android.inputmethodservice.KeyboardView: boolean onLongPress(android.inputmethodservice.Keyboard$Key)>($r1);
+
+        if z0 == 0 goto label3;
+
+        r0.<android.inputmethodservice.KeyboardView: boolean mAbortKey> = 1;
+
+        specialinvoke r0.<android.inputmethodservice.KeyboardView: void showPreview(int)>(-1);
+
+     label3:
+        return z0;
+
+     label4:
+        return 0;
+    }
+
+    private void removeMessages()
+    {
+        android.inputmethodservice.KeyboardView r0;
+        android.os.Handler r1, $r2, $r3;
+
+        r0 := @this: android.inputmethodservice.KeyboardView;
+
+        r1 = r0.<android.inputmethodservice.KeyboardView: android.os.Handler mHandler>;
+
+        if r1 == null goto label1;
+
+        virtualinvoke r1.<android.os.Handler: void removeMessages(int)>(3);
+
+        $r2 = r0.<android.inputmethodservice.KeyboardView: android.os.Handler mHandler>;
+
+        virtualinvoke $r2.<android.os.Handler: void removeMessages(int)>(4);
+
+        $r3 = r0.<android.inputmethodservice.KeyboardView: android.os.Handler mHandler>;
+
+        virtualinvoke $r3.<android.os.Handler: void removeMessages(int)>(1);
+
+     label1:
+        return;
+    }
+
+    private boolean repeatKey()
+    {
+        android.inputmethodservice.KeyboardView r0;
+        android.inputmethodservice.Keyboard$Key r1;
+        int $i0, $i2, $i3, $i4;
+        android.inputmethodservice.Keyboard$Key[] $r2;
+        long $l1;
+
+        r0 := @this: android.inputmethodservice.KeyboardView;
+
+        $r2 = r0.<android.inputmethodservice.KeyboardView: android.inputmethodservice.Keyboard$Key[] mKeys>;
+
+        $i0 = r0.<android.inputmethodservice.KeyboardView: int mRepeatKeyIndex>;
+
+        r1 = $r2[$i0];
+
+        $i4 = r0.<android.inputmethodservice.KeyboardView: int mCurrentKey>;
+
+        $i3 = r1.<android.inputmethodservice.Keyboard$Key: int x>;
+
+        $i2 = r1.<android.inputmethodservice.Keyboard$Key: int y>;
+
+        $l1 = r0.<android.inputmethodservice.KeyboardView: long mLastTapTime>;
+
+        specialinvoke r0.<android.inputmethodservice.KeyboardView: void detectAndSendKey(int,int,int,long)>($i4, $i3, $i2, $l1);
+
+        return 1;
+    }
+
+    private void resetMultiTap()
+    {
+        android.inputmethodservice.KeyboardView r0;
+
+        r0 := @this: android.inputmethodservice.KeyboardView;
+
+        r0.<android.inputmethodservice.KeyboardView: int mLastSentIndex> = -1;
+
+        r0.<android.inputmethodservice.KeyboardView: int mTapCount> = 0;
+
+        r0.<android.inputmethodservice.KeyboardView: long mLastTapTime> = -1L;
+
+        r0.<android.inputmethodservice.KeyboardView: boolean mInMultiTap> = 0;
+
+        return;
+    }
+
+    private void sendAccessibilityEventForUnicodeCharacter(int, int)
+    {
+        android.inputmethodservice.KeyboardView r0;
+        int i0, i1;
+        android.view.accessibility.AccessibilityEvent r1;
+        android.view.accessibility.AccessibilityManager $r2, $r12;
+        boolean $z0;
+        android.content.Context $r3, $r4, $r5, $r6, $r7, $r8, $r9;
+        char $c2;
+        java.lang.String r10;
+        java.util.List $r11;
+
+        r0 := @this: android.inputmethodservice.KeyboardView;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        $r2 = r0.<android.inputmethodservice.KeyboardView: android.view.accessibility.AccessibilityManager mAccessibilityManager>;
+
+        $z0 = virtualinvoke $r2.<android.view.accessibility.AccessibilityManager: boolean isEnabled()>();
+
+        if $z0 == 0 goto label10;
+
+        r1 = staticinvoke <android.view.accessibility.AccessibilityEvent: android.view.accessibility.AccessibilityEvent obtain(int)>(i0);
+
+        virtualinvoke r0.<android.inputmethodservice.KeyboardView: void onInitializeAccessibilityEvent(android.view.accessibility.AccessibilityEvent)>(r1);
+
+        if i1 == 10 goto label08;
+
+        tableswitch(i1)
+        {
+            case -6: goto label07;
+            case -5: goto label06;
+            case -4: goto label05;
+            case -3: goto label04;
+            case -2: goto label03;
+            case -1: goto label02;
+            default: goto label01;
+        };
+
+     label01:
+        $c2 = (char) i1;
+
+        r10 = staticinvoke <java.lang.String: java.lang.String valueOf(char)>($c2);
+
+        goto label09;
+
+     label02:
+        $r4 = r0.<android.inputmethodservice.KeyboardView: android.content.Context mContext>;
+
+        r10 = virtualinvoke $r4.<android.content.Context: java.lang.String getString(int)>(17040350);
+
+        goto label09;
+
+     label03:
+        $r5 = r0.<android.inputmethodservice.KeyboardView: android.content.Context mContext>;
+
+        r10 = virtualinvoke $r5.<android.content.Context: java.lang.String getString(int)>(17040349);
+
+        goto label09;
+
+     label04:
+        $r6 = r0.<android.inputmethodservice.KeyboardView: android.content.Context mContext>;
+
+        r10 = virtualinvoke $r6.<android.content.Context: java.lang.String getString(int)>(17040345);
+
+        goto label09;
+
+     label05:
+        $r7 = r0.<android.inputmethodservice.KeyboardView: android.content.Context mContext>;
+
+        r10 = virtualinvoke $r7.<android.content.Context: java.lang.String getString(int)>(17040347);
+
+        goto label09;
+
+     label06:
+        $r8 = r0.<android.inputmethodservice.KeyboardView: android.content.Context mContext>;
+
+        r10 = virtualinvoke $r8.<android.content.Context: java.lang.String getString(int)>(17040346);
+
+        goto label09;
+
+     label07:
+        $r9 = r0.<android.inputmethodservice.KeyboardView: android.content.Context mContext>;
+
+        r10 = virtualinvoke $r9.<android.content.Context: java.lang.String getString(int)>(17040344);
+
+        goto label09;
+
+     label08:
+        $r3 = r0.<android.inputmethodservice.KeyboardView: android.content.Context mContext>;
+
+        r10 = virtualinvoke $r3.<android.content.Context: java.lang.String getString(int)>(17040348);
+
+     label09:
+        $r11 = virtualinvoke r1.<android.view.accessibility.AccessibilityEvent: java.util.List getText()>();
+
+        interfaceinvoke $r11.<java.util.List: boolean add(java.lang.Object)>(r10);
+
+        $r12 = r0.<android.inputmethodservice.KeyboardView: android.view.accessibility.AccessibilityManager mAccessibilityManager>;
+
+        virtualinvoke $r12.<android.view.accessibility.AccessibilityManager: void sendAccessibilityEvent(android.view.accessibility.AccessibilityEvent)>(r1);
+
+     label10:
+        return;
+    }
+
+    private void showKey(int)
+    {
+        android.inputmethodservice.KeyboardView r0;
+        android.widget.PopupWindow r1;
+        android.inputmethodservice.Keyboard$Key r2;
+        int i0, i1, $i2, $i3, $i4, $i5, $i6, $i7, $i8, $i9, $i10, $i11, $i12, $i13, $i14, $i15, $i16, $i17, $i18, $i19, $i20, $i21, $i22, $i23, $i24, $i25, $i26, $i27, $i28, $i29, $i30, $i31, $i32, $i33, $i34, $i35, $i36, $i37, $i38, $i39, $i40, $i41, $i42, $i43, $i44, $i45, $i46, $i47, $i48, $i49, $i50, $i51, $i52, $i53, $i54, i55, $i56, $i57, $i58, $i59, $i60, $i61, $i62, $i63, i64;
+        android.inputmethodservice.Keyboard$Key[] $r3, r27;
+        android.graphics.drawable.Drawable $r4, $r25, r29, r37;
+        android.widget.TextView $r5, $r6, $r9, $r11, $r12, $r13, $r16, $r19, $r20, $r22, $r24, $r26, r28, $r30, $r31, $r32, $r33, $r34;
+        java.lang.CharSequence $r7, $r8;
+        float $f0, $f1;
+        android.graphics.Typeface $r10, $r23;
+        boolean $z0, $z2;
+        android.os.Handler $r14;
+        int[] $r15, $r17, $r21, r36, r38, r39;
+        android.view.View $r18;
+        double $d0, $d1, $d2, $d3;
+        android.view.ViewGroup$LayoutParams r35;
+
+        r0 := @this: android.inputmethodservice.KeyboardView;
+
+        i55 := @parameter0: int;
+
+        r1 = r0.<android.inputmethodservice.KeyboardView: android.widget.PopupWindow mPreviewPopup>;
+
+        r27 = r0.<android.inputmethodservice.KeyboardView: android.inputmethodservice.Keyboard$Key[] mKeys>;
+
+        if i55 < 0 goto label17;
+
+        $r3 = r0.<android.inputmethodservice.KeyboardView: android.inputmethodservice.Keyboard$Key[] mKeys>;
+
+        $i2 = lengthof $r3;
+
+        if i55 < $i2 goto label01;
+
+        goto label17;
+
+     label01:
+        r2 = r27[i55];
+
+        $r4 = r2.<android.inputmethodservice.Keyboard$Key: android.graphics.drawable.Drawable icon>;
+
+        if $r4 == null goto label04;
+
+        r28 = r0.<android.inputmethodservice.KeyboardView: android.widget.TextView mPreviewText>;
+
+        $r25 = r2.<android.inputmethodservice.Keyboard$Key: android.graphics.drawable.Drawable iconPreview>;
+
+        if $r25 == null goto label02;
+
+        r29 = r2.<android.inputmethodservice.Keyboard$Key: android.graphics.drawable.Drawable iconPreview>;
+
+        goto label03;
+
+     label02:
+        r29 = r2.<android.inputmethodservice.Keyboard$Key: android.graphics.drawable.Drawable icon>;
+
+     label03:
+        virtualinvoke r28.<android.widget.TextView: void setCompoundDrawables(android.graphics.drawable.Drawable,android.graphics.drawable.Drawable,android.graphics.drawable.Drawable,android.graphics.drawable.Drawable)>(null, null, null, r29);
+
+        $r26 = r0.<android.inputmethodservice.KeyboardView: android.widget.TextView mPreviewText>;
+
+        virtualinvoke $r26.<android.widget.TextView: void setText(java.lang.CharSequence)>(null);
+
+        goto label06;
+
+     label04:
+        $r5 = r0.<android.inputmethodservice.KeyboardView: android.widget.TextView mPreviewText>;
+
+        virtualinvoke $r5.<android.widget.TextView: void setCompoundDrawables(android.graphics.drawable.Drawable,android.graphics.drawable.Drawable,android.graphics.drawable.Drawable,android.graphics.drawable.Drawable)>(null, null, null, null);
+
+        $r6 = r0.<android.inputmethodservice.KeyboardView: android.widget.TextView mPreviewText>;
+
+        $r7 = specialinvoke r0.<android.inputmethodservice.KeyboardView: java.lang.CharSequence getPreviewText(android.inputmethodservice.Keyboard$Key)>(r2);
+
+        virtualinvoke $r6.<android.widget.TextView: void setText(java.lang.CharSequence)>($r7);
+
+        $r8 = r2.<android.inputmethodservice.Keyboard$Key: java.lang.CharSequence label>;
+
+        $i3 = interfaceinvoke $r8.<java.lang.CharSequence: int length()>();
+
+        if $i3 <= 1 goto label05;
+
+        $r21 = r2.<android.inputmethodservice.Keyboard$Key: int[] codes>;
+
+        $i53 = lengthof $r21;
+
+        if $i53 >= 2 goto label05;
+
+        $r22 = r0.<android.inputmethodservice.KeyboardView: android.widget.TextView mPreviewText>;
+
+        $i54 = r0.<android.inputmethodservice.KeyboardView: int mKeyTextSize>;
+
+        $f1 = (float) $i54;
+
+        virtualinvoke $r22.<android.widget.TextView: void setTextSize(int,float)>(0, $f1);
+
+        $r24 = r0.<android.inputmethodservice.KeyboardView: android.widget.TextView mPreviewText>;
+
+        $r23 = <android.graphics.Typeface: android.graphics.Typeface DEFAULT_BOLD>;
+
+        virtualinvoke $r24.<android.widget.TextView: void setTypeface(android.graphics.Typeface)>($r23);
+
+        goto label06;
+
+     label05:
+        $r9 = r0.<android.inputmethodservice.KeyboardView: android.widget.TextView mPreviewText>;
+
+        $i4 = r0.<android.inputmethodservice.KeyboardView: int mPreviewTextSizeLarge>;
+
+        $f0 = (float) $i4;
+
+        virtualinvoke $r9.<android.widget.TextView: void setTextSize(int,float)>(0, $f0);
+
+        $r11 = r0.<android.inputmethodservice.KeyboardView: android.widget.TextView mPreviewText>;
+
+        $r10 = <android.graphics.Typeface: android.graphics.Typeface DEFAULT>;
+
+        virtualinvoke $r11.<android.widget.TextView: void setTypeface(android.graphics.Typeface)>($r10);
+
+     label06:
+        $r30 = r0.<android.inputmethodservice.KeyboardView: android.widget.TextView mPreviewText>;
+
+        $i56 = staticinvoke <android.view.View$MeasureSpec: int makeMeasureSpec(int,int)>(0, 0);
+
+        $i57 = staticinvoke <android.view.View$MeasureSpec: int makeMeasureSpec(int,int)>(0, 0);
+
+        virtualinvoke $r30.<android.widget.TextView: void measure(int,int)>($i56, $i57);
+
+        $r31 = r0.<android.inputmethodservice.KeyboardView: android.widget.TextView mPreviewText>;
+
+        $i58 = virtualinvoke $r31.<android.widget.TextView: int getMeasuredWidth()>();
+
+        $i59 = r2.<android.inputmethodservice.Keyboard$Key: int width>;
+
+        $r32 = r0.<android.inputmethodservice.KeyboardView: android.widget.TextView mPreviewText>;
+
+        $i60 = virtualinvoke $r32.<android.widget.TextView: int getPaddingLeft()>();
+
+        $i61 = $i59 + $i60;
+
+        $r33 = r0.<android.inputmethodservice.KeyboardView: android.widget.TextView mPreviewText>;
+
+        $i62 = virtualinvoke $r33.<android.widget.TextView: int getPaddingRight()>();
+
+        $i63 = $i61 + $i62;
+
+        i0 = staticinvoke <java.lang.Math: int max(int,int)>($i58, $i63);
+
+        i64 = r0.<android.inputmethodservice.KeyboardView: int mPreviewHeight>;
+
+        $r34 = r0.<android.inputmethodservice.KeyboardView: android.widget.TextView mPreviewText>;
+
+        r35 = virtualinvoke $r34.<android.widget.TextView: android.view.ViewGroup$LayoutParams getLayoutParams()>();
+
+        if r35 == null goto label07;
+
+        r35.<android.view.ViewGroup$LayoutParams: int width> = i0;
+
+        r35.<android.view.ViewGroup$LayoutParams: int height> = i64;
+
+     label07:
+        $z0 = r0.<android.inputmethodservice.KeyboardView: boolean mPreviewCentered>;
+
+        if $z0 != 0 goto label08;
+
+        $i44 = r2.<android.inputmethodservice.Keyboard$Key: int x>;
+
+        $r20 = r0.<android.inputmethodservice.KeyboardView: android.widget.TextView mPreviewText>;
+
+        $i45 = virtualinvoke $r20.<android.widget.TextView: int getPaddingLeft()>();
+
+        $i47 = $i44 - $i45;
+
+        $i46 = r0.<android.inputmethodservice.KeyboardView: int mPaddingLeft>;
+
+        $i48 = $i47 + $i46;
+
+        r0.<android.inputmethodservice.KeyboardView: int mPopupPreviewX> = $i48;
+
+        $i49 = r2.<android.inputmethodservice.Keyboard$Key: int y>;
+
+        $i51 = $i49 - i64;
+
+        $i50 = r0.<android.inputmethodservice.KeyboardView: int mPreviewOffset>;
+
+        $i52 = $i51 + $i50;
+
+        r0.<android.inputmethodservice.KeyboardView: int mPopupPreviewY> = $i52;
+
+        goto label09;
+
+     label08:
+        $r12 = r0.<android.inputmethodservice.KeyboardView: android.widget.TextView mPreviewText>;
+
+        $i5 = virtualinvoke $r12.<android.widget.TextView: int getMeasuredWidth()>();
+
+        $i6 = $i5 / 2;
+
+        $i7 = 160 - $i6;
+
+        r0.<android.inputmethodservice.KeyboardView: int mPopupPreviewX> = $i7;
+
+        $r13 = r0.<android.inputmethodservice.KeyboardView: android.widget.TextView mPreviewText>;
+
+        $i8 = virtualinvoke $r13.<android.widget.TextView: int getMeasuredHeight()>();
+
+        $i9 = neg $i8;
+
+        r0.<android.inputmethodservice.KeyboardView: int mPopupPreviewY> = $i9;
+
+     label09:
+        $r14 = r0.<android.inputmethodservice.KeyboardView: android.os.Handler mHandler>;
+
+        virtualinvoke $r14.<android.os.Handler: void removeMessages(int)>(2);
+
+        $r15 = r0.<android.inputmethodservice.KeyboardView: int[] mCoordinates>;
+
+        virtualinvoke r0.<android.inputmethodservice.KeyboardView: void getLocationInWindow(int[])>($r15);
+
+        r36 = r0.<android.inputmethodservice.KeyboardView: int[] mCoordinates>;
+
+        $i11 = r36[0];
+
+        $i10 = r0.<android.inputmethodservice.KeyboardView: int mMiniKeyboardOffsetX>;
+
+        $i12 = $i11 + $i10;
+
+        r36[0] = $i12;
+
+        $i14 = r36[1];
+
+        $i13 = r0.<android.inputmethodservice.KeyboardView: int mMiniKeyboardOffsetY>;
+
+        $i15 = $i14 + $i13;
+
+        r36[1] = $i15;
+
+        $r16 = r0.<android.inputmethodservice.KeyboardView: android.widget.TextView mPreviewText>;
+
+        r37 = virtualinvoke $r16.<android.widget.TextView: android.graphics.drawable.Drawable getBackground()>();
+
+        $i16 = r2.<android.inputmethodservice.Keyboard$Key: int popupResId>;
+
+        if $i16 == 0 goto label10;
+
+        r38 = <android.inputmethodservice.KeyboardView: int[] LONG_PRESSABLE_STATE_SET>;
+
+        goto label11;
+
+     label10:
+        r38 = <android.inputmethodservice.KeyboardView: int[] EMPTY_STATE_SET>;
+
+     label11:
+        virtualinvoke r37.<android.graphics.drawable.Drawable: boolean setState(int[])>(r38);
+
+        i1 = r0.<android.inputmethodservice.KeyboardView: int mPopupPreviewX>;
+
+        r39 = r0.<android.inputmethodservice.KeyboardView: int[] mCoordinates>;
+
+        $i17 = r39[0];
+
+        $i18 = i1 + $i17;
+
+        r0.<android.inputmethodservice.KeyboardView: int mPopupPreviewX> = $i18;
+
+        $i20 = r0.<android.inputmethodservice.KeyboardView: int mPopupPreviewY>;
+
+        $i19 = r39[1];
+
+        $i21 = $i20 + $i19;
+
+        r0.<android.inputmethodservice.KeyboardView: int mPopupPreviewY> = $i21;
+
+        virtualinvoke r0.<android.inputmethodservice.KeyboardView: void getLocationOnScreen(int[])>(r39);
+
+        $i23 = r0.<android.inputmethodservice.KeyboardView: int mPopupPreviewY>;
+
+        $r17 = r0.<android.inputmethodservice.KeyboardView: int[] mCoordinates>;
+
+        $i22 = $r17[1];
+
+        $i24 = $i23 + $i22;
+
+        if $i24 >= 0 goto label14;
+
+        $i30 = r2.<android.inputmethodservice.Keyboard$Key: int x>;
+
+        $i29 = r2.<android.inputmethodservice.Keyboard$Key: int width>;
+
+        $i31 = $i30 + $i29;
+
+        $i32 = virtualinvoke r0.<android.inputmethodservice.KeyboardView: int getWidth()>();
+
+        $i33 = $i32 / 2;
+
+        if $i31 > $i33 goto label12;
+
+        $i42 = r0.<android.inputmethodservice.KeyboardView: int mPopupPreviewX>;
+
+        $i40 = r2.<android.inputmethodservice.Keyboard$Key: int width>;
+
+        $d2 = (double) $i40;
+
+        $d3 = $d2 * 2.5;
+
+        $i41 = (int) $d3;
+
+        $i43 = $i42 + $i41;
+
+        r0.<android.inputmethodservice.KeyboardView: int mPopupPreviewX> = $i43;
+
+        goto label13;
+
+     label12:
+        $i36 = r0.<android.inputmethodservice.KeyboardView: int mPopupPreviewX>;
+
+        $i34 = r2.<android.inputmethodservice.Keyboard$Key: int width>;
+
+        $d0 = (double) $i34;
+
+        $d1 = $d0 * 2.5;
+
+        $i35 = (int) $d1;
+
+        $i37 = $i36 - $i35;
+
+        r0.<android.inputmethodservice.KeyboardView: int mPopupPreviewX> = $i37;
+
+     label13:
+        $i38 = r0.<android.inputmethodservice.KeyboardView: int mPopupPreviewY>;
+
+        $i39 = $i38 + i64;
+
+        r0.<android.inputmethodservice.KeyboardView: int mPopupPreviewY> = $i39;
+
+     label14:
+        $z2 = virtualinvoke r1.<android.widget.PopupWindow: boolean isShowing()>();
+
+        if $z2 == 0 goto label15;
+
+        $i28 = r0.<android.inputmethodservice.KeyboardView: int mPopupPreviewX>;
+
+        $i27 = r0.<android.inputmethodservice.KeyboardView: int mPopupPreviewY>;
+
+        virtualinvoke r1.<android.widget.PopupWindow: void update(int,int,int,int)>($i28, $i27, i0, i64);
+
+        goto label16;
+
+     label15:
+        virtualinvoke r1.<android.widget.PopupWindow: void setWidth(int)>(i0);
+
+        virtualinvoke r1.<android.widget.PopupWindow: void setHeight(int)>(i64);
+
+        $r18 = r0.<android.inputmethodservice.KeyboardView: android.view.View mPopupParent>;
+
+        $i26 = r0.<android.inputmethodservice.KeyboardView: int mPopupPreviewX>;
+
+        $i25 = r0.<android.inputmethodservice.KeyboardView: int mPopupPreviewY>;
+
+        virtualinvoke r1.<android.widget.PopupWindow: void showAtLocation(android.view.View,int,int,int)>($r18, 0, $i26, $i25);
+
+     label16:
+        $r19 = r0.<android.inputmethodservice.KeyboardView: android.widget.TextView mPreviewText>;
+
+        virtualinvoke $r19.<android.widget.TextView: void setVisibility(int)>(0);
+
+        return;
+
+     label17:
+        return;
+    }
+
+    private void showPreview(int)
+    {
+        android.inputmethodservice.KeyboardView r0;
+        int i0, i1, $i2, $i3, $i4, $i5, i6, i7, i8, $i9;
+        android.inputmethodservice.Keyboard$Key r1, r10;
+        boolean $z0, $z1, $z2, z5;
+        android.os.Handler $r2, r11, r12;
+        android.os.Message $r3, $r5;
+        android.widget.TextView $r4;
+        int[] $r6, $r7;
+        android.widget.PopupWindow r8;
+        android.inputmethodservice.Keyboard$Key[] r9;
+
+        r0 := @this: android.inputmethodservice.KeyboardView;
+
+        i0 := @parameter0: int;
+
+        i1 = r0.<android.inputmethodservice.KeyboardView: int mCurrentKeyIndex>;
+
+        r8 = r0.<android.inputmethodservice.KeyboardView: android.widget.PopupWindow mPreviewPopup>;
+
+        r0.<android.inputmethodservice.KeyboardView: int mCurrentKeyIndex> = i0;
+
+        r9 = r0.<android.inputmethodservice.KeyboardView: android.inputmethodservice.Keyboard$Key[] mKeys>;
+
+        if i1 == i0 goto label4;
+
+        if i1 == -1 goto label3;
+
+        $i5 = lengthof r9;
+
+        if $i5 <= i1 goto label3;
+
+        r1 = r9[i1];
+
+        if i0 != -1 goto label1;
+
+        z5 = 1;
+
+        goto label2;
+
+     label1:
+        z5 = 0;
+
+     label2:
+        virtualinvoke r1.<android.inputmethodservice.Keyboard$Key: void onReleased(boolean)>(z5);
+
+        virtualinvoke r0.<android.inputmethodservice.KeyboardView: void invalidateKey(int)>(i1);
+
+        $r7 = r1.<android.inputmethodservice.Keyboard$Key: int[] codes>;
+
+        i6 = $r7[0];
+
+        specialinvoke r0.<android.inputmethodservice.KeyboardView: void sendAccessibilityEventForUnicodeCharacter(int,int)>(256, i6);
+
+        specialinvoke r0.<android.inputmethodservice.KeyboardView: void sendAccessibilityEventForUnicodeCharacter(int,int)>(65536, i6);
+
+     label3:
+        i7 = r0.<android.inputmethodservice.KeyboardView: int mCurrentKeyIndex>;
+
+        if i7 == -1 goto label4;
+
+        $i3 = lengthof r9;
+
+        if $i3 <= i7 goto label4;
+
+        r10 = r9[i7];
+
+        virtualinvoke r10.<android.inputmethodservice.Keyboard$Key: void onPressed()>();
+
+        $i4 = r0.<android.inputmethodservice.KeyboardView: int mCurrentKeyIndex>;
+
+        virtualinvoke r0.<android.inputmethodservice.KeyboardView: void invalidateKey(int)>($i4);
+
+        $r6 = r10.<android.inputmethodservice.Keyboard$Key: int[] codes>;
+
+        i8 = $r6[0];
+
+        specialinvoke r0.<android.inputmethodservice.KeyboardView: void sendAccessibilityEventForUnicodeCharacter(int,int)>(128, i8);
+
+        specialinvoke r0.<android.inputmethodservice.KeyboardView: void sendAccessibilityEventForUnicodeCharacter(int,int)>(32768, i8);
+
+     label4:
+        $i9 = r0.<android.inputmethodservice.KeyboardView: int mCurrentKeyIndex>;
+
+        if i1 == $i9 goto label7;
+
+        $z0 = r0.<android.inputmethodservice.KeyboardView: boolean mShowPreview>;
+
+        if $z0 == 0 goto label7;
+
+        $r2 = r0.<android.inputmethodservice.KeyboardView: android.os.Handler mHandler>;
+
+        virtualinvoke $r2.<android.os.Handler: void removeMessages(int)>(1);
+
+        $z1 = virtualinvoke r8.<android.widget.PopupWindow: boolean isShowing()>();
+
+        if $z1 == 0 goto label5;
+
+        if i0 != -1 goto label5;
+
+        r11 = r0.<android.inputmethodservice.KeyboardView: android.os.Handler mHandler>;
+
+        $r5 = virtualinvoke r11.<android.os.Handler: android.os.Message obtainMessage(int)>(2);
+
+        virtualinvoke r11.<android.os.Handler: boolean sendMessageDelayed(android.os.Message,long)>($r5, 70L);
+
+     label5:
+        if i0 == -1 goto label7;
+
+        $z2 = virtualinvoke r8.<android.widget.PopupWindow: boolean isShowing()>();
+
+        if $z2 == 0 goto label6;
+
+        $r4 = r0.<android.inputmethodservice.KeyboardView: android.widget.TextView mPreviewText>;
+
+        $i2 = virtualinvoke $r4.<android.widget.TextView: int getVisibility()>();
+
+        if $i2 != 0 goto label6;
+
+        specialinvoke r0.<android.inputmethodservice.KeyboardView: void showKey(int)>(i0);
+
+        goto label7;
+
+     label6:
+        r12 = r0.<android.inputmethodservice.KeyboardView: android.os.Handler mHandler>;
+
+        $r3 = virtualinvoke r12.<android.os.Handler: android.os.Message obtainMessage(int,int,int)>(1, i0, 0);
+
+        virtualinvoke r12.<android.os.Handler: boolean sendMessageDelayed(android.os.Message,long)>($r3, 0L);
+
+     label7:
+        return;
+    }
+
+    public void closing()
+    {
+        android.inputmethodservice.KeyboardView r0;
+        android.widget.PopupWindow $r1, $r3;
+        boolean $z0;
+        java.util.Map $r2;
+
+        r0 := @this: android.inputmethodservice.KeyboardView;
+
+        $r1 = r0.<android.inputmethodservice.KeyboardView: android.widget.PopupWindow mPreviewPopup>;
+
+        $z0 = virtualinvoke $r1.<android.widget.PopupWindow: boolean isShowing()>();
+
+        if $z0 == 0 goto label1;
+
+        $r3 = r0.<android.inputmethodservice.KeyboardView: android.widget.PopupWindow mPreviewPopup>;
+
+        virtualinvoke $r3.<android.widget.PopupWindow: void dismiss()>();
+
+     label1:
+        specialinvoke r0.<android.inputmethodservice.KeyboardView: void removeMessages()>();
+
+        specialinvoke r0.<android.inputmethodservice.KeyboardView: void dismissPopupKeyboard()>();
+
+        r0.<android.inputmethodservice.KeyboardView: android.graphics.Bitmap mBuffer> = null;
+
+        r0.<android.inputmethodservice.KeyboardView: android.graphics.Canvas mCanvas> = null;
+
+        $r2 = r0.<android.inputmethodservice.KeyboardView: java.util.Map mMiniKeyboardCache>;
+
+        interfaceinvoke $r2.<java.util.Map: void clear()>();
+
+        return;
+    }
+
+    public android.inputmethodservice.Keyboard getKeyboard()
+    {
+        android.inputmethodservice.KeyboardView r0;
+        android.inputmethodservice.Keyboard $r1;
+
+        r0 := @this: android.inputmethodservice.KeyboardView;
+
+        $r1 = r0.<android.inputmethodservice.KeyboardView: android.inputmethodservice.Keyboard mKeyboard>;
+
+        return $r1;
+    }
+
+    protected android.inputmethodservice.KeyboardView$OnKeyboardActionListener getOnKeyboardActionListener()
+    {
+        android.inputmethodservice.KeyboardView r0;
+        android.inputmethodservice.KeyboardView$OnKeyboardActionListener $r1;
+
+        r0 := @this: android.inputmethodservice.KeyboardView;
+
+        $r1 = r0.<android.inputmethodservice.KeyboardView: android.inputmethodservice.KeyboardView$OnKeyboardActionListener mKeyboardActionListener>;
+
+        return $r1;
+    }
+
+    public boolean handleBack()
+    {
+        android.inputmethodservice.KeyboardView r0;
+        android.widget.PopupWindow $r1;
+        boolean $z0;
+
+        r0 := @this: android.inputmethodservice.KeyboardView;
+
+        $r1 = r0.<android.inputmethodservice.KeyboardView: android.widget.PopupWindow mPopupKeyboard>;
+
+        $z0 = virtualinvoke $r1.<android.widget.PopupWindow: boolean isShowing()>();
+
+        if $z0 == 0 goto label1;
+
+        specialinvoke r0.<android.inputmethodservice.KeyboardView: void dismissPopupKeyboard()>();
+
+        return 1;
+
+     label1:
+        return 0;
+    }
+
+    public void invalidateAllKeys()
+    {
+        android.inputmethodservice.KeyboardView r0;
+        android.graphics.Rect $r1;
+        int $i0, $i1;
+
+        r0 := @this: android.inputmethodservice.KeyboardView;
+
+        $r1 = r0.<android.inputmethodservice.KeyboardView: android.graphics.Rect mDirtyRect>;
+
+        $i0 = virtualinvoke r0.<android.inputmethodservice.KeyboardView: int getWidth()>();
+
+        $i1 = virtualinvoke r0.<android.inputmethodservice.KeyboardView: int getHeight()>();
+
+        virtualinvoke $r1.<android.graphics.Rect: void union(int,int,int,int)>(0, 0, $i0, $i1);
+
+        r0.<android.inputmethodservice.KeyboardView: boolean mDrawPending> = 1;
+
+        virtualinvoke r0.<android.inputmethodservice.KeyboardView: void invalidate()>();
+
+        return;
+    }
+
+    public void invalidateKey(int)
+    {
+        android.inputmethodservice.KeyboardView r0;
+        int i0, $i1, $i2, $i3, $i4, $i5, $i6, $i7, $i8, $i9, $i10, $i11, $i12, $i13, $i14, $i15, $i16, $i17, $i18, $i19, $i20, $i21, $i22, $i23, $i24, $i25, $i26, $i27, $i28, $i29, $i30, $i31, $i32, $i33;
+        android.graphics.Rect $r1;
+        android.inputmethodservice.Keyboard$Key[] r2;
+        android.inputmethodservice.Keyboard$Key r3;
+
+        r0 := @this: android.inputmethodservice.KeyboardView;
+
+        i0 := @parameter0: int;
+
+        r2 = r0.<android.inputmethodservice.KeyboardView: android.inputmethodservice.Keyboard$Key[] mKeys>;
+
+        if r2 != null goto label1;
+
+        return;
+
+     label1:
+        if i0 < 0 goto label3;
+
+        $i1 = lengthof r2;
+
+        if i0 < $i1 goto label2;
+
+        goto label3;
+
+     label2:
+        r3 = r2[i0];
+
+        r0.<android.inputmethodservice.KeyboardView: android.inputmethodservice.Keyboard$Key mInvalidatedKey> = r3;
+
+        $r1 = r0.<android.inputmethodservice.KeyboardView: android.graphics.Rect mDirtyRect>;
+
+        $i3 = r3.<android.inputmethodservice.Keyboard$Key: int x>;
+
+        $i2 = r0.<android.inputmethodservice.KeyboardView: int mPaddingLeft>;
+
+        $i17 = $i3 + $i2;
+
+        $i5 = r3.<android.inputmethodservice.Keyboard$Key: int y>;
+
+        $i4 = r0.<android.inputmethodservice.KeyboardView: int mPaddingTop>;
+
+        $i16 = $i5 + $i4;
+
+        $i7 = r3.<android.inputmethodservice.Keyboard$Key: int x>;
+
+        $i6 = r3.<android.inputmethodservice.Keyboard$Key: int width>;
+
+        $i9 = $i7 + $i6;
+
+        $i8 = r0.<android.inputmethodservice.KeyboardView: int mPaddingLeft>;
+
+        $i15 = $i9 + $i8;
+
+        $i11 = r3.<android.inputmethodservice.Keyboard$Key: int y>;
+
+        $i10 = r3.<android.inputmethodservice.Keyboard$Key: int height>;
+
+        $i13 = $i11 + $i10;
+
+        $i12 = r0.<android.inputmethodservice.KeyboardView: int mPaddingTop>;
+
+        $i14 = $i13 + $i12;
+
+        virtualinvoke $r1.<android.graphics.Rect: void union(int,int,int,int)>($i17, $i16, $i15, $i14);
+
+        specialinvoke r0.<android.inputmethodservice.KeyboardView: void onBufferDraw()>();
+
+        $i19 = r3.<android.inputmethodservice.Keyboard$Key: int x>;
+
+        $i18 = r0.<android.inputmethodservice.KeyboardView: int mPaddingLeft>;
+
+        $i33 = $i19 + $i18;
+
+        $i21 = r3.<android.inputmethodservice.Keyboard$Key: int y>;
+
+        $i20 = r0.<android.inputmethodservice.KeyboardView: int mPaddingTop>;
+
+        $i32 = $i21 + $i20;
+
+        $i23 = r3.<android.inputmethodservice.Keyboard$Key: int x>;
+
+        $i22 = r3.<android.inputmethodservice.Keyboard$Key: int width>;
+
+        $i25 = $i23 + $i22;
+
+        $i24 = r0.<android.inputmethodservice.KeyboardView: int mPaddingLeft>;
+
+        $i31 = $i25 + $i24;
+
+        $i27 = r3.<android.inputmethodservice.Keyboard$Key: int y>;
+
+        $i26 = r3.<android.inputmethodservice.Keyboard$Key: int height>;
+
+        $i29 = $i27 + $i26;
+
+        $i28 = r0.<android.inputmethodservice.KeyboardView: int mPaddingTop>;
+
+        $i30 = $i29 + $i28;
+
+        virtualinvoke r0.<android.inputmethodservice.KeyboardView: void invalidate(int,int,int,int)>($i33, $i32, $i31, $i30);
+
+        return;
+
+     label3:
+        return;
+    }
+
+    public boolean isPreviewEnabled()
+    {
+        android.inputmethodservice.KeyboardView r0;
+        boolean $z0;
+
+        r0 := @this: android.inputmethodservice.KeyboardView;
+
+        $z0 = r0.<android.inputmethodservice.KeyboardView: boolean mShowPreview>;
+
+        return $z0;
+    }
+
+    public boolean isProximityCorrectionEnabled()
+    {
+        android.inputmethodservice.KeyboardView r0;
+        boolean $z0;
+
+        r0 := @this: android.inputmethodservice.KeyboardView;
+
+        $z0 = r0.<android.inputmethodservice.KeyboardView: boolean mProximityCorrectOn>;
+
+        return $z0;
+    }
+
+    public boolean isShifted()
+    {
+        android.inputmethodservice.KeyboardView r0;
+        android.inputmethodservice.Keyboard r1;
+        boolean $z0;
+
+        r0 := @this: android.inputmethodservice.KeyboardView;
+
+        r1 = r0.<android.inputmethodservice.KeyboardView: android.inputmethodservice.Keyboard mKeyboard>;
+
+        if r1 == null goto label1;
+
+        $z0 = virtualinvoke r1.<android.inputmethodservice.Keyboard: boolean isShifted()>();
+
+        return $z0;
+
+     label1:
+        return 0;
+    }
+
+    protected void onAttachedToWindow()
+    {
+        android.inputmethodservice.KeyboardView r0;
+        android.os.Handler $r1;
+        android.inputmethodservice.KeyboardView$1 $r2;
+
+        r0 := @this: android.inputmethodservice.KeyboardView;
+
+        specialinvoke r0.<android.view.View: void onAttachedToWindow()>();
+
+        specialinvoke r0.<android.inputmethodservice.KeyboardView: void initGestureDetector()>();
+
+        $r1 = r0.<android.inputmethodservice.KeyboardView: android.os.Handler mHandler>;
+
+        if $r1 != null goto label1;
+
+        $r2 = new android.inputmethodservice.KeyboardView$1;
+
+        specialinvoke $r2.<android.inputmethodservice.KeyboardView$1: void <init>(android.inputmethodservice.KeyboardView)>(r0);
+
+        r0.<android.inputmethodservice.KeyboardView: android.os.Handler mHandler> = $r2;
+
+     label1:
+        return;
+    }
+
+    public void onClick(android.view.View)
+    {
+        android.inputmethodservice.KeyboardView r0;
+        android.view.View r1;
+
+        r0 := @this: android.inputmethodservice.KeyboardView;
+
+        r1 := @parameter0: android.view.View;
+
+        specialinvoke r0.<android.inputmethodservice.KeyboardView: void dismissPopupKeyboard()>();
+
+        return;
+    }
+
+    public void onDetachedFromWindow()
+    {
+        android.inputmethodservice.KeyboardView r0;
+
+        r0 := @this: android.inputmethodservice.KeyboardView;
+
+        specialinvoke r0.<android.view.View: void onDetachedFromWindow()>();
+
+        virtualinvoke r0.<android.inputmethodservice.KeyboardView: void closing()>();
+
+        return;
+    }
+
+    public void onDraw(android.graphics.Canvas)
+    {
+        android.inputmethodservice.KeyboardView r0;
+        android.graphics.Canvas r1;
+        boolean $z0, $z1;
+        android.graphics.Bitmap $r2, $r3;
+
+        r0 := @this: android.inputmethodservice.KeyboardView;
+
+        r1 := @parameter0: android.graphics.Canvas;
+
+        specialinvoke r0.<android.view.View: void onDraw(android.graphics.Canvas)>(r1);
+
+        $z0 = r0.<android.inputmethodservice.KeyboardView: boolean mDrawPending>;
+
+        if $z0 != 0 goto label1;
+
+        $r2 = r0.<android.inputmethodservice.KeyboardView: android.graphics.Bitmap mBuffer>;
+
+        if $r2 == null goto label1;
+
+        $z1 = r0.<android.inputmethodservice.KeyboardView: boolean mKeyboardChanged>;
+
+        if $z1 == 0 goto label2;
+
+     label1:
+        specialinvoke r0.<android.inputmethodservice.KeyboardView: void onBufferDraw()>();
+
+     label2:
+        $r3 = r0.<android.inputmethodservice.KeyboardView: android.graphics.Bitmap mBuffer>;
+
+        virtualinvoke r1.<android.graphics.Canvas: void drawBitmap(android.graphics.Bitmap,float,float,android.graphics.Paint)>($r3, 0.0F, 0.0F, null);
+
+        return;
+    }
+
+    public boolean onHoverEvent(android.view.MotionEvent)
+    {
+        android.inputmethodservice.KeyboardView r0;
+        android.view.MotionEvent r1;
+        int i0, $i1;
+        android.view.accessibility.AccessibilityManager $r2;
+        boolean $z0, $z1;
+
+        r0 := @this: android.inputmethodservice.KeyboardView;
+
+        r1 := @parameter0: android.view.MotionEvent;
+
+        $r2 = r0.<android.inputmethodservice.KeyboardView: android.view.accessibility.AccessibilityManager mAccessibilityManager>;
+
+        $z0 = virtualinvoke $r2.<android.view.accessibility.AccessibilityManager: boolean isTouchExplorationEnabled()>();
+
+        if $z0 == 0 goto label5;
+
+        $i1 = virtualinvoke r1.<android.view.MotionEvent: int getPointerCount()>();
+
+        if $i1 != 1 goto label5;
+
+        i0 = virtualinvoke r1.<android.view.MotionEvent: int getAction()>();
+
+        if i0 == 7 goto label3;
+
+        if i0 == 9 goto label2;
+
+        if i0 == 10 goto label1;
+
+        goto label4;
+
+     label1:
+        virtualinvoke r1.<android.view.MotionEvent: void setAction(int)>(1);
+
+        goto label4;
+
+     label2:
+        virtualinvoke r1.<android.view.MotionEvent: void setAction(int)>(0);
+
+        goto label4;
+
+     label3:
+        virtualinvoke r1.<android.view.MotionEvent: void setAction(int)>(2);
+
+     label4:
+        $z1 = virtualinvoke r0.<android.inputmethodservice.KeyboardView: boolean onTouchEvent(android.view.MotionEvent)>(r1);
+
+        return $z1;
+
+     label5:
+        return 1;
+    }
+
+    protected boolean onLongPress(android.inputmethodservice.Keyboard$Key)
+    {
+        android.inputmethodservice.KeyboardView r0, $r4, $r12, $r24, $r27, $r31, $r32, r45;
+        int i0, i1, $i2, $i3, $i4, $i5, $i6, $i7, $i8, $i9, $i10, $i11, $i12, $i13, $i14, $i15, $i16, $i17, $i18, $i19, $i20, $i21, $i22, $i23, $i24, $i25, $i26, $i27, $i28, $i29, $i30, $i31, $i32, $i33, i34, i35;
+        java.util.Map $r1, $r35;
+        java.lang.Object $r2, $r21;
+        android.view.View $r3, $r6, $r7, $r8, $r10, $r13, $r15, $r17, $r23, $r25, $r33, $r34, r41, r42, r43;
+        int[] $r5, $r9, $r11;
+        boolean $z0;
+        android.widget.PopupWindow $r14, $r16, $r18, $r19;
+        android.content.Context $r20, $r30, $r38;
+        android.view.LayoutInflater $r22;
+        android.inputmethodservice.KeyboardView$3 $r26;
+        java.lang.CharSequence $r28, $r39;
+        android.inputmethodservice.Keyboard $r29, $r37, r44;
+        android.inputmethodservice.Keyboard$Key r40;
+
+        r0 := @this: android.inputmethodservice.KeyboardView;
+
+        r40 := @parameter0: android.inputmethodservice.Keyboard$Key;
+
+        i34 = r40.<android.inputmethodservice.Keyboard$Key: int popupResId>;
+
+        if i34 == 0 goto label8;
+
+        $r1 = r0.<android.inputmethodservice.KeyboardView: java.util.Map mMiniKeyboardCache>;
+
+        $r2 = interfaceinvoke $r1.<java.util.Map: java.lang.Object get(java.lang.Object)>(r40);
+
+        r41 = (android.view.View) $r2;
+
+        r0.<android.inputmethodservice.KeyboardView: android.view.View mMiniKeyboardContainer> = r41;
+
+        if r41 != null goto label4;
+
+        $r20 = virtualinvoke r0.<android.inputmethodservice.KeyboardView: android.content.Context getContext()>();
+
+        $r21 = virtualinvoke $r20.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("layout_inflater");
+
+        $r22 = (android.view.LayoutInflater) $r21;
+
+        $i26 = r0.<android.inputmethodservice.KeyboardView: int mPopupLayout>;
+
+        r42 = virtualinvoke $r22.<android.view.LayoutInflater: android.view.View inflate(int,android.view.ViewGroup)>($i26, null);
+
+        r0.<android.inputmethodservice.KeyboardView: android.view.View mMiniKeyboardContainer> = r42;
+
+        $r23 = virtualinvoke r42.<android.view.View: android.view.View findViewById(int)>(16908326);
+
+        $r24 = (android.inputmethodservice.KeyboardView) $r23;
+
+        r0.<android.inputmethodservice.KeyboardView: android.inputmethodservice.KeyboardView mMiniKeyboard> = $r24;
+
+        $r25 = r0.<android.inputmethodservice.KeyboardView: android.view.View mMiniKeyboardContainer>;
+
+        r43 = virtualinvoke $r25.<android.view.View: android.view.View findViewById(int)>(16908327);
+
+        if r43 == null goto label1;
+
+        virtualinvoke r43.<android.view.View: void setOnClickListener(android.view.View$OnClickListener)>(r0);
+
+     label1:
+        $r27 = r0.<android.inputmethodservice.KeyboardView: android.inputmethodservice.KeyboardView mMiniKeyboard>;
+
+        $r26 = new android.inputmethodservice.KeyboardView$3;
+
+        specialinvoke $r26.<android.inputmethodservice.KeyboardView$3: void <init>(android.inputmethodservice.KeyboardView)>(r0);
+
+        virtualinvoke $r27.<android.inputmethodservice.KeyboardView: void setOnKeyboardActionListener(android.inputmethodservice.KeyboardView$OnKeyboardActionListener)>($r26);
+
+        $r28 = r40.<android.inputmethodservice.Keyboard$Key: java.lang.CharSequence popupCharacters>;
+
+        if $r28 == null goto label2;
+
+        $r37 = new android.inputmethodservice.Keyboard;
+
+        $r38 = virtualinvoke r0.<android.inputmethodservice.KeyboardView: android.content.Context getContext()>();
+
+        $r39 = r40.<android.inputmethodservice.Keyboard$Key: java.lang.CharSequence popupCharacters>;
+
+        $i31 = virtualinvoke r0.<android.inputmethodservice.KeyboardView: int getPaddingLeft()>();
+
+        $i32 = virtualinvoke r0.<android.inputmethodservice.KeyboardView: int getPaddingRight()>();
+
+        $i33 = $i31 + $i32;
+
+        specialinvoke $r37.<android.inputmethodservice.Keyboard: void <init>(android.content.Context,int,java.lang.CharSequence,int,int)>($r38, i34, $r39, -1, $i33);
+
+        r44 = $r37;
+
+        goto label3;
+
+     label2:
+        $r29 = new android.inputmethodservice.Keyboard;
+
+        $r30 = virtualinvoke r0.<android.inputmethodservice.KeyboardView: android.content.Context getContext()>();
+
+        specialinvoke $r29.<android.inputmethodservice.Keyboard: void <init>(android.content.Context,int)>($r30, i34);
+
+        r44 = $r29;
+
+     label3:
+        $r31 = r0.<android.inputmethodservice.KeyboardView: android.inputmethodservice.KeyboardView mMiniKeyboard>;
+
+        virtualinvoke $r31.<android.inputmethodservice.KeyboardView: void setKeyboard(android.inputmethodservice.Keyboard)>(r44);
+
+        $r32 = r0.<android.inputmethodservice.KeyboardView: android.inputmethodservice.KeyboardView mMiniKeyboard>;
+
+        virtualinvoke $r32.<android.inputmethodservice.KeyboardView: void setPopupParent(android.view.View)>(r0);
+
+        $r33 = r0.<android.inputmethodservice.KeyboardView: android.view.View mMiniKeyboardContainer>;
+
+        $i27 = virtualinvoke r0.<android.inputmethodservice.KeyboardView: int getWidth()>();
+
+        $i28 = staticinvoke <android.view.View$MeasureSpec: int makeMeasureSpec(int,int)>($i27, -2147483648);
+
+        $i29 = virtualinvoke r0.<android.inputmethodservice.KeyboardView: int getHeight()>();
+
+        $i30 = staticinvoke <android.view.View$MeasureSpec: int makeMeasureSpec(int,int)>($i29, -2147483648);
+
+        virtualinvoke $r33.<android.view.View: void measure(int,int)>($i28, $i30);
+
+        $r35 = r0.<android.inputmethodservice.KeyboardView: java.util.Map mMiniKeyboardCache>;
+
+        $r34 = r0.<android.inputmethodservice.KeyboardView: android.view.View mMiniKeyboardContainer>;
+
+        interfaceinvoke $r35.<java.util.Map: java.lang.Object put(java.lang.Object,java.lang.Object)>(r40, $r34);
+
+        goto label5;
+
+     label4:
+        $r3 = virtualinvoke r41.<android.view.View: android.view.View findViewById(int)>(16908326);
+
+        $r4 = (android.inputmethodservice.KeyboardView) $r3;
+
+        r0.<android.inputmethodservice.KeyboardView: android.inputmethodservice.KeyboardView mMiniKeyboard> = $r4;
+
+     label5:
+        $r5 = r0.<android.inputmethodservice.KeyboardView: int[] mCoordinates>;
+
+        virtualinvoke r0.<android.inputmethodservice.KeyboardView: void getLocationInWindow(int[])>($r5);
+
+        $i3 = r40.<android.inputmethodservice.Keyboard$Key: int x>;
+
+        $i2 = r0.<android.inputmethodservice.KeyboardView: int mPaddingLeft>;
+
+        $i4 = $i3 + $i2;
+
+        r0.<android.inputmethodservice.KeyboardView: int mPopupX> = $i4;
+
+        $i6 = r40.<android.inputmethodservice.Keyboard$Key: int y>;
+
+        $i5 = r0.<android.inputmethodservice.KeyboardView: int mPaddingTop>;
+
+        $i7 = $i6 + $i5;
+
+        r0.<android.inputmethodservice.KeyboardView: int mPopupY> = $i7;
+
+        $i9 = r0.<android.inputmethodservice.KeyboardView: int mPopupX>;
+
+        $i8 = r40.<android.inputmethodservice.Keyboard$Key: int width>;
+
+        $i10 = $i9 + $i8;
+
+        $r6 = r0.<android.inputmethodservice.KeyboardView: android.view.View mMiniKeyboardContainer>;
+
+        $i11 = virtualinvoke $r6.<android.view.View: int getMeasuredWidth()>();
+
+        $i12 = $i10 - $i11;
+
+        r0.<android.inputmethodservice.KeyboardView: int mPopupX> = $i12;
+
+        $i13 = r0.<android.inputmethodservice.KeyboardView: int mPopupY>;
+
+        $r7 = r0.<android.inputmethodservice.KeyboardView: android.view.View mMiniKeyboardContainer>;
+
+        $i14 = virtualinvoke $r7.<android.view.View: int getMeasuredHeight()>();
+
+        $i15 = $i13 - $i14;
+
+        r0.<android.inputmethodservice.KeyboardView: int mPopupY> = $i15;
+
+        $i16 = r0.<android.inputmethodservice.KeyboardView: int mPopupX>;
+
+        $r8 = r0.<android.inputmethodservice.KeyboardView: android.view.View mMiniKeyboardContainer>;
+
+        $i17 = virtualinvoke $r8.<android.view.View: int getPaddingRight()>();
+
+        $i19 = $i16 + $i17;
+
+        $r9 = r0.<android.inputmethodservice.KeyboardView: int[] mCoordinates>;
+
+        $i18 = $r9[0];
+
+        i0 = $i19 + $i18;
+
+        $i20 = r0.<android.inputmethodservice.KeyboardView: int mPopupY>;
+
+        $r10 = r0.<android.inputmethodservice.KeyboardView: android.view.View mMiniKeyboardContainer>;
+
+        $i21 = virtualinvoke $r10.<android.view.View: int getPaddingBottom()>();
+
+        $i23 = $i20 + $i21;
+
+        $r11 = r0.<android.inputmethodservice.KeyboardView: int[] mCoordinates>;
+
+        $i22 = $r11[1];
+
+        i1 = $i23 + $i22;
+
+        r45 = r0.<android.inputmethodservice.KeyboardView: android.inputmethodservice.KeyboardView mMiniKeyboard>;
+
+        if i0 >= 0 goto label6;
+
+        i35 = 0;
+
+        goto label7;
+
+     label6:
+        i35 = i0;
+
+     label7:
+        virtualinvoke r45.<android.inputmethodservice.KeyboardView: void setPopupOffset(int,int)>(i35, i1);
+
+        $r12 = r0.<android.inputmethodservice.KeyboardView: android.inputmethodservice.KeyboardView mMiniKeyboard>;
+
+        $z0 = virtualinvoke r0.<android.inputmethodservice.KeyboardView: boolean isShifted()>();
+
+        virtualinvoke $r12.<android.inputmethodservice.KeyboardView: boolean setShifted(boolean)>($z0);
+
+        $r14 = r0.<android.inputmethodservice.KeyboardView: android.widget.PopupWindow mPopupKeyboard>;
+
+        $r13 = r0.<android.inputmethodservice.KeyboardView: android.view.View mMiniKeyboardContainer>;
+
+        virtualinvoke $r14.<android.widget.PopupWindow: void setContentView(android.view.View)>($r13);
+
+        $r16 = r0.<android.inputmethodservice.KeyboardView: android.widget.PopupWindow mPopupKeyboard>;
+
+        $r15 = r0.<android.inputmethodservice.KeyboardView: android.view.View mMiniKeyboardContainer>;
+
+        $i24 = virtualinvoke $r15.<android.view.View: int getMeasuredWidth()>();
+
+        virtualinvoke $r16.<android.widget.PopupWindow: void setWidth(int)>($i24);
+
+        $r18 = r0.<android.inputmethodservice.KeyboardView: android.widget.PopupWindow mPopupKeyboard>;
+
+        $r17 = r0.<android.inputmethodservice.KeyboardView: android.view.View mMiniKeyboardContainer>;
+
+        $i25 = virtualinvoke $r17.<android.view.View: int getMeasuredHeight()>();
+
+        virtualinvoke $r18.<android.widget.PopupWindow: void setHeight(int)>($i25);
+
+        $r19 = r0.<android.inputmethodservice.KeyboardView: android.widget.PopupWindow mPopupKeyboard>;
+
+        virtualinvoke $r19.<android.widget.PopupWindow: void showAtLocation(android.view.View,int,int,int)>(r0, 0, i0, i1);
+
+        r0.<android.inputmethodservice.KeyboardView: boolean mMiniKeyboardOnScreen> = 1;
+
+        virtualinvoke r0.<android.inputmethodservice.KeyboardView: void invalidateAllKeys()>();
+
+        return 1;
+
+     label8:
+        return 0;
+    }
+
+    public void onMeasure(int, int)
+    {
+        android.inputmethodservice.KeyboardView r0;
+        int i0, i1, $i2, $i3, $i4, $i5, $i6, $i7, $i8, $i9, $i10, $i11, $i12, $i13, $i14, $i15, $i16, $i17, $i18, i19, i20;
+        android.inputmethodservice.Keyboard r1, $r2;
+
+        r0 := @this: android.inputmethodservice.KeyboardView;
+
+        i0 := @parameter0: int;
+
+        i19 := @parameter1: int;
+
+        r1 = r0.<android.inputmethodservice.KeyboardView: android.inputmethodservice.Keyboard mKeyboard>;
+
+        if r1 != null goto label1;
+
+        $i14 = r0.<android.inputmethodservice.KeyboardView: int mPaddingLeft>;
+
+        $i13 = r0.<android.inputmethodservice.KeyboardView: int mPaddingRight>;
+
+        $i18 = $i14 + $i13;
+
+        $i16 = r0.<android.inputmethodservice.KeyboardView: int mPaddingTop>;
+
+        $i15 = r0.<android.inputmethodservice.KeyboardView: int mPaddingBottom>;
+
+        $i17 = $i16 + $i15;
+
+        virtualinvoke r0.<android.inputmethodservice.KeyboardView: void setMeasuredDimension(int,int)>($i18, $i17);
+
+        goto label3;
+
+     label1:
+        $i2 = virtualinvoke r1.<android.inputmethodservice.Keyboard: int getMinWidth()>();
+
+        $i3 = r0.<android.inputmethodservice.KeyboardView: int mPaddingLeft>;
+
+        $i5 = $i2 + $i3;
+
+        $i4 = r0.<android.inputmethodservice.KeyboardView: int mPaddingRight>;
+
+        i1 = $i5 + $i4;
+
+        i20 = i1;
+
+        $i6 = staticinvoke <android.view.View$MeasureSpec: int getSize(int)>(i0);
+
+        $i7 = i1 + 10;
+
+        if $i6 >= $i7 goto label2;
+
+        i20 = staticinvoke <android.view.View$MeasureSpec: int getSize(int)>(i0);
+
+     label2:
+        $r2 = r0.<android.inputmethodservice.KeyboardView: android.inputmethodservice.Keyboard mKeyboard>;
+
+        $i8 = virtualinvoke $r2.<android.inputmethodservice.Keyboard: int getHeight()>();
+
+        $i9 = r0.<android.inputmethodservice.KeyboardView: int mPaddingTop>;
+
+        $i11 = $i8 + $i9;
+
+        $i10 = r0.<android.inputmethodservice.KeyboardView: int mPaddingBottom>;
+
+        $i12 = $i11 + $i10;
+
+        virtualinvoke r0.<android.inputmethodservice.KeyboardView: void setMeasuredDimension(int,int)>(i20, $i12);
+
+     label3:
+        return;
+    }
+
+    public void onSizeChanged(int, int, int, int)
+    {
+        android.inputmethodservice.KeyboardView r0;
+        int i0, i1, i2, i3;
+        android.inputmethodservice.Keyboard r1;
+
+        r0 := @this: android.inputmethodservice.KeyboardView;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        i2 := @parameter2: int;
+
+        i3 := @parameter3: int;
+
+        specialinvoke r0.<android.view.View: void onSizeChanged(int,int,int,int)>(i0, i1, i2, i3);
+
+        r1 = r0.<android.inputmethodservice.KeyboardView: android.inputmethodservice.Keyboard mKeyboard>;
+
+        if r1 == null goto label1;
+
+        virtualinvoke r1.<android.inputmethodservice.Keyboard: void resize(int,int)>(i0, i1);
+
+     label1:
+        r0.<android.inputmethodservice.KeyboardView: android.graphics.Bitmap mBuffer> = null;
+
+        return;
+    }
+
+    public boolean onTouchEvent(android.view.MotionEvent)
+    {
+        android.inputmethodservice.KeyboardView r0;
+        int i0, i1, $i3, $i4, $i5;
+        long l2;
+        android.view.MotionEvent r1, r2, r3;
+        float $f0, $f1, $f2, $f3, $f4, $f5;
+        boolean z0;
+
+        r0 := @this: android.inputmethodservice.KeyboardView;
+
+        r2 := @parameter0: android.view.MotionEvent;
+
+        i0 = virtualinvoke r2.<android.view.MotionEvent: int getPointerCount()>();
+
+        i1 = virtualinvoke r2.<android.view.MotionEvent: int getAction()>();
+
+        l2 = virtualinvoke r2.<android.view.MotionEvent: long getEventTime()>();
+
+        $i3 = r0.<android.inputmethodservice.KeyboardView: int mOldPointerCount>;
+
+        if i0 == $i3 goto label3;
+
+        if i0 != 1 goto label2;
+
+        $f4 = virtualinvoke r2.<android.view.MotionEvent: float getX()>();
+
+        $f5 = virtualinvoke r2.<android.view.MotionEvent: float getY()>();
+
+        $i5 = virtualinvoke r2.<android.view.MotionEvent: int getMetaState()>();
+
+        r1 = staticinvoke <android.view.MotionEvent: android.view.MotionEvent obtain(long,long,int,float,float,int)>(l2, l2, 0, $f4, $f5, $i5);
+
+        z0 = specialinvoke r0.<android.inputmethodservice.KeyboardView: boolean onModifiedTouchEvent(android.view.MotionEvent,boolean)>(r1, 0);
+
+        virtualinvoke r1.<android.view.MotionEvent: void recycle()>();
+
+        if i1 != 1 goto label1;
+
+        z0 = specialinvoke r0.<android.inputmethodservice.KeyboardView: boolean onModifiedTouchEvent(android.view.MotionEvent,boolean)>(r2, 1);
+
+     label1:
+        goto label5;
+
+     label2:
+        $f2 = r0.<android.inputmethodservice.KeyboardView: float mOldPointerX>;
+
+        $f3 = r0.<android.inputmethodservice.KeyboardView: float mOldPointerY>;
+
+        $i4 = virtualinvoke r2.<android.view.MotionEvent: int getMetaState()>();
+
+        r3 = staticinvoke <android.view.MotionEvent: android.view.MotionEvent obtain(long,long,int,float,float,int)>(l2, l2, 1, $f2, $f3, $i4);
+
+        z0 = specialinvoke r0.<android.inputmethodservice.KeyboardView: boolean onModifiedTouchEvent(android.view.MotionEvent,boolean)>(r3, 1);
+
+        virtualinvoke r3.<android.view.MotionEvent: void recycle()>();
+
+        goto label5;
+
+     label3:
+        if i0 != 1 goto label4;
+
+        z0 = specialinvoke r0.<android.inputmethodservice.KeyboardView: boolean onModifiedTouchEvent(android.view.MotionEvent,boolean)>(r2, 0);
+
+        $f0 = virtualinvoke r2.<android.view.MotionEvent: float getX()>();
+
+        r0.<android.inputmethodservice.KeyboardView: float mOldPointerX> = $f0;
+
+        $f1 = virtualinvoke r2.<android.view.MotionEvent: float getY()>();
+
+        r0.<android.inputmethodservice.KeyboardView: float mOldPointerY> = $f1;
+
+        goto label5;
+
+     label4:
+        z0 = 1;
+
+     label5:
+        r0.<android.inputmethodservice.KeyboardView: int mOldPointerCount> = i0;
+
+        return z0;
+    }
+
+    public void setKeyboard(android.inputmethodservice.Keyboard)
+    {
+        android.inputmethodservice.KeyboardView r0;
+        android.inputmethodservice.Keyboard r1, $r3;
+        java.util.List r2;
+        int $i0;
+        android.inputmethodservice.Keyboard$Key[] $r4, $r6;
+        java.lang.Object[] $r5;
+        java.util.Map $r7;
+
+        r0 := @this: android.inputmethodservice.KeyboardView;
+
+        r1 := @parameter0: android.inputmethodservice.Keyboard;
+
+        $r3 = r0.<android.inputmethodservice.KeyboardView: android.inputmethodservice.Keyboard mKeyboard>;
+
+        if $r3 == null goto label1;
+
+        specialinvoke r0.<android.inputmethodservice.KeyboardView: void showPreview(int)>(-1);
+
+     label1:
+        specialinvoke r0.<android.inputmethodservice.KeyboardView: void removeMessages()>();
+
+        r0.<android.inputmethodservice.KeyboardView: android.inputmethodservice.Keyboard mKeyboard> = r1;
+
+        r2 = virtualinvoke r1.<android.inputmethodservice.Keyboard: java.util.List getKeys()>();
+
+        $i0 = interfaceinvoke r2.<java.util.List: int size()>();
+
+        $r4 = newarray (android.inputmethodservice.Keyboard$Key)[$i0];
+
+        $r5 = interfaceinvoke r2.<java.util.List: java.lang.Object[] toArray(java.lang.Object[])>($r4);
+
+        $r6 = (android.inputmethodservice.Keyboard$Key[]) $r5;
+
+        r0.<android.inputmethodservice.KeyboardView: android.inputmethodservice.Keyboard$Key[] mKeys> = $r6;
+
+        virtualinvoke r0.<android.inputmethodservice.KeyboardView: void requestLayout()>();
+
+        r0.<android.inputmethodservice.KeyboardView: boolean mKeyboardChanged> = 1;
+
+        virtualinvoke r0.<android.inputmethodservice.KeyboardView: void invalidateAllKeys()>();
+
+        specialinvoke r0.<android.inputmethodservice.KeyboardView: void computeProximityThreshold(android.inputmethodservice.Keyboard)>(r1);
+
+        $r7 = r0.<android.inputmethodservice.KeyboardView: java.util.Map mMiniKeyboardCache>;
+
+        interfaceinvoke $r7.<java.util.Map: void clear()>();
+
+        r0.<android.inputmethodservice.KeyboardView: boolean mAbortKey> = 1;
+
+        return;
+    }
+
+    public void setOnKeyboardActionListener(android.inputmethodservice.KeyboardView$OnKeyboardActionListener)
+    {
+        android.inputmethodservice.KeyboardView r0;
+        android.inputmethodservice.KeyboardView$OnKeyboardActionListener r1;
+
+        r0 := @this: android.inputmethodservice.KeyboardView;
+
+        r1 := @parameter0: android.inputmethodservice.KeyboardView$OnKeyboardActionListener;
+
+        r0.<android.inputmethodservice.KeyboardView: android.inputmethodservice.KeyboardView$OnKeyboardActionListener mKeyboardActionListener> = r1;
+
+        return;
+    }
+
+    public void setPopupOffset(int, int)
+    {
+        android.inputmethodservice.KeyboardView r0;
+        int i0, i1;
+        android.widget.PopupWindow $r1, $r2;
+        boolean $z0;
+
+        r0 := @this: android.inputmethodservice.KeyboardView;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        r0.<android.inputmethodservice.KeyboardView: int mMiniKeyboardOffsetX> = i0;
+
+        r0.<android.inputmethodservice.KeyboardView: int mMiniKeyboardOffsetY> = i1;
+
+        $r1 = r0.<android.inputmethodservice.KeyboardView: android.widget.PopupWindow mPreviewPopup>;
+
+        $z0 = virtualinvoke $r1.<android.widget.PopupWindow: boolean isShowing()>();
+
+        if $z0 == 0 goto label1;
+
+        $r2 = r0.<android.inputmethodservice.KeyboardView: android.widget.PopupWindow mPreviewPopup>;
+
+        virtualinvoke $r2.<android.widget.PopupWindow: void dismiss()>();
+
+     label1:
+        return;
+    }
+
+    public void setPopupParent(android.view.View)
+    {
+        android.inputmethodservice.KeyboardView r0;
+        android.view.View r1;
+
+        r0 := @this: android.inputmethodservice.KeyboardView;
+
+        r1 := @parameter0: android.view.View;
+
+        r0.<android.inputmethodservice.KeyboardView: android.view.View mPopupParent> = r1;
+
+        return;
+    }
+
+    public void setPreviewEnabled(boolean)
+    {
+        android.inputmethodservice.KeyboardView r0;
+        boolean z0;
+
+        r0 := @this: android.inputmethodservice.KeyboardView;
+
+        z0 := @parameter0: boolean;
+
+        r0.<android.inputmethodservice.KeyboardView: boolean mShowPreview> = z0;
+
+        return;
+    }
+
+    public void setProximityCorrectionEnabled(boolean)
+    {
+        android.inputmethodservice.KeyboardView r0;
+        boolean z0;
+
+        r0 := @this: android.inputmethodservice.KeyboardView;
+
+        z0 := @parameter0: boolean;
+
+        r0.<android.inputmethodservice.KeyboardView: boolean mProximityCorrectOn> = z0;
+
+        return;
+    }
+
+    public boolean setShifted(boolean)
+    {
+        android.inputmethodservice.KeyboardView r0;
+        boolean z0, $z1;
+        android.inputmethodservice.Keyboard r1;
+
+        r0 := @this: android.inputmethodservice.KeyboardView;
+
+        z0 := @parameter0: boolean;
+
+        r1 = r0.<android.inputmethodservice.KeyboardView: android.inputmethodservice.Keyboard mKeyboard>;
+
+        if r1 == null goto label1;
+
+        $z1 = virtualinvoke r1.<android.inputmethodservice.Keyboard: boolean setShifted(boolean)>(z0);
+
+        if $z1 == 0 goto label1;
+
+        virtualinvoke r0.<android.inputmethodservice.KeyboardView: void invalidateAllKeys()>();
+
+        return 1;
+
+     label1:
+        return 0;
+    }
+
+    public void setVerticalCorrection(int)
+    {
+        android.inputmethodservice.KeyboardView r0;
+        int i0;
+
+        r0 := @this: android.inputmethodservice.KeyboardView;
+
+        i0 := @parameter0: int;
+
+        return;
+    }
+
+    protected void swipeDown()
+    {
+        android.inputmethodservice.KeyboardView r0;
+        android.inputmethodservice.KeyboardView$OnKeyboardActionListener $r1;
+
+        r0 := @this: android.inputmethodservice.KeyboardView;
+
+        $r1 = r0.<android.inputmethodservice.KeyboardView: android.inputmethodservice.KeyboardView$OnKeyboardActionListener mKeyboardActionListener>;
+
+        interfaceinvoke $r1.<android.inputmethodservice.KeyboardView$OnKeyboardActionListener: void swipeDown()>();
+
+        return;
+    }
+
+    protected void swipeLeft()
+    {
+        android.inputmethodservice.KeyboardView r0;
+        android.inputmethodservice.KeyboardView$OnKeyboardActionListener $r1;
+
+        r0 := @this: android.inputmethodservice.KeyboardView;
+
+        $r1 = r0.<android.inputmethodservice.KeyboardView: android.inputmethodservice.KeyboardView$OnKeyboardActionListener mKeyboardActionListener>;
+
+        interfaceinvoke $r1.<android.inputmethodservice.KeyboardView$OnKeyboardActionListener: void swipeLeft()>();
+
+        return;
+    }
+
+    protected void swipeRight()
+    {
+        android.inputmethodservice.KeyboardView r0;
+        android.inputmethodservice.KeyboardView$OnKeyboardActionListener $r1;
+
+        r0 := @this: android.inputmethodservice.KeyboardView;
+
+        $r1 = r0.<android.inputmethodservice.KeyboardView: android.inputmethodservice.KeyboardView$OnKeyboardActionListener mKeyboardActionListener>;
+
+        interfaceinvoke $r1.<android.inputmethodservice.KeyboardView$OnKeyboardActionListener: void swipeRight()>();
+
+        return;
+    }
+
+    protected void swipeUp()
+    {
+        android.inputmethodservice.KeyboardView r0;
+        android.inputmethodservice.KeyboardView$OnKeyboardActionListener $r1;
+
+        r0 := @this: android.inputmethodservice.KeyboardView;
+
+        $r1 = r0.<android.inputmethodservice.KeyboardView: android.inputmethodservice.KeyboardView$OnKeyboardActionListener mKeyboardActionListener>;
+
+        interfaceinvoke $r1.<android.inputmethodservice.KeyboardView$OnKeyboardActionListener: void swipeUp()>();
+
+        return;
+    }
+}

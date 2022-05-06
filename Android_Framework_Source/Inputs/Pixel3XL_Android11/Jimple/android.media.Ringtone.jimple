@@ -1,0 +1,1499 @@
+public class android.media.Ringtone extends java.lang.Object
+{
+    private static final boolean LOGD;
+    private static final java.lang.String[] MEDIA_COLUMNS;
+    private static final java.lang.String MEDIA_SELECTION;
+    private static final java.lang.String TAG;
+    private static final java.util.ArrayList sActiveRingtones;
+    private final boolean mAllowRemote;
+    private android.media.AudioAttributes mAudioAttributes;
+    private final android.media.AudioManager mAudioManager;
+    private final android.media.Ringtone$MyOnCompletionListener mCompletionListener;
+    private final android.content.Context mContext;
+    private boolean mIsLooping;
+    private android.media.MediaPlayer mLocalPlayer;
+    private final java.lang.Object mPlaybackSettingsLock;
+    private final android.media.IRingtonePlayer mRemotePlayer;
+    private final android.os.Binder mRemoteToken;
+    private java.lang.String mTitle;
+    private android.net.Uri mUri;
+    private float mVolume;
+    private android.media.VolumeShaper mVolumeShaper;
+    private android.media.VolumeShaper$Configuration mVolumeShaperConfig;
+
+    static void <clinit>()
+    {
+        java.lang.String[] $r0;
+        java.util.ArrayList $r1;
+
+        <android.media.Ringtone: java.lang.String TAG> = "Ringtone";
+
+        <android.media.Ringtone: java.lang.String MEDIA_SELECTION> = "mime_type LIKE \'audio/%\' OR mime_type IN (\'application/ogg\', \'application/x-flac\')";
+
+        <android.media.Ringtone: boolean LOGD> = 1;
+
+        $r0 = newarray (java.lang.String)[2];
+
+        $r0[0] = "_id";
+
+        $r0[1] = "title";
+
+        <android.media.Ringtone: java.lang.String[] MEDIA_COLUMNS> = $r0;
+
+        $r1 = new java.util.ArrayList;
+
+        specialinvoke $r1.<java.util.ArrayList: void <init>()>();
+
+        <android.media.Ringtone: java.util.ArrayList sActiveRingtones> = $r1;
+
+        return;
+    }
+
+    public void <init>(android.content.Context, boolean)
+    {
+        android.media.Ringtone r0;
+        boolean z0;
+        android.media.Ringtone$MyOnCompletionListener $r1;
+        android.media.AudioAttributes$Builder $r2, $r3, $r4;
+        android.media.AudioAttributes $r5;
+        java.lang.Object $r6, $r7;
+        android.os.Binder $r8, r12;
+        android.content.Context r9;
+        android.media.AudioManager r10;
+        android.media.IRingtonePlayer r11;
+
+        r0 := @this: android.media.Ringtone;
+
+        r9 := @parameter0: android.content.Context;
+
+        z0 := @parameter1: boolean;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        $r1 = new android.media.Ringtone$MyOnCompletionListener;
+
+        specialinvoke $r1.<android.media.Ringtone$MyOnCompletionListener: void <init>(android.media.Ringtone)>(r0);
+
+        r0.<android.media.Ringtone: android.media.Ringtone$MyOnCompletionListener mCompletionListener> = $r1;
+
+        $r2 = new android.media.AudioAttributes$Builder;
+
+        specialinvoke $r2.<android.media.AudioAttributes$Builder: void <init>()>();
+
+        $r3 = virtualinvoke $r2.<android.media.AudioAttributes$Builder: android.media.AudioAttributes$Builder setUsage(int)>(6);
+
+        $r4 = virtualinvoke $r3.<android.media.AudioAttributes$Builder: android.media.AudioAttributes$Builder setContentType(int)>(4);
+
+        $r5 = virtualinvoke $r4.<android.media.AudioAttributes$Builder: android.media.AudioAttributes build()>();
+
+        r0.<android.media.Ringtone: android.media.AudioAttributes mAudioAttributes> = $r5;
+
+        r0.<android.media.Ringtone: boolean mIsLooping> = 0;
+
+        r0.<android.media.Ringtone: float mVolume> = 1.0F;
+
+        $r6 = new java.lang.Object;
+
+        specialinvoke $r6.<java.lang.Object: void <init>()>();
+
+        r0.<android.media.Ringtone: java.lang.Object mPlaybackSettingsLock> = $r6;
+
+        r0.<android.media.Ringtone: android.content.Context mContext> = r9;
+
+        $r7 = virtualinvoke r9.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("audio");
+
+        r10 = (android.media.AudioManager) $r7;
+
+        r0.<android.media.Ringtone: android.media.AudioManager mAudioManager> = r10;
+
+        r0.<android.media.Ringtone: boolean mAllowRemote> = z0;
+
+        if z0 == 0 goto label1;
+
+        r11 = virtualinvoke r10.<android.media.AudioManager: android.media.IRingtonePlayer getRingtonePlayer()>();
+
+        goto label2;
+
+     label1:
+        r11 = null;
+
+     label2:
+        r0.<android.media.Ringtone: android.media.IRingtonePlayer mRemotePlayer> = r11;
+
+        r12 = null;
+
+        if z0 == 0 goto label3;
+
+        $r8 = new android.os.Binder;
+
+        specialinvoke $r8.<android.os.Binder: void <init>()>();
+
+        r12 = $r8;
+
+     label3:
+        r0.<android.media.Ringtone: android.os.Binder mRemoteToken> = r12;
+
+        return;
+    }
+
+    static java.util.ArrayList access$000()
+    {
+        java.util.ArrayList $r0;
+
+        $r0 = <android.media.Ringtone: java.util.ArrayList sActiveRingtones>;
+
+        return $r0;
+    }
+
+    private void applyPlaybackProperties_sync()
+    {
+        android.media.Ringtone r0;
+        boolean $z0, $z1, $z2;
+        float $f0, $f1;
+        android.os.Binder $r1;
+        android.media.MediaPlayer $r2, r4;
+        android.os.RemoteException $r3;
+        android.media.IRingtonePlayer r5;
+
+        r0 := @this: android.media.Ringtone;
+
+        r4 = r0.<android.media.Ringtone: android.media.MediaPlayer mLocalPlayer>;
+
+        if r4 == null goto label1;
+
+        $f1 = r0.<android.media.Ringtone: float mVolume>;
+
+        virtualinvoke r4.<android.media.MediaPlayer: void setVolume(float)>($f1);
+
+        $r2 = r0.<android.media.Ringtone: android.media.MediaPlayer mLocalPlayer>;
+
+        $z2 = r0.<android.media.Ringtone: boolean mIsLooping>;
+
+        virtualinvoke $r2.<android.media.MediaPlayer: void setLooping(boolean)>($z2);
+
+        goto label7;
+
+     label1:
+        $z0 = r0.<android.media.Ringtone: boolean mAllowRemote>;
+
+        if $z0 == 0 goto label6;
+
+        r5 = r0.<android.media.Ringtone: android.media.IRingtonePlayer mRemotePlayer>;
+
+        if r5 == null goto label6;
+
+     label2:
+        $r1 = r0.<android.media.Ringtone: android.os.Binder mRemoteToken>;
+
+        $f0 = r0.<android.media.Ringtone: float mVolume>;
+
+        $z1 = r0.<android.media.Ringtone: boolean mIsLooping>;
+
+        interfaceinvoke r5.<android.media.IRingtonePlayer: void setPlaybackProperties(android.os.IBinder,float,boolean)>($r1, $f0, $z1);
+
+     label3:
+        goto label5;
+
+     label4:
+        $r3 := @caughtexception;
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String,java.lang.Throwable)>("Ringtone", "Problem setting playback properties: ", $r3);
+
+     label5:
+        goto label7;
+
+     label6:
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("Ringtone", "Neither local nor remote player available when applying playback properties");
+
+     label7:
+        return;
+
+        catch android.os.RemoteException from label2 to label3 with label4;
+    }
+
+    private void destroyLocalPlayer()
+    {
+        android.media.Ringtone r0;
+        android.media.MediaPlayer $r2, $r3, r6;
+        java.util.ArrayList $r4, r7;
+        java.lang.Throwable $r5;
+
+        r0 := @this: android.media.Ringtone;
+
+        r6 = r0.<android.media.Ringtone: android.media.MediaPlayer mLocalPlayer>;
+
+        if r6 == null goto label6;
+
+        virtualinvoke r6.<android.media.MediaPlayer: void setOnCompletionListener(android.media.MediaPlayer$OnCompletionListener)>(null);
+
+        $r2 = r0.<android.media.Ringtone: android.media.MediaPlayer mLocalPlayer>;
+
+        virtualinvoke $r2.<android.media.MediaPlayer: void reset()>();
+
+        $r3 = r0.<android.media.Ringtone: android.media.MediaPlayer mLocalPlayer>;
+
+        virtualinvoke $r3.<android.media.MediaPlayer: void release()>();
+
+        r0.<android.media.Ringtone: android.media.MediaPlayer mLocalPlayer> = null;
+
+        r0.<android.media.Ringtone: android.media.VolumeShaper mVolumeShaper> = null;
+
+        r7 = <android.media.Ringtone: java.util.ArrayList sActiveRingtones>;
+
+        entermonitor r7;
+
+     label1:
+        $r4 = <android.media.Ringtone: java.util.ArrayList sActiveRingtones>;
+
+        virtualinvoke $r4.<java.util.ArrayList: boolean remove(java.lang.Object)>(r0);
+
+        exitmonitor r7;
+
+     label2:
+        goto label6;
+
+     label3:
+        $r5 := @caughtexception;
+
+     label4:
+        exitmonitor r7;
+
+     label5:
+        throw $r5;
+
+     label6:
+        return;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    public static java.lang.String getTitle(android.content.Context, android.net.Uri, boolean, boolean)
+    {
+        boolean z0, z1, $z2, $z3;
+        android.content.ContentResolver r0;
+        java.lang.String r1, $r2, $r3, $r4, $r8, r16, r20, r22, r23, r26, r27, r28;
+        java.lang.String[] $r5;
+        int $i0, $i1;
+        java.lang.Object[] $r6;
+        android.net.Uri $r7, r15;
+        java.lang.Throwable $r9, $r13;
+        java.lang.Object $r10;
+        android.media.AudioManager $r11;
+        android.os.RemoteException $r12;
+        android.content.Context r14;
+        android.database.Cursor r17, r18, r19, r21;
+        android.media.IRingtonePlayer r25;
+
+        r14 := @parameter0: android.content.Context;
+
+        r15 := @parameter1: android.net.Uri;
+
+        z0 := @parameter2: boolean;
+
+        z1 := @parameter3: boolean;
+
+        r0 = virtualinvoke r14.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        r16 = null;
+
+        if r15 == null goto label30;
+
+        $r2 = virtualinvoke r15.<android.net.Uri: java.lang.String getAuthority()>();
+
+        r1 = staticinvoke <android.content.ContentProvider: java.lang.String getAuthorityWithoutUserId(java.lang.String)>($r2);
+
+        $r3 = "settings";
+
+        $z2 = virtualinvoke $r3.<java.lang.String: boolean equals(java.lang.Object)>(r1);
+
+        if $z2 == 0 goto label01;
+
+        if z0 == 0 goto label29;
+
+        $r6 = newarray (java.lang.Object)[1];
+
+        $i1 = staticinvoke <android.media.RingtoneManager: int getDefaultType(android.net.Uri)>(r15);
+
+        $r7 = staticinvoke <android.media.RingtoneManager: android.net.Uri getActualDefaultRingtoneUri(android.content.Context,int)>(r14, $i1);
+
+        $r8 = staticinvoke <android.media.Ringtone: java.lang.String getTitle(android.content.Context,android.net.Uri,boolean,boolean)>(r14, $r7, 0, z1);
+
+        $r6[0] = $r8;
+
+        r16 = virtualinvoke r14.<android.content.Context: java.lang.String getString(int,java.lang.Object[])>(17041158, $r6);
+
+        goto label29;
+
+     label01:
+        r17 = null;
+
+        r18 = null;
+
+        r19 = null;
+
+     label02:
+        $r4 = "media";
+
+        $z3 = virtualinvoke $r4.<java.lang.String: boolean equals(java.lang.Object)>(r1);
+
+        if $z3 == 0 goto label15;
+
+     label03:
+        if z1 == 0 goto label04;
+
+        r20 = null;
+
+        goto label05;
+
+     label04:
+        r20 = "mime_type LIKE \'audio/%\' OR mime_type IN (\'application/ogg\', \'application/x-flac\')";
+
+     label05:
+        r18 = null;
+
+        r19 = null;
+
+     label06:
+        $r5 = <android.media.Ringtone: java.lang.String[] MEDIA_COLUMNS>;
+
+        r21 = virtualinvoke r0.<android.content.ContentResolver: android.database.Cursor query(android.net.Uri,java.lang.String[],java.lang.String,java.lang.String[],java.lang.String)>(r15, $r5, r20, null, null);
+
+     label07:
+        r17 = r21;
+
+        if r21 == null goto label15;
+
+        r17 = r21;
+
+        r18 = r21;
+
+        r19 = r21;
+
+     label08:
+        $i0 = interfaceinvoke r21.<android.database.Cursor: int getCount()>();
+
+        if $i0 != 1 goto label15;
+
+     label09:
+        r18 = r21;
+
+        r19 = r21;
+
+     label10:
+        interfaceinvoke r21.<android.database.Cursor: boolean moveToFirst()>();
+
+     label11:
+        r18 = r21;
+
+        r19 = r21;
+
+     label12:
+        r22 = interfaceinvoke r21.<android.database.Cursor: java.lang.String getString(int)>(1);
+
+     label13:
+        if r21 == null goto label14;
+
+        interfaceinvoke r21.<android.database.Cursor: void close()>();
+
+     label14:
+        return r22;
+
+     label15:
+        r23 = null;
+
+        if r17 == null goto label17;
+
+        r19 = r17;
+
+        r23 = null;
+
+     label16:
+        interfaceinvoke r19.<android.database.Cursor: void close()>();
+
+     label17:
+        goto label28;
+
+     label18:
+        $r13 := @caughtexception;
+
+        goto label24;
+
+     label19:
+        $r9 := @caughtexception;
+
+        r25 = null;
+
+        if z1 == 0 goto label21;
+
+        r18 = r19;
+
+     label20:
+        $r10 = virtualinvoke r14.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("audio");
+
+        $r11 = (android.media.AudioManager) $r10;
+
+        r25 = virtualinvoke $r11.<android.media.AudioManager: android.media.IRingtonePlayer getRingtonePlayer()>();
+
+     label21:
+        r26 = null;
+
+        if r25 == null goto label27;
+
+        r18 = r19;
+
+     label22:
+        r26 = interfaceinvoke r25.<android.media.IRingtonePlayer: java.lang.String getTitle(android.net.Uri)>(r15);
+
+     label23:
+        goto label27;
+
+     label24:
+        if r18 == null goto label25;
+
+        interfaceinvoke r18.<android.database.Cursor: void close()>();
+
+     label25:
+        throw $r13;
+
+     label26:
+        $r12 := @caughtexception;
+
+        r26 = null;
+
+     label27:
+        r23 = r26;
+
+        if r19 == null goto label17;
+
+        r23 = r26;
+
+        goto label16;
+
+     label28:
+        r16 = r23;
+
+        if r23 != null goto label29;
+
+        r16 = virtualinvoke r15.<android.net.Uri: java.lang.String getLastPathSegment()>();
+
+     label29:
+        goto label31;
+
+     label30:
+        r16 = virtualinvoke r14.<android.content.Context: java.lang.String getString(int)>(17041162);
+
+     label31:
+        r27 = r16;
+
+        if r16 != null goto label32;
+
+        r28 = virtualinvoke r14.<android.content.Context: java.lang.String getString(int)>(17041163);
+
+        r27 = r28;
+
+        if r28 != null goto label32;
+
+        r27 = "";
+
+     label32:
+        return r27;
+
+        catch java.lang.SecurityException from label02 to label03 with label19;
+        catch java.lang.Throwable from label02 to label03 with label18;
+        catch java.lang.SecurityException from label06 to label07 with label19;
+        catch java.lang.Throwable from label06 to label07 with label18;
+        catch java.lang.SecurityException from label08 to label09 with label19;
+        catch java.lang.Throwable from label08 to label09 with label18;
+        catch java.lang.SecurityException from label10 to label11 with label19;
+        catch java.lang.Throwable from label10 to label11 with label18;
+        catch java.lang.SecurityException from label12 to label13 with label19;
+        catch java.lang.Throwable from label12 to label13 with label18;
+        catch java.lang.Throwable from label20 to label21 with label18;
+        catch android.os.RemoteException from label22 to label23 with label26;
+        catch java.lang.Throwable from label22 to label23 with label18;
+    }
+
+    private boolean playFallbackRingtone()
+    {
+        android.media.Ringtone r0;
+        int i0, $i1, $i2;
+        android.media.AudioAttributes $r1, $r8;
+        android.media.AudioManager $r2;
+        android.net.Uri $r3, $r18, $r21;
+        android.content.Context $r4, $r17;
+        android.content.res.Resources $r5;
+        long $l4, $l6, $l7;
+        byte $b5;
+        android.media.MediaPlayer $r6, $r9, $r11, $r13, $r15, r29;
+        java.io.FileDescriptor $r7, $r16;
+        android.media.VolumeShaper$Configuration $r10, $r12;
+        android.media.VolumeShaper $r14;
+        java.lang.StringBuilder $r19;
+        java.lang.String $r23;
+        android.content.res.Resources$NotFoundException $r24;
+        java.lang.Throwable $r25, $r26;
+        android.content.res.AssetFileDescriptor r28;
+        java.lang.Object r30;
+
+        r0 := @this: android.media.Ringtone;
+
+        $r2 = r0.<android.media.Ringtone: android.media.AudioManager mAudioManager>;
+
+        $r1 = r0.<android.media.Ringtone: android.media.AudioAttributes mAudioAttributes>;
+
+        $i1 = staticinvoke <android.media.AudioAttributes: int toLegacyStreamType(android.media.AudioAttributes)>($r1);
+
+        $i2 = virtualinvoke $r2.<android.media.AudioManager: int getStreamVolume(int)>($i1);
+
+        if $i2 == 0 goto label19;
+
+        $r3 = r0.<android.media.Ringtone: android.net.Uri mUri>;
+
+        i0 = staticinvoke <android.media.RingtoneManager: int getDefaultType(android.net.Uri)>($r3);
+
+        if i0 == -1 goto label02;
+
+        $r17 = r0.<android.media.Ringtone: android.content.Context mContext>;
+
+        $r18 = staticinvoke <android.media.RingtoneManager: android.net.Uri getActualDefaultRingtoneUri(android.content.Context,int)>($r17, i0);
+
+        if $r18 == null goto label01;
+
+        goto label02;
+
+     label01:
+        $r19 = new java.lang.StringBuilder;
+
+        specialinvoke $r19.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("not playing fallback for ");
+
+        $r21 = r0.<android.media.Ringtone: android.net.Uri mUri>;
+
+        virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r21);
+
+        $r23 = virtualinvoke $r19.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("Ringtone", $r23);
+
+        goto label19;
+
+     label02:
+        $r4 = r0.<android.media.Ringtone: android.content.Context mContext>;
+
+        $r5 = virtualinvoke $r4.<android.content.Context: android.content.res.Resources getResources()>();
+
+        r28 = virtualinvoke $r5.<android.content.res.Resources: android.content.res.AssetFileDescriptor openRawResourceFd(int)>(17825797);
+
+     label03:
+        if r28 == null goto label15;
+
+     label04:
+        r29 = new android.media.MediaPlayer;
+
+        specialinvoke r29.<android.media.MediaPlayer: void <init>()>();
+
+        r0.<android.media.Ringtone: android.media.MediaPlayer mLocalPlayer> = r29;
+
+        $l4 = virtualinvoke r28.<android.content.res.AssetFileDescriptor: long getDeclaredLength()>();
+
+        $b5 = $l4 cmp 0L;
+
+        if $b5 >= 0 goto label06;
+
+        $r15 = r0.<android.media.Ringtone: android.media.MediaPlayer mLocalPlayer>;
+
+        $r16 = virtualinvoke r28.<android.content.res.AssetFileDescriptor: java.io.FileDescriptor getFileDescriptor()>();
+
+        virtualinvoke $r15.<android.media.MediaPlayer: void setDataSource(java.io.FileDescriptor)>($r16);
+
+     label05:
+        goto label07;
+
+     label06:
+        $r6 = r0.<android.media.Ringtone: android.media.MediaPlayer mLocalPlayer>;
+
+        $r7 = virtualinvoke r28.<android.content.res.AssetFileDescriptor: java.io.FileDescriptor getFileDescriptor()>();
+
+        $l6 = virtualinvoke r28.<android.content.res.AssetFileDescriptor: long getStartOffset()>();
+
+        $l7 = virtualinvoke r28.<android.content.res.AssetFileDescriptor: long getDeclaredLength()>();
+
+        virtualinvoke $r6.<android.media.MediaPlayer: void setDataSource(java.io.FileDescriptor,long,long)>($r7, $l6, $l7);
+
+     label07:
+        $r9 = r0.<android.media.Ringtone: android.media.MediaPlayer mLocalPlayer>;
+
+        $r8 = r0.<android.media.Ringtone: android.media.AudioAttributes mAudioAttributes>;
+
+        virtualinvoke $r9.<android.media.MediaPlayer: void setAudioAttributes(android.media.AudioAttributes)>($r8);
+
+        r30 = r0.<android.media.Ringtone: java.lang.Object mPlaybackSettingsLock>;
+
+        entermonitor r30;
+
+     label08:
+        specialinvoke r0.<android.media.Ringtone: void applyPlaybackProperties_sync()>();
+
+        exitmonitor r30;
+
+     label09:
+        $r10 = r0.<android.media.Ringtone: android.media.VolumeShaper$Configuration mVolumeShaperConfig>;
+
+        if $r10 == null goto label10;
+
+        $r13 = r0.<android.media.Ringtone: android.media.MediaPlayer mLocalPlayer>;
+
+        $r12 = r0.<android.media.Ringtone: android.media.VolumeShaper$Configuration mVolumeShaperConfig>;
+
+        $r14 = virtualinvoke $r13.<android.media.MediaPlayer: android.media.VolumeShaper createVolumeShaper(android.media.VolumeShaper$Configuration)>($r12);
+
+        r0.<android.media.Ringtone: android.media.VolumeShaper mVolumeShaper> = $r14;
+
+     label10:
+        $r11 = r0.<android.media.Ringtone: android.media.MediaPlayer mLocalPlayer>;
+
+        virtualinvoke $r11.<android.media.MediaPlayer: void prepare()>();
+
+        specialinvoke r0.<android.media.Ringtone: void startLocalPlayer()>();
+
+        virtualinvoke r28.<android.content.res.AssetFileDescriptor: void close()>();
+
+     label11:
+        return 1;
+
+     label12:
+        $r25 := @caughtexception;
+
+     label13:
+        exitmonitor r30;
+
+     label14:
+        throw $r25;
+
+     label15:
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>("Ringtone", "Could not load fallback ringtone");
+
+     label16:
+        goto label19;
+
+     label17:
+        $r24 := @caughtexception;
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>("Ringtone", "Fallback ringtone does not exist");
+
+        goto label19;
+
+     label18:
+        $r26 := @caughtexception;
+
+        specialinvoke r0.<android.media.Ringtone: void destroyLocalPlayer()>();
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>("Ringtone", "Failed to open fallback ringtone");
+
+     label19:
+        return 0;
+
+        catch java.io.IOException from label02 to label03 with label18;
+        catch android.content.res.Resources$NotFoundException from label02 to label03 with label17;
+        catch java.io.IOException from label04 to label05 with label18;
+        catch android.content.res.Resources$NotFoundException from label04 to label05 with label17;
+        catch java.io.IOException from label06 to label07 with label18;
+        catch android.content.res.Resources$NotFoundException from label06 to label07 with label17;
+        catch java.io.IOException from label07 to label08 with label18;
+        catch android.content.res.Resources$NotFoundException from label07 to label08 with label17;
+        catch java.lang.Throwable from label08 to label09 with label12;
+        catch java.io.IOException from label09 to label10 with label18;
+        catch android.content.res.Resources$NotFoundException from label09 to label10 with label17;
+        catch java.io.IOException from label10 to label11 with label18;
+        catch android.content.res.Resources$NotFoundException from label10 to label11 with label17;
+        catch java.lang.Throwable from label13 to label14 with label12;
+        catch java.io.IOException from label14 to label15 with label18;
+        catch android.content.res.Resources$NotFoundException from label14 to label15 with label17;
+        catch java.io.IOException from label15 to label16 with label18;
+        catch android.content.res.Resources$NotFoundException from label15 to label16 with label17;
+    }
+
+    private void startLocalPlayer()
+    {
+        android.media.Ringtone r0;
+        android.media.MediaPlayer $r2, $r5, $r6;
+        java.util.ArrayList $r3, r9;
+        android.media.Ringtone$MyOnCompletionListener $r4;
+        android.media.VolumeShaper$Operation $r7;
+        java.lang.Throwable $r8;
+        android.media.VolumeShaper r10;
+
+        r0 := @this: android.media.Ringtone;
+
+        $r2 = r0.<android.media.Ringtone: android.media.MediaPlayer mLocalPlayer>;
+
+        if $r2 != null goto label1;
+
+        return;
+
+     label1:
+        r9 = <android.media.Ringtone: java.util.ArrayList sActiveRingtones>;
+
+        entermonitor r9;
+
+     label2:
+        $r3 = <android.media.Ringtone: java.util.ArrayList sActiveRingtones>;
+
+        virtualinvoke $r3.<java.util.ArrayList: boolean add(java.lang.Object)>(r0);
+
+        exitmonitor r9;
+
+     label3:
+        $r5 = r0.<android.media.Ringtone: android.media.MediaPlayer mLocalPlayer>;
+
+        $r4 = r0.<android.media.Ringtone: android.media.Ringtone$MyOnCompletionListener mCompletionListener>;
+
+        virtualinvoke $r5.<android.media.MediaPlayer: void setOnCompletionListener(android.media.MediaPlayer$OnCompletionListener)>($r4);
+
+        $r6 = r0.<android.media.Ringtone: android.media.MediaPlayer mLocalPlayer>;
+
+        virtualinvoke $r6.<android.media.MediaPlayer: void start()>();
+
+        r10 = r0.<android.media.Ringtone: android.media.VolumeShaper mVolumeShaper>;
+
+        if r10 == null goto label4;
+
+        $r7 = <android.media.VolumeShaper$Operation: android.media.VolumeShaper$Operation PLAY>;
+
+        virtualinvoke r10.<android.media.VolumeShaper: void apply(android.media.VolumeShaper$Operation)>($r7);
+
+     label4:
+        return;
+
+     label5:
+        $r8 := @caughtexception;
+
+     label6:
+        exitmonitor r9;
+
+     label7:
+        throw $r8;
+
+        catch java.lang.Throwable from label2 to label3 with label5;
+        catch java.lang.Throwable from label6 to label7 with label5;
+    }
+
+    protected void finalize()
+    {
+        android.media.Ringtone r0;
+        android.media.MediaPlayer r1;
+
+        r0 := @this: android.media.Ringtone;
+
+        r1 = r0.<android.media.Ringtone: android.media.MediaPlayer mLocalPlayer>;
+
+        if r1 == null goto label1;
+
+        virtualinvoke r1.<android.media.MediaPlayer: void release()>();
+
+     label1:
+        return;
+    }
+
+    public android.media.AudioAttributes getAudioAttributes()
+    {
+        android.media.Ringtone r0;
+        android.media.AudioAttributes $r1;
+
+        r0 := @this: android.media.Ringtone;
+
+        $r1 = r0.<android.media.Ringtone: android.media.AudioAttributes mAudioAttributes>;
+
+        return $r1;
+    }
+
+    public int getStreamType()
+    {
+        android.media.Ringtone r0;
+        android.media.AudioAttributes $r1;
+        int $i0;
+
+        r0 := @this: android.media.Ringtone;
+
+        $r1 = r0.<android.media.Ringtone: android.media.AudioAttributes mAudioAttributes>;
+
+        $i0 = staticinvoke <android.media.AudioAttributes: int toLegacyStreamType(android.media.AudioAttributes)>($r1);
+
+        return $i0;
+    }
+
+    public java.lang.String getTitle(android.content.Context)
+    {
+        android.media.Ringtone r0;
+        java.lang.String r1, r4;
+        boolean $z0;
+        android.net.Uri $r2;
+        android.content.Context r3;
+
+        r0 := @this: android.media.Ringtone;
+
+        r3 := @parameter0: android.content.Context;
+
+        r1 = r0.<android.media.Ringtone: java.lang.String mTitle>;
+
+        if r1 == null goto label1;
+
+        return r1;
+
+     label1:
+        $r2 = r0.<android.media.Ringtone: android.net.Uri mUri>;
+
+        $z0 = r0.<android.media.Ringtone: boolean mAllowRemote>;
+
+        r4 = staticinvoke <android.media.Ringtone: java.lang.String getTitle(android.content.Context,android.net.Uri,boolean,boolean)>(r3, $r2, 1, $z0);
+
+        r0.<android.media.Ringtone: java.lang.String mTitle> = r4;
+
+        return r4;
+    }
+
+    public android.net.Uri getUri()
+    {
+        android.media.Ringtone r0;
+        android.net.Uri $r1;
+
+        r0 := @this: android.media.Ringtone;
+
+        $r1 = r0.<android.media.Ringtone: android.net.Uri mUri>;
+
+        return $r1;
+    }
+
+    public float getVolume()
+    {
+        android.media.Ringtone r0;
+        java.lang.Object r1;
+        float f0;
+        java.lang.Throwable $r3;
+
+        r0 := @this: android.media.Ringtone;
+
+        r1 = r0.<android.media.Ringtone: java.lang.Object mPlaybackSettingsLock>;
+
+        entermonitor r1;
+
+     label1:
+        f0 = r0.<android.media.Ringtone: float mVolume>;
+
+        exitmonitor r1;
+
+     label2:
+        return f0;
+
+     label3:
+        $r3 := @caughtexception;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        throw $r3;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    public boolean isLooping()
+    {
+        android.media.Ringtone r0;
+        java.lang.Object r1;
+        boolean z0;
+        java.lang.Throwable $r3;
+
+        r0 := @this: android.media.Ringtone;
+
+        r1 = r0.<android.media.Ringtone: java.lang.Object mPlaybackSettingsLock>;
+
+        entermonitor r1;
+
+     label1:
+        z0 = r0.<android.media.Ringtone: boolean mIsLooping>;
+
+        exitmonitor r1;
+
+     label2:
+        return z0;
+
+     label3:
+        $r3 := @caughtexception;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        throw $r3;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    public boolean isPlaying()
+    {
+        android.media.Ringtone r0;
+        boolean z0, $z1, $z2;
+        android.os.Binder $r2;
+        android.os.RemoteException $r3;
+        java.lang.StringBuilder $r4;
+        java.lang.String $r7;
+        android.media.MediaPlayer r8;
+        android.media.IRingtonePlayer r9;
+
+        r0 := @this: android.media.Ringtone;
+
+        r8 = r0.<android.media.Ringtone: android.media.MediaPlayer mLocalPlayer>;
+
+        if r8 == null goto label1;
+
+        $z2 = virtualinvoke r8.<android.media.MediaPlayer: boolean isPlaying()>();
+
+        return $z2;
+
+     label1:
+        $z1 = r0.<android.media.Ringtone: boolean mAllowRemote>;
+
+        if $z1 == 0 goto label5;
+
+        r9 = r0.<android.media.Ringtone: android.media.IRingtonePlayer mRemotePlayer>;
+
+        if r9 == null goto label5;
+
+     label2:
+        $r2 = r0.<android.media.Ringtone: android.os.Binder mRemoteToken>;
+
+        z0 = interfaceinvoke r9.<android.media.IRingtonePlayer: boolean isPlaying(android.os.IBinder)>($r2);
+
+     label3:
+        return z0;
+
+     label4:
+        $r3 := @caughtexception;
+
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Problem checking ringtone: ");
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r3);
+
+        $r7 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("Ringtone", $r7);
+
+        return 0;
+
+     label5:
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("Ringtone", "Neither local nor remote playback available");
+
+        return 0;
+
+        catch android.os.RemoteException from label2 to label3 with label4;
+    }
+
+    public void play()
+    {
+        android.media.Ringtone r0;
+        boolean z0, $z1, $z2, $z3;
+        float f0;
+        android.media.MediaPlayer $r1;
+        android.media.IRingtonePlayer $r2, $r7;
+        android.net.Uri $r3, r16;
+        android.media.VolumeShaper$Configuration $r4;
+        android.media.AudioAttributes $r5, $r8;
+        android.os.Binder $r6;
+        android.media.AudioManager $r9;
+        int $i1, $i2;
+        android.os.RemoteException $r10;
+        java.lang.StringBuilder $r11;
+        java.lang.String $r14;
+        java.lang.Throwable $r15;
+        java.lang.Object r17;
+
+        r0 := @this: android.media.Ringtone;
+
+        $r1 = r0.<android.media.Ringtone: android.media.MediaPlayer mLocalPlayer>;
+
+        if $r1 == null goto label01;
+
+        $r9 = r0.<android.media.Ringtone: android.media.AudioManager mAudioManager>;
+
+        $r8 = r0.<android.media.Ringtone: android.media.AudioAttributes mAudioAttributes>;
+
+        $i1 = staticinvoke <android.media.AudioAttributes: int toLegacyStreamType(android.media.AudioAttributes)>($r8);
+
+        $i2 = virtualinvoke $r9.<android.media.AudioManager: int getStreamVolume(int)>($i1);
+
+        if $i2 == 0 goto label11;
+
+        specialinvoke r0.<android.media.Ringtone: void startLocalPlayer()>();
+
+        goto label11;
+
+     label01:
+        $z1 = r0.<android.media.Ringtone: boolean mAllowRemote>;
+
+        if $z1 == 0 goto label10;
+
+        $r2 = r0.<android.media.Ringtone: android.media.IRingtonePlayer mRemotePlayer>;
+
+        if $r2 == null goto label10;
+
+        $r3 = r0.<android.media.Ringtone: android.net.Uri mUri>;
+
+        r16 = virtualinvoke $r3.<android.net.Uri: android.net.Uri getCanonicalUri()>();
+
+        r17 = r0.<android.media.Ringtone: java.lang.Object mPlaybackSettingsLock>;
+
+        entermonitor r17;
+
+     label02:
+        z0 = r0.<android.media.Ringtone: boolean mIsLooping>;
+
+        f0 = r0.<android.media.Ringtone: float mVolume>;
+
+        exitmonitor r17;
+
+     label03:
+        $r7 = r0.<android.media.Ringtone: android.media.IRingtonePlayer mRemotePlayer>;
+
+        $r6 = r0.<android.media.Ringtone: android.os.Binder mRemoteToken>;
+
+        $r5 = r0.<android.media.Ringtone: android.media.AudioAttributes mAudioAttributes>;
+
+        $r4 = r0.<android.media.Ringtone: android.media.VolumeShaper$Configuration mVolumeShaperConfig>;
+
+        interfaceinvoke $r7.<android.media.IRingtonePlayer: void playWithVolumeShaping(android.os.IBinder,android.net.Uri,android.media.AudioAttributes,float,boolean,android.media.VolumeShaper$Configuration)>($r6, r16, $r5, f0, z0, $r4);
+
+     label04:
+        goto label06;
+
+     label05:
+        $r10 := @caughtexception;
+
+        $z3 = specialinvoke r0.<android.media.Ringtone: boolean playFallbackRingtone()>();
+
+        if $z3 != 0 goto label06;
+
+        $r11 = new java.lang.StringBuilder;
+
+        specialinvoke $r11.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Problem playing ringtone: ");
+
+        virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r10);
+
+        $r14 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("Ringtone", $r14);
+
+     label06:
+        goto label11;
+
+     label07:
+        $r15 := @caughtexception;
+
+     label08:
+        exitmonitor r17;
+
+     label09:
+        throw $r15;
+
+     label10:
+        $z2 = specialinvoke r0.<android.media.Ringtone: boolean playFallbackRingtone()>();
+
+        if $z2 != 0 goto label11;
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("Ringtone", "Neither local nor remote playback available");
+
+     label11:
+        return;
+
+        catch java.lang.Throwable from label02 to label03 with label07;
+        catch android.os.RemoteException from label03 to label04 with label05;
+        catch java.lang.Throwable from label08 to label09 with label07;
+    }
+
+    public void setAudioAttributes(android.media.AudioAttributes) throws java.lang.IllegalArgumentException
+    {
+        android.media.Ringtone r0;
+        android.media.AudioAttributes r1;
+        java.lang.IllegalArgumentException $r2;
+        android.media.VolumeShaper$Configuration $r3;
+        android.net.Uri $r4;
+
+        r0 := @this: android.media.Ringtone;
+
+        r1 := @parameter0: android.media.AudioAttributes;
+
+        if r1 == null goto label1;
+
+        r0.<android.media.Ringtone: android.media.AudioAttributes mAudioAttributes> = r1;
+
+        $r4 = r0.<android.media.Ringtone: android.net.Uri mUri>;
+
+        $r3 = r0.<android.media.Ringtone: android.media.VolumeShaper$Configuration mVolumeShaperConfig>;
+
+        virtualinvoke r0.<android.media.Ringtone: void setUri(android.net.Uri,android.media.VolumeShaper$Configuration)>($r4, $r3);
+
+        return;
+
+     label1:
+        $r2 = new java.lang.IllegalArgumentException;
+
+        specialinvoke $r2.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>("Invalid null AudioAttributes for Ringtone");
+
+        throw $r2;
+    }
+
+    public void setLooping(boolean)
+    {
+        android.media.Ringtone r0;
+        boolean z0;
+        java.lang.Object r1;
+        java.lang.Throwable $r3;
+
+        r0 := @this: android.media.Ringtone;
+
+        z0 := @parameter0: boolean;
+
+        r1 = r0.<android.media.Ringtone: java.lang.Object mPlaybackSettingsLock>;
+
+        entermonitor r1;
+
+     label1:
+        r0.<android.media.Ringtone: boolean mIsLooping> = z0;
+
+        specialinvoke r0.<android.media.Ringtone: void applyPlaybackProperties_sync()>();
+
+        exitmonitor r1;
+
+     label2:
+        return;
+
+     label3:
+        $r3 := @caughtexception;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        throw $r3;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    public void setStreamType(int)
+    {
+        android.media.Ringtone r0;
+        int i0;
+        android.media.AudioAttributes$Builder $r1, $r2;
+        android.media.AudioAttributes $r3;
+
+        r0 := @this: android.media.Ringtone;
+
+        i0 := @parameter0: int;
+
+        staticinvoke <android.media.PlayerBase: void deprecateStreamTypeForPlayback(int,java.lang.String,java.lang.String)>(i0, "Ringtone", "setStreamType()");
+
+        $r1 = new android.media.AudioAttributes$Builder;
+
+        specialinvoke $r1.<android.media.AudioAttributes$Builder: void <init>()>();
+
+        $r2 = virtualinvoke $r1.<android.media.AudioAttributes$Builder: android.media.AudioAttributes$Builder setInternalLegacyStreamType(int)>(i0);
+
+        $r3 = virtualinvoke $r2.<android.media.AudioAttributes$Builder: android.media.AudioAttributes build()>();
+
+        virtualinvoke r0.<android.media.Ringtone: void setAudioAttributes(android.media.AudioAttributes)>($r3);
+
+        return;
+    }
+
+    void setTitle(java.lang.String)
+    {
+        android.media.Ringtone r0;
+        java.lang.String r1;
+
+        r0 := @this: android.media.Ringtone;
+
+        r1 := @parameter0: java.lang.String;
+
+        r0.<android.media.Ringtone: java.lang.String mTitle> = r1;
+
+        return;
+    }
+
+    public void setUri(android.net.Uri)
+    {
+        android.media.Ringtone r0;
+        android.net.Uri r1;
+
+        r0 := @this: android.media.Ringtone;
+
+        r1 := @parameter0: android.net.Uri;
+
+        virtualinvoke r0.<android.media.Ringtone: void setUri(android.net.Uri,android.media.VolumeShaper$Configuration)>(r1, null);
+
+        return;
+    }
+
+    public void setUri(android.net.Uri, android.media.VolumeShaper$Configuration)
+    {
+        android.media.Ringtone r0;
+        android.media.MediaPlayer $r1, $r5, $r7, $r9, $r24;
+        android.net.Uri $r2, r17;
+        android.content.Context $r3;
+        android.media.AudioAttributes $r4;
+        android.media.VolumeShaper$Configuration $r6, $r8, r18;
+        android.media.VolumeShaper $r10;
+        java.lang.Throwable $r11, $r12;
+        boolean $z0;
+        java.lang.StringBuilder $r13;
+        java.lang.String $r16;
+        java.lang.Object r20;
+
+        r0 := @this: android.media.Ringtone;
+
+        r17 := @parameter0: android.net.Uri;
+
+        r18 := @parameter1: android.media.VolumeShaper$Configuration;
+
+        r0.<android.media.Ringtone: android.media.VolumeShaper$Configuration mVolumeShaperConfig> = r18;
+
+        specialinvoke r0.<android.media.Ringtone: void destroyLocalPlayer()>();
+
+        r0.<android.media.Ringtone: android.net.Uri mUri> = r17;
+
+        if r17 != null goto label01;
+
+        return;
+
+     label01:
+        $r1 = new android.media.MediaPlayer;
+
+        specialinvoke $r1.<android.media.MediaPlayer: void <init>()>();
+
+        r0.<android.media.Ringtone: android.media.MediaPlayer mLocalPlayer> = $r1;
+
+     label02:
+        $r3 = r0.<android.media.Ringtone: android.content.Context mContext>;
+
+        $r2 = r0.<android.media.Ringtone: android.net.Uri mUri>;
+
+        virtualinvoke $r1.<android.media.MediaPlayer: void setDataSource(android.content.Context,android.net.Uri)>($r3, $r2);
+
+        $r5 = r0.<android.media.Ringtone: android.media.MediaPlayer mLocalPlayer>;
+
+        $r4 = r0.<android.media.Ringtone: android.media.AudioAttributes mAudioAttributes>;
+
+        virtualinvoke $r5.<android.media.MediaPlayer: void setAudioAttributes(android.media.AudioAttributes)>($r4);
+
+        r20 = r0.<android.media.Ringtone: java.lang.Object mPlaybackSettingsLock>;
+
+        entermonitor r20;
+
+     label03:
+        specialinvoke r0.<android.media.Ringtone: void applyPlaybackProperties_sync()>();
+
+        exitmonitor r20;
+
+     label04:
+        $r6 = r0.<android.media.Ringtone: android.media.VolumeShaper$Configuration mVolumeShaperConfig>;
+
+        if $r6 == null goto label05;
+
+        $r9 = r0.<android.media.Ringtone: android.media.MediaPlayer mLocalPlayer>;
+
+        $r8 = r0.<android.media.Ringtone: android.media.VolumeShaper$Configuration mVolumeShaperConfig>;
+
+        $r10 = virtualinvoke $r9.<android.media.MediaPlayer: android.media.VolumeShaper createVolumeShaper(android.media.VolumeShaper$Configuration)>($r8);
+
+        r0.<android.media.Ringtone: android.media.VolumeShaper mVolumeShaper> = $r10;
+
+     label05:
+        $r7 = r0.<android.media.Ringtone: android.media.MediaPlayer mLocalPlayer>;
+
+        virtualinvoke $r7.<android.media.MediaPlayer: void prepare()>();
+
+     label06:
+        goto label11;
+
+     label07:
+        $r11 := @caughtexception;
+
+     label08:
+        exitmonitor r20;
+
+     label09:
+        throw $r11;
+
+     label10:
+        $r12 := @caughtexception;
+
+        specialinvoke r0.<android.media.Ringtone: void destroyLocalPlayer()>();
+
+        $z0 = r0.<android.media.Ringtone: boolean mAllowRemote>;
+
+        if $z0 != 0 goto label11;
+
+        $r13 = new java.lang.StringBuilder;
+
+        specialinvoke $r13.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Remote playback not allowed: ");
+
+        virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r12);
+
+        $r16 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("Ringtone", $r16);
+
+     label11:
+        $r24 = r0.<android.media.Ringtone: android.media.MediaPlayer mLocalPlayer>;
+
+        if $r24 == null goto label12;
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("Ringtone", "Successfully created local player");
+
+        goto label13;
+
+     label12:
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("Ringtone", "Problem opening; delegating to remote player");
+
+     label13:
+        return;
+
+        catch java.lang.SecurityException from label02 to label03 with label10;
+        catch java.io.IOException from label02 to label03 with label10;
+        catch java.lang.Throwable from label03 to label04 with label07;
+        catch java.lang.SecurityException from label04 to label05 with label10;
+        catch java.io.IOException from label04 to label05 with label10;
+        catch java.lang.SecurityException from label05 to label06 with label10;
+        catch java.io.IOException from label05 to label06 with label10;
+        catch java.lang.Throwable from label08 to label09 with label07;
+        catch java.lang.SecurityException from label09 to label10 with label10;
+        catch java.io.IOException from label09 to label10 with label10;
+    }
+
+    public void setVolume(float)
+    {
+        android.media.Ringtone r0;
+        java.lang.Object r1;
+        byte $b0, $b1;
+        java.lang.Throwable $r3;
+        float f0, f1, f2;
+
+        r0 := @this: android.media.Ringtone;
+
+        f0 := @parameter0: float;
+
+        r1 = r0.<android.media.Ringtone: java.lang.Object mPlaybackSettingsLock>;
+
+        entermonitor r1;
+
+        f1 = f0;
+
+        $b0 = f0 cmpg 0.0F;
+
+        if $b0 >= 0 goto label1;
+
+        f1 = 0.0F;
+
+     label1:
+        f2 = f1;
+
+        $b1 = f1 cmpl 1.0F;
+
+        if $b1 <= 0 goto label2;
+
+        f2 = 1.0F;
+
+     label2:
+        r0.<android.media.Ringtone: float mVolume> = f2;
+
+        specialinvoke r0.<android.media.Ringtone: void applyPlaybackProperties_sync()>();
+
+        exitmonitor r1;
+
+     label3:
+        return;
+
+     label4:
+        $r3 := @caughtexception;
+
+     label5:
+        exitmonitor r1;
+
+     label6:
+        throw $r3;
+
+        catch java.lang.Throwable from label2 to label3 with label4;
+        catch java.lang.Throwable from label5 to label6 with label4;
+    }
+
+    public void stop()
+    {
+        android.media.Ringtone r0;
+        android.media.MediaPlayer $r2;
+        boolean $z0;
+        android.os.Binder $r3;
+        android.os.RemoteException $r4;
+        java.lang.StringBuilder $r5;
+        java.lang.String $r8;
+        android.media.IRingtonePlayer r9;
+
+        r0 := @this: android.media.Ringtone;
+
+        $r2 = r0.<android.media.Ringtone: android.media.MediaPlayer mLocalPlayer>;
+
+        if $r2 == null goto label1;
+
+        specialinvoke r0.<android.media.Ringtone: void destroyLocalPlayer()>();
+
+        goto label5;
+
+     label1:
+        $z0 = r0.<android.media.Ringtone: boolean mAllowRemote>;
+
+        if $z0 == 0 goto label5;
+
+        r9 = r0.<android.media.Ringtone: android.media.IRingtonePlayer mRemotePlayer>;
+
+        if r9 == null goto label5;
+
+     label2:
+        $r3 = r0.<android.media.Ringtone: android.os.Binder mRemoteToken>;
+
+        interfaceinvoke r9.<android.media.IRingtonePlayer: void stop(android.os.IBinder)>($r3);
+
+     label3:
+        goto label5;
+
+     label4:
+        $r4 := @caughtexception;
+
+        $r5 = new java.lang.StringBuilder;
+
+        specialinvoke $r5.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Problem stopping ringtone: ");
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r4);
+
+        $r8 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("Ringtone", $r8);
+
+     label5:
+        return;
+
+        catch android.os.RemoteException from label2 to label3 with label4;
+    }
+}

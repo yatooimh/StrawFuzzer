@@ -1,0 +1,741 @@
+public abstract class android.os.AsyncTask extends java.lang.Object
+{
+    private static final int BACKUP_POOL_SIZE;
+    private static final int CORE_POOL_SIZE;
+    private static final int KEEP_ALIVE_SECONDS;
+    private static final java.lang.String LOG_TAG;
+    private static final int MAXIMUM_POOL_SIZE;
+    private static final int MESSAGE_POST_PROGRESS;
+    private static final int MESSAGE_POST_RESULT;
+    public static final java.util.concurrent.Executor SERIAL_EXECUTOR;
+    public static final java.util.concurrent.Executor THREAD_POOL_EXECUTOR;
+    private static java.util.concurrent.ThreadPoolExecutor sBackupExecutor;
+    private static java.util.concurrent.LinkedBlockingQueue sBackupExecutorQueue;
+    private static volatile java.util.concurrent.Executor sDefaultExecutor;
+    private static android.os.AsyncTask$InternalHandler sHandler;
+    private static final java.util.concurrent.RejectedExecutionHandler sRunOnSerialPolicy;
+    private static final java.util.concurrent.ThreadFactory sThreadFactory;
+    private final java.util.concurrent.atomic.AtomicBoolean mCancelled;
+    private final java.util.concurrent.FutureTask mFuture;
+    private final android.os.Handler mHandler;
+    private volatile android.os.AsyncTask$Status mStatus;
+    private final java.util.concurrent.atomic.AtomicBoolean mTaskInvoked;
+    private final android.os.AsyncTask$WorkerRunnable mWorker;
+
+    static void <clinit>()
+    {
+        android.os.AsyncTask$1 $r0;
+        android.os.AsyncTask$2 $r1;
+        java.util.concurrent.ThreadPoolExecutor $r2;
+        java.util.concurrent.SynchronousQueue $r3;
+        java.util.concurrent.TimeUnit $r4;
+        java.util.concurrent.ThreadFactory $r5;
+        java.util.concurrent.RejectedExecutionHandler $r6;
+        android.os.AsyncTask$SerialExecutor $r7;
+
+        <android.os.AsyncTask: int MESSAGE_POST_RESULT> = 1;
+
+        <android.os.AsyncTask: int MESSAGE_POST_PROGRESS> = 2;
+
+        <android.os.AsyncTask: int MAXIMUM_POOL_SIZE> = 20;
+
+        <android.os.AsyncTask: java.lang.String LOG_TAG> = "AsyncTask";
+
+        <android.os.AsyncTask: int KEEP_ALIVE_SECONDS> = 3;
+
+        <android.os.AsyncTask: int CORE_POOL_SIZE> = 1;
+
+        <android.os.AsyncTask: int BACKUP_POOL_SIZE> = 5;
+
+        $r0 = new android.os.AsyncTask$1;
+
+        specialinvoke $r0.<android.os.AsyncTask$1: void <init>()>();
+
+        <android.os.AsyncTask: java.util.concurrent.ThreadFactory sThreadFactory> = $r0;
+
+        $r1 = new android.os.AsyncTask$2;
+
+        specialinvoke $r1.<android.os.AsyncTask$2: void <init>()>();
+
+        <android.os.AsyncTask: java.util.concurrent.RejectedExecutionHandler sRunOnSerialPolicy> = $r1;
+
+        $r2 = new java.util.concurrent.ThreadPoolExecutor;
+
+        $r4 = <java.util.concurrent.TimeUnit: java.util.concurrent.TimeUnit SECONDS>;
+
+        $r3 = new java.util.concurrent.SynchronousQueue;
+
+        specialinvoke $r3.<java.util.concurrent.SynchronousQueue: void <init>()>();
+
+        $r5 = <android.os.AsyncTask: java.util.concurrent.ThreadFactory sThreadFactory>;
+
+        specialinvoke $r2.<java.util.concurrent.ThreadPoolExecutor: void <init>(int,int,long,java.util.concurrent.TimeUnit,java.util.concurrent.BlockingQueue,java.util.concurrent.ThreadFactory)>(1, 20, 3L, $r4, $r3, $r5);
+
+        $r6 = <android.os.AsyncTask: java.util.concurrent.RejectedExecutionHandler sRunOnSerialPolicy>;
+
+        virtualinvoke $r2.<java.util.concurrent.ThreadPoolExecutor: void setRejectedExecutionHandler(java.util.concurrent.RejectedExecutionHandler)>($r6);
+
+        <android.os.AsyncTask: java.util.concurrent.Executor THREAD_POOL_EXECUTOR> = $r2;
+
+        $r7 = new android.os.AsyncTask$SerialExecutor;
+
+        specialinvoke $r7.<android.os.AsyncTask$SerialExecutor: void <init>(android.os.AsyncTask$1)>(null);
+
+        <android.os.AsyncTask: java.util.concurrent.Executor SERIAL_EXECUTOR> = $r7;
+
+        <android.os.AsyncTask: java.util.concurrent.Executor sDefaultExecutor> = $r7;
+
+        return;
+    }
+
+    public void <init>()
+    {
+        android.os.AsyncTask r0;
+        android.os.Looper $r1;
+
+        r0 := @this: android.os.AsyncTask;
+
+        $r1 = (android.os.Looper) null;
+
+        specialinvoke r0.<android.os.AsyncTask: void <init>(android.os.Looper)>($r1);
+
+        return;
+    }
+
+    public void <init>(android.os.Handler)
+    {
+        android.os.AsyncTask r0;
+        android.os.Handler r1;
+        android.os.Looper r2;
+
+        r0 := @this: android.os.AsyncTask;
+
+        r1 := @parameter0: android.os.Handler;
+
+        if r1 == null goto label1;
+
+        r2 = virtualinvoke r1.<android.os.Handler: android.os.Looper getLooper()>();
+
+        goto label2;
+
+     label1:
+        r2 = null;
+
+     label2:
+        specialinvoke r0.<android.os.AsyncTask: void <init>(android.os.Looper)>(r2);
+
+        return;
+    }
+
+    public void <init>(android.os.Looper)
+    {
+        android.os.AsyncTask r0;
+        android.os.AsyncTask$Status $r1;
+        java.util.concurrent.atomic.AtomicBoolean $r2, $r3;
+        android.os.Looper $r4, r6;
+        android.os.Handler $r5, r7;
+        android.os.AsyncTask$3 $r8;
+        android.os.AsyncTask$4 $r9;
+        android.os.AsyncTask$WorkerRunnable $r10;
+
+        r0 := @this: android.os.AsyncTask;
+
+        r6 := @parameter0: android.os.Looper;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        $r1 = <android.os.AsyncTask$Status: android.os.AsyncTask$Status PENDING>;
+
+        r0.<android.os.AsyncTask: android.os.AsyncTask$Status mStatus> = $r1;
+
+        $r2 = new java.util.concurrent.atomic.AtomicBoolean;
+
+        specialinvoke $r2.<java.util.concurrent.atomic.AtomicBoolean: void <init>()>();
+
+        r0.<android.os.AsyncTask: java.util.concurrent.atomic.AtomicBoolean mCancelled> = $r2;
+
+        $r3 = new java.util.concurrent.atomic.AtomicBoolean;
+
+        specialinvoke $r3.<java.util.concurrent.atomic.AtomicBoolean: void <init>()>();
+
+        r0.<android.os.AsyncTask: java.util.concurrent.atomic.AtomicBoolean mTaskInvoked> = $r3;
+
+        if r6 == null goto label2;
+
+        $r4 = staticinvoke <android.os.Looper: android.os.Looper getMainLooper()>();
+
+        if r6 != $r4 goto label1;
+
+        goto label2;
+
+     label1:
+        $r5 = new android.os.Handler;
+
+        specialinvoke $r5.<android.os.Handler: void <init>(android.os.Looper)>(r6);
+
+        r7 = $r5;
+
+        goto label3;
+
+     label2:
+        r7 = staticinvoke <android.os.AsyncTask: android.os.Handler getMainHandler()>();
+
+     label3:
+        r0.<android.os.AsyncTask: android.os.Handler mHandler> = r7;
+
+        $r8 = new android.os.AsyncTask$3;
+
+        specialinvoke $r8.<android.os.AsyncTask$3: void <init>(android.os.AsyncTask)>(r0);
+
+        r0.<android.os.AsyncTask: android.os.AsyncTask$WorkerRunnable mWorker> = $r8;
+
+        $r9 = new android.os.AsyncTask$4;
+
+        $r10 = r0.<android.os.AsyncTask: android.os.AsyncTask$WorkerRunnable mWorker>;
+
+        specialinvoke $r9.<android.os.AsyncTask$4: void <init>(android.os.AsyncTask,java.util.concurrent.Callable)>(r0, $r10);
+
+        r0.<android.os.AsyncTask: java.util.concurrent.FutureTask mFuture> = $r9;
+
+        return;
+    }
+
+    static java.util.concurrent.ThreadPoolExecutor access$000()
+    {
+        java.util.concurrent.ThreadPoolExecutor $r0;
+
+        $r0 = <android.os.AsyncTask: java.util.concurrent.ThreadPoolExecutor sBackupExecutor>;
+
+        return $r0;
+    }
+
+    static java.util.concurrent.ThreadPoolExecutor access$002(java.util.concurrent.ThreadPoolExecutor)
+    {
+        java.util.concurrent.ThreadPoolExecutor r0;
+
+        r0 := @parameter0: java.util.concurrent.ThreadPoolExecutor;
+
+        <android.os.AsyncTask: java.util.concurrent.ThreadPoolExecutor sBackupExecutor> = r0;
+
+        return r0;
+    }
+
+    static java.util.concurrent.LinkedBlockingQueue access$100()
+    {
+        java.util.concurrent.LinkedBlockingQueue $r0;
+
+        $r0 = <android.os.AsyncTask: java.util.concurrent.LinkedBlockingQueue sBackupExecutorQueue>;
+
+        return $r0;
+    }
+
+    static java.util.concurrent.LinkedBlockingQueue access$102(java.util.concurrent.LinkedBlockingQueue)
+    {
+        java.util.concurrent.LinkedBlockingQueue r0;
+
+        r0 := @parameter0: java.util.concurrent.LinkedBlockingQueue;
+
+        <android.os.AsyncTask: java.util.concurrent.LinkedBlockingQueue sBackupExecutorQueue> = r0;
+
+        return r0;
+    }
+
+    static java.util.concurrent.ThreadFactory access$200()
+    {
+        java.util.concurrent.ThreadFactory $r0;
+
+        $r0 = <android.os.AsyncTask: java.util.concurrent.ThreadFactory sThreadFactory>;
+
+        return $r0;
+    }
+
+    static java.util.concurrent.atomic.AtomicBoolean access$500(android.os.AsyncTask)
+    {
+        android.os.AsyncTask r0;
+        java.util.concurrent.atomic.AtomicBoolean $r1;
+
+        r0 := @parameter0: android.os.AsyncTask;
+
+        $r1 = r0.<android.os.AsyncTask: java.util.concurrent.atomic.AtomicBoolean mTaskInvoked>;
+
+        return $r1;
+    }
+
+    static java.util.concurrent.atomic.AtomicBoolean access$600(android.os.AsyncTask)
+    {
+        android.os.AsyncTask r0;
+        java.util.concurrent.atomic.AtomicBoolean $r1;
+
+        r0 := @parameter0: android.os.AsyncTask;
+
+        $r1 = r0.<android.os.AsyncTask: java.util.concurrent.atomic.AtomicBoolean mCancelled>;
+
+        return $r1;
+    }
+
+    static java.lang.Object access$700(android.os.AsyncTask, java.lang.Object)
+    {
+        android.os.AsyncTask r0;
+        java.lang.Object r1, $r2;
+
+        r0 := @parameter0: android.os.AsyncTask;
+
+        r1 := @parameter1: java.lang.Object;
+
+        $r2 = specialinvoke r0.<android.os.AsyncTask: java.lang.Object postResult(java.lang.Object)>(r1);
+
+        return $r2;
+    }
+
+    static void access$800(android.os.AsyncTask, java.lang.Object)
+    {
+        android.os.AsyncTask r0;
+        java.lang.Object r1;
+
+        r0 := @parameter0: android.os.AsyncTask;
+
+        r1 := @parameter1: java.lang.Object;
+
+        specialinvoke r0.<android.os.AsyncTask: void postResultIfNotInvoked(java.lang.Object)>(r1);
+
+        return;
+    }
+
+    static void access$900(android.os.AsyncTask, java.lang.Object)
+    {
+        android.os.AsyncTask r0;
+        java.lang.Object r1;
+
+        r0 := @parameter0: android.os.AsyncTask;
+
+        r1 := @parameter1: java.lang.Object;
+
+        specialinvoke r0.<android.os.AsyncTask: void finish(java.lang.Object)>(r1);
+
+        return;
+    }
+
+    public static void execute(java.lang.Runnable)
+    {
+        java.lang.Runnable r0;
+        java.util.concurrent.Executor $r1;
+
+        r0 := @parameter0: java.lang.Runnable;
+
+        $r1 = <android.os.AsyncTask: java.util.concurrent.Executor sDefaultExecutor>;
+
+        interfaceinvoke $r1.<java.util.concurrent.Executor: void execute(java.lang.Runnable)>(r0);
+
+        return;
+    }
+
+    private void finish(java.lang.Object)
+    {
+        android.os.AsyncTask r0;
+        java.lang.Object r1;
+        boolean $z0;
+        android.os.AsyncTask$Status $r2;
+
+        r0 := @this: android.os.AsyncTask;
+
+        r1 := @parameter0: java.lang.Object;
+
+        $z0 = virtualinvoke r0.<android.os.AsyncTask: boolean isCancelled()>();
+
+        if $z0 == 0 goto label1;
+
+        virtualinvoke r0.<android.os.AsyncTask: void onCancelled(java.lang.Object)>(r1);
+
+        goto label2;
+
+     label1:
+        virtualinvoke r0.<android.os.AsyncTask: void onPostExecute(java.lang.Object)>(r1);
+
+     label2:
+        $r2 = <android.os.AsyncTask$Status: android.os.AsyncTask$Status FINISHED>;
+
+        r0.<android.os.AsyncTask: android.os.AsyncTask$Status mStatus> = $r2;
+
+        return;
+    }
+
+    private android.os.Handler getHandler()
+    {
+        android.os.AsyncTask r0;
+        android.os.Handler $r1;
+
+        r0 := @this: android.os.AsyncTask;
+
+        $r1 = r0.<android.os.AsyncTask: android.os.Handler mHandler>;
+
+        return $r1;
+    }
+
+    private static android.os.Handler getMainHandler()
+    {
+        android.os.AsyncTask$InternalHandler $r0, r3, r4;
+        android.os.Looper $r1;
+        java.lang.Throwable $r2;
+
+        entermonitor class "Landroid/os/AsyncTask;";
+
+     label1:
+        $r0 = <android.os.AsyncTask: android.os.AsyncTask$InternalHandler sHandler>;
+
+        if $r0 != null goto label2;
+
+        r3 = new android.os.AsyncTask$InternalHandler;
+
+        $r1 = staticinvoke <android.os.Looper: android.os.Looper getMainLooper()>();
+
+        specialinvoke r3.<android.os.AsyncTask$InternalHandler: void <init>(android.os.Looper)>($r1);
+
+        <android.os.AsyncTask: android.os.AsyncTask$InternalHandler sHandler> = r3;
+
+     label2:
+        r4 = <android.os.AsyncTask: android.os.AsyncTask$InternalHandler sHandler>;
+
+        exitmonitor class "Landroid/os/AsyncTask;";
+
+     label3:
+        return r4;
+
+     label4:
+        $r2 := @caughtexception;
+
+     label5:
+        exitmonitor class "Landroid/os/AsyncTask;";
+
+     label6:
+        throw $r2;
+
+        catch java.lang.Throwable from label1 to label2 with label4;
+        catch java.lang.Throwable from label2 to label3 with label4;
+        catch java.lang.Throwable from label5 to label6 with label4;
+    }
+
+    private java.lang.Object postResult(java.lang.Object)
+    {
+        android.os.AsyncTask r0;
+        java.lang.Object r1;
+        android.os.Handler $r2;
+        android.os.AsyncTask$AsyncTaskResult $r3;
+        java.lang.Object[] $r4;
+        android.os.Message $r5;
+
+        r0 := @this: android.os.AsyncTask;
+
+        r1 := @parameter0: java.lang.Object;
+
+        $r2 = specialinvoke r0.<android.os.AsyncTask: android.os.Handler getHandler()>();
+
+        $r3 = new android.os.AsyncTask$AsyncTaskResult;
+
+        $r4 = newarray (java.lang.Object)[1];
+
+        $r4[0] = r1;
+
+        specialinvoke $r3.<android.os.AsyncTask$AsyncTaskResult: void <init>(android.os.AsyncTask,java.lang.Object[])>(r0, $r4);
+
+        $r5 = virtualinvoke $r2.<android.os.Handler: android.os.Message obtainMessage(int,java.lang.Object)>(1, $r3);
+
+        virtualinvoke $r5.<android.os.Message: void sendToTarget()>();
+
+        return r1;
+    }
+
+    private void postResultIfNotInvoked(java.lang.Object)
+    {
+        android.os.AsyncTask r0;
+        java.lang.Object r1;
+        java.util.concurrent.atomic.AtomicBoolean $r2;
+        boolean $z0;
+
+        r0 := @this: android.os.AsyncTask;
+
+        r1 := @parameter0: java.lang.Object;
+
+        $r2 = r0.<android.os.AsyncTask: java.util.concurrent.atomic.AtomicBoolean mTaskInvoked>;
+
+        $z0 = virtualinvoke $r2.<java.util.concurrent.atomic.AtomicBoolean: boolean get()>();
+
+        if $z0 != 0 goto label1;
+
+        specialinvoke r0.<android.os.AsyncTask: java.lang.Object postResult(java.lang.Object)>(r1);
+
+     label1:
+        return;
+    }
+
+    public static void setDefaultExecutor(java.util.concurrent.Executor)
+    {
+        java.util.concurrent.Executor r0;
+
+        r0 := @parameter0: java.util.concurrent.Executor;
+
+        <android.os.AsyncTask: java.util.concurrent.Executor sDefaultExecutor> = r0;
+
+        return;
+    }
+
+    public final boolean cancel(boolean)
+    {
+        android.os.AsyncTask r0;
+        boolean z0, $z1;
+        java.util.concurrent.atomic.AtomicBoolean $r1;
+        java.util.concurrent.FutureTask $r2;
+
+        r0 := @this: android.os.AsyncTask;
+
+        z0 := @parameter0: boolean;
+
+        $r1 = r0.<android.os.AsyncTask: java.util.concurrent.atomic.AtomicBoolean mCancelled>;
+
+        virtualinvoke $r1.<java.util.concurrent.atomic.AtomicBoolean: void set(boolean)>(1);
+
+        $r2 = r0.<android.os.AsyncTask: java.util.concurrent.FutureTask mFuture>;
+
+        $z1 = virtualinvoke $r2.<java.util.concurrent.FutureTask: boolean cancel(boolean)>(z0);
+
+        return $z1;
+    }
+
+    protected abstract transient java.lang.Object doInBackground(java.lang.Object[]);
+
+    public final transient android.os.AsyncTask execute(java.lang.Object[])
+    {
+        android.os.AsyncTask r0, $r3;
+        java.lang.Object[] r1;
+        java.util.concurrent.Executor $r2;
+
+        r0 := @this: android.os.AsyncTask;
+
+        r1 := @parameter0: java.lang.Object[];
+
+        $r2 = <android.os.AsyncTask: java.util.concurrent.Executor sDefaultExecutor>;
+
+        $r3 = virtualinvoke r0.<android.os.AsyncTask: android.os.AsyncTask executeOnExecutor(java.util.concurrent.Executor,java.lang.Object[])>($r2, r1);
+
+        return $r3;
+    }
+
+    public final transient android.os.AsyncTask executeOnExecutor(java.util.concurrent.Executor, java.lang.Object[])
+    {
+        android.os.AsyncTask r0;
+        java.util.concurrent.Executor r1;
+        java.lang.Object[] r2;
+        int i0, $i1;
+        android.os.AsyncTask$Status $r3, $r4, $r5, $r8;
+        android.os.AsyncTask$WorkerRunnable $r6;
+        java.util.concurrent.FutureTask $r7;
+        int[] $r9;
+        java.lang.IllegalStateException $r10, $r11;
+
+        r0 := @this: android.os.AsyncTask;
+
+        r1 := @parameter0: java.util.concurrent.Executor;
+
+        r2 := @parameter1: java.lang.Object[];
+
+        $r4 = r0.<android.os.AsyncTask: android.os.AsyncTask$Status mStatus>;
+
+        $r3 = <android.os.AsyncTask$Status: android.os.AsyncTask$Status PENDING>;
+
+        if $r4 == $r3 goto label3;
+
+        $r9 = <android.os.AsyncTask$5: int[] $SwitchMap$android$os$AsyncTask$Status>;
+
+        $r8 = r0.<android.os.AsyncTask: android.os.AsyncTask$Status mStatus>;
+
+        $i1 = virtualinvoke $r8.<android.os.AsyncTask$Status: int ordinal()>();
+
+        i0 = $r9[$i1];
+
+        if i0 == 1 goto label2;
+
+        if i0 == 2 goto label1;
+
+        goto label3;
+
+     label1:
+        $r11 = new java.lang.IllegalStateException;
+
+        specialinvoke $r11.<java.lang.IllegalStateException: void <init>(java.lang.String)>("Cannot execute task: the task has already been executed (a task can be executed only once)");
+
+        throw $r11;
+
+     label2:
+        $r10 = new java.lang.IllegalStateException;
+
+        specialinvoke $r10.<java.lang.IllegalStateException: void <init>(java.lang.String)>("Cannot execute task: the task is already running.");
+
+        throw $r10;
+
+     label3:
+        $r5 = <android.os.AsyncTask$Status: android.os.AsyncTask$Status RUNNING>;
+
+        r0.<android.os.AsyncTask: android.os.AsyncTask$Status mStatus> = $r5;
+
+        virtualinvoke r0.<android.os.AsyncTask: void onPreExecute()>();
+
+        $r6 = r0.<android.os.AsyncTask: android.os.AsyncTask$WorkerRunnable mWorker>;
+
+        $r6.<android.os.AsyncTask$WorkerRunnable: java.lang.Object[] mParams> = r2;
+
+        $r7 = r0.<android.os.AsyncTask: java.util.concurrent.FutureTask mFuture>;
+
+        interfaceinvoke r1.<java.util.concurrent.Executor: void execute(java.lang.Runnable)>($r7);
+
+        return r0;
+    }
+
+    public final java.lang.Object get() throws java.lang.InterruptedException, java.util.concurrent.ExecutionException
+    {
+        android.os.AsyncTask r0;
+        java.util.concurrent.FutureTask $r1;
+        java.lang.Object $r2;
+
+        r0 := @this: android.os.AsyncTask;
+
+        $r1 = r0.<android.os.AsyncTask: java.util.concurrent.FutureTask mFuture>;
+
+        $r2 = virtualinvoke $r1.<java.util.concurrent.FutureTask: java.lang.Object get()>();
+
+        return $r2;
+    }
+
+    public final java.lang.Object get(long, java.util.concurrent.TimeUnit) throws java.lang.InterruptedException, java.util.concurrent.ExecutionException, java.util.concurrent.TimeoutException
+    {
+        android.os.AsyncTask r0;
+        long l0;
+        java.util.concurrent.TimeUnit r1;
+        java.util.concurrent.FutureTask $r2;
+        java.lang.Object $r3;
+
+        r0 := @this: android.os.AsyncTask;
+
+        l0 := @parameter0: long;
+
+        r1 := @parameter1: java.util.concurrent.TimeUnit;
+
+        $r2 = r0.<android.os.AsyncTask: java.util.concurrent.FutureTask mFuture>;
+
+        $r3 = virtualinvoke $r2.<java.util.concurrent.FutureTask: java.lang.Object get(long,java.util.concurrent.TimeUnit)>(l0, r1);
+
+        return $r3;
+    }
+
+    public final android.os.AsyncTask$Status getStatus()
+    {
+        android.os.AsyncTask r0;
+        android.os.AsyncTask$Status $r1;
+
+        r0 := @this: android.os.AsyncTask;
+
+        $r1 = r0.<android.os.AsyncTask: android.os.AsyncTask$Status mStatus>;
+
+        return $r1;
+    }
+
+    public final boolean isCancelled()
+    {
+        android.os.AsyncTask r0;
+        java.util.concurrent.atomic.AtomicBoolean $r1;
+        boolean $z0;
+
+        r0 := @this: android.os.AsyncTask;
+
+        $r1 = r0.<android.os.AsyncTask: java.util.concurrent.atomic.AtomicBoolean mCancelled>;
+
+        $z0 = virtualinvoke $r1.<java.util.concurrent.atomic.AtomicBoolean: boolean get()>();
+
+        return $z0;
+    }
+
+    protected void onCancelled()
+    {
+        android.os.AsyncTask r0;
+
+        r0 := @this: android.os.AsyncTask;
+
+        return;
+    }
+
+    protected void onCancelled(java.lang.Object)
+    {
+        android.os.AsyncTask r0;
+        java.lang.Object r1;
+
+        r0 := @this: android.os.AsyncTask;
+
+        r1 := @parameter0: java.lang.Object;
+
+        virtualinvoke r0.<android.os.AsyncTask: void onCancelled()>();
+
+        return;
+    }
+
+    protected void onPostExecute(java.lang.Object)
+    {
+        android.os.AsyncTask r0;
+        java.lang.Object r1;
+
+        r0 := @this: android.os.AsyncTask;
+
+        r1 := @parameter0: java.lang.Object;
+
+        return;
+    }
+
+    protected void onPreExecute()
+    {
+        android.os.AsyncTask r0;
+
+        r0 := @this: android.os.AsyncTask;
+
+        return;
+    }
+
+    protected transient void onProgressUpdate(java.lang.Object[])
+    {
+        android.os.AsyncTask r0;
+        java.lang.Object[] r1;
+
+        r0 := @this: android.os.AsyncTask;
+
+        r1 := @parameter0: java.lang.Object[];
+
+        return;
+    }
+
+    protected final transient void publishProgress(java.lang.Object[])
+    {
+        android.os.AsyncTask r0;
+        java.lang.Object[] r1;
+        boolean $z0;
+        android.os.Handler $r2;
+        android.os.AsyncTask$AsyncTaskResult $r3;
+        android.os.Message $r4;
+
+        r0 := @this: android.os.AsyncTask;
+
+        r1 := @parameter0: java.lang.Object[];
+
+        $z0 = virtualinvoke r0.<android.os.AsyncTask: boolean isCancelled()>();
+
+        if $z0 != 0 goto label1;
+
+        $r2 = specialinvoke r0.<android.os.AsyncTask: android.os.Handler getHandler()>();
+
+        $r3 = new android.os.AsyncTask$AsyncTaskResult;
+
+        specialinvoke $r3.<android.os.AsyncTask$AsyncTaskResult: void <init>(android.os.AsyncTask,java.lang.Object[])>(r0, r1);
+
+        $r4 = virtualinvoke $r2.<android.os.Handler: android.os.Message obtainMessage(int,java.lang.Object)>(2, $r3);
+
+        virtualinvoke $r4.<android.os.Message: void sendToTarget()>();
+
+     label1:
+        return;
+    }
+}

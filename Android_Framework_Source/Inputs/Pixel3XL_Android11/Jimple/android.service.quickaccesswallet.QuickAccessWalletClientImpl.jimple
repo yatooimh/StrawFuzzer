@@ -1,0 +1,1260 @@
+public class android.service.quickaccesswallet.QuickAccessWalletClientImpl extends java.lang.Object implements android.service.quickaccesswallet.QuickAccessWalletClient, android.content.ServiceConnection
+{
+    private static final int MSG_TIMEOUT_SERVICE;
+    private static final long SERVICE_CONNECTION_TIMEOUT_MS;
+    private static final java.lang.String TAG;
+    private final android.content.Context mContext;
+    private final java.util.Map mEventListeners;
+    private final android.os.Handler mHandler;
+    private boolean mIsConnected;
+    private final java.util.Queue mRequestQueue;
+    private android.service.quickaccesswallet.IQuickAccessWalletService mService;
+    private final android.service.quickaccesswallet.QuickAccessWalletServiceInfo mServiceInfo;
+
+    void <init>(android.content.Context)
+    {
+        android.service.quickaccesswallet.QuickAccessWalletClientImpl r0;
+        android.content.Context r1, $r2;
+        android.service.quickaccesswallet.QuickAccessWalletServiceInfo $r3;
+        android.os.Handler $r4;
+        android.os.Looper $r5;
+        java.util.LinkedList $r6;
+        java.util.HashMap $r7;
+
+        r0 := @this: android.service.quickaccesswallet.QuickAccessWalletClientImpl;
+
+        r1 := @parameter0: android.content.Context;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        $r2 = virtualinvoke r1.<android.content.Context: android.content.Context getApplicationContext()>();
+
+        r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: android.content.Context mContext> = $r2;
+
+        $r3 = staticinvoke <android.service.quickaccesswallet.QuickAccessWalletServiceInfo: android.service.quickaccesswallet.QuickAccessWalletServiceInfo tryCreate(android.content.Context)>(r1);
+
+        r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: android.service.quickaccesswallet.QuickAccessWalletServiceInfo mServiceInfo> = $r3;
+
+        $r4 = new android.os.Handler;
+
+        $r5 = staticinvoke <android.os.Looper: android.os.Looper getMainLooper()>();
+
+        specialinvoke $r4.<android.os.Handler: void <init>(android.os.Looper)>($r5);
+
+        r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: android.os.Handler mHandler> = $r4;
+
+        $r6 = new java.util.LinkedList;
+
+        specialinvoke $r6.<java.util.LinkedList: void <init>()>();
+
+        r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: java.util.Queue mRequestQueue> = $r6;
+
+        $r7 = new java.util.HashMap;
+
+        specialinvoke $r7.<java.util.HashMap: void <init>(int)>(1);
+
+        r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: java.util.Map mEventListeners> = $r7;
+
+        return;
+    }
+
+    static java.util.Map access$200(android.service.quickaccesswallet.QuickAccessWalletClientImpl)
+    {
+        android.service.quickaccesswallet.QuickAccessWalletClientImpl r0;
+        java.util.Map $r1;
+
+        r0 := @parameter0: android.service.quickaccesswallet.QuickAccessWalletClientImpl;
+
+        $r1 = r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: java.util.Map mEventListeners>;
+
+        return $r1;
+    }
+
+    private boolean checkSecureSetting(java.lang.String)
+    {
+        android.service.quickaccesswallet.QuickAccessWalletClientImpl r0;
+        java.lang.String r1;
+        android.content.ContentResolver r2;
+        android.content.Context $r3;
+        int $i0;
+        boolean z0;
+
+        r0 := @this: android.service.quickaccesswallet.QuickAccessWalletClientImpl;
+
+        r1 := @parameter0: java.lang.String;
+
+        $r3 = r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: android.content.Context mContext>;
+
+        r2 = virtualinvoke $r3.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        z0 = 0;
+
+        $i0 = staticinvoke <android.provider.Settings$Secure: int getInt(android.content.ContentResolver,java.lang.String,int)>(r2, r1, 0);
+
+        if $i0 != 1 goto label1;
+
+        z0 = 1;
+
+     label1:
+        return z0;
+    }
+
+    private boolean checkUserSetupComplete()
+    {
+        android.service.quickaccesswallet.QuickAccessWalletClientImpl r0;
+        android.content.ContentResolver r1;
+        android.content.Context $r2;
+        int $i0;
+        boolean z0;
+
+        r0 := @this: android.service.quickaccesswallet.QuickAccessWalletClientImpl;
+
+        $r2 = r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: android.content.Context mContext>;
+
+        r1 = virtualinvoke $r2.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        z0 = 0;
+
+        $i0 = staticinvoke <android.provider.Settings$Secure: int getIntForUser(android.content.ContentResolver,java.lang.String,int,int)>(r1, "user_setup_complete", 0, -2);
+
+        if $i0 != 1 goto label1;
+
+        z0 = 1;
+
+     label1:
+        return z0;
+    }
+
+    private void connect()
+    {
+        android.service.quickaccesswallet.QuickAccessWalletClientImpl r0;
+        android.service.quickaccesswallet._$$Lambda$QuickAccessWalletClientImpl$zq3IA_w0x321BC_zCrZHGMkFsuo $r1;
+        android.os.Handler $r2;
+
+        r0 := @this: android.service.quickaccesswallet.QuickAccessWalletClientImpl;
+
+        $r2 = r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: android.os.Handler mHandler>;
+
+        $r1 = new android.service.quickaccesswallet._$$Lambda$QuickAccessWalletClientImpl$zq3IA_w0x321BC_zCrZHGMkFsuo;
+
+        specialinvoke $r1.<android.service.quickaccesswallet._$$Lambda$QuickAccessWalletClientImpl$zq3IA_w0x321BC_zCrZHGMkFsuo: void <init>(android.service.quickaccesswallet.QuickAccessWalletClientImpl)>(r0);
+
+        virtualinvoke $r2.<android.os.Handler: boolean post(java.lang.Runnable)>($r1);
+
+        return;
+    }
+
+    private void connectInternal()
+    {
+        android.service.quickaccesswallet.QuickAccessWalletClientImpl r0;
+        android.service.quickaccesswallet.QuickAccessWalletServiceInfo $r2, $r4;
+        boolean $z0;
+        android.content.Intent $r3;
+        android.content.ComponentName $r5;
+        android.content.Context $r7;
+
+        r0 := @this: android.service.quickaccesswallet.QuickAccessWalletClientImpl;
+
+        $r2 = r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: android.service.quickaccesswallet.QuickAccessWalletServiceInfo mServiceInfo>;
+
+        if $r2 != null goto label1;
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("QAWalletSClient", "Wallet service unavailable");
+
+        return;
+
+     label1:
+        $z0 = r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: boolean mIsConnected>;
+
+        if $z0 == 0 goto label2;
+
+        return;
+
+     label2:
+        r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: boolean mIsConnected> = 1;
+
+        $r3 = new android.content.Intent;
+
+        specialinvoke $r3.<android.content.Intent: void <init>(java.lang.String)>("android.service.quickaccesswallet.QuickAccessWalletService");
+
+        $r4 = r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: android.service.quickaccesswallet.QuickAccessWalletServiceInfo mServiceInfo>;
+
+        $r5 = virtualinvoke $r4.<android.service.quickaccesswallet.QuickAccessWalletServiceInfo: android.content.ComponentName getComponentName()>();
+
+        virtualinvoke $r3.<android.content.Intent: android.content.Intent setComponent(android.content.ComponentName)>($r5);
+
+        $r7 = r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: android.content.Context mContext>;
+
+        virtualinvoke $r7.<android.content.Context: boolean bindService(android.content.Intent,android.content.ServiceConnection,int)>($r3, r0, 33);
+
+        specialinvoke r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: void resetServiceConnectionTimeout()>();
+
+        return;
+    }
+
+    private android.content.Intent createIntent(java.lang.String, java.lang.String, java.lang.String)
+    {
+        android.service.quickaccesswallet.QuickAccessWalletClientImpl r0;
+        java.lang.String r1, r2, r8, r9;
+        android.content.pm.PackageManager r3;
+        android.content.Context $r4;
+        boolean $z0, $z1, $z2;
+        android.content.ComponentName $r5;
+        android.content.Intent $r6, $r7;
+
+        r0 := @this: android.service.quickaccesswallet.QuickAccessWalletClientImpl;
+
+        r8 := @parameter0: java.lang.String;
+
+        r1 := @parameter1: java.lang.String;
+
+        r2 := @parameter2: java.lang.String;
+
+        $r4 = r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: android.content.Context mContext>;
+
+        r3 = virtualinvoke $r4.<android.content.Context: android.content.pm.PackageManager getPackageManager()>();
+
+        r9 = r8;
+
+        $z0 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>(r8);
+
+        if $z0 == 0 goto label1;
+
+        r9 = staticinvoke <android.service.quickaccesswallet.QuickAccessWalletClientImpl: java.lang.String queryActivityForAction(android.content.pm.PackageManager,java.lang.String,java.lang.String)>(r3, r1, r2);
+
+     label1:
+        $z1 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>(r9);
+
+        if $z1 == 0 goto label2;
+
+        return null;
+
+     label2:
+        $r5 = new android.content.ComponentName;
+
+        specialinvoke $r5.<android.content.ComponentName: void <init>(java.lang.String,java.lang.String)>(r1, r9);
+
+        $z2 = staticinvoke <android.service.quickaccesswallet.QuickAccessWalletClientImpl: boolean isActivityEnabled(android.content.pm.PackageManager,android.content.ComponentName)>(r3, $r5);
+
+        if $z2 != 0 goto label3;
+
+        return null;
+
+     label3:
+        $r6 = new android.content.Intent;
+
+        specialinvoke $r6.<android.content.Intent: void <init>(java.lang.String)>(r2);
+
+        $r7 = virtualinvoke $r6.<android.content.Intent: android.content.Intent setComponent(android.content.ComponentName)>($r5);
+
+        return $r7;
+    }
+
+    private void disconnectInternal(boolean)
+    {
+        android.service.quickaccesswallet.QuickAccessWalletClientImpl r0;
+        boolean z0, $z1, $z2, $z3;
+        java.util.Iterator r1;
+        android.content.Context $r2;
+        java.util.Map $r3, $r5, $r6;
+        java.util.Queue $r4;
+        java.util.Set $r7;
+        android.service.quickaccesswallet._$$Lambda$QuickAccessWalletClientImpl$7HA_OH57LeoccKifp5JF9tkdFeM $r8;
+        android.os.Handler $r9;
+        java.lang.Object $r10;
+        android.service.quickaccesswallet.QuickAccessWalletClient$WalletServiceEventListener $r11;
+
+        r0 := @this: android.service.quickaccesswallet.QuickAccessWalletClientImpl;
+
+        z0 := @parameter0: boolean;
+
+        $z1 = r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: boolean mIsConnected>;
+
+        if $z1 != 0 goto label1;
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("QAWalletSClient", "already disconnected");
+
+        return;
+
+     label1:
+        if z0 == 0 goto label4;
+
+        $r5 = r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: java.util.Map mEventListeners>;
+
+        $z2 = interfaceinvoke $r5.<java.util.Map: boolean isEmpty()>();
+
+        if $z2 != 0 goto label4;
+
+        $r6 = r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: java.util.Map mEventListeners>;
+
+        $r7 = interfaceinvoke $r6.<java.util.Map: java.util.Set keySet()>();
+
+        r1 = interfaceinvoke $r7.<java.util.Set: java.util.Iterator iterator()>();
+
+     label2:
+        $z3 = interfaceinvoke r1.<java.util.Iterator: boolean hasNext()>();
+
+        if $z3 == 0 goto label3;
+
+        $r10 = interfaceinvoke r1.<java.util.Iterator: java.lang.Object next()>();
+
+        $r11 = (android.service.quickaccesswallet.QuickAccessWalletClient$WalletServiceEventListener) $r10;
+
+        virtualinvoke r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: void removeWalletServiceEventListener(android.service.quickaccesswallet.QuickAccessWalletClient$WalletServiceEventListener)>($r11);
+
+        goto label2;
+
+     label3:
+        $r9 = r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: android.os.Handler mHandler>;
+
+        $r8 = new android.service.quickaccesswallet._$$Lambda$QuickAccessWalletClientImpl$7HA_OH57LeoccKifp5JF9tkdFeM;
+
+        specialinvoke $r8.<android.service.quickaccesswallet._$$Lambda$QuickAccessWalletClientImpl$7HA_OH57LeoccKifp5JF9tkdFeM: void <init>(android.service.quickaccesswallet.QuickAccessWalletClientImpl)>(r0);
+
+        virtualinvoke $r9.<android.os.Handler: boolean post(java.lang.Runnable)>($r8);
+
+        return;
+
+     label4:
+        r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: boolean mIsConnected> = 0;
+
+        $r2 = r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: android.content.Context mContext>;
+
+        virtualinvoke $r2.<android.content.Context: void unbindService(android.content.ServiceConnection)>(r0);
+
+        r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: android.service.quickaccesswallet.IQuickAccessWalletService mService> = null;
+
+        $r3 = r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: java.util.Map mEventListeners>;
+
+        interfaceinvoke $r3.<java.util.Map: void clear()>();
+
+        $r4 = r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: java.util.Queue mRequestQueue>;
+
+        interfaceinvoke $r4.<java.util.Queue: void clear()>();
+
+        return;
+    }
+
+    private void executeApiCall(android.service.quickaccesswallet.QuickAccessWalletClientImpl$ApiCaller)
+    {
+        android.service.quickaccesswallet.QuickAccessWalletClientImpl r0;
+        android.service.quickaccesswallet.QuickAccessWalletClientImpl$ApiCaller r1;
+        android.service.quickaccesswallet._$$Lambda$QuickAccessWalletClientImpl$57_WwM8sEJa0kRLvImQRsKL0aJA $r2;
+        android.os.Handler $r3;
+
+        r0 := @this: android.service.quickaccesswallet.QuickAccessWalletClientImpl;
+
+        r1 := @parameter0: android.service.quickaccesswallet.QuickAccessWalletClientImpl$ApiCaller;
+
+        $r3 = r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: android.os.Handler mHandler>;
+
+        $r2 = new android.service.quickaccesswallet._$$Lambda$QuickAccessWalletClientImpl$57_WwM8sEJa0kRLvImQRsKL0aJA;
+
+        specialinvoke $r2.<android.service.quickaccesswallet._$$Lambda$QuickAccessWalletClientImpl$57_WwM8sEJa0kRLvImQRsKL0aJA: void <init>(android.service.quickaccesswallet.QuickAccessWalletClientImpl,android.service.quickaccesswallet.QuickAccessWalletClientImpl$ApiCaller)>(r0, r1);
+
+        virtualinvoke $r3.<android.os.Handler: boolean post(java.lang.Runnable)>($r2);
+
+        return;
+    }
+
+    private void executeInternal(android.service.quickaccesswallet.QuickAccessWalletClientImpl$ApiCaller)
+    {
+        android.service.quickaccesswallet.QuickAccessWalletClientImpl r0;
+        android.service.quickaccesswallet.QuickAccessWalletClientImpl$ApiCaller r1;
+        android.service.quickaccesswallet.IQuickAccessWalletService r2;
+        boolean $z0;
+        java.util.Queue $r3;
+
+        r0 := @this: android.service.quickaccesswallet.QuickAccessWalletClientImpl;
+
+        r1 := @parameter0: android.service.quickaccesswallet.QuickAccessWalletClientImpl$ApiCaller;
+
+        $z0 = r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: boolean mIsConnected>;
+
+        if $z0 == 0 goto label1;
+
+        r2 = r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: android.service.quickaccesswallet.IQuickAccessWalletService mService>;
+
+        if r2 == null goto label1;
+
+        specialinvoke r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: void performApiCallInternal(android.service.quickaccesswallet.QuickAccessWalletClientImpl$ApiCaller,android.service.quickaccesswallet.IQuickAccessWalletService)>(r1, r2);
+
+        goto label2;
+
+     label1:
+        $r3 = r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: java.util.Queue mRequestQueue>;
+
+        interfaceinvoke $r3.<java.util.Queue: boolean add(java.lang.Object)>(r1);
+
+        specialinvoke r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: void connect()>();
+
+     label2:
+        return;
+    }
+
+    private static boolean isActivityEnabled(android.content.pm.PackageManager, android.content.ComponentName)
+    {
+        android.content.ComponentName r0;
+        int i0;
+        boolean z0;
+        android.content.pm.ActivityInfo $r1;
+        android.content.pm.PackageManager$NameNotFoundException $r2;
+        android.content.pm.PackageManager r3;
+
+        r3 := @parameter0: android.content.pm.PackageManager;
+
+        r0 := @parameter1: android.content.ComponentName;
+
+        i0 = virtualinvoke r3.<android.content.pm.PackageManager: int getComponentEnabledSetting(android.content.ComponentName)>(r0);
+
+        if i0 != 1 goto label1;
+
+        return 1;
+
+     label1:
+        if i0 == 0 goto label2;
+
+        return 0;
+
+     label2:
+        $r1 = virtualinvoke r3.<android.content.pm.PackageManager: android.content.pm.ActivityInfo getActivityInfo(android.content.ComponentName,int)>(r0, 0);
+
+        z0 = virtualinvoke $r1.<android.content.pm.ActivityInfo: boolean isEnabled()>();
+
+     label3:
+        return z0;
+
+     label4:
+        $r2 := @caughtexception;
+
+        return 0;
+
+        catch android.content.pm.PackageManager$NameNotFoundException from label2 to label3 with label4;
+    }
+
+    static void lambda$getWalletCards$0(android.service.quickaccesswallet.QuickAccessWalletClient$OnWalletCardsRetrievedCallback)
+    {
+        android.service.quickaccesswallet.QuickAccessWalletClient$OnWalletCardsRetrievedCallback r0;
+        android.service.quickaccesswallet.GetWalletCardsError $r1;
+
+        r0 := @parameter0: android.service.quickaccesswallet.QuickAccessWalletClient$OnWalletCardsRetrievedCallback;
+
+        $r1 = new android.service.quickaccesswallet.GetWalletCardsError;
+
+        specialinvoke $r1.<android.service.quickaccesswallet.GetWalletCardsError: void <init>(android.graphics.drawable.Icon,java.lang.CharSequence)>(null, null);
+
+        interfaceinvoke r0.<android.service.quickaccesswallet.QuickAccessWalletClient$OnWalletCardsRetrievedCallback: void onWalletCardRetrievalError(android.service.quickaccesswallet.GetWalletCardsError)>($r1);
+
+        return;
+    }
+
+    public static void lambda$zq3IA_w0x321BC_zCrZHGMkFsuo(android.service.quickaccesswallet.QuickAccessWalletClientImpl)
+    {
+        android.service.quickaccesswallet.QuickAccessWalletClientImpl r0;
+
+        r0 := @parameter0: android.service.quickaccesswallet.QuickAccessWalletClientImpl;
+
+        specialinvoke r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: void connectInternal()>();
+
+        return;
+    }
+
+    private void onConnectedInternal(android.service.quickaccesswallet.IQuickAccessWalletService)
+    {
+        android.service.quickaccesswallet.QuickAccessWalletClientImpl r0;
+        java.util.Iterator r1;
+        boolean $z0, $z1;
+        java.util.ArrayList $r2;
+        java.util.Queue $r3, $r6;
+        java.lang.Object $r4;
+        android.service.quickaccesswallet.IQuickAccessWalletService $r5, r7;
+        android.service.quickaccesswallet.QuickAccessWalletClientImpl$ApiCaller r8;
+
+        r0 := @this: android.service.quickaccesswallet.QuickAccessWalletClientImpl;
+
+        r7 := @parameter0: android.service.quickaccesswallet.IQuickAccessWalletService;
+
+        $z0 = r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: boolean mIsConnected>;
+
+        if $z0 != 0 goto label1;
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("QAWalletSClient", "onConnectInternal but connection closed");
+
+        r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: android.service.quickaccesswallet.IQuickAccessWalletService mService> = null;
+
+        return;
+
+     label1:
+        r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: android.service.quickaccesswallet.IQuickAccessWalletService mService> = r7;
+
+        $r2 = new java.util.ArrayList;
+
+        $r3 = r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: java.util.Queue mRequestQueue>;
+
+        specialinvoke $r2.<java.util.ArrayList: void <init>(java.util.Collection)>($r3);
+
+        r1 = virtualinvoke $r2.<java.util.ArrayList: java.util.Iterator iterator()>();
+
+     label2:
+        $z1 = interfaceinvoke r1.<java.util.Iterator: boolean hasNext()>();
+
+        if $z1 == 0 goto label3;
+
+        $r4 = interfaceinvoke r1.<java.util.Iterator: java.lang.Object next()>();
+
+        r8 = (android.service.quickaccesswallet.QuickAccessWalletClientImpl$ApiCaller) $r4;
+
+        $r5 = r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: android.service.quickaccesswallet.IQuickAccessWalletService mService>;
+
+        specialinvoke r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: void performApiCallInternal(android.service.quickaccesswallet.QuickAccessWalletClientImpl$ApiCaller,android.service.quickaccesswallet.IQuickAccessWalletService)>(r8, $r5);
+
+        $r6 = r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: java.util.Queue mRequestQueue>;
+
+        interfaceinvoke $r6.<java.util.Queue: boolean remove(java.lang.Object)>(r8);
+
+        goto label2;
+
+     label3:
+        return;
+    }
+
+    private void performApiCallInternal(android.service.quickaccesswallet.QuickAccessWalletClientImpl$ApiCaller, android.service.quickaccesswallet.IQuickAccessWalletService)
+    {
+        android.service.quickaccesswallet.QuickAccessWalletClientImpl r0;
+        android.service.quickaccesswallet.QuickAccessWalletClientImpl$ApiCaller r1;
+        android.os.RemoteException $r3;
+        java.lang.StringBuilder $r4;
+        java.lang.String $r6, $r8;
+        android.service.quickaccesswallet.IQuickAccessWalletService r9;
+
+        r0 := @this: android.service.quickaccesswallet.QuickAccessWalletClientImpl;
+
+        r1 := @parameter0: android.service.quickaccesswallet.QuickAccessWalletClientImpl$ApiCaller;
+
+        r9 := @parameter1: android.service.quickaccesswallet.IQuickAccessWalletService;
+
+        if r9 != null goto label1;
+
+        virtualinvoke r1.<android.service.quickaccesswallet.QuickAccessWalletClientImpl$ApiCaller: void onApiError()>();
+
+        return;
+
+     label1:
+        virtualinvoke r1.<android.service.quickaccesswallet.QuickAccessWalletClientImpl$ApiCaller: void performApiCall(android.service.quickaccesswallet.IQuickAccessWalletService)>(r9);
+
+        specialinvoke r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: void resetServiceConnectionTimeout()>();
+
+     label2:
+        goto label4;
+
+     label3:
+        $r3 := @caughtexception;
+
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("executeInternal error: ");
+
+        $r6 = staticinvoke <android.service.quickaccesswallet.QuickAccessWalletClientImpl$ApiCaller: java.lang.String access$300(android.service.quickaccesswallet.QuickAccessWalletClientImpl$ApiCaller)>(r1);
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r6);
+
+        $r8 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String,java.lang.Throwable)>("QAWalletSClient", $r8, $r3);
+
+        virtualinvoke r1.<android.service.quickaccesswallet.QuickAccessWalletClientImpl$ApiCaller: void onApiError()>();
+
+        virtualinvoke r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: void disconnect()>();
+
+     label4:
+        return;
+
+        catch android.os.RemoteException from label1 to label2 with label3;
+    }
+
+    private static java.lang.String queryActivityForAction(android.content.pm.PackageManager, java.lang.String, java.lang.String)
+    {
+        java.lang.String r0, r1, $r7;
+        android.content.Intent $r2, $r3;
+        android.content.pm.ActivityInfo $r4, $r5, $r6;
+        boolean $z0;
+        android.content.pm.PackageManager r8;
+        android.content.pm.ResolveInfo r9;
+
+        r8 := @parameter0: android.content.pm.PackageManager;
+
+        r0 := @parameter1: java.lang.String;
+
+        r1 := @parameter2: java.lang.String;
+
+        $r2 = new android.content.Intent;
+
+        specialinvoke $r2.<android.content.Intent: void <init>(java.lang.String)>(r1);
+
+        $r3 = virtualinvoke $r2.<android.content.Intent: android.content.Intent setPackage(java.lang.String)>(r0);
+
+        r9 = virtualinvoke r8.<android.content.pm.PackageManager: android.content.pm.ResolveInfo resolveActivity(android.content.Intent,int)>($r3, 0);
+
+        if r9 == null goto label2;
+
+        $r4 = r9.<android.content.pm.ResolveInfo: android.content.pm.ActivityInfo activityInfo>;
+
+        if $r4 == null goto label2;
+
+        $r5 = r9.<android.content.pm.ResolveInfo: android.content.pm.ActivityInfo activityInfo>;
+
+        $z0 = $r5.<android.content.pm.ActivityInfo: boolean exported>;
+
+        if $z0 != 0 goto label1;
+
+        goto label2;
+
+     label1:
+        $r6 = r9.<android.content.pm.ResolveInfo: android.content.pm.ActivityInfo activityInfo>;
+
+        $r7 = $r6.<android.content.pm.ActivityInfo: java.lang.String name>;
+
+        return $r7;
+
+     label2:
+        return null;
+    }
+
+    private void resetServiceConnectionTimeout()
+    {
+        android.service.quickaccesswallet.QuickAccessWalletClientImpl r0;
+        android.os.Handler $r1, $r3;
+        android.service.quickaccesswallet._$$Lambda$QuickAccessWalletClientImpl$GBzEQZDL0gkMzecgeo8Z6BPZbAw $r2;
+
+        r0 := @this: android.service.quickaccesswallet.QuickAccessWalletClientImpl;
+
+        $r1 = r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: android.os.Handler mHandler>;
+
+        virtualinvoke $r1.<android.os.Handler: void removeMessages(int)>(5);
+
+        $r3 = r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: android.os.Handler mHandler>;
+
+        $r2 = new android.service.quickaccesswallet._$$Lambda$QuickAccessWalletClientImpl$GBzEQZDL0gkMzecgeo8Z6BPZbAw;
+
+        specialinvoke $r2.<android.service.quickaccesswallet._$$Lambda$QuickAccessWalletClientImpl$GBzEQZDL0gkMzecgeo8Z6BPZbAw: void <init>(android.service.quickaccesswallet.QuickAccessWalletClientImpl)>(r0);
+
+        virtualinvoke $r3.<android.os.Handler: boolean postDelayed(java.lang.Runnable,int,long)>($r2, 5, 60000L);
+
+        return;
+    }
+
+    public void addWalletServiceEventListener(android.service.quickaccesswallet.QuickAccessWalletClient$WalletServiceEventListener)
+    {
+        android.service.quickaccesswallet.QuickAccessWalletClientImpl r0;
+        android.service.quickaccesswallet.QuickAccessWalletClient$WalletServiceEventListener r1;
+        android.content.Context $r2;
+        java.util.concurrent.Executor $r3;
+
+        r0 := @this: android.service.quickaccesswallet.QuickAccessWalletClientImpl;
+
+        r1 := @parameter0: android.service.quickaccesswallet.QuickAccessWalletClient$WalletServiceEventListener;
+
+        $r2 = r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: android.content.Context mContext>;
+
+        $r3 = virtualinvoke $r2.<android.content.Context: java.util.concurrent.Executor getMainExecutor()>();
+
+        virtualinvoke r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: void addWalletServiceEventListener(java.util.concurrent.Executor,android.service.quickaccesswallet.QuickAccessWalletClient$WalletServiceEventListener)>($r3, r1);
+
+        return;
+    }
+
+    public void addWalletServiceEventListener(java.util.concurrent.Executor, android.service.quickaccesswallet.QuickAccessWalletClient$WalletServiceEventListener)
+    {
+        android.service.quickaccesswallet.QuickAccessWalletClientImpl r0;
+        java.util.concurrent.Executor r1;
+        android.service.quickaccesswallet.QuickAccessWalletClient$WalletServiceEventListener r2;
+        boolean $z0;
+        android.service.quickaccesswallet.QuickAccessWalletClientImpl$6 $r3;
+        android.service.quickaccesswallet.QuickAccessWalletClientImpl$5 $r4;
+
+        r0 := @this: android.service.quickaccesswallet.QuickAccessWalletClientImpl;
+
+        r1 := @parameter0: java.util.concurrent.Executor;
+
+        r2 := @parameter1: android.service.quickaccesswallet.QuickAccessWalletClient$WalletServiceEventListener;
+
+        $z0 = virtualinvoke r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: boolean isWalletServiceAvailable()>();
+
+        if $z0 != 0 goto label1;
+
+        return;
+
+     label1:
+        $r3 = new android.service.quickaccesswallet.QuickAccessWalletClientImpl$6;
+
+        $r4 = new android.service.quickaccesswallet.QuickAccessWalletClientImpl$5;
+
+        specialinvoke $r4.<android.service.quickaccesswallet.QuickAccessWalletClientImpl$5: void <init>(android.service.quickaccesswallet.QuickAccessWalletClientImpl,java.util.concurrent.Executor,android.service.quickaccesswallet.QuickAccessWalletClient$WalletServiceEventListener)>(r0, r1, r2);
+
+        specialinvoke $r3.<android.service.quickaccesswallet.QuickAccessWalletClientImpl$6: void <init>(android.service.quickaccesswallet.QuickAccessWalletClientImpl,java.lang.String,android.service.quickaccesswallet.QuickAccessWalletClient$WalletServiceEventListener,android.service.quickaccesswallet.QuickAccessWalletClientImpl$BaseCallbacks)>(r0, "registerListener", r2, $r4);
+
+        specialinvoke r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: void executeApiCall(android.service.quickaccesswallet.QuickAccessWalletClientImpl$ApiCaller)>($r3);
+
+        return;
+    }
+
+    public void close() throws java.io.IOException
+    {
+        android.service.quickaccesswallet.QuickAccessWalletClientImpl r0;
+
+        r0 := @this: android.service.quickaccesswallet.QuickAccessWalletClientImpl;
+
+        virtualinvoke r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: void disconnect()>();
+
+        return;
+    }
+
+    public android.content.Intent createWalletIntent()
+    {
+        android.service.quickaccesswallet.QuickAccessWalletClientImpl r0;
+        android.content.ComponentName $r1;
+        android.service.quickaccesswallet.QuickAccessWalletServiceInfo $r2, r5;
+        java.lang.String $r3, r6;
+        android.content.Intent $r4;
+
+        r0 := @this: android.service.quickaccesswallet.QuickAccessWalletClientImpl;
+
+        r5 = r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: android.service.quickaccesswallet.QuickAccessWalletServiceInfo mServiceInfo>;
+
+        if r5 != null goto label1;
+
+        return null;
+
+     label1:
+        $r1 = virtualinvoke r5.<android.service.quickaccesswallet.QuickAccessWalletServiceInfo: android.content.ComponentName getComponentName()>();
+
+        r6 = virtualinvoke $r1.<android.content.ComponentName: java.lang.String getPackageName()>();
+
+        $r2 = r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: android.service.quickaccesswallet.QuickAccessWalletServiceInfo mServiceInfo>;
+
+        $r3 = virtualinvoke $r2.<android.service.quickaccesswallet.QuickAccessWalletServiceInfo: java.lang.String getWalletActivity()>();
+
+        $r4 = specialinvoke r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: android.content.Intent createIntent(java.lang.String,java.lang.String,java.lang.String)>($r3, r6, "android.service.quickaccesswallet.action.VIEW_WALLET");
+
+        return $r4;
+    }
+
+    public android.content.Intent createWalletSettingsIntent()
+    {
+        android.service.quickaccesswallet.QuickAccessWalletClientImpl r0;
+        android.content.ComponentName $r1;
+        android.service.quickaccesswallet.QuickAccessWalletServiceInfo $r2, r5;
+        java.lang.String $r3, r6;
+        android.content.Intent $r4;
+
+        r0 := @this: android.service.quickaccesswallet.QuickAccessWalletClientImpl;
+
+        r5 = r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: android.service.quickaccesswallet.QuickAccessWalletServiceInfo mServiceInfo>;
+
+        if r5 != null goto label1;
+
+        return null;
+
+     label1:
+        $r1 = virtualinvoke r5.<android.service.quickaccesswallet.QuickAccessWalletServiceInfo: android.content.ComponentName getComponentName()>();
+
+        r6 = virtualinvoke $r1.<android.content.ComponentName: java.lang.String getPackageName()>();
+
+        $r2 = r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: android.service.quickaccesswallet.QuickAccessWalletServiceInfo mServiceInfo>;
+
+        $r3 = virtualinvoke $r2.<android.service.quickaccesswallet.QuickAccessWalletServiceInfo: java.lang.String getSettingsActivity()>();
+
+        $r4 = specialinvoke r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: android.content.Intent createIntent(java.lang.String,java.lang.String,java.lang.String)>($r3, r6, "android.service.quickaccesswallet.action.VIEW_WALLET_SETTINGS");
+
+        return $r4;
+    }
+
+    public void disconnect()
+    {
+        android.service.quickaccesswallet.QuickAccessWalletClientImpl r0;
+        android.service.quickaccesswallet._$$Lambda$QuickAccessWalletClientImpl$vq8dtsjM9qYSfiFL0YG_3THsN0s $r1;
+        android.os.Handler $r2;
+
+        r0 := @this: android.service.quickaccesswallet.QuickAccessWalletClientImpl;
+
+        $r2 = r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: android.os.Handler mHandler>;
+
+        $r1 = new android.service.quickaccesswallet._$$Lambda$QuickAccessWalletClientImpl$vq8dtsjM9qYSfiFL0YG_3THsN0s;
+
+        specialinvoke $r1.<android.service.quickaccesswallet._$$Lambda$QuickAccessWalletClientImpl$vq8dtsjM9qYSfiFL0YG_3THsN0s: void <init>(android.service.quickaccesswallet.QuickAccessWalletClientImpl)>(r0);
+
+        virtualinvoke $r2.<android.os.Handler: boolean post(java.lang.Runnable)>($r1);
+
+        return;
+    }
+
+    public android.graphics.drawable.Drawable getLogo()
+    {
+        android.service.quickaccesswallet.QuickAccessWalletClientImpl r0;
+        android.content.Context $r1;
+        android.service.quickaccesswallet.QuickAccessWalletServiceInfo r2;
+        android.graphics.drawable.Drawable r3;
+
+        r0 := @this: android.service.quickaccesswallet.QuickAccessWalletClientImpl;
+
+        r2 = r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: android.service.quickaccesswallet.QuickAccessWalletServiceInfo mServiceInfo>;
+
+        if r2 != null goto label1;
+
+        r3 = null;
+
+        goto label2;
+
+     label1:
+        $r1 = r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: android.content.Context mContext>;
+
+        r3 = virtualinvoke r2.<android.service.quickaccesswallet.QuickAccessWalletServiceInfo: android.graphics.drawable.Drawable getWalletLogo(android.content.Context)>($r1);
+
+     label2:
+        return r3;
+    }
+
+    public java.lang.CharSequence getServiceLabel()
+    {
+        android.service.quickaccesswallet.QuickAccessWalletClientImpl r0;
+        android.content.Context $r1;
+        android.service.quickaccesswallet.QuickAccessWalletServiceInfo r2;
+        java.lang.CharSequence r3;
+
+        r0 := @this: android.service.quickaccesswallet.QuickAccessWalletClientImpl;
+
+        r2 = r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: android.service.quickaccesswallet.QuickAccessWalletServiceInfo mServiceInfo>;
+
+        if r2 != null goto label1;
+
+        r3 = null;
+
+        goto label2;
+
+     label1:
+        $r1 = r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: android.content.Context mContext>;
+
+        r3 = virtualinvoke r2.<android.service.quickaccesswallet.QuickAccessWalletServiceInfo: java.lang.CharSequence getServiceLabel(android.content.Context)>($r1);
+
+     label2:
+        return r3;
+    }
+
+    public java.lang.CharSequence getShortcutLongLabel()
+    {
+        android.service.quickaccesswallet.QuickAccessWalletClientImpl r0;
+        android.content.Context $r1;
+        android.service.quickaccesswallet.QuickAccessWalletServiceInfo r2;
+        java.lang.CharSequence r3;
+
+        r0 := @this: android.service.quickaccesswallet.QuickAccessWalletClientImpl;
+
+        r2 = r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: android.service.quickaccesswallet.QuickAccessWalletServiceInfo mServiceInfo>;
+
+        if r2 != null goto label1;
+
+        r3 = null;
+
+        goto label2;
+
+     label1:
+        $r1 = r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: android.content.Context mContext>;
+
+        r3 = virtualinvoke r2.<android.service.quickaccesswallet.QuickAccessWalletServiceInfo: java.lang.CharSequence getShortcutLongLabel(android.content.Context)>($r1);
+
+     label2:
+        return r3;
+    }
+
+    public java.lang.CharSequence getShortcutShortLabel()
+    {
+        android.service.quickaccesswallet.QuickAccessWalletClientImpl r0;
+        android.content.Context $r1;
+        android.service.quickaccesswallet.QuickAccessWalletServiceInfo r2;
+        java.lang.CharSequence r3;
+
+        r0 := @this: android.service.quickaccesswallet.QuickAccessWalletClientImpl;
+
+        r2 = r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: android.service.quickaccesswallet.QuickAccessWalletServiceInfo mServiceInfo>;
+
+        if r2 != null goto label1;
+
+        r3 = null;
+
+        goto label2;
+
+     label1:
+        $r1 = r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: android.content.Context mContext>;
+
+        r3 = virtualinvoke r2.<android.service.quickaccesswallet.QuickAccessWalletServiceInfo: java.lang.CharSequence getShortcutShortLabel(android.content.Context)>($r1);
+
+     label2:
+        return r3;
+    }
+
+    public void getWalletCards(android.service.quickaccesswallet.GetWalletCardsRequest, android.service.quickaccesswallet.QuickAccessWalletClient$OnWalletCardsRetrievedCallback)
+    {
+        android.service.quickaccesswallet.QuickAccessWalletClientImpl r0;
+        android.service.quickaccesswallet.GetWalletCardsRequest r1;
+        android.service.quickaccesswallet.QuickAccessWalletClient$OnWalletCardsRetrievedCallback r2;
+        android.content.Context $r3;
+        java.util.concurrent.Executor $r4;
+
+        r0 := @this: android.service.quickaccesswallet.QuickAccessWalletClientImpl;
+
+        r1 := @parameter0: android.service.quickaccesswallet.GetWalletCardsRequest;
+
+        r2 := @parameter1: android.service.quickaccesswallet.QuickAccessWalletClient$OnWalletCardsRetrievedCallback;
+
+        $r3 = r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: android.content.Context mContext>;
+
+        $r4 = virtualinvoke $r3.<android.content.Context: java.util.concurrent.Executor getMainExecutor()>();
+
+        virtualinvoke r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: void getWalletCards(java.util.concurrent.Executor,android.service.quickaccesswallet.GetWalletCardsRequest,android.service.quickaccesswallet.QuickAccessWalletClient$OnWalletCardsRetrievedCallback)>($r4, r1, r2);
+
+        return;
+    }
+
+    public void getWalletCards(java.util.concurrent.Executor, android.service.quickaccesswallet.GetWalletCardsRequest, android.service.quickaccesswallet.QuickAccessWalletClient$OnWalletCardsRetrievedCallback)
+    {
+        android.service.quickaccesswallet.QuickAccessWalletClientImpl r0;
+        java.util.concurrent.Executor r1;
+        android.service.quickaccesswallet.GetWalletCardsRequest r2;
+        android.service.quickaccesswallet.QuickAccessWalletClient$OnWalletCardsRetrievedCallback r3;
+        boolean $z0;
+        android.service.quickaccesswallet.QuickAccessWalletClientImpl$2 $r4;
+        android.service.quickaccesswallet.QuickAccessWalletClientImpl$1 $r5;
+        android.service.quickaccesswallet._$$Lambda$QuickAccessWalletClientImpl$1rta7e7prvwImZMSYUVLF9RWQO0 $r6;
+
+        r0 := @this: android.service.quickaccesswallet.QuickAccessWalletClientImpl;
+
+        r1 := @parameter0: java.util.concurrent.Executor;
+
+        r2 := @parameter1: android.service.quickaccesswallet.GetWalletCardsRequest;
+
+        r3 := @parameter2: android.service.quickaccesswallet.QuickAccessWalletClient$OnWalletCardsRetrievedCallback;
+
+        $z0 = virtualinvoke r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: boolean isWalletServiceAvailable()>();
+
+        if $z0 != 0 goto label1;
+
+        $r6 = new android.service.quickaccesswallet._$$Lambda$QuickAccessWalletClientImpl$1rta7e7prvwImZMSYUVLF9RWQO0;
+
+        specialinvoke $r6.<android.service.quickaccesswallet._$$Lambda$QuickAccessWalletClientImpl$1rta7e7prvwImZMSYUVLF9RWQO0: void <init>(android.service.quickaccesswallet.QuickAccessWalletClient$OnWalletCardsRetrievedCallback)>(r3);
+
+        interfaceinvoke r1.<java.util.concurrent.Executor: void execute(java.lang.Runnable)>($r6);
+
+        return;
+
+     label1:
+        $r4 = new android.service.quickaccesswallet.QuickAccessWalletClientImpl$2;
+
+        $r5 = new android.service.quickaccesswallet.QuickAccessWalletClientImpl$1;
+
+        specialinvoke $r5.<android.service.quickaccesswallet.QuickAccessWalletClientImpl$1: void <init>(android.service.quickaccesswallet.QuickAccessWalletClientImpl,java.util.concurrent.Executor,android.service.quickaccesswallet.QuickAccessWalletClient$OnWalletCardsRetrievedCallback)>(r0, r1, r3);
+
+        specialinvoke $r4.<android.service.quickaccesswallet.QuickAccessWalletClientImpl$2: void <init>(android.service.quickaccesswallet.QuickAccessWalletClientImpl,java.lang.String,android.service.quickaccesswallet.GetWalletCardsRequest,android.service.quickaccesswallet.QuickAccessWalletClientImpl$BaseCallbacks)>(r0, "onWalletCardsRequested", r2, $r5);
+
+        specialinvoke r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: void executeApiCall(android.service.quickaccesswallet.QuickAccessWalletClientImpl$ApiCaller)>($r4);
+
+        return;
+    }
+
+    public boolean isWalletFeatureAvailable()
+    {
+        android.service.quickaccesswallet.QuickAccessWalletClientImpl r0;
+        int i0;
+        boolean $z0, $z1, $z2, z3;
+        com.android.internal.widget.LockPatternUtils $r1;
+        android.content.Context $r2;
+
+        r0 := @this: android.service.quickaccesswallet.QuickAccessWalletClientImpl;
+
+        i0 = staticinvoke <android.app.ActivityManager: int getCurrentUser()>();
+
+        if i0 != 0 goto label1;
+
+        $z0 = specialinvoke r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: boolean checkUserSetupComplete()>();
+
+        if $z0 == 0 goto label1;
+
+        $z1 = specialinvoke r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: boolean checkSecureSetting(java.lang.String)>("global_actions_panel_enabled");
+
+        if $z1 == 0 goto label1;
+
+        $r1 = new com.android.internal.widget.LockPatternUtils;
+
+        $r2 = r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: android.content.Context mContext>;
+
+        specialinvoke $r1.<com.android.internal.widget.LockPatternUtils: void <init>(android.content.Context)>($r2);
+
+        $z2 = virtualinvoke $r1.<com.android.internal.widget.LockPatternUtils: boolean isUserInLockdown(int)>(i0);
+
+        if $z2 != 0 goto label1;
+
+        z3 = 1;
+
+        goto label2;
+
+     label1:
+        z3 = 0;
+
+     label2:
+        return z3;
+    }
+
+    public boolean isWalletFeatureAvailableWhenDeviceLocked()
+    {
+        android.service.quickaccesswallet.QuickAccessWalletClientImpl r0;
+        boolean $z0;
+
+        r0 := @this: android.service.quickaccesswallet.QuickAccessWalletClientImpl;
+
+        $z0 = specialinvoke r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: boolean checkSecureSetting(java.lang.String)>("power_menu_locked_show_content");
+
+        return $z0;
+    }
+
+    public boolean isWalletServiceAvailable()
+    {
+        android.service.quickaccesswallet.QuickAccessWalletClientImpl r0;
+        android.service.quickaccesswallet.QuickAccessWalletServiceInfo $r1;
+        boolean z0;
+
+        r0 := @this: android.service.quickaccesswallet.QuickAccessWalletClientImpl;
+
+        $r1 = r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: android.service.quickaccesswallet.QuickAccessWalletServiceInfo mServiceInfo>;
+
+        if $r1 == null goto label1;
+
+        z0 = 1;
+
+        goto label2;
+
+     label1:
+        z0 = 0;
+
+     label2:
+        return z0;
+    }
+
+    public void lambda$disconnect$1$QuickAccessWalletClientImpl()
+    {
+        android.service.quickaccesswallet.QuickAccessWalletClientImpl r0;
+
+        r0 := @this: android.service.quickaccesswallet.QuickAccessWalletClientImpl;
+
+        specialinvoke r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: void disconnectInternal(boolean)>(1);
+
+        return;
+    }
+
+    public void lambda$disconnectInternal$3$QuickAccessWalletClientImpl()
+    {
+        android.service.quickaccesswallet.QuickAccessWalletClientImpl r0;
+
+        r0 := @this: android.service.quickaccesswallet.QuickAccessWalletClientImpl;
+
+        specialinvoke r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: void disconnectInternal(boolean)>(0);
+
+        return;
+    }
+
+    public void lambda$executeApiCall$4$QuickAccessWalletClientImpl(android.service.quickaccesswallet.QuickAccessWalletClientImpl$ApiCaller)
+    {
+        android.service.quickaccesswallet.QuickAccessWalletClientImpl r0;
+        android.service.quickaccesswallet.QuickAccessWalletClientImpl$ApiCaller r1;
+
+        r0 := @this: android.service.quickaccesswallet.QuickAccessWalletClientImpl;
+
+        r1 := @parameter0: android.service.quickaccesswallet.QuickAccessWalletClientImpl$ApiCaller;
+
+        specialinvoke r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: void executeInternal(android.service.quickaccesswallet.QuickAccessWalletClientImpl$ApiCaller)>(r1);
+
+        return;
+    }
+
+    public void lambda$onServiceConnected$5$QuickAccessWalletClientImpl(android.service.quickaccesswallet.IQuickAccessWalletService)
+    {
+        android.service.quickaccesswallet.QuickAccessWalletClientImpl r0;
+        android.service.quickaccesswallet.IQuickAccessWalletService r1;
+
+        r0 := @this: android.service.quickaccesswallet.QuickAccessWalletClientImpl;
+
+        r1 := @parameter0: android.service.quickaccesswallet.IQuickAccessWalletService;
+
+        specialinvoke r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: void onConnectedInternal(android.service.quickaccesswallet.IQuickAccessWalletService)>(r1);
+
+        return;
+    }
+
+    public void lambda$resetServiceConnectionTimeout$2$QuickAccessWalletClientImpl()
+    {
+        android.service.quickaccesswallet.QuickAccessWalletClientImpl r0;
+
+        r0 := @this: android.service.quickaccesswallet.QuickAccessWalletClientImpl;
+
+        specialinvoke r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: void disconnectInternal(boolean)>(1);
+
+        return;
+    }
+
+    public void notifyWalletDismissed()
+    {
+        android.service.quickaccesswallet.QuickAccessWalletClientImpl r0;
+        boolean $z0;
+        android.service.quickaccesswallet.QuickAccessWalletClientImpl$4 $r1;
+
+        r0 := @this: android.service.quickaccesswallet.QuickAccessWalletClientImpl;
+
+        $z0 = virtualinvoke r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: boolean isWalletServiceAvailable()>();
+
+        if $z0 != 0 goto label1;
+
+        return;
+
+     label1:
+        $r1 = new android.service.quickaccesswallet.QuickAccessWalletClientImpl$4;
+
+        specialinvoke $r1.<android.service.quickaccesswallet.QuickAccessWalletClientImpl$4: void <init>(android.service.quickaccesswallet.QuickAccessWalletClientImpl,java.lang.String)>(r0, "onWalletDismissed");
+
+        specialinvoke r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: void executeApiCall(android.service.quickaccesswallet.QuickAccessWalletClientImpl$ApiCaller)>($r1);
+
+        return;
+    }
+
+    public void onBindingDied(android.content.ComponentName)
+    {
+        android.service.quickaccesswallet.QuickAccessWalletClientImpl r0;
+        android.content.ComponentName r1;
+
+        r0 := @this: android.service.quickaccesswallet.QuickAccessWalletClientImpl;
+
+        r1 := @parameter0: android.content.ComponentName;
+
+        virtualinvoke r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: void disconnect()>();
+
+        return;
+    }
+
+    public void onNullBinding(android.content.ComponentName)
+    {
+        android.service.quickaccesswallet.QuickAccessWalletClientImpl r0;
+        android.content.ComponentName r1;
+
+        r0 := @this: android.service.quickaccesswallet.QuickAccessWalletClientImpl;
+
+        r1 := @parameter0: android.content.ComponentName;
+
+        virtualinvoke r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: void disconnect()>();
+
+        return;
+    }
+
+    public void onServiceConnected(android.content.ComponentName, android.os.IBinder)
+    {
+        android.service.quickaccesswallet.QuickAccessWalletClientImpl r0;
+        android.os.IBinder r1;
+        android.service.quickaccesswallet._$$Lambda$QuickAccessWalletClientImpl$diSuWqMhVKkvlN8SDX5FMwqS6XM $r2;
+        android.os.Handler $r3;
+        android.content.ComponentName r4;
+        android.service.quickaccesswallet.IQuickAccessWalletService r5;
+
+        r0 := @this: android.service.quickaccesswallet.QuickAccessWalletClientImpl;
+
+        r4 := @parameter0: android.content.ComponentName;
+
+        r1 := @parameter1: android.os.IBinder;
+
+        r5 = staticinvoke <android.service.quickaccesswallet.IQuickAccessWalletService$Stub: android.service.quickaccesswallet.IQuickAccessWalletService asInterface(android.os.IBinder)>(r1);
+
+        $r3 = r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: android.os.Handler mHandler>;
+
+        $r2 = new android.service.quickaccesswallet._$$Lambda$QuickAccessWalletClientImpl$diSuWqMhVKkvlN8SDX5FMwqS6XM;
+
+        specialinvoke $r2.<android.service.quickaccesswallet._$$Lambda$QuickAccessWalletClientImpl$diSuWqMhVKkvlN8SDX5FMwqS6XM: void <init>(android.service.quickaccesswallet.QuickAccessWalletClientImpl,android.service.quickaccesswallet.IQuickAccessWalletService)>(r0, r5);
+
+        virtualinvoke $r3.<android.os.Handler: boolean post(java.lang.Runnable)>($r2);
+
+        return;
+    }
+
+    public void onServiceDisconnected(android.content.ComponentName)
+    {
+        android.service.quickaccesswallet.QuickAccessWalletClientImpl r0;
+        android.content.ComponentName r1;
+
+        r0 := @this: android.service.quickaccesswallet.QuickAccessWalletClientImpl;
+
+        r1 := @parameter0: android.content.ComponentName;
+
+        return;
+    }
+
+    public void removeWalletServiceEventListener(android.service.quickaccesswallet.QuickAccessWalletClient$WalletServiceEventListener)
+    {
+        android.service.quickaccesswallet.QuickAccessWalletClientImpl r0;
+        android.service.quickaccesswallet.QuickAccessWalletClient$WalletServiceEventListener r1;
+        boolean $z0;
+        android.service.quickaccesswallet.QuickAccessWalletClientImpl$7 $r2;
+
+        r0 := @this: android.service.quickaccesswallet.QuickAccessWalletClientImpl;
+
+        r1 := @parameter0: android.service.quickaccesswallet.QuickAccessWalletClient$WalletServiceEventListener;
+
+        $z0 = virtualinvoke r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: boolean isWalletServiceAvailable()>();
+
+        if $z0 != 0 goto label1;
+
+        return;
+
+     label1:
+        $r2 = new android.service.quickaccesswallet.QuickAccessWalletClientImpl$7;
+
+        specialinvoke $r2.<android.service.quickaccesswallet.QuickAccessWalletClientImpl$7: void <init>(android.service.quickaccesswallet.QuickAccessWalletClientImpl,java.lang.String,android.service.quickaccesswallet.QuickAccessWalletClient$WalletServiceEventListener)>(r0, "unregisterListener", r1);
+
+        specialinvoke r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: void executeApiCall(android.service.quickaccesswallet.QuickAccessWalletClientImpl$ApiCaller)>($r2);
+
+        return;
+    }
+
+    public void selectWalletCard(android.service.quickaccesswallet.SelectWalletCardRequest)
+    {
+        android.service.quickaccesswallet.QuickAccessWalletClientImpl r0;
+        android.service.quickaccesswallet.SelectWalletCardRequest r1;
+        boolean $z0;
+        android.service.quickaccesswallet.QuickAccessWalletClientImpl$3 $r2;
+
+        r0 := @this: android.service.quickaccesswallet.QuickAccessWalletClientImpl;
+
+        r1 := @parameter0: android.service.quickaccesswallet.SelectWalletCardRequest;
+
+        $z0 = virtualinvoke r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: boolean isWalletServiceAvailable()>();
+
+        if $z0 != 0 goto label1;
+
+        return;
+
+     label1:
+        $r2 = new android.service.quickaccesswallet.QuickAccessWalletClientImpl$3;
+
+        specialinvoke $r2.<android.service.quickaccesswallet.QuickAccessWalletClientImpl$3: void <init>(android.service.quickaccesswallet.QuickAccessWalletClientImpl,java.lang.String,android.service.quickaccesswallet.SelectWalletCardRequest)>(r0, "onWalletCardSelected", r1);
+
+        specialinvoke r0.<android.service.quickaccesswallet.QuickAccessWalletClientImpl: void executeApiCall(android.service.quickaccesswallet.QuickAccessWalletClientImpl$ApiCaller)>($r2);
+
+        return;
+    }
+
+    public static void <clinit>()
+    {
+        <android.service.quickaccesswallet.QuickAccessWalletClientImpl: java.lang.String TAG> = "QAWalletSClient";
+
+        <android.service.quickaccesswallet.QuickAccessWalletClientImpl: long SERVICE_CONNECTION_TIMEOUT_MS> = 60000L;
+
+        <android.service.quickaccesswallet.QuickAccessWalletClientImpl: int MSG_TIMEOUT_SERVICE> = 5;
+
+        return;
+    }
+}

@@ -1,0 +1,4386 @@
+class com.android.server.media.MediaRouter2ServiceImpl extends java.lang.Object
+{
+    private static final boolean DEBUG;
+    private static final long DUMMY_REQUEST_ID;
+    private static final java.lang.String TAG;
+    private final android.util.ArrayMap mAllManagerRecords;
+    private final android.util.ArrayMap mAllRouterRecords;
+    private final android.content.Context mContext;
+    private int mCurrentUserId;
+    private final java.lang.Object mLock;
+    final java.util.concurrent.atomic.AtomicInteger mNextRouterOrManagerId;
+    private final android.util.SparseArray mUserRecords;
+
+    static void <clinit>()
+    {
+        boolean $z0;
+
+        <com.android.server.media.MediaRouter2ServiceImpl: java.lang.String TAG> = "MR2ServiceImpl";
+
+        <com.android.server.media.MediaRouter2ServiceImpl: long DUMMY_REQUEST_ID> = -1L;
+
+        $z0 = staticinvoke <android.util.Log: boolean isLoggable(java.lang.String,int)>("MR2ServiceImpl", 3);
+
+        <com.android.server.media.MediaRouter2ServiceImpl: boolean DEBUG> = $z0;
+
+        return;
+    }
+
+    void <init>(android.content.Context)
+    {
+        com.android.server.media.MediaRouter2ServiceImpl r0;
+        android.content.Context r1;
+        java.lang.Object $r2;
+        java.util.concurrent.atomic.AtomicInteger $r3;
+        android.util.SparseArray $r4;
+        android.util.ArrayMap $r5, $r6;
+
+        r0 := @this: com.android.server.media.MediaRouter2ServiceImpl;
+
+        r1 := @parameter0: android.content.Context;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        $r2 = new java.lang.Object;
+
+        specialinvoke $r2.<java.lang.Object: void <init>()>();
+
+        r0.<com.android.server.media.MediaRouter2ServiceImpl: java.lang.Object mLock> = $r2;
+
+        $r3 = new java.util.concurrent.atomic.AtomicInteger;
+
+        specialinvoke $r3.<java.util.concurrent.atomic.AtomicInteger: void <init>(int)>(1);
+
+        r0.<com.android.server.media.MediaRouter2ServiceImpl: java.util.concurrent.atomic.AtomicInteger mNextRouterOrManagerId> = $r3;
+
+        $r4 = new android.util.SparseArray;
+
+        specialinvoke $r4.<android.util.SparseArray: void <init>()>();
+
+        r0.<com.android.server.media.MediaRouter2ServiceImpl: android.util.SparseArray mUserRecords> = $r4;
+
+        $r5 = new android.util.ArrayMap;
+
+        specialinvoke $r5.<android.util.ArrayMap: void <init>()>();
+
+        r0.<com.android.server.media.MediaRouter2ServiceImpl: android.util.ArrayMap mAllRouterRecords> = $r5;
+
+        $r6 = new android.util.ArrayMap;
+
+        specialinvoke $r6.<android.util.ArrayMap: void <init>()>();
+
+        r0.<com.android.server.media.MediaRouter2ServiceImpl: android.util.ArrayMap mAllManagerRecords> = $r6;
+
+        r0.<com.android.server.media.MediaRouter2ServiceImpl: int mCurrentUserId> = -1;
+
+        r0.<com.android.server.media.MediaRouter2ServiceImpl: android.content.Context mContext> = r1;
+
+        return;
+    }
+
+    static android.content.Context access$400(com.android.server.media.MediaRouter2ServiceImpl)
+    {
+        com.android.server.media.MediaRouter2ServiceImpl r0;
+        android.content.Context $r1;
+
+        r0 := @parameter0: com.android.server.media.MediaRouter2ServiceImpl;
+
+        $r1 = r0.<com.android.server.media.MediaRouter2ServiceImpl: android.content.Context mContext>;
+
+        return $r1;
+    }
+
+    static java.lang.Object access$500(com.android.server.media.MediaRouter2ServiceImpl)
+    {
+        com.android.server.media.MediaRouter2ServiceImpl r0;
+        java.lang.Object $r1;
+
+        r0 := @parameter0: com.android.server.media.MediaRouter2ServiceImpl;
+
+        $r1 = r0.<com.android.server.media.MediaRouter2ServiceImpl: java.lang.Object mLock>;
+
+        return $r1;
+    }
+
+    private void deselectRouteWithManagerLocked(int, android.media.IMediaRouter2Manager, java.lang.String, android.media.MediaRoute2Info)
+    {
+        com.android.server.media.MediaRouter2ServiceImpl r0;
+        int i0, $i2;
+        java.lang.String r1;
+        android.media.MediaRoute2Info r2;
+        com.android.server.media.MediaRouter2ServiceImpl$RouterRecord r3;
+        long l1;
+        android.util.ArrayMap $r4;
+        java.lang.Object $r5;
+        com.android.server.media.MediaRouter2ServiceImpl$UserRecord $r6, $r8, $r9;
+        com.android.server.media.MediaRouter2ServiceImpl$UserHandler $r7, $r10, $r12;
+        com.android.server.media.'-$$Lambda$MediaRouter2ServiceImpl$Pp2d3b-RtNPsI6lvIf9eI7IRits' $r11;
+        java.lang.Long $r13;
+        android.os.Message $r14;
+        android.media.IMediaRouter2Manager r15;
+        android.os.IBinder r16;
+        com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord r17;
+        com.android.internal.util.function.QuintConsumer r18;
+
+        r0 := @this: com.android.server.media.MediaRouter2ServiceImpl;
+
+        i0 := @parameter0: int;
+
+        r15 := @parameter1: android.media.IMediaRouter2Manager;
+
+        r1 := @parameter2: java.lang.String;
+
+        r2 := @parameter3: android.media.MediaRoute2Info;
+
+        r16 = interfaceinvoke r15.<android.media.IMediaRouter2Manager: android.os.IBinder asBinder()>();
+
+        $r4 = r0.<com.android.server.media.MediaRouter2ServiceImpl: android.util.ArrayMap mAllManagerRecords>;
+
+        $r5 = virtualinvoke $r4.<android.util.ArrayMap: java.lang.Object get(java.lang.Object)>(r16);
+
+        r17 = (com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord) $r5;
+
+        if r17 != null goto label1;
+
+        return;
+
+     label1:
+        $r6 = r17.<com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord: com.android.server.media.MediaRouter2ServiceImpl$UserRecord mUserRecord>;
+
+        $r7 = $r6.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        r3 = virtualinvoke $r7.<com.android.server.media.MediaRouter2ServiceImpl$UserHandler: com.android.server.media.MediaRouter2ServiceImpl$RouterRecord findRouterWithSessionLocked(java.lang.String)>(r1);
+
+        $i2 = r17.<com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord: int mManagerId>;
+
+        l1 = staticinvoke <com.android.server.media.MediaRouter2ServiceImpl: long toUniqueRequestId(int,int)>($i2, i0);
+
+        $r8 = r17.<com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord: com.android.server.media.MediaRouter2ServiceImpl$UserRecord mUserRecord>;
+
+        $r10 = $r8.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        $r11 = <com.android.server.media._$$Lambda$MediaRouter2ServiceImpl$Pp2d3b_RtNPsI6lvIf9eI7IRits: com.android.server.media.'-$$Lambda$MediaRouter2ServiceImpl$Pp2d3b-RtNPsI6lvIf9eI7IRits' INSTANCE>;
+
+        $r9 = r17.<com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord: com.android.server.media.MediaRouter2ServiceImpl$UserRecord mUserRecord>;
+
+        $r12 = $r9.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        $r13 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>(l1);
+
+        r18 = (com.android.internal.util.function.QuintConsumer) $r11;
+
+        $r14 = staticinvoke <com.android.internal.util.function.pooled.PooledLambda: android.os.Message obtainMessage(com.android.internal.util.function.QuintConsumer,java.lang.Object,java.lang.Object,java.lang.Object,java.lang.Object,java.lang.Object)>(r18, $r12, $r13, r3, r1, r2);
+
+        virtualinvoke $r10.<com.android.server.media.MediaRouter2ServiceImpl$UserHandler: boolean sendMessage(android.os.Message)>($r14);
+
+        return;
+    }
+
+    private void deselectRouteWithRouter2Locked(android.media.IMediaRouter2, java.lang.String, android.media.MediaRoute2Info)
+    {
+        com.android.server.media.MediaRouter2ServiceImpl r0;
+        java.lang.String r1;
+        android.media.MediaRoute2Info r2;
+        android.util.ArrayMap $r3;
+        java.lang.Object $r4;
+        com.android.server.media.MediaRouter2ServiceImpl$UserRecord $r5, $r6;
+        com.android.server.media.MediaRouter2ServiceImpl$UserHandler $r7, $r9;
+        com.android.server.media.'-$$Lambda$MediaRouter2ServiceImpl$GL5nyZiggrPTBLSqfz_hk4ccNqc' $r8;
+        java.lang.Long $r10;
+        android.os.Message $r11;
+        android.media.IMediaRouter2 r12;
+        android.os.IBinder r13;
+        com.android.server.media.MediaRouter2ServiceImpl$RouterRecord r14;
+        com.android.internal.util.function.QuintConsumer r15;
+
+        r0 := @this: com.android.server.media.MediaRouter2ServiceImpl;
+
+        r12 := @parameter0: android.media.IMediaRouter2;
+
+        r1 := @parameter1: java.lang.String;
+
+        r2 := @parameter2: android.media.MediaRoute2Info;
+
+        r13 = interfaceinvoke r12.<android.media.IMediaRouter2: android.os.IBinder asBinder()>();
+
+        $r3 = r0.<com.android.server.media.MediaRouter2ServiceImpl: android.util.ArrayMap mAllRouterRecords>;
+
+        $r4 = virtualinvoke $r3.<android.util.ArrayMap: java.lang.Object get(java.lang.Object)>(r13);
+
+        r14 = (com.android.server.media.MediaRouter2ServiceImpl$RouterRecord) $r4;
+
+        if r14 != null goto label1;
+
+        return;
+
+     label1:
+        $r5 = r14.<com.android.server.media.MediaRouter2ServiceImpl$RouterRecord: com.android.server.media.MediaRouter2ServiceImpl$UserRecord mUserRecord>;
+
+        $r7 = $r5.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        $r8 = <com.android.server.media._$$Lambda$MediaRouter2ServiceImpl$GL5nyZiggrPTBLSqfz_hk4ccNqc: com.android.server.media.'-$$Lambda$MediaRouter2ServiceImpl$GL5nyZiggrPTBLSqfz_hk4ccNqc' INSTANCE>;
+
+        $r6 = r14.<com.android.server.media.MediaRouter2ServiceImpl$RouterRecord: com.android.server.media.MediaRouter2ServiceImpl$UserRecord mUserRecord>;
+
+        $r9 = $r6.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        $r10 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>(-1L);
+
+        r15 = (com.android.internal.util.function.QuintConsumer) $r8;
+
+        $r11 = staticinvoke <com.android.internal.util.function.pooled.PooledLambda: android.os.Message obtainMessage(com.android.internal.util.function.QuintConsumer,java.lang.Object,java.lang.Object,java.lang.Object,java.lang.Object,java.lang.Object)>(r15, $r9, $r10, r14, r1, r2);
+
+        virtualinvoke $r7.<com.android.server.media.MediaRouter2ServiceImpl$UserHandler: boolean sendMessage(android.os.Message)>($r11);
+
+        return;
+    }
+
+    private void disposeUserIfNeededLocked(com.android.server.media.MediaRouter2ServiceImpl$UserRecord)
+    {
+        com.android.server.media.MediaRouter2ServiceImpl r0;
+        com.android.server.media.MediaRouter2ServiceImpl$UserRecord r1;
+        int $i0, $i1, $i2;
+        java.util.ArrayList $r3, $r4;
+        boolean $z0, $z1, $z2;
+        android.util.SparseArray $r5;
+        java.lang.StringBuilder $r6;
+        java.lang.String $r9;
+
+        r0 := @this: com.android.server.media.MediaRouter2ServiceImpl;
+
+        r1 := @parameter0: com.android.server.media.MediaRouter2ServiceImpl$UserRecord;
+
+        $i1 = r1.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: int mUserId>;
+
+        $i0 = r0.<com.android.server.media.MediaRouter2ServiceImpl: int mCurrentUserId>;
+
+        if $i1 == $i0 goto label2;
+
+        $r3 = r1.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: java.util.ArrayList mRouterRecords>;
+
+        $z0 = virtualinvoke $r3.<java.util.ArrayList: boolean isEmpty()>();
+
+        if $z0 == 0 goto label2;
+
+        $r4 = r1.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: java.util.ArrayList mManagerRecords>;
+
+        $z1 = virtualinvoke $r4.<java.util.ArrayList: boolean isEmpty()>();
+
+        if $z1 == 0 goto label2;
+
+        $z2 = <com.android.server.media.MediaRouter2ServiceImpl: boolean DEBUG>;
+
+        if $z2 == 0 goto label1;
+
+        $r6 = new java.lang.StringBuilder;
+
+        specialinvoke $r6.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r1);
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(": Disposed");
+
+        $r9 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("MR2ServiceImpl", $r9);
+
+     label1:
+        $r5 = r0.<com.android.server.media.MediaRouter2ServiceImpl: android.util.SparseArray mUserRecords>;
+
+        $i2 = r1.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: int mUserId>;
+
+        virtualinvoke $r5.<android.util.SparseArray: void remove(int)>($i2);
+
+     label2:
+        return;
+    }
+
+    private java.util.List getActiveSessionsLocked(android.media.IMediaRouter2Manager)
+    {
+        com.android.server.media.MediaRouter2ServiceImpl r0;
+        android.util.ArrayMap $r1;
+        java.lang.Object $r2, $r7;
+        java.util.ArrayList $r3, $r6;
+        com.android.server.media.MediaRouter2ServiceImpl$UserRecord $r4;
+        com.android.server.media.MediaRouter2ServiceImpl$UserHandler $r5;
+        boolean $z0;
+        com.android.server.media.MediaRoute2Provider $r8;
+        java.util.List $r9, $r10;
+        android.media.IMediaRouter2Manager r11;
+        android.os.IBinder r12;
+        com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord r13;
+        java.util.Iterator r15;
+
+        r0 := @this: com.android.server.media.MediaRouter2ServiceImpl;
+
+        r11 := @parameter0: android.media.IMediaRouter2Manager;
+
+        r12 = interfaceinvoke r11.<android.media.IMediaRouter2Manager: android.os.IBinder asBinder()>();
+
+        $r1 = r0.<com.android.server.media.MediaRouter2ServiceImpl: android.util.ArrayMap mAllManagerRecords>;
+
+        $r2 = virtualinvoke $r1.<android.util.ArrayMap: java.lang.Object get(java.lang.Object)>(r12);
+
+        r13 = (com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord) $r2;
+
+        if r13 != null goto label1;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("MR2ServiceImpl", "getActiveSessionLocked: Ignoring unknown manager");
+
+        $r10 = staticinvoke <java.util.Collections: java.util.List emptyList()>();
+
+        return $r10;
+
+     label1:
+        $r3 = new java.util.ArrayList;
+
+        specialinvoke $r3.<java.util.ArrayList: void <init>()>();
+
+        $r4 = r13.<com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord: com.android.server.media.MediaRouter2ServiceImpl$UserRecord mUserRecord>;
+
+        $r5 = $r4.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        $r6 = staticinvoke <com.android.server.media.MediaRouter2ServiceImpl$UserHandler: java.util.ArrayList access$200(com.android.server.media.MediaRouter2ServiceImpl$UserHandler)>($r5);
+
+        r15 = virtualinvoke $r6.<java.util.ArrayList: java.util.Iterator iterator()>();
+
+     label2:
+        $z0 = interfaceinvoke r15.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label3;
+
+        $r7 = interfaceinvoke r15.<java.util.Iterator: java.lang.Object next()>();
+
+        $r8 = (com.android.server.media.MediaRoute2Provider) $r7;
+
+        $r9 = virtualinvoke $r8.<com.android.server.media.MediaRoute2Provider: java.util.List getSessionInfos()>();
+
+        interfaceinvoke $r3.<java.util.List: boolean addAll(java.util.Collection)>($r9);
+
+        goto label2;
+
+     label3:
+        return $r3;
+    }
+
+    private com.android.server.media.MediaRouter2ServiceImpl$UserRecord getOrCreateUserRecordLocked(int)
+    {
+        com.android.server.media.MediaRouter2ServiceImpl r0;
+        int i0, $i1;
+        android.util.SparseArray $r1, $r4;
+        java.lang.Object $r2;
+        com.android.server.media.MediaRouter2ServiceImpl$UserHandler $r5, $r7;
+        com.android.server.media.'-$$Lambda$MediaRouter2ServiceImpl$Pgmx1AV4D4WBNjd6-kTr3nRqEdo' $r6;
+        android.os.Message $r8;
+        com.android.server.media.MediaRouter2ServiceImpl$UserRecord r9, r10, r12;
+        java.util.function.Consumer r13;
+
+        r0 := @this: com.android.server.media.MediaRouter2ServiceImpl;
+
+        i0 := @parameter0: int;
+
+        $r1 = r0.<com.android.server.media.MediaRouter2ServiceImpl: android.util.SparseArray mUserRecords>;
+
+        $r2 = virtualinvoke $r1.<android.util.SparseArray: java.lang.Object get(int)>(i0);
+
+        r9 = (com.android.server.media.MediaRouter2ServiceImpl$UserRecord) $r2;
+
+        r10 = r9;
+
+        if r9 != null goto label1;
+
+        r12 = new com.android.server.media.MediaRouter2ServiceImpl$UserRecord;
+
+        specialinvoke r12.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: void <init>(com.android.server.media.MediaRouter2ServiceImpl,int)>(r0, i0);
+
+        $r4 = r0.<com.android.server.media.MediaRouter2ServiceImpl: android.util.SparseArray mUserRecords>;
+
+        virtualinvoke $r4.<android.util.SparseArray: void put(int,java.lang.Object)>(i0, r12);
+
+        virtualinvoke r12.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: void init()>();
+
+        r10 = r12;
+
+        $i1 = r0.<com.android.server.media.MediaRouter2ServiceImpl: int mCurrentUserId>;
+
+        if i0 != $i1 goto label1;
+
+        $r7 = r12.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        $r6 = <com.android.server.media._$$Lambda$MediaRouter2ServiceImpl$Pgmx1AV4D4WBNjd6_kTr3nRqEdo: com.android.server.media.'-$$Lambda$MediaRouter2ServiceImpl$Pgmx1AV4D4WBNjd6-kTr3nRqEdo' INSTANCE>;
+
+        $r5 = r12.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        r13 = (java.util.function.Consumer) $r6;
+
+        $r8 = staticinvoke <com.android.internal.util.function.pooled.PooledLambda: android.os.Message obtainMessage(java.util.function.Consumer,java.lang.Object)>(r13, $r5);
+
+        virtualinvoke $r7.<com.android.server.media.MediaRouter2ServiceImpl$UserHandler: boolean sendMessage(android.os.Message)>($r8);
+
+        r10 = r12;
+
+     label1:
+        return r10;
+    }
+
+    static void lambda$deselectRouteWithManagerLocked$20(java.lang.Object, long, com.android.server.media.MediaRouter2ServiceImpl$RouterRecord, java.lang.String, android.media.MediaRoute2Info)
+    {
+        java.lang.Object r0;
+        long l0;
+        com.android.server.media.MediaRouter2ServiceImpl$RouterRecord r1;
+        java.lang.String r2;
+        android.media.MediaRoute2Info r3;
+        com.android.server.media.MediaRouter2ServiceImpl$UserHandler $r4;
+
+        r0 := @parameter0: java.lang.Object;
+
+        l0 := @parameter1: long;
+
+        r1 := @parameter2: com.android.server.media.MediaRouter2ServiceImpl$RouterRecord;
+
+        r2 := @parameter3: java.lang.String;
+
+        r3 := @parameter4: android.media.MediaRoute2Info;
+
+        $r4 = (com.android.server.media.MediaRouter2ServiceImpl$UserHandler) r0;
+
+        staticinvoke <com.android.server.media.MediaRouter2ServiceImpl$UserHandler: void access$1000(com.android.server.media.MediaRouter2ServiceImpl$UserHandler,long,com.android.server.media.MediaRouter2ServiceImpl$RouterRecord,java.lang.String,android.media.MediaRoute2Info)>($r4, l0, r1, r2, r3);
+
+        return;
+    }
+
+    static void lambda$deselectRouteWithRouter2Locked$10(java.lang.Object, long, com.android.server.media.MediaRouter2ServiceImpl$RouterRecord, java.lang.String, android.media.MediaRoute2Info)
+    {
+        java.lang.Object r0;
+        long l0;
+        com.android.server.media.MediaRouter2ServiceImpl$RouterRecord r1;
+        java.lang.String r2;
+        android.media.MediaRoute2Info r3;
+        com.android.server.media.MediaRouter2ServiceImpl$UserHandler $r4;
+
+        r0 := @parameter0: java.lang.Object;
+
+        l0 := @parameter1: long;
+
+        r1 := @parameter2: com.android.server.media.MediaRouter2ServiceImpl$RouterRecord;
+
+        r2 := @parameter3: java.lang.String;
+
+        r3 := @parameter4: android.media.MediaRoute2Info;
+
+        $r4 = (com.android.server.media.MediaRouter2ServiceImpl$UserHandler) r0;
+
+        staticinvoke <com.android.server.media.MediaRouter2ServiceImpl$UserHandler: void access$1000(com.android.server.media.MediaRouter2ServiceImpl$UserHandler,long,com.android.server.media.MediaRouter2ServiceImpl$RouterRecord,java.lang.String,android.media.MediaRoute2Info)>($r4, l0, r1, r2, r3);
+
+        return;
+    }
+
+    static void lambda$getOrCreateUserRecordLocked$24(java.lang.Object)
+    {
+        java.lang.Object r0;
+        com.android.server.media.MediaRouter2ServiceImpl$UserHandler $r1;
+
+        r0 := @parameter0: java.lang.Object;
+
+        $r1 = (com.android.server.media.MediaRouter2ServiceImpl$UserHandler) r0;
+
+        staticinvoke <com.android.server.media.MediaRouter2ServiceImpl$UserHandler: void access$600(com.android.server.media.MediaRouter2ServiceImpl$UserHandler)>($r1);
+
+        return;
+    }
+
+    static void lambda$registerManagerLocked$15(java.lang.Object, android.media.IMediaRouter2Manager)
+    {
+        java.lang.Object r0;
+        android.media.IMediaRouter2Manager r1;
+        com.android.server.media.MediaRouter2ServiceImpl$UserHandler $r2;
+
+        r0 := @parameter0: java.lang.Object;
+
+        r1 := @parameter1: android.media.IMediaRouter2Manager;
+
+        $r2 = (com.android.server.media.MediaRouter2ServiceImpl$UserHandler) r0;
+
+        staticinvoke <com.android.server.media.MediaRouter2ServiceImpl$UserHandler: void access$1500(com.android.server.media.MediaRouter2ServiceImpl$UserHandler,android.media.IMediaRouter2Manager)>($r2, r1);
+
+        return;
+    }
+
+    static void lambda$registerManagerLocked$16(java.lang.Object, com.android.server.media.MediaRouter2ServiceImpl$RouterRecord, android.media.IMediaRouter2Manager)
+    {
+        java.lang.Object r0;
+        com.android.server.media.MediaRouter2ServiceImpl$RouterRecord r1;
+        android.media.IMediaRouter2Manager r2;
+        com.android.server.media.MediaRouter2ServiceImpl$UserHandler $r3;
+
+        r0 := @parameter0: java.lang.Object;
+
+        r1 := @parameter1: com.android.server.media.MediaRouter2ServiceImpl$RouterRecord;
+
+        r2 := @parameter2: android.media.IMediaRouter2Manager;
+
+        $r3 = (com.android.server.media.MediaRouter2ServiceImpl$UserHandler) r0;
+
+        staticinvoke <com.android.server.media.MediaRouter2ServiceImpl$UserHandler: void access$1400(com.android.server.media.MediaRouter2ServiceImpl$UserHandler,com.android.server.media.MediaRouter2ServiceImpl$RouterRecord,android.media.IMediaRouter2Manager)>($r3, r1, r2);
+
+        return;
+    }
+
+    static void lambda$registerRouter2Locked$2(java.lang.Object, com.android.server.media.MediaRouter2ServiceImpl$RouterRecord)
+    {
+        java.lang.Object r0;
+        com.android.server.media.MediaRouter2ServiceImpl$RouterRecord r1;
+        com.android.server.media.MediaRouter2ServiceImpl$UserHandler $r2;
+
+        r0 := @parameter0: java.lang.Object;
+
+        r1 := @parameter1: com.android.server.media.MediaRouter2ServiceImpl$RouterRecord;
+
+        $r2 = (com.android.server.media.MediaRouter2ServiceImpl$UserHandler) r0;
+
+        staticinvoke <com.android.server.media.MediaRouter2ServiceImpl$UserHandler: void access$1900(com.android.server.media.MediaRouter2ServiceImpl$UserHandler,com.android.server.media.MediaRouter2ServiceImpl$RouterRecord)>($r2, r1);
+
+        return;
+    }
+
+    static void lambda$releaseSessionWithManagerLocked$23(java.lang.Object, long, com.android.server.media.MediaRouter2ServiceImpl$RouterRecord, java.lang.String)
+    {
+        java.lang.Object r0;
+        long l0;
+        com.android.server.media.MediaRouter2ServiceImpl$RouterRecord r1;
+        java.lang.String r2;
+        com.android.server.media.MediaRouter2ServiceImpl$UserHandler $r3;
+
+        r0 := @parameter0: java.lang.Object;
+
+        l0 := @parameter1: long;
+
+        r1 := @parameter2: com.android.server.media.MediaRouter2ServiceImpl$RouterRecord;
+
+        r2 := @parameter3: java.lang.String;
+
+        $r3 = (com.android.server.media.MediaRouter2ServiceImpl$UserHandler) r0;
+
+        staticinvoke <com.android.server.media.MediaRouter2ServiceImpl$UserHandler: void access$700(com.android.server.media.MediaRouter2ServiceImpl$UserHandler,long,com.android.server.media.MediaRouter2ServiceImpl$RouterRecord,java.lang.String)>($r3, l0, r1, r2);
+
+        return;
+    }
+
+    static void lambda$releaseSessionWithRouter2Locked$14(java.lang.Object, long, com.android.server.media.MediaRouter2ServiceImpl$RouterRecord, java.lang.String)
+    {
+        java.lang.Object r0;
+        long l0;
+        com.android.server.media.MediaRouter2ServiceImpl$RouterRecord r1;
+        java.lang.String r2;
+        com.android.server.media.MediaRouter2ServiceImpl$UserHandler $r3;
+
+        r0 := @parameter0: java.lang.Object;
+
+        l0 := @parameter1: long;
+
+        r1 := @parameter2: com.android.server.media.MediaRouter2ServiceImpl$RouterRecord;
+
+        r2 := @parameter3: java.lang.String;
+
+        $r3 = (com.android.server.media.MediaRouter2ServiceImpl$UserHandler) r0;
+
+        staticinvoke <com.android.server.media.MediaRouter2ServiceImpl$UserHandler: void access$700(com.android.server.media.MediaRouter2ServiceImpl$UserHandler,long,com.android.server.media.MediaRouter2ServiceImpl$RouterRecord,java.lang.String)>($r3, l0, r1, r2);
+
+        return;
+    }
+
+    static void lambda$requestCreateSessionWithManagerLocked$18(java.lang.Object, long, com.android.server.media.MediaRouter2ServiceImpl$RouterRecord, com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord, android.media.RoutingSessionInfo, android.media.MediaRoute2Info)
+    {
+        java.lang.Object r0;
+        long l0;
+        com.android.server.media.MediaRouter2ServiceImpl$RouterRecord r1;
+        com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord r2;
+        android.media.RoutingSessionInfo r3;
+        android.media.MediaRoute2Info r4;
+        com.android.server.media.MediaRouter2ServiceImpl$UserHandler $r5;
+
+        r0 := @parameter0: java.lang.Object;
+
+        l0 := @parameter1: long;
+
+        r1 := @parameter2: com.android.server.media.MediaRouter2ServiceImpl$RouterRecord;
+
+        r2 := @parameter3: com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord;
+
+        r3 := @parameter4: android.media.RoutingSessionInfo;
+
+        r4 := @parameter5: android.media.MediaRoute2Info;
+
+        $r5 = (com.android.server.media.MediaRouter2ServiceImpl$UserHandler) r0;
+
+        staticinvoke <com.android.server.media.MediaRouter2ServiceImpl$UserHandler: void access$1200(com.android.server.media.MediaRouter2ServiceImpl$UserHandler,long,com.android.server.media.MediaRouter2ServiceImpl$RouterRecord,com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord,android.media.RoutingSessionInfo,android.media.MediaRoute2Info)>($r5, l0, r1, r2, r3, r4);
+
+        return;
+    }
+
+    static void lambda$requestCreateSessionWithRouter2Locked$8(java.lang.Object, long, long, com.android.server.media.MediaRouter2ServiceImpl$RouterRecord, android.media.RoutingSessionInfo, android.media.MediaRoute2Info, android.os.Bundle)
+    {
+        java.lang.Object r0;
+        long l0, l1;
+        com.android.server.media.MediaRouter2ServiceImpl$RouterRecord r1;
+        android.media.RoutingSessionInfo r2;
+        android.media.MediaRoute2Info r3;
+        android.os.Bundle r4;
+        com.android.server.media.MediaRouter2ServiceImpl$UserHandler $r5;
+
+        r0 := @parameter0: java.lang.Object;
+
+        l0 := @parameter1: long;
+
+        l1 := @parameter2: long;
+
+        r1 := @parameter3: com.android.server.media.MediaRouter2ServiceImpl$RouterRecord;
+
+        r2 := @parameter4: android.media.RoutingSessionInfo;
+
+        r3 := @parameter5: android.media.MediaRoute2Info;
+
+        r4 := @parameter6: android.os.Bundle;
+
+        $r5 = (com.android.server.media.MediaRouter2ServiceImpl$UserHandler) r0;
+
+        staticinvoke <com.android.server.media.MediaRouter2ServiceImpl$UserHandler: void access$1600(com.android.server.media.MediaRouter2ServiceImpl$UserHandler,long,long,com.android.server.media.MediaRouter2ServiceImpl$RouterRecord,android.media.RoutingSessionInfo,android.media.MediaRoute2Info,android.os.Bundle)>($r5, l0, l1, r1, r2, r3, r4);
+
+        return;
+    }
+
+    static void lambda$selectRouteWithManagerLocked$19(java.lang.Object, long, com.android.server.media.MediaRouter2ServiceImpl$RouterRecord, java.lang.String, android.media.MediaRoute2Info)
+    {
+        java.lang.Object r0;
+        long l0;
+        com.android.server.media.MediaRouter2ServiceImpl$RouterRecord r1;
+        java.lang.String r2;
+        android.media.MediaRoute2Info r3;
+        com.android.server.media.MediaRouter2ServiceImpl$UserHandler $r4;
+
+        r0 := @parameter0: java.lang.Object;
+
+        l0 := @parameter1: long;
+
+        r1 := @parameter2: com.android.server.media.MediaRouter2ServiceImpl$RouterRecord;
+
+        r2 := @parameter3: java.lang.String;
+
+        r3 := @parameter4: android.media.MediaRoute2Info;
+
+        $r4 = (com.android.server.media.MediaRouter2ServiceImpl$UserHandler) r0;
+
+        staticinvoke <com.android.server.media.MediaRouter2ServiceImpl$UserHandler: void access$1100(com.android.server.media.MediaRouter2ServiceImpl$UserHandler,long,com.android.server.media.MediaRouter2ServiceImpl$RouterRecord,java.lang.String,android.media.MediaRoute2Info)>($r4, l0, r1, r2, r3);
+
+        return;
+    }
+
+    static void lambda$selectRouteWithRouter2Locked$9(java.lang.Object, long, com.android.server.media.MediaRouter2ServiceImpl$RouterRecord, java.lang.String, android.media.MediaRoute2Info)
+    {
+        java.lang.Object r0;
+        long l0;
+        com.android.server.media.MediaRouter2ServiceImpl$RouterRecord r1;
+        java.lang.String r2;
+        android.media.MediaRoute2Info r3;
+        com.android.server.media.MediaRouter2ServiceImpl$UserHandler $r4;
+
+        r0 := @parameter0: java.lang.Object;
+
+        l0 := @parameter1: long;
+
+        r1 := @parameter2: com.android.server.media.MediaRouter2ServiceImpl$RouterRecord;
+
+        r2 := @parameter3: java.lang.String;
+
+        r3 := @parameter4: android.media.MediaRoute2Info;
+
+        $r4 = (com.android.server.media.MediaRouter2ServiceImpl$UserHandler) r0;
+
+        staticinvoke <com.android.server.media.MediaRouter2ServiceImpl$UserHandler: void access$1100(com.android.server.media.MediaRouter2ServiceImpl$UserHandler,long,com.android.server.media.MediaRouter2ServiceImpl$RouterRecord,java.lang.String,android.media.MediaRoute2Info)>($r4, l0, r1, r2, r3);
+
+        return;
+    }
+
+    static void lambda$setDiscoveryRequestWithRouter2Locked$5(java.lang.Object, java.lang.String, java.util.List)
+    {
+        java.lang.Object r0;
+        java.lang.String r1;
+        java.util.List r2;
+        com.android.server.media.MediaRouter2ServiceImpl$UserHandler $r3;
+
+        r0 := @parameter0: java.lang.Object;
+
+        r1 := @parameter1: java.lang.String;
+
+        r2 := @parameter2: java.util.List;
+
+        $r3 = (com.android.server.media.MediaRouter2ServiceImpl$UserHandler) r0;
+
+        staticinvoke <com.android.server.media.MediaRouter2ServiceImpl$UserHandler: void access$1800(com.android.server.media.MediaRouter2ServiceImpl$UserHandler,java.lang.String,java.util.List)>($r3, r1, r2);
+
+        return;
+    }
+
+    static void lambda$setDiscoveryRequestWithRouter2Locked$6(java.lang.Object)
+    {
+        java.lang.Object r0;
+        com.android.server.media.MediaRouter2ServiceImpl$UserHandler $r1;
+
+        r0 := @parameter0: java.lang.Object;
+
+        $r1 = (com.android.server.media.MediaRouter2ServiceImpl$UserHandler) r0;
+
+        staticinvoke <com.android.server.media.MediaRouter2ServiceImpl$UserHandler: void access$1700(com.android.server.media.MediaRouter2ServiceImpl$UserHandler)>($r1);
+
+        return;
+    }
+
+    static void lambda$setRouteVolumeWithManagerLocked$17(java.lang.Object, long, android.media.MediaRoute2Info, int)
+    {
+        java.lang.Object r0;
+        long l0;
+        android.media.MediaRoute2Info r1;
+        int i1;
+        com.android.server.media.MediaRouter2ServiceImpl$UserHandler $r2;
+
+        r0 := @parameter0: java.lang.Object;
+
+        l0 := @parameter1: long;
+
+        r1 := @parameter2: android.media.MediaRoute2Info;
+
+        i1 := @parameter3: int;
+
+        $r2 = (com.android.server.media.MediaRouter2ServiceImpl$UserHandler) r0;
+
+        staticinvoke <com.android.server.media.MediaRouter2ServiceImpl$UserHandler: void access$1300(com.android.server.media.MediaRouter2ServiceImpl$UserHandler,long,android.media.MediaRoute2Info,int)>($r2, l0, r1, i1);
+
+        return;
+    }
+
+    static void lambda$setRouteVolumeWithRouter2Locked$7(java.lang.Object, long, android.media.MediaRoute2Info, int)
+    {
+        java.lang.Object r0;
+        long l0;
+        android.media.MediaRoute2Info r1;
+        int i1;
+        com.android.server.media.MediaRouter2ServiceImpl$UserHandler $r2;
+
+        r0 := @parameter0: java.lang.Object;
+
+        l0 := @parameter1: long;
+
+        r1 := @parameter2: android.media.MediaRoute2Info;
+
+        i1 := @parameter3: int;
+
+        $r2 = (com.android.server.media.MediaRouter2ServiceImpl$UserHandler) r0;
+
+        staticinvoke <com.android.server.media.MediaRouter2ServiceImpl$UserHandler: void access$1300(com.android.server.media.MediaRouter2ServiceImpl$UserHandler,long,android.media.MediaRoute2Info,int)>($r2, l0, r1, i1);
+
+        return;
+    }
+
+    static void lambda$setSessionVolumeWithManagerLocked$22(java.lang.Object, long, java.lang.String, int)
+    {
+        java.lang.Object r0;
+        long l0;
+        java.lang.String r1;
+        int i1;
+        com.android.server.media.MediaRouter2ServiceImpl$UserHandler $r2;
+
+        r0 := @parameter0: java.lang.Object;
+
+        l0 := @parameter1: long;
+
+        r1 := @parameter2: java.lang.String;
+
+        i1 := @parameter3: int;
+
+        $r2 = (com.android.server.media.MediaRouter2ServiceImpl$UserHandler) r0;
+
+        staticinvoke <com.android.server.media.MediaRouter2ServiceImpl$UserHandler: void access$800(com.android.server.media.MediaRouter2ServiceImpl$UserHandler,long,java.lang.String,int)>($r2, l0, r1, i1);
+
+        return;
+    }
+
+    static void lambda$setSessionVolumeWithRouter2Locked$13(java.lang.Object, long, java.lang.String, int)
+    {
+        java.lang.Object r0;
+        long l0;
+        java.lang.String r1;
+        int i1;
+        com.android.server.media.MediaRouter2ServiceImpl$UserHandler $r2;
+
+        r0 := @parameter0: java.lang.Object;
+
+        l0 := @parameter1: long;
+
+        r1 := @parameter2: java.lang.String;
+
+        i1 := @parameter3: int;
+
+        $r2 = (com.android.server.media.MediaRouter2ServiceImpl$UserHandler) r0;
+
+        staticinvoke <com.android.server.media.MediaRouter2ServiceImpl$UserHandler: void access$800(com.android.server.media.MediaRouter2ServiceImpl$UserHandler,long,java.lang.String,int)>($r2, l0, r1, i1);
+
+        return;
+    }
+
+    static void lambda$switchUser$0(java.lang.Object)
+    {
+        java.lang.Object r0;
+        com.android.server.media.MediaRouter2ServiceImpl$UserHandler $r1;
+
+        r0 := @parameter0: java.lang.Object;
+
+        $r1 = (com.android.server.media.MediaRouter2ServiceImpl$UserHandler) r0;
+
+        staticinvoke <com.android.server.media.MediaRouter2ServiceImpl$UserHandler: void access$2000(com.android.server.media.MediaRouter2ServiceImpl$UserHandler)>($r1);
+
+        return;
+    }
+
+    static void lambda$switchUser$1(java.lang.Object)
+    {
+        java.lang.Object r0;
+        com.android.server.media.MediaRouter2ServiceImpl$UserHandler $r1;
+
+        r0 := @parameter0: java.lang.Object;
+
+        $r1 = (com.android.server.media.MediaRouter2ServiceImpl$UserHandler) r0;
+
+        staticinvoke <com.android.server.media.MediaRouter2ServiceImpl$UserHandler: void access$600(com.android.server.media.MediaRouter2ServiceImpl$UserHandler)>($r1);
+
+        return;
+    }
+
+    static void lambda$transferToRouteWithManagerLocked$21(java.lang.Object, long, com.android.server.media.MediaRouter2ServiceImpl$RouterRecord, java.lang.String, android.media.MediaRoute2Info)
+    {
+        java.lang.Object r0;
+        long l0;
+        com.android.server.media.MediaRouter2ServiceImpl$RouterRecord r1;
+        java.lang.String r2;
+        android.media.MediaRoute2Info r3;
+        com.android.server.media.MediaRouter2ServiceImpl$UserHandler $r4;
+
+        r0 := @parameter0: java.lang.Object;
+
+        l0 := @parameter1: long;
+
+        r1 := @parameter2: com.android.server.media.MediaRouter2ServiceImpl$RouterRecord;
+
+        r2 := @parameter3: java.lang.String;
+
+        r3 := @parameter4: android.media.MediaRoute2Info;
+
+        $r4 = (com.android.server.media.MediaRouter2ServiceImpl$UserHandler) r0;
+
+        staticinvoke <com.android.server.media.MediaRouter2ServiceImpl$UserHandler: void access$900(com.android.server.media.MediaRouter2ServiceImpl$UserHandler,long,com.android.server.media.MediaRouter2ServiceImpl$RouterRecord,java.lang.String,android.media.MediaRoute2Info)>($r4, l0, r1, r2, r3);
+
+        return;
+    }
+
+    static void lambda$transferToRouteWithRouter2Locked$11(java.lang.Object, com.android.server.media.MediaRouter2ServiceImpl$RouterRecord, int)
+    {
+        java.lang.Object r0;
+        com.android.server.media.MediaRouter2ServiceImpl$RouterRecord r1;
+        int i0;
+        com.android.server.media.MediaRouter2ServiceImpl$UserHandler $r2;
+
+        r0 := @parameter0: java.lang.Object;
+
+        r1 := @parameter1: com.android.server.media.MediaRouter2ServiceImpl$RouterRecord;
+
+        i0 := @parameter2: int;
+
+        $r2 = (com.android.server.media.MediaRouter2ServiceImpl$UserHandler) r0;
+
+        staticinvoke <com.android.server.media.MediaRouter2ServiceImpl$UserHandler: void access$100(com.android.server.media.MediaRouter2ServiceImpl$UserHandler,com.android.server.media.MediaRouter2ServiceImpl$RouterRecord,int)>($r2, r1, i0);
+
+        return;
+    }
+
+    static void lambda$transferToRouteWithRouter2Locked$12(java.lang.Object, long, com.android.server.media.MediaRouter2ServiceImpl$RouterRecord, java.lang.String, android.media.MediaRoute2Info)
+    {
+        java.lang.Object r0;
+        long l0;
+        com.android.server.media.MediaRouter2ServiceImpl$RouterRecord r1;
+        java.lang.String r2;
+        android.media.MediaRoute2Info r3;
+        com.android.server.media.MediaRouter2ServiceImpl$UserHandler $r4;
+
+        r0 := @parameter0: java.lang.Object;
+
+        l0 := @parameter1: long;
+
+        r1 := @parameter2: com.android.server.media.MediaRouter2ServiceImpl$RouterRecord;
+
+        r2 := @parameter3: java.lang.String;
+
+        r3 := @parameter4: android.media.MediaRoute2Info;
+
+        $r4 = (com.android.server.media.MediaRouter2ServiceImpl$UserHandler) r0;
+
+        staticinvoke <com.android.server.media.MediaRouter2ServiceImpl$UserHandler: void access$900(com.android.server.media.MediaRouter2ServiceImpl$UserHandler,long,com.android.server.media.MediaRouter2ServiceImpl$RouterRecord,java.lang.String,android.media.MediaRoute2Info)>($r4, l0, r1, r2, r3);
+
+        return;
+    }
+
+    static void lambda$unregisterRouter2Locked$3(java.lang.Object, java.lang.String, java.util.List)
+    {
+        java.lang.Object r0;
+        java.lang.String r1;
+        java.util.List r2;
+        com.android.server.media.MediaRouter2ServiceImpl$UserHandler $r3;
+
+        r0 := @parameter0: java.lang.Object;
+
+        r1 := @parameter1: java.lang.String;
+
+        r2 := @parameter2: java.util.List;
+
+        $r3 = (com.android.server.media.MediaRouter2ServiceImpl$UserHandler) r0;
+
+        staticinvoke <com.android.server.media.MediaRouter2ServiceImpl$UserHandler: void access$1800(com.android.server.media.MediaRouter2ServiceImpl$UserHandler,java.lang.String,java.util.List)>($r3, r1, r2);
+
+        return;
+    }
+
+    static void lambda$unregisterRouter2Locked$4(java.lang.Object)
+    {
+        java.lang.Object r0;
+        com.android.server.media.MediaRouter2ServiceImpl$UserHandler $r1;
+
+        r0 := @parameter0: java.lang.Object;
+
+        $r1 = (com.android.server.media.MediaRouter2ServiceImpl$UserHandler) r0;
+
+        staticinvoke <com.android.server.media.MediaRouter2ServiceImpl$UserHandler: void access$1700(com.android.server.media.MediaRouter2ServiceImpl$UserHandler)>($r1);
+
+        return;
+    }
+
+    private void registerManagerLocked(android.media.IMediaRouter2Manager, int, int, java.lang.String, int)
+    {
+        com.android.server.media.MediaRouter2ServiceImpl r0;
+        int i0, i1, i2;
+        android.os.IBinder r1;
+        android.util.ArrayMap $r2, $r7;
+        java.lang.Object $r3, $r14;
+        com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord $r4, r36;
+        java.util.ArrayList $r6, $r13;
+        com.android.server.media.MediaRouter2ServiceImpl$UserHandler $r9, $r11, $r17, $r19;
+        com.android.server.media.'-$$Lambda$MediaRouter2ServiceImpl$xzjbJysx3KRHsaEYi_B6XZaYEC4' $r10;
+        android.os.Message $r12, $r20;
+        boolean $z2;
+        com.android.server.media.MediaRouter2ServiceImpl$UserRecord $r15, $r16, r30;
+        com.android.server.media.'-$$Lambda$MediaRouter2ServiceImpl$Eyh_l7NfdhxthjHC_Kro-9iv_RE' $r18;
+        java.lang.String $r24, r28;
+        android.os.RemoteException $r25;
+        android.media.IMediaRouter2Manager r27;
+        java.util.Iterator r32;
+        com.android.server.media.MediaRouter2ServiceImpl$RouterRecord r33;
+        java.lang.StringBuilder r35;
+        java.lang.RuntimeException r37;
+        java.util.function.BiConsumer r38;
+        com.android.internal.util.function.TriConsumer r39;
+
+        r0 := @this: com.android.server.media.MediaRouter2ServiceImpl;
+
+        r27 := @parameter0: android.media.IMediaRouter2Manager;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        r28 := @parameter3: java.lang.String;
+
+        i2 := @parameter4: int;
+
+        r1 = interfaceinvoke r27.<android.media.IMediaRouter2Manager: android.os.IBinder asBinder()>();
+
+        $r2 = r0.<com.android.server.media.MediaRouter2ServiceImpl: android.util.ArrayMap mAllManagerRecords>;
+
+        $r3 = virtualinvoke $r2.<android.util.ArrayMap: java.lang.Object get(java.lang.Object)>(r1);
+
+        $r4 = (com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord) $r3;
+
+        if $r4 == null goto label1;
+
+        r35 = new java.lang.StringBuilder;
+
+        specialinvoke r35.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r35.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("registerManagerLocked: Same manager already exists. packageName=");
+
+        virtualinvoke r35.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r28);
+
+        $r24 = virtualinvoke r35.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("MR2ServiceImpl", $r24);
+
+        return;
+
+     label1:
+        r30 = specialinvoke r0.<com.android.server.media.MediaRouter2ServiceImpl: com.android.server.media.MediaRouter2ServiceImpl$UserRecord getOrCreateUserRecordLocked(int)>(i2);
+
+        r36 = new com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord;
+
+        specialinvoke r36.<com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord: void <init>(com.android.server.media.MediaRouter2ServiceImpl,com.android.server.media.MediaRouter2ServiceImpl$UserRecord,android.media.IMediaRouter2Manager,int,int,java.lang.String)>(r0, r30, r27, i0, i1, r28);
+
+     label2:
+        interfaceinvoke r1.<android.os.IBinder: void linkToDeath(android.os.IBinder$DeathRecipient,int)>(r36, 0);
+
+     label3:
+        $r6 = r30.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: java.util.ArrayList mManagerRecords>;
+
+        virtualinvoke $r6.<java.util.ArrayList: boolean add(java.lang.Object)>(r36);
+
+        $r7 = r0.<com.android.server.media.MediaRouter2ServiceImpl: android.util.ArrayMap mAllManagerRecords>;
+
+        virtualinvoke $r7.<android.util.ArrayMap: java.lang.Object put(java.lang.Object,java.lang.Object)>(r1, r36);
+
+        $r11 = r30.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        $r10 = <com.android.server.media._$$Lambda$MediaRouter2ServiceImpl$xzjbJysx3KRHsaEYi_B6XZaYEC4: com.android.server.media.'-$$Lambda$MediaRouter2ServiceImpl$xzjbJysx3KRHsaEYi_B6XZaYEC4' INSTANCE>;
+
+        $r9 = r30.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        r38 = (java.util.function.BiConsumer) $r10;
+
+        $r12 = staticinvoke <com.android.internal.util.function.pooled.PooledLambda: android.os.Message obtainMessage(java.util.function.BiConsumer,java.lang.Object,java.lang.Object)>(r38, $r9, r27);
+
+        virtualinvoke $r11.<com.android.server.media.MediaRouter2ServiceImpl$UserHandler: boolean sendMessage(android.os.Message)>($r12);
+
+        $r13 = r30.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: java.util.ArrayList mRouterRecords>;
+
+        r32 = virtualinvoke $r13.<java.util.ArrayList: java.util.Iterator iterator()>();
+
+     label4:
+        $z2 = interfaceinvoke r32.<java.util.Iterator: boolean hasNext()>();
+
+        if $z2 == 0 goto label5;
+
+        $r14 = interfaceinvoke r32.<java.util.Iterator: java.lang.Object next()>();
+
+        r33 = (com.android.server.media.MediaRouter2ServiceImpl$RouterRecord) $r14;
+
+        $r15 = r33.<com.android.server.media.MediaRouter2ServiceImpl$RouterRecord: com.android.server.media.MediaRouter2ServiceImpl$UserRecord mUserRecord>;
+
+        $r19 = $r15.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        $r18 = <com.android.server.media._$$Lambda$MediaRouter2ServiceImpl$Eyh_l7NfdhxthjHC_Kro_9iv_RE: com.android.server.media.'-$$Lambda$MediaRouter2ServiceImpl$Eyh_l7NfdhxthjHC_Kro-9iv_RE' INSTANCE>;
+
+        $r16 = r33.<com.android.server.media.MediaRouter2ServiceImpl$RouterRecord: com.android.server.media.MediaRouter2ServiceImpl$UserRecord mUserRecord>;
+
+        $r17 = $r16.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        r39 = (com.android.internal.util.function.TriConsumer) $r18;
+
+        $r20 = staticinvoke <com.android.internal.util.function.pooled.PooledLambda: android.os.Message obtainMessage(com.android.internal.util.function.TriConsumer,java.lang.Object,java.lang.Object,java.lang.Object)>(r39, $r17, r33, r27);
+
+        virtualinvoke $r19.<com.android.server.media.MediaRouter2ServiceImpl$UserHandler: boolean sendMessage(android.os.Message)>($r20);
+
+        goto label4;
+
+     label5:
+        return;
+
+     label6:
+        $r25 := @caughtexception;
+
+        r37 = new java.lang.RuntimeException;
+
+        specialinvoke r37.<java.lang.RuntimeException: void <init>(java.lang.String,java.lang.Throwable)>("Media router manager died prematurely.", $r25);
+
+        throw r37;
+
+        catch android.os.RemoteException from label2 to label3 with label6;
+    }
+
+    private void registerRouter2Locked(android.media.IMediaRouter2, int, int, java.lang.String, int, boolean, boolean)
+    {
+        com.android.server.media.MediaRouter2ServiceImpl r0;
+        int i0, i1, i2;
+        java.lang.String r1, $r17;
+        boolean z0, z1;
+        android.os.IBinder r2;
+        com.android.server.media.MediaRouter2ServiceImpl$UserRecord r3;
+        android.util.ArrayMap $r4, $r8;
+        java.lang.Object $r5;
+        java.util.ArrayList $r7;
+        com.android.server.media.MediaRouter2ServiceImpl$UserHandler $r10, $r12;
+        com.android.server.media.'-$$Lambda$MediaRouter2ServiceImpl$q7qwl6hmD458dcvdywa2y7koWbk' $r11;
+        android.os.Message $r13;
+        android.os.RemoteException $r18;
+        android.media.IMediaRouter2 r20;
+        java.lang.StringBuilder r24;
+        com.android.server.media.MediaRouter2ServiceImpl$RouterRecord r25;
+        java.lang.RuntimeException r26;
+        java.util.function.BiConsumer r27;
+
+        r0 := @this: com.android.server.media.MediaRouter2ServiceImpl;
+
+        r20 := @parameter0: android.media.IMediaRouter2;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        r1 := @parameter3: java.lang.String;
+
+        i2 := @parameter4: int;
+
+        z0 := @parameter5: boolean;
+
+        z1 := @parameter6: boolean;
+
+        r2 = interfaceinvoke r20.<android.media.IMediaRouter2: android.os.IBinder asBinder()>();
+
+        $r4 = r0.<com.android.server.media.MediaRouter2ServiceImpl: android.util.ArrayMap mAllRouterRecords>;
+
+        $r5 = virtualinvoke $r4.<android.util.ArrayMap: java.lang.Object get(java.lang.Object)>(r2);
+
+        if $r5 == null goto label1;
+
+        r24 = new java.lang.StringBuilder;
+
+        specialinvoke r24.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r24.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("registerRouter2Locked: Same router already exists. packageName=");
+
+        virtualinvoke r24.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r17 = virtualinvoke r24.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("MR2ServiceImpl", $r17);
+
+        return;
+
+     label1:
+        r3 = specialinvoke r0.<com.android.server.media.MediaRouter2ServiceImpl: com.android.server.media.MediaRouter2ServiceImpl$UserRecord getOrCreateUserRecordLocked(int)>(i2);
+
+        r25 = new com.android.server.media.MediaRouter2ServiceImpl$RouterRecord;
+
+        specialinvoke r25.<com.android.server.media.MediaRouter2ServiceImpl$RouterRecord: void <init>(com.android.server.media.MediaRouter2ServiceImpl,com.android.server.media.MediaRouter2ServiceImpl$UserRecord,android.media.IMediaRouter2,int,int,java.lang.String,boolean,boolean)>(r0, r3, r20, i0, i1, r1, z0, z1);
+
+     label2:
+        interfaceinvoke r2.<android.os.IBinder: void linkToDeath(android.os.IBinder$DeathRecipient,int)>(r25, 0);
+
+     label3:
+        $r7 = r3.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: java.util.ArrayList mRouterRecords>;
+
+        virtualinvoke $r7.<java.util.ArrayList: boolean add(java.lang.Object)>(r25);
+
+        $r8 = r0.<com.android.server.media.MediaRouter2ServiceImpl: android.util.ArrayMap mAllRouterRecords>;
+
+        virtualinvoke $r8.<android.util.ArrayMap: java.lang.Object put(java.lang.Object,java.lang.Object)>(r2, r25);
+
+        $r12 = r3.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        $r11 = <com.android.server.media._$$Lambda$MediaRouter2ServiceImpl$q7qwl6hmD458dcvdywa2y7koWbk: com.android.server.media.'-$$Lambda$MediaRouter2ServiceImpl$q7qwl6hmD458dcvdywa2y7koWbk' INSTANCE>;
+
+        $r10 = r3.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        r27 = (java.util.function.BiConsumer) $r11;
+
+        $r13 = staticinvoke <com.android.internal.util.function.pooled.PooledLambda: android.os.Message obtainMessage(java.util.function.BiConsumer,java.lang.Object,java.lang.Object)>(r27, $r10, r25);
+
+        virtualinvoke $r12.<com.android.server.media.MediaRouter2ServiceImpl$UserHandler: boolean sendMessage(android.os.Message)>($r13);
+
+        return;
+
+     label4:
+        $r18 := @caughtexception;
+
+        r26 = new java.lang.RuntimeException;
+
+        specialinvoke r26.<java.lang.RuntimeException: void <init>(java.lang.String,java.lang.Throwable)>("MediaRouter2 died prematurely.", $r18);
+
+        throw r26;
+
+        catch android.os.RemoteException from label2 to label3 with label4;
+    }
+
+    private void releaseSessionWithManagerLocked(int, android.media.IMediaRouter2Manager, java.lang.String)
+    {
+        com.android.server.media.MediaRouter2ServiceImpl r0;
+        int i0, $i2;
+        java.lang.String r1;
+        com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord r2;
+        long l1;
+        android.util.ArrayMap $r3;
+        java.lang.Object $r4;
+        com.android.server.media.MediaRouter2ServiceImpl$UserRecord $r5, $r7, $r8;
+        com.android.server.media.MediaRouter2ServiceImpl$UserHandler $r6, $r9, $r11;
+        com.android.server.media.'-$$Lambda$MediaRouter2ServiceImpl$258F40LB2nLzF4Yteewjo3prwVs' $r10;
+        java.lang.Long $r12;
+        android.os.Message $r13;
+        android.media.IMediaRouter2Manager r14;
+        android.os.IBinder r15;
+        com.android.server.media.MediaRouter2ServiceImpl$RouterRecord r16;
+        com.android.internal.util.function.QuadConsumer r17;
+
+        r0 := @this: com.android.server.media.MediaRouter2ServiceImpl;
+
+        i0 := @parameter0: int;
+
+        r14 := @parameter1: android.media.IMediaRouter2Manager;
+
+        r1 := @parameter2: java.lang.String;
+
+        r15 = interfaceinvoke r14.<android.media.IMediaRouter2Manager: android.os.IBinder asBinder()>();
+
+        $r3 = r0.<com.android.server.media.MediaRouter2ServiceImpl: android.util.ArrayMap mAllManagerRecords>;
+
+        $r4 = virtualinvoke $r3.<android.util.ArrayMap: java.lang.Object get(java.lang.Object)>(r15);
+
+        r2 = (com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord) $r4;
+
+        if r2 != null goto label1;
+
+        return;
+
+     label1:
+        $r5 = r2.<com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord: com.android.server.media.MediaRouter2ServiceImpl$UserRecord mUserRecord>;
+
+        $r6 = $r5.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        r16 = virtualinvoke $r6.<com.android.server.media.MediaRouter2ServiceImpl$UserHandler: com.android.server.media.MediaRouter2ServiceImpl$RouterRecord findRouterWithSessionLocked(java.lang.String)>(r1);
+
+        $i2 = r2.<com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord: int mManagerId>;
+
+        l1 = staticinvoke <com.android.server.media.MediaRouter2ServiceImpl: long toUniqueRequestId(int,int)>($i2, i0);
+
+        $r7 = r2.<com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord: com.android.server.media.MediaRouter2ServiceImpl$UserRecord mUserRecord>;
+
+        $r9 = $r7.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        $r10 = <com.android.server.media._$$Lambda$MediaRouter2ServiceImpl$258F40LB2nLzF4Yteewjo3prwVs: com.android.server.media.'-$$Lambda$MediaRouter2ServiceImpl$258F40LB2nLzF4Yteewjo3prwVs' INSTANCE>;
+
+        $r8 = r2.<com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord: com.android.server.media.MediaRouter2ServiceImpl$UserRecord mUserRecord>;
+
+        $r11 = $r8.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        $r12 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>(l1);
+
+        r17 = (com.android.internal.util.function.QuadConsumer) $r10;
+
+        $r13 = staticinvoke <com.android.internal.util.function.pooled.PooledLambda: android.os.Message obtainMessage(com.android.internal.util.function.QuadConsumer,java.lang.Object,java.lang.Object,java.lang.Object,java.lang.Object)>(r17, $r11, $r12, r16, r1);
+
+        virtualinvoke $r9.<com.android.server.media.MediaRouter2ServiceImpl$UserHandler: boolean sendMessage(android.os.Message)>($r13);
+
+        return;
+    }
+
+    private void releaseSessionWithRouter2Locked(android.media.IMediaRouter2, java.lang.String)
+    {
+        com.android.server.media.MediaRouter2ServiceImpl r0;
+        java.lang.String r1;
+        android.util.ArrayMap $r2;
+        java.lang.Object $r3;
+        com.android.server.media.MediaRouter2ServiceImpl$UserRecord $r4, $r5;
+        com.android.server.media.MediaRouter2ServiceImpl$UserHandler $r6, $r8;
+        com.android.server.media.'-$$Lambda$MediaRouter2ServiceImpl$5lTLwVvq0pwuL9HyX5bbMG7YMlM' $r7;
+        java.lang.Long $r9;
+        android.os.Message $r10;
+        android.media.IMediaRouter2 r11;
+        android.os.IBinder r12;
+        com.android.server.media.MediaRouter2ServiceImpl$RouterRecord r13;
+        com.android.internal.util.function.QuadConsumer r14;
+
+        r0 := @this: com.android.server.media.MediaRouter2ServiceImpl;
+
+        r11 := @parameter0: android.media.IMediaRouter2;
+
+        r1 := @parameter1: java.lang.String;
+
+        r12 = interfaceinvoke r11.<android.media.IMediaRouter2: android.os.IBinder asBinder()>();
+
+        $r2 = r0.<com.android.server.media.MediaRouter2ServiceImpl: android.util.ArrayMap mAllRouterRecords>;
+
+        $r3 = virtualinvoke $r2.<android.util.ArrayMap: java.lang.Object get(java.lang.Object)>(r12);
+
+        r13 = (com.android.server.media.MediaRouter2ServiceImpl$RouterRecord) $r3;
+
+        if r13 != null goto label1;
+
+        return;
+
+     label1:
+        $r4 = r13.<com.android.server.media.MediaRouter2ServiceImpl$RouterRecord: com.android.server.media.MediaRouter2ServiceImpl$UserRecord mUserRecord>;
+
+        $r6 = $r4.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        $r7 = <com.android.server.media._$$Lambda$MediaRouter2ServiceImpl$5lTLwVvq0pwuL9HyX5bbMG7YMlM: com.android.server.media.'-$$Lambda$MediaRouter2ServiceImpl$5lTLwVvq0pwuL9HyX5bbMG7YMlM' INSTANCE>;
+
+        $r5 = r13.<com.android.server.media.MediaRouter2ServiceImpl$RouterRecord: com.android.server.media.MediaRouter2ServiceImpl$UserRecord mUserRecord>;
+
+        $r8 = $r5.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        $r9 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>(-1L);
+
+        r14 = (com.android.internal.util.function.QuadConsumer) $r7;
+
+        $r10 = staticinvoke <com.android.internal.util.function.pooled.PooledLambda: android.os.Message obtainMessage(com.android.internal.util.function.QuadConsumer,java.lang.Object,java.lang.Object,java.lang.Object,java.lang.Object)>(r14, $r8, $r9, r13, r1);
+
+        virtualinvoke $r6.<com.android.server.media.MediaRouter2ServiceImpl$UserHandler: boolean sendMessage(android.os.Message)>($r10);
+
+        return;
+    }
+
+    private void requestCreateSessionWithManagerLocked(int, android.media.IMediaRouter2Manager, android.media.RoutingSessionInfo, android.media.MediaRoute2Info)
+    {
+        com.android.server.media.MediaRouter2ServiceImpl r0;
+        int i0, $i2, $i4;
+        android.media.RoutingSessionInfo r1;
+        android.media.MediaRoute2Info r2;
+        long l1, $l3;
+        android.util.ArrayMap $r3;
+        android.os.IBinder $r4;
+        java.lang.Object $r5;
+        com.android.server.media.MediaRouter2ServiceImpl$UserRecord $r6, $r9, $r10, $r16;
+        com.android.server.media.MediaRouter2ServiceImpl$SessionCreationRequest $r7, $r17, r27;
+        com.android.server.media.MediaRouter2ServiceImpl$UserHandler $r11, $r13, $r18;
+        com.android.server.media.'-$$Lambda$MediaRouter2ServiceImpl$IidBe_oSaQ9Rvba8-W5oyHv_AO8' $r12;
+        java.lang.Long $r14;
+        android.os.Message $r15;
+        android.media.IMediaRouter2Manager $r19, $r20, r22;
+        android.os.RemoteException $r21;
+        com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord r23;
+        java.lang.String r24;
+        com.android.server.media.MediaRouter2ServiceImpl$RouterRecord r25;
+        com.android.internal.util.function.HexConsumer r28;
+
+        r0 := @this: com.android.server.media.MediaRouter2ServiceImpl;
+
+        i0 := @parameter0: int;
+
+        r22 := @parameter1: android.media.IMediaRouter2Manager;
+
+        r1 := @parameter2: android.media.RoutingSessionInfo;
+
+        r2 := @parameter3: android.media.MediaRoute2Info;
+
+        $r3 = r0.<com.android.server.media.MediaRouter2ServiceImpl: android.util.ArrayMap mAllManagerRecords>;
+
+        $r4 = interfaceinvoke r22.<android.media.IMediaRouter2Manager: android.os.IBinder asBinder()>();
+
+        $r5 = virtualinvoke $r3.<android.util.ArrayMap: java.lang.Object get(java.lang.Object)>($r4);
+
+        r23 = (com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord) $r5;
+
+        if r23 != null goto label1;
+
+        return;
+
+     label1:
+        r24 = virtualinvoke r1.<android.media.RoutingSessionInfo: java.lang.String getClientPackageName()>();
+
+        $r6 = r23.<com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord: com.android.server.media.MediaRouter2ServiceImpl$UserRecord mUserRecord>;
+
+        r25 = virtualinvoke $r6.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$RouterRecord findRouterRecordLocked(java.lang.String)>(r24);
+
+        if r25 != null goto label6;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("MR2ServiceImpl", "requestCreateSessionWithManagerLocked: Ignoring session creation for unknown router.");
+
+     label2:
+        $r20 = r23.<com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord: android.media.IMediaRouter2Manager mManager>;
+
+        interfaceinvoke $r20.<android.media.IMediaRouter2Manager: void notifyRequestFailed(int,int)>(i0, 0);
+
+     label3:
+        goto label5;
+
+     label4:
+        $r21 := @caughtexception;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("MR2ServiceImpl", "requestCreateSessionWithManagerLocked: Failed to notify failure. Manager probably died.");
+
+     label5:
+        return;
+
+     label6:
+        $i2 = r23.<com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord: int mManagerId>;
+
+        l1 = staticinvoke <com.android.server.media.MediaRouter2ServiceImpl: long toUniqueRequestId(int,int)>($i2, i0);
+
+        $r7 = r23.<com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord: com.android.server.media.MediaRouter2ServiceImpl$SessionCreationRequest mLastSessionCreationRequest>;
+
+        if $r7 == null goto label7;
+
+        $r16 = r23.<com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord: com.android.server.media.MediaRouter2ServiceImpl$UserRecord mUserRecord>;
+
+        $r18 = $r16.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        $r19 = r23.<com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord: android.media.IMediaRouter2Manager mManager>;
+
+        $r17 = r23.<com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord: com.android.server.media.MediaRouter2ServiceImpl$SessionCreationRequest mLastSessionCreationRequest>;
+
+        $l3 = $r17.<com.android.server.media.MediaRouter2ServiceImpl$SessionCreationRequest: long mManagerRequestId>;
+
+        $i4 = staticinvoke <com.android.server.media.MediaRouter2ServiceImpl: int toOriginalRequestId(long)>($l3);
+
+        staticinvoke <com.android.server.media.MediaRouter2ServiceImpl$UserHandler: void access$300(com.android.server.media.MediaRouter2ServiceImpl$UserHandler,android.media.IMediaRouter2Manager,int,int)>($r18, $r19, $i4, 0);
+
+        r23.<com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord: com.android.server.media.MediaRouter2ServiceImpl$SessionCreationRequest mLastSessionCreationRequest> = null;
+
+     label7:
+        r27 = new com.android.server.media.MediaRouter2ServiceImpl$SessionCreationRequest;
+
+        specialinvoke r27.<com.android.server.media.MediaRouter2ServiceImpl$SessionCreationRequest: void <init>(com.android.server.media.MediaRouter2ServiceImpl$RouterRecord,long,long,android.media.RoutingSessionInfo,android.media.MediaRoute2Info)>(r25, 0L, l1, r1, r2);
+
+        r23.<com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord: com.android.server.media.MediaRouter2ServiceImpl$SessionCreationRequest mLastSessionCreationRequest> = r27;
+
+        $r9 = r25.<com.android.server.media.MediaRouter2ServiceImpl$RouterRecord: com.android.server.media.MediaRouter2ServiceImpl$UserRecord mUserRecord>;
+
+        $r11 = $r9.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        $r12 = <com.android.server.media._$$Lambda$MediaRouter2ServiceImpl$IidBe_oSaQ9Rvba8_W5oyHv_AO8: com.android.server.media.'-$$Lambda$MediaRouter2ServiceImpl$IidBe_oSaQ9Rvba8-W5oyHv_AO8' INSTANCE>;
+
+        $r10 = r25.<com.android.server.media.MediaRouter2ServiceImpl$RouterRecord: com.android.server.media.MediaRouter2ServiceImpl$UserRecord mUserRecord>;
+
+        $r13 = $r10.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        $r14 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>(l1);
+
+        r28 = (com.android.internal.util.function.HexConsumer) $r12;
+
+        $r15 = staticinvoke <com.android.internal.util.function.pooled.PooledLambda: android.os.Message obtainMessage(com.android.internal.util.function.HexConsumer,java.lang.Object,java.lang.Object,java.lang.Object,java.lang.Object,java.lang.Object,java.lang.Object)>(r28, $r13, $r14, r25, r23, r1, r2);
+
+        virtualinvoke $r11.<com.android.server.media.MediaRouter2ServiceImpl$UserHandler: boolean sendMessage(android.os.Message)>($r15);
+
+        return;
+
+        catch android.os.RemoteException from label2 to label3 with label4;
+    }
+
+    private void requestCreateSessionWithRouter2Locked(int, long, android.media.IMediaRouter2, android.media.RoutingSessionInfo, android.media.MediaRoute2Info, android.os.Bundle)
+    {
+        com.android.server.media.MediaRouter2ServiceImpl r0;
+        int i0, $i5, $i9;
+        long l1, l2;
+        android.media.RoutingSessionInfo r1, $r26;
+        android.media.MediaRoute2Info r2, $r12, $r30, $r34, r40;
+        android.os.Bundle r3;
+        com.android.server.media.MediaRouter2ServiceImpl$RouterRecord r4;
+        com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord r5;
+        android.util.ArrayMap $r6;
+        java.lang.Object $r7;
+        byte $b3;
+        boolean $z0, $z2, $z3, $z4, $z5, $z6, $z7, $z8;
+        java.lang.String $r8, $r13, $r17, $r27, $r28, $r31, $r32;
+        com.android.server.media.MediaRouter2ServiceImpl$UserRecord $r9, $r18, $r20, $r22, $r36, $r41, $r44, $r47;
+        com.android.server.media.MediaRouter2ServiceImpl$UserHandler $r10, $r19, $r21, $r23, $r37, $r42, $r45, $r48;
+        com.android.server.media.SystemMediaRoute2Provider $r11;
+        com.android.server.media.MediaRouter2ServiceImpl$SessionCreationRequest $r24, $r25, $r29, $r33, $r35;
+        android.media.IMediaRouter2 r38;
+        android.os.IBinder r39;
+        com.android.server.media.'-$$Lambda$MediaRouter2ServiceImpl$003OcZZ5xaDYOonhMlHDzkahjlE' $r46;
+        java.lang.Long $r49, $r50;
+        android.os.Message $r51;
+        java.lang.StringBuilder r52;
+        com.android.internal.util.function.HeptConsumer r53;
+
+        r0 := @this: com.android.server.media.MediaRouter2ServiceImpl;
+
+        i0 := @parameter0: int;
+
+        l1 := @parameter1: long;
+
+        r38 := @parameter2: android.media.IMediaRouter2;
+
+        r1 := @parameter3: android.media.RoutingSessionInfo;
+
+        r2 := @parameter4: android.media.MediaRoute2Info;
+
+        r3 := @parameter5: android.os.Bundle;
+
+        r39 = interfaceinvoke r38.<android.media.IMediaRouter2: android.os.IBinder asBinder()>();
+
+        $r6 = r0.<com.android.server.media.MediaRouter2ServiceImpl: android.util.ArrayMap mAllRouterRecords>;
+
+        $r7 = virtualinvoke $r6.<android.util.ArrayMap: java.lang.Object get(java.lang.Object)>(r39);
+
+        r4 = (com.android.server.media.MediaRouter2ServiceImpl$RouterRecord) $r7;
+
+        if r4 != null goto label01;
+
+        return;
+
+     label01:
+        $b3 = l1 cmp 0L;
+
+        if $b3 == 0 goto label08;
+
+        $r20 = r4.<com.android.server.media.MediaRouter2ServiceImpl$RouterRecord: com.android.server.media.MediaRouter2ServiceImpl$UserRecord mUserRecord>;
+
+        $r21 = $r20.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        $i5 = staticinvoke <com.android.server.media.MediaRouter2ServiceImpl: int toRequesterId(long)>(l1);
+
+        r5 = virtualinvoke $r21.<com.android.server.media.MediaRouter2ServiceImpl$UserHandler: com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord findManagerWithId(int)>($i5);
+
+        if r5 == null goto label07;
+
+        $r24 = r5.<com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord: com.android.server.media.MediaRouter2ServiceImpl$SessionCreationRequest mLastSessionCreationRequest>;
+
+        if $r24 != null goto label02;
+
+        goto label07;
+
+     label02:
+        $r25 = r5.<com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord: com.android.server.media.MediaRouter2ServiceImpl$SessionCreationRequest mLastSessionCreationRequest>;
+
+        $r26 = $r25.<com.android.server.media.MediaRouter2ServiceImpl$SessionCreationRequest: android.media.RoutingSessionInfo mOldSession>;
+
+        $r27 = virtualinvoke $r26.<android.media.RoutingSessionInfo: java.lang.String getId()>();
+
+        $r28 = virtualinvoke r1.<android.media.RoutingSessionInfo: java.lang.String getId()>();
+
+        $z4 = staticinvoke <android.text.TextUtils: boolean equals(java.lang.CharSequence,java.lang.CharSequence)>($r27, $r28);
+
+        if $z4 != 0 goto label03;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("MR2ServiceImpl", "requestCreateSessionWithRouter2Locked: Ignoring unmatched routing session.");
+
+        $r36 = r4.<com.android.server.media.MediaRouter2ServiceImpl$RouterRecord: com.android.server.media.MediaRouter2ServiceImpl$UserRecord mUserRecord>;
+
+        $r37 = $r36.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        staticinvoke <com.android.server.media.MediaRouter2ServiceImpl$UserHandler: void access$100(com.android.server.media.MediaRouter2ServiceImpl$UserHandler,com.android.server.media.MediaRouter2ServiceImpl$RouterRecord,int)>($r37, r4, i0);
+
+        return;
+
+     label03:
+        $r29 = r5.<com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord: com.android.server.media.MediaRouter2ServiceImpl$SessionCreationRequest mLastSessionCreationRequest>;
+
+        $r30 = $r29.<com.android.server.media.MediaRouter2ServiceImpl$SessionCreationRequest: android.media.MediaRoute2Info mRoute>;
+
+        $r31 = virtualinvoke $r30.<android.media.MediaRoute2Info: java.lang.String getId()>();
+
+        $r32 = virtualinvoke r2.<android.media.MediaRoute2Info: java.lang.String getId()>();
+
+        $z5 = staticinvoke <android.text.TextUtils: boolean equals(java.lang.CharSequence,java.lang.CharSequence)>($r31, $r32);
+
+        if $z5 != 0 goto label05;
+
+        $z6 = r4.<com.android.server.media.MediaRouter2ServiceImpl$RouterRecord: boolean mHasModifyAudioRoutingPermission>;
+
+        if $z6 != 0 goto label04;
+
+        $r33 = r5.<com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord: com.android.server.media.MediaRouter2ServiceImpl$SessionCreationRequest mLastSessionCreationRequest>;
+
+        $r34 = $r33.<com.android.server.media.MediaRouter2ServiceImpl$SessionCreationRequest: android.media.MediaRoute2Info mRoute>;
+
+        $z7 = virtualinvoke $r34.<android.media.MediaRoute2Info: boolean isSystemRoute()>();
+
+        if $z7 == 0 goto label04;
+
+        $z8 = virtualinvoke r2.<android.media.MediaRoute2Info: boolean isSystemRoute()>();
+
+        if $z8 == 0 goto label04;
+
+        $r35 = r5.<com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord: com.android.server.media.MediaRouter2ServiceImpl$SessionCreationRequest mLastSessionCreationRequest>;
+
+        r40 = $r35.<com.android.server.media.MediaRouter2ServiceImpl$SessionCreationRequest: android.media.MediaRoute2Info mRoute>;
+
+        goto label06;
+
+     label04:
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("MR2ServiceImpl", "requestCreateSessionWithRouter2Locked: Ignoring unmatched route.");
+
+        $r41 = r4.<com.android.server.media.MediaRouter2ServiceImpl$RouterRecord: com.android.server.media.MediaRouter2ServiceImpl$UserRecord mUserRecord>;
+
+        $r42 = $r41.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        staticinvoke <com.android.server.media.MediaRouter2ServiceImpl$UserHandler: void access$100(com.android.server.media.MediaRouter2ServiceImpl$UserHandler,com.android.server.media.MediaRouter2ServiceImpl$RouterRecord,int)>($r42, r4, i0);
+
+        return;
+
+     label05:
+        r40 = r2;
+
+     label06:
+        r5.<com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord: com.android.server.media.MediaRouter2ServiceImpl$SessionCreationRequest mLastSessionCreationRequest> = null;
+
+        goto label11;
+
+     label07:
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("MR2ServiceImpl", "requestCreateSessionWithRouter2Locked: Ignoring unknown request.");
+
+        $r22 = r4.<com.android.server.media.MediaRouter2ServiceImpl$RouterRecord: com.android.server.media.MediaRouter2ServiceImpl$UserRecord mUserRecord>;
+
+        $r23 = $r22.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        staticinvoke <com.android.server.media.MediaRouter2ServiceImpl$UserHandler: void access$100(com.android.server.media.MediaRouter2ServiceImpl$UserHandler,com.android.server.media.MediaRouter2ServiceImpl$RouterRecord,int)>($r23, r4, i0);
+
+        return;
+
+     label08:
+        $z0 = virtualinvoke r2.<android.media.MediaRoute2Info: boolean isSystemRoute()>();
+
+        if $z0 == 0 goto label10;
+
+        $z2 = r4.<com.android.server.media.MediaRouter2ServiceImpl$RouterRecord: boolean mHasModifyAudioRoutingPermission>;
+
+        if $z2 != 0 goto label10;
+
+        $r8 = virtualinvoke r2.<android.media.MediaRoute2Info: java.lang.String getId()>();
+
+        $r9 = r4.<com.android.server.media.MediaRouter2ServiceImpl$RouterRecord: com.android.server.media.MediaRouter2ServiceImpl$UserRecord mUserRecord>;
+
+        $r10 = $r9.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        $r11 = staticinvoke <com.android.server.media.MediaRouter2ServiceImpl$UserHandler: com.android.server.media.SystemMediaRoute2Provider access$000(com.android.server.media.MediaRouter2ServiceImpl$UserHandler)>($r10);
+
+        $r12 = virtualinvoke $r11.<com.android.server.media.SystemMediaRoute2Provider: android.media.MediaRoute2Info getDefaultRoute()>();
+
+        $r13 = virtualinvoke $r12.<android.media.MediaRoute2Info: java.lang.String getId()>();
+
+        $z3 = staticinvoke <android.text.TextUtils: boolean equals(java.lang.CharSequence,java.lang.CharSequence)>($r8, $r13);
+
+        if $z3 != 0 goto label09;
+
+        r52 = new java.lang.StringBuilder;
+
+        specialinvoke r52.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r52.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("MODIFY_AUDIO_ROUTING permission is required to transfer to");
+
+        virtualinvoke r52.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r2);
+
+        $r17 = virtualinvoke r52.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("MR2ServiceImpl", $r17);
+
+        $r18 = r4.<com.android.server.media.MediaRouter2ServiceImpl$RouterRecord: com.android.server.media.MediaRouter2ServiceImpl$UserRecord mUserRecord>;
+
+        $r19 = $r18.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        staticinvoke <com.android.server.media.MediaRouter2ServiceImpl$UserHandler: void access$100(com.android.server.media.MediaRouter2ServiceImpl$UserHandler,com.android.server.media.MediaRouter2ServiceImpl$RouterRecord,int)>($r19, r4, i0);
+
+        return;
+
+     label09:
+        goto label10;
+
+     label10:
+        r40 = r2;
+
+     label11:
+        $i9 = r4.<com.android.server.media.MediaRouter2ServiceImpl$RouterRecord: int mRouterId>;
+
+        l2 = staticinvoke <com.android.server.media.MediaRouter2ServiceImpl: long toUniqueRequestId(int,int)>($i9, i0);
+
+        $r44 = r4.<com.android.server.media.MediaRouter2ServiceImpl$RouterRecord: com.android.server.media.MediaRouter2ServiceImpl$UserRecord mUserRecord>;
+
+        $r45 = $r44.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        $r46 = <com.android.server.media._$$Lambda$MediaRouter2ServiceImpl$003OcZZ5xaDYOonhMlHDzkahjlE: com.android.server.media.'-$$Lambda$MediaRouter2ServiceImpl$003OcZZ5xaDYOonhMlHDzkahjlE' INSTANCE>;
+
+        $r47 = r4.<com.android.server.media.MediaRouter2ServiceImpl$RouterRecord: com.android.server.media.MediaRouter2ServiceImpl$UserRecord mUserRecord>;
+
+        $r48 = $r47.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        $r49 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>(l2);
+
+        $r50 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>(l1);
+
+        r53 = (com.android.internal.util.function.HeptConsumer) $r46;
+
+        $r51 = staticinvoke <com.android.internal.util.function.pooled.PooledLambda: android.os.Message obtainMessage(com.android.internal.util.function.HeptConsumer,java.lang.Object,java.lang.Object,java.lang.Object,java.lang.Object,java.lang.Object,java.lang.Object,java.lang.Object)>(r53, $r48, $r49, $r50, r4, r1, r40, r3);
+
+        virtualinvoke $r45.<com.android.server.media.MediaRouter2ServiceImpl$UserHandler: boolean sendMessage(android.os.Message)>($r51);
+
+        return;
+    }
+
+    private void selectRouteWithManagerLocked(int, android.media.IMediaRouter2Manager, java.lang.String, android.media.MediaRoute2Info)
+    {
+        com.android.server.media.MediaRouter2ServiceImpl r0;
+        int i0, $i2;
+        java.lang.String r1;
+        android.media.MediaRoute2Info r2;
+        com.android.server.media.MediaRouter2ServiceImpl$RouterRecord r3;
+        long l1;
+        android.util.ArrayMap $r4;
+        java.lang.Object $r5;
+        com.android.server.media.MediaRouter2ServiceImpl$UserRecord $r6, $r8, $r9;
+        com.android.server.media.MediaRouter2ServiceImpl$UserHandler $r7, $r10, $r12;
+        com.android.server.media.'-$$Lambda$MediaRouter2ServiceImpl$iZFWzZtlhKLgbRjK00BWRlF-64k' $r11;
+        java.lang.Long $r13;
+        android.os.Message $r14;
+        android.media.IMediaRouter2Manager r15;
+        android.os.IBinder r16;
+        com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord r17;
+        com.android.internal.util.function.QuintConsumer r18;
+
+        r0 := @this: com.android.server.media.MediaRouter2ServiceImpl;
+
+        i0 := @parameter0: int;
+
+        r15 := @parameter1: android.media.IMediaRouter2Manager;
+
+        r1 := @parameter2: java.lang.String;
+
+        r2 := @parameter3: android.media.MediaRoute2Info;
+
+        r16 = interfaceinvoke r15.<android.media.IMediaRouter2Manager: android.os.IBinder asBinder()>();
+
+        $r4 = r0.<com.android.server.media.MediaRouter2ServiceImpl: android.util.ArrayMap mAllManagerRecords>;
+
+        $r5 = virtualinvoke $r4.<android.util.ArrayMap: java.lang.Object get(java.lang.Object)>(r16);
+
+        r17 = (com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord) $r5;
+
+        if r17 != null goto label1;
+
+        return;
+
+     label1:
+        $r6 = r17.<com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord: com.android.server.media.MediaRouter2ServiceImpl$UserRecord mUserRecord>;
+
+        $r7 = $r6.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        r3 = virtualinvoke $r7.<com.android.server.media.MediaRouter2ServiceImpl$UserHandler: com.android.server.media.MediaRouter2ServiceImpl$RouterRecord findRouterWithSessionLocked(java.lang.String)>(r1);
+
+        $i2 = r17.<com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord: int mManagerId>;
+
+        l1 = staticinvoke <com.android.server.media.MediaRouter2ServiceImpl: long toUniqueRequestId(int,int)>($i2, i0);
+
+        $r8 = r17.<com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord: com.android.server.media.MediaRouter2ServiceImpl$UserRecord mUserRecord>;
+
+        $r10 = $r8.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        $r11 = <com.android.server.media._$$Lambda$MediaRouter2ServiceImpl$iZFWzZtlhKLgbRjK00BWRlF_64k: com.android.server.media.'-$$Lambda$MediaRouter2ServiceImpl$iZFWzZtlhKLgbRjK00BWRlF-64k' INSTANCE>;
+
+        $r9 = r17.<com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord: com.android.server.media.MediaRouter2ServiceImpl$UserRecord mUserRecord>;
+
+        $r12 = $r9.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        $r13 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>(l1);
+
+        r18 = (com.android.internal.util.function.QuintConsumer) $r11;
+
+        $r14 = staticinvoke <com.android.internal.util.function.pooled.PooledLambda: android.os.Message obtainMessage(com.android.internal.util.function.QuintConsumer,java.lang.Object,java.lang.Object,java.lang.Object,java.lang.Object,java.lang.Object)>(r18, $r12, $r13, r3, r1, r2);
+
+        virtualinvoke $r10.<com.android.server.media.MediaRouter2ServiceImpl$UserHandler: boolean sendMessage(android.os.Message)>($r14);
+
+        return;
+    }
+
+    private void selectRouteWithRouter2Locked(android.media.IMediaRouter2, java.lang.String, android.media.MediaRoute2Info)
+    {
+        com.android.server.media.MediaRouter2ServiceImpl r0;
+        java.lang.String r1;
+        android.media.MediaRoute2Info r2;
+        android.util.ArrayMap $r3;
+        java.lang.Object $r4;
+        com.android.server.media.MediaRouter2ServiceImpl$UserRecord $r5, $r6;
+        com.android.server.media.MediaRouter2ServiceImpl$UserHandler $r7, $r9;
+        com.android.server.media.'-$$Lambda$MediaRouter2ServiceImpl$p451jnGjPANc96LeGhpJtysV0Uc' $r8;
+        java.lang.Long $r10;
+        android.os.Message $r11;
+        android.media.IMediaRouter2 r12;
+        android.os.IBinder r13;
+        com.android.server.media.MediaRouter2ServiceImpl$RouterRecord r14;
+        com.android.internal.util.function.QuintConsumer r15;
+
+        r0 := @this: com.android.server.media.MediaRouter2ServiceImpl;
+
+        r12 := @parameter0: android.media.IMediaRouter2;
+
+        r1 := @parameter1: java.lang.String;
+
+        r2 := @parameter2: android.media.MediaRoute2Info;
+
+        r13 = interfaceinvoke r12.<android.media.IMediaRouter2: android.os.IBinder asBinder()>();
+
+        $r3 = r0.<com.android.server.media.MediaRouter2ServiceImpl: android.util.ArrayMap mAllRouterRecords>;
+
+        $r4 = virtualinvoke $r3.<android.util.ArrayMap: java.lang.Object get(java.lang.Object)>(r13);
+
+        r14 = (com.android.server.media.MediaRouter2ServiceImpl$RouterRecord) $r4;
+
+        if r14 != null goto label1;
+
+        return;
+
+     label1:
+        $r5 = r14.<com.android.server.media.MediaRouter2ServiceImpl$RouterRecord: com.android.server.media.MediaRouter2ServiceImpl$UserRecord mUserRecord>;
+
+        $r7 = $r5.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        $r8 = <com.android.server.media._$$Lambda$MediaRouter2ServiceImpl$p451jnGjPANc96LeGhpJtysV0Uc: com.android.server.media.'-$$Lambda$MediaRouter2ServiceImpl$p451jnGjPANc96LeGhpJtysV0Uc' INSTANCE>;
+
+        $r6 = r14.<com.android.server.media.MediaRouter2ServiceImpl$RouterRecord: com.android.server.media.MediaRouter2ServiceImpl$UserRecord mUserRecord>;
+
+        $r9 = $r6.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        $r10 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>(-1L);
+
+        r15 = (com.android.internal.util.function.QuintConsumer) $r8;
+
+        $r11 = staticinvoke <com.android.internal.util.function.pooled.PooledLambda: android.os.Message obtainMessage(com.android.internal.util.function.QuintConsumer,java.lang.Object,java.lang.Object,java.lang.Object,java.lang.Object,java.lang.Object)>(r15, $r9, $r10, r14, r1, r2);
+
+        virtualinvoke $r7.<com.android.server.media.MediaRouter2ServiceImpl$UserHandler: boolean sendMessage(android.os.Message)>($r11);
+
+        return;
+    }
+
+    private void setDiscoveryRequestWithRouter2Locked(com.android.server.media.MediaRouter2ServiceImpl$RouterRecord, android.media.RouteDiscoveryPreference)
+    {
+        com.android.server.media.MediaRouter2ServiceImpl r0;
+        com.android.server.media.MediaRouter2ServiceImpl$RouterRecord r1;
+        android.media.RouteDiscoveryPreference r2, $r3, $r6;
+        boolean $z0;
+        com.android.server.media.MediaRouter2ServiceImpl$UserRecord $r4, $r5, $r13, $r14;
+        com.android.server.media.MediaRouter2ServiceImpl$UserHandler $r7, $r9, $r15, $r17;
+        com.android.server.media.'-$$Lambda$MediaRouter2ServiceImpl$d6bYOwwZwToUI8a8GHVmlm1kg-c' $r8;
+        java.lang.String $r10;
+        java.util.List $r11;
+        android.os.Message $r12, $r18;
+        com.android.server.media.'-$$Lambda$MediaRouter2ServiceImpl$HxuyDpZFoEiAyb_LAlroiGtZTKk' $r16;
+        com.android.internal.util.function.TriConsumer r19;
+        java.util.function.Consumer r20;
+
+        r0 := @this: com.android.server.media.MediaRouter2ServiceImpl;
+
+        r1 := @parameter0: com.android.server.media.MediaRouter2ServiceImpl$RouterRecord;
+
+        r2 := @parameter1: android.media.RouteDiscoveryPreference;
+
+        $r3 = r1.<com.android.server.media.MediaRouter2ServiceImpl$RouterRecord: android.media.RouteDiscoveryPreference mDiscoveryPreference>;
+
+        $z0 = virtualinvoke $r3.<android.media.RouteDiscoveryPreference: boolean equals(java.lang.Object)>(r2);
+
+        if $z0 == 0 goto label1;
+
+        return;
+
+     label1:
+        r1.<com.android.server.media.MediaRouter2ServiceImpl$RouterRecord: android.media.RouteDiscoveryPreference mDiscoveryPreference> = r2;
+
+        $r4 = r1.<com.android.server.media.MediaRouter2ServiceImpl$RouterRecord: com.android.server.media.MediaRouter2ServiceImpl$UserRecord mUserRecord>;
+
+        $r7 = $r4.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        $r8 = <com.android.server.media._$$Lambda$MediaRouter2ServiceImpl$d6bYOwwZwToUI8a8GHVmlm1kg_c: com.android.server.media.'-$$Lambda$MediaRouter2ServiceImpl$d6bYOwwZwToUI8a8GHVmlm1kg-c' INSTANCE>;
+
+        $r5 = r1.<com.android.server.media.MediaRouter2ServiceImpl$RouterRecord: com.android.server.media.MediaRouter2ServiceImpl$UserRecord mUserRecord>;
+
+        $r9 = $r5.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        $r10 = r1.<com.android.server.media.MediaRouter2ServiceImpl$RouterRecord: java.lang.String mPackageName>;
+
+        $r6 = r1.<com.android.server.media.MediaRouter2ServiceImpl$RouterRecord: android.media.RouteDiscoveryPreference mDiscoveryPreference>;
+
+        $r11 = virtualinvoke $r6.<android.media.RouteDiscoveryPreference: java.util.List getPreferredFeatures()>();
+
+        r19 = (com.android.internal.util.function.TriConsumer) $r8;
+
+        $r12 = staticinvoke <com.android.internal.util.function.pooled.PooledLambda: android.os.Message obtainMessage(com.android.internal.util.function.TriConsumer,java.lang.Object,java.lang.Object,java.lang.Object)>(r19, $r9, $r10, $r11);
+
+        virtualinvoke $r7.<com.android.server.media.MediaRouter2ServiceImpl$UserHandler: boolean sendMessage(android.os.Message)>($r12);
+
+        $r13 = r1.<com.android.server.media.MediaRouter2ServiceImpl$RouterRecord: com.android.server.media.MediaRouter2ServiceImpl$UserRecord mUserRecord>;
+
+        $r17 = $r13.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        $r16 = <com.android.server.media._$$Lambda$MediaRouter2ServiceImpl$HxuyDpZFoEiAyb_LAlroiGtZTKk: com.android.server.media.'-$$Lambda$MediaRouter2ServiceImpl$HxuyDpZFoEiAyb_LAlroiGtZTKk' INSTANCE>;
+
+        $r14 = r1.<com.android.server.media.MediaRouter2ServiceImpl$RouterRecord: com.android.server.media.MediaRouter2ServiceImpl$UserRecord mUserRecord>;
+
+        $r15 = $r14.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        r20 = (java.util.function.Consumer) $r16;
+
+        $r18 = staticinvoke <com.android.internal.util.function.pooled.PooledLambda: android.os.Message obtainMessage(java.util.function.Consumer,java.lang.Object)>(r20, $r15);
+
+        virtualinvoke $r17.<com.android.server.media.MediaRouter2ServiceImpl$UserHandler: boolean sendMessage(android.os.Message)>($r18);
+
+        return;
+    }
+
+    private void setRouteVolumeWithManagerLocked(int, android.media.IMediaRouter2Manager, android.media.MediaRoute2Info, int)
+    {
+        com.android.server.media.MediaRouter2ServiceImpl r0;
+        int i0, i1, $i3;
+        android.media.MediaRoute2Info r1;
+        long l2;
+        android.util.ArrayMap $r2;
+        java.lang.Object $r3;
+        com.android.server.media.MediaRouter2ServiceImpl$UserRecord $r4, $r5;
+        com.android.server.media.MediaRouter2ServiceImpl$UserHandler $r6, $r8;
+        com.android.server.media.'-$$Lambda$MediaRouter2ServiceImpl$nvFlbQuyFtBS9R4AKhgP_fuBTQk' $r7;
+        java.lang.Long $r9;
+        java.lang.Integer $r10;
+        android.os.Message $r11;
+        android.media.IMediaRouter2Manager r12;
+        android.os.IBinder r13;
+        com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord r14;
+        com.android.internal.util.function.QuadConsumer r15;
+
+        r0 := @this: com.android.server.media.MediaRouter2ServiceImpl;
+
+        i0 := @parameter0: int;
+
+        r12 := @parameter1: android.media.IMediaRouter2Manager;
+
+        r1 := @parameter2: android.media.MediaRoute2Info;
+
+        i1 := @parameter3: int;
+
+        r13 = interfaceinvoke r12.<android.media.IMediaRouter2Manager: android.os.IBinder asBinder()>();
+
+        $r2 = r0.<com.android.server.media.MediaRouter2ServiceImpl: android.util.ArrayMap mAllManagerRecords>;
+
+        $r3 = virtualinvoke $r2.<android.util.ArrayMap: java.lang.Object get(java.lang.Object)>(r13);
+
+        r14 = (com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord) $r3;
+
+        if r14 != null goto label1;
+
+        return;
+
+     label1:
+        $i3 = r14.<com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord: int mManagerId>;
+
+        l2 = staticinvoke <com.android.server.media.MediaRouter2ServiceImpl: long toUniqueRequestId(int,int)>($i3, i0);
+
+        $r4 = r14.<com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord: com.android.server.media.MediaRouter2ServiceImpl$UserRecord mUserRecord>;
+
+        $r6 = $r4.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        $r7 = <com.android.server.media._$$Lambda$MediaRouter2ServiceImpl$nvFlbQuyFtBS9R4AKhgP_fuBTQk: com.android.server.media.'-$$Lambda$MediaRouter2ServiceImpl$nvFlbQuyFtBS9R4AKhgP_fuBTQk' INSTANCE>;
+
+        $r5 = r14.<com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord: com.android.server.media.MediaRouter2ServiceImpl$UserRecord mUserRecord>;
+
+        $r8 = $r5.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        $r9 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>(l2);
+
+        $r10 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i1);
+
+        r15 = (com.android.internal.util.function.QuadConsumer) $r7;
+
+        $r11 = staticinvoke <com.android.internal.util.function.pooled.PooledLambda: android.os.Message obtainMessage(com.android.internal.util.function.QuadConsumer,java.lang.Object,java.lang.Object,java.lang.Object,java.lang.Object)>(r15, $r8, $r9, r1, $r10);
+
+        virtualinvoke $r6.<com.android.server.media.MediaRouter2ServiceImpl$UserHandler: boolean sendMessage(android.os.Message)>($r11);
+
+        return;
+    }
+
+    private void setRouteVolumeWithRouter2Locked(android.media.IMediaRouter2, android.media.MediaRoute2Info, int)
+    {
+        com.android.server.media.MediaRouter2ServiceImpl r0;
+        android.media.MediaRoute2Info r1;
+        int i0;
+        android.util.ArrayMap $r2;
+        java.lang.Object $r3;
+        com.android.server.media.MediaRouter2ServiceImpl$UserRecord $r4, $r5;
+        com.android.server.media.MediaRouter2ServiceImpl$UserHandler $r6, $r8;
+        com.android.server.media.'-$$Lambda$MediaRouter2ServiceImpl$RoUmpoNOZj9E9QEH8PRtZNKKUz0' $r7;
+        java.lang.Long $r9;
+        java.lang.Integer $r10;
+        android.os.Message $r11;
+        android.media.IMediaRouter2 r12;
+        android.os.IBinder r13;
+        com.android.server.media.MediaRouter2ServiceImpl$RouterRecord r14;
+        com.android.internal.util.function.QuadConsumer r15;
+
+        r0 := @this: com.android.server.media.MediaRouter2ServiceImpl;
+
+        r12 := @parameter0: android.media.IMediaRouter2;
+
+        r1 := @parameter1: android.media.MediaRoute2Info;
+
+        i0 := @parameter2: int;
+
+        r13 = interfaceinvoke r12.<android.media.IMediaRouter2: android.os.IBinder asBinder()>();
+
+        $r2 = r0.<com.android.server.media.MediaRouter2ServiceImpl: android.util.ArrayMap mAllRouterRecords>;
+
+        $r3 = virtualinvoke $r2.<android.util.ArrayMap: java.lang.Object get(java.lang.Object)>(r13);
+
+        r14 = (com.android.server.media.MediaRouter2ServiceImpl$RouterRecord) $r3;
+
+        if r14 == null goto label1;
+
+        $r4 = r14.<com.android.server.media.MediaRouter2ServiceImpl$RouterRecord: com.android.server.media.MediaRouter2ServiceImpl$UserRecord mUserRecord>;
+
+        $r6 = $r4.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        $r7 = <com.android.server.media._$$Lambda$MediaRouter2ServiceImpl$RoUmpoNOZj9E9QEH8PRtZNKKUz0: com.android.server.media.'-$$Lambda$MediaRouter2ServiceImpl$RoUmpoNOZj9E9QEH8PRtZNKKUz0' INSTANCE>;
+
+        $r5 = r14.<com.android.server.media.MediaRouter2ServiceImpl$RouterRecord: com.android.server.media.MediaRouter2ServiceImpl$UserRecord mUserRecord>;
+
+        $r8 = $r5.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        $r9 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>(-1L);
+
+        $r10 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i0);
+
+        r15 = (com.android.internal.util.function.QuadConsumer) $r7;
+
+        $r11 = staticinvoke <com.android.internal.util.function.pooled.PooledLambda: android.os.Message obtainMessage(com.android.internal.util.function.QuadConsumer,java.lang.Object,java.lang.Object,java.lang.Object,java.lang.Object)>(r15, $r8, $r9, r1, $r10);
+
+        virtualinvoke $r6.<com.android.server.media.MediaRouter2ServiceImpl$UserHandler: boolean sendMessage(android.os.Message)>($r11);
+
+     label1:
+        return;
+    }
+
+    private void setSessionVolumeWithManagerLocked(int, android.media.IMediaRouter2Manager, java.lang.String, int)
+    {
+        com.android.server.media.MediaRouter2ServiceImpl r0;
+        int i0, i1, $i3;
+        java.lang.String r1;
+        long l2;
+        android.util.ArrayMap $r2;
+        java.lang.Object $r3;
+        com.android.server.media.MediaRouter2ServiceImpl$UserRecord $r4, $r5;
+        com.android.server.media.MediaRouter2ServiceImpl$UserHandler $r6, $r8;
+        com.android.server.media.'-$$Lambda$MediaRouter2ServiceImpl$7d0x85YpjWhhNYL1un1btWAq9xE' $r7;
+        java.lang.Long $r9;
+        java.lang.Integer $r10;
+        android.os.Message $r11;
+        android.media.IMediaRouter2Manager r12;
+        android.os.IBinder r13;
+        com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord r14;
+        com.android.internal.util.function.QuadConsumer r15;
+
+        r0 := @this: com.android.server.media.MediaRouter2ServiceImpl;
+
+        i0 := @parameter0: int;
+
+        r12 := @parameter1: android.media.IMediaRouter2Manager;
+
+        r1 := @parameter2: java.lang.String;
+
+        i1 := @parameter3: int;
+
+        r13 = interfaceinvoke r12.<android.media.IMediaRouter2Manager: android.os.IBinder asBinder()>();
+
+        $r2 = r0.<com.android.server.media.MediaRouter2ServiceImpl: android.util.ArrayMap mAllManagerRecords>;
+
+        $r3 = virtualinvoke $r2.<android.util.ArrayMap: java.lang.Object get(java.lang.Object)>(r13);
+
+        r14 = (com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord) $r3;
+
+        if r14 != null goto label1;
+
+        return;
+
+     label1:
+        $i3 = r14.<com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord: int mManagerId>;
+
+        l2 = staticinvoke <com.android.server.media.MediaRouter2ServiceImpl: long toUniqueRequestId(int,int)>($i3, i0);
+
+        $r4 = r14.<com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord: com.android.server.media.MediaRouter2ServiceImpl$UserRecord mUserRecord>;
+
+        $r6 = $r4.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        $r7 = <com.android.server.media._$$Lambda$MediaRouter2ServiceImpl$7d0x85YpjWhhNYL1un1btWAq9xE: com.android.server.media.'-$$Lambda$MediaRouter2ServiceImpl$7d0x85YpjWhhNYL1un1btWAq9xE' INSTANCE>;
+
+        $r5 = r14.<com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord: com.android.server.media.MediaRouter2ServiceImpl$UserRecord mUserRecord>;
+
+        $r8 = $r5.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        $r9 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>(l2);
+
+        $r10 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i1);
+
+        r15 = (com.android.internal.util.function.QuadConsumer) $r7;
+
+        $r11 = staticinvoke <com.android.internal.util.function.pooled.PooledLambda: android.os.Message obtainMessage(com.android.internal.util.function.QuadConsumer,java.lang.Object,java.lang.Object,java.lang.Object,java.lang.Object)>(r15, $r8, $r9, r1, $r10);
+
+        virtualinvoke $r6.<com.android.server.media.MediaRouter2ServiceImpl$UserHandler: boolean sendMessage(android.os.Message)>($r11);
+
+        return;
+    }
+
+    private void setSessionVolumeWithRouter2Locked(android.media.IMediaRouter2, java.lang.String, int)
+    {
+        com.android.server.media.MediaRouter2ServiceImpl r0;
+        java.lang.String r1;
+        int i0;
+        android.util.ArrayMap $r2;
+        java.lang.Object $r3;
+        com.android.server.media.MediaRouter2ServiceImpl$UserRecord $r4, $r5;
+        com.android.server.media.MediaRouter2ServiceImpl$UserHandler $r6, $r8;
+        com.android.server.media.'-$$Lambda$MediaRouter2ServiceImpl$6CAVhzKx1ZDqa56kX6pmPCwaiAg' $r7;
+        java.lang.Long $r9;
+        java.lang.Integer $r10;
+        android.os.Message $r11;
+        android.media.IMediaRouter2 r12;
+        android.os.IBinder r13;
+        com.android.server.media.MediaRouter2ServiceImpl$RouterRecord r14;
+        com.android.internal.util.function.QuadConsumer r15;
+
+        r0 := @this: com.android.server.media.MediaRouter2ServiceImpl;
+
+        r12 := @parameter0: android.media.IMediaRouter2;
+
+        r1 := @parameter1: java.lang.String;
+
+        i0 := @parameter2: int;
+
+        r13 = interfaceinvoke r12.<android.media.IMediaRouter2: android.os.IBinder asBinder()>();
+
+        $r2 = r0.<com.android.server.media.MediaRouter2ServiceImpl: android.util.ArrayMap mAllRouterRecords>;
+
+        $r3 = virtualinvoke $r2.<android.util.ArrayMap: java.lang.Object get(java.lang.Object)>(r13);
+
+        r14 = (com.android.server.media.MediaRouter2ServiceImpl$RouterRecord) $r3;
+
+        if r14 != null goto label1;
+
+        return;
+
+     label1:
+        $r4 = r14.<com.android.server.media.MediaRouter2ServiceImpl$RouterRecord: com.android.server.media.MediaRouter2ServiceImpl$UserRecord mUserRecord>;
+
+        $r6 = $r4.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        $r7 = <com.android.server.media._$$Lambda$MediaRouter2ServiceImpl$6CAVhzKx1ZDqa56kX6pmPCwaiAg: com.android.server.media.'-$$Lambda$MediaRouter2ServiceImpl$6CAVhzKx1ZDqa56kX6pmPCwaiAg' INSTANCE>;
+
+        $r5 = r14.<com.android.server.media.MediaRouter2ServiceImpl$RouterRecord: com.android.server.media.MediaRouter2ServiceImpl$UserRecord mUserRecord>;
+
+        $r8 = $r5.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        $r9 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>(-1L);
+
+        $r10 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i0);
+
+        r15 = (com.android.internal.util.function.QuadConsumer) $r7;
+
+        $r11 = staticinvoke <com.android.internal.util.function.pooled.PooledLambda: android.os.Message obtainMessage(com.android.internal.util.function.QuadConsumer,java.lang.Object,java.lang.Object,java.lang.Object,java.lang.Object)>(r15, $r8, $r9, r1, $r10);
+
+        virtualinvoke $r6.<com.android.server.media.MediaRouter2ServiceImpl$UserHandler: boolean sendMessage(android.os.Message)>($r11);
+
+        return;
+    }
+
+    static int toOriginalRequestId(long)
+    {
+        long l0;
+        int $i1;
+
+        l0 := @parameter0: long;
+
+        $i1 = (int) l0;
+
+        return $i1;
+    }
+
+    static int toRequesterId(long)
+    {
+        long l0, $l1;
+        int $i2;
+
+        l0 := @parameter0: long;
+
+        $l1 = l0 >> 32;
+
+        $i2 = (int) $l1;
+
+        return $i2;
+    }
+
+    static long toUniqueRequestId(int, int)
+    {
+        int i0, i1;
+        long $l2, $l3, $l4, $l5;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        $l2 = (long) i0;
+
+        $l4 = $l2 << 32;
+
+        $l3 = (long) i1;
+
+        $l5 = $l4 | $l3;
+
+        return $l5;
+    }
+
+    private void transferToRouteWithManagerLocked(int, android.media.IMediaRouter2Manager, java.lang.String, android.media.MediaRoute2Info)
+    {
+        com.android.server.media.MediaRouter2ServiceImpl r0;
+        int i0, $i2;
+        java.lang.String r1;
+        android.media.MediaRoute2Info r2;
+        com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord r3;
+        long l1;
+        android.util.ArrayMap $r4;
+        java.lang.Object $r5;
+        com.android.server.media.MediaRouter2ServiceImpl$UserRecord $r6, $r8, $r9;
+        com.android.server.media.MediaRouter2ServiceImpl$UserHandler $r7, $r10, $r12;
+        com.android.server.media.'-$$Lambda$MediaRouter2ServiceImpl$qIBJeDgF933DAIK4s7u4wfp0W5o' $r11;
+        java.lang.Long $r13;
+        android.os.Message $r14;
+        android.media.IMediaRouter2Manager r15;
+        android.os.IBinder r16;
+        com.android.server.media.MediaRouter2ServiceImpl$RouterRecord r17;
+        com.android.internal.util.function.QuintConsumer r18;
+
+        r0 := @this: com.android.server.media.MediaRouter2ServiceImpl;
+
+        i0 := @parameter0: int;
+
+        r15 := @parameter1: android.media.IMediaRouter2Manager;
+
+        r1 := @parameter2: java.lang.String;
+
+        r2 := @parameter3: android.media.MediaRoute2Info;
+
+        r16 = interfaceinvoke r15.<android.media.IMediaRouter2Manager: android.os.IBinder asBinder()>();
+
+        $r4 = r0.<com.android.server.media.MediaRouter2ServiceImpl: android.util.ArrayMap mAllManagerRecords>;
+
+        $r5 = virtualinvoke $r4.<android.util.ArrayMap: java.lang.Object get(java.lang.Object)>(r16);
+
+        r3 = (com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord) $r5;
+
+        if r3 != null goto label1;
+
+        return;
+
+     label1:
+        $r6 = r3.<com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord: com.android.server.media.MediaRouter2ServiceImpl$UserRecord mUserRecord>;
+
+        $r7 = $r6.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        r17 = virtualinvoke $r7.<com.android.server.media.MediaRouter2ServiceImpl$UserHandler: com.android.server.media.MediaRouter2ServiceImpl$RouterRecord findRouterWithSessionLocked(java.lang.String)>(r1);
+
+        $i2 = r3.<com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord: int mManagerId>;
+
+        l1 = staticinvoke <com.android.server.media.MediaRouter2ServiceImpl: long toUniqueRequestId(int,int)>($i2, i0);
+
+        $r8 = r3.<com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord: com.android.server.media.MediaRouter2ServiceImpl$UserRecord mUserRecord>;
+
+        $r10 = $r8.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        $r11 = <com.android.server.media._$$Lambda$MediaRouter2ServiceImpl$qIBJeDgF933DAIK4s7u4wfp0W5o: com.android.server.media.'-$$Lambda$MediaRouter2ServiceImpl$qIBJeDgF933DAIK4s7u4wfp0W5o' INSTANCE>;
+
+        $r9 = r3.<com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord: com.android.server.media.MediaRouter2ServiceImpl$UserRecord mUserRecord>;
+
+        $r12 = $r9.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        $r13 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>(l1);
+
+        r18 = (com.android.internal.util.function.QuintConsumer) $r11;
+
+        $r14 = staticinvoke <com.android.internal.util.function.pooled.PooledLambda: android.os.Message obtainMessage(com.android.internal.util.function.QuintConsumer,java.lang.Object,java.lang.Object,java.lang.Object,java.lang.Object,java.lang.Object)>(r18, $r12, $r13, r17, r1, r2);
+
+        virtualinvoke $r10.<com.android.server.media.MediaRouter2ServiceImpl$UserHandler: boolean sendMessage(android.os.Message)>($r14);
+
+        return;
+    }
+
+    private void transferToRouteWithRouter2Locked(android.media.IMediaRouter2, java.lang.String, android.media.MediaRoute2Info)
+    {
+        com.android.server.media.MediaRouter2ServiceImpl r0;
+        java.lang.String r1, $r10, r20;
+        android.media.MediaRoute2Info r2, $r9;
+        com.android.server.media.MediaRouter2ServiceImpl$RouterRecord r3;
+        android.util.ArrayMap $r4;
+        java.lang.Object $r5;
+        com.android.server.media.MediaRouter2ServiceImpl$UserRecord $r6, $r11, $r12, $r21, $r24;
+        com.android.server.media.MediaRouter2ServiceImpl$UserHandler $r7, $r13, $r15, $r22, $r25;
+        com.android.server.media.SystemMediaRoute2Provider $r8;
+        boolean $z0, $z2, $z3;
+        com.android.server.media.'-$$Lambda$MediaRouter2ServiceImpl$v0lzUd5lG9IZWCroURxmaEQL7Qs' $r14;
+        int $i0;
+        java.lang.Integer $r16;
+        android.os.Message $r17, $r27;
+        android.media.IMediaRouter2 r18;
+        android.os.IBinder r19;
+        com.android.server.media.'-$$Lambda$MediaRouter2ServiceImpl$vWfp72h-jRgh3rS3RGjq0pOS5-k' $r23;
+        java.lang.Long $r26;
+        com.android.internal.util.function.TriConsumer r28;
+        com.android.internal.util.function.QuintConsumer r29;
+
+        r0 := @this: com.android.server.media.MediaRouter2ServiceImpl;
+
+        r18 := @parameter0: android.media.IMediaRouter2;
+
+        r1 := @parameter1: java.lang.String;
+
+        r2 := @parameter2: android.media.MediaRoute2Info;
+
+        r19 = interfaceinvoke r18.<android.media.IMediaRouter2: android.os.IBinder asBinder()>();
+
+        $r4 = r0.<com.android.server.media.MediaRouter2ServiceImpl: android.util.ArrayMap mAllRouterRecords>;
+
+        $r5 = virtualinvoke $r4.<android.util.ArrayMap: java.lang.Object get(java.lang.Object)>(r19);
+
+        r3 = (com.android.server.media.MediaRouter2ServiceImpl$RouterRecord) $r5;
+
+        if r3 != null goto label1;
+
+        return;
+
+     label1:
+        $r6 = r3.<com.android.server.media.MediaRouter2ServiceImpl$RouterRecord: com.android.server.media.MediaRouter2ServiceImpl$UserRecord mUserRecord>;
+
+        $r7 = $r6.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        $r8 = staticinvoke <com.android.server.media.MediaRouter2ServiceImpl$UserHandler: com.android.server.media.SystemMediaRoute2Provider access$000(com.android.server.media.MediaRouter2ServiceImpl$UserHandler)>($r7);
+
+        $r9 = virtualinvoke $r8.<com.android.server.media.SystemMediaRoute2Provider: android.media.MediaRoute2Info getDefaultRoute()>();
+
+        r20 = virtualinvoke $r9.<android.media.MediaRoute2Info: java.lang.String getId()>();
+
+        $z0 = virtualinvoke r2.<android.media.MediaRoute2Info: boolean isSystemRoute()>();
+
+        if $z0 == 0 goto label2;
+
+        $z2 = r3.<com.android.server.media.MediaRouter2ServiceImpl$RouterRecord: boolean mHasModifyAudioRoutingPermission>;
+
+        if $z2 != 0 goto label2;
+
+        $r10 = virtualinvoke r2.<android.media.MediaRoute2Info: java.lang.String getId()>();
+
+        $z3 = staticinvoke <android.text.TextUtils: boolean equals(java.lang.CharSequence,java.lang.CharSequence)>($r10, r20);
+
+        if $z3 != 0 goto label2;
+
+        $r11 = r3.<com.android.server.media.MediaRouter2ServiceImpl$RouterRecord: com.android.server.media.MediaRouter2ServiceImpl$UserRecord mUserRecord>;
+
+        $r13 = $r11.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        $r14 = <com.android.server.media._$$Lambda$MediaRouter2ServiceImpl$v0lzUd5lG9IZWCroURxmaEQL7Qs: com.android.server.media.'-$$Lambda$MediaRouter2ServiceImpl$v0lzUd5lG9IZWCroURxmaEQL7Qs' INSTANCE>;
+
+        $r12 = r3.<com.android.server.media.MediaRouter2ServiceImpl$RouterRecord: com.android.server.media.MediaRouter2ServiceImpl$UserRecord mUserRecord>;
+
+        $r15 = $r12.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        $i0 = staticinvoke <com.android.server.media.MediaRouter2ServiceImpl: int toOriginalRequestId(long)>(-1L);
+
+        $r16 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i0);
+
+        r28 = (com.android.internal.util.function.TriConsumer) $r14;
+
+        $r17 = staticinvoke <com.android.internal.util.function.pooled.PooledLambda: android.os.Message obtainMessage(com.android.internal.util.function.TriConsumer,java.lang.Object,java.lang.Object,java.lang.Object)>(r28, $r15, r3, $r16);
+
+        virtualinvoke $r13.<com.android.server.media.MediaRouter2ServiceImpl$UserHandler: boolean sendMessage(android.os.Message)>($r17);
+
+        goto label3;
+
+     label2:
+        $r21 = r3.<com.android.server.media.MediaRouter2ServiceImpl$RouterRecord: com.android.server.media.MediaRouter2ServiceImpl$UserRecord mUserRecord>;
+
+        $r22 = $r21.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        $r23 = <com.android.server.media._$$Lambda$MediaRouter2ServiceImpl$vWfp72h_jRgh3rS3RGjq0pOS5_k: com.android.server.media.'-$$Lambda$MediaRouter2ServiceImpl$vWfp72h-jRgh3rS3RGjq0pOS5-k' INSTANCE>;
+
+        $r24 = r3.<com.android.server.media.MediaRouter2ServiceImpl$RouterRecord: com.android.server.media.MediaRouter2ServiceImpl$UserRecord mUserRecord>;
+
+        $r25 = $r24.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        $r26 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>(-1L);
+
+        r29 = (com.android.internal.util.function.QuintConsumer) $r23;
+
+        $r27 = staticinvoke <com.android.internal.util.function.pooled.PooledLambda: android.os.Message obtainMessage(com.android.internal.util.function.QuintConsumer,java.lang.Object,java.lang.Object,java.lang.Object,java.lang.Object,java.lang.Object)>(r29, $r25, $r26, r3, r1, r2);
+
+        virtualinvoke $r22.<com.android.server.media.MediaRouter2ServiceImpl$UserHandler: boolean sendMessage(android.os.Message)>($r27);
+
+     label3:
+        return;
+    }
+
+    private void unregisterManagerLocked(android.media.IMediaRouter2Manager, boolean)
+    {
+        com.android.server.media.MediaRouter2ServiceImpl r0;
+        boolean z0;
+        com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord r1;
+        android.util.ArrayMap $r2;
+        android.os.IBinder $r3;
+        java.lang.Object $r4;
+        java.util.ArrayList $r5;
+        android.media.IMediaRouter2Manager r6;
+        com.android.server.media.MediaRouter2ServiceImpl$UserRecord r7;
+
+        r0 := @this: com.android.server.media.MediaRouter2ServiceImpl;
+
+        r6 := @parameter0: android.media.IMediaRouter2Manager;
+
+        z0 := @parameter1: boolean;
+
+        $r2 = r0.<com.android.server.media.MediaRouter2ServiceImpl: android.util.ArrayMap mAllManagerRecords>;
+
+        $r3 = interfaceinvoke r6.<android.media.IMediaRouter2Manager: android.os.IBinder asBinder()>();
+
+        $r4 = virtualinvoke $r2.<android.util.ArrayMap: java.lang.Object remove(java.lang.Object)>($r3);
+
+        r1 = (com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord) $r4;
+
+        if r1 != null goto label1;
+
+        return;
+
+     label1:
+        r7 = r1.<com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord: com.android.server.media.MediaRouter2ServiceImpl$UserRecord mUserRecord>;
+
+        $r5 = r7.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: java.util.ArrayList mManagerRecords>;
+
+        virtualinvoke $r5.<java.util.ArrayList: boolean remove(java.lang.Object)>(r1);
+
+        virtualinvoke r1.<com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord: void dispose()>();
+
+        specialinvoke r0.<com.android.server.media.MediaRouter2ServiceImpl: void disposeUserIfNeededLocked(com.android.server.media.MediaRouter2ServiceImpl$UserRecord)>(r7);
+
+        return;
+    }
+
+    private void unregisterRouter2Locked(android.media.IMediaRouter2, boolean)
+    {
+        com.android.server.media.MediaRouter2ServiceImpl r0;
+        boolean z0;
+        com.android.server.media.MediaRouter2ServiceImpl$UserRecord r1, $r6, $r7;
+        android.util.ArrayMap $r2;
+        android.os.IBinder $r3;
+        java.lang.Object $r4;
+        java.util.ArrayList $r5;
+        java.lang.String $r8;
+        com.android.server.media.MediaRouter2ServiceImpl$UserHandler $r9, $r11, $r13, $r15;
+        com.android.server.media.'-$$Lambda$MediaRouter2ServiceImpl$4WgsYQWLv4EvtnIJipTULolFxkw' $r10;
+        android.os.Message $r12, $r16;
+        com.android.server.media.'-$$Lambda$MediaRouter2ServiceImpl$jC1rAmXgW1ZIdeyc1iRBGDN_YrE' $r14;
+        android.media.IMediaRouter2 r17;
+        com.android.server.media.MediaRouter2ServiceImpl$RouterRecord r18;
+        com.android.internal.util.function.TriConsumer r19;
+        java.util.function.Consumer r20;
+
+        r0 := @this: com.android.server.media.MediaRouter2ServiceImpl;
+
+        r17 := @parameter0: android.media.IMediaRouter2;
+
+        z0 := @parameter1: boolean;
+
+        $r2 = r0.<com.android.server.media.MediaRouter2ServiceImpl: android.util.ArrayMap mAllRouterRecords>;
+
+        $r3 = interfaceinvoke r17.<android.media.IMediaRouter2: android.os.IBinder asBinder()>();
+
+        $r4 = virtualinvoke $r2.<android.util.ArrayMap: java.lang.Object remove(java.lang.Object)>($r3);
+
+        r18 = (com.android.server.media.MediaRouter2ServiceImpl$RouterRecord) $r4;
+
+        if r18 != null goto label1;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("MR2ServiceImpl", "Ignoring unregistering unknown router2");
+
+        return;
+
+     label1:
+        r1 = r18.<com.android.server.media.MediaRouter2ServiceImpl$RouterRecord: com.android.server.media.MediaRouter2ServiceImpl$UserRecord mUserRecord>;
+
+        $r5 = r1.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: java.util.ArrayList mRouterRecords>;
+
+        virtualinvoke $r5.<java.util.ArrayList: boolean remove(java.lang.Object)>(r18);
+
+        $r6 = r18.<com.android.server.media.MediaRouter2ServiceImpl$RouterRecord: com.android.server.media.MediaRouter2ServiceImpl$UserRecord mUserRecord>;
+
+        $r11 = $r6.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        $r10 = <com.android.server.media._$$Lambda$MediaRouter2ServiceImpl$4WgsYQWLv4EvtnIJipTULolFxkw: com.android.server.media.'-$$Lambda$MediaRouter2ServiceImpl$4WgsYQWLv4EvtnIJipTULolFxkw' INSTANCE>;
+
+        $r7 = r18.<com.android.server.media.MediaRouter2ServiceImpl$RouterRecord: com.android.server.media.MediaRouter2ServiceImpl$UserRecord mUserRecord>;
+
+        $r9 = $r7.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        $r8 = r18.<com.android.server.media.MediaRouter2ServiceImpl$RouterRecord: java.lang.String mPackageName>;
+
+        r19 = (com.android.internal.util.function.TriConsumer) $r10;
+
+        $r12 = staticinvoke <com.android.internal.util.function.pooled.PooledLambda: android.os.Message obtainMessage(com.android.internal.util.function.TriConsumer,java.lang.Object,java.lang.Object,java.lang.Object)>(r19, $r9, $r8, null);
+
+        virtualinvoke $r11.<com.android.server.media.MediaRouter2ServiceImpl$UserHandler: boolean sendMessage(android.os.Message)>($r12);
+
+        $r15 = r1.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        $r14 = <com.android.server.media._$$Lambda$MediaRouter2ServiceImpl$jC1rAmXgW1ZIdeyc1iRBGDN_YrE: com.android.server.media.'-$$Lambda$MediaRouter2ServiceImpl$jC1rAmXgW1ZIdeyc1iRBGDN_YrE' INSTANCE>;
+
+        $r13 = r1.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        r20 = (java.util.function.Consumer) $r14;
+
+        $r16 = staticinvoke <com.android.internal.util.function.pooled.PooledLambda: android.os.Message obtainMessage(java.util.function.Consumer,java.lang.Object)>(r20, $r13);
+
+        virtualinvoke $r15.<com.android.server.media.MediaRouter2ServiceImpl$UserHandler: boolean sendMessage(android.os.Message)>($r16);
+
+        virtualinvoke r18.<com.android.server.media.MediaRouter2ServiceImpl$RouterRecord: void dispose()>();
+
+        specialinvoke r0.<com.android.server.media.MediaRouter2ServiceImpl: void disposeUserIfNeededLocked(com.android.server.media.MediaRouter2ServiceImpl$UserRecord)>(r1);
+
+        return;
+    }
+
+    public void deselectRouteWithManager(android.media.IMediaRouter2Manager, int, java.lang.String, android.media.MediaRoute2Info)
+    {
+        com.android.server.media.MediaRouter2ServiceImpl r0;
+        int i0;
+        java.lang.String r1;
+        android.media.MediaRoute2Info r2;
+        long l1;
+        java.lang.Object r3;
+        boolean $z0;
+        java.lang.IllegalArgumentException $r5;
+        java.lang.Throwable $r7, $r8;
+        android.media.IMediaRouter2Manager r9;
+
+        r0 := @this: com.android.server.media.MediaRouter2ServiceImpl;
+
+        r9 := @parameter0: android.media.IMediaRouter2Manager;
+
+        i0 := @parameter1: int;
+
+        r1 := @parameter2: java.lang.String;
+
+        r2 := @parameter3: android.media.MediaRoute2Info;
+
+        staticinvoke <java.util.Objects: java.lang.Object requireNonNull(java.lang.Object,java.lang.String)>(r9, "manager must not be null");
+
+        $z0 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>(r1);
+
+        if $z0 != 0 goto label8;
+
+        staticinvoke <java.util.Objects: java.lang.Object requireNonNull(java.lang.Object,java.lang.String)>(r2, "route must not be null");
+
+        l1 = staticinvoke <android.os.Binder: long clearCallingIdentity()>();
+
+     label1:
+        r3 = r0.<com.android.server.media.MediaRouter2ServiceImpl: java.lang.Object mLock>;
+
+        entermonitor r3;
+
+     label2:
+        specialinvoke r0.<com.android.server.media.MediaRouter2ServiceImpl: void deselectRouteWithManagerLocked(int,android.media.IMediaRouter2Manager,java.lang.String,android.media.MediaRoute2Info)>(i0, r9, r1, r2);
+
+        exitmonitor r3;
+
+     label3:
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l1);
+
+        return;
+
+     label4:
+        $r7 := @caughtexception;
+
+     label5:
+        exitmonitor r3;
+
+     label6:
+        throw $r7;
+
+     label7:
+        $r8 := @caughtexception;
+
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l1);
+
+        throw $r8;
+
+     label8:
+        $r5 = new java.lang.IllegalArgumentException;
+
+        specialinvoke $r5.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>("uniqueSessionId must not be empty");
+
+        throw $r5;
+
+        catch java.lang.Throwable from label1 to label2 with label7;
+        catch java.lang.Throwable from label2 to label3 with label4;
+        catch java.lang.Throwable from label5 to label6 with label4;
+        catch java.lang.Throwable from label6 to label7 with label7;
+    }
+
+    public void deselectRouteWithRouter2(android.media.IMediaRouter2, java.lang.String, android.media.MediaRoute2Info)
+    {
+        com.android.server.media.MediaRouter2ServiceImpl r0;
+        java.lang.String r1;
+        android.media.MediaRoute2Info r2;
+        long l0;
+        java.lang.Object r3;
+        boolean $z0;
+        java.lang.IllegalArgumentException $r6;
+        java.lang.Throwable $r7, $r8;
+        android.media.IMediaRouter2 r9;
+
+        r0 := @this: com.android.server.media.MediaRouter2ServiceImpl;
+
+        r9 := @parameter0: android.media.IMediaRouter2;
+
+        r1 := @parameter1: java.lang.String;
+
+        r2 := @parameter2: android.media.MediaRoute2Info;
+
+        staticinvoke <java.util.Objects: java.lang.Object requireNonNull(java.lang.Object,java.lang.String)>(r9, "router must not be null");
+
+        staticinvoke <java.util.Objects: java.lang.Object requireNonNull(java.lang.Object,java.lang.String)>(r2, "route must not be null");
+
+        $z0 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>(r1);
+
+        if $z0 != 0 goto label8;
+
+        l0 = staticinvoke <android.os.Binder: long clearCallingIdentity()>();
+
+     label1:
+        r3 = r0.<com.android.server.media.MediaRouter2ServiceImpl: java.lang.Object mLock>;
+
+        entermonitor r3;
+
+     label2:
+        specialinvoke r0.<com.android.server.media.MediaRouter2ServiceImpl: void deselectRouteWithRouter2Locked(android.media.IMediaRouter2,java.lang.String,android.media.MediaRoute2Info)>(r9, r1, r2);
+
+        exitmonitor r3;
+
+     label3:
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l0);
+
+        return;
+
+     label4:
+        $r8 := @caughtexception;
+
+     label5:
+        exitmonitor r3;
+
+     label6:
+        throw $r8;
+
+     label7:
+        $r7 := @caughtexception;
+
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l0);
+
+        throw $r7;
+
+     label8:
+        $r6 = new java.lang.IllegalArgumentException;
+
+        specialinvoke $r6.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>("uniqueSessionId must not be empty");
+
+        throw $r6;
+
+        catch java.lang.Throwable from label1 to label2 with label7;
+        catch java.lang.Throwable from label2 to label3 with label4;
+        catch java.lang.Throwable from label5 to label6 with label4;
+        catch java.lang.Throwable from label6 to label7 with label7;
+    }
+
+    public java.util.List getActiveSessions(android.media.IMediaRouter2Manager)
+    {
+        com.android.server.media.MediaRouter2ServiceImpl r0;
+        long l0;
+        java.lang.Object r1;
+        java.lang.Throwable $r3, $r4;
+        android.media.IMediaRouter2Manager r5;
+        java.util.List r6;
+
+        r0 := @this: com.android.server.media.MediaRouter2ServiceImpl;
+
+        r5 := @parameter0: android.media.IMediaRouter2Manager;
+
+        staticinvoke <java.util.Objects: java.lang.Object requireNonNull(java.lang.Object,java.lang.String)>(r5, "manager must not be null");
+
+        l0 = staticinvoke <android.os.Binder: long clearCallingIdentity()>();
+
+     label1:
+        r1 = r0.<com.android.server.media.MediaRouter2ServiceImpl: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label2:
+        r6 = specialinvoke r0.<com.android.server.media.MediaRouter2ServiceImpl: java.util.List getActiveSessionsLocked(android.media.IMediaRouter2Manager)>(r5);
+
+        exitmonitor r1;
+
+     label3:
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l0);
+
+        return r6;
+
+     label4:
+        $r3 := @caughtexception;
+
+     label5:
+        exitmonitor r1;
+
+     label6:
+        throw $r3;
+
+     label7:
+        $r4 := @caughtexception;
+
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l0);
+
+        throw $r4;
+
+        catch java.lang.Throwable from label1 to label2 with label7;
+        catch java.lang.Throwable from label2 to label3 with label4;
+        catch java.lang.Throwable from label5 to label6 with label4;
+        catch java.lang.Throwable from label6 to label7 with label7;
+    }
+
+    public java.util.List getSystemRoutes()
+    {
+        com.android.server.media.MediaRouter2ServiceImpl r0;
+        int i0, $i2, $i3;
+        long l1;
+        java.lang.Object r1, r14;
+        com.android.server.media.MediaRouter2ServiceImpl$UserRecord r2;
+        android.os.UserHandle $r3;
+        android.content.Context $r4;
+        com.android.server.media.MediaRouter2ServiceImpl$UserHandler $r5, $r9;
+        com.android.server.media.SystemMediaRoute2Provider $r6, $r10;
+        android.media.MediaRoute2Info $r7;
+        java.lang.Throwable $r11, $r12;
+        boolean z1;
+        android.media.MediaRoute2ProviderInfo r13;
+        java.util.ArrayList r18, r19;
+        java.util.Collection r20, r21;
+
+        r0 := @this: com.android.server.media.MediaRouter2ServiceImpl;
+
+        $i2 = staticinvoke <android.os.Binder: int getCallingUid()>();
+
+        $r3 = staticinvoke <android.os.UserHandle: android.os.UserHandle getUserHandleForUid(int)>($i2);
+
+        i0 = virtualinvoke $r3.<android.os.UserHandle: int getIdentifier()>();
+
+        $r4 = r0.<com.android.server.media.MediaRouter2ServiceImpl: android.content.Context mContext>;
+
+        $i3 = virtualinvoke $r4.<android.content.Context: int checkCallingOrSelfPermission(java.lang.String)>("android.permission.MODIFY_AUDIO_ROUTING");
+
+        if $i3 != 0 goto label01;
+
+        z1 = 1;
+
+        goto label02;
+
+     label01:
+        z1 = 0;
+
+     label02:
+        l1 = staticinvoke <android.os.Binder: long clearCallingIdentity()>();
+
+     label03:
+        r1 = r0.<com.android.server.media.MediaRouter2ServiceImpl: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label04:
+        r2 = specialinvoke r0.<com.android.server.media.MediaRouter2ServiceImpl: com.android.server.media.MediaRouter2ServiceImpl$UserRecord getOrCreateUserRecordLocked(int)>(i0);
+
+     label05:
+        if z1 == 0 goto label12;
+
+     label06:
+        $r9 = r2.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        $r10 = staticinvoke <com.android.server.media.MediaRouter2ServiceImpl$UserHandler: com.android.server.media.SystemMediaRoute2Provider access$000(com.android.server.media.MediaRouter2ServiceImpl$UserHandler)>($r9);
+
+        r13 = virtualinvoke $r10.<com.android.server.media.SystemMediaRoute2Provider: android.media.MediaRoute2ProviderInfo getProviderInfo()>();
+
+     label07:
+        if r13 == null goto label10;
+
+     label08:
+        r14 = virtualinvoke r13.<android.media.MediaRoute2ProviderInfo: java.util.Collection getRoutes()>();
+
+     label09:
+        goto label11;
+
+     label10:
+        r14 = staticinvoke <java.util.Collections: java.util.List emptyList()>();
+
+     label11:
+        goto label14;
+
+     label12:
+        r18 = new java.util.ArrayList;
+
+        r14 = r18;
+
+        specialinvoke r18.<java.util.ArrayList: void <init>()>();
+
+     label13:
+        $r5 = r2.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        $r6 = staticinvoke <com.android.server.media.MediaRouter2ServiceImpl$UserHandler: com.android.server.media.SystemMediaRoute2Provider access$000(com.android.server.media.MediaRouter2ServiceImpl$UserHandler)>($r5);
+
+        $r7 = virtualinvoke $r6.<com.android.server.media.SystemMediaRoute2Provider: android.media.MediaRoute2Info getDefaultRoute()>();
+
+        r20 = (java.util.Collection) r18;
+
+        interfaceinvoke r20.<java.util.Collection: boolean add(java.lang.Object)>($r7);
+
+     label14:
+        exitmonitor r1;
+
+     label15:
+        r19 = new java.util.ArrayList;
+
+        r21 = (java.util.Collection) r14;
+
+        specialinvoke r19.<java.util.ArrayList: void <init>(java.util.Collection)>(r21);
+
+     label16:
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l1);
+
+        return r19;
+
+     label17:
+        $r12 := @caughtexception;
+
+     label18:
+        exitmonitor r1;
+
+     label19:
+        throw $r12;
+
+     label20:
+        $r11 := @caughtexception;
+
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l1);
+
+        throw $r11;
+
+        catch java.lang.Throwable from label03 to label04 with label20;
+        catch java.lang.Throwable from label04 to label05 with label17;
+        catch java.lang.Throwable from label06 to label07 with label17;
+        catch java.lang.Throwable from label08 to label09 with label17;
+        catch java.lang.Throwable from label10 to label11 with label17;
+        catch java.lang.Throwable from label12 to label13 with label17;
+        catch java.lang.Throwable from label13 to label14 with label17;
+        catch java.lang.Throwable from label14 to label15 with label17;
+        catch java.lang.Throwable from label15 to label16 with label20;
+        catch java.lang.Throwable from label18 to label19 with label17;
+        catch java.lang.Throwable from label19 to label20 with label20;
+    }
+
+    public android.media.RoutingSessionInfo getSystemSessionInfo()
+    {
+        com.android.server.media.MediaRouter2ServiceImpl r0;
+        int i0, $i2, $i3;
+        long l1;
+        java.lang.Object r1, $r8;
+        android.os.UserHandle $r2;
+        android.content.Context $r3;
+        com.android.server.media.MediaRouter2ServiceImpl$UserHandler $r4, $r6;
+        com.android.server.media.SystemMediaRoute2Provider $r5, $r7;
+        boolean $z0, z1;
+        java.lang.Throwable $r9, $r10;
+        android.media.RoutingSessionInfo r11;
+        com.android.server.media.MediaRouter2ServiceImpl$UserRecord r12;
+        java.util.List r13;
+
+        r0 := @this: com.android.server.media.MediaRouter2ServiceImpl;
+
+        $i2 = staticinvoke <android.os.Binder: int getCallingUid()>();
+
+        $r2 = staticinvoke <android.os.UserHandle: android.os.UserHandle getUserHandleForUid(int)>($i2);
+
+        i0 = virtualinvoke $r2.<android.os.UserHandle: int getIdentifier()>();
+
+        $r3 = r0.<com.android.server.media.MediaRouter2ServiceImpl: android.content.Context mContext>;
+
+        $i3 = virtualinvoke $r3.<android.content.Context: int checkCallingOrSelfPermission(java.lang.String)>("android.permission.MODIFY_AUDIO_ROUTING");
+
+        if $i3 != 0 goto label01;
+
+        z1 = 1;
+
+        goto label02;
+
+     label01:
+        z1 = 0;
+
+     label02:
+        l1 = staticinvoke <android.os.Binder: long clearCallingIdentity()>();
+
+        r11 = null;
+
+     label03:
+        r1 = r0.<com.android.server.media.MediaRouter2ServiceImpl: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label04:
+        r12 = specialinvoke r0.<com.android.server.media.MediaRouter2ServiceImpl: com.android.server.media.MediaRouter2ServiceImpl$UserRecord getOrCreateUserRecordLocked(int)>(i0);
+
+     label05:
+        if z1 == 0 goto label12;
+
+     label06:
+        $r6 = r12.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        $r7 = staticinvoke <com.android.server.media.MediaRouter2ServiceImpl$UserHandler: com.android.server.media.SystemMediaRoute2Provider access$000(com.android.server.media.MediaRouter2ServiceImpl$UserHandler)>($r6);
+
+        r13 = virtualinvoke $r7.<com.android.server.media.SystemMediaRoute2Provider: java.util.List getSessionInfos()>();
+
+     label07:
+        if r13 == null goto label10;
+
+     label08:
+        $z0 = interfaceinvoke r13.<java.util.List: boolean isEmpty()>();
+
+        if $z0 != 0 goto label10;
+
+        $r8 = interfaceinvoke r13.<java.util.List: java.lang.Object get(int)>(0);
+
+        r11 = (android.media.RoutingSessionInfo) $r8;
+
+     label09:
+        goto label13;
+
+     label10:
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("MR2ServiceImpl", "System provider does not have any session info.");
+
+     label11:
+        goto label13;
+
+     label12:
+        $r4 = r12.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        $r5 = staticinvoke <com.android.server.media.MediaRouter2ServiceImpl$UserHandler: com.android.server.media.SystemMediaRoute2Provider access$000(com.android.server.media.MediaRouter2ServiceImpl$UserHandler)>($r4);
+
+        r11 = virtualinvoke $r5.<com.android.server.media.SystemMediaRoute2Provider: android.media.RoutingSessionInfo getDefaultSessionInfo()>();
+
+     label13:
+        exitmonitor r1;
+
+     label14:
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l1);
+
+        return r11;
+
+     label15:
+        $r9 := @caughtexception;
+
+     label16:
+        exitmonitor r1;
+
+     label17:
+        throw $r9;
+
+     label18:
+        $r10 := @caughtexception;
+
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l1);
+
+        throw $r10;
+
+        catch java.lang.Throwable from label03 to label04 with label18;
+        catch java.lang.Throwable from label04 to label05 with label15;
+        catch java.lang.Throwable from label06 to label07 with label15;
+        catch java.lang.Throwable from label08 to label09 with label15;
+        catch java.lang.Throwable from label10 to label11 with label15;
+        catch java.lang.Throwable from label12 to label13 with label15;
+        catch java.lang.Throwable from label13 to label14 with label15;
+        catch java.lang.Throwable from label16 to label17 with label15;
+        catch java.lang.Throwable from label17 to label18 with label18;
+    }
+
+    void managerDied(com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord)
+    {
+        com.android.server.media.MediaRouter2ServiceImpl r0;
+        java.lang.Object r1;
+        android.media.IMediaRouter2Manager $r2;
+        java.lang.Throwable $r3;
+        com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord r4;
+
+        r0 := @this: com.android.server.media.MediaRouter2ServiceImpl;
+
+        r4 := @parameter0: com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord;
+
+        r1 = r0.<com.android.server.media.MediaRouter2ServiceImpl: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        $r2 = r4.<com.android.server.media.MediaRouter2ServiceImpl$ManagerRecord: android.media.IMediaRouter2Manager mManager>;
+
+        specialinvoke r0.<com.android.server.media.MediaRouter2ServiceImpl: void unregisterManagerLocked(android.media.IMediaRouter2Manager,boolean)>($r2, 1);
+
+        exitmonitor r1;
+
+     label2:
+        return;
+
+     label3:
+        $r3 := @caughtexception;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        throw $r3;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    public void registerManager(android.media.IMediaRouter2Manager, java.lang.String)
+    {
+        com.android.server.media.MediaRouter2ServiceImpl r0;
+        java.lang.String r1;
+        int i0, i1, i2;
+        long l3;
+        java.lang.Object r2;
+        boolean $z0;
+        java.lang.IllegalArgumentException $r4;
+        android.os.UserHandle $r5;
+        java.lang.Throwable $r6, $r7;
+        android.media.IMediaRouter2Manager r8;
+
+        r0 := @this: com.android.server.media.MediaRouter2ServiceImpl;
+
+        r8 := @parameter0: android.media.IMediaRouter2Manager;
+
+        r1 := @parameter1: java.lang.String;
+
+        staticinvoke <java.util.Objects: java.lang.Object requireNonNull(java.lang.Object,java.lang.String)>(r8, "manager must not be null");
+
+        $z0 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>(r1);
+
+        if $z0 != 0 goto label8;
+
+        i0 = staticinvoke <android.os.Binder: int getCallingUid()>();
+
+        i1 = staticinvoke <android.os.Binder: int getCallingPid()>();
+
+        $r5 = staticinvoke <android.os.UserHandle: android.os.UserHandle getUserHandleForUid(int)>(i0);
+
+        i2 = virtualinvoke $r5.<android.os.UserHandle: int getIdentifier()>();
+
+        l3 = staticinvoke <android.os.Binder: long clearCallingIdentity()>();
+
+     label1:
+        r2 = r0.<com.android.server.media.MediaRouter2ServiceImpl: java.lang.Object mLock>;
+
+        entermonitor r2;
+
+     label2:
+        specialinvoke r0.<com.android.server.media.MediaRouter2ServiceImpl: void registerManagerLocked(android.media.IMediaRouter2Manager,int,int,java.lang.String,int)>(r8, i0, i1, r1, i2);
+
+        exitmonitor r2;
+
+     label3:
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l3);
+
+        return;
+
+     label4:
+        $r6 := @caughtexception;
+
+     label5:
+        exitmonitor r2;
+
+     label6:
+        throw $r6;
+
+     label7:
+        $r7 := @caughtexception;
+
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l3);
+
+        throw $r7;
+
+     label8:
+        $r4 = new java.lang.IllegalArgumentException;
+
+        specialinvoke $r4.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>("packageName must not be empty");
+
+        throw $r4;
+
+        catch java.lang.Throwable from label1 to label2 with label7;
+        catch java.lang.Throwable from label2 to label3 with label4;
+        catch java.lang.Throwable from label5 to label6 with label4;
+        catch java.lang.Throwable from label6 to label7 with label7;
+    }
+
+    public void registerRouter2(android.media.IMediaRouter2, java.lang.String)
+    {
+        com.android.server.media.MediaRouter2ServiceImpl r0;
+        java.lang.String r1;
+        int i0, i1, i2, $i4, $i5;
+        long l3;
+        java.lang.Object r2;
+        boolean $z0, z1, z2;
+        java.lang.IllegalArgumentException $r4;
+        android.os.UserHandle $r5;
+        android.content.Context $r6, $r7;
+        java.lang.Throwable $r8, $r9;
+        android.media.IMediaRouter2 r10;
+
+        r0 := @this: com.android.server.media.MediaRouter2ServiceImpl;
+
+        r10 := @parameter0: android.media.IMediaRouter2;
+
+        r1 := @parameter1: java.lang.String;
+
+        staticinvoke <java.util.Objects: java.lang.Object requireNonNull(java.lang.Object,java.lang.String)>(r10, "router must not be null");
+
+        $z0 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>(r1);
+
+        if $z0 != 0 goto label12;
+
+        i0 = staticinvoke <android.os.Binder: int getCallingUid()>();
+
+        i1 = staticinvoke <android.os.Binder: int getCallingPid()>();
+
+        $r5 = staticinvoke <android.os.UserHandle: android.os.UserHandle getUserHandleForUid(int)>(i0);
+
+        i2 = virtualinvoke $r5.<android.os.UserHandle: int getIdentifier()>();
+
+        $r6 = r0.<com.android.server.media.MediaRouter2ServiceImpl: android.content.Context mContext>;
+
+        $i4 = virtualinvoke $r6.<android.content.Context: int checkCallingOrSelfPermission(java.lang.String)>("android.permission.CONFIGURE_WIFI_DISPLAY");
+
+        if $i4 != 0 goto label01;
+
+        z1 = 1;
+
+        goto label02;
+
+     label01:
+        z1 = 0;
+
+     label02:
+        $r7 = r0.<com.android.server.media.MediaRouter2ServiceImpl: android.content.Context mContext>;
+
+        $i5 = virtualinvoke $r7.<android.content.Context: int checkCallingOrSelfPermission(java.lang.String)>("android.permission.MODIFY_AUDIO_ROUTING");
+
+        if $i5 != 0 goto label03;
+
+        z2 = 1;
+
+        goto label04;
+
+     label03:
+        z2 = 0;
+
+     label04:
+        l3 = staticinvoke <android.os.Binder: long clearCallingIdentity()>();
+
+     label05:
+        r2 = r0.<com.android.server.media.MediaRouter2ServiceImpl: java.lang.Object mLock>;
+
+        entermonitor r2;
+
+     label06:
+        specialinvoke r0.<com.android.server.media.MediaRouter2ServiceImpl: void registerRouter2Locked(android.media.IMediaRouter2,int,int,java.lang.String,int,boolean,boolean)>(r10, i0, i1, r1, i2, z1, z2);
+
+        exitmonitor r2;
+
+     label07:
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l3);
+
+        return;
+
+     label08:
+        $r8 := @caughtexception;
+
+     label09:
+        exitmonitor r2;
+
+     label10:
+        throw $r8;
+
+     label11:
+        $r9 := @caughtexception;
+
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l3);
+
+        throw $r9;
+
+     label12:
+        $r4 = new java.lang.IllegalArgumentException;
+
+        specialinvoke $r4.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>("packageName must not be empty");
+
+        throw $r4;
+
+        catch java.lang.Throwable from label05 to label06 with label11;
+        catch java.lang.Throwable from label06 to label07 with label08;
+        catch java.lang.Throwable from label09 to label10 with label08;
+        catch java.lang.Throwable from label10 to label11 with label11;
+    }
+
+    public void releaseSessionWithManager(android.media.IMediaRouter2Manager, int, java.lang.String)
+    {
+        com.android.server.media.MediaRouter2ServiceImpl r0;
+        int i0;
+        java.lang.String r1;
+        long l1;
+        java.lang.Object r2;
+        boolean $z0;
+        java.lang.IllegalArgumentException $r4;
+        java.lang.Throwable $r5, $r6;
+        android.media.IMediaRouter2Manager r7;
+
+        r0 := @this: com.android.server.media.MediaRouter2ServiceImpl;
+
+        r7 := @parameter0: android.media.IMediaRouter2Manager;
+
+        i0 := @parameter1: int;
+
+        r1 := @parameter2: java.lang.String;
+
+        staticinvoke <java.util.Objects: java.lang.Object requireNonNull(java.lang.Object,java.lang.String)>(r7, "manager must not be null");
+
+        $z0 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>(r1);
+
+        if $z0 != 0 goto label8;
+
+        l1 = staticinvoke <android.os.Binder: long clearCallingIdentity()>();
+
+     label1:
+        r2 = r0.<com.android.server.media.MediaRouter2ServiceImpl: java.lang.Object mLock>;
+
+        entermonitor r2;
+
+     label2:
+        specialinvoke r0.<com.android.server.media.MediaRouter2ServiceImpl: void releaseSessionWithManagerLocked(int,android.media.IMediaRouter2Manager,java.lang.String)>(i0, r7, r1);
+
+        exitmonitor r2;
+
+     label3:
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l1);
+
+        return;
+
+     label4:
+        $r5 := @caughtexception;
+
+     label5:
+        exitmonitor r2;
+
+     label6:
+        throw $r5;
+
+     label7:
+        $r6 := @caughtexception;
+
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l1);
+
+        throw $r6;
+
+     label8:
+        $r4 = new java.lang.IllegalArgumentException;
+
+        specialinvoke $r4.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>("uniqueSessionId must not be empty");
+
+        throw $r4;
+
+        catch java.lang.Throwable from label1 to label2 with label7;
+        catch java.lang.Throwable from label2 to label3 with label4;
+        catch java.lang.Throwable from label5 to label6 with label4;
+        catch java.lang.Throwable from label6 to label7 with label7;
+    }
+
+    public void releaseSessionWithRouter2(android.media.IMediaRouter2, java.lang.String)
+    {
+        com.android.server.media.MediaRouter2ServiceImpl r0;
+        java.lang.String r1;
+        long l0;
+        java.lang.Object r2;
+        boolean $z0;
+        java.lang.IllegalArgumentException $r4;
+        java.lang.Throwable $r5, $r6;
+        android.media.IMediaRouter2 r7;
+
+        r0 := @this: com.android.server.media.MediaRouter2ServiceImpl;
+
+        r7 := @parameter0: android.media.IMediaRouter2;
+
+        r1 := @parameter1: java.lang.String;
+
+        staticinvoke <java.util.Objects: java.lang.Object requireNonNull(java.lang.Object,java.lang.String)>(r7, "router must not be null");
+
+        $z0 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>(r1);
+
+        if $z0 != 0 goto label8;
+
+        l0 = staticinvoke <android.os.Binder: long clearCallingIdentity()>();
+
+     label1:
+        r2 = r0.<com.android.server.media.MediaRouter2ServiceImpl: java.lang.Object mLock>;
+
+        entermonitor r2;
+
+     label2:
+        specialinvoke r0.<com.android.server.media.MediaRouter2ServiceImpl: void releaseSessionWithRouter2Locked(android.media.IMediaRouter2,java.lang.String)>(r7, r1);
+
+        exitmonitor r2;
+
+     label3:
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l0);
+
+        return;
+
+     label4:
+        $r6 := @caughtexception;
+
+     label5:
+        exitmonitor r2;
+
+     label6:
+        throw $r6;
+
+     label7:
+        $r5 := @caughtexception;
+
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l0);
+
+        throw $r5;
+
+     label8:
+        $r4 = new java.lang.IllegalArgumentException;
+
+        specialinvoke $r4.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>("uniqueSessionId must not be empty");
+
+        throw $r4;
+
+        catch java.lang.Throwable from label1 to label2 with label7;
+        catch java.lang.Throwable from label2 to label3 with label4;
+        catch java.lang.Throwable from label5 to label6 with label4;
+        catch java.lang.Throwable from label6 to label7 with label7;
+    }
+
+    public void requestCreateSessionWithManager(android.media.IMediaRouter2Manager, int, android.media.RoutingSessionInfo, android.media.MediaRoute2Info)
+    {
+        com.android.server.media.MediaRouter2ServiceImpl r0;
+        int i0;
+        android.media.RoutingSessionInfo r1;
+        android.media.MediaRoute2Info r2;
+        long l1;
+        java.lang.Object r3;
+        java.lang.Throwable $r6, $r7;
+        android.media.IMediaRouter2Manager r8;
+
+        r0 := @this: com.android.server.media.MediaRouter2ServiceImpl;
+
+        r8 := @parameter0: android.media.IMediaRouter2Manager;
+
+        i0 := @parameter1: int;
+
+        r1 := @parameter2: android.media.RoutingSessionInfo;
+
+        r2 := @parameter3: android.media.MediaRoute2Info;
+
+        staticinvoke <java.util.Objects: java.lang.Object requireNonNull(java.lang.Object,java.lang.String)>(r8, "manager must not be null");
+
+        staticinvoke <java.util.Objects: java.lang.Object requireNonNull(java.lang.Object,java.lang.String)>(r1, "oldSession must not be null");
+
+        l1 = staticinvoke <android.os.Binder: long clearCallingIdentity()>();
+
+     label1:
+        r3 = r0.<com.android.server.media.MediaRouter2ServiceImpl: java.lang.Object mLock>;
+
+        entermonitor r3;
+
+     label2:
+        specialinvoke r0.<com.android.server.media.MediaRouter2ServiceImpl: void requestCreateSessionWithManagerLocked(int,android.media.IMediaRouter2Manager,android.media.RoutingSessionInfo,android.media.MediaRoute2Info)>(i0, r8, r1, r2);
+
+        exitmonitor r3;
+
+     label3:
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l1);
+
+        return;
+
+     label4:
+        $r7 := @caughtexception;
+
+     label5:
+        exitmonitor r3;
+
+     label6:
+        throw $r7;
+
+     label7:
+        $r6 := @caughtexception;
+
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l1);
+
+        throw $r6;
+
+        catch java.lang.Throwable from label1 to label2 with label7;
+        catch java.lang.Throwable from label2 to label3 with label4;
+        catch java.lang.Throwable from label5 to label6 with label4;
+        catch java.lang.Throwable from label6 to label7 with label7;
+    }
+
+    public void requestCreateSessionWithRouter2(android.media.IMediaRouter2, int, long, android.media.RoutingSessionInfo, android.media.MediaRoute2Info, android.os.Bundle)
+    {
+        com.android.server.media.MediaRouter2ServiceImpl r0;
+        int i0;
+        long l1, l2;
+        android.media.RoutingSessionInfo r1;
+        android.media.MediaRoute2Info r2;
+        android.os.Bundle r3;
+        java.lang.Object r4;
+        java.lang.Throwable $r8, $r9;
+        android.media.IMediaRouter2 r10;
+
+        r0 := @this: com.android.server.media.MediaRouter2ServiceImpl;
+
+        r10 := @parameter0: android.media.IMediaRouter2;
+
+        i0 := @parameter1: int;
+
+        l1 := @parameter2: long;
+
+        r1 := @parameter3: android.media.RoutingSessionInfo;
+
+        r2 := @parameter4: android.media.MediaRoute2Info;
+
+        r3 := @parameter5: android.os.Bundle;
+
+        staticinvoke <java.util.Objects: java.lang.Object requireNonNull(java.lang.Object,java.lang.String)>(r10, "router must not be null");
+
+        staticinvoke <java.util.Objects: java.lang.Object requireNonNull(java.lang.Object,java.lang.String)>(r1, "oldSession must not be null");
+
+        staticinvoke <java.util.Objects: java.lang.Object requireNonNull(java.lang.Object,java.lang.String)>(r2, "route must not be null");
+
+        l2 = staticinvoke <android.os.Binder: long clearCallingIdentity()>();
+
+     label1:
+        r4 = r0.<com.android.server.media.MediaRouter2ServiceImpl: java.lang.Object mLock>;
+
+        entermonitor r4;
+
+     label2:
+        specialinvoke r0.<com.android.server.media.MediaRouter2ServiceImpl: void requestCreateSessionWithRouter2Locked(int,long,android.media.IMediaRouter2,android.media.RoutingSessionInfo,android.media.MediaRoute2Info,android.os.Bundle)>(i0, l1, r10, r1, r2, r3);
+
+        exitmonitor r4;
+
+     label3:
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l2);
+
+        return;
+
+     label4:
+        $r9 := @caughtexception;
+
+     label5:
+        exitmonitor r4;
+
+     label6:
+        throw $r9;
+
+     label7:
+        $r8 := @caughtexception;
+
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l2);
+
+        throw $r8;
+
+        catch java.lang.Throwable from label1 to label2 with label7;
+        catch java.lang.Throwable from label2 to label3 with label4;
+        catch java.lang.Throwable from label5 to label6 with label4;
+        catch java.lang.Throwable from label6 to label7 with label7;
+    }
+
+    void routerDied(com.android.server.media.MediaRouter2ServiceImpl$RouterRecord)
+    {
+        com.android.server.media.MediaRouter2ServiceImpl r0;
+        java.lang.Object r1;
+        android.media.IMediaRouter2 $r2;
+        java.lang.Throwable $r3;
+        com.android.server.media.MediaRouter2ServiceImpl$RouterRecord r4;
+
+        r0 := @this: com.android.server.media.MediaRouter2ServiceImpl;
+
+        r4 := @parameter0: com.android.server.media.MediaRouter2ServiceImpl$RouterRecord;
+
+        r1 = r0.<com.android.server.media.MediaRouter2ServiceImpl: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        $r2 = r4.<com.android.server.media.MediaRouter2ServiceImpl$RouterRecord: android.media.IMediaRouter2 mRouter>;
+
+        specialinvoke r0.<com.android.server.media.MediaRouter2ServiceImpl: void unregisterRouter2Locked(android.media.IMediaRouter2,boolean)>($r2, 1);
+
+        exitmonitor r1;
+
+     label2:
+        return;
+
+     label3:
+        $r3 := @caughtexception;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        throw $r3;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    public void selectRouteWithManager(android.media.IMediaRouter2Manager, int, java.lang.String, android.media.MediaRoute2Info)
+    {
+        com.android.server.media.MediaRouter2ServiceImpl r0;
+        int i0;
+        java.lang.String r1;
+        android.media.MediaRoute2Info r2;
+        long l1;
+        java.lang.Object r3;
+        boolean $z0;
+        java.lang.IllegalArgumentException $r5;
+        java.lang.Throwable $r7, $r8;
+        android.media.IMediaRouter2Manager r9;
+
+        r0 := @this: com.android.server.media.MediaRouter2ServiceImpl;
+
+        r9 := @parameter0: android.media.IMediaRouter2Manager;
+
+        i0 := @parameter1: int;
+
+        r1 := @parameter2: java.lang.String;
+
+        r2 := @parameter3: android.media.MediaRoute2Info;
+
+        staticinvoke <java.util.Objects: java.lang.Object requireNonNull(java.lang.Object,java.lang.String)>(r9, "manager must not be null");
+
+        $z0 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>(r1);
+
+        if $z0 != 0 goto label8;
+
+        staticinvoke <java.util.Objects: java.lang.Object requireNonNull(java.lang.Object,java.lang.String)>(r2, "route must not be null");
+
+        l1 = staticinvoke <android.os.Binder: long clearCallingIdentity()>();
+
+     label1:
+        r3 = r0.<com.android.server.media.MediaRouter2ServiceImpl: java.lang.Object mLock>;
+
+        entermonitor r3;
+
+     label2:
+        specialinvoke r0.<com.android.server.media.MediaRouter2ServiceImpl: void selectRouteWithManagerLocked(int,android.media.IMediaRouter2Manager,java.lang.String,android.media.MediaRoute2Info)>(i0, r9, r1, r2);
+
+        exitmonitor r3;
+
+     label3:
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l1);
+
+        return;
+
+     label4:
+        $r7 := @caughtexception;
+
+     label5:
+        exitmonitor r3;
+
+     label6:
+        throw $r7;
+
+     label7:
+        $r8 := @caughtexception;
+
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l1);
+
+        throw $r8;
+
+     label8:
+        $r5 = new java.lang.IllegalArgumentException;
+
+        specialinvoke $r5.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>("uniqueSessionId must not be empty");
+
+        throw $r5;
+
+        catch java.lang.Throwable from label1 to label2 with label7;
+        catch java.lang.Throwable from label2 to label3 with label4;
+        catch java.lang.Throwable from label5 to label6 with label4;
+        catch java.lang.Throwable from label6 to label7 with label7;
+    }
+
+    public void selectRouteWithRouter2(android.media.IMediaRouter2, java.lang.String, android.media.MediaRoute2Info)
+    {
+        com.android.server.media.MediaRouter2ServiceImpl r0;
+        java.lang.String r1;
+        android.media.MediaRoute2Info r2;
+        long l0;
+        java.lang.Object r3;
+        boolean $z0;
+        java.lang.IllegalArgumentException $r6;
+        java.lang.Throwable $r7, $r8;
+        android.media.IMediaRouter2 r9;
+
+        r0 := @this: com.android.server.media.MediaRouter2ServiceImpl;
+
+        r9 := @parameter0: android.media.IMediaRouter2;
+
+        r1 := @parameter1: java.lang.String;
+
+        r2 := @parameter2: android.media.MediaRoute2Info;
+
+        staticinvoke <java.util.Objects: java.lang.Object requireNonNull(java.lang.Object,java.lang.String)>(r9, "router must not be null");
+
+        staticinvoke <java.util.Objects: java.lang.Object requireNonNull(java.lang.Object,java.lang.String)>(r2, "route must not be null");
+
+        $z0 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>(r1);
+
+        if $z0 != 0 goto label8;
+
+        l0 = staticinvoke <android.os.Binder: long clearCallingIdentity()>();
+
+     label1:
+        r3 = r0.<com.android.server.media.MediaRouter2ServiceImpl: java.lang.Object mLock>;
+
+        entermonitor r3;
+
+     label2:
+        specialinvoke r0.<com.android.server.media.MediaRouter2ServiceImpl: void selectRouteWithRouter2Locked(android.media.IMediaRouter2,java.lang.String,android.media.MediaRoute2Info)>(r9, r1, r2);
+
+        exitmonitor r3;
+
+     label3:
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l0);
+
+        return;
+
+     label4:
+        $r7 := @caughtexception;
+
+     label5:
+        exitmonitor r3;
+
+     label6:
+        throw $r7;
+
+     label7:
+        $r8 := @caughtexception;
+
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l0);
+
+        throw $r8;
+
+     label8:
+        $r6 = new java.lang.IllegalArgumentException;
+
+        specialinvoke $r6.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>("uniqueSessionId must not be empty");
+
+        throw $r6;
+
+        catch java.lang.Throwable from label1 to label2 with label7;
+        catch java.lang.Throwable from label2 to label3 with label4;
+        catch java.lang.Throwable from label5 to label6 with label4;
+        catch java.lang.Throwable from label6 to label7 with label7;
+    }
+
+    public void setDiscoveryRequestWithRouter2(android.media.IMediaRouter2, android.media.RouteDiscoveryPreference)
+    {
+        com.android.server.media.MediaRouter2ServiceImpl r0;
+        android.media.RouteDiscoveryPreference r1;
+        long l0;
+        java.lang.Object r2, $r7;
+        android.util.ArrayMap $r5;
+        android.os.IBinder $r6;
+        java.lang.Throwable $r8, $r9;
+        android.media.IMediaRouter2 r10;
+        com.android.server.media.MediaRouter2ServiceImpl$RouterRecord r11;
+
+        r0 := @this: com.android.server.media.MediaRouter2ServiceImpl;
+
+        r10 := @parameter0: android.media.IMediaRouter2;
+
+        r1 := @parameter1: android.media.RouteDiscoveryPreference;
+
+        staticinvoke <java.util.Objects: java.lang.Object requireNonNull(java.lang.Object,java.lang.String)>(r10, "router must not be null");
+
+        staticinvoke <java.util.Objects: java.lang.Object requireNonNull(java.lang.Object,java.lang.String)>(r1, "preference must not be null");
+
+        l0 = staticinvoke <android.os.Binder: long clearCallingIdentity()>();
+
+     label01:
+        r2 = r0.<com.android.server.media.MediaRouter2ServiceImpl: java.lang.Object mLock>;
+
+        entermonitor r2;
+
+     label02:
+        $r5 = r0.<com.android.server.media.MediaRouter2ServiceImpl: android.util.ArrayMap mAllRouterRecords>;
+
+        $r6 = interfaceinvoke r10.<android.media.IMediaRouter2: android.os.IBinder asBinder()>();
+
+        $r7 = virtualinvoke $r5.<android.util.ArrayMap: java.lang.Object get(java.lang.Object)>($r6);
+
+        r11 = (com.android.server.media.MediaRouter2ServiceImpl$RouterRecord) $r7;
+
+     label03:
+        if r11 != null goto label06;
+
+     label04:
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("MR2ServiceImpl", "Ignoring updating discoveryRequest of null routerRecord.");
+
+        exitmonitor r2;
+
+     label05:
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l0);
+
+        return;
+
+     label06:
+        specialinvoke r0.<com.android.server.media.MediaRouter2ServiceImpl: void setDiscoveryRequestWithRouter2Locked(com.android.server.media.MediaRouter2ServiceImpl$RouterRecord,android.media.RouteDiscoveryPreference)>(r11, r1);
+
+        exitmonitor r2;
+
+     label07:
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l0);
+
+        return;
+
+     label08:
+        $r8 := @caughtexception;
+
+     label09:
+        exitmonitor r2;
+
+     label10:
+        throw $r8;
+
+     label11:
+        $r9 := @caughtexception;
+
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l0);
+
+        throw $r9;
+
+        catch java.lang.Throwable from label01 to label02 with label11;
+        catch java.lang.Throwable from label02 to label03 with label08;
+        catch java.lang.Throwable from label04 to label05 with label08;
+        catch java.lang.Throwable from label06 to label07 with label08;
+        catch java.lang.Throwable from label09 to label10 with label08;
+        catch java.lang.Throwable from label10 to label11 with label11;
+    }
+
+    public void setRouteVolumeWithManager(android.media.IMediaRouter2Manager, int, android.media.MediaRoute2Info, int)
+    {
+        com.android.server.media.MediaRouter2ServiceImpl r0;
+        int i0, i1;
+        android.media.MediaRoute2Info r1;
+        long l2;
+        java.lang.Object r2;
+        java.lang.Throwable $r5, $r6;
+        android.media.IMediaRouter2Manager r7;
+
+        r0 := @this: com.android.server.media.MediaRouter2ServiceImpl;
+
+        r7 := @parameter0: android.media.IMediaRouter2Manager;
+
+        i0 := @parameter1: int;
+
+        r1 := @parameter2: android.media.MediaRoute2Info;
+
+        i1 := @parameter3: int;
+
+        staticinvoke <java.util.Objects: java.lang.Object requireNonNull(java.lang.Object,java.lang.String)>(r7, "manager must not be null");
+
+        staticinvoke <java.util.Objects: java.lang.Object requireNonNull(java.lang.Object,java.lang.String)>(r1, "route must not be null");
+
+        l2 = staticinvoke <android.os.Binder: long clearCallingIdentity()>();
+
+     label1:
+        r2 = r0.<com.android.server.media.MediaRouter2ServiceImpl: java.lang.Object mLock>;
+
+        entermonitor r2;
+
+     label2:
+        specialinvoke r0.<com.android.server.media.MediaRouter2ServiceImpl: void setRouteVolumeWithManagerLocked(int,android.media.IMediaRouter2Manager,android.media.MediaRoute2Info,int)>(i0, r7, r1, i1);
+
+        exitmonitor r2;
+
+     label3:
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l2);
+
+        return;
+
+     label4:
+        $r5 := @caughtexception;
+
+     label5:
+        exitmonitor r2;
+
+     label6:
+        throw $r5;
+
+     label7:
+        $r6 := @caughtexception;
+
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l2);
+
+        throw $r6;
+
+        catch java.lang.Throwable from label1 to label2 with label7;
+        catch java.lang.Throwable from label2 to label3 with label4;
+        catch java.lang.Throwable from label5 to label6 with label4;
+        catch java.lang.Throwable from label6 to label7 with label7;
+    }
+
+    public void setRouteVolumeWithRouter2(android.media.IMediaRouter2, android.media.MediaRoute2Info, int)
+    {
+        com.android.server.media.MediaRouter2ServiceImpl r0;
+        android.media.MediaRoute2Info r1;
+        int i0;
+        long l1;
+        java.lang.Object r2;
+        java.lang.Throwable $r5, $r6;
+        android.media.IMediaRouter2 r7;
+
+        r0 := @this: com.android.server.media.MediaRouter2ServiceImpl;
+
+        r7 := @parameter0: android.media.IMediaRouter2;
+
+        r1 := @parameter1: android.media.MediaRoute2Info;
+
+        i0 := @parameter2: int;
+
+        staticinvoke <java.util.Objects: java.lang.Object requireNonNull(java.lang.Object,java.lang.String)>(r7, "router must not be null");
+
+        staticinvoke <java.util.Objects: java.lang.Object requireNonNull(java.lang.Object,java.lang.String)>(r1, "route must not be null");
+
+        l1 = staticinvoke <android.os.Binder: long clearCallingIdentity()>();
+
+     label1:
+        r2 = r0.<com.android.server.media.MediaRouter2ServiceImpl: java.lang.Object mLock>;
+
+        entermonitor r2;
+
+     label2:
+        specialinvoke r0.<com.android.server.media.MediaRouter2ServiceImpl: void setRouteVolumeWithRouter2Locked(android.media.IMediaRouter2,android.media.MediaRoute2Info,int)>(r7, r1, i0);
+
+        exitmonitor r2;
+
+     label3:
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l1);
+
+        return;
+
+     label4:
+        $r5 := @caughtexception;
+
+     label5:
+        exitmonitor r2;
+
+     label6:
+        throw $r5;
+
+     label7:
+        $r6 := @caughtexception;
+
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l1);
+
+        throw $r6;
+
+        catch java.lang.Throwable from label1 to label2 with label7;
+        catch java.lang.Throwable from label2 to label3 with label4;
+        catch java.lang.Throwable from label5 to label6 with label4;
+        catch java.lang.Throwable from label6 to label7 with label7;
+    }
+
+    public void setSessionVolumeWithManager(android.media.IMediaRouter2Manager, int, java.lang.String, int)
+    {
+        com.android.server.media.MediaRouter2ServiceImpl r0;
+        int i0, i1;
+        java.lang.String r1;
+        long l2;
+        java.lang.Object r2;
+        boolean $z0;
+        java.lang.IllegalArgumentException $r4;
+        java.lang.Throwable $r5, $r6;
+        android.media.IMediaRouter2Manager r7;
+
+        r0 := @this: com.android.server.media.MediaRouter2ServiceImpl;
+
+        r7 := @parameter0: android.media.IMediaRouter2Manager;
+
+        i0 := @parameter1: int;
+
+        r1 := @parameter2: java.lang.String;
+
+        i1 := @parameter3: int;
+
+        staticinvoke <java.util.Objects: java.lang.Object requireNonNull(java.lang.Object,java.lang.String)>(r7, "manager must not be null");
+
+        $z0 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>(r1);
+
+        if $z0 != 0 goto label8;
+
+        l2 = staticinvoke <android.os.Binder: long clearCallingIdentity()>();
+
+     label1:
+        r2 = r0.<com.android.server.media.MediaRouter2ServiceImpl: java.lang.Object mLock>;
+
+        entermonitor r2;
+
+     label2:
+        specialinvoke r0.<com.android.server.media.MediaRouter2ServiceImpl: void setSessionVolumeWithManagerLocked(int,android.media.IMediaRouter2Manager,java.lang.String,int)>(i0, r7, r1, i1);
+
+        exitmonitor r2;
+
+     label3:
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l2);
+
+        return;
+
+     label4:
+        $r5 := @caughtexception;
+
+     label5:
+        exitmonitor r2;
+
+     label6:
+        throw $r5;
+
+     label7:
+        $r6 := @caughtexception;
+
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l2);
+
+        throw $r6;
+
+     label8:
+        $r4 = new java.lang.IllegalArgumentException;
+
+        specialinvoke $r4.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>("uniqueSessionId must not be empty");
+
+        throw $r4;
+
+        catch java.lang.Throwable from label1 to label2 with label7;
+        catch java.lang.Throwable from label2 to label3 with label4;
+        catch java.lang.Throwable from label5 to label6 with label4;
+        catch java.lang.Throwable from label6 to label7 with label7;
+    }
+
+    public void setSessionVolumeWithRouter2(android.media.IMediaRouter2, java.lang.String, int)
+    {
+        com.android.server.media.MediaRouter2ServiceImpl r0;
+        java.lang.String r1;
+        int i0;
+        long l1;
+        java.lang.Object r2;
+        java.lang.Throwable $r5, $r6;
+        android.media.IMediaRouter2 r7;
+
+        r0 := @this: com.android.server.media.MediaRouter2ServiceImpl;
+
+        r7 := @parameter0: android.media.IMediaRouter2;
+
+        r1 := @parameter1: java.lang.String;
+
+        i0 := @parameter2: int;
+
+        staticinvoke <java.util.Objects: java.lang.Object requireNonNull(java.lang.Object,java.lang.String)>(r7, "router must not be null");
+
+        staticinvoke <java.util.Objects: java.lang.Object requireNonNull(java.lang.Object,java.lang.String)>(r1, "uniqueSessionId must not be null");
+
+        l1 = staticinvoke <android.os.Binder: long clearCallingIdentity()>();
+
+     label1:
+        r2 = r0.<com.android.server.media.MediaRouter2ServiceImpl: java.lang.Object mLock>;
+
+        entermonitor r2;
+
+     label2:
+        specialinvoke r0.<com.android.server.media.MediaRouter2ServiceImpl: void setSessionVolumeWithRouter2Locked(android.media.IMediaRouter2,java.lang.String,int)>(r7, r1, i0);
+
+        exitmonitor r2;
+
+     label3:
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l1);
+
+        return;
+
+     label4:
+        $r6 := @caughtexception;
+
+     label5:
+        exitmonitor r2;
+
+     label6:
+        throw $r6;
+
+     label7:
+        $r5 := @caughtexception;
+
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l1);
+
+        throw $r5;
+
+        catch java.lang.Throwable from label1 to label2 with label7;
+        catch java.lang.Throwable from label2 to label3 with label4;
+        catch java.lang.Throwable from label5 to label6 with label4;
+        catch java.lang.Throwable from label6 to label7 with label7;
+    }
+
+    void switchUser()
+    {
+        com.android.server.media.MediaRouter2ServiceImpl r0;
+        java.lang.Object r1, $r3, $r5;
+        int i0, i1, $i2;
+        android.util.SparseArray $r2, $r4;
+        com.android.server.media.MediaRouter2ServiceImpl$UserHandler $r6, $r8, $r10, $r12;
+        com.android.server.media.'-$$Lambda$MediaRouter2ServiceImpl$xwrgJ0QIcy6O_xCDFBt_XQNI5DY' $r7;
+        android.os.Message $r9, $r13;
+        com.android.server.media.'-$$Lambda$MediaRouter2ServiceImpl$6Riyrjlduscvk3ao_6ULVEacHqc' $r11;
+        java.lang.Throwable $r14;
+        com.android.server.media.MediaRouter2ServiceImpl$UserRecord r15, r16;
+        java.util.function.Consumer r18, r19;
+
+        r0 := @this: com.android.server.media.MediaRouter2ServiceImpl;
+
+        r1 = r0.<com.android.server.media.MediaRouter2ServiceImpl: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label01:
+        i0 = staticinvoke <android.app.ActivityManager: int getCurrentUser()>();
+
+        $i2 = r0.<com.android.server.media.MediaRouter2ServiceImpl: int mCurrentUserId>;
+
+        if $i2 == i0 goto label07;
+
+        i1 = r0.<com.android.server.media.MediaRouter2ServiceImpl: int mCurrentUserId>;
+
+        r0.<com.android.server.media.MediaRouter2ServiceImpl: int mCurrentUserId> = i0;
+
+        $r2 = r0.<com.android.server.media.MediaRouter2ServiceImpl: android.util.SparseArray mUserRecords>;
+
+        $r3 = virtualinvoke $r2.<android.util.SparseArray: java.lang.Object get(int)>(i1);
+
+        r15 = (com.android.server.media.MediaRouter2ServiceImpl$UserRecord) $r3;
+
+     label02:
+        if r15 == null goto label04;
+
+     label03:
+        $r12 = r15.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        $r11 = <com.android.server.media._$$Lambda$MediaRouter2ServiceImpl$6Riyrjlduscvk3ao_6ULVEacHqc: com.android.server.media.'-$$Lambda$MediaRouter2ServiceImpl$6Riyrjlduscvk3ao_6ULVEacHqc' INSTANCE>;
+
+        $r10 = r15.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        r18 = (java.util.function.Consumer) $r11;
+
+        $r13 = staticinvoke <com.android.internal.util.function.pooled.PooledLambda: android.os.Message obtainMessage(java.util.function.Consumer,java.lang.Object)>(r18, $r10);
+
+        virtualinvoke $r12.<com.android.server.media.MediaRouter2ServiceImpl$UserHandler: boolean sendMessage(android.os.Message)>($r13);
+
+        specialinvoke r0.<com.android.server.media.MediaRouter2ServiceImpl: void disposeUserIfNeededLocked(com.android.server.media.MediaRouter2ServiceImpl$UserRecord)>(r15);
+
+     label04:
+        $r4 = r0.<com.android.server.media.MediaRouter2ServiceImpl: android.util.SparseArray mUserRecords>;
+
+        $r5 = virtualinvoke $r4.<android.util.SparseArray: java.lang.Object get(int)>(i0);
+
+        r16 = (com.android.server.media.MediaRouter2ServiceImpl$UserRecord) $r5;
+
+     label05:
+        if r16 == null goto label07;
+
+     label06:
+        $r8 = r16.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        $r7 = <com.android.server.media._$$Lambda$MediaRouter2ServiceImpl$xwrgJ0QIcy6O_xCDFBt_XQNI5DY: com.android.server.media.'-$$Lambda$MediaRouter2ServiceImpl$xwrgJ0QIcy6O_xCDFBt_XQNI5DY' INSTANCE>;
+
+        $r6 = r16.<com.android.server.media.MediaRouter2ServiceImpl$UserRecord: com.android.server.media.MediaRouter2ServiceImpl$UserHandler mHandler>;
+
+        r19 = (java.util.function.Consumer) $r7;
+
+        $r9 = staticinvoke <com.android.internal.util.function.pooled.PooledLambda: android.os.Message obtainMessage(java.util.function.Consumer,java.lang.Object)>(r19, $r6);
+
+        virtualinvoke $r8.<com.android.server.media.MediaRouter2ServiceImpl$UserHandler: boolean sendMessage(android.os.Message)>($r9);
+
+     label07:
+        exitmonitor r1;
+
+     label08:
+        return;
+
+     label09:
+        $r14 := @caughtexception;
+
+     label10:
+        exitmonitor r1;
+
+     label11:
+        throw $r14;
+
+        catch java.lang.Throwable from label01 to label02 with label09;
+        catch java.lang.Throwable from label03 to label04 with label09;
+        catch java.lang.Throwable from label04 to label05 with label09;
+        catch java.lang.Throwable from label06 to label07 with label09;
+        catch java.lang.Throwable from label07 to label08 with label09;
+        catch java.lang.Throwable from label10 to label11 with label09;
+    }
+
+    public void transferToRouteWithManager(android.media.IMediaRouter2Manager, int, java.lang.String, android.media.MediaRoute2Info)
+    {
+        com.android.server.media.MediaRouter2ServiceImpl r0;
+        int i0;
+        java.lang.String r1;
+        android.media.MediaRoute2Info r2;
+        long l1;
+        java.lang.Object r3;
+        boolean $z0;
+        java.lang.IllegalArgumentException $r5;
+        java.lang.Throwable $r7, $r8;
+        android.media.IMediaRouter2Manager r9;
+
+        r0 := @this: com.android.server.media.MediaRouter2ServiceImpl;
+
+        r9 := @parameter0: android.media.IMediaRouter2Manager;
+
+        i0 := @parameter1: int;
+
+        r1 := @parameter2: java.lang.String;
+
+        r2 := @parameter3: android.media.MediaRoute2Info;
+
+        staticinvoke <java.util.Objects: java.lang.Object requireNonNull(java.lang.Object,java.lang.String)>(r9, "manager must not be null");
+
+        $z0 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>(r1);
+
+        if $z0 != 0 goto label8;
+
+        staticinvoke <java.util.Objects: java.lang.Object requireNonNull(java.lang.Object,java.lang.String)>(r2, "route must not be null");
+
+        l1 = staticinvoke <android.os.Binder: long clearCallingIdentity()>();
+
+     label1:
+        r3 = r0.<com.android.server.media.MediaRouter2ServiceImpl: java.lang.Object mLock>;
+
+        entermonitor r3;
+
+     label2:
+        specialinvoke r0.<com.android.server.media.MediaRouter2ServiceImpl: void transferToRouteWithManagerLocked(int,android.media.IMediaRouter2Manager,java.lang.String,android.media.MediaRoute2Info)>(i0, r9, r1, r2);
+
+        exitmonitor r3;
+
+     label3:
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l1);
+
+        return;
+
+     label4:
+        $r7 := @caughtexception;
+
+     label5:
+        exitmonitor r3;
+
+     label6:
+        throw $r7;
+
+     label7:
+        $r8 := @caughtexception;
+
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l1);
+
+        throw $r8;
+
+     label8:
+        $r5 = new java.lang.IllegalArgumentException;
+
+        specialinvoke $r5.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>("uniqueSessionId must not be empty");
+
+        throw $r5;
+
+        catch java.lang.Throwable from label1 to label2 with label7;
+        catch java.lang.Throwable from label2 to label3 with label4;
+        catch java.lang.Throwable from label5 to label6 with label4;
+        catch java.lang.Throwable from label6 to label7 with label7;
+    }
+
+    public void transferToRouteWithRouter2(android.media.IMediaRouter2, java.lang.String, android.media.MediaRoute2Info)
+    {
+        com.android.server.media.MediaRouter2ServiceImpl r0;
+        java.lang.String r1;
+        android.media.MediaRoute2Info r2;
+        long l0;
+        java.lang.Object r3;
+        boolean $z0;
+        java.lang.IllegalArgumentException $r6;
+        java.lang.Throwable $r7, $r8;
+        android.media.IMediaRouter2 r9;
+
+        r0 := @this: com.android.server.media.MediaRouter2ServiceImpl;
+
+        r9 := @parameter0: android.media.IMediaRouter2;
+
+        r1 := @parameter1: java.lang.String;
+
+        r2 := @parameter2: android.media.MediaRoute2Info;
+
+        staticinvoke <java.util.Objects: java.lang.Object requireNonNull(java.lang.Object,java.lang.String)>(r9, "router must not be null");
+
+        staticinvoke <java.util.Objects: java.lang.Object requireNonNull(java.lang.Object,java.lang.String)>(r2, "route must not be null");
+
+        $z0 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>(r1);
+
+        if $z0 != 0 goto label8;
+
+        l0 = staticinvoke <android.os.Binder: long clearCallingIdentity()>();
+
+     label1:
+        r3 = r0.<com.android.server.media.MediaRouter2ServiceImpl: java.lang.Object mLock>;
+
+        entermonitor r3;
+
+     label2:
+        specialinvoke r0.<com.android.server.media.MediaRouter2ServiceImpl: void transferToRouteWithRouter2Locked(android.media.IMediaRouter2,java.lang.String,android.media.MediaRoute2Info)>(r9, r1, r2);
+
+        exitmonitor r3;
+
+     label3:
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l0);
+
+        return;
+
+     label4:
+        $r8 := @caughtexception;
+
+     label5:
+        exitmonitor r3;
+
+     label6:
+        throw $r8;
+
+     label7:
+        $r7 := @caughtexception;
+
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l0);
+
+        throw $r7;
+
+     label8:
+        $r6 = new java.lang.IllegalArgumentException;
+
+        specialinvoke $r6.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>("uniqueSessionId must not be empty");
+
+        throw $r6;
+
+        catch java.lang.Throwable from label1 to label2 with label7;
+        catch java.lang.Throwable from label2 to label3 with label4;
+        catch java.lang.Throwable from label5 to label6 with label4;
+        catch java.lang.Throwable from label6 to label7 with label7;
+    }
+
+    public void unregisterManager(android.media.IMediaRouter2Manager)
+    {
+        com.android.server.media.MediaRouter2ServiceImpl r0;
+        long l0;
+        java.lang.Object r1;
+        java.lang.Throwable $r3, $r4;
+        android.media.IMediaRouter2Manager r5;
+
+        r0 := @this: com.android.server.media.MediaRouter2ServiceImpl;
+
+        r5 := @parameter0: android.media.IMediaRouter2Manager;
+
+        staticinvoke <java.util.Objects: java.lang.Object requireNonNull(java.lang.Object,java.lang.String)>(r5, "manager must not be null");
+
+        l0 = staticinvoke <android.os.Binder: long clearCallingIdentity()>();
+
+     label1:
+        r1 = r0.<com.android.server.media.MediaRouter2ServiceImpl: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label2:
+        specialinvoke r0.<com.android.server.media.MediaRouter2ServiceImpl: void unregisterManagerLocked(android.media.IMediaRouter2Manager,boolean)>(r5, 0);
+
+        exitmonitor r1;
+
+     label3:
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l0);
+
+        return;
+
+     label4:
+        $r3 := @caughtexception;
+
+     label5:
+        exitmonitor r1;
+
+     label6:
+        throw $r3;
+
+     label7:
+        $r4 := @caughtexception;
+
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l0);
+
+        throw $r4;
+
+        catch java.lang.Throwable from label1 to label2 with label7;
+        catch java.lang.Throwable from label2 to label3 with label4;
+        catch java.lang.Throwable from label5 to label6 with label4;
+        catch java.lang.Throwable from label6 to label7 with label7;
+    }
+
+    public void unregisterRouter2(android.media.IMediaRouter2)
+    {
+        com.android.server.media.MediaRouter2ServiceImpl r0;
+        long l0;
+        java.lang.Object r1;
+        java.lang.Throwable $r3, $r4;
+        android.media.IMediaRouter2 r5;
+
+        r0 := @this: com.android.server.media.MediaRouter2ServiceImpl;
+
+        r5 := @parameter0: android.media.IMediaRouter2;
+
+        staticinvoke <java.util.Objects: java.lang.Object requireNonNull(java.lang.Object,java.lang.String)>(r5, "router must not be null");
+
+        l0 = staticinvoke <android.os.Binder: long clearCallingIdentity()>();
+
+     label1:
+        r1 = r0.<com.android.server.media.MediaRouter2ServiceImpl: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label2:
+        specialinvoke r0.<com.android.server.media.MediaRouter2ServiceImpl: void unregisterRouter2Locked(android.media.IMediaRouter2,boolean)>(r5, 0);
+
+        exitmonitor r1;
+
+     label3:
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l0);
+
+        return;
+
+     label4:
+        $r3 := @caughtexception;
+
+     label5:
+        exitmonitor r1;
+
+     label6:
+        throw $r3;
+
+     label7:
+        $r4 := @caughtexception;
+
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l0);
+
+        throw $r4;
+
+        catch java.lang.Throwable from label1 to label2 with label7;
+        catch java.lang.Throwable from label2 to label3 with label4;
+        catch java.lang.Throwable from label5 to label6 with label4;
+        catch java.lang.Throwable from label6 to label7 with label7;
+    }
+}

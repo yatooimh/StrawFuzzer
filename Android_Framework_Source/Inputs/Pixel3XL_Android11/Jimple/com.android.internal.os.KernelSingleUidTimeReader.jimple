@@ -1,0 +1,750 @@
+public class com.android.internal.os.KernelSingleUidTimeReader extends java.lang.Object
+{
+    private static final boolean DBG;
+    private static final java.lang.String PROC_FILE_DIR;
+    private static final java.lang.String PROC_FILE_NAME;
+    private static final java.lang.String TAG;
+    public static final int TOTAL_READ_ERROR_COUNT;
+    private static final java.lang.String UID_TIMES_PROC_FILE;
+    private boolean mBpfTimesAvailable;
+    private final int mCpuFreqsCount;
+    private boolean mCpuFreqsCountVerified;
+    private final com.android.internal.os.KernelSingleUidTimeReader$Injector mInjector;
+    private android.util.SparseArray mLastUidCpuTimeMs;
+    private int mReadErrorCounter;
+    private boolean mSingleUidCpuTimesAvailable;
+
+    static void <clinit>()
+    {
+        java.lang.Class $r0;
+        java.lang.String $r1;
+
+        <com.android.internal.os.KernelSingleUidTimeReader: java.lang.String UID_TIMES_PROC_FILE> = "/proc/uid_time_in_state";
+
+        <com.android.internal.os.KernelSingleUidTimeReader: int TOTAL_READ_ERROR_COUNT> = 5;
+
+        <com.android.internal.os.KernelSingleUidTimeReader: java.lang.String PROC_FILE_NAME> = "/time_in_state";
+
+        <com.android.internal.os.KernelSingleUidTimeReader: java.lang.String PROC_FILE_DIR> = "/proc/uid/";
+
+        <com.android.internal.os.KernelSingleUidTimeReader: boolean DBG> = 0;
+
+        $r0 = class "Lcom/android/internal/os/KernelSingleUidTimeReader;";
+
+        $r1 = virtualinvoke $r0.<java.lang.Class: java.lang.String getName()>();
+
+        <com.android.internal.os.KernelSingleUidTimeReader: java.lang.String TAG> = $r1;
+
+        return;
+    }
+
+    void <init>(int)
+    {
+        com.android.internal.os.KernelSingleUidTimeReader r0;
+        int i0;
+        com.android.internal.os.KernelSingleUidTimeReader$Injector $r1;
+
+        r0 := @this: com.android.internal.os.KernelSingleUidTimeReader;
+
+        i0 := @parameter0: int;
+
+        $r1 = new com.android.internal.os.KernelSingleUidTimeReader$Injector;
+
+        specialinvoke $r1.<com.android.internal.os.KernelSingleUidTimeReader$Injector: void <init>()>();
+
+        specialinvoke r0.<com.android.internal.os.KernelSingleUidTimeReader: void <init>(int,com.android.internal.os.KernelSingleUidTimeReader$Injector)>(i0, $r1);
+
+        return;
+    }
+
+    public void <init>(int, com.android.internal.os.KernelSingleUidTimeReader$Injector)
+    {
+        com.android.internal.os.KernelSingleUidTimeReader r0;
+        int i0;
+        com.android.internal.os.KernelSingleUidTimeReader$Injector r1;
+        android.util.SparseArray $r2;
+
+        r0 := @this: com.android.internal.os.KernelSingleUidTimeReader;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: com.android.internal.os.KernelSingleUidTimeReader$Injector;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        $r2 = new android.util.SparseArray;
+
+        specialinvoke $r2.<android.util.SparseArray: void <init>()>();
+
+        r0.<com.android.internal.os.KernelSingleUidTimeReader: android.util.SparseArray mLastUidCpuTimeMs> = $r2;
+
+        r0.<com.android.internal.os.KernelSingleUidTimeReader: boolean mSingleUidCpuTimesAvailable> = 1;
+
+        r0.<com.android.internal.os.KernelSingleUidTimeReader: boolean mBpfTimesAvailable> = 1;
+
+        r0.<com.android.internal.os.KernelSingleUidTimeReader: com.android.internal.os.KernelSingleUidTimeReader$Injector mInjector> = r1;
+
+        r0.<com.android.internal.os.KernelSingleUidTimeReader: int mCpuFreqsCount> = i0;
+
+        if i0 != 0 goto label1;
+
+        r0.<com.android.internal.os.KernelSingleUidTimeReader: boolean mSingleUidCpuTimesAvailable> = 0;
+
+     label1:
+        return;
+    }
+
+    private static final native boolean canReadBpfTimes();
+
+    private long[] readCpuTimesFromByteBuffer(java.nio.ByteBuffer)
+    {
+        com.android.internal.os.KernelSingleUidTimeReader r0;
+        java.nio.ByteBuffer r1;
+        long[] r2;
+        int $i0, $i1, i4;
+        long $l2, $l3;
+
+        r0 := @this: com.android.internal.os.KernelSingleUidTimeReader;
+
+        r1 := @parameter0: java.nio.ByteBuffer;
+
+        $i0 = r0.<com.android.internal.os.KernelSingleUidTimeReader: int mCpuFreqsCount>;
+
+        r2 = newarray (long)[$i0];
+
+        i4 = 0;
+
+     label1:
+        $i1 = r0.<com.android.internal.os.KernelSingleUidTimeReader: int mCpuFreqsCount>;
+
+        if i4 >= $i1 goto label2;
+
+        $l2 = virtualinvoke r1.<java.nio.ByteBuffer: long getLong()>();
+
+        $l3 = $l2 * 10L;
+
+        r2[i4] = $l3;
+
+        i4 = i4 + 1;
+
+        goto label1;
+
+     label2:
+        return r2;
+    }
+
+    private void verifyCpuFreqsCount(int, java.lang.String)
+    {
+        com.android.internal.os.KernelSingleUidTimeReader r0;
+        java.lang.String r1, $r11;
+        int $i0, $i1, i2, i3;
+        java.lang.StringBuilder $r3;
+        java.lang.IllegalStateException $r10;
+
+        r0 := @this: com.android.internal.os.KernelSingleUidTimeReader;
+
+        i2 := @parameter0: int;
+
+        r1 := @parameter1: java.lang.String;
+
+        i3 = i2 / 8;
+
+        $i0 = r0.<com.android.internal.os.KernelSingleUidTimeReader: int mCpuFreqsCount>;
+
+        if $i0 != i3 goto label1;
+
+        r0.<com.android.internal.os.KernelSingleUidTimeReader: boolean mCpuFreqsCountVerified> = 1;
+
+        return;
+
+     label1:
+        r0.<com.android.internal.os.KernelSingleUidTimeReader: boolean mSingleUidCpuTimesAvailable> = 0;
+
+        $r3 = new java.lang.StringBuilder;
+
+        specialinvoke $r3.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Freq count didn\'t match,count from /proc/uid_time_in_state=");
+
+        $i1 = r0.<com.android.internal.os.KernelSingleUidTimeReader: int mCpuFreqsCount>;
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i1);
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", butcount from ");
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("=");
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i3);
+
+        $r10 = new java.lang.IllegalStateException;
+
+        $r11 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r10.<java.lang.IllegalStateException: void <init>(java.lang.String)>($r11);
+
+        throw $r10;
+    }
+
+    public long[] computeDelta(int, long[])
+    {
+        com.android.internal.os.KernelSingleUidTimeReader r0;
+        int i0, $i1, i4;
+        long[] r1, $r4, r7;
+        boolean $z1, z2;
+        android.util.SparseArray $r2, $r5;
+        java.lang.Object $r3;
+        long $l2;
+        byte $b3;
+        java.lang.Throwable $r6;
+
+        r0 := @this: com.android.internal.os.KernelSingleUidTimeReader;
+
+        i0 := @parameter0: int;
+
+        r7 := @parameter1: long[];
+
+        entermonitor r0;
+
+     label01:
+        $z1 = r0.<com.android.internal.os.KernelSingleUidTimeReader: boolean mSingleUidCpuTimesAvailable>;
+
+        if $z1 != 0 goto label03;
+
+        exitmonitor r0;
+
+     label02:
+        return null;
+
+     label03:
+        $r2 = r0.<com.android.internal.os.KernelSingleUidTimeReader: android.util.SparseArray mLastUidCpuTimeMs>;
+
+        $r3 = virtualinvoke $r2.<android.util.SparseArray: java.lang.Object get(int)>(i0);
+
+        $r4 = (long[]) $r3;
+
+        r1 = virtualinvoke r0.<com.android.internal.os.KernelSingleUidTimeReader: long[] getDeltaLocked(long[],long[])>($r4, r7);
+
+     label04:
+        if r1 != null goto label07;
+
+     label05:
+        exitmonitor r0;
+
+     label06:
+        return null;
+
+     label07:
+        $i1 = lengthof r1;
+
+        i4 = $i1 - 1;
+
+     label08:
+        z2 = 0;
+
+        if i4 < 0 goto label10;
+
+        $l2 = r1[i4];
+
+        $b3 = $l2 cmp 0L;
+
+        if $b3 <= 0 goto label09;
+
+        z2 = 1;
+
+        goto label10;
+
+     label09:
+        i4 = i4 + -1;
+
+        goto label08;
+
+     label10:
+        if z2 == 0 goto label13;
+
+     label11:
+        $r5 = r0.<com.android.internal.os.KernelSingleUidTimeReader: android.util.SparseArray mLastUidCpuTimeMs>;
+
+        virtualinvoke $r5.<android.util.SparseArray: void put(int,java.lang.Object)>(i0, r7);
+
+        exitmonitor r0;
+
+     label12:
+        return r1;
+
+     label13:
+        exitmonitor r0;
+
+     label14:
+        return null;
+
+     label15:
+        $r6 := @caughtexception;
+
+     label16:
+        exitmonitor r0;
+
+     label17:
+        throw $r6;
+
+        catch java.lang.Throwable from label01 to label02 with label15;
+        catch java.lang.Throwable from label03 to label04 with label15;
+        catch java.lang.Throwable from label05 to label06 with label15;
+        catch java.lang.Throwable from label07 to label08 with label15;
+        catch java.lang.Throwable from label11 to label12 with label15;
+        catch java.lang.Throwable from label13 to label14 with label15;
+        catch java.lang.Throwable from label16 to label17 with label15;
+    }
+
+    public long[] getDeltaLocked(long[], long[])
+    {
+        com.android.internal.os.KernelSingleUidTimeReader r0;
+        long[] r1, r2, r3;
+        int $i0, $i1, $i2, i10, i11;
+        long $l3, $l4, $l5, $l6, $l8;
+        byte $b7, $b9;
+
+        r0 := @this: com.android.internal.os.KernelSingleUidTimeReader;
+
+        r1 := @parameter0: long[];
+
+        r2 := @parameter1: long[];
+
+        $i0 = lengthof r2;
+
+        i10 = $i0 - 1;
+
+     label1:
+        if i10 < 0 goto label3;
+
+        $l8 = r2[i10];
+
+        $b9 = $l8 cmp 0L;
+
+        if $b9 >= 0 goto label2;
+
+        return null;
+
+     label2:
+        i10 = i10 + -1;
+
+        goto label1;
+
+     label3:
+        if r1 != null goto label4;
+
+        return r2;
+
+     label4:
+        $i1 = lengthof r2;
+
+        r3 = newarray (long)[$i1];
+
+        $i2 = lengthof r2;
+
+        i11 = $i2 - 1;
+
+     label5:
+        if i11 < 0 goto label7;
+
+        $l4 = r2[i11];
+
+        $l3 = r1[i11];
+
+        $l5 = $l4 - $l3;
+
+        r3[i11] = $l5;
+
+        $l6 = r3[i11];
+
+        $b7 = $l6 cmp 0L;
+
+        if $b7 >= 0 goto label6;
+
+        return null;
+
+     label6:
+        i11 = i11 + -1;
+
+        goto label5;
+
+     label7:
+        return r3;
+    }
+
+    public android.util.SparseArray getLastUidCpuTimeMs()
+    {
+        com.android.internal.os.KernelSingleUidTimeReader r0;
+        android.util.SparseArray $r1;
+
+        r0 := @this: com.android.internal.os.KernelSingleUidTimeReader;
+
+        $r1 = r0.<com.android.internal.os.KernelSingleUidTimeReader: android.util.SparseArray mLastUidCpuTimeMs>;
+
+        return $r1;
+    }
+
+    public long[] readDeltaMs(int)
+    {
+        com.android.internal.os.KernelSingleUidTimeReader r0;
+        byte[] r1;
+        boolean $z0, $z1, $z2, $z3;
+        com.android.internal.os.KernelSingleUidTimeReader$Injector $r4, $r7;
+        java.nio.ByteOrder $r5;
+        int $i0, $i1, $i2, $i3, $i4, i5, i6;
+        java.lang.Exception $r8;
+        java.lang.Throwable $r9;
+        long[] r10, r11, r15, r16;
+        java.lang.StringBuilder r12;
+        java.lang.String r13;
+        java.nio.ByteBuffer r14;
+
+        r0 := @this: com.android.internal.os.KernelSingleUidTimeReader;
+
+        i5 := @parameter0: int;
+
+        entermonitor r0;
+
+     label01:
+        $z0 = r0.<com.android.internal.os.KernelSingleUidTimeReader: boolean mSingleUidCpuTimesAvailable>;
+
+        if $z0 != 0 goto label03;
+
+        exitmonitor r0;
+
+     label02:
+        return null;
+
+     label03:
+        $z1 = r0.<com.android.internal.os.KernelSingleUidTimeReader: boolean mBpfTimesAvailable>;
+
+        if $z1 == 0 goto label09;
+
+        $r7 = r0.<com.android.internal.os.KernelSingleUidTimeReader: com.android.internal.os.KernelSingleUidTimeReader$Injector mInjector>;
+
+        r10 = virtualinvoke $r7.<com.android.internal.os.KernelSingleUidTimeReader$Injector: long[] readBpfData(int)>(i5);
+
+        $i1 = lengthof r10;
+
+        if $i1 != 0 goto label05;
+
+        r0.<com.android.internal.os.KernelSingleUidTimeReader: boolean mBpfTimesAvailable> = 0;
+
+     label04:
+        goto label09;
+
+     label05:
+        $z3 = r0.<com.android.internal.os.KernelSingleUidTimeReader: boolean mCpuFreqsCountVerified>;
+
+        if $z3 != 0 goto label07;
+
+        $i3 = lengthof r10;
+
+        $i2 = r0.<com.android.internal.os.KernelSingleUidTimeReader: int mCpuFreqsCount>;
+
+        if $i3 == $i2 goto label07;
+
+        r0.<com.android.internal.os.KernelSingleUidTimeReader: boolean mSingleUidCpuTimesAvailable> = 0;
+
+        exitmonitor r0;
+
+     label06:
+        return null;
+
+     label07:
+        r0.<com.android.internal.os.KernelSingleUidTimeReader: boolean mCpuFreqsCountVerified> = 1;
+
+        r11 = virtualinvoke r0.<com.android.internal.os.KernelSingleUidTimeReader: long[] computeDelta(int,long[])>(i5, r10);
+
+        exitmonitor r0;
+
+     label08:
+        return r11;
+
+     label09:
+        r12 = new java.lang.StringBuilder;
+
+        specialinvoke r12.<java.lang.StringBuilder: void <init>(java.lang.String)>("/proc/uid/");
+
+        virtualinvoke r12.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i5);
+
+        virtualinvoke r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("/time_in_state");
+
+        r13 = virtualinvoke r12.<java.lang.StringBuilder: java.lang.String toString()>();
+
+     label10:
+        $r4 = r0.<com.android.internal.os.KernelSingleUidTimeReader: com.android.internal.os.KernelSingleUidTimeReader$Injector mInjector>;
+
+        r1 = virtualinvoke $r4.<com.android.internal.os.KernelSingleUidTimeReader$Injector: byte[] readData(java.lang.String)>(r13);
+
+        $z2 = r0.<com.android.internal.os.KernelSingleUidTimeReader: boolean mCpuFreqsCountVerified>;
+
+        if $z2 != 0 goto label11;
+
+        $i0 = lengthof r1;
+
+        specialinvoke r0.<com.android.internal.os.KernelSingleUidTimeReader: void verifyCpuFreqsCount(int,java.lang.String)>($i0, r13);
+
+     label11:
+        r14 = staticinvoke <java.nio.ByteBuffer: java.nio.ByteBuffer wrap(byte[])>(r1);
+
+        $r5 = staticinvoke <java.nio.ByteOrder: java.nio.ByteOrder nativeOrder()>();
+
+        virtualinvoke r14.<java.nio.ByteBuffer: java.nio.ByteBuffer order(java.nio.ByteOrder)>($r5);
+
+        r15 = specialinvoke r0.<com.android.internal.os.KernelSingleUidTimeReader: long[] readCpuTimesFromByteBuffer(java.nio.ByteBuffer)>(r14);
+
+     label12:
+        r16 = virtualinvoke r0.<com.android.internal.os.KernelSingleUidTimeReader: long[] computeDelta(int,long[])>(i5, r15);
+
+        exitmonitor r0;
+
+     label13:
+        return r16;
+
+     label14:
+        $r8 := @caughtexception;
+
+     label15:
+        $i4 = r0.<com.android.internal.os.KernelSingleUidTimeReader: int mReadErrorCounter>;
+
+        i6 = $i4 + 1;
+
+        r0.<com.android.internal.os.KernelSingleUidTimeReader: int mReadErrorCounter> = i6;
+
+     label16:
+        if i6 < 5 goto label18;
+
+     label17:
+        r0.<com.android.internal.os.KernelSingleUidTimeReader: boolean mSingleUidCpuTimesAvailable> = 0;
+
+     label18:
+        exitmonitor r0;
+
+     label19:
+        return null;
+
+     label20:
+        $r9 := @caughtexception;
+
+     label21:
+        exitmonitor r0;
+
+     label22:
+        throw $r9;
+
+        catch java.lang.Throwable from label01 to label02 with label20;
+        catch java.lang.Throwable from label03 to label04 with label20;
+        catch java.lang.Throwable from label05 to label06 with label20;
+        catch java.lang.Throwable from label07 to label08 with label20;
+        catch java.lang.Throwable from label09 to label10 with label20;
+        catch java.lang.Exception from label10 to label11 with label14;
+        catch java.lang.Throwable from label10 to label11 with label20;
+        catch java.lang.Exception from label11 to label12 with label14;
+        catch java.lang.Throwable from label11 to label12 with label20;
+        catch java.lang.Throwable from label12 to label13 with label20;
+        catch java.lang.Throwable from label15 to label16 with label20;
+        catch java.lang.Throwable from label17 to label18 with label20;
+        catch java.lang.Throwable from label18 to label19 with label20;
+        catch java.lang.Throwable from label21 to label22 with label20;
+    }
+
+    public void removeUid(int)
+    {
+        com.android.internal.os.KernelSingleUidTimeReader r0;
+        int i0;
+        android.util.SparseArray $r2;
+        java.lang.Throwable $r3;
+
+        r0 := @this: com.android.internal.os.KernelSingleUidTimeReader;
+
+        i0 := @parameter0: int;
+
+        entermonitor r0;
+
+     label1:
+        $r2 = r0.<com.android.internal.os.KernelSingleUidTimeReader: android.util.SparseArray mLastUidCpuTimeMs>;
+
+        virtualinvoke $r2.<android.util.SparseArray: void delete(int)>(i0);
+
+        exitmonitor r0;
+
+     label2:
+        return;
+
+     label3:
+        $r3 := @caughtexception;
+
+     label4:
+        exitmonitor r0;
+
+     label5:
+        throw $r3;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    public void removeUidsInRange(int, int)
+    {
+        com.android.internal.os.KernelSingleUidTimeReader r0;
+        android.util.SparseArray $r2, $r3, $r4, $r5, $r6;
+        int $i0, $i1, i2, i3, i4, i5;
+        java.lang.Throwable $r7;
+
+        r0 := @this: com.android.internal.os.KernelSingleUidTimeReader;
+
+        i2 := @parameter0: int;
+
+        i3 := @parameter1: int;
+
+        if i3 >= i2 goto label1;
+
+        return;
+
+     label1:
+        entermonitor r0;
+
+     label2:
+        $r2 = r0.<com.android.internal.os.KernelSingleUidTimeReader: android.util.SparseArray mLastUidCpuTimeMs>;
+
+        virtualinvoke $r2.<android.util.SparseArray: void put(int,java.lang.Object)>(i2, null);
+
+        $r3 = r0.<com.android.internal.os.KernelSingleUidTimeReader: android.util.SparseArray mLastUidCpuTimeMs>;
+
+        virtualinvoke $r3.<android.util.SparseArray: void put(int,java.lang.Object)>(i3, null);
+
+        $r4 = r0.<com.android.internal.os.KernelSingleUidTimeReader: android.util.SparseArray mLastUidCpuTimeMs>;
+
+        i4 = virtualinvoke $r4.<android.util.SparseArray: int indexOfKey(int)>(i2);
+
+        $r5 = r0.<com.android.internal.os.KernelSingleUidTimeReader: android.util.SparseArray mLastUidCpuTimeMs>;
+
+        i5 = virtualinvoke $r5.<android.util.SparseArray: int indexOfKey(int)>(i3);
+
+        $r6 = r0.<com.android.internal.os.KernelSingleUidTimeReader: android.util.SparseArray mLastUidCpuTimeMs>;
+
+        $i0 = i5 - i4;
+
+        $i1 = $i0 + 1;
+
+        virtualinvoke $r6.<android.util.SparseArray: void removeAtRange(int,int)>(i4, $i1);
+
+        exitmonitor r0;
+
+     label3:
+        return;
+
+     label4:
+        $r7 := @caughtexception;
+
+     label5:
+        exitmonitor r0;
+
+     label6:
+        throw $r7;
+
+        catch java.lang.Throwable from label2 to label3 with label4;
+        catch java.lang.Throwable from label5 to label6 with label4;
+    }
+
+    public void setAllUidsCpuTimesMs(android.util.SparseArray)
+    {
+        com.android.internal.os.KernelSingleUidTimeReader r0;
+        long[] r1, $r6;
+        android.util.SparseArray $r2, $r4, r8;
+        int $i0, $i1, i2;
+        java.lang.Object $r3, $r5;
+        java.lang.Throwable $r7;
+
+        r0 := @this: com.android.internal.os.KernelSingleUidTimeReader;
+
+        r8 := @parameter0: android.util.SparseArray;
+
+        entermonitor r0;
+
+     label01:
+        $r2 = r0.<com.android.internal.os.KernelSingleUidTimeReader: android.util.SparseArray mLastUidCpuTimeMs>;
+
+        virtualinvoke $r2.<android.util.SparseArray: void clear()>();
+
+        $i0 = virtualinvoke r8.<android.util.SparseArray: int size()>();
+
+        i2 = $i0 - 1;
+
+     label02:
+        if i2 < 0 goto label07;
+
+     label03:
+        $r3 = virtualinvoke r8.<android.util.SparseArray: java.lang.Object valueAt(int)>(i2);
+
+        r1 = (long[]) $r3;
+
+     label04:
+        if r1 == null goto label06;
+
+     label05:
+        $r4 = r0.<com.android.internal.os.KernelSingleUidTimeReader: android.util.SparseArray mLastUidCpuTimeMs>;
+
+        $i1 = virtualinvoke r8.<android.util.SparseArray: int keyAt(int)>(i2);
+
+        $r5 = virtualinvoke r1.<java.lang.Object: java.lang.Object clone()>();
+
+        $r6 = (long[]) $r5;
+
+        virtualinvoke $r4.<android.util.SparseArray: void put(int,java.lang.Object)>($i1, $r6);
+
+     label06:
+        i2 = i2 + -1;
+
+        goto label02;
+
+     label07:
+        exitmonitor r0;
+
+     label08:
+        return;
+
+     label09:
+        $r7 := @caughtexception;
+
+     label10:
+        exitmonitor r0;
+
+     label11:
+        throw $r7;
+
+        catch java.lang.Throwable from label01 to label02 with label09;
+        catch java.lang.Throwable from label03 to label04 with label09;
+        catch java.lang.Throwable from label05 to label06 with label09;
+        catch java.lang.Throwable from label07 to label08 with label09;
+        catch java.lang.Throwable from label10 to label11 with label09;
+    }
+
+    public void setSingleUidCpuTimesAvailable(boolean)
+    {
+        com.android.internal.os.KernelSingleUidTimeReader r0;
+        boolean z0;
+
+        r0 := @this: com.android.internal.os.KernelSingleUidTimeReader;
+
+        z0 := @parameter0: boolean;
+
+        r0.<com.android.internal.os.KernelSingleUidTimeReader: boolean mSingleUidCpuTimesAvailable> = z0;
+
+        return;
+    }
+
+    public boolean singleUidCpuTimesAvailable()
+    {
+        com.android.internal.os.KernelSingleUidTimeReader r0;
+        boolean $z0;
+
+        r0 := @this: com.android.internal.os.KernelSingleUidTimeReader;
+
+        $z0 = r0.<com.android.internal.os.KernelSingleUidTimeReader: boolean mSingleUidCpuTimesAvailable>;
+
+        return $z0;
+    }
+}

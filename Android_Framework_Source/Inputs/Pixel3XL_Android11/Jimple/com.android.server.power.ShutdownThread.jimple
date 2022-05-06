@@ -1,0 +1,1862 @@
+public final class com.android.server.power.ShutdownThread extends java.lang.Thread
+{
+    private static final int ACTION_DONE_POLL_WAIT_MS;
+    private static final int ACTIVITY_MANAGER_STOP_PERCENT;
+    private static final int BROADCAST_STOP_PERCENT;
+    private static final int MAX_BROADCAST_TIME;
+    private static final int MAX_RADIO_WAIT_TIME;
+    private static final int MAX_SHUTDOWN_WAIT_TIME;
+    private static final int MAX_UNCRYPT_WAIT_TIME;
+    private static final java.lang.String METRICS_FILE_BASENAME;
+    private static java.lang.String METRIC_AM;
+    private static java.lang.String METRIC_PM;
+    private static java.lang.String METRIC_RADIO;
+    private static java.lang.String METRIC_RADIOS;
+    private static java.lang.String METRIC_SEND_BROADCAST;
+    private static java.lang.String METRIC_SHUTDOWN_TIME_START;
+    private static java.lang.String METRIC_SYSTEM_SERVER;
+    private static final int MOUNT_SERVICE_STOP_PERCENT;
+    private static final int PACKAGE_MANAGER_STOP_PERCENT;
+    private static final int RADIOS_STATE_POLL_SLEEP_MS;
+    private static final int RADIO_STOP_PERCENT;
+    public static final java.lang.String REBOOT_SAFEMODE_PROPERTY;
+    public static final java.lang.String RO_SAFEMODE_PROPERTY;
+    public static final java.lang.String SHUTDOWN_ACTION_PROPERTY;
+    private static final int SHUTDOWN_VIBRATE_MS;
+    private static final java.lang.String TAG;
+    private static final android.util.ArrayMap TRON_METRICS;
+    private static final android.media.AudioAttributes VIBRATION_ATTRIBUTES;
+    private static java.lang.String mReason;
+    private static boolean mReboot;
+    private static boolean mRebootHasProgressBar;
+    private static boolean mRebootSafeMode;
+    private static android.app.AlertDialog sConfirmDialog;
+    private static final com.android.server.power.ShutdownThread sInstance;
+    private static boolean sIsStarted;
+    private static final java.lang.Object sIsStartedGuard;
+    private boolean mActionDone;
+    private final java.lang.Object mActionDoneSync;
+    private android.content.Context mContext;
+    private android.os.PowerManager$WakeLock mCpuWakeLock;
+    private android.os.Handler mHandler;
+    private android.os.PowerManager mPowerManager;
+    private android.app.ProgressDialog mProgressDialog;
+    private android.os.PowerManager$WakeLock mScreenWakeLock;
+
+    static void <clinit>()
+    {
+        java.lang.Object $r0;
+        com.android.server.power.ShutdownThread $r1;
+        android.media.AudioAttributes$Builder $r2, $r3, $r4;
+        android.media.AudioAttributes $r5;
+        android.util.ArrayMap $r6;
+
+        <com.android.server.power.ShutdownThread: java.lang.String TAG> = "ShutdownThread";
+
+        <com.android.server.power.ShutdownThread: int SHUTDOWN_VIBRATE_MS> = 500;
+
+        <com.android.server.power.ShutdownThread: java.lang.String SHUTDOWN_ACTION_PROPERTY> = "sys.shutdown.requested";
+
+        <com.android.server.power.ShutdownThread: java.lang.String RO_SAFEMODE_PROPERTY> = "ro.sys.safemode";
+
+        <com.android.server.power.ShutdownThread: java.lang.String REBOOT_SAFEMODE_PROPERTY> = "persist.sys.safemode";
+
+        <com.android.server.power.ShutdownThread: int RADIO_STOP_PERCENT> = 18;
+
+        <com.android.server.power.ShutdownThread: int RADIOS_STATE_POLL_SLEEP_MS> = 100;
+
+        <com.android.server.power.ShutdownThread: int PACKAGE_MANAGER_STOP_PERCENT> = 6;
+
+        <com.android.server.power.ShutdownThread: int MOUNT_SERVICE_STOP_PERCENT> = 20;
+
+        <com.android.server.power.ShutdownThread: java.lang.String METRICS_FILE_BASENAME> = "/data/system/shutdown-metrics";
+
+        <com.android.server.power.ShutdownThread: int MAX_UNCRYPT_WAIT_TIME> = 900000;
+
+        <com.android.server.power.ShutdownThread: int MAX_SHUTDOWN_WAIT_TIME> = 20000;
+
+        <com.android.server.power.ShutdownThread: int MAX_RADIO_WAIT_TIME> = 12000;
+
+        <com.android.server.power.ShutdownThread: int MAX_BROADCAST_TIME> = 10000;
+
+        <com.android.server.power.ShutdownThread: int BROADCAST_STOP_PERCENT> = 2;
+
+        <com.android.server.power.ShutdownThread: int ACTIVITY_MANAGER_STOP_PERCENT> = 4;
+
+        <com.android.server.power.ShutdownThread: int ACTION_DONE_POLL_WAIT_MS> = 500;
+
+        $r0 = new java.lang.Object;
+
+        specialinvoke $r0.<java.lang.Object: void <init>()>();
+
+        <com.android.server.power.ShutdownThread: java.lang.Object sIsStartedGuard> = $r0;
+
+        <com.android.server.power.ShutdownThread: boolean sIsStarted> = 0;
+
+        $r1 = new com.android.server.power.ShutdownThread;
+
+        specialinvoke $r1.<com.android.server.power.ShutdownThread: void <init>()>();
+
+        <com.android.server.power.ShutdownThread: com.android.server.power.ShutdownThread sInstance> = $r1;
+
+        $r2 = new android.media.AudioAttributes$Builder;
+
+        specialinvoke $r2.<android.media.AudioAttributes$Builder: void <init>()>();
+
+        $r3 = virtualinvoke $r2.<android.media.AudioAttributes$Builder: android.media.AudioAttributes$Builder setContentType(int)>(4);
+
+        $r4 = virtualinvoke $r3.<android.media.AudioAttributes$Builder: android.media.AudioAttributes$Builder setUsage(int)>(13);
+
+        $r5 = virtualinvoke $r4.<android.media.AudioAttributes$Builder: android.media.AudioAttributes build()>();
+
+        <com.android.server.power.ShutdownThread: android.media.AudioAttributes VIBRATION_ATTRIBUTES> = $r5;
+
+        $r6 = new android.util.ArrayMap;
+
+        specialinvoke $r6.<android.util.ArrayMap: void <init>()>();
+
+        <com.android.server.power.ShutdownThread: android.util.ArrayMap TRON_METRICS> = $r6;
+
+        <com.android.server.power.ShutdownThread: java.lang.String METRIC_SYSTEM_SERVER> = "shutdown_system_server";
+
+        <com.android.server.power.ShutdownThread: java.lang.String METRIC_SEND_BROADCAST> = "shutdown_send_shutdown_broadcast";
+
+        <com.android.server.power.ShutdownThread: java.lang.String METRIC_AM> = "shutdown_activity_manager";
+
+        <com.android.server.power.ShutdownThread: java.lang.String METRIC_PM> = "shutdown_package_manager";
+
+        <com.android.server.power.ShutdownThread: java.lang.String METRIC_RADIOS> = "shutdown_radios";
+
+        <com.android.server.power.ShutdownThread: java.lang.String METRIC_RADIO> = "shutdown_radio";
+
+        <com.android.server.power.ShutdownThread: java.lang.String METRIC_SHUTDOWN_TIME_START> = "begin_shutdown";
+
+        return;
+    }
+
+    private void <init>()
+    {
+        com.android.server.power.ShutdownThread r0;
+        java.lang.Object $r1;
+
+        r0 := @this: com.android.server.power.ShutdownThread;
+
+        specialinvoke r0.<java.lang.Thread: void <init>()>();
+
+        $r1 = new java.lang.Object;
+
+        specialinvoke $r1.<java.lang.Object: void <init>()>();
+
+        r0.<com.android.server.power.ShutdownThread: java.lang.Object mActionDoneSync> = $r1;
+
+        return;
+    }
+
+    static void access$000(android.content.Context)
+    {
+        android.content.Context r0;
+
+        r0 := @parameter0: android.content.Context;
+
+        staticinvoke <com.android.server.power.ShutdownThread: void beginShutdownSequence(android.content.Context)>(r0);
+
+        return;
+    }
+
+    static android.app.ProgressDialog access$100(com.android.server.power.ShutdownThread)
+    {
+        com.android.server.power.ShutdownThread r0;
+        android.app.ProgressDialog $r1;
+
+        r0 := @parameter0: com.android.server.power.ShutdownThread;
+
+        $r1 = r0.<com.android.server.power.ShutdownThread: android.app.ProgressDialog mProgressDialog>;
+
+        return $r1;
+    }
+
+    static android.util.ArrayMap access$1000()
+    {
+        android.util.ArrayMap $r0;
+
+        $r0 = <com.android.server.power.ShutdownThread: android.util.ArrayMap TRON_METRICS>;
+
+        return $r0;
+    }
+
+    static android.util.TimingsTraceLog access$200()
+    {
+        android.util.TimingsTraceLog $r0;
+
+        $r0 = staticinvoke <com.android.server.power.ShutdownThread: android.util.TimingsTraceLog newTimingsLog()>();
+
+        return $r0;
+    }
+
+    static android.content.Context access$300(com.android.server.power.ShutdownThread)
+    {
+        com.android.server.power.ShutdownThread r0;
+        android.content.Context $r1;
+
+        r0 := @parameter0: com.android.server.power.ShutdownThread;
+
+        $r1 = r0.<com.android.server.power.ShutdownThread: android.content.Context mContext>;
+
+        return $r1;
+    }
+
+    static java.lang.String access$400()
+    {
+        java.lang.String $r0;
+
+        $r0 = <com.android.server.power.ShutdownThread: java.lang.String METRIC_RADIO>;
+
+        return $r0;
+    }
+
+    static void access$500(java.lang.String)
+    {
+        java.lang.String r0;
+
+        r0 := @parameter0: java.lang.String;
+
+        staticinvoke <com.android.server.power.ShutdownThread: void metricStarted(java.lang.String)>(r0);
+
+        return;
+    }
+
+    static boolean access$600()
+    {
+        boolean $z0;
+
+        $z0 = <com.android.server.power.ShutdownThread: boolean mRebootHasProgressBar>;
+
+        return $z0;
+    }
+
+    static com.android.server.power.ShutdownThread access$700()
+    {
+        com.android.server.power.ShutdownThread $r0;
+
+        $r0 = <com.android.server.power.ShutdownThread: com.android.server.power.ShutdownThread sInstance>;
+
+        return $r0;
+    }
+
+    static void access$800(com.android.server.power.ShutdownThread, int, java.lang.CharSequence)
+    {
+        com.android.server.power.ShutdownThread r0;
+        int i0;
+        java.lang.CharSequence r1;
+
+        r0 := @parameter0: com.android.server.power.ShutdownThread;
+
+        i0 := @parameter1: int;
+
+        r1 := @parameter2: java.lang.CharSequence;
+
+        specialinvoke r0.<com.android.server.power.ShutdownThread: void setRebootProgress(int,java.lang.CharSequence)>(i0, r1);
+
+        return;
+    }
+
+    static void access$900(java.lang.String)
+    {
+        java.lang.String r0;
+
+        r0 := @parameter0: java.lang.String;
+
+        staticinvoke <com.android.server.power.ShutdownThread: void metricEnded(java.lang.String)>(r0);
+
+        return;
+    }
+
+    private static void beginShutdownSequence(android.content.Context)
+    {
+        boolean $z0, $z1, $z2;
+        com.android.server.power.ShutdownThread $r0, $r6, $r8, $r12, $r13, $r15, $r17, $r19, $r21, $r24, $r26, r30, r31, r33;
+        android.app.ProgressDialog $r1;
+        java.lang.Object $r2, r29;
+        android.os.PowerManager $r3, $r4, $r10, $r16;
+        android.os.PowerManager$WakeLock $r5, $r7, $r9, $r18, $r20, $r22;
+        com.android.server.power.ShutdownThread$2 $r11;
+        java.lang.Object[] $r14;
+        java.lang.Throwable $r23, $r25, $r27;
+        android.content.Context r28;
+
+        r28 := @parameter0: android.content.Context;
+
+        r29 = <com.android.server.power.ShutdownThread: java.lang.Object sIsStartedGuard>;
+
+        entermonitor r29;
+
+     label01:
+        $z0 = <com.android.server.power.ShutdownThread: boolean sIsStarted>;
+
+        if $z0 == 0 goto label03;
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("ShutdownThread", "Shutdown sequence already running, returning.");
+
+        exitmonitor r29;
+
+     label02:
+        return;
+
+     label03:
+        <com.android.server.power.ShutdownThread: boolean sIsStarted> = 1;
+
+        exitmonitor r29;
+
+     label04:
+        $r0 = <com.android.server.power.ShutdownThread: com.android.server.power.ShutdownThread sInstance>;
+
+        $r1 = staticinvoke <com.android.server.power.ShutdownThread: android.app.ProgressDialog showShutdownDialog(android.content.Context)>(r28);
+
+        $r0.<com.android.server.power.ShutdownThread: android.app.ProgressDialog mProgressDialog> = $r1;
+
+        r30 = <com.android.server.power.ShutdownThread: com.android.server.power.ShutdownThread sInstance>;
+
+        r30.<com.android.server.power.ShutdownThread: android.content.Context mContext> = r28;
+
+        $r2 = virtualinvoke r28.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("power");
+
+        $r3 = (android.os.PowerManager) $r2;
+
+        r30.<com.android.server.power.ShutdownThread: android.os.PowerManager mPowerManager> = $r3;
+
+        r31 = <com.android.server.power.ShutdownThread: com.android.server.power.ShutdownThread sInstance>;
+
+        r31.<com.android.server.power.ShutdownThread: android.os.PowerManager$WakeLock mCpuWakeLock> = null;
+
+     label05:
+        $r4 = r31.<com.android.server.power.ShutdownThread: android.os.PowerManager mPowerManager>;
+
+        $r5 = virtualinvoke $r4.<android.os.PowerManager: android.os.PowerManager$WakeLock newWakeLock(int,java.lang.String)>(1, "ShutdownThread-cpu");
+
+        r31.<com.android.server.power.ShutdownThread: android.os.PowerManager$WakeLock mCpuWakeLock> = $r5;
+
+        $r6 = <com.android.server.power.ShutdownThread: com.android.server.power.ShutdownThread sInstance>;
+
+        $r7 = $r6.<com.android.server.power.ShutdownThread: android.os.PowerManager$WakeLock mCpuWakeLock>;
+
+        virtualinvoke $r7.<android.os.PowerManager$WakeLock: void setReferenceCounted(boolean)>(0);
+
+        $r8 = <com.android.server.power.ShutdownThread: com.android.server.power.ShutdownThread sInstance>;
+
+        $r9 = $r8.<com.android.server.power.ShutdownThread: android.os.PowerManager$WakeLock mCpuWakeLock>;
+
+        virtualinvoke $r9.<android.os.PowerManager$WakeLock: void acquire()>();
+
+     label06:
+        goto label08;
+
+     label07:
+        $r25 := @caughtexception;
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String,java.lang.Throwable)>("ShutdownThread", "No permission to acquire wake lock", $r25);
+
+        $r26 = <com.android.server.power.ShutdownThread: com.android.server.power.ShutdownThread sInstance>;
+
+        $r26.<com.android.server.power.ShutdownThread: android.os.PowerManager$WakeLock mCpuWakeLock> = null;
+
+     label08:
+        r33 = <com.android.server.power.ShutdownThread: com.android.server.power.ShutdownThread sInstance>;
+
+        r33.<com.android.server.power.ShutdownThread: android.os.PowerManager$WakeLock mScreenWakeLock> = null;
+
+        $r10 = r33.<com.android.server.power.ShutdownThread: android.os.PowerManager mPowerManager>;
+
+        $z1 = virtualinvoke $r10.<android.os.PowerManager: boolean isScreenOn()>();
+
+        if $z1 == 0 goto label12;
+
+     label09:
+        $r17 = <com.android.server.power.ShutdownThread: com.android.server.power.ShutdownThread sInstance>;
+
+        $r15 = <com.android.server.power.ShutdownThread: com.android.server.power.ShutdownThread sInstance>;
+
+        $r16 = $r15.<com.android.server.power.ShutdownThread: android.os.PowerManager mPowerManager>;
+
+        $r18 = virtualinvoke $r16.<android.os.PowerManager: android.os.PowerManager$WakeLock newWakeLock(int,java.lang.String)>(26, "ShutdownThread-screen");
+
+        $r17.<com.android.server.power.ShutdownThread: android.os.PowerManager$WakeLock mScreenWakeLock> = $r18;
+
+        $r19 = <com.android.server.power.ShutdownThread: com.android.server.power.ShutdownThread sInstance>;
+
+        $r20 = $r19.<com.android.server.power.ShutdownThread: android.os.PowerManager$WakeLock mScreenWakeLock>;
+
+        virtualinvoke $r20.<android.os.PowerManager$WakeLock: void setReferenceCounted(boolean)>(0);
+
+        $r21 = <com.android.server.power.ShutdownThread: com.android.server.power.ShutdownThread sInstance>;
+
+        $r22 = $r21.<com.android.server.power.ShutdownThread: android.os.PowerManager$WakeLock mScreenWakeLock>;
+
+        virtualinvoke $r22.<android.os.PowerManager$WakeLock: void acquire()>();
+
+     label10:
+        goto label12;
+
+     label11:
+        $r23 := @caughtexception;
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String,java.lang.Throwable)>("ShutdownThread", "No permission to acquire wake lock", $r23);
+
+        $r24 = <com.android.server.power.ShutdownThread: com.android.server.power.ShutdownThread sInstance>;
+
+        $r24.<com.android.server.power.ShutdownThread: android.os.PowerManager$WakeLock mScreenWakeLock> = null;
+
+     label12:
+        $z2 = staticinvoke <android.app.admin.SecurityLog: boolean isLoggingEnabled()>();
+
+        if $z2 == 0 goto label13;
+
+        $r14 = newarray (java.lang.Object)[0];
+
+        staticinvoke <android.app.admin.SecurityLog: int writeEvent(int,java.lang.Object[])>(210010, $r14);
+
+     label13:
+        $r12 = <com.android.server.power.ShutdownThread: com.android.server.power.ShutdownThread sInstance>;
+
+        $r11 = new com.android.server.power.ShutdownThread$2;
+
+        specialinvoke $r11.<com.android.server.power.ShutdownThread$2: void <init>()>();
+
+        $r12.<com.android.server.power.ShutdownThread: android.os.Handler mHandler> = $r11;
+
+        $r13 = <com.android.server.power.ShutdownThread: com.android.server.power.ShutdownThread sInstance>;
+
+        virtualinvoke $r13.<com.android.server.power.ShutdownThread: void start()>();
+
+        return;
+
+     label14:
+        $r27 := @caughtexception;
+
+     label15:
+        exitmonitor r29;
+
+     label16:
+        throw $r27;
+
+        catch java.lang.Throwable from label01 to label02 with label14;
+        catch java.lang.Throwable from label03 to label04 with label14;
+        catch java.lang.SecurityException from label05 to label06 with label07;
+        catch java.lang.SecurityException from label09 to label10 with label11;
+        catch java.lang.Throwable from label15 to label16 with label14;
+    }
+
+    private static void metricEnded(java.lang.String)
+    {
+        android.util.ArrayMap r0, $r1, $r2;
+        long $l0, $l1, $l2;
+        java.lang.Object $r3;
+        java.lang.Long $r4, $r5;
+        java.lang.Throwable $r7;
+        java.lang.String r8;
+
+        r8 := @parameter0: java.lang.String;
+
+        r0 = <com.android.server.power.ShutdownThread: android.util.ArrayMap TRON_METRICS>;
+
+        entermonitor r0;
+
+     label1:
+        $r1 = <com.android.server.power.ShutdownThread: android.util.ArrayMap TRON_METRICS>;
+
+        $l0 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        $r2 = <com.android.server.power.ShutdownThread: android.util.ArrayMap TRON_METRICS>;
+
+        $r3 = virtualinvoke $r2.<android.util.ArrayMap: java.lang.Object get(java.lang.Object)>(r8);
+
+        $r4 = (java.lang.Long) $r3;
+
+        $l1 = virtualinvoke $r4.<java.lang.Long: long longValue()>();
+
+        $l2 = $l0 + $l1;
+
+        $r5 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l2);
+
+        virtualinvoke $r1.<android.util.ArrayMap: java.lang.Object put(java.lang.Object,java.lang.Object)>(r8, $r5);
+
+        exitmonitor r0;
+
+     label2:
+        return;
+
+     label3:
+        $r7 := @caughtexception;
+
+     label4:
+        exitmonitor r0;
+
+     label5:
+        throw $r7;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    private static void metricShutdownStart()
+    {
+        android.util.ArrayMap r0, $r2;
+        java.lang.String $r3;
+        long $l0;
+        java.lang.Long $r4;
+        java.lang.Throwable $r6;
+
+        r0 = <com.android.server.power.ShutdownThread: android.util.ArrayMap TRON_METRICS>;
+
+        entermonitor r0;
+
+     label1:
+        $r2 = <com.android.server.power.ShutdownThread: android.util.ArrayMap TRON_METRICS>;
+
+        $r3 = <com.android.server.power.ShutdownThread: java.lang.String METRIC_SHUTDOWN_TIME_START>;
+
+        $l0 = staticinvoke <java.lang.System: long currentTimeMillis()>();
+
+        $r4 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l0);
+
+        virtualinvoke $r2.<android.util.ArrayMap: java.lang.Object put(java.lang.Object,java.lang.Object)>($r3, $r4);
+
+        exitmonitor r0;
+
+     label2:
+        return;
+
+     label3:
+        $r6 := @caughtexception;
+
+     label4:
+        exitmonitor r0;
+
+     label5:
+        throw $r6;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    private static void metricStarted(java.lang.String)
+    {
+        android.util.ArrayMap r0, $r1;
+        long $l0, $l1;
+        java.lang.Long $r2;
+        java.lang.Throwable $r4;
+        java.lang.String r5;
+
+        r5 := @parameter0: java.lang.String;
+
+        r0 = <com.android.server.power.ShutdownThread: android.util.ArrayMap TRON_METRICS>;
+
+        entermonitor r0;
+
+     label1:
+        $r1 = <com.android.server.power.ShutdownThread: android.util.ArrayMap TRON_METRICS>;
+
+        $l0 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        $l1 = $l0 * -1L;
+
+        $r2 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l1);
+
+        virtualinvoke $r1.<android.util.ArrayMap: java.lang.Object put(java.lang.Object,java.lang.Object)>(r5, $r2);
+
+        exitmonitor r0;
+
+     label2:
+        return;
+
+     label3:
+        $r4 := @caughtexception;
+
+     label4:
+        exitmonitor r0;
+
+     label5:
+        throw $r4;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    private static android.util.TimingsTraceLog newTimingsLog()
+    {
+        android.util.TimingsTraceLog $r0;
+
+        $r0 = new android.util.TimingsTraceLog;
+
+        specialinvoke $r0.<android.util.TimingsTraceLog: void <init>(java.lang.String,long)>("ShutdownTiming", 524288L);
+
+        return $r0;
+    }
+
+    public static void reboot(android.content.Context, java.lang.String, boolean)
+    {
+        android.content.Context r0;
+        java.lang.String r1;
+        boolean z0;
+
+        r0 := @parameter0: android.content.Context;
+
+        r1 := @parameter1: java.lang.String;
+
+        z0 := @parameter2: boolean;
+
+        <com.android.server.power.ShutdownThread: boolean mReboot> = 1;
+
+        <com.android.server.power.ShutdownThread: boolean mRebootSafeMode> = 0;
+
+        <com.android.server.power.ShutdownThread: boolean mRebootHasProgressBar> = 0;
+
+        <com.android.server.power.ShutdownThread: java.lang.String mReason> = r1;
+
+        staticinvoke <com.android.server.power.ShutdownThread: void shutdownInner(android.content.Context,boolean)>(r0, z0);
+
+        return;
+    }
+
+    public static void rebootOrShutdown(android.content.Context, boolean, java.lang.String)
+    {
+        boolean z0;
+        java.lang.String r0, $r6, r11;
+        android.os.SystemVibrator $r1;
+        android.media.AudioAttributes $r2;
+        java.lang.StringBuilder $r3;
+        java.lang.Exception $r7;
+        java.lang.Throwable $r8;
+        android.content.Context r9;
+
+        r9 := @parameter0: android.content.Context;
+
+        z0 := @parameter1: boolean;
+
+        r0 := @parameter2: java.lang.String;
+
+        if z0 == 0 goto label1;
+
+        $r3 = new java.lang.StringBuilder;
+
+        specialinvoke $r3.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Rebooting, reason: ");
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r0);
+
+        $r6 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int i(java.lang.String,java.lang.String)>("ShutdownThread", $r6);
+
+        staticinvoke <com.android.server.power.PowerManagerService: void lowLevelReboot(java.lang.String)>(r0);
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>("ShutdownThread", "Reboot failed, will attempt shutdown instead");
+
+        r11 = null;
+
+        goto label8;
+
+     label1:
+        r11 = r0;
+
+        if r9 == null goto label8;
+
+        $r1 = new android.os.SystemVibrator;
+
+        specialinvoke $r1.<android.os.SystemVibrator: void <init>(android.content.Context)>(r9);
+
+     label2:
+        $r2 = <com.android.server.power.ShutdownThread: android.media.AudioAttributes VIBRATION_ATTRIBUTES>;
+
+        virtualinvoke $r1.<android.os.Vibrator: void vibrate(long,android.media.AudioAttributes)>(500L, $r2);
+
+     label3:
+        goto label5;
+
+     label4:
+        $r7 := @caughtexception;
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String,java.lang.Throwable)>("ShutdownThread", "Failed to vibrate during shutdown.", $r7);
+
+     label5:
+        staticinvoke <java.lang.Thread: void sleep(long)>(500L);
+
+     label6:
+        r11 = r0;
+
+        goto label8;
+
+     label7:
+        $r8 := @caughtexception;
+
+        r11 = r0;
+
+     label8:
+        staticinvoke <android.util.Log: int i(java.lang.String,java.lang.String)>("ShutdownThread", "Performing low-level shutdown...");
+
+        staticinvoke <com.android.server.power.PowerManagerService: void lowLevelShutdown(java.lang.String)>(r11);
+
+        return;
+
+        catch java.lang.Exception from label2 to label3 with label4;
+        catch java.lang.InterruptedException from label5 to label6 with label7;
+    }
+
+    public static void rebootSafeMode(android.content.Context, boolean)
+    {
+        android.content.Context r0;
+        boolean z0, $z1;
+        java.lang.Object $r1;
+        android.os.UserManager $r2;
+
+        r0 := @parameter0: android.content.Context;
+
+        z0 := @parameter1: boolean;
+
+        $r1 = virtualinvoke r0.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("user");
+
+        $r2 = (android.os.UserManager) $r1;
+
+        $z1 = virtualinvoke $r2.<android.os.UserManager: boolean hasUserRestriction(java.lang.String)>("no_safe_boot");
+
+        if $z1 == 0 goto label1;
+
+        return;
+
+     label1:
+        <com.android.server.power.ShutdownThread: boolean mReboot> = 1;
+
+        <com.android.server.power.ShutdownThread: boolean mRebootSafeMode> = 1;
+
+        <com.android.server.power.ShutdownThread: boolean mRebootHasProgressBar> = 0;
+
+        <com.android.server.power.ShutdownThread: java.lang.String mReason> = null;
+
+        staticinvoke <com.android.server.power.ShutdownThread: void shutdownInner(android.content.Context,boolean)>(r0, z0);
+
+        return;
+    }
+
+    private static void saveMetrics(boolean, java.lang.String)
+    {
+        boolean z0, z3;
+        long l0;
+        java.lang.StringBuilder $r0, $r21;
+        android.util.ArrayMap $r6, $r12, $r14;
+        java.io.File $r7, $r11;
+        java.lang.String $r8, $r24, r28, r30, r31;
+        java.nio.charset.Charset $r9;
+        byte[] $r10;
+        java.lang.Object $r13, $r15;
+        java.lang.Long $r16;
+        byte $b1;
+        java.lang.Throwable $r25, $r26, $r27;
+        int i4, i5;
+        java.io.FileOutputStream r34;
+
+        z0 := @parameter0: boolean;
+
+        r28 := @parameter1: java.lang.String;
+
+        $r0 = new java.lang.StringBuilder;
+
+        specialinvoke $r0.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r0.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("reboot:");
+
+        if z0 == 0 goto label01;
+
+        r30 = "y";
+
+        goto label02;
+
+     label01:
+        r30 = "n";
+
+     label02:
+        virtualinvoke $r0.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r30);
+
+        virtualinvoke $r0.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(",");
+
+        virtualinvoke $r0.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("reason:");
+
+        virtualinvoke $r0.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r28);
+
+        $r6 = <com.android.server.power.ShutdownThread: android.util.ArrayMap TRON_METRICS>;
+
+        i4 = virtualinvoke $r6.<android.util.ArrayMap: int size()>();
+
+        i5 = 0;
+
+     label03:
+        if i5 >= i4 goto label06;
+
+        $r12 = <com.android.server.power.ShutdownThread: android.util.ArrayMap TRON_METRICS>;
+
+        $r13 = virtualinvoke $r12.<android.util.ArrayMap: java.lang.Object keyAt(int)>(i5);
+
+        r31 = (java.lang.String) $r13;
+
+        $r14 = <com.android.server.power.ShutdownThread: android.util.ArrayMap TRON_METRICS>;
+
+        $r15 = virtualinvoke $r14.<android.util.ArrayMap: java.lang.Object valueAt(int)>(i5);
+
+        $r16 = (java.lang.Long) $r15;
+
+        l0 = virtualinvoke $r16.<java.lang.Long: long longValue()>();
+
+        $b1 = l0 cmp 0L;
+
+        if $b1 >= 0 goto label04;
+
+        $r21 = new java.lang.StringBuilder;
+
+        specialinvoke $r21.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r21.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("metricEnded wasn\'t called for ");
+
+        virtualinvoke $r21.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r31);
+
+        $r24 = virtualinvoke $r21.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>("ShutdownThread", $r24);
+
+        goto label05;
+
+     label04:
+        virtualinvoke $r0.<java.lang.StringBuilder: java.lang.StringBuilder append(char)>(44);
+
+        virtualinvoke $r0.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r31);
+
+        virtualinvoke $r0.<java.lang.StringBuilder: java.lang.StringBuilder append(char)>(58);
+
+        virtualinvoke $r0.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>(l0);
+
+     label05:
+        i5 = i5 + 1;
+
+        goto label03;
+
+     label06:
+        $r7 = new java.io.File;
+
+        specialinvoke $r7.<java.io.File: void <init>(java.lang.String)>("/data/system/shutdown-metrics.tmp");
+
+        z3 = 0;
+
+     label07:
+        r34 = new java.io.FileOutputStream;
+
+     label08:
+        z3 = 0;
+
+     label09:
+        specialinvoke r34.<java.io.FileOutputStream: void <init>(java.io.File)>($r7);
+
+     label10:
+        $r8 = virtualinvoke $r0.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $r9 = <java.nio.charset.StandardCharsets: java.nio.charset.Charset UTF_8>;
+
+        $r10 = virtualinvoke $r8.<java.lang.String: byte[] getBytes(java.nio.charset.Charset)>($r9);
+
+        virtualinvoke r34.<java.io.FileOutputStream: void write(byte[])>($r10);
+
+     label11:
+        z3 = 1;
+
+     label12:
+        virtualinvoke r34.<java.io.FileOutputStream: void close()>();
+
+     label13:
+        z3 = 1;
+
+        goto label22;
+
+     label14:
+        $r25 := @caughtexception;
+
+     label15:
+        virtualinvoke r34.<java.io.FileOutputStream: void close()>();
+
+     label16:
+        goto label19;
+
+     label17:
+        $r26 := @caughtexception;
+
+        z3 = 0;
+
+     label18:
+        virtualinvoke $r25.<java.lang.Throwable: void addSuppressed(java.lang.Throwable)>($r26);
+
+     label19:
+        z3 = 0;
+
+     label20:
+        throw $r25;
+
+     label21:
+        $r27 := @caughtexception;
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("ShutdownThread", "Cannot save shutdown metrics", $r27);
+
+     label22:
+        if z3 == 0 goto label23;
+
+        $r11 = new java.io.File;
+
+        specialinvoke $r11.<java.io.File: void <init>(java.lang.String)>("/data/system/shutdown-metrics.txt");
+
+        virtualinvoke $r7.<java.io.File: boolean renameTo(java.io.File)>($r11);
+
+     label23:
+        return;
+
+        catch java.io.IOException from label07 to label08 with label21;
+        catch java.io.IOException from label09 to label10 with label21;
+        catch java.lang.Throwable from label10 to label11 with label14;
+        catch java.io.IOException from label12 to label13 with label21;
+        catch java.lang.Throwable from label15 to label16 with label17;
+        catch java.io.IOException from label18 to label19 with label21;
+        catch java.io.IOException from label20 to label21 with label21;
+    }
+
+    private void setRebootProgress(int, java.lang.CharSequence)
+    {
+        com.android.server.power.ShutdownThread r0;
+        int i0;
+        java.lang.CharSequence r1;
+        com.android.server.power.ShutdownThread$4 $r2;
+        android.os.Handler $r3;
+
+        r0 := @this: com.android.server.power.ShutdownThread;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: java.lang.CharSequence;
+
+        $r3 = r0.<com.android.server.power.ShutdownThread: android.os.Handler mHandler>;
+
+        $r2 = new com.android.server.power.ShutdownThread$4;
+
+        specialinvoke $r2.<com.android.server.power.ShutdownThread$4: void <init>(com.android.server.power.ShutdownThread,int,java.lang.CharSequence)>(r0, i0, r1);
+
+        virtualinvoke $r3.<android.os.Handler: boolean post(java.lang.Runnable)>($r2);
+
+        return;
+    }
+
+    private static android.app.ProgressDialog showShutdownDialog(android.content.Context)
+    {
+        android.content.Context r0;
+        android.app.ProgressDialog $r2;
+        boolean $z0, $z1, $z2, $z3, $z4, $z5, $z6, $z7, z8, $z9;
+        java.lang.CharSequence $r3, $r4, $r5, $r6, $r7, $r8, $r10, $r11, $r14;
+        java.io.File $r9, $r12;
+        java.lang.String r13, r15;
+        android.view.Window $r16;
+
+        r0 := @parameter0: android.content.Context;
+
+        $r2 = new android.app.ProgressDialog;
+
+        specialinvoke $r2.<android.app.ProgressDialog: void <init>(android.content.Context)>(r0);
+
+        r13 = <com.android.server.power.ShutdownThread: java.lang.String mReason>;
+
+        if r13 == null goto label05;
+
+        $z4 = virtualinvoke r13.<java.lang.String: boolean startsWith(java.lang.String)>("recovery-update");
+
+        if $z4 == 0 goto label05;
+
+        $r9 = <android.os.RecoverySystem: java.io.File UNCRYPT_PACKAGE_FILE>;
+
+        $z5 = virtualinvoke $r9.<java.io.File: boolean exists()>();
+
+        if $z5 == 0 goto label01;
+
+        $r12 = <android.os.RecoverySystem: java.io.File BLOCK_MAP_FILE>;
+
+        $z7 = virtualinvoke $r12.<java.io.File: boolean exists()>();
+
+        if $z7 != 0 goto label01;
+
+        z8 = 1;
+
+        goto label02;
+
+     label01:
+        z8 = 0;
+
+     label02:
+        <com.android.server.power.ShutdownThread: boolean mRebootHasProgressBar> = z8;
+
+        $r14 = virtualinvoke r0.<android.content.Context: java.lang.CharSequence getText(int)>(17041105);
+
+        virtualinvoke $r2.<android.app.ProgressDialog: void setTitle(java.lang.CharSequence)>($r14);
+
+        $z9 = <com.android.server.power.ShutdownThread: boolean mRebootHasProgressBar>;
+
+        if $z9 == 0 goto label03;
+
+        virtualinvoke $r2.<android.app.ProgressDialog: void setMax(int)>(100);
+
+        virtualinvoke $r2.<android.app.ProgressDialog: void setProgress(int)>(0);
+
+        virtualinvoke $r2.<android.app.ProgressDialog: void setIndeterminate(boolean)>(0);
+
+        virtualinvoke $r2.<android.app.ProgressDialog: void setProgressNumberFormat(java.lang.String)>(null);
+
+        virtualinvoke $r2.<android.app.ProgressDialog: void setProgressStyle(int)>(1);
+
+        $r11 = virtualinvoke r0.<android.content.Context: java.lang.CharSequence getText(int)>(17041103);
+
+        virtualinvoke $r2.<android.app.ProgressDialog: void setMessage(java.lang.CharSequence)>($r11);
+
+        goto label10;
+
+     label03:
+        $z6 = staticinvoke <com.android.server.power.ShutdownThread: boolean showSysuiReboot()>();
+
+        if $z6 == 0 goto label04;
+
+        return null;
+
+     label04:
+        virtualinvoke $r2.<android.app.ProgressDialog: void setIndeterminate(boolean)>(1);
+
+        $r10 = virtualinvoke r0.<android.content.Context: java.lang.CharSequence getText(int)>(17041104);
+
+        virtualinvoke $r2.<android.app.ProgressDialog: void setMessage(java.lang.CharSequence)>($r10);
+
+        goto label10;
+
+     label05:
+        r15 = <com.android.server.power.ShutdownThread: java.lang.String mReason>;
+
+        if r15 == null goto label08;
+
+        $z1 = virtualinvoke r15.<java.lang.String: boolean equals(java.lang.Object)>("recovery");
+
+        if $z1 == 0 goto label08;
+
+        $z2 = staticinvoke <com.android.server.power.ShutdownThread: boolean showSysuiReboot()>();
+
+        if $z2 == 0 goto label06;
+
+        return null;
+
+     label06:
+        $z3 = staticinvoke <com.android.server.RescueParty: boolean isAttemptingFactoryReset()>();
+
+        if $z3 == 0 goto label07;
+
+        $r7 = virtualinvoke r0.<android.content.Context: java.lang.CharSequence getText(int)>(17041080);
+
+        virtualinvoke $r2.<android.app.ProgressDialog: void setTitle(java.lang.CharSequence)>($r7);
+
+        $r8 = virtualinvoke r0.<android.content.Context: java.lang.CharSequence getText(int)>(17041245);
+
+        virtualinvoke $r2.<android.app.ProgressDialog: void setMessage(java.lang.CharSequence)>($r8);
+
+        virtualinvoke $r2.<android.app.ProgressDialog: void setIndeterminate(boolean)>(1);
+
+        goto label10;
+
+     label07:
+        $r5 = virtualinvoke r0.<android.content.Context: java.lang.CharSequence getText(int)>(17041101);
+
+        virtualinvoke $r2.<android.app.ProgressDialog: void setTitle(java.lang.CharSequence)>($r5);
+
+        $r6 = virtualinvoke r0.<android.content.Context: java.lang.CharSequence getText(int)>(17041100);
+
+        virtualinvoke $r2.<android.app.ProgressDialog: void setMessage(java.lang.CharSequence)>($r6);
+
+        virtualinvoke $r2.<android.app.ProgressDialog: void setIndeterminate(boolean)>(1);
+
+        goto label10;
+
+     label08:
+        $z0 = staticinvoke <com.android.server.power.ShutdownThread: boolean showSysuiReboot()>();
+
+        if $z0 == 0 goto label09;
+
+        return null;
+
+     label09:
+        $r3 = virtualinvoke r0.<android.content.Context: java.lang.CharSequence getText(int)>(17041080);
+
+        virtualinvoke $r2.<android.app.ProgressDialog: void setTitle(java.lang.CharSequence)>($r3);
+
+        $r4 = virtualinvoke r0.<android.content.Context: java.lang.CharSequence getText(int)>(17041245);
+
+        virtualinvoke $r2.<android.app.ProgressDialog: void setMessage(java.lang.CharSequence)>($r4);
+
+        virtualinvoke $r2.<android.app.ProgressDialog: void setIndeterminate(boolean)>(1);
+
+     label10:
+        virtualinvoke $r2.<android.app.ProgressDialog: void setCancelable(boolean)>(0);
+
+        $r16 = virtualinvoke $r2.<android.app.ProgressDialog: android.view.Window getWindow()>();
+
+        virtualinvoke $r16.<android.view.Window: void setType(int)>(2009);
+
+        virtualinvoke $r2.<android.app.ProgressDialog: void show()>();
+
+        return $r2;
+    }
+
+    private static boolean showSysuiReboot()
+    {
+        java.lang.Object $r1;
+        java.lang.String $r2;
+        boolean $z0, $z1;
+        com.android.server.statusbar.StatusBarManagerInternal $r3;
+        java.lang.Exception $r4;
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("ShutdownThread", "Attempting to use SysUI shutdown UI");
+
+     label1:
+        $r1 = staticinvoke <com.android.server.LocalServices: java.lang.Object getService(java.lang.Class)>(class "Lcom/android/server/statusbar/StatusBarManagerInternal;");
+
+        $r3 = (com.android.server.statusbar.StatusBarManagerInternal) $r1;
+
+        $z0 = <com.android.server.power.ShutdownThread: boolean mReboot>;
+
+        $r2 = <com.android.server.power.ShutdownThread: java.lang.String mReason>;
+
+        $z1 = interfaceinvoke $r3.<com.android.server.statusbar.StatusBarManagerInternal: boolean showShutdownUi(boolean,java.lang.String)>($z0, $r2);
+
+        if $z1 == 0 goto label3;
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("ShutdownThread", "SysUI handling shutdown UI");
+
+     label2:
+        return 1;
+
+     label3:
+        goto label5;
+
+     label4:
+        $r4 := @caughtexception;
+
+     label5:
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("ShutdownThread", "SysUI is unavailable");
+
+        return 0;
+
+        catch java.lang.Exception from label1 to label2 with label4;
+    }
+
+    public static void shutdown(android.content.Context, java.lang.String, boolean)
+    {
+        android.content.Context r0;
+        java.lang.String r1;
+        boolean z0;
+
+        r0 := @parameter0: android.content.Context;
+
+        r1 := @parameter1: java.lang.String;
+
+        z0 := @parameter2: boolean;
+
+        <com.android.server.power.ShutdownThread: boolean mReboot> = 0;
+
+        <com.android.server.power.ShutdownThread: boolean mRebootSafeMode> = 0;
+
+        <com.android.server.power.ShutdownThread: java.lang.String mReason> = r1;
+
+        staticinvoke <com.android.server.power.ShutdownThread: void shutdownInner(android.content.Context,boolean)>(r0, z0);
+
+        return;
+    }
+
+    private static void shutdownInner(android.content.Context, boolean)
+    {
+        boolean z0, $z1, $z2, $z3;
+        android.content.res.Resources $r0;
+        com.android.server.power.ShutdownThread$CloseDialogReceiver $r3;
+        android.app.AlertDialog$Builder $r4, $r5, $r6, $r8, $r9;
+        com.android.server.power.ShutdownThread$1 $r7;
+        android.app.AlertDialog $r10, $r11, $r13, r21, r23;
+        android.view.Window $r12;
+        java.lang.Throwable $r14;
+        android.content.Context r15;
+        java.lang.Object r16;
+        int i2, i3, i4;
+        java.lang.StringBuilder $r17;
+        java.lang.String $r19;
+
+        r15 := @parameter0: android.content.Context;
+
+        z0 := @parameter1: boolean;
+
+        virtualinvoke r15.<android.content.Context: void assertRuntimeOverlayThemable()>();
+
+        r16 = <com.android.server.power.ShutdownThread: java.lang.Object sIsStartedGuard>;
+
+        entermonitor r16;
+
+     label01:
+        $z1 = <com.android.server.power.ShutdownThread: boolean sIsStarted>;
+
+        if $z1 == 0 goto label03;
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("ShutdownThread", "Request to shutdown already running, returning.");
+
+        exitmonitor r16;
+
+     label02:
+        return;
+
+     label03:
+        exitmonitor r16;
+
+     label04:
+        $r0 = virtualinvoke r15.<android.content.Context: android.content.res.Resources getResources()>();
+
+        i2 = virtualinvoke $r0.<android.content.res.Resources: int getInteger(int)>(17694827);
+
+        $z2 = <com.android.server.power.ShutdownThread: boolean mRebootSafeMode>;
+
+        if $z2 == 0 goto label05;
+
+        i3 = 17041098;
+
+        goto label07;
+
+     label05:
+        if i2 != 2 goto label06;
+
+        i3 = 17041244;
+
+        goto label07;
+
+     label06:
+        i3 = 17041243;
+
+     label07:
+        $r17 = new java.lang.StringBuilder;
+
+        specialinvoke $r17.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r17.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Notifying thread to start shutdown longPressBehavior=");
+
+        virtualinvoke $r17.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i2);
+
+        $r19 = virtualinvoke $r17.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("ShutdownThread", $r19);
+
+        if z0 == 0 goto label11;
+
+        $r3 = new com.android.server.power.ShutdownThread$CloseDialogReceiver;
+
+        specialinvoke $r3.<com.android.server.power.ShutdownThread$CloseDialogReceiver: void <init>(android.content.Context)>(r15);
+
+        r21 = <com.android.server.power.ShutdownThread: android.app.AlertDialog sConfirmDialog>;
+
+        if r21 == null goto label08;
+
+        virtualinvoke r21.<android.app.AlertDialog: void dismiss()>();
+
+     label08:
+        $r4 = new android.app.AlertDialog$Builder;
+
+        specialinvoke $r4.<android.app.AlertDialog$Builder: void <init>(android.content.Context)>(r15);
+
+        $z3 = <com.android.server.power.ShutdownThread: boolean mRebootSafeMode>;
+
+        if $z3 == 0 goto label09;
+
+        i4 = 17041099;
+
+        goto label10;
+
+     label09:
+        i4 = 17041080;
+
+     label10:
+        $r5 = virtualinvoke $r4.<android.app.AlertDialog$Builder: android.app.AlertDialog$Builder setTitle(int)>(i4);
+
+        $r6 = virtualinvoke $r5.<android.app.AlertDialog$Builder: android.app.AlertDialog$Builder setMessage(int)>(i3);
+
+        $r7 = new com.android.server.power.ShutdownThread$1;
+
+        specialinvoke $r7.<com.android.server.power.ShutdownThread$1: void <init>(android.content.Context)>(r15);
+
+        $r8 = virtualinvoke $r6.<android.app.AlertDialog$Builder: android.app.AlertDialog$Builder setPositiveButton(int,android.content.DialogInterface$OnClickListener)>(17039379, $r7);
+
+        $r9 = virtualinvoke $r8.<android.app.AlertDialog$Builder: android.app.AlertDialog$Builder setNegativeButton(int,android.content.DialogInterface$OnClickListener)>(17039369, null);
+
+        r23 = virtualinvoke $r9.<android.app.AlertDialog$Builder: android.app.AlertDialog create()>();
+
+        <com.android.server.power.ShutdownThread: android.app.AlertDialog sConfirmDialog> = r23;
+
+        $r3.<com.android.server.power.ShutdownThread$CloseDialogReceiver: android.app.Dialog dialog> = r23;
+
+        $r10 = <com.android.server.power.ShutdownThread: android.app.AlertDialog sConfirmDialog>;
+
+        virtualinvoke $r10.<android.app.AlertDialog: void setOnDismissListener(android.content.DialogInterface$OnDismissListener)>($r3);
+
+        $r11 = <com.android.server.power.ShutdownThread: android.app.AlertDialog sConfirmDialog>;
+
+        $r12 = virtualinvoke $r11.<android.app.AlertDialog: android.view.Window getWindow()>();
+
+        virtualinvoke $r12.<android.view.Window: void setType(int)>(2009);
+
+        $r13 = <com.android.server.power.ShutdownThread: android.app.AlertDialog sConfirmDialog>;
+
+        virtualinvoke $r13.<android.app.AlertDialog: void show()>();
+
+        goto label12;
+
+     label11:
+        staticinvoke <com.android.server.power.ShutdownThread: void beginShutdownSequence(android.content.Context)>(r15);
+
+     label12:
+        return;
+
+     label13:
+        $r14 := @caughtexception;
+
+     label14:
+        exitmonitor r16;
+
+     label15:
+        throw $r14;
+
+        catch java.lang.Throwable from label01 to label02 with label13;
+        catch java.lang.Throwable from label03 to label04 with label13;
+        catch java.lang.Throwable from label14 to label15 with label13;
+    }
+
+    private void shutdownRadios(int)
+    {
+        com.android.server.power.ShutdownThread r0;
+        int i0;
+        long l1, $l2, l4, l5;
+        boolean[] r1;
+        com.android.server.power.ShutdownThread$5 $r2;
+        boolean $z0;
+        java.lang.Throwable $r3;
+
+        r0 := @this: com.android.server.power.ShutdownThread;
+
+        i0 := @parameter0: int;
+
+        l4 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        l1 = (long) i0;
+
+        r1 = newarray (boolean)[1];
+
+        $r2 = new com.android.server.power.ShutdownThread$5;
+
+        $l2 = l4 + l1;
+
+        specialinvoke $r2.<com.android.server.power.ShutdownThread$5: void <init>(com.android.server.power.ShutdownThread,long,int,boolean[])>(r0, $l2, i0, r1);
+
+        virtualinvoke $r2.<java.lang.Thread: void start()>();
+
+        l5 = (long) i0;
+
+     label1:
+        virtualinvoke $r2.<java.lang.Thread: void join(long)>(l5);
+
+     label2:
+        goto label4;
+
+     label3:
+        $r3 := @caughtexception;
+
+     label4:
+        $z0 = r1[0];
+
+        if $z0 != 0 goto label5;
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("ShutdownThread", "Timed out waiting for Radio shutdown.");
+
+     label5:
+        return;
+
+        catch java.lang.InterruptedException from label1 to label2 with label3;
+    }
+
+    private void uncrypt()
+    {
+        com.android.server.power.ShutdownThread r0;
+        com.android.server.power.ShutdownThread$6 $r1;
+        com.android.server.power.ShutdownThread$7 $r2;
+        boolean $z0;
+        java.lang.Object[] $r3;
+        java.lang.Integer $r4, $r5;
+        java.io.File $r6;
+        java.lang.Throwable $r7, $r8;
+        boolean[] r10;
+        java.lang.String r13;
+
+        r0 := @this: com.android.server.power.ShutdownThread;
+
+        staticinvoke <android.util.Log: int i(java.lang.String,java.lang.String)>("ShutdownThread", "Calling uncrypt and monitoring the progress...");
+
+        $r1 = new com.android.server.power.ShutdownThread$6;
+
+        specialinvoke $r1.<com.android.server.power.ShutdownThread$6: void <init>(com.android.server.power.ShutdownThread)>(r0);
+
+        r10 = newarray (boolean)[1];
+
+        r10[0] = 0;
+
+        $r2 = new com.android.server.power.ShutdownThread$7;
+
+        specialinvoke $r2.<com.android.server.power.ShutdownThread$7: void <init>(com.android.server.power.ShutdownThread,android.os.RecoverySystem$ProgressListener,boolean[])>(r0, $r1, r10);
+
+        virtualinvoke $r2.<java.lang.Thread: void start()>();
+
+     label1:
+        virtualinvoke $r2.<java.lang.Thread: void join(long)>(900000L);
+
+     label2:
+        goto label4;
+
+     label3:
+        $r7 := @caughtexception;
+
+     label4:
+        $z0 = r10[0];
+
+        if $z0 != 0 goto label8;
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("ShutdownThread", "Timed out waiting for uncrypt.");
+
+        $r3 = newarray (java.lang.Object)[2];
+
+        $r4 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(900);
+
+        $r3[0] = $r4;
+
+        $r5 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(100);
+
+        $r3[1] = $r5;
+
+        r13 = staticinvoke <java.lang.String: java.lang.String format(java.lang.String,java.lang.Object[])>("uncrypt_time: %d\nuncrypt_error: %d\n", $r3);
+
+     label5:
+        $r6 = <android.os.RecoverySystem: java.io.File UNCRYPT_STATUS_FILE>;
+
+        staticinvoke <android.os.FileUtils: void stringToFile(java.io.File,java.lang.String)>($r6, r13);
+
+     label6:
+        goto label8;
+
+     label7:
+        $r8 := @caughtexception;
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("ShutdownThread", "Failed to write timeout message to uncrypt status", $r8);
+
+     label8:
+        return;
+
+        catch java.lang.InterruptedException from label1 to label2 with label3;
+        catch java.io.IOException from label5 to label6 with label7;
+    }
+
+    void actionDone()
+    {
+        com.android.server.power.ShutdownThread r0;
+        java.lang.Object r1, $r3;
+        java.lang.Throwable $r4;
+
+        r0 := @this: com.android.server.power.ShutdownThread;
+
+        r1 = r0.<com.android.server.power.ShutdownThread: java.lang.Object mActionDoneSync>;
+
+        entermonitor r1;
+
+     label1:
+        r0.<com.android.server.power.ShutdownThread: boolean mActionDone> = 1;
+
+        $r3 = r0.<com.android.server.power.ShutdownThread: java.lang.Object mActionDoneSync>;
+
+        virtualinvoke $r3.<java.lang.Object: void notifyAll()>();
+
+        exitmonitor r1;
+
+     label2:
+        return;
+
+     label3:
+        $r4 := @caughtexception;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        throw $r4;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    public void run()
+    {
+        com.android.server.power.ShutdownThread r0, $r28, $r29, $r30, $r31, $r32, $r34;
+        long l0, l1, $l7, $l8, $l10, $l11;
+        int i2;
+        java.lang.String $r2, $r7, $r9, $r15, $r16, $r18, $r19, $r21, $r22, $r23, $r24, $r25, $r26, r41, r42;
+        com.android.server.power.ShutdownThread$3 $r3;
+        java.lang.StringBuilder $r4;
+        boolean $z0, $z1, $z2, $z3, $z4, $z5, $z6, $z7, $z9, $z10, $z11;
+        android.content.Context $r8, $r14, $r27;
+        android.content.Intent $r10;
+        android.os.Handler $r12;
+        android.os.UserHandle $r13;
+        android.os.IBinder $r17, $r20;
+        byte $b9;
+        java.lang.Object $r33, r45;
+        double $d0, $d1, $d2, $d3;
+        java.lang.Throwable $r35, $r38;
+        android.os.RemoteException $r36;
+        java.lang.Exception $r37;
+        android.util.TimingsTraceLog r39;
+        android.app.IActivityManager r47;
+        com.android.server.pm.PackageManagerService r49;
+
+        r0 := @this: com.android.server.power.ShutdownThread;
+
+        r39 = staticinvoke <com.android.server.power.ShutdownThread: android.util.TimingsTraceLog newTimingsLog()>();
+
+        virtualinvoke r39.<android.util.TimingsTraceLog: void traceBegin(java.lang.String)>("SystemServerShutdown");
+
+        staticinvoke <com.android.server.power.ShutdownThread: void metricShutdownStart()>();
+
+        $r2 = <com.android.server.power.ShutdownThread: java.lang.String METRIC_SYSTEM_SERVER>;
+
+        staticinvoke <com.android.server.power.ShutdownThread: void metricStarted(java.lang.String)>($r2);
+
+        $r3 = new com.android.server.power.ShutdownThread$3;
+
+        specialinvoke $r3.<com.android.server.power.ShutdownThread$3: void <init>(com.android.server.power.ShutdownThread)>(r0);
+
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        $z0 = <com.android.server.power.ShutdownThread: boolean mReboot>;
+
+        if $z0 == 0 goto label01;
+
+        r41 = "1";
+
+        goto label02;
+
+     label01:
+        r41 = "0";
+
+     label02:
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r41);
+
+        r42 = <com.android.server.power.ShutdownThread: java.lang.String mReason>;
+
+        if r42 == null goto label03;
+
+        goto label04;
+
+     label03:
+        r42 = "";
+
+     label04:
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r42);
+
+        $r7 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.os.SystemProperties: void set(java.lang.String,java.lang.String)>("sys.shutdown.requested", $r7);
+
+        $z1 = <com.android.server.power.ShutdownThread: boolean mRebootSafeMode>;
+
+        if $z1 == 0 goto label05;
+
+        staticinvoke <android.os.SystemProperties: void set(java.lang.String,java.lang.String)>("persist.sys.safemode", "1");
+
+     label05:
+        virtualinvoke r39.<android.util.TimingsTraceLog: void traceBegin(java.lang.String)>("DumpPreRebootInfo");
+
+     label06:
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("ShutdownThread", "Logging pre-reboot information...");
+
+        $r8 = r0.<com.android.server.power.ShutdownThread: android.content.Context mContext>;
+
+        staticinvoke <com.android.server.power.PreRebootLogger: void log(android.content.Context)>($r8);
+
+     label07:
+        goto label09;
+
+     label08:
+        $r37 := @caughtexception;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("ShutdownThread", "Failed to log pre-reboot information", $r37);
+
+     label09:
+        virtualinvoke r39.<android.util.TimingsTraceLog: void traceEnd()>();
+
+        $r9 = <com.android.server.power.ShutdownThread: java.lang.String METRIC_SEND_BROADCAST>;
+
+        staticinvoke <com.android.server.power.ShutdownThread: void metricStarted(java.lang.String)>($r9);
+
+        virtualinvoke r39.<android.util.TimingsTraceLog: void traceBegin(java.lang.String)>("SendShutdownBroadcast");
+
+        staticinvoke <android.util.Log: int i(java.lang.String,java.lang.String)>("ShutdownThread", "Sending shutdown broadcast...");
+
+        r0.<com.android.server.power.ShutdownThread: boolean mActionDone> = 0;
+
+        $r10 = new android.content.Intent;
+
+        specialinvoke $r10.<android.content.Intent: void <init>(java.lang.String)>("android.intent.action.ACTION_SHUTDOWN");
+
+        virtualinvoke $r10.<android.content.Intent: android.content.Intent addFlags(int)>(1342177280);
+
+        $r14 = r0.<com.android.server.power.ShutdownThread: android.content.Context mContext>;
+
+        $r13 = <android.os.UserHandle: android.os.UserHandle ALL>;
+
+        $r12 = r0.<com.android.server.power.ShutdownThread: android.os.Handler mHandler>;
+
+        virtualinvoke $r14.<android.content.Context: void sendOrderedBroadcastAsUser(android.content.Intent,android.os.UserHandle,java.lang.String,android.content.BroadcastReceiver,android.os.Handler,int,java.lang.String,android.os.Bundle)>($r10, $r13, null, $r3, $r12, 0, null, null);
+
+        l0 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        r45 = r0.<com.android.server.power.ShutdownThread: java.lang.Object mActionDoneSync>;
+
+        entermonitor r45;
+
+     label10:
+        $z10 = r0.<com.android.server.power.ShutdownThread: boolean mActionDone>;
+
+        if $z10 != 0 goto label21;
+
+        $l7 = l0 + 10000L;
+
+        $l8 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        l1 = $l7 - $l8;
+
+     label11:
+        $b9 = l1 cmp 0L;
+
+        if $b9 > 0 goto label14;
+
+     label12:
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("ShutdownThread", "Shutdown broadcast timed out");
+
+     label13:
+        goto label21;
+
+     label14:
+        $z9 = <com.android.server.power.ShutdownThread: boolean mRebootHasProgressBar>;
+
+        if $z9 == 0 goto label17;
+
+     label15:
+        $l11 = 10000L - l1;
+
+        $d0 = (double) $l11;
+
+        $d1 = $d0 * 1.0;
+
+        $d2 = $d1 * 2.0;
+
+        $d3 = $d2 / 10000.0;
+
+        i2 = (int) $d3;
+
+     label16:
+        $r34 = <com.android.server.power.ShutdownThread: com.android.server.power.ShutdownThread sInstance>;
+
+        specialinvoke $r34.<com.android.server.power.ShutdownThread: void setRebootProgress(int,java.lang.CharSequence)>(i2, null);
+
+     label17:
+        $r33 = r0.<com.android.server.power.ShutdownThread: java.lang.Object mActionDoneSync>;
+
+        $l10 = staticinvoke <java.lang.Math: long min(long,long)>(l1, 500L);
+
+        virtualinvoke $r33.<java.lang.Object: void wait(long)>($l10);
+
+     label18:
+        goto label20;
+
+     label19:
+        $r35 := @caughtexception;
+
+     label20:
+        goto label10;
+
+     label21:
+        exitmonitor r45;
+
+     label22:
+        $z2 = <com.android.server.power.ShutdownThread: boolean mRebootHasProgressBar>;
+
+        if $z2 == 0 goto label23;
+
+        $r32 = <com.android.server.power.ShutdownThread: com.android.server.power.ShutdownThread sInstance>;
+
+        specialinvoke $r32.<com.android.server.power.ShutdownThread: void setRebootProgress(int,java.lang.CharSequence)>(2, null);
+
+     label23:
+        virtualinvoke r39.<android.util.TimingsTraceLog: void traceEnd()>();
+
+        $r15 = <com.android.server.power.ShutdownThread: java.lang.String METRIC_SEND_BROADCAST>;
+
+        staticinvoke <com.android.server.power.ShutdownThread: void metricEnded(java.lang.String)>($r15);
+
+        staticinvoke <android.util.Log: int i(java.lang.String,java.lang.String)>("ShutdownThread", "Shutting down activity manager...");
+
+        virtualinvoke r39.<android.util.TimingsTraceLog: void traceBegin(java.lang.String)>("ShutdownActivityManager");
+
+        $r16 = <com.android.server.power.ShutdownThread: java.lang.String METRIC_AM>;
+
+        staticinvoke <com.android.server.power.ShutdownThread: void metricStarted(java.lang.String)>($r16);
+
+        $r17 = staticinvoke <android.os.ServiceManager: android.os.IBinder checkService(java.lang.String)>("activity");
+
+        r47 = staticinvoke <android.app.IActivityManager$Stub: android.app.IActivityManager asInterface(android.os.IBinder)>($r17);
+
+        if r47 == null goto label27;
+
+     label24:
+        interfaceinvoke r47.<android.app.IActivityManager: boolean shutdown(int)>(10000);
+
+     label25:
+        goto label27;
+
+     label26:
+        $r36 := @caughtexception;
+
+     label27:
+        $z11 = <com.android.server.power.ShutdownThread: boolean mRebootHasProgressBar>;
+
+        if $z11 == 0 goto label28;
+
+        $r31 = <com.android.server.power.ShutdownThread: com.android.server.power.ShutdownThread sInstance>;
+
+        specialinvoke $r31.<com.android.server.power.ShutdownThread: void setRebootProgress(int,java.lang.CharSequence)>(4, null);
+
+     label28:
+        virtualinvoke r39.<android.util.TimingsTraceLog: void traceEnd()>();
+
+        $r18 = <com.android.server.power.ShutdownThread: java.lang.String METRIC_AM>;
+
+        staticinvoke <com.android.server.power.ShutdownThread: void metricEnded(java.lang.String)>($r18);
+
+        staticinvoke <android.util.Log: int i(java.lang.String,java.lang.String)>("ShutdownThread", "Shutting down package manager...");
+
+        virtualinvoke r39.<android.util.TimingsTraceLog: void traceBegin(java.lang.String)>("ShutdownPackageManager");
+
+        $r19 = <com.android.server.power.ShutdownThread: java.lang.String METRIC_PM>;
+
+        staticinvoke <com.android.server.power.ShutdownThread: void metricStarted(java.lang.String)>($r19);
+
+        $r20 = staticinvoke <android.os.ServiceManager: android.os.IBinder getService(java.lang.String)>("package");
+
+        r49 = (com.android.server.pm.PackageManagerService) $r20;
+
+        if r49 == null goto label29;
+
+        virtualinvoke r49.<com.android.server.pm.PackageManagerService: void shutdown()>();
+
+     label29:
+        $z3 = <com.android.server.power.ShutdownThread: boolean mRebootHasProgressBar>;
+
+        if $z3 == 0 goto label30;
+
+        $r30 = <com.android.server.power.ShutdownThread: com.android.server.power.ShutdownThread sInstance>;
+
+        specialinvoke $r30.<com.android.server.power.ShutdownThread: void setRebootProgress(int,java.lang.CharSequence)>(6, null);
+
+     label30:
+        virtualinvoke r39.<android.util.TimingsTraceLog: void traceEnd()>();
+
+        $r21 = <com.android.server.power.ShutdownThread: java.lang.String METRIC_PM>;
+
+        staticinvoke <com.android.server.power.ShutdownThread: void metricEnded(java.lang.String)>($r21);
+
+        virtualinvoke r39.<android.util.TimingsTraceLog: void traceBegin(java.lang.String)>("ShutdownRadios");
+
+        $r22 = <com.android.server.power.ShutdownThread: java.lang.String METRIC_RADIOS>;
+
+        staticinvoke <com.android.server.power.ShutdownThread: void metricStarted(java.lang.String)>($r22);
+
+        specialinvoke r0.<com.android.server.power.ShutdownThread: void shutdownRadios(int)>(12000);
+
+        $z4 = <com.android.server.power.ShutdownThread: boolean mRebootHasProgressBar>;
+
+        if $z4 == 0 goto label31;
+
+        $r29 = <com.android.server.power.ShutdownThread: com.android.server.power.ShutdownThread sInstance>;
+
+        specialinvoke $r29.<com.android.server.power.ShutdownThread: void setRebootProgress(int,java.lang.CharSequence)>(18, null);
+
+     label31:
+        virtualinvoke r39.<android.util.TimingsTraceLog: void traceEnd()>();
+
+        $r23 = <com.android.server.power.ShutdownThread: java.lang.String METRIC_RADIOS>;
+
+        staticinvoke <com.android.server.power.ShutdownThread: void metricEnded(java.lang.String)>($r23);
+
+        $z5 = <com.android.server.power.ShutdownThread: boolean mRebootHasProgressBar>;
+
+        if $z5 == 0 goto label32;
+
+        $r28 = <com.android.server.power.ShutdownThread: com.android.server.power.ShutdownThread sInstance>;
+
+        specialinvoke $r28.<com.android.server.power.ShutdownThread: void setRebootProgress(int,java.lang.CharSequence)>(20, null);
+
+        specialinvoke r0.<com.android.server.power.ShutdownThread: void uncrypt()>();
+
+     label32:
+        virtualinvoke r39.<android.util.TimingsTraceLog: void traceEnd()>();
+
+        $r24 = <com.android.server.power.ShutdownThread: java.lang.String METRIC_SYSTEM_SERVER>;
+
+        staticinvoke <com.android.server.power.ShutdownThread: void metricEnded(java.lang.String)>($r24);
+
+        $z6 = <com.android.server.power.ShutdownThread: boolean mReboot>;
+
+        $r25 = <com.android.server.power.ShutdownThread: java.lang.String mReason>;
+
+        staticinvoke <com.android.server.power.ShutdownThread: void saveMetrics(boolean,java.lang.String)>($z6, $r25);
+
+        $r27 = r0.<com.android.server.power.ShutdownThread: android.content.Context mContext>;
+
+        $z7 = <com.android.server.power.ShutdownThread: boolean mReboot>;
+
+        $r26 = <com.android.server.power.ShutdownThread: java.lang.String mReason>;
+
+        staticinvoke <com.android.server.power.ShutdownThread: void rebootOrShutdown(android.content.Context,boolean,java.lang.String)>($r27, $z7, $r26);
+
+        return;
+
+     label33:
+        $r38 := @caughtexception;
+
+     label34:
+        exitmonitor r45;
+
+     label35:
+        throw $r38;
+
+        catch java.lang.Exception from label06 to label07 with label08;
+        catch java.lang.Throwable from label10 to label11 with label33;
+        catch java.lang.Throwable from label12 to label13 with label33;
+        catch java.lang.Throwable from label14 to label15 with label33;
+        catch java.lang.Throwable from label16 to label17 with label33;
+        catch java.lang.InterruptedException from label17 to label18 with label19;
+        catch java.lang.Throwable from label17 to label18 with label33;
+        catch java.lang.Throwable from label21 to label22 with label33;
+        catch android.os.RemoteException from label24 to label25 with label26;
+        catch java.lang.Throwable from label34 to label35 with label33;
+    }
+}

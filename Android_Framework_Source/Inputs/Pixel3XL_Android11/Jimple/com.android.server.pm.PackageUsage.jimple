@@ -1,0 +1,808 @@
+class com.android.server.pm.PackageUsage extends com.android.server.pm.AbstractStatsBase
+{
+    private static final java.lang.String USAGE_FILE_MAGIC;
+    private static final java.lang.String USAGE_FILE_MAGIC_VERSION_1;
+    private boolean mIsHistoricalPackageUsageAvailable;
+
+    void <init>()
+    {
+        com.android.server.pm.PackageUsage r0;
+
+        r0 := @this: com.android.server.pm.PackageUsage;
+
+        specialinvoke r0.<com.android.server.pm.AbstractStatsBase: void <init>(java.lang.String,java.lang.String,boolean)>("package-usage.list", "PackageUsage_DiskWriter", 1);
+
+        r0.<com.android.server.pm.PackageUsage: boolean mIsHistoricalPackageUsageAvailable> = 1;
+
+        return;
+    }
+
+    private long parseAsLong(java.lang.String) throws java.io.IOException
+    {
+        com.android.server.pm.PackageUsage r0;
+        java.lang.String r1, $r10;
+        long l0;
+        java.lang.Throwable $r4;
+        java.lang.StringBuilder $r5;
+        java.io.IOException $r9;
+
+        r0 := @this: com.android.server.pm.PackageUsage;
+
+        r1 := @parameter0: java.lang.String;
+
+     label1:
+        l0 = staticinvoke <java.lang.Long: long parseLong(java.lang.String)>(r1);
+
+     label2:
+        return l0;
+
+     label3:
+        $r4 := @caughtexception;
+
+        $r5 = new java.lang.StringBuilder;
+
+        specialinvoke $r5.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Failed to parse ");
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" as a long.");
+
+        $r9 = new java.io.IOException;
+
+        $r10 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r9.<java.io.IOException: void <init>(java.lang.String,java.lang.Throwable)>($r10, $r4);
+
+        throw $r9;
+
+        catch java.lang.NumberFormatException from label1 to label2 with label3;
+    }
+
+    private java.lang.String readLine(java.io.InputStream, java.lang.StringBuffer) throws java.io.IOException
+    {
+        com.android.server.pm.PackageUsage r0;
+        java.io.InputStream r1;
+        java.lang.StringBuffer r2;
+        java.lang.String $r3;
+
+        r0 := @this: com.android.server.pm.PackageUsage;
+
+        r1 := @parameter0: java.io.InputStream;
+
+        r2 := @parameter1: java.lang.StringBuffer;
+
+        $r3 = specialinvoke r0.<com.android.server.pm.PackageUsage: java.lang.String readToken(java.io.InputStream,java.lang.StringBuffer,char)>(r1, r2, 10);
+
+        return $r3;
+    }
+
+    private java.lang.String readToken(java.io.InputStream, java.lang.StringBuffer, char) throws java.io.IOException
+    {
+        com.android.server.pm.PackageUsage r0;
+        java.io.InputStream r1;
+        java.lang.StringBuffer r2;
+        char c0, $c2;
+        int i1, $i3;
+        java.lang.String $r4;
+        java.io.IOException $r5;
+
+        r0 := @this: com.android.server.pm.PackageUsage;
+
+        r1 := @parameter0: java.io.InputStream;
+
+        r2 := @parameter1: java.lang.StringBuffer;
+
+        c0 := @parameter2: char;
+
+        virtualinvoke r2.<java.lang.StringBuffer: void setLength(int)>(0);
+
+     label1:
+        i1 = virtualinvoke r1.<java.io.InputStream: int read()>();
+
+        if i1 != -1 goto label3;
+
+        $i3 = virtualinvoke r2.<java.lang.StringBuffer: int length()>();
+
+        if $i3 != 0 goto label2;
+
+        return null;
+
+     label2:
+        $r5 = new java.io.IOException;
+
+        specialinvoke $r5.<java.io.IOException: void <init>(java.lang.String)>("Unexpected EOF");
+
+        throw $r5;
+
+     label3:
+        if i1 != c0 goto label4;
+
+        $r4 = virtualinvoke r2.<java.lang.StringBuffer: java.lang.String toString()>();
+
+        return $r4;
+
+     label4:
+        $c2 = (char) i1;
+
+        virtualinvoke r2.<java.lang.StringBuffer: java.lang.StringBuffer append(char)>($c2);
+
+        goto label1;
+    }
+
+    private void readVersion0LP(java.util.Map, java.io.InputStream, java.lang.StringBuffer, java.lang.String) throws java.io.IOException
+    {
+        com.android.server.pm.PackageUsage r0;
+        java.io.InputStream r1;
+        java.lang.StringBuffer r2;
+        java.lang.String[] r3;
+        long l0;
+        int $i1, i2;
+        java.lang.StringBuilder $r4;
+        java.io.IOException $r8;
+        java.lang.String $r9, $r10, $r12, r16;
+        java.lang.Object $r11;
+        com.android.server.pm.pkg.PackageStateUnserialized $r13;
+        java.util.Map r15;
+        com.android.server.pm.PackageSetting r17;
+
+        r0 := @this: com.android.server.pm.PackageUsage;
+
+        r15 := @parameter0: java.util.Map;
+
+        r1 := @parameter1: java.io.InputStream;
+
+        r2 := @parameter2: java.lang.StringBuffer;
+
+        r16 := @parameter3: java.lang.String;
+
+     label1:
+        if r16 == null goto label6;
+
+        r3 = virtualinvoke r16.<java.lang.String: java.lang.String[] split(java.lang.String)>(" ");
+
+        $i1 = lengthof r3;
+
+        if $i1 != 2 goto label5;
+
+        $r10 = r3[0];
+
+        $r11 = interfaceinvoke r15.<java.util.Map: java.lang.Object get(java.lang.Object)>($r10);
+
+        r17 = (com.android.server.pm.PackageSetting) $r11;
+
+        if r17 != null goto label2;
+
+        goto label4;
+
+     label2:
+        $r12 = r3[1];
+
+        l0 = specialinvoke r0.<com.android.server.pm.PackageUsage: long parseAsLong(java.lang.String)>($r12);
+
+        i2 = 0;
+
+     label3:
+        if i2 >= 8 goto label4;
+
+        $r13 = virtualinvoke r17.<com.android.server.pm.PackageSetting: com.android.server.pm.pkg.PackageStateUnserialized getPkgState()>();
+
+        virtualinvoke $r13.<com.android.server.pm.pkg.PackageStateUnserialized: com.android.server.pm.pkg.PackageStateUnserialized setLastPackageUsageTimeInMills(int,long)>(i2, l0);
+
+        i2 = i2 + 1;
+
+        goto label3;
+
+     label4:
+        r16 = specialinvoke r0.<com.android.server.pm.PackageUsage: java.lang.String readLine(java.io.InputStream,java.lang.StringBuffer)>(r1, r2);
+
+        goto label1;
+
+     label5:
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Failed to parse ");
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r16);
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" as package-timestamp pair.");
+
+        $r8 = new java.io.IOException;
+
+        $r9 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r8.<java.io.IOException: void <init>(java.lang.String)>($r9);
+
+        throw $r8;
+
+     label6:
+        return;
+    }
+
+    private void readVersion1LP(java.util.Map, java.io.InputStream, java.lang.StringBuffer) throws java.io.IOException
+    {
+        com.android.server.pm.PackageUsage r0;
+        java.io.InputStream r1;
+        java.lang.StringBuffer r2;
+        java.lang.String[] r3;
+        int $i0, $i1, i3;
+        java.lang.StringBuilder $r4;
+        java.io.IOException $r8;
+        java.lang.String $r9, $r10, $r13, r16;
+        java.lang.Object $r11;
+        com.android.server.pm.pkg.PackageStateUnserialized $r12;
+        long $l2;
+        java.util.Map r15;
+        com.android.server.pm.PackageSetting r17;
+
+        r0 := @this: com.android.server.pm.PackageUsage;
+
+        r15 := @parameter0: java.util.Map;
+
+        r1 := @parameter1: java.io.InputStream;
+
+        r2 := @parameter2: java.lang.StringBuffer;
+
+     label1:
+        r16 = specialinvoke r0.<com.android.server.pm.PackageUsage: java.lang.String readLine(java.io.InputStream,java.lang.StringBuffer)>(r1, r2);
+
+        if r16 == null goto label6;
+
+        r3 = virtualinvoke r16.<java.lang.String: java.lang.String[] split(java.lang.String)>(" ");
+
+        $i0 = lengthof r3;
+
+        if $i0 != 9 goto label5;
+
+        $r10 = r3[0];
+
+        $r11 = interfaceinvoke r15.<java.util.Map: java.lang.Object get(java.lang.Object)>($r10);
+
+        r17 = (com.android.server.pm.PackageSetting) $r11;
+
+        if r17 != null goto label2;
+
+        goto label1;
+
+     label2:
+        i3 = 0;
+
+     label3:
+        if i3 >= 8 goto label4;
+
+        $r12 = virtualinvoke r17.<com.android.server.pm.PackageSetting: com.android.server.pm.pkg.PackageStateUnserialized getPkgState()>();
+
+        $i1 = i3 + 1;
+
+        $r13 = r3[$i1];
+
+        $l2 = specialinvoke r0.<com.android.server.pm.PackageUsage: long parseAsLong(java.lang.String)>($r13);
+
+        virtualinvoke $r12.<com.android.server.pm.pkg.PackageStateUnserialized: com.android.server.pm.pkg.PackageStateUnserialized setLastPackageUsageTimeInMills(int,long)>(i3, $l2);
+
+        i3 = i3 + 1;
+
+        goto label3;
+
+     label4:
+        goto label1;
+
+     label5:
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Failed to parse ");
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r16);
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" as a timestamp array.");
+
+        $r8 = new java.io.IOException;
+
+        $r9 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r8.<java.io.IOException: void <init>(java.lang.String)>($r9);
+
+        throw $r8;
+
+     label6:
+        return;
+    }
+
+    boolean isHistoricalPackageUsageAvailable()
+    {
+        com.android.server.pm.PackageUsage r0;
+        boolean $z0;
+
+        r0 := @this: com.android.server.pm.PackageUsage;
+
+        $z0 = r0.<com.android.server.pm.PackageUsage: boolean mIsHistoricalPackageUsageAvailable>;
+
+        return $z0;
+    }
+
+    protected volatile void readInternal(java.lang.Object)
+    {
+        com.android.server.pm.PackageUsage r0;
+        java.lang.Object r1;
+        java.util.Map $r2;
+
+        r0 := @this: com.android.server.pm.PackageUsage;
+
+        r1 := @parameter0: java.lang.Object;
+
+        $r2 = (java.util.Map) r1;
+
+        virtualinvoke r0.<com.android.server.pm.PackageUsage: void readInternal(java.util.Map)>($r2);
+
+        return;
+    }
+
+    protected void readInternal(java.util.Map)
+    {
+        com.android.server.pm.PackageUsage r0;
+        android.util.AtomicFile r1;
+        java.io.FileInputStream $r2;
+        java.lang.String $r3, r13;
+        boolean $z0;
+        java.lang.Throwable $r4, $r5, $r6;
+        java.util.Map r7;
+        java.io.BufferedInputStream r8, r9, r10, r11;
+        java.lang.StringBuffer r12;
+
+        r0 := @this: com.android.server.pm.PackageUsage;
+
+        r7 := @parameter0: java.util.Map;
+
+        r1 = virtualinvoke r0.<com.android.server.pm.PackageUsage: android.util.AtomicFile getFile()>();
+
+        r8 = null;
+
+        r9 = null;
+
+        r10 = null;
+
+     label01:
+        r11 = new java.io.BufferedInputStream;
+
+     label02:
+        r8 = null;
+
+        r9 = null;
+
+        r10 = null;
+
+     label03:
+        $r2 = virtualinvoke r1.<android.util.AtomicFile: java.io.FileInputStream openRead()>();
+
+        specialinvoke r11.<java.io.BufferedInputStream: void <init>(java.io.InputStream)>($r2);
+
+     label04:
+        r8 = r11;
+
+        r9 = r11;
+
+        r10 = r11;
+
+     label05:
+        r12 = new java.lang.StringBuffer;
+
+     label06:
+        r8 = r11;
+
+        r9 = r11;
+
+        r10 = r11;
+
+     label07:
+        specialinvoke r12.<java.lang.StringBuffer: void <init>()>();
+
+     label08:
+        r8 = r11;
+
+        r9 = r11;
+
+        r10 = r11;
+
+     label09:
+        r13 = specialinvoke r0.<com.android.server.pm.PackageUsage: java.lang.String readLine(java.io.InputStream,java.lang.StringBuffer)>(r11, r12);
+
+     label10:
+        if r13 != null goto label11;
+
+        goto label26;
+
+     label11:
+        r8 = r11;
+
+        r9 = r11;
+
+        r10 = r11;
+
+     label12:
+        $r3 = "PACKAGE_USAGE__VERSION_1";
+
+        $z0 = virtualinvoke $r3.<java.lang.String: boolean equals(java.lang.Object)>(r13);
+
+        if $z0 == 0 goto label16;
+
+     label13:
+        r8 = r11;
+
+        r9 = r11;
+
+        r10 = r11;
+
+     label14:
+        specialinvoke r0.<com.android.server.pm.PackageUsage: void readVersion1LP(java.util.Map,java.io.InputStream,java.lang.StringBuffer)>(r7, r11, r12);
+
+     label15:
+        goto label26;
+
+     label16:
+        r8 = r11;
+
+        r9 = r11;
+
+        r10 = r11;
+
+     label17:
+        specialinvoke r0.<com.android.server.pm.PackageUsage: void readVersion0LP(java.util.Map,java.io.InputStream,java.lang.StringBuffer,java.lang.String)>(r7, r11, r12, r13);
+
+     label18:
+        goto label26;
+
+     label19:
+        $r5 := @caughtexception;
+
+        goto label27;
+
+     label20:
+        $r6 := @caughtexception;
+
+        r8 = r9;
+
+     label21:
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String,java.lang.Throwable)>("PackageManager", "Failed to read package usage times", $r6);
+
+     label22:
+        r11 = r9;
+
+        goto label26;
+
+     label23:
+        $r4 := @caughtexception;
+
+        r8 = r10;
+
+     label24:
+        r0.<com.android.server.pm.PackageUsage: boolean mIsHistoricalPackageUsageAvailable> = 0;
+
+     label25:
+        r11 = r10;
+
+     label26:
+        staticinvoke <libcore.io.IoUtils: void closeQuietly(java.lang.AutoCloseable)>(r11);
+
+        return;
+
+     label27:
+        staticinvoke <libcore.io.IoUtils: void closeQuietly(java.lang.AutoCloseable)>(r8);
+
+        throw $r5;
+
+        catch java.io.FileNotFoundException from label01 to label02 with label23;
+        catch java.io.IOException from label01 to label02 with label20;
+        catch java.lang.Throwable from label01 to label02 with label19;
+        catch java.io.FileNotFoundException from label03 to label04 with label23;
+        catch java.io.IOException from label03 to label04 with label20;
+        catch java.lang.Throwable from label03 to label04 with label19;
+        catch java.io.FileNotFoundException from label05 to label06 with label23;
+        catch java.io.IOException from label05 to label06 with label20;
+        catch java.lang.Throwable from label05 to label06 with label19;
+        catch java.io.FileNotFoundException from label07 to label08 with label23;
+        catch java.io.IOException from label07 to label08 with label20;
+        catch java.lang.Throwable from label07 to label08 with label19;
+        catch java.io.FileNotFoundException from label09 to label10 with label23;
+        catch java.io.IOException from label09 to label10 with label20;
+        catch java.lang.Throwable from label09 to label10 with label19;
+        catch java.io.FileNotFoundException from label12 to label13 with label23;
+        catch java.io.IOException from label12 to label13 with label20;
+        catch java.lang.Throwable from label12 to label13 with label19;
+        catch java.io.FileNotFoundException from label14 to label15 with label23;
+        catch java.io.IOException from label14 to label15 with label20;
+        catch java.lang.Throwable from label14 to label15 with label19;
+        catch java.io.FileNotFoundException from label17 to label18 with label23;
+        catch java.io.IOException from label17 to label18 with label20;
+        catch java.lang.Throwable from label17 to label18 with label19;
+        catch java.lang.Throwable from label21 to label22 with label19;
+        catch java.lang.Throwable from label24 to label25 with label19;
+    }
+
+    protected volatile void writeInternal(java.lang.Object)
+    {
+        com.android.server.pm.PackageUsage r0;
+        java.lang.Object r1;
+        java.util.Map $r2;
+
+        r0 := @this: com.android.server.pm.PackageUsage;
+
+        r1 := @parameter0: java.lang.Object;
+
+        $r2 = (java.util.Map) r1;
+
+        virtualinvoke r0.<com.android.server.pm.PackageUsage: void writeInternal(java.util.Map)>($r2);
+
+        return;
+    }
+
+    protected void writeInternal(java.util.Map)
+    {
+        com.android.server.pm.PackageUsage r0;
+        android.util.AtomicFile r1;
+        java.io.FileOutputStream r2, r26;
+        java.io.BufferedOutputStream r3;
+        java.lang.StringBuilder r4;
+        int i0, i6;
+        long l1, $l3;
+        java.io.File $r5;
+        java.lang.String $r6, $r9, $r15, $r19;
+        java.nio.charset.Charset $r10, $r20;
+        byte[] $r11, $r21;
+        java.util.Collection $r12;
+        java.lang.Object $r13;
+        com.android.server.pm.pkg.PackageStateUnserialized $r14, $r17;
+        byte $b4;
+        java.lang.Throwable $r24;
+        java.util.Map r25;
+        java.util.Iterator r27;
+        boolean $z0;
+        com.android.server.pm.PackageSetting r28;
+        long[] r29;
+
+        r0 := @this: com.android.server.pm.PackageUsage;
+
+        r25 := @parameter0: java.util.Map;
+
+        r1 = virtualinvoke r0.<com.android.server.pm.PackageUsage: android.util.AtomicFile getFile()>();
+
+        r26 = null;
+
+     label01:
+        r2 = virtualinvoke r1.<android.util.AtomicFile: java.io.FileOutputStream startWrite()>();
+
+     label02:
+        r26 = r2;
+
+     label03:
+        r3 = new java.io.BufferedOutputStream;
+
+     label04:
+        r26 = r2;
+
+     label05:
+        specialinvoke r3.<java.io.BufferedOutputStream: void <init>(java.io.OutputStream)>(r2);
+
+     label06:
+        r26 = r2;
+
+     label07:
+        $r5 = virtualinvoke r1.<android.util.AtomicFile: java.io.File getBaseFile()>();
+
+        $r6 = virtualinvoke $r5.<java.io.File: java.lang.String getPath()>();
+
+        staticinvoke <android.os.FileUtils: int setPermissions(java.lang.String,int,int,int)>($r6, 416, 1000, 1032);
+
+     label08:
+        r26 = r2;
+
+     label09:
+        r4 = new java.lang.StringBuilder;
+
+     label10:
+        r26 = r2;
+
+     label11:
+        specialinvoke r4.<java.lang.StringBuilder: void <init>()>();
+
+     label12:
+        r26 = r2;
+
+     label13:
+        virtualinvoke r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("PACKAGE_USAGE__VERSION_1");
+
+     label14:
+        r26 = r2;
+
+     label15:
+        virtualinvoke r4.<java.lang.StringBuilder: java.lang.StringBuilder append(char)>(10);
+
+     label16:
+        r26 = r2;
+
+     label17:
+        $r9 = virtualinvoke r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $r10 = <java.nio.charset.StandardCharsets: java.nio.charset.Charset US_ASCII>;
+
+        $r11 = virtualinvoke $r9.<java.lang.String: byte[] getBytes(java.nio.charset.Charset)>($r10);
+
+        virtualinvoke r3.<java.io.BufferedOutputStream: void write(byte[])>($r11);
+
+     label18:
+        r26 = r2;
+
+     label19:
+        $r12 = interfaceinvoke r25.<java.util.Map: java.util.Collection values()>();
+
+        r27 = interfaceinvoke $r12.<java.util.Collection: java.util.Iterator iterator()>();
+
+     label20:
+        r26 = r2;
+
+     label21:
+        $z0 = interfaceinvoke r27.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label45;
+
+     label22:
+        r26 = r2;
+
+     label23:
+        $r13 = interfaceinvoke r27.<java.util.Iterator: java.lang.Object next()>();
+
+        r28 = (com.android.server.pm.PackageSetting) $r13;
+
+     label24:
+        r26 = r2;
+
+     label25:
+        $r14 = virtualinvoke r28.<com.android.server.pm.PackageSetting: com.android.server.pm.pkg.PackageStateUnserialized getPkgState()>();
+
+        $l3 = virtualinvoke $r14.<com.android.server.pm.pkg.PackageStateUnserialized: long getLatestPackageUseTimeInMills()>();
+
+        $b4 = $l3 cmp 0L;
+
+        if $b4 != 0 goto label27;
+
+     label26:
+        goto label20;
+
+     label27:
+        i6 = 0;
+
+        r26 = r2;
+
+     label28:
+        virtualinvoke r4.<java.lang.StringBuilder: void setLength(int)>(0);
+
+     label29:
+        r26 = r2;
+
+     label30:
+        $r15 = r28.<com.android.server.pm.PackageSetting: java.lang.String name>;
+
+        virtualinvoke r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r15);
+
+     label31:
+        r26 = r2;
+
+     label32:
+        $r17 = virtualinvoke r28.<com.android.server.pm.PackageSetting: com.android.server.pm.pkg.PackageStateUnserialized getPkgState()>();
+
+        r29 = virtualinvoke $r17.<com.android.server.pm.pkg.PackageStateUnserialized: long[] getLastPackageUsageTimeInMills()>();
+
+     label33:
+        r26 = r2;
+
+     label34:
+        i0 = lengthof r29;
+
+     label35:
+        if i6 >= i0 goto label40;
+
+        l1 = r29[i6];
+
+        r26 = r2;
+
+     label36:
+        virtualinvoke r4.<java.lang.StringBuilder: java.lang.StringBuilder append(char)>(32);
+
+     label37:
+        r26 = r2;
+
+     label38:
+        virtualinvoke r4.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>(l1);
+
+     label39:
+        i6 = i6 + 1;
+
+        goto label35;
+
+     label40:
+        r26 = r2;
+
+     label41:
+        virtualinvoke r4.<java.lang.StringBuilder: java.lang.StringBuilder append(char)>(10);
+
+     label42:
+        r26 = r2;
+
+     label43:
+        $r19 = virtualinvoke r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $r20 = <java.nio.charset.StandardCharsets: java.nio.charset.Charset US_ASCII>;
+
+        $r21 = virtualinvoke $r19.<java.lang.String: byte[] getBytes(java.nio.charset.Charset)>($r20);
+
+        virtualinvoke r3.<java.io.BufferedOutputStream: void write(byte[])>($r21);
+
+     label44:
+        goto label20;
+
+     label45:
+        r26 = r2;
+
+     label46:
+        virtualinvoke r3.<java.io.BufferedOutputStream: void flush()>();
+
+     label47:
+        r26 = r2;
+
+     label48:
+        virtualinvoke r1.<android.util.AtomicFile: void finishWrite(java.io.FileOutputStream)>(r2);
+
+     label49:
+        goto label52;
+
+     label50:
+        $r24 := @caughtexception;
+
+        if r26 == null goto label51;
+
+        virtualinvoke r1.<android.util.AtomicFile: void failWrite(java.io.FileOutputStream)>(r26);
+
+     label51:
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("PackageManager", "Failed to write package usage times", $r24);
+
+     label52:
+        return;
+
+        catch java.io.IOException from label01 to label02 with label50;
+        catch java.io.IOException from label03 to label04 with label50;
+        catch java.io.IOException from label05 to label06 with label50;
+        catch java.io.IOException from label07 to label08 with label50;
+        catch java.io.IOException from label09 to label10 with label50;
+        catch java.io.IOException from label11 to label12 with label50;
+        catch java.io.IOException from label13 to label14 with label50;
+        catch java.io.IOException from label15 to label16 with label50;
+        catch java.io.IOException from label17 to label18 with label50;
+        catch java.io.IOException from label19 to label20 with label50;
+        catch java.io.IOException from label21 to label22 with label50;
+        catch java.io.IOException from label23 to label24 with label50;
+        catch java.io.IOException from label25 to label26 with label50;
+        catch java.io.IOException from label28 to label29 with label50;
+        catch java.io.IOException from label30 to label31 with label50;
+        catch java.io.IOException from label32 to label33 with label50;
+        catch java.io.IOException from label34 to label35 with label50;
+        catch java.io.IOException from label36 to label37 with label50;
+        catch java.io.IOException from label38 to label39 with label50;
+        catch java.io.IOException from label41 to label42 with label50;
+        catch java.io.IOException from label43 to label44 with label50;
+        catch java.io.IOException from label46 to label47 with label50;
+        catch java.io.IOException from label48 to label49 with label50;
+    }
+
+    public static void <clinit>()
+    {
+        <com.android.server.pm.PackageUsage: java.lang.String USAGE_FILE_MAGIC_VERSION_1> = "PACKAGE_USAGE__VERSION_1";
+
+        <com.android.server.pm.PackageUsage: java.lang.String USAGE_FILE_MAGIC> = "PACKAGE_USAGE__VERSION_";
+
+        return;
+    }
+}

@@ -1,0 +1,3269 @@
+public class com.android.server.PackageWatchdog extends java.lang.Object
+{
+    private static final java.lang.String ATTR_DURATION;
+    private static final java.lang.String ATTR_EXPLICIT_HEALTH_CHECK_DURATION;
+    private static final java.lang.String ATTR_NAME;
+    private static final java.lang.String ATTR_PASSED_HEALTH_CHECK;
+    private static final java.lang.String ATTR_VERSION;
+    private static final int DB_VERSION;
+    static final int DEFAULT_BOOT_LOOP_TRIGGER_COUNT;
+    static final long DEFAULT_BOOT_LOOP_TRIGGER_WINDOW_MS;
+    private static final boolean DEFAULT_EXPLICIT_HEALTH_CHECK_ENABLED;
+    static final long DEFAULT_OBSERVING_DURATION_MS;
+    static final int DEFAULT_TRIGGER_FAILURE_COUNT;
+    static final int DEFAULT_TRIGGER_FAILURE_DURATION_MS;
+    public static final int FAILURE_REASON_APP_CRASH;
+    public static final int FAILURE_REASON_APP_NOT_RESPONDING;
+    public static final int FAILURE_REASON_EXPLICIT_HEALTH_CHECK;
+    public static final int FAILURE_REASON_NATIVE_CRASH;
+    public static final int FAILURE_REASON_UNKNOWN;
+    private static final long NATIVE_CRASH_POLLING_INTERVAL_MILLIS;
+    private static final long NUMBER_OF_NATIVE_CRASH_POLLS;
+    static final java.lang.String PROPERTY_WATCHDOG_EXPLICIT_HEALTH_CHECK_ENABLED;
+    static final java.lang.String PROPERTY_WATCHDOG_TRIGGER_DURATION_MILLIS;
+    static final java.lang.String PROPERTY_WATCHDOG_TRIGGER_FAILURE_COUNT;
+    private static final java.lang.String PROP_RESCUE_BOOT_COUNT;
+    private static final java.lang.String PROP_RESCUE_BOOT_START;
+    private static final java.lang.String TAG;
+    private static final java.lang.String TAG_OBSERVER;
+    private static final java.lang.String TAG_PACKAGE;
+    private static final java.lang.String TAG_PACKAGE_WATCHDOG;
+    private static com.android.server.PackageWatchdog sPackageWatchdog;
+    private final android.util.ArrayMap mAllObservers;
+    private final com.android.server.PackageWatchdog$BootThreshold mBootThreshold;
+    private final android.net.ConnectivityModuleConnector mConnectivityModuleConnector;
+    private final android.content.Context mContext;
+    private final com.android.server.ExplicitHealthCheckController mHealthCheckController;
+    private boolean mIsHealthCheckEnabled;
+    private boolean mIsPackagesReady;
+    private final java.lang.Object mLock;
+    private final android.os.Handler mLongTaskHandler;
+    private long mNumberOfNativeCrashPollsRemaining;
+    private final android.util.AtomicFile mPolicyFile;
+    private java.util.Set mRequestedHealthCheckPackages;
+    private final java.lang.Runnable mSaveToFile;
+    private final android.os.Handler mShortTaskHandler;
+    private final java.lang.Runnable mSyncRequests;
+    private boolean mSyncRequired;
+    private final java.lang.Runnable mSyncStateWithScheduledReason;
+    private final com.android.server.PackageWatchdog$SystemClock mSystemClock;
+    private int mTriggerFailureCount;
+    private int mTriggerFailureDurationMs;
+    private long mUptimeAtLastStateSync;
+
+    static void <clinit>()
+    {
+        java.util.concurrent.TimeUnit $r0, $r1, $r2, $r3;
+        long $l0, $l1, $l3, $l4;
+        int $i2;
+
+        <com.android.server.PackageWatchdog: java.lang.String TAG_PACKAGE_WATCHDOG> = "package-watchdog";
+
+        <com.android.server.PackageWatchdog: java.lang.String TAG_PACKAGE> = "package";
+
+        <com.android.server.PackageWatchdog: java.lang.String TAG_OBSERVER> = "observer";
+
+        <com.android.server.PackageWatchdog: java.lang.String TAG> = "PackageWatchdog";
+
+        <com.android.server.PackageWatchdog: java.lang.String PROP_RESCUE_BOOT_START> = "sys.rescue_boot_start";
+
+        <com.android.server.PackageWatchdog: java.lang.String PROP_RESCUE_BOOT_COUNT> = "sys.rescue_boot_count";
+
+        <com.android.server.PackageWatchdog: java.lang.String PROPERTY_WATCHDOG_TRIGGER_FAILURE_COUNT> = "watchdog_trigger_failure_count";
+
+        <com.android.server.PackageWatchdog: java.lang.String PROPERTY_WATCHDOG_TRIGGER_DURATION_MILLIS> = "watchdog_trigger_failure_duration_millis";
+
+        <com.android.server.PackageWatchdog: java.lang.String PROPERTY_WATCHDOG_EXPLICIT_HEALTH_CHECK_ENABLED> = "watchdog_explicit_health_check_enabled";
+
+        <com.android.server.PackageWatchdog: long NUMBER_OF_NATIVE_CRASH_POLLS> = 10L;
+
+        <com.android.server.PackageWatchdog: int FAILURE_REASON_UNKNOWN> = 0;
+
+        <com.android.server.PackageWatchdog: int FAILURE_REASON_NATIVE_CRASH> = 1;
+
+        <com.android.server.PackageWatchdog: int FAILURE_REASON_EXPLICIT_HEALTH_CHECK> = 2;
+
+        <com.android.server.PackageWatchdog: int FAILURE_REASON_APP_NOT_RESPONDING> = 4;
+
+        <com.android.server.PackageWatchdog: int FAILURE_REASON_APP_CRASH> = 3;
+
+        <com.android.server.PackageWatchdog: int DEFAULT_TRIGGER_FAILURE_COUNT> = 5;
+
+        <com.android.server.PackageWatchdog: boolean DEFAULT_EXPLICIT_HEALTH_CHECK_ENABLED> = 1;
+
+        <com.android.server.PackageWatchdog: int DEFAULT_BOOT_LOOP_TRIGGER_COUNT> = 5;
+
+        <com.android.server.PackageWatchdog: int DB_VERSION> = 1;
+
+        <com.android.server.PackageWatchdog: java.lang.String ATTR_VERSION> = "version";
+
+        <com.android.server.PackageWatchdog: java.lang.String ATTR_PASSED_HEALTH_CHECK> = "passed-health-check";
+
+        <com.android.server.PackageWatchdog: java.lang.String ATTR_NAME> = "name";
+
+        <com.android.server.PackageWatchdog: java.lang.String ATTR_EXPLICIT_HEALTH_CHECK_DURATION> = "health-check-duration";
+
+        <com.android.server.PackageWatchdog: java.lang.String ATTR_DURATION> = "duration";
+
+        $r0 = <java.util.concurrent.TimeUnit: java.util.concurrent.TimeUnit SECONDS>;
+
+        $l0 = virtualinvoke $r0.<java.util.concurrent.TimeUnit: long toMillis(long)>(30L);
+
+        <com.android.server.PackageWatchdog: long NATIVE_CRASH_POLLING_INTERVAL_MILLIS> = $l0;
+
+        $r1 = <java.util.concurrent.TimeUnit: java.util.concurrent.TimeUnit MINUTES>;
+
+        $l1 = virtualinvoke $r1.<java.util.concurrent.TimeUnit: long toMillis(long)>(1L);
+
+        $i2 = (int) $l1;
+
+        <com.android.server.PackageWatchdog: int DEFAULT_TRIGGER_FAILURE_DURATION_MS> = $i2;
+
+        $r2 = <java.util.concurrent.TimeUnit: java.util.concurrent.TimeUnit DAYS>;
+
+        $l3 = virtualinvoke $r2.<java.util.concurrent.TimeUnit: long toMillis(long)>(2L);
+
+        <com.android.server.PackageWatchdog: long DEFAULT_OBSERVING_DURATION_MS> = $l3;
+
+        $r3 = <java.util.concurrent.TimeUnit: java.util.concurrent.TimeUnit MINUTES>;
+
+        $l4 = virtualinvoke $r3.<java.util.concurrent.TimeUnit: long toMillis(long)>(10L);
+
+        <com.android.server.PackageWatchdog: long DEFAULT_BOOT_LOOP_TRIGGER_WINDOW_MS> = $l4;
+
+        return;
+    }
+
+    private void <init>(android.content.Context)
+    {
+        com.android.server.PackageWatchdog r0;
+        android.content.Context r1;
+        java.io.File $r5, r12, r13;
+        android.os.Looper $r7;
+        android.os.Handler $r8, r15;
+        android.net.ConnectivityModuleConnector $r10;
+        com.android.server.'-$$Lambda$u6uWKONNslLDvDcMfFfe2etQmKg' $r11;
+        android.util.AtomicFile r14;
+        com.android.server.ExplicitHealthCheckController r16;
+        com.android.server.PackageWatchdog$SystemClock r17;
+
+        r0 := @this: com.android.server.PackageWatchdog;
+
+        r1 := @parameter0: android.content.Context;
+
+        r14 = new android.util.AtomicFile;
+
+        r13 = new java.io.File;
+
+        r12 = new java.io.File;
+
+        $r5 = staticinvoke <android.os.Environment: java.io.File getDataDirectory()>();
+
+        specialinvoke r12.<java.io.File: void <init>(java.io.File,java.lang.String)>($r5, "system");
+
+        specialinvoke r13.<java.io.File: void <init>(java.io.File,java.lang.String)>(r12, "package-watchdog.xml");
+
+        specialinvoke r14.<android.util.AtomicFile: void <init>(java.io.File)>(r13);
+
+        r15 = new android.os.Handler;
+
+        $r7 = staticinvoke <android.os.Looper: android.os.Looper myLooper()>();
+
+        specialinvoke r15.<android.os.Handler: void <init>(android.os.Looper)>($r7);
+
+        $r8 = staticinvoke <com.android.internal.os.BackgroundThread: android.os.Handler getHandler()>();
+
+        r16 = new com.android.server.ExplicitHealthCheckController;
+
+        specialinvoke r16.<com.android.server.ExplicitHealthCheckController: void <init>(android.content.Context)>(r1);
+
+        $r10 = staticinvoke <android.net.ConnectivityModuleConnector: android.net.ConnectivityModuleConnector getInstance()>();
+
+        $r11 = <com.android.server._$$Lambda$u6uWKONNslLDvDcMfFfe2etQmKg: com.android.server.'-$$Lambda$u6uWKONNslLDvDcMfFfe2etQmKg' INSTANCE>;
+
+        r17 = (com.android.server.PackageWatchdog$SystemClock) $r11;
+
+        specialinvoke r0.<com.android.server.PackageWatchdog: void <init>(android.content.Context,android.util.AtomicFile,android.os.Handler,android.os.Handler,com.android.server.ExplicitHealthCheckController,android.net.ConnectivityModuleConnector,com.android.server.PackageWatchdog$SystemClock)>(r1, r14, r15, $r8, r16, $r10, r17);
+
+        return;
+    }
+
+    void <init>(android.content.Context, android.util.AtomicFile, android.os.Handler, android.os.Handler, com.android.server.ExplicitHealthCheckController, android.net.ConnectivityModuleConnector, com.android.server.PackageWatchdog$SystemClock)
+    {
+        com.android.server.PackageWatchdog r0;
+        android.content.Context r1;
+        android.util.AtomicFile r2;
+        android.os.Handler r3, r4;
+        com.android.server.ExplicitHealthCheckController r5;
+        android.net.ConnectivityModuleConnector r6;
+        com.android.server.PackageWatchdog$SystemClock r7;
+        java.lang.Object $r8;
+        android.util.ArrayMap $r9;
+        com.android.server._$$Lambda$PackageWatchdog$CQuOnXthwwBaxcS5WoAlJJAz8Tk $r10;
+        com.android.server._$$Lambda$PackageWatchdog$vRKcIrucEj03dz6ypRVINZtns1s $r11;
+        com.android.server._$$Lambda$PackageWatchdog$Q0WI2EJpRFO1jF_7_YDaj1eGHas $r12;
+        android.util.ArraySet $r13;
+        int $i0;
+        com.android.server.PackageWatchdog$BootThreshold $r14;
+        long $l1;
+
+        r0 := @this: com.android.server.PackageWatchdog;
+
+        r1 := @parameter0: android.content.Context;
+
+        r2 := @parameter1: android.util.AtomicFile;
+
+        r3 := @parameter2: android.os.Handler;
+
+        r4 := @parameter3: android.os.Handler;
+
+        r5 := @parameter4: com.android.server.ExplicitHealthCheckController;
+
+        r6 := @parameter5: android.net.ConnectivityModuleConnector;
+
+        r7 := @parameter6: com.android.server.PackageWatchdog$SystemClock;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        $r8 = new java.lang.Object;
+
+        specialinvoke $r8.<java.lang.Object: void <init>()>();
+
+        r0.<com.android.server.PackageWatchdog: java.lang.Object mLock> = $r8;
+
+        $r9 = new android.util.ArrayMap;
+
+        specialinvoke $r9.<android.util.ArrayMap: void <init>()>();
+
+        r0.<com.android.server.PackageWatchdog: android.util.ArrayMap mAllObservers> = $r9;
+
+        $r10 = new com.android.server._$$Lambda$PackageWatchdog$CQuOnXthwwBaxcS5WoAlJJAz8Tk;
+
+        specialinvoke $r10.<com.android.server._$$Lambda$PackageWatchdog$CQuOnXthwwBaxcS5WoAlJJAz8Tk: void <init>(com.android.server.PackageWatchdog)>(r0);
+
+        r0.<com.android.server.PackageWatchdog: java.lang.Runnable mSyncRequests> = $r10;
+
+        $r11 = new com.android.server._$$Lambda$PackageWatchdog$vRKcIrucEj03dz6ypRVINZtns1s;
+
+        specialinvoke $r11.<com.android.server._$$Lambda$PackageWatchdog$vRKcIrucEj03dz6ypRVINZtns1s: void <init>(com.android.server.PackageWatchdog)>(r0);
+
+        r0.<com.android.server.PackageWatchdog: java.lang.Runnable mSyncStateWithScheduledReason> = $r11;
+
+        $r12 = new com.android.server._$$Lambda$PackageWatchdog$Q0WI2EJpRFO1jF_7_YDaj1eGHas;
+
+        specialinvoke $r12.<com.android.server._$$Lambda$PackageWatchdog$Q0WI2EJpRFO1jF_7_YDaj1eGHas: void <init>(com.android.server.PackageWatchdog)>(r0);
+
+        r0.<com.android.server.PackageWatchdog: java.lang.Runnable mSaveToFile> = $r12;
+
+        $r13 = new android.util.ArraySet;
+
+        specialinvoke $r13.<android.util.ArraySet: void <init>()>();
+
+        r0.<com.android.server.PackageWatchdog: java.util.Set mRequestedHealthCheckPackages> = $r13;
+
+        r0.<com.android.server.PackageWatchdog: boolean mIsHealthCheckEnabled> = 1;
+
+        $i0 = <com.android.server.PackageWatchdog: int DEFAULT_TRIGGER_FAILURE_DURATION_MS>;
+
+        r0.<com.android.server.PackageWatchdog: int mTriggerFailureDurationMs> = $i0;
+
+        r0.<com.android.server.PackageWatchdog: int mTriggerFailureCount> = 5;
+
+        r0.<com.android.server.PackageWatchdog: boolean mSyncRequired> = 0;
+
+        r0.<com.android.server.PackageWatchdog: android.content.Context mContext> = r1;
+
+        r0.<com.android.server.PackageWatchdog: android.util.AtomicFile mPolicyFile> = r2;
+
+        r0.<com.android.server.PackageWatchdog: android.os.Handler mShortTaskHandler> = r3;
+
+        r0.<com.android.server.PackageWatchdog: android.os.Handler mLongTaskHandler> = r4;
+
+        r0.<com.android.server.PackageWatchdog: com.android.server.ExplicitHealthCheckController mHealthCheckController> = r5;
+
+        r0.<com.android.server.PackageWatchdog: android.net.ConnectivityModuleConnector mConnectivityModuleConnector> = r6;
+
+        r0.<com.android.server.PackageWatchdog: com.android.server.PackageWatchdog$SystemClock mSystemClock> = r7;
+
+        r0.<com.android.server.PackageWatchdog: long mNumberOfNativeCrashPollsRemaining> = 10L;
+
+        $r14 = new com.android.server.PackageWatchdog$BootThreshold;
+
+        $l1 = <com.android.server.PackageWatchdog: long DEFAULT_BOOT_LOOP_TRIGGER_WINDOW_MS>;
+
+        specialinvoke $r14.<com.android.server.PackageWatchdog$BootThreshold: void <init>(int,long)>(5, $l1);
+
+        r0.<com.android.server.PackageWatchdog: com.android.server.PackageWatchdog$BootThreshold mBootThreshold> = $r14;
+
+        specialinvoke r0.<com.android.server.PackageWatchdog: void loadFromFile()>();
+
+        <com.android.server.PackageWatchdog: com.android.server.PackageWatchdog sPackageWatchdog> = r0;
+
+        return;
+    }
+
+    static int access$1000(com.android.server.PackageWatchdog)
+    {
+        com.android.server.PackageWatchdog r0;
+        int $i0;
+
+        r0 := @parameter0: com.android.server.PackageWatchdog;
+
+        $i0 = r0.<com.android.server.PackageWatchdog: int mTriggerFailureDurationMs>;
+
+        return $i0;
+    }
+
+    static int access$1100(com.android.server.PackageWatchdog)
+    {
+        com.android.server.PackageWatchdog r0;
+        int $i0;
+
+        r0 := @parameter0: com.android.server.PackageWatchdog;
+
+        $i0 = r0.<com.android.server.PackageWatchdog: int mTriggerFailureCount>;
+
+        return $i0;
+    }
+
+    static com.android.server.PackageWatchdog access$300()
+    {
+        com.android.server.PackageWatchdog $r0;
+
+        $r0 = <com.android.server.PackageWatchdog: com.android.server.PackageWatchdog sPackageWatchdog>;
+
+        return $r0;
+    }
+
+    static com.android.server.PackageWatchdog$SystemClock access$900(com.android.server.PackageWatchdog)
+    {
+        com.android.server.PackageWatchdog r0;
+        com.android.server.PackageWatchdog$SystemClock $r1;
+
+        r0 := @parameter0: com.android.server.PackageWatchdog;
+
+        $r1 = r0.<com.android.server.PackageWatchdog: com.android.server.PackageWatchdog$SystemClock mSystemClock>;
+
+        return $r1;
+    }
+
+    private void checkAndMitigateNativeCrashes()
+    {
+        com.android.server.PackageWatchdog r0;
+        long $l0, $l1, $l2, $l4;
+        java.lang.String $r1, $r2;
+        boolean $z0;
+        byte $b3;
+        com.android.server._$$Lambda$PackageWatchdog$wEbB54PjC3ae7wMN2BshwaF0OhE $r3;
+        android.os.Handler $r4;
+        java.util.List $r5;
+
+        r0 := @this: com.android.server.PackageWatchdog;
+
+        $l0 = r0.<com.android.server.PackageWatchdog: long mNumberOfNativeCrashPollsRemaining>;
+
+        $l1 = $l0 - 1L;
+
+        r0.<com.android.server.PackageWatchdog: long mNumberOfNativeCrashPollsRemaining> = $l1;
+
+        $r1 = "1";
+
+        $r2 = staticinvoke <android.os.SystemProperties: java.lang.String get(java.lang.String)>("sys.init.updatable_crashing");
+
+        $z0 = virtualinvoke $r1.<java.lang.String: boolean equals(java.lang.Object)>($r2);
+
+        if $z0 == 0 goto label1;
+
+        $r5 = <java.util.Collections: java.util.List EMPTY_LIST>;
+
+        virtualinvoke r0.<com.android.server.PackageWatchdog: void onPackageFailure(java.util.List,int)>($r5, 1);
+
+        goto label2;
+
+     label1:
+        $l2 = r0.<com.android.server.PackageWatchdog: long mNumberOfNativeCrashPollsRemaining>;
+
+        $b3 = $l2 cmp 0L;
+
+        if $b3 <= 0 goto label2;
+
+        $r4 = r0.<com.android.server.PackageWatchdog: android.os.Handler mShortTaskHandler>;
+
+        $r3 = new com.android.server._$$Lambda$PackageWatchdog$wEbB54PjC3ae7wMN2BshwaF0OhE;
+
+        specialinvoke $r3.<com.android.server._$$Lambda$PackageWatchdog$wEbB54PjC3ae7wMN2BshwaF0OhE: void <init>(com.android.server.PackageWatchdog)>(r0);
+
+        $l4 = <com.android.server.PackageWatchdog: long NATIVE_CRASH_POLLING_INTERVAL_MILLIS>;
+
+        virtualinvoke $r4.<android.os.Handler: boolean postDelayed(java.lang.Runnable,long)>($r3, $l4);
+
+     label2:
+        return;
+    }
+
+    public static com.android.server.PackageWatchdog getInstance(android.content.Context)
+    {
+        com.android.server.PackageWatchdog $r0, $r1, r4;
+        java.lang.Throwable $r2;
+        android.content.Context r3;
+
+        r3 := @parameter0: android.content.Context;
+
+        entermonitor class "Lcom/android/server/PackageWatchdog;";
+
+     label1:
+        $r0 = <com.android.server.PackageWatchdog: com.android.server.PackageWatchdog sPackageWatchdog>;
+
+        if $r0 != null goto label2;
+
+        $r1 = new com.android.server.PackageWatchdog;
+
+        specialinvoke $r1.<com.android.server.PackageWatchdog: void <init>(android.content.Context)>(r3);
+
+     label2:
+        r4 = <com.android.server.PackageWatchdog: com.android.server.PackageWatchdog sPackageWatchdog>;
+
+        exitmonitor class "Lcom/android/server/PackageWatchdog;";
+
+     label3:
+        return r4;
+
+     label4:
+        $r2 := @caughtexception;
+
+     label5:
+        exitmonitor class "Lcom/android/server/PackageWatchdog;";
+
+     label6:
+        throw $r2;
+
+        catch java.lang.Throwable from label1 to label2 with label4;
+        catch java.lang.Throwable from label2 to label3 with label4;
+        catch java.lang.Throwable from label5 to label6 with label4;
+    }
+
+    private long getNextStateSyncMillisLocked()
+    {
+        com.android.server.PackageWatchdog r0;
+        android.util.ArrayMap r1, $r2, $r3;
+        long l0, l4, l7;
+        int $i1, $i2, i5, i6;
+        java.lang.Object $r4, $r6;
+        com.android.server.PackageWatchdog$ObserverInternal $r5;
+        com.android.server.PackageWatchdog$MonitoredPackage $r7;
+        byte $b3;
+
+        r0 := @this: com.android.server.PackageWatchdog;
+
+        l4 = 9223372036854775807L;
+
+        i5 = 0;
+
+     label1:
+        $r2 = r0.<com.android.server.PackageWatchdog: android.util.ArrayMap mAllObservers>;
+
+        $i1 = virtualinvoke $r2.<android.util.ArrayMap: int size()>();
+
+        if i5 >= $i1 goto label5;
+
+        $r3 = r0.<com.android.server.PackageWatchdog: android.util.ArrayMap mAllObservers>;
+
+        $r4 = virtualinvoke $r3.<android.util.ArrayMap: java.lang.Object valueAt(int)>(i5);
+
+        $r5 = (com.android.server.PackageWatchdog$ObserverInternal) $r4;
+
+        r1 = $r5.<com.android.server.PackageWatchdog$ObserverInternal: android.util.ArrayMap packages>;
+
+        i6 = 0;
+
+     label2:
+        $i2 = virtualinvoke r1.<android.util.ArrayMap: int size()>();
+
+        if i6 >= $i2 goto label4;
+
+        $r6 = virtualinvoke r1.<android.util.ArrayMap: java.lang.Object valueAt(int)>(i6);
+
+        $r7 = (com.android.server.PackageWatchdog$MonitoredPackage) $r6;
+
+        l0 = virtualinvoke $r7.<com.android.server.PackageWatchdog$MonitoredPackage: long getShortestScheduleDurationMsLocked()>();
+
+        l7 = l4;
+
+        $b3 = l0 cmp l4;
+
+        if $b3 >= 0 goto label3;
+
+        l7 = l0;
+
+     label3:
+        i6 = i6 + 1;
+
+        l4 = l7;
+
+        goto label2;
+
+     label4:
+        i5 = i5 + 1;
+
+        goto label1;
+
+     label5:
+        return l4;
+    }
+
+    private java.util.Set getPackagesPendingHealthChecksLocked()
+    {
+        com.android.server.PackageWatchdog r0;
+        java.util.Iterator r2, r3;
+        com.android.server.PackageWatchdog$MonitoredPackage r4;
+        java.lang.String r5;
+        android.util.ArraySet $r6;
+        android.util.ArrayMap $r7, $r11;
+        java.util.Collection $r8, $r12;
+        boolean $z0, $z1, $z2;
+        java.lang.Object $r9, $r13;
+        com.android.server.PackageWatchdog$ObserverInternal $r10;
+
+        r0 := @this: com.android.server.PackageWatchdog;
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("PackageWatchdog", "Getting all observed packages pending health checks");
+
+        $r6 = new android.util.ArraySet;
+
+        specialinvoke $r6.<android.util.ArraySet: void <init>()>();
+
+        $r7 = r0.<com.android.server.PackageWatchdog: android.util.ArrayMap mAllObservers>;
+
+        $r8 = virtualinvoke $r7.<android.util.ArrayMap: java.util.Collection values()>();
+
+        r2 = interfaceinvoke $r8.<java.util.Collection: java.util.Iterator iterator()>();
+
+     label1:
+        $z0 = interfaceinvoke r2.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label5;
+
+        $r9 = interfaceinvoke r2.<java.util.Iterator: java.lang.Object next()>();
+
+        $r10 = (com.android.server.PackageWatchdog$ObserverInternal) $r9;
+
+        $r11 = $r10.<com.android.server.PackageWatchdog$ObserverInternal: android.util.ArrayMap packages>;
+
+        $r12 = virtualinvoke $r11.<android.util.ArrayMap: java.util.Collection values()>();
+
+        r3 = interfaceinvoke $r12.<java.util.Collection: java.util.Iterator iterator()>();
+
+     label2:
+        $z1 = interfaceinvoke r3.<java.util.Iterator: boolean hasNext()>();
+
+        if $z1 == 0 goto label4;
+
+        $r13 = interfaceinvoke r3.<java.util.Iterator: java.lang.Object next()>();
+
+        r4 = (com.android.server.PackageWatchdog$MonitoredPackage) $r13;
+
+        r5 = staticinvoke <com.android.server.PackageWatchdog$MonitoredPackage: java.lang.String access$000(com.android.server.PackageWatchdog$MonitoredPackage)>(r4);
+
+        $z2 = virtualinvoke r4.<com.android.server.PackageWatchdog$MonitoredPackage: boolean isPendingHealthChecksLocked()>();
+
+        if $z2 == 0 goto label3;
+
+        interfaceinvoke $r6.<java.util.Set: boolean add(java.lang.Object)>(r5);
+
+     label3:
+        goto label2;
+
+     label4:
+        goto label1;
+
+     label5:
+        return $r6;
+    }
+
+    private android.content.pm.VersionedPackage getVersionedPackage(java.lang.String)
+    {
+        com.android.server.PackageWatchdog r0;
+        android.content.pm.PackageManager r1;
+        android.content.Context $r2;
+        boolean $z0;
+        android.content.pm.VersionedPackage $r3;
+        android.content.pm.PackageInfo $r4;
+        long $l0;
+        android.content.pm.PackageManager$NameNotFoundException $r5;
+        java.lang.String r6;
+
+        r0 := @this: com.android.server.PackageWatchdog;
+
+        r6 := @parameter0: java.lang.String;
+
+        $r2 = r0.<com.android.server.PackageWatchdog: android.content.Context mContext>;
+
+        r1 = virtualinvoke $r2.<android.content.Context: android.content.pm.PackageManager getPackageManager()>();
+
+        if r1 == null goto label4;
+
+        $z0 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>(r6);
+
+        if $z0 == 0 goto label1;
+
+        goto label4;
+
+     label1:
+        $r3 = new android.content.pm.VersionedPackage;
+
+        $r4 = virtualinvoke r1.<android.content.pm.PackageManager: android.content.pm.PackageInfo getPackageInfo(java.lang.String,int)>(r6, 0);
+
+        $l0 = virtualinvoke $r4.<android.content.pm.PackageInfo: long getLongVersionCode()>();
+
+        specialinvoke $r3.<android.content.pm.VersionedPackage: void <init>(java.lang.String,long)>(r6, $l0);
+
+     label2:
+        return $r3;
+
+     label3:
+        $r5 := @caughtexception;
+
+        return null;
+
+     label4:
+        return null;
+
+        catch android.content.pm.PackageManager$NameNotFoundException from label1 to label2 with label3;
+    }
+
+    private void handleFailureImmediately(java.util.List, int)
+    {
+        com.android.server.PackageWatchdog r0;
+        int i0, i1, $i2, i3, i4;
+        java.util.Iterator r1;
+        com.android.server.PackageWatchdog$PackageHealthObserver r2, r10, r11;
+        android.util.ArrayMap $r3;
+        java.util.Collection $r4;
+        java.lang.Object $r5, $r7;
+        com.android.server.PackageWatchdog$ObserverInternal $r6;
+        java.util.List r8;
+        android.content.pm.VersionedPackage r9;
+        boolean $z1;
+
+        r0 := @this: com.android.server.PackageWatchdog;
+
+        r8 := @parameter0: java.util.List;
+
+        i0 := @parameter1: int;
+
+        $i2 = interfaceinvoke r8.<java.util.List: int size()>();
+
+        if $i2 <= 0 goto label1;
+
+        $r7 = interfaceinvoke r8.<java.util.List: java.lang.Object get(int)>(0);
+
+        r9 = (android.content.pm.VersionedPackage) $r7;
+
+        goto label2;
+
+     label1:
+        r9 = null;
+
+     label2:
+        r10 = null;
+
+        i3 = 2147483647;
+
+        $r3 = r0.<com.android.server.PackageWatchdog: android.util.ArrayMap mAllObservers>;
+
+        $r4 = virtualinvoke $r3.<android.util.ArrayMap: java.util.Collection values()>();
+
+        r1 = interfaceinvoke $r4.<java.util.Collection: java.util.Iterator iterator()>();
+
+     label3:
+        $z1 = interfaceinvoke r1.<java.util.Iterator: boolean hasNext()>();
+
+        if $z1 == 0 goto label5;
+
+        $r5 = interfaceinvoke r1.<java.util.Iterator: java.lang.Object next()>();
+
+        $r6 = (com.android.server.PackageWatchdog$ObserverInternal) $r5;
+
+        r2 = $r6.<com.android.server.PackageWatchdog$ObserverInternal: com.android.server.PackageWatchdog$PackageHealthObserver registeredObserver>;
+
+        r11 = r10;
+
+        i4 = i3;
+
+        if r2 == null goto label4;
+
+        i1 = interfaceinvoke r2.<com.android.server.PackageWatchdog$PackageHealthObserver: int onHealthCheckFailed(android.content.pm.VersionedPackage,int)>(r9, i0);
+
+        r11 = r10;
+
+        i4 = i3;
+
+        if i1 == 0 goto label4;
+
+        r11 = r10;
+
+        i4 = i3;
+
+        if i1 >= i3 goto label4;
+
+        r11 = r2;
+
+        i4 = i1;
+
+     label4:
+        r10 = r11;
+
+        i3 = i4;
+
+        goto label3;
+
+     label5:
+        if r10 == null goto label6;
+
+        interfaceinvoke r10.<com.android.server.PackageWatchdog$PackageHealthObserver: boolean execute(android.content.pm.VersionedPackage,int)>(r9, i0);
+
+     label6:
+        return;
+    }
+
+    public static void lambda$CQuOnXthwwBaxcS5WoAlJJAz8Tk(com.android.server.PackageWatchdog)
+    {
+        com.android.server.PackageWatchdog r0;
+
+        r0 := @parameter0: com.android.server.PackageWatchdog;
+
+        specialinvoke r0.<com.android.server.PackageWatchdog: void syncRequests()>();
+
+        return;
+    }
+
+    public static boolean lambda$Q0WI2EJpRFO1jF_7_YDaj1eGHas(com.android.server.PackageWatchdog)
+    {
+        com.android.server.PackageWatchdog r0;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.server.PackageWatchdog;
+
+        $z0 = specialinvoke r0.<com.android.server.PackageWatchdog: boolean saveToFile()>();
+
+        return $z0;
+    }
+
+    public static void lambda$vRKcIrucEj03dz6ypRVINZtns1s(com.android.server.PackageWatchdog)
+    {
+        com.android.server.PackageWatchdog r0;
+
+        r0 := @parameter0: com.android.server.PackageWatchdog;
+
+        specialinvoke r0.<com.android.server.PackageWatchdog: void syncStateWithScheduledReason()>();
+
+        return;
+    }
+
+    private void loadFromFile()
+    {
+        com.android.server.PackageWatchdog r0;
+        org.xmlpull.v1.XmlPullParser r1;
+        int i0;
+        com.android.server.PackageWatchdog$ObserverInternal r2;
+        android.util.ArrayMap $r3, $r8;
+        android.util.AtomicFile $r4, $r12;
+        java.nio.charset.Charset $r5;
+        java.lang.String $r6, $r7;
+        boolean $z0;
+        java.lang.Throwable $r10, $r11, $r13;
+        java.io.FileInputStream r14, r15, r16, r17;
+
+        r0 := @this: com.android.server.PackageWatchdog;
+
+        r14 = null;
+
+        r15 = null;
+
+        r16 = null;
+
+        $r3 = r0.<com.android.server.PackageWatchdog: android.util.ArrayMap mAllObservers>;
+
+        virtualinvoke $r3.<android.util.ArrayMap: void clear()>();
+
+     label01:
+        $r4 = r0.<com.android.server.PackageWatchdog: android.util.AtomicFile mPolicyFile>;
+
+        r17 = virtualinvoke $r4.<android.util.AtomicFile: java.io.FileInputStream openRead()>();
+
+     label02:
+        r16 = r17;
+
+        r14 = r17;
+
+        r15 = r17;
+
+     label03:
+        r1 = staticinvoke <android.util.Xml: org.xmlpull.v1.XmlPullParser newPullParser()>();
+
+     label04:
+        r16 = r17;
+
+        r14 = r17;
+
+        r15 = r17;
+
+     label05:
+        $r5 = <java.nio.charset.StandardCharsets: java.nio.charset.Charset UTF_8>;
+
+        $r6 = virtualinvoke $r5.<java.nio.charset.Charset: java.lang.String name()>();
+
+        interfaceinvoke r1.<org.xmlpull.v1.XmlPullParser: void setInput(java.io.InputStream,java.lang.String)>(r17, $r6);
+
+     label06:
+        r16 = r17;
+
+        r14 = r17;
+
+        r15 = r17;
+
+     label07:
+        staticinvoke <com.android.internal.util.XmlUtils: void beginDocument(org.xmlpull.v1.XmlPullParser,java.lang.String)>(r1, "package-watchdog");
+
+     label08:
+        r16 = r17;
+
+        r14 = r17;
+
+        r15 = r17;
+
+     label09:
+        i0 = interfaceinvoke r1.<org.xmlpull.v1.XmlPullParser: int getDepth()>();
+
+     label10:
+        r16 = r17;
+
+        r14 = r17;
+
+        r15 = r17;
+
+     label11:
+        $z0 = staticinvoke <com.android.internal.util.XmlUtils: boolean nextElementWithin(org.xmlpull.v1.XmlPullParser,int)>(r1, i0);
+
+        if $z0 == 0 goto label17;
+
+     label12:
+        r16 = r17;
+
+        r14 = r17;
+
+        r15 = r17;
+
+     label13:
+        r2 = staticinvoke <com.android.server.PackageWatchdog$ObserverInternal: com.android.server.PackageWatchdog$ObserverInternal read(org.xmlpull.v1.XmlPullParser,com.android.server.PackageWatchdog)>(r1, r0);
+
+     label14:
+        if r2 == null goto label16;
+
+        r16 = r17;
+
+        r14 = r17;
+
+        r15 = r17;
+
+     label15:
+        $r8 = r0.<com.android.server.PackageWatchdog: android.util.ArrayMap mAllObservers>;
+
+        $r7 = r2.<com.android.server.PackageWatchdog$ObserverInternal: java.lang.String name>;
+
+        virtualinvoke $r8.<android.util.ArrayMap: java.lang.Object put(java.lang.Object,java.lang.Object)>($r7, r2);
+
+     label16:
+        goto label10;
+
+     label17:
+        r14 = r17;
+
+        goto label26;
+
+     label18:
+        $r13 := @caughtexception;
+
+        goto label24;
+
+     label19:
+        $r11 := @caughtexception;
+
+        r16 = r14;
+
+     label20:
+        staticinvoke <android.util.Slog: int wtf(java.lang.String,java.lang.String,java.lang.Throwable)>("PackageWatchdog", "Unable to read monitored packages, deleting file", $r11);
+
+     label21:
+        r16 = r14;
+
+     label22:
+        $r12 = r0.<com.android.server.PackageWatchdog: android.util.AtomicFile mPolicyFile>;
+
+        virtualinvoke $r12.<android.util.AtomicFile: void delete()>();
+
+     label23:
+        goto label26;
+
+     label24:
+        staticinvoke <libcore.io.IoUtils: void closeQuietly(java.lang.AutoCloseable)>(r16);
+
+        throw $r13;
+
+     label25:
+        $r10 := @caughtexception;
+
+        r14 = r15;
+
+     label26:
+        staticinvoke <libcore.io.IoUtils: void closeQuietly(java.lang.AutoCloseable)>(r14);
+
+        return;
+
+        catch java.io.FileNotFoundException from label01 to label02 with label25;
+        catch java.io.IOException from label01 to label02 with label19;
+        catch java.lang.NumberFormatException from label01 to label02 with label19;
+        catch org.xmlpull.v1.XmlPullParserException from label01 to label02 with label19;
+        catch java.lang.Throwable from label01 to label02 with label18;
+        catch java.io.FileNotFoundException from label03 to label04 with label25;
+        catch java.io.IOException from label03 to label04 with label19;
+        catch java.lang.NumberFormatException from label03 to label04 with label19;
+        catch org.xmlpull.v1.XmlPullParserException from label03 to label04 with label19;
+        catch java.lang.Throwable from label03 to label04 with label18;
+        catch java.io.FileNotFoundException from label05 to label06 with label25;
+        catch java.io.IOException from label05 to label06 with label19;
+        catch java.lang.NumberFormatException from label05 to label06 with label19;
+        catch org.xmlpull.v1.XmlPullParserException from label05 to label06 with label19;
+        catch java.lang.Throwable from label05 to label06 with label18;
+        catch java.io.FileNotFoundException from label07 to label08 with label25;
+        catch java.io.IOException from label07 to label08 with label19;
+        catch java.lang.NumberFormatException from label07 to label08 with label19;
+        catch org.xmlpull.v1.XmlPullParserException from label07 to label08 with label19;
+        catch java.lang.Throwable from label07 to label08 with label18;
+        catch java.io.FileNotFoundException from label09 to label10 with label25;
+        catch java.io.IOException from label09 to label10 with label19;
+        catch java.lang.NumberFormatException from label09 to label10 with label19;
+        catch org.xmlpull.v1.XmlPullParserException from label09 to label10 with label19;
+        catch java.lang.Throwable from label09 to label10 with label18;
+        catch java.io.FileNotFoundException from label11 to label12 with label25;
+        catch java.io.IOException from label11 to label12 with label19;
+        catch java.lang.NumberFormatException from label11 to label12 with label19;
+        catch org.xmlpull.v1.XmlPullParserException from label11 to label12 with label19;
+        catch java.lang.Throwable from label11 to label12 with label18;
+        catch java.io.FileNotFoundException from label13 to label14 with label25;
+        catch java.io.IOException from label13 to label14 with label19;
+        catch java.lang.NumberFormatException from label13 to label14 with label19;
+        catch org.xmlpull.v1.XmlPullParserException from label13 to label14 with label19;
+        catch java.lang.Throwable from label13 to label14 with label18;
+        catch java.io.FileNotFoundException from label15 to label16 with label25;
+        catch java.io.IOException from label15 to label16 with label19;
+        catch java.lang.NumberFormatException from label15 to label16 with label19;
+        catch org.xmlpull.v1.XmlPullParserException from label15 to label16 with label19;
+        catch java.lang.Throwable from label15 to label16 with label18;
+        catch java.lang.Throwable from label20 to label21 with label18;
+        catch java.lang.Throwable from label22 to label23 with label18;
+    }
+
+    private void onHealthCheckFailed(com.android.server.PackageWatchdog$ObserverInternal, java.util.Set)
+    {
+        com.android.server.PackageWatchdog r0;
+        com.android.server.PackageWatchdog$ObserverInternal r1;
+        java.util.Set r2;
+        com.android.server._$$Lambda$PackageWatchdog$GB6yAhRLhCGS_ufDzSN8j7GHmGo $r3;
+        android.os.Handler $r4;
+
+        r0 := @this: com.android.server.PackageWatchdog;
+
+        r1 := @parameter0: com.android.server.PackageWatchdog$ObserverInternal;
+
+        r2 := @parameter1: java.util.Set;
+
+        $r4 = r0.<com.android.server.PackageWatchdog: android.os.Handler mLongTaskHandler>;
+
+        $r3 = new com.android.server._$$Lambda$PackageWatchdog$GB6yAhRLhCGS_ufDzSN8j7GHmGo;
+
+        specialinvoke $r3.<com.android.server._$$Lambda$PackageWatchdog$GB6yAhRLhCGS_ufDzSN8j7GHmGo: void <init>(com.android.server.PackageWatchdog,com.android.server.PackageWatchdog$ObserverInternal,java.util.Set)>(r0, r1, r2);
+
+        virtualinvoke $r4.<android.os.Handler: boolean post(java.lang.Runnable)>($r3);
+
+        return;
+    }
+
+    private void onHealthCheckPassed(java.lang.String)
+    {
+        com.android.server.PackageWatchdog r0;
+        com.android.server.PackageWatchdog$MonitoredPackage r1;
+        java.lang.StringBuilder $r2, $r7;
+        java.lang.String $r5, $r10, r17;
+        android.util.ArrayMap $r6, $r11, $r14;
+        int $i1, $i2, $i3, i4;
+        java.lang.Object $r12, $r15, r19;
+        com.android.server.PackageWatchdog$ObserverInternal $r13;
+        java.lang.Throwable $r16;
+        boolean z0, z1, z2;
+
+        r0 := @this: com.android.server.PackageWatchdog;
+
+        r17 := @parameter0: java.lang.String;
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Health check passed for package: ");
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r17);
+
+        $r5 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("PackageWatchdog", $r5);
+
+        z0 = 0;
+
+        r19 = r0.<com.android.server.PackageWatchdog: java.lang.Object mLock>;
+
+        entermonitor r19;
+
+        i4 = 0;
+
+     label01:
+        $r6 = r0.<com.android.server.PackageWatchdog: android.util.ArrayMap mAllObservers>;
+
+        $i1 = virtualinvoke $r6.<android.util.ArrayMap: int size()>();
+
+        if i4 >= $i1 goto label08;
+
+        $r11 = r0.<com.android.server.PackageWatchdog: android.util.ArrayMap mAllObservers>;
+
+        $r12 = virtualinvoke $r11.<android.util.ArrayMap: java.lang.Object valueAt(int)>(i4);
+
+        $r13 = (com.android.server.PackageWatchdog$ObserverInternal) $r12;
+
+        $r14 = $r13.<com.android.server.PackageWatchdog$ObserverInternal: android.util.ArrayMap packages>;
+
+        $r15 = virtualinvoke $r14.<android.util.ArrayMap: java.lang.Object get(java.lang.Object)>(r17);
+
+        r1 = (com.android.server.PackageWatchdog$MonitoredPackage) $r15;
+
+     label02:
+        z1 = z0;
+
+        if r1 == null goto label07;
+
+     label03:
+        $i2 = virtualinvoke r1.<com.android.server.PackageWatchdog$MonitoredPackage: int getHealthCheckStateLocked()>();
+
+        $i3 = virtualinvoke r1.<com.android.server.PackageWatchdog$MonitoredPackage: int tryPassHealthCheckLocked()>();
+
+        if $i2 == $i3 goto label05;
+
+     label04:
+        z2 = 1;
+
+        goto label06;
+
+     label05:
+        z2 = 0;
+
+     label06:
+        z1 = z0 | z2;
+
+     label07:
+        i4 = i4 + 1;
+
+        z0 = z1;
+
+        goto label01;
+
+     label08:
+        exitmonitor r19;
+
+     label09:
+        if z0 == 0 goto label10;
+
+        $r7 = new java.lang.StringBuilder;
+
+        specialinvoke $r7.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("health check passed for ");
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r17);
+
+        $r10 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.server.PackageWatchdog: void syncState(java.lang.String)>($r10);
+
+     label10:
+        return;
+
+     label11:
+        $r16 := @caughtexception;
+
+     label12:
+        exitmonitor r19;
+
+     label13:
+        throw $r16;
+
+        catch java.lang.Throwable from label01 to label02 with label11;
+        catch java.lang.Throwable from label03 to label04 with label11;
+        catch java.lang.Throwable from label08 to label09 with label11;
+        catch java.lang.Throwable from label12 to label13 with label11;
+    }
+
+    private void onSupportedPackages(java.util.List)
+    {
+        com.android.server.PackageWatchdog r0;
+        java.util.Iterator r1, r2, r28;
+        java.lang.String r3, $r7, $r13, $r22;
+        int i0, i4;
+        android.util.ArrayMap $r4, $r8, $r16;
+        boolean $z0, $z1, $z2, $z3, z4, z5;
+        java.util.Collection $r9, $r17;
+        java.lang.StringBuilder $r10, r31;
+        java.lang.Object $r14, $r18, $r19, $r21, r30;
+        com.android.server.PackageWatchdog$ObserverInternal $r15;
+        java.lang.Long $r20, $r23;
+        long $l2, $l3;
+        java.lang.Throwable $r25;
+        java.util.List r26;
+        android.service.watchdog.ExplicitHealthCheckService$PackageConfig r29;
+        com.android.server.PackageWatchdog$MonitoredPackage r32;
+
+        r0 := @this: com.android.server.PackageWatchdog;
+
+        r26 := @parameter0: java.util.List;
+
+        z4 = 0;
+
+        $r4 = new android.util.ArrayMap;
+
+        specialinvoke $r4.<android.util.ArrayMap: void <init>()>();
+
+        r28 = interfaceinvoke r26.<java.util.List: java.util.Iterator iterator()>();
+
+     label01:
+        $z0 = interfaceinvoke r28.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label02;
+
+        $r21 = interfaceinvoke r28.<java.util.Iterator: java.lang.Object next()>();
+
+        r29 = (android.service.watchdog.ExplicitHealthCheckService$PackageConfig) $r21;
+
+        $r22 = virtualinvoke r29.<android.service.watchdog.ExplicitHealthCheckService$PackageConfig: java.lang.String getPackageName()>();
+
+        $l3 = virtualinvoke r29.<android.service.watchdog.ExplicitHealthCheckService$PackageConfig: long getHealthCheckTimeoutMillis()>();
+
+        $r23 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l3);
+
+        interfaceinvoke $r4.<java.util.Map: java.lang.Object put(java.lang.Object,java.lang.Object)>($r22, $r23);
+
+        goto label01;
+
+     label02:
+        r30 = r0.<com.android.server.PackageWatchdog: java.lang.Object mLock>;
+
+        entermonitor r30;
+
+     label03:
+        r31 = new java.lang.StringBuilder;
+
+        specialinvoke r31.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r31.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Received supported packages ");
+
+        virtualinvoke r31.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r26);
+
+        $r7 = virtualinvoke r31.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("PackageWatchdog", $r7);
+
+        $r8 = r0.<com.android.server.PackageWatchdog: android.util.ArrayMap mAllObservers>;
+
+        $r9 = virtualinvoke $r8.<android.util.ArrayMap: java.util.Collection values()>();
+
+        r1 = interfaceinvoke $r9.<java.util.Collection: java.util.Iterator iterator()>();
+
+     label04:
+        $z1 = interfaceinvoke r1.<java.util.Iterator: boolean hasNext()>();
+
+        if $z1 == 0 goto label13;
+
+        $r14 = interfaceinvoke r1.<java.util.Iterator: java.lang.Object next()>();
+
+        $r15 = (com.android.server.PackageWatchdog$ObserverInternal) $r14;
+
+        $r16 = $r15.<com.android.server.PackageWatchdog$ObserverInternal: android.util.ArrayMap packages>;
+
+        $r17 = virtualinvoke $r16.<android.util.ArrayMap: java.util.Collection values()>();
+
+        r2 = interfaceinvoke $r17.<java.util.Collection: java.util.Iterator iterator()>();
+
+     label05:
+        $z2 = interfaceinvoke r2.<java.util.Iterator: boolean hasNext()>();
+
+        if $z2 == 0 goto label12;
+
+        $r18 = interfaceinvoke r2.<java.util.Iterator: java.lang.Object next()>();
+
+        r32 = (com.android.server.PackageWatchdog$MonitoredPackage) $r18;
+
+        r3 = staticinvoke <com.android.server.PackageWatchdog$MonitoredPackage: java.lang.String access$000(com.android.server.PackageWatchdog$MonitoredPackage)>(r32);
+
+        i0 = virtualinvoke r32.<com.android.server.PackageWatchdog$MonitoredPackage: int getHealthCheckStateLocked()>();
+
+        $z3 = interfaceinvoke $r4.<java.util.Map: boolean containsKey(java.lang.Object)>(r3);
+
+        if $z3 == 0 goto label08;
+
+     label06:
+        $r19 = interfaceinvoke $r4.<java.util.Map: java.lang.Object get(java.lang.Object)>(r3);
+
+        $r20 = (java.lang.Long) $r19;
+
+        $l2 = virtualinvoke $r20.<java.lang.Long: long longValue()>();
+
+        i4 = virtualinvoke r32.<com.android.server.PackageWatchdog$MonitoredPackage: int setHealthCheckActiveLocked(long)>($l2);
+
+     label07:
+        goto label09;
+
+     label08:
+        i4 = virtualinvoke r32.<com.android.server.PackageWatchdog$MonitoredPackage: int tryPassHealthCheckLocked()>();
+
+     label09:
+        if i0 == i4 goto label10;
+
+        z5 = 1;
+
+        goto label11;
+
+     label10:
+        z5 = 0;
+
+     label11:
+        z4 = z4 | z5;
+
+        goto label05;
+
+     label12:
+        goto label04;
+
+     label13:
+        exitmonitor r30;
+
+     label14:
+        if z4 == 0 goto label15;
+
+        $r10 = new java.lang.StringBuilder;
+
+        specialinvoke $r10.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("updated health check supported packages ");
+
+        virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r26);
+
+        $r13 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.server.PackageWatchdog: void syncState(java.lang.String)>($r13);
+
+     label15:
+        return;
+
+     label16:
+        $r25 := @caughtexception;
+
+     label17:
+        exitmonitor r30;
+
+     label18:
+        throw $r25;
+
+        catch java.lang.Throwable from label03 to label04 with label16;
+        catch java.lang.Throwable from label04 to label05 with label16;
+        catch java.lang.Throwable from label05 to label06 with label16;
+        catch java.lang.Throwable from label06 to label07 with label16;
+        catch java.lang.Throwable from label08 to label09 with label16;
+        catch java.lang.Throwable from label13 to label14 with label16;
+        catch java.lang.Throwable from label17 to label18 with label16;
+    }
+
+    private void pruneObserversLocked()
+    {
+        com.android.server.PackageWatchdog r0;
+        java.util.Iterator r1;
+        long $l0, $l2, $l3, l8;
+        byte $b1, $b4;
+        com.android.server.PackageWatchdog$SystemClock $r2;
+        java.lang.StringBuilder $r3, $r13, $r20;
+        java.lang.String $r7, $r15, $r18, $r24;
+        android.util.ArrayMap $r8, $r11;
+        java.util.Collection $r9;
+        boolean $z0, $z1, $z2, $z3;
+        java.lang.Object $r10;
+        com.android.server.PackageWatchdog$PackageHealthObserver $r12, $r19;
+        com.android.server.PackageWatchdog$ObserverInternal r27;
+        java.util.Set r28;
+
+        r0 := @this: com.android.server.PackageWatchdog;
+
+        $l0 = r0.<com.android.server.PackageWatchdog: long mUptimeAtLastStateSync>;
+
+        $b1 = $l0 cmp 0L;
+
+        if $b1 != 0 goto label1;
+
+        l8 = 0L;
+
+        goto label2;
+
+     label1:
+        $r2 = r0.<com.android.server.PackageWatchdog: com.android.server.PackageWatchdog$SystemClock mSystemClock>;
+
+        $l2 = interfaceinvoke $r2.<com.android.server.PackageWatchdog$SystemClock: long uptimeMillis()>();
+
+        $l3 = r0.<com.android.server.PackageWatchdog: long mUptimeAtLastStateSync>;
+
+        l8 = $l2 - $l3;
+
+     label2:
+        $b4 = l8 cmp 0L;
+
+        if $b4 > 0 goto label3;
+
+        $r20 = new java.lang.StringBuilder;
+
+        specialinvoke $r20.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r20.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Not pruning observers, elapsed time: ");
+
+        virtualinvoke $r20.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>(l8);
+
+        virtualinvoke $r20.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("ms");
+
+        $r24 = virtualinvoke $r20.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("PackageWatchdog", $r24);
+
+        return;
+
+     label3:
+        $r3 = new java.lang.StringBuilder;
+
+        specialinvoke $r3.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Removing ");
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>(l8);
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("ms from all packages on all observers");
+
+        $r7 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("PackageWatchdog", $r7);
+
+        $r8 = r0.<com.android.server.PackageWatchdog: android.util.ArrayMap mAllObservers>;
+
+        $r9 = virtualinvoke $r8.<android.util.ArrayMap: java.util.Collection values()>();
+
+        r1 = interfaceinvoke $r9.<java.util.Collection: java.util.Iterator iterator()>();
+
+     label4:
+        $z0 = interfaceinvoke r1.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label8;
+
+        $r10 = interfaceinvoke r1.<java.util.Iterator: java.lang.Object next()>();
+
+        r27 = (com.android.server.PackageWatchdog$ObserverInternal) $r10;
+
+        r28 = staticinvoke <com.android.server.PackageWatchdog$ObserverInternal: java.util.Set access$100(com.android.server.PackageWatchdog$ObserverInternal,long)>(r27, l8);
+
+        $z1 = interfaceinvoke r28.<java.util.Set: boolean isEmpty()>();
+
+        if $z1 != 0 goto label5;
+
+        specialinvoke r0.<com.android.server.PackageWatchdog: void onHealthCheckFailed(com.android.server.PackageWatchdog$ObserverInternal,java.util.Set)>(r27, r28);
+
+     label5:
+        $r11 = r27.<com.android.server.PackageWatchdog$ObserverInternal: android.util.ArrayMap packages>;
+
+        $z2 = virtualinvoke $r11.<android.util.ArrayMap: boolean isEmpty()>();
+
+        if $z2 == 0 goto label7;
+
+        $r12 = r27.<com.android.server.PackageWatchdog$ObserverInternal: com.android.server.PackageWatchdog$PackageHealthObserver registeredObserver>;
+
+        if $r12 == null goto label6;
+
+        $r19 = r27.<com.android.server.PackageWatchdog$ObserverInternal: com.android.server.PackageWatchdog$PackageHealthObserver registeredObserver>;
+
+        $z3 = interfaceinvoke $r19.<com.android.server.PackageWatchdog$PackageHealthObserver: boolean isPersistent()>();
+
+        if $z3 != 0 goto label7;
+
+     label6:
+        $r13 = new java.lang.StringBuilder;
+
+        specialinvoke $r13.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Discarding observer ");
+
+        $r15 = r27.<com.android.server.PackageWatchdog$ObserverInternal: java.lang.String name>;
+
+        virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r15);
+
+        virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(". All packages expired");
+
+        $r18 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("PackageWatchdog", $r18);
+
+        interfaceinvoke r1.<java.util.Iterator: void remove()>();
+
+     label7:
+        goto label4;
+
+     label8:
+        return;
+    }
+
+    private void registerConnectivityModuleHealthListener()
+    {
+        com.android.server.PackageWatchdog r0;
+        com.android.server._$$Lambda$PackageWatchdog$l0t57Hik0VChZk77GfFE4tnfo0g $r1;
+        android.net.ConnectivityModuleConnector $r2;
+
+        r0 := @this: com.android.server.PackageWatchdog;
+
+        $r2 = r0.<com.android.server.PackageWatchdog: android.net.ConnectivityModuleConnector mConnectivityModuleConnector>;
+
+        $r1 = new com.android.server._$$Lambda$PackageWatchdog$l0t57Hik0VChZk77GfFE4tnfo0g;
+
+        specialinvoke $r1.<com.android.server._$$Lambda$PackageWatchdog$l0t57Hik0VChZk77GfFE4tnfo0g: void <init>(com.android.server.PackageWatchdog)>(r0);
+
+        virtualinvoke $r2.<android.net.ConnectivityModuleConnector: void registerHealthListener(android.net.ConnectivityModuleConnector$ConnectivityModuleHealthListener)>($r1);
+
+        return;
+    }
+
+    private boolean saveToFile()
+    {
+        com.android.server.PackageWatchdog r0;
+        java.lang.Object r1, $r13;
+        android.util.AtomicFile $r2, $r11, $r19;
+        java.nio.charset.Charset $r3;
+        java.lang.String $r4, $r7;
+        java.lang.Boolean $r5;
+        android.util.ArrayMap $r9, $r12;
+        int $i1, i4;
+        com.android.server.PackageWatchdog$ObserverInternal $r14;
+        java.lang.Throwable $r15, $r16, $r17, $r18;
+        java.io.FileOutputStream r20;
+        com.android.internal.util.FastXmlSerializer r21;
+
+        r0 := @this: com.android.server.PackageWatchdog;
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("PackageWatchdog", "Saving observer state to file");
+
+        r1 = r0.<com.android.server.PackageWatchdog: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label01:
+        $r2 = r0.<com.android.server.PackageWatchdog: android.util.AtomicFile mPolicyFile>;
+
+        r20 = virtualinvoke $r2.<android.util.AtomicFile: java.io.FileOutputStream startWrite()>();
+
+     label02:
+        r21 = new com.android.internal.util.FastXmlSerializer;
+
+        specialinvoke r21.<com.android.internal.util.FastXmlSerializer: void <init>()>();
+
+        $r3 = <java.nio.charset.StandardCharsets: java.nio.charset.Charset UTF_8>;
+
+        $r4 = virtualinvoke $r3.<java.nio.charset.Charset: java.lang.String name()>();
+
+        interfaceinvoke r21.<org.xmlpull.v1.XmlSerializer: void setOutput(java.io.OutputStream,java.lang.String)>(r20, $r4);
+
+        $r5 = staticinvoke <java.lang.Boolean: java.lang.Boolean valueOf(boolean)>(1);
+
+        interfaceinvoke r21.<org.xmlpull.v1.XmlSerializer: void startDocument(java.lang.String,java.lang.Boolean)>(null, $r5);
+
+        interfaceinvoke r21.<org.xmlpull.v1.XmlSerializer: org.xmlpull.v1.XmlSerializer startTag(java.lang.String,java.lang.String)>(null, "package-watchdog");
+
+        $r7 = staticinvoke <java.lang.Integer: java.lang.String toString(int)>(1);
+
+        interfaceinvoke r21.<org.xmlpull.v1.XmlSerializer: org.xmlpull.v1.XmlSerializer attribute(java.lang.String,java.lang.String,java.lang.String)>(null, "version", $r7);
+
+     label03:
+        i4 = 0;
+
+     label04:
+        $r9 = r0.<com.android.server.PackageWatchdog: android.util.ArrayMap mAllObservers>;
+
+        $i1 = virtualinvoke $r9.<android.util.ArrayMap: int size()>();
+
+        if i4 >= $i1 goto label06;
+
+        $r12 = r0.<com.android.server.PackageWatchdog: android.util.ArrayMap mAllObservers>;
+
+        $r13 = virtualinvoke $r12.<android.util.ArrayMap: java.lang.Object valueAt(int)>(i4);
+
+        $r14 = (com.android.server.PackageWatchdog$ObserverInternal) $r13;
+
+        virtualinvoke $r14.<com.android.server.PackageWatchdog$ObserverInternal: boolean writeLocked(org.xmlpull.v1.XmlSerializer)>(r21);
+
+     label05:
+        i4 = i4 + 1;
+
+        goto label04;
+
+     label06:
+        interfaceinvoke r21.<org.xmlpull.v1.XmlSerializer: org.xmlpull.v1.XmlSerializer endTag(java.lang.String,java.lang.String)>(null, "package-watchdog");
+
+        interfaceinvoke r21.<org.xmlpull.v1.XmlSerializer: void endDocument()>();
+
+        $r11 = r0.<com.android.server.PackageWatchdog: android.util.AtomicFile mPolicyFile>;
+
+        virtualinvoke $r11.<android.util.AtomicFile: void finishWrite(java.io.FileOutputStream)>(r20);
+
+     label07:
+        staticinvoke <libcore.io.IoUtils: void closeQuietly(java.lang.AutoCloseable)>(r20);
+
+        exitmonitor r1;
+
+     label08:
+        return 1;
+
+     label09:
+        $r16 := @caughtexception;
+
+        goto label14;
+
+     label10:
+        $r18 := @caughtexception;
+
+     label11:
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String,java.lang.Throwable)>("PackageWatchdog", "Failed to save monitored packages, restoring backup", $r18);
+
+        $r19 = r0.<com.android.server.PackageWatchdog: android.util.AtomicFile mPolicyFile>;
+
+        virtualinvoke $r19.<android.util.AtomicFile: void failWrite(java.io.FileOutputStream)>(r20);
+
+     label12:
+        staticinvoke <libcore.io.IoUtils: void closeQuietly(java.lang.AutoCloseable)>(r20);
+
+        exitmonitor r1;
+
+     label13:
+        return 0;
+
+     label14:
+        staticinvoke <libcore.io.IoUtils: void closeQuietly(java.lang.AutoCloseable)>(r20);
+
+     label15:
+        throw $r16;
+
+     label16:
+        $r15 := @caughtexception;
+
+        goto label20;
+
+     label17:
+        $r17 := @caughtexception;
+
+     label18:
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String,java.lang.Throwable)>("PackageWatchdog", "Cannot update monitored packages", $r17);
+
+        exitmonitor r1;
+
+     label19:
+        return 0;
+
+     label20:
+        exitmonitor r1;
+
+     label21:
+        throw $r15;
+
+        catch java.io.IOException from label01 to label02 with label17;
+        catch java.lang.Throwable from label01 to label02 with label16;
+        catch java.io.IOException from label02 to label03 with label10;
+        catch java.lang.Throwable from label02 to label03 with label09;
+        catch java.io.IOException from label04 to label05 with label10;
+        catch java.lang.Throwable from label04 to label05 with label09;
+        catch java.io.IOException from label06 to label07 with label10;
+        catch java.lang.Throwable from label06 to label07 with label09;
+        catch java.lang.Throwable from label07 to label08 with label16;
+        catch java.lang.Throwable from label11 to label12 with label09;
+        catch java.lang.Throwable from label12 to label13 with label16;
+        catch java.lang.Throwable from label14 to label15 with label16;
+        catch java.lang.Throwable from label15 to label16 with label16;
+        catch java.lang.Throwable from label18 to label19 with label16;
+        catch java.lang.Throwable from label20 to label21 with label16;
+    }
+
+    private void saveToFileAsync()
+    {
+        com.android.server.PackageWatchdog r0;
+        java.lang.Runnable $r1, $r3;
+        android.os.Handler $r2, $r4;
+        boolean $z0;
+
+        r0 := @this: com.android.server.PackageWatchdog;
+
+        $r2 = r0.<com.android.server.PackageWatchdog: android.os.Handler mLongTaskHandler>;
+
+        $r1 = r0.<com.android.server.PackageWatchdog: java.lang.Runnable mSaveToFile>;
+
+        $z0 = virtualinvoke $r2.<android.os.Handler: boolean hasCallbacks(java.lang.Runnable)>($r1);
+
+        if $z0 != 0 goto label1;
+
+        $r4 = r0.<com.android.server.PackageWatchdog: android.os.Handler mLongTaskHandler>;
+
+        $r3 = r0.<com.android.server.PackageWatchdog: java.lang.Runnable mSaveToFile>;
+
+        virtualinvoke $r4.<android.os.Handler: boolean post(java.lang.Runnable)>($r3);
+
+     label1:
+        return;
+    }
+
+    private void scheduleNextSyncStateLocked()
+    {
+        com.android.server.PackageWatchdog r0;
+        long l0, $l3;
+        java.lang.Runnable $r2, $r10;
+        android.os.Handler $r3, $r11;
+        byte $b1;
+        java.lang.StringBuilder $r4;
+        java.lang.String $r8;
+        com.android.server.PackageWatchdog$SystemClock $r9;
+
+        r0 := @this: com.android.server.PackageWatchdog;
+
+        l0 = specialinvoke r0.<com.android.server.PackageWatchdog: long getNextStateSyncMillisLocked()>();
+
+        $r3 = r0.<com.android.server.PackageWatchdog: android.os.Handler mShortTaskHandler>;
+
+        $r2 = r0.<com.android.server.PackageWatchdog: java.lang.Runnable mSyncStateWithScheduledReason>;
+
+        virtualinvoke $r3.<android.os.Handler: void removeCallbacks(java.lang.Runnable)>($r2);
+
+        $b1 = l0 cmp 9223372036854775807L;
+
+        if $b1 != 0 goto label1;
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("PackageWatchdog", "Cancelling state sync, nothing to sync");
+
+        r0.<com.android.server.PackageWatchdog: long mUptimeAtLastStateSync> = 0L;
+
+        goto label2;
+
+     label1:
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Scheduling next state sync in ");
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>(l0);
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("ms");
+
+        $r8 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("PackageWatchdog", $r8);
+
+        $r9 = r0.<com.android.server.PackageWatchdog: com.android.server.PackageWatchdog$SystemClock mSystemClock>;
+
+        $l3 = interfaceinvoke $r9.<com.android.server.PackageWatchdog$SystemClock: long uptimeMillis()>();
+
+        r0.<com.android.server.PackageWatchdog: long mUptimeAtLastStateSync> = $l3;
+
+        $r11 = r0.<com.android.server.PackageWatchdog: android.os.Handler mShortTaskHandler>;
+
+        $r10 = r0.<com.android.server.PackageWatchdog: java.lang.Runnable mSyncStateWithScheduledReason>;
+
+        virtualinvoke $r11.<android.os.Handler: boolean postDelayed(java.lang.Runnable,long)>($r10, l0);
+
+     label2:
+        return;
+    }
+
+    private void setExplicitHealthCheckEnabled(boolean)
+    {
+        com.android.server.PackageWatchdog r0;
+        boolean z0;
+        java.lang.Object r1;
+        java.lang.StringBuilder r2;
+        com.android.server.ExplicitHealthCheckController $r3;
+        java.lang.String $r6, r8;
+        java.lang.Throwable $r7;
+
+        r0 := @this: com.android.server.PackageWatchdog;
+
+        z0 := @parameter0: boolean;
+
+        r1 = r0.<com.android.server.PackageWatchdog: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        r0.<com.android.server.PackageWatchdog: boolean mIsHealthCheckEnabled> = z0;
+
+        $r3 = r0.<com.android.server.PackageWatchdog: com.android.server.ExplicitHealthCheckController mHealthCheckController>;
+
+        virtualinvoke $r3.<com.android.server.ExplicitHealthCheckController: void setEnabled(boolean)>(z0);
+
+        r2 = new java.lang.StringBuilder;
+
+        specialinvoke r2.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("health check state ");
+
+     label2:
+        if z0 == 0 goto label3;
+
+        r8 = "enabled";
+
+        goto label4;
+
+     label3:
+        r8 = "disabled";
+
+     label4:
+        virtualinvoke r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r8);
+
+        $r6 = virtualinvoke r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.server.PackageWatchdog: void syncState(java.lang.String)>($r6);
+
+        exitmonitor r1;
+
+     label5:
+        return;
+
+     label6:
+        $r7 := @caughtexception;
+
+     label7:
+        exitmonitor r1;
+
+     label8:
+        throw $r7;
+
+        catch java.lang.Throwable from label1 to label2 with label6;
+        catch java.lang.Throwable from label4 to label5 with label6;
+        catch java.lang.Throwable from label7 to label8 with label6;
+    }
+
+    private void setPropertyChangedListenerLocked()
+    {
+        com.android.server.PackageWatchdog r0;
+        android.content.Context $r1;
+        java.util.concurrent.Executor $r2;
+        com.android.server._$$Lambda$PackageWatchdog$c6DeFAaAsEUAlPf0Sv5YyUydmCk $r3;
+
+        r0 := @this: com.android.server.PackageWatchdog;
+
+        $r1 = r0.<com.android.server.PackageWatchdog: android.content.Context mContext>;
+
+        $r2 = virtualinvoke $r1.<android.content.Context: java.util.concurrent.Executor getMainExecutor()>();
+
+        $r3 = new com.android.server._$$Lambda$PackageWatchdog$c6DeFAaAsEUAlPf0Sv5YyUydmCk;
+
+        specialinvoke $r3.<com.android.server._$$Lambda$PackageWatchdog$c6DeFAaAsEUAlPf0Sv5YyUydmCk: void <init>(com.android.server.PackageWatchdog)>(r0);
+
+        staticinvoke <android.provider.DeviceConfig: void addOnPropertiesChangedListener(java.lang.String,java.util.concurrent.Executor,android.provider.DeviceConfig$OnPropertiesChangedListener)>("rollback", $r2, $r3);
+
+        return;
+    }
+
+    private void syncRequests()
+    {
+        com.android.server.PackageWatchdog r0;
+        boolean $z1, $z2, $z3, $z4, z5;
+        java.lang.StringBuilder $r1;
+        java.util.Set $r3, $r6, $r8, r11;
+        java.lang.String $r5;
+        com.android.server.ExplicitHealthCheckController $r7;
+        java.lang.Throwable $r9;
+        java.lang.Object r10;
+
+        r0 := @this: com.android.server.PackageWatchdog;
+
+        r10 = r0.<com.android.server.PackageWatchdog: java.lang.Object mLock>;
+
+        entermonitor r10;
+
+        z5 = 0;
+
+     label01:
+        $z1 = r0.<com.android.server.PackageWatchdog: boolean mIsPackagesReady>;
+
+        if $z1 == 0 goto label06;
+
+        r11 = specialinvoke r0.<com.android.server.PackageWatchdog: java.util.Set getPackagesPendingHealthChecksLocked()>();
+
+        $z2 = r0.<com.android.server.PackageWatchdog: boolean mSyncRequired>;
+
+        if $z2 != 0 goto label04;
+
+        $r8 = r0.<com.android.server.PackageWatchdog: java.util.Set mRequestedHealthCheckPackages>;
+
+        $z3 = interfaceinvoke r11.<java.util.Set: boolean equals(java.lang.Object)>($r8);
+
+        if $z3 == 0 goto label04;
+
+     label02:
+        z5 = 0;
+
+     label03:
+        $z4 = interfaceinvoke r11.<java.util.Set: boolean isEmpty()>();
+
+        if $z4 == 0 goto label06;
+
+     label04:
+        z5 = 1;
+
+     label05:
+        r0.<com.android.server.PackageWatchdog: java.util.Set mRequestedHealthCheckPackages> = r11;
+
+     label06:
+        exitmonitor r10;
+
+     label07:
+        if z5 == 0 goto label08;
+
+        $r1 = new java.lang.StringBuilder;
+
+        specialinvoke $r1.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Syncing health check requests for packages: ");
+
+        $r3 = r0.<com.android.server.PackageWatchdog: java.util.Set mRequestedHealthCheckPackages>;
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r3);
+
+        $r5 = virtualinvoke $r1.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("PackageWatchdog", $r5);
+
+        $r7 = r0.<com.android.server.PackageWatchdog: com.android.server.ExplicitHealthCheckController mHealthCheckController>;
+
+        $r6 = r0.<com.android.server.PackageWatchdog: java.util.Set mRequestedHealthCheckPackages>;
+
+        virtualinvoke $r7.<com.android.server.ExplicitHealthCheckController: void syncRequests(java.util.Set)>($r6);
+
+        r0.<com.android.server.PackageWatchdog: boolean mSyncRequired> = 0;
+
+     label08:
+        return;
+
+     label09:
+        $r9 := @caughtexception;
+
+     label10:
+        exitmonitor r10;
+
+     label11:
+        throw $r9;
+
+        catch java.lang.Throwable from label01 to label02 with label09;
+        catch java.lang.Throwable from label03 to label04 with label09;
+        catch java.lang.Throwable from label05 to label06 with label09;
+        catch java.lang.Throwable from label06 to label07 with label09;
+        catch java.lang.Throwable from label10 to label11 with label09;
+    }
+
+    private void syncRequestsAsync()
+    {
+        com.android.server.PackageWatchdog r0;
+        java.lang.Runnable $r1, $r3;
+        android.os.Handler $r2, $r4;
+
+        r0 := @this: com.android.server.PackageWatchdog;
+
+        $r2 = r0.<com.android.server.PackageWatchdog: android.os.Handler mShortTaskHandler>;
+
+        $r1 = r0.<com.android.server.PackageWatchdog: java.lang.Runnable mSyncRequests>;
+
+        virtualinvoke $r2.<android.os.Handler: void removeCallbacks(java.lang.Runnable)>($r1);
+
+        $r4 = r0.<com.android.server.PackageWatchdog: android.os.Handler mShortTaskHandler>;
+
+        $r3 = r0.<com.android.server.PackageWatchdog: java.lang.Runnable mSyncRequests>;
+
+        virtualinvoke $r4.<android.os.Handler: boolean post(java.lang.Runnable)>($r3);
+
+        return;
+    }
+
+    private void syncState(java.lang.String)
+    {
+        com.android.server.PackageWatchdog r0;
+        java.lang.Object r1;
+        java.lang.StringBuilder r2;
+        java.lang.String $r5, r7;
+        java.lang.Throwable $r6;
+
+        r0 := @this: com.android.server.PackageWatchdog;
+
+        r7 := @parameter0: java.lang.String;
+
+        r1 = r0.<com.android.server.PackageWatchdog: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        r2 = new java.lang.StringBuilder;
+
+        specialinvoke r2.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Syncing state, reason: ");
+
+        virtualinvoke r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r7);
+
+        $r5 = virtualinvoke r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("PackageWatchdog", $r5);
+
+        specialinvoke r0.<com.android.server.PackageWatchdog: void pruneObserversLocked()>();
+
+        specialinvoke r0.<com.android.server.PackageWatchdog: void saveToFileAsync()>();
+
+        specialinvoke r0.<com.android.server.PackageWatchdog: void syncRequestsAsync()>();
+
+        specialinvoke r0.<com.android.server.PackageWatchdog: void scheduleNextSyncStateLocked()>();
+
+        exitmonitor r1;
+
+     label2:
+        return;
+
+     label3:
+        $r6 := @caughtexception;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        throw $r6;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    private void syncStateWithScheduledReason()
+    {
+        com.android.server.PackageWatchdog r0;
+
+        r0 := @this: com.android.server.PackageWatchdog;
+
+        specialinvoke r0.<com.android.server.PackageWatchdog: void syncState(java.lang.String)>("scheduled");
+
+        return;
+    }
+
+    private void updateConfigs()
+    {
+        com.android.server.PackageWatchdog r0;
+        java.lang.Object r1;
+        int $i0, $i1, i2, i3;
+        boolean $z0;
+        java.lang.Throwable $r3;
+
+        r0 := @this: com.android.server.PackageWatchdog;
+
+        r1 = r0.<com.android.server.PackageWatchdog: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label01:
+        i2 = staticinvoke <android.provider.DeviceConfig: int getInt(java.lang.String,java.lang.String,int)>("rollback", "watchdog_trigger_failure_count", 5);
+
+        r0.<com.android.server.PackageWatchdog: int mTriggerFailureCount> = i2;
+
+     label02:
+        if i2 > 0 goto label04;
+
+     label03:
+        r0.<com.android.server.PackageWatchdog: int mTriggerFailureCount> = 5;
+
+     label04:
+        $i0 = <com.android.server.PackageWatchdog: int DEFAULT_TRIGGER_FAILURE_DURATION_MS>;
+
+        i3 = staticinvoke <android.provider.DeviceConfig: int getInt(java.lang.String,java.lang.String,int)>("rollback", "watchdog_trigger_failure_duration_millis", $i0);
+
+        r0.<com.android.server.PackageWatchdog: int mTriggerFailureDurationMs> = i3;
+
+     label05:
+        if i3 > 0 goto label07;
+
+     label06:
+        $i1 = <com.android.server.PackageWatchdog: int DEFAULT_TRIGGER_FAILURE_DURATION_MS>;
+
+        r0.<com.android.server.PackageWatchdog: int mTriggerFailureDurationMs> = $i1;
+
+     label07:
+        $z0 = staticinvoke <android.provider.DeviceConfig: boolean getBoolean(java.lang.String,java.lang.String,boolean)>("rollback", "watchdog_explicit_health_check_enabled", 1);
+
+        specialinvoke r0.<com.android.server.PackageWatchdog: void setExplicitHealthCheckEnabled(boolean)>($z0);
+
+        exitmonitor r1;
+
+     label08:
+        return;
+
+     label09:
+        $r3 := @caughtexception;
+
+     label10:
+        exitmonitor r1;
+
+     label11:
+        throw $r3;
+
+        catch java.lang.Throwable from label01 to label02 with label09;
+        catch java.lang.Throwable from label03 to label04 with label09;
+        catch java.lang.Throwable from label04 to label05 with label09;
+        catch java.lang.Throwable from label06 to label07 with label09;
+        catch java.lang.Throwable from label07 to label08 with label09;
+        catch java.lang.Throwable from label10 to label11 with label09;
+    }
+
+    public void dump(com.android.internal.util.IndentingPrintWriter)
+    {
+        com.android.server.PackageWatchdog r0;
+        java.lang.Object r1, $r8, $r14;
+        java.util.Iterator r2;
+        java.lang.String r3, $r11;
+        java.lang.StringBuilder r4;
+        android.util.ArrayMap $r6, $r13;
+        java.util.Set $r7;
+        boolean $z0;
+        com.android.server.PackageWatchdog$ObserverInternal $r15;
+        java.lang.Throwable $r17;
+        com.android.internal.util.IndentingPrintWriter r18;
+
+        r0 := @this: com.android.server.PackageWatchdog;
+
+        r18 := @parameter0: com.android.internal.util.IndentingPrintWriter;
+
+        virtualinvoke r18.<com.android.internal.util.IndentingPrintWriter: void println(java.lang.String)>("Package Watchdog status");
+
+        virtualinvoke r18.<com.android.internal.util.IndentingPrintWriter: com.android.internal.util.IndentingPrintWriter increaseIndent()>();
+
+        r1 = r0.<com.android.server.PackageWatchdog: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        $r6 = r0.<com.android.server.PackageWatchdog: android.util.ArrayMap mAllObservers>;
+
+        $r7 = virtualinvoke $r6.<android.util.ArrayMap: java.util.Set keySet()>();
+
+        r2 = interfaceinvoke $r7.<java.util.Set: java.util.Iterator iterator()>();
+
+     label2:
+        $z0 = interfaceinvoke r2.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label4;
+
+        $r8 = interfaceinvoke r2.<java.util.Iterator: java.lang.Object next()>();
+
+        r3 = (java.lang.String) $r8;
+
+        r4 = new java.lang.StringBuilder;
+
+        specialinvoke r4.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Observer name: ");
+
+        virtualinvoke r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r3);
+
+        $r11 = virtualinvoke r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r18.<com.android.internal.util.IndentingPrintWriter: void println(java.lang.String)>($r11);
+
+        virtualinvoke r18.<com.android.internal.util.IndentingPrintWriter: com.android.internal.util.IndentingPrintWriter increaseIndent()>();
+
+        $r13 = r0.<com.android.server.PackageWatchdog: android.util.ArrayMap mAllObservers>;
+
+        $r14 = virtualinvoke $r13.<android.util.ArrayMap: java.lang.Object get(java.lang.Object)>(r3);
+
+        $r15 = (com.android.server.PackageWatchdog$ObserverInternal) $r14;
+
+        virtualinvoke $r15.<com.android.server.PackageWatchdog$ObserverInternal: void dump(com.android.internal.util.IndentingPrintWriter)>(r18);
+
+        virtualinvoke r18.<com.android.internal.util.IndentingPrintWriter: com.android.internal.util.IndentingPrintWriter decreaseIndent()>();
+
+     label3:
+        goto label2;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        return;
+
+     label6:
+        $r17 := @caughtexception;
+
+     label7:
+        exitmonitor r1;
+
+     label8:
+        throw $r17;
+
+        catch java.lang.Throwable from label1 to label2 with label6;
+        catch java.lang.Throwable from label2 to label3 with label6;
+        catch java.lang.Throwable from label4 to label5 with label6;
+        catch java.lang.Throwable from label7 to label8 with label6;
+    }
+
+    long getTriggerFailureCount()
+    {
+        com.android.server.PackageWatchdog r0;
+        java.lang.Object r1;
+        long l0;
+        int $i1;
+        java.lang.Throwable $r3;
+
+        r0 := @this: com.android.server.PackageWatchdog;
+
+        r1 = r0.<com.android.server.PackageWatchdog: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        $i1 = r0.<com.android.server.PackageWatchdog: int mTriggerFailureCount>;
+
+        l0 = (long) $i1;
+
+        exitmonitor r1;
+
+     label2:
+        return l0;
+
+     label3:
+        $r3 := @caughtexception;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        throw $r3;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    public void lambda$checkAndMitigateNativeCrashes$5$PackageWatchdog()
+    {
+        com.android.server.PackageWatchdog r0;
+
+        r0 := @this: com.android.server.PackageWatchdog;
+
+        specialinvoke r0.<com.android.server.PackageWatchdog: void checkAndMitigateNativeCrashes()>();
+
+        return;
+    }
+
+    public void lambda$onHealthCheckFailed$7$PackageWatchdog(com.android.server.PackageWatchdog$ObserverInternal, java.util.Set)
+    {
+        com.android.server.PackageWatchdog r0;
+        java.lang.Object r1, $r4;
+        java.util.Iterator r2;
+        java.lang.StringBuilder r3;
+        boolean $z0;
+        com.android.server.PackageWatchdog$MonitoredPackage $r5;
+        java.lang.String $r8;
+        java.lang.Throwable $r9;
+        com.android.server.PackageWatchdog$ObserverInternal r10;
+        java.util.Set r11;
+        com.android.server.PackageWatchdog$PackageHealthObserver r12;
+        android.content.pm.VersionedPackage r13;
+
+        r0 := @this: com.android.server.PackageWatchdog;
+
+        r10 := @parameter0: com.android.server.PackageWatchdog$ObserverInternal;
+
+        r11 := @parameter1: java.util.Set;
+
+        r1 = r0.<com.android.server.PackageWatchdog: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label01:
+        r12 = r10.<com.android.server.PackageWatchdog$ObserverInternal: com.android.server.PackageWatchdog$PackageHealthObserver registeredObserver>;
+
+     label02:
+        if r12 == null goto label06;
+
+     label03:
+        r2 = interfaceinvoke r11.<java.util.Set: java.util.Iterator iterator()>();
+
+     label04:
+        $z0 = interfaceinvoke r2.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label06;
+
+        $r4 = interfaceinvoke r2.<java.util.Iterator: java.lang.Object next()>();
+
+        $r5 = (com.android.server.PackageWatchdog$MonitoredPackage) $r4;
+
+        r13 = staticinvoke <com.android.server.PackageWatchdog$MonitoredPackage: android.content.pm.VersionedPackage access$1200(com.android.server.PackageWatchdog$MonitoredPackage)>($r5);
+
+        r3 = new java.lang.StringBuilder;
+
+        specialinvoke r3.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Explicit health check failed for package ");
+
+        virtualinvoke r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r13);
+
+        $r8 = virtualinvoke r3.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("PackageWatchdog", $r8);
+
+        interfaceinvoke r12.<com.android.server.PackageWatchdog$PackageHealthObserver: boolean execute(android.content.pm.VersionedPackage,int)>(r13, 2);
+
+     label05:
+        goto label04;
+
+     label06:
+        exitmonitor r1;
+
+     label07:
+        return;
+
+     label08:
+        $r9 := @caughtexception;
+
+     label09:
+        exitmonitor r1;
+
+     label10:
+        throw $r9;
+
+        catch java.lang.Throwable from label01 to label02 with label08;
+        catch java.lang.Throwable from label03 to label04 with label08;
+        catch java.lang.Throwable from label04 to label05 with label08;
+        catch java.lang.Throwable from label06 to label07 with label08;
+        catch java.lang.Throwable from label09 to label10 with label08;
+    }
+
+    public void lambda$onPackageFailure$4$PackageWatchdog(int, java.util.List)
+    {
+        com.android.server.PackageWatchdog r0;
+        int i0, i1, $i2, $i3, i4, i5, i6, i7;
+        java.lang.Object r1, $r6, $r9;
+        android.content.pm.VersionedPackage r2;
+        com.android.server.PackageWatchdog$ObserverInternal r3;
+        com.android.server.PackageWatchdog$PackageHealthObserver r4, r13, r14;
+        android.util.ArrayMap $r5, $r7, $r8;
+        boolean $z0, $z2, z4;
+        java.lang.String $r10;
+        java.lang.Throwable $r11;
+        java.util.List r12;
+
+        r0 := @this: com.android.server.PackageWatchdog;
+
+        i0 := @parameter0: int;
+
+        r12 := @parameter1: java.util.List;
+
+        r1 = r0.<com.android.server.PackageWatchdog: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label01:
+        $r5 = r0.<com.android.server.PackageWatchdog: android.util.ArrayMap mAllObservers>;
+
+        $z0 = virtualinvoke $r5.<android.util.ArrayMap: boolean isEmpty()>();
+
+        if $z0 == 0 goto label03;
+
+        exitmonitor r1;
+
+     label02:
+        return;
+
+     label03:
+        z4 = 1;
+
+        if i0 == 1 goto label05;
+
+        if i0 != 2 goto label04;
+
+        z4 = 1;
+
+        goto label05;
+
+     label04:
+        z4 = 0;
+
+     label05:
+        if z4 == 0 goto label08;
+
+     label06:
+        specialinvoke r0.<com.android.server.PackageWatchdog: void handleFailureImmediately(java.util.List,int)>(r12, i0);
+
+     label07:
+        goto label19;
+
+     label08:
+        i4 = 0;
+
+     label09:
+        $i2 = interfaceinvoke r12.<java.util.List: int size()>();
+
+        if i4 >= $i2 goto label19;
+
+        $r6 = interfaceinvoke r12.<java.util.List: java.lang.Object get(int)>(i4);
+
+        r2 = (android.content.pm.VersionedPackage) $r6;
+
+     label10:
+        r13 = null;
+
+        i5 = 2147483647;
+
+        i6 = 0;
+
+     label11:
+        $r7 = r0.<com.android.server.PackageWatchdog: android.util.ArrayMap mAllObservers>;
+
+        $i3 = virtualinvoke $r7.<android.util.ArrayMap: int size()>();
+
+        if i6 >= $i3 goto label16;
+
+        $r8 = r0.<com.android.server.PackageWatchdog: android.util.ArrayMap mAllObservers>;
+
+        $r9 = virtualinvoke $r8.<android.util.ArrayMap: java.lang.Object valueAt(int)>(i6);
+
+        r3 = (com.android.server.PackageWatchdog$ObserverInternal) $r9;
+
+        r4 = r3.<com.android.server.PackageWatchdog$ObserverInternal: com.android.server.PackageWatchdog$PackageHealthObserver registeredObserver>;
+
+     label12:
+        r14 = r13;
+
+        i7 = i5;
+
+        if r4 == null goto label15;
+
+        r14 = r13;
+
+        i7 = i5;
+
+     label13:
+        $r10 = virtualinvoke r2.<android.content.pm.VersionedPackage: java.lang.String getPackageName()>();
+
+        $z2 = virtualinvoke r3.<com.android.server.PackageWatchdog$ObserverInternal: boolean onPackageFailureLocked(java.lang.String)>($r10);
+
+        if $z2 == 0 goto label15;
+
+        i1 = interfaceinvoke r4.<com.android.server.PackageWatchdog$PackageHealthObserver: int onHealthCheckFailed(android.content.pm.VersionedPackage,int)>(r2, i0);
+
+     label14:
+        r14 = r13;
+
+        i7 = i5;
+
+        if i1 == 0 goto label15;
+
+        r14 = r13;
+
+        i7 = i5;
+
+        if i1 >= i5 goto label15;
+
+        r14 = r4;
+
+        i7 = i1;
+
+     label15:
+        i6 = i6 + 1;
+
+        r13 = r14;
+
+        i5 = i7;
+
+        goto label11;
+
+     label16:
+        if r13 == null goto label18;
+
+     label17:
+        interfaceinvoke r13.<com.android.server.PackageWatchdog$PackageHealthObserver: boolean execute(android.content.pm.VersionedPackage,int)>(r2, i0);
+
+     label18:
+        i4 = i4 + 1;
+
+        goto label09;
+
+     label19:
+        exitmonitor r1;
+
+     label20:
+        return;
+
+     label21:
+        $r11 := @caughtexception;
+
+     label22:
+        exitmonitor r1;
+
+     label23:
+        throw $r11;
+
+        catch java.lang.Throwable from label01 to label02 with label21;
+        catch java.lang.Throwable from label06 to label07 with label21;
+        catch java.lang.Throwable from label09 to label10 with label21;
+        catch java.lang.Throwable from label11 to label12 with label21;
+        catch java.lang.Throwable from label13 to label14 with label21;
+        catch java.lang.Throwable from label17 to label18 with label21;
+        catch java.lang.Throwable from label19 to label20 with label21;
+        catch java.lang.Throwable from label22 to label23 with label21;
+    }
+
+    public void lambda$onPackagesReady$0$PackageWatchdog(java.lang.String)
+    {
+        com.android.server.PackageWatchdog r0;
+        java.lang.String r1;
+
+        r0 := @this: com.android.server.PackageWatchdog;
+
+        r1 := @parameter0: java.lang.String;
+
+        specialinvoke r0.<com.android.server.PackageWatchdog: void onHealthCheckPassed(java.lang.String)>(r1);
+
+        return;
+    }
+
+    public void lambda$onPackagesReady$1$PackageWatchdog(java.util.List)
+    {
+        com.android.server.PackageWatchdog r0;
+        java.util.List r1;
+
+        r0 := @this: com.android.server.PackageWatchdog;
+
+        r1 := @parameter0: java.util.List;
+
+        specialinvoke r0.<com.android.server.PackageWatchdog: void onSupportedPackages(java.util.List)>(r1);
+
+        return;
+    }
+
+    public void lambda$onPackagesReady$2$PackageWatchdog()
+    {
+        com.android.server.PackageWatchdog r0;
+
+        r0 := @this: com.android.server.PackageWatchdog;
+
+        specialinvoke r0.<com.android.server.PackageWatchdog: void syncRequestsAsync()>();
+
+        r0.<com.android.server.PackageWatchdog: boolean mSyncRequired> = 1;
+
+        return;
+    }
+
+    public void lambda$registerConnectivityModuleHealthListener$9$PackageWatchdog(java.lang.String)
+    {
+        com.android.server.PackageWatchdog r0;
+        java.util.List $r1;
+        java.lang.String r2;
+        android.content.pm.VersionedPackage r3;
+
+        r0 := @this: com.android.server.PackageWatchdog;
+
+        r2 := @parameter0: java.lang.String;
+
+        r3 = specialinvoke r0.<com.android.server.PackageWatchdog: android.content.pm.VersionedPackage getVersionedPackage(java.lang.String)>(r2);
+
+        if r3 != null goto label1;
+
+        staticinvoke <android.util.Slog: int wtf(java.lang.String,java.lang.String)>("PackageWatchdog", "NetworkStack failed but could not find its package");
+
+        return;
+
+     label1:
+        $r1 = staticinvoke <java.util.Collections: java.util.List singletonList(java.lang.Object)>(r3);
+
+        virtualinvoke r0.<com.android.server.PackageWatchdog: void onPackageFailure(java.util.List,int)>($r1, 2);
+
+        return;
+    }
+
+    public void lambda$scheduleCheckAndMitigateNativeCrashes$6$PackageWatchdog()
+    {
+        com.android.server.PackageWatchdog r0;
+
+        r0 := @this: com.android.server.PackageWatchdog;
+
+        specialinvoke r0.<com.android.server.PackageWatchdog: void checkAndMitigateNativeCrashes()>();
+
+        return;
+    }
+
+    public void lambda$setPropertyChangedListenerLocked$8$PackageWatchdog(android.provider.DeviceConfig$Properties)
+    {
+        com.android.server.PackageWatchdog r0;
+        android.provider.DeviceConfig$Properties r1;
+        java.lang.String $r2, $r3;
+        boolean $z0;
+
+        r0 := @this: com.android.server.PackageWatchdog;
+
+        r1 := @parameter0: android.provider.DeviceConfig$Properties;
+
+        $r2 = "rollback";
+
+        $r3 = virtualinvoke r1.<android.provider.DeviceConfig$Properties: java.lang.String getNamespace()>();
+
+        $z0 = virtualinvoke $r2.<java.lang.String: boolean equals(java.lang.Object)>($r3);
+
+        if $z0 != 0 goto label1;
+
+        return;
+
+     label1:
+        specialinvoke r0.<com.android.server.PackageWatchdog: void updateConfigs()>();
+
+        return;
+    }
+
+    public void lambda$startObservingHealth$3$PackageWatchdog(com.android.server.PackageWatchdog$PackageHealthObserver, java.util.List, java.util.List)
+    {
+        com.android.server.PackageWatchdog r0;
+        java.util.List r1, r20;
+        java.lang.Object r2, $r5;
+        android.util.ArrayMap $r3, r23;
+        java.lang.String $r4, $r6, $r10, $r11, $r15, $r16, r24;
+        java.lang.Throwable $r18;
+        com.android.server.PackageWatchdog$PackageHealthObserver r19;
+        com.android.server.PackageWatchdog$ObserverInternal r21, r25;
+        java.lang.StringBuilder r22, r26;
+
+        r0 := @this: com.android.server.PackageWatchdog;
+
+        r19 := @parameter0: com.android.server.PackageWatchdog$PackageHealthObserver;
+
+        r20 := @parameter1: java.util.List;
+
+        r1 := @parameter2: java.util.List;
+
+        specialinvoke r0.<com.android.server.PackageWatchdog: void syncState(java.lang.String)>("observing new packages");
+
+        r2 = r0.<com.android.server.PackageWatchdog: java.lang.Object mLock>;
+
+        entermonitor r2;
+
+     label01:
+        $r3 = r0.<com.android.server.PackageWatchdog: android.util.ArrayMap mAllObservers>;
+
+        $r4 = interfaceinvoke r19.<com.android.server.PackageWatchdog$PackageHealthObserver: java.lang.String getName()>();
+
+        $r5 = virtualinvoke $r3.<android.util.ArrayMap: java.lang.Object get(java.lang.Object)>($r4);
+
+        r21 = (com.android.server.PackageWatchdog$ObserverInternal) $r5;
+
+     label02:
+        if r21 != null goto label05;
+
+     label03:
+        r22 = new java.lang.StringBuilder;
+
+        specialinvoke r22.<java.lang.StringBuilder: void <init>()>();
+
+        $r11 = interfaceinvoke r19.<com.android.server.PackageWatchdog$PackageHealthObserver: java.lang.String getName()>();
+
+        virtualinvoke r22.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r11);
+
+        virtualinvoke r22.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" started monitoring health of packages ");
+
+        virtualinvoke r22.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r20);
+
+        $r15 = virtualinvoke r22.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("PackageWatchdog", $r15);
+
+        r23 = r0.<com.android.server.PackageWatchdog: android.util.ArrayMap mAllObservers>;
+
+        r24 = interfaceinvoke r19.<com.android.server.PackageWatchdog$PackageHealthObserver: java.lang.String getName()>();
+
+        r25 = new com.android.server.PackageWatchdog$ObserverInternal;
+
+        $r16 = interfaceinvoke r19.<com.android.server.PackageWatchdog$PackageHealthObserver: java.lang.String getName()>();
+
+        specialinvoke r25.<com.android.server.PackageWatchdog$ObserverInternal: void <init>(java.lang.String,java.util.List)>($r16, r1);
+
+        virtualinvoke r23.<android.util.ArrayMap: java.lang.Object put(java.lang.Object,java.lang.Object)>(r24, r25);
+
+     label04:
+        goto label06;
+
+     label05:
+        r26 = new java.lang.StringBuilder;
+
+        specialinvoke r26.<java.lang.StringBuilder: void <init>()>();
+
+        $r6 = interfaceinvoke r19.<com.android.server.PackageWatchdog$PackageHealthObserver: java.lang.String getName()>();
+
+        virtualinvoke r26.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r6);
+
+        virtualinvoke r26.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" added the following packages to monitor ");
+
+        virtualinvoke r26.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r20);
+
+        $r10 = virtualinvoke r26.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("PackageWatchdog", $r10);
+
+        virtualinvoke r21.<com.android.server.PackageWatchdog$ObserverInternal: void updatePackagesLocked(java.util.List)>(r1);
+
+     label06:
+        exitmonitor r2;
+
+     label07:
+        virtualinvoke r0.<com.android.server.PackageWatchdog: void registerHealthObserver(com.android.server.PackageWatchdog$PackageHealthObserver)>(r19);
+
+        specialinvoke r0.<com.android.server.PackageWatchdog: void syncState(java.lang.String)>("updated observers");
+
+        return;
+
+     label08:
+        $r18 := @caughtexception;
+
+     label09:
+        exitmonitor r2;
+
+     label10:
+        throw $r18;
+
+        catch java.lang.Throwable from label01 to label02 with label08;
+        catch java.lang.Throwable from label03 to label04 with label08;
+        catch java.lang.Throwable from label05 to label06 with label08;
+        catch java.lang.Throwable from label06 to label07 with label08;
+        catch java.lang.Throwable from label09 to label10 with label08;
+    }
+
+    com.android.server.PackageWatchdog$MonitoredPackage newMonitoredPackage(java.lang.String, long, long, boolean)
+    {
+        com.android.server.PackageWatchdog r0;
+        long l0, l1;
+        boolean z0;
+        com.android.server.PackageWatchdog$MonitoredPackage $r1;
+        java.lang.String r2;
+        android.content.pm.VersionedPackage r3;
+
+        r0 := @this: com.android.server.PackageWatchdog;
+
+        r2 := @parameter0: java.lang.String;
+
+        l0 := @parameter1: long;
+
+        l1 := @parameter2: long;
+
+        z0 := @parameter3: boolean;
+
+        r3 = specialinvoke r0.<com.android.server.PackageWatchdog: android.content.pm.VersionedPackage getVersionedPackage(java.lang.String)>(r2);
+
+        if r3 != null goto label1;
+
+        return null;
+
+     label1:
+        $r1 = new com.android.server.PackageWatchdog$MonitoredPackage;
+
+        specialinvoke $r1.<com.android.server.PackageWatchdog$MonitoredPackage: void <init>(com.android.server.PackageWatchdog,android.content.pm.VersionedPackage,long,long,boolean,com.android.server.PackageWatchdog$1)>(r0, r3, l0, l1, z0, null);
+
+        return $r1;
+    }
+
+    com.android.server.PackageWatchdog$MonitoredPackage newMonitoredPackage(java.lang.String, long, boolean)
+    {
+        com.android.server.PackageWatchdog r0;
+        java.lang.String r1;
+        long l0;
+        boolean z0;
+        com.android.server.PackageWatchdog$MonitoredPackage $r2;
+
+        r0 := @this: com.android.server.PackageWatchdog;
+
+        r1 := @parameter0: java.lang.String;
+
+        l0 := @parameter1: long;
+
+        z0 := @parameter2: boolean;
+
+        $r2 = virtualinvoke r0.<com.android.server.PackageWatchdog: com.android.server.PackageWatchdog$MonitoredPackage newMonitoredPackage(java.lang.String,long,long,boolean)>(r1, l0, 9223372036854775807L, z0);
+
+        return $r2;
+    }
+
+    public void noteBoot()
+    {
+        com.android.server.PackageWatchdog r0;
+        java.lang.Object r1, $r7;
+        com.android.server.PackageWatchdog$PackageHealthObserver r2, r10, r11;
+        int i0, $i1, i2, i3, i4;
+        com.android.server.PackageWatchdog$BootThreshold $r3, $r4;
+        boolean $z0;
+        android.util.ArrayMap $r5, $r6;
+        com.android.server.PackageWatchdog$ObserverInternal $r8;
+        java.lang.Throwable $r9;
+
+        r0 := @this: com.android.server.PackageWatchdog;
+
+        r1 = r0.<com.android.server.PackageWatchdog: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label01:
+        $r3 = r0.<com.android.server.PackageWatchdog: com.android.server.PackageWatchdog$BootThreshold mBootThreshold>;
+
+        $z0 = virtualinvoke $r3.<com.android.server.PackageWatchdog$BootThreshold: boolean incrementAndTest()>();
+
+        if $z0 == 0 goto label10;
+
+        $r4 = r0.<com.android.server.PackageWatchdog: com.android.server.PackageWatchdog$BootThreshold mBootThreshold>;
+
+        virtualinvoke $r4.<com.android.server.PackageWatchdog$BootThreshold: void reset()>();
+
+     label02:
+        r10 = null;
+
+        i2 = 2147483647;
+
+        i3 = 0;
+
+     label03:
+        $r5 = r0.<com.android.server.PackageWatchdog: android.util.ArrayMap mAllObservers>;
+
+        $i1 = virtualinvoke $r5.<android.util.ArrayMap: int size()>();
+
+        if i3 >= $i1 goto label08;
+
+        $r6 = r0.<com.android.server.PackageWatchdog: android.util.ArrayMap mAllObservers>;
+
+        $r7 = virtualinvoke $r6.<android.util.ArrayMap: java.lang.Object valueAt(int)>(i3);
+
+        $r8 = (com.android.server.PackageWatchdog$ObserverInternal) $r7;
+
+        r2 = $r8.<com.android.server.PackageWatchdog$ObserverInternal: com.android.server.PackageWatchdog$PackageHealthObserver registeredObserver>;
+
+     label04:
+        r11 = r10;
+
+        i4 = i2;
+
+        if r2 == null goto label07;
+
+     label05:
+        i0 = interfaceinvoke r2.<com.android.server.PackageWatchdog$PackageHealthObserver: int onBootLoop()>();
+
+     label06:
+        r11 = r10;
+
+        i4 = i2;
+
+        if i0 == 0 goto label07;
+
+        r11 = r10;
+
+        i4 = i2;
+
+        if i0 >= i2 goto label07;
+
+        r11 = r2;
+
+        i4 = i0;
+
+     label07:
+        i3 = i3 + 1;
+
+        r10 = r11;
+
+        i2 = i4;
+
+        goto label03;
+
+     label08:
+        if r10 == null goto label10;
+
+     label09:
+        interfaceinvoke r10.<com.android.server.PackageWatchdog$PackageHealthObserver: boolean executeBootLoopMitigation()>();
+
+     label10:
+        exitmonitor r1;
+
+     label11:
+        return;
+
+     label12:
+        $r9 := @caughtexception;
+
+     label13:
+        exitmonitor r1;
+
+     label14:
+        throw $r9;
+
+        catch java.lang.Throwable from label01 to label02 with label12;
+        catch java.lang.Throwable from label03 to label04 with label12;
+        catch java.lang.Throwable from label05 to label06 with label12;
+        catch java.lang.Throwable from label09 to label10 with label12;
+        catch java.lang.Throwable from label10 to label11 with label12;
+        catch java.lang.Throwable from label13 to label14 with label12;
+    }
+
+    public void onPackageFailure(java.util.List, int)
+    {
+        com.android.server.PackageWatchdog r0;
+        java.util.List r1;
+        int i0;
+        com.android.server._$$Lambda$PackageWatchdog$Ya4lYGbdDy3Dda20wvc2AHBqIMM $r2;
+        android.os.Handler $r3;
+
+        r0 := @this: com.android.server.PackageWatchdog;
+
+        r1 := @parameter0: java.util.List;
+
+        i0 := @parameter1: int;
+
+        if r1 != null goto label1;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("PackageWatchdog", "Could not resolve a list of failing packages");
+
+        return;
+
+     label1:
+        $r3 = r0.<com.android.server.PackageWatchdog: android.os.Handler mLongTaskHandler>;
+
+        $r2 = new com.android.server._$$Lambda$PackageWatchdog$Ya4lYGbdDy3Dda20wvc2AHBqIMM;
+
+        specialinvoke $r2.<com.android.server._$$Lambda$PackageWatchdog$Ya4lYGbdDy3Dda20wvc2AHBqIMM: void <init>(com.android.server.PackageWatchdog,int,java.util.List)>(r0, i0, r1);
+
+        virtualinvoke $r3.<android.os.Handler: boolean post(java.lang.Runnable)>($r2);
+
+        return;
+    }
+
+    public void onPackagesReady()
+    {
+        com.android.server.PackageWatchdog r0;
+        java.lang.Object r1;
+        com.android.server._$$Lambda$PackageWatchdog$nOS9OaZO4hPsSe0I8skPT1UgQoo r2;
+        com.android.server._$$Lambda$PackageWatchdog$uFI2R7Ip9Bh1wQPJqJ5H5A0soVU r3;
+        com.android.server._$$Lambda$PackageWatchdog$07YAng9lcuyRJuBYy9Jk3p2pWVY r4;
+        java.lang.Throwable $r5;
+        com.android.server.ExplicitHealthCheckController r6;
+
+        r0 := @this: com.android.server.PackageWatchdog;
+
+        r1 = r0.<com.android.server.PackageWatchdog: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        r0.<com.android.server.PackageWatchdog: boolean mIsPackagesReady> = 1;
+
+        r6 = r0.<com.android.server.PackageWatchdog: com.android.server.ExplicitHealthCheckController mHealthCheckController>;
+
+        r2 = new com.android.server._$$Lambda$PackageWatchdog$nOS9OaZO4hPsSe0I8skPT1UgQoo;
+
+        specialinvoke r2.<com.android.server._$$Lambda$PackageWatchdog$nOS9OaZO4hPsSe0I8skPT1UgQoo: void <init>(com.android.server.PackageWatchdog)>(r0);
+
+        r3 = new com.android.server._$$Lambda$PackageWatchdog$uFI2R7Ip9Bh1wQPJqJ5H5A0soVU;
+
+        specialinvoke r3.<com.android.server._$$Lambda$PackageWatchdog$uFI2R7Ip9Bh1wQPJqJ5H5A0soVU: void <init>(com.android.server.PackageWatchdog)>(r0);
+
+        r4 = new com.android.server._$$Lambda$PackageWatchdog$07YAng9lcuyRJuBYy9Jk3p2pWVY;
+
+        specialinvoke r4.<com.android.server._$$Lambda$PackageWatchdog$07YAng9lcuyRJuBYy9Jk3p2pWVY: void <init>(com.android.server.PackageWatchdog)>(r0);
+
+        virtualinvoke r6.<com.android.server.ExplicitHealthCheckController: void setCallbacks(java.util.function.Consumer,java.util.function.Consumer,java.lang.Runnable)>(r2, r3, r4);
+
+        specialinvoke r0.<com.android.server.PackageWatchdog: void setPropertyChangedListenerLocked()>();
+
+        specialinvoke r0.<com.android.server.PackageWatchdog: void updateConfigs()>();
+
+        specialinvoke r0.<com.android.server.PackageWatchdog: void registerConnectivityModuleHealthListener()>();
+
+        exitmonitor r1;
+
+     label2:
+        return;
+
+     label3:
+        $r5 := @caughtexception;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        throw $r5;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    public void registerHealthObserver(com.android.server.PackageWatchdog$PackageHealthObserver)
+    {
+        com.android.server.PackageWatchdog r0;
+        java.lang.Object r1, $r6;
+        java.lang.String r2, $r5, $r8;
+        java.util.ArrayList r3;
+        android.util.ArrayMap $r4, $r7;
+        java.lang.Throwable $r10;
+        com.android.server.PackageWatchdog$PackageHealthObserver r11;
+        com.android.server.PackageWatchdog$ObserverInternal r12, r13;
+
+        r0 := @this: com.android.server.PackageWatchdog;
+
+        r11 := @parameter0: com.android.server.PackageWatchdog$PackageHealthObserver;
+
+        r1 = r0.<com.android.server.PackageWatchdog: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label01:
+        $r4 = r0.<com.android.server.PackageWatchdog: android.util.ArrayMap mAllObservers>;
+
+        $r5 = interfaceinvoke r11.<com.android.server.PackageWatchdog$PackageHealthObserver: java.lang.String getName()>();
+
+        $r6 = virtualinvoke $r4.<android.util.ArrayMap: java.lang.Object get(java.lang.Object)>($r5);
+
+        r12 = (com.android.server.PackageWatchdog$ObserverInternal) $r6;
+
+     label02:
+        if r12 == null goto label05;
+
+     label03:
+        r12.<com.android.server.PackageWatchdog$ObserverInternal: com.android.server.PackageWatchdog$PackageHealthObserver registeredObserver> = r11;
+
+     label04:
+        goto label06;
+
+     label05:
+        r13 = new com.android.server.PackageWatchdog$ObserverInternal;
+
+        r2 = interfaceinvoke r11.<com.android.server.PackageWatchdog$PackageHealthObserver: java.lang.String getName()>();
+
+        r3 = new java.util.ArrayList;
+
+        specialinvoke r3.<java.util.ArrayList: void <init>()>();
+
+        specialinvoke r13.<com.android.server.PackageWatchdog$ObserverInternal: void <init>(java.lang.String,java.util.List)>(r2, r3);
+
+        r13.<com.android.server.PackageWatchdog$ObserverInternal: com.android.server.PackageWatchdog$PackageHealthObserver registeredObserver> = r11;
+
+        $r7 = r0.<com.android.server.PackageWatchdog: android.util.ArrayMap mAllObservers>;
+
+        $r8 = interfaceinvoke r11.<com.android.server.PackageWatchdog$PackageHealthObserver: java.lang.String getName()>();
+
+        virtualinvoke $r7.<android.util.ArrayMap: java.lang.Object put(java.lang.Object,java.lang.Object)>($r8, r13);
+
+        specialinvoke r0.<com.android.server.PackageWatchdog: void syncState(java.lang.String)>("added new observer");
+
+     label06:
+        exitmonitor r1;
+
+     label07:
+        return;
+
+     label08:
+        $r10 := @caughtexception;
+
+     label09:
+        exitmonitor r1;
+
+     label10:
+        throw $r10;
+
+        catch java.lang.Throwable from label01 to label02 with label08;
+        catch java.lang.Throwable from label03 to label04 with label08;
+        catch java.lang.Throwable from label05 to label06 with label08;
+        catch java.lang.Throwable from label06 to label07 with label08;
+        catch java.lang.Throwable from label09 to label10 with label08;
+    }
+
+    public void scheduleCheckAndMitigateNativeCrashes()
+    {
+        com.android.server.PackageWatchdog r0;
+        java.lang.StringBuilder $r2;
+        long $l0;
+        java.lang.String $r6;
+        com.android.server._$$Lambda$PackageWatchdog$t3rKD_cTKjWjowHB0sDvYPa95Fc $r7;
+        android.os.Handler $r8;
+
+        r0 := @this: com.android.server.PackageWatchdog;
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Scheduling ");
+
+        $l0 = r0.<com.android.server.PackageWatchdog: long mNumberOfNativeCrashPollsRemaining>;
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l0);
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" polls to check and mitigate native crashes");
+
+        $r6 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("PackageWatchdog", $r6);
+
+        $r8 = r0.<com.android.server.PackageWatchdog: android.os.Handler mShortTaskHandler>;
+
+        $r7 = new com.android.server._$$Lambda$PackageWatchdog$t3rKD_cTKjWjowHB0sDvYPa95Fc;
+
+        specialinvoke $r7.<com.android.server._$$Lambda$PackageWatchdog$t3rKD_cTKjWjowHB0sDvYPa95Fc: void <init>(com.android.server.PackageWatchdog)>(r0);
+
+        virtualinvoke $r8.<android.os.Handler: boolean post(java.lang.Runnable)>($r7);
+
+        return;
+    }
+
+    public void startObservingHealth(com.android.server.PackageWatchdog$PackageHealthObserver, java.util.List, long)
+    {
+        com.android.server.PackageWatchdog r0;
+        com.android.server.PackageWatchdog$PackageHealthObserver r1;
+        long l0, l4;
+        boolean $z0, $z1;
+        byte $b1;
+        java.util.ArrayList $r3;
+        com.android.server._$$Lambda$PackageWatchdog$jINplDIdLxNaZiKt8dCCJn1Cx6c $r4;
+        android.os.Handler $r5;
+        java.lang.Object $r6;
+        java.lang.String $r7, $r12, $r16, $r19, $r21;
+        java.lang.StringBuilder $r8, $r17;
+        java.util.List r22;
+        int i5, $i6;
+        com.android.server.PackageWatchdog$MonitoredPackage r25;
+
+        r0 := @this: com.android.server.PackageWatchdog;
+
+        r1 := @parameter0: com.android.server.PackageWatchdog$PackageHealthObserver;
+
+        r22 := @parameter1: java.util.List;
+
+        l0 := @parameter2: long;
+
+        $z0 = interfaceinvoke r22.<java.util.List: boolean isEmpty()>();
+
+        if $z0 == 0 goto label1;
+
+        $r17 = new java.lang.StringBuilder;
+
+        specialinvoke $r17.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r17.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("No packages to observe, ");
+
+        $r19 = interfaceinvoke r1.<com.android.server.PackageWatchdog$PackageHealthObserver: java.lang.String getName()>();
+
+        virtualinvoke $r17.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r19);
+
+        $r21 = virtualinvoke $r17.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int wtf(java.lang.String,java.lang.String)>("PackageWatchdog", $r21);
+
+        return;
+
+     label1:
+        l4 = l0;
+
+        $b1 = l0 cmp 1L;
+
+        if $b1 >= 0 goto label2;
+
+        $r8 = new java.lang.StringBuilder;
+
+        specialinvoke $r8.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Invalid duration ");
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>(l0);
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("ms for observer ");
+
+        $r12 = interfaceinvoke r1.<com.android.server.PackageWatchdog$PackageHealthObserver: java.lang.String getName()>();
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r12);
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(". Not observing packages ");
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r22);
+
+        $r16 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int wtf(java.lang.String,java.lang.String)>("PackageWatchdog", $r16);
+
+        l4 = <com.android.server.PackageWatchdog: long DEFAULT_OBSERVING_DURATION_MS>;
+
+     label2:
+        $r3 = new java.util.ArrayList;
+
+        specialinvoke $r3.<java.util.ArrayList: void <init>()>();
+
+        i5 = 0;
+
+     label3:
+        $i6 = interfaceinvoke r22.<java.util.List: int size()>();
+
+        if i5 >= $i6 goto label5;
+
+        $r6 = interfaceinvoke r22.<java.util.List: java.lang.Object get(int)>(i5);
+
+        $r7 = (java.lang.String) $r6;
+
+        r25 = virtualinvoke r0.<com.android.server.PackageWatchdog: com.android.server.PackageWatchdog$MonitoredPackage newMonitoredPackage(java.lang.String,long,boolean)>($r7, l4, 0);
+
+        if r25 == null goto label4;
+
+        interfaceinvoke $r3.<java.util.List: boolean add(java.lang.Object)>(r25);
+
+     label4:
+        i5 = i5 + 1;
+
+        goto label3;
+
+     label5:
+        $z1 = interfaceinvoke $r3.<java.util.List: boolean isEmpty()>();
+
+        if $z1 == 0 goto label6;
+
+        return;
+
+     label6:
+        $r5 = r0.<com.android.server.PackageWatchdog: android.os.Handler mLongTaskHandler>;
+
+        $r4 = new com.android.server._$$Lambda$PackageWatchdog$jINplDIdLxNaZiKt8dCCJn1Cx6c;
+
+        specialinvoke $r4.<com.android.server._$$Lambda$PackageWatchdog$jINplDIdLxNaZiKt8dCCJn1Cx6c: void <init>(com.android.server.PackageWatchdog,com.android.server.PackageWatchdog$PackageHealthObserver,java.util.List,java.util.List)>(r0, r1, r22, $r3);
+
+        virtualinvoke $r5.<android.os.Handler: boolean post(java.lang.Runnable)>($r4);
+
+        return;
+    }
+
+    public void unregisterHealthObserver(com.android.server.PackageWatchdog$PackageHealthObserver)
+    {
+        com.android.server.PackageWatchdog r0;
+        android.util.ArrayMap $r1;
+        java.lang.String $r2, $r6, $r8;
+        java.lang.StringBuilder $r4;
+        java.lang.Throwable $r9;
+        com.android.server.PackageWatchdog$PackageHealthObserver r10;
+        java.lang.Object r11;
+
+        r0 := @this: com.android.server.PackageWatchdog;
+
+        r10 := @parameter0: com.android.server.PackageWatchdog$PackageHealthObserver;
+
+        r11 = r0.<com.android.server.PackageWatchdog: java.lang.Object mLock>;
+
+        entermonitor r11;
+
+     label1:
+        $r1 = r0.<com.android.server.PackageWatchdog: android.util.ArrayMap mAllObservers>;
+
+        $r2 = interfaceinvoke r10.<com.android.server.PackageWatchdog$PackageHealthObserver: java.lang.String getName()>();
+
+        virtualinvoke $r1.<android.util.ArrayMap: java.lang.Object remove(java.lang.Object)>($r2);
+
+        exitmonitor r11;
+
+     label2:
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("unregistering observer: ");
+
+        $r6 = interfaceinvoke r10.<com.android.server.PackageWatchdog$PackageHealthObserver: java.lang.String getName()>();
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r6);
+
+        $r8 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.server.PackageWatchdog: void syncState(java.lang.String)>($r8);
+
+        return;
+
+     label3:
+        $r9 := @caughtexception;
+
+     label4:
+        exitmonitor r11;
+
+     label5:
+        throw $r9;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    public void writeNow()
+    {
+        com.android.server.PackageWatchdog r0;
+        java.lang.Object r1;
+        android.util.ArrayMap $r3;
+        boolean $z0;
+        java.lang.Runnable $r4;
+        android.os.Handler $r5;
+        java.lang.Throwable $r6;
+
+        r0 := @this: com.android.server.PackageWatchdog;
+
+        r1 = r0.<com.android.server.PackageWatchdog: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        $r3 = r0.<com.android.server.PackageWatchdog: android.util.ArrayMap mAllObservers>;
+
+        $z0 = virtualinvoke $r3.<android.util.ArrayMap: boolean isEmpty()>();
+
+        if $z0 != 0 goto label2;
+
+        $r5 = r0.<com.android.server.PackageWatchdog: android.os.Handler mLongTaskHandler>;
+
+        $r4 = r0.<com.android.server.PackageWatchdog: java.lang.Runnable mSaveToFile>;
+
+        virtualinvoke $r5.<android.os.Handler: void removeCallbacks(java.lang.Runnable)>($r4);
+
+        specialinvoke r0.<com.android.server.PackageWatchdog: void pruneObserversLocked()>();
+
+        specialinvoke r0.<com.android.server.PackageWatchdog: boolean saveToFile()>();
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("PackageWatchdog", "Last write to update package durations");
+
+     label2:
+        exitmonitor r1;
+
+     label3:
+        return;
+
+     label4:
+        $r6 := @caughtexception;
+
+     label5:
+        exitmonitor r1;
+
+     label6:
+        throw $r6;
+
+        catch java.lang.Throwable from label1 to label2 with label4;
+        catch java.lang.Throwable from label2 to label3 with label4;
+        catch java.lang.Throwable from label5 to label6 with label4;
+    }
+}

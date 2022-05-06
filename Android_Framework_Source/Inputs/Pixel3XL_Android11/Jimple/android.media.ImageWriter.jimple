@@ -1,0 +1,830 @@
+public class android.media.ImageWriter extends java.lang.Object implements java.lang.AutoCloseable
+{
+    private java.util.List mDequeuedImages;
+    private int mEstimatedNativeAllocBytes;
+    private android.media.ImageWriter$OnImageReleasedListener mListener;
+    private android.media.ImageWriter$ListenerHandler mListenerHandler;
+    private final java.lang.Object mListenerLock;
+    private final int mMaxImages;
+    private long mNativeContext;
+    private int mWriterFormat;
+
+    static void <clinit>()
+    {
+        staticinvoke <java.lang.System: void loadLibrary(java.lang.String)>("media_jni");
+
+        staticinvoke <android.media.ImageWriter: void nativeClassInit()>();
+
+        return;
+    }
+
+    protected void <init>(android.view.Surface, int, int)
+    {
+        android.media.ImageWriter r0;
+        int i0, $i2, $i3, $i4, $i5, i6, i7;
+        java.lang.Object $r2;
+        java.util.concurrent.CopyOnWriteArrayList $r3;
+        java.lang.StringBuilder $r4;
+        java.lang.IllegalArgumentException $r9;
+        java.lang.String $r10;
+        java.lang.ref.WeakReference $r11;
+        long $l1;
+        dalvik.system.VMRuntime $r12;
+        android.view.Surface r13;
+        android.util.Size r14;
+
+        r0 := @this: android.media.ImageWriter;
+
+        r13 := @parameter0: android.view.Surface;
+
+        i6 := @parameter1: int;
+
+        i0 := @parameter2: int;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        $r2 = new java.lang.Object;
+
+        specialinvoke $r2.<java.lang.Object: void <init>()>();
+
+        r0.<android.media.ImageWriter: java.lang.Object mListenerLock> = $r2;
+
+        $r3 = new java.util.concurrent.CopyOnWriteArrayList;
+
+        specialinvoke $r3.<java.util.concurrent.CopyOnWriteArrayList: void <init>()>();
+
+        r0.<android.media.ImageWriter: java.util.List mDequeuedImages> = $r3;
+
+        if r13 == null goto label2;
+
+        if i6 < 1 goto label2;
+
+        r0.<android.media.ImageWriter: int mMaxImages> = i6;
+
+        $r11 = new java.lang.ref.WeakReference;
+
+        specialinvoke $r11.<java.lang.ref.WeakReference: void <init>(java.lang.Object)>(r0);
+
+        $l1 = specialinvoke r0.<android.media.ImageWriter: long nativeInit(java.lang.Object,android.view.Surface,int,int)>($r11, r13, i6, i0);
+
+        r0.<android.media.ImageWriter: long mNativeContext> = $l1;
+
+        i7 = i0;
+
+        if i0 != 0 goto label1;
+
+        i7 = staticinvoke <android.hardware.camera2.utils.SurfaceUtils: int getSurfaceFormat(android.view.Surface)>(r13);
+
+     label1:
+        r14 = staticinvoke <android.hardware.camera2.utils.SurfaceUtils: android.util.Size getSurfaceSize(android.view.Surface)>(r13);
+
+        $i2 = virtualinvoke r14.<android.util.Size: int getWidth()>();
+
+        $i3 = virtualinvoke r14.<android.util.Size: int getHeight()>();
+
+        $i4 = staticinvoke <android.media.ImageUtils: int getEstimatedNativeAllocBytes(int,int,int,int)>($i2, $i3, i7, 1);
+
+        r0.<android.media.ImageWriter: int mEstimatedNativeAllocBytes> = $i4;
+
+        $r12 = staticinvoke <dalvik.system.VMRuntime: dalvik.system.VMRuntime getRuntime()>();
+
+        $i5 = r0.<android.media.ImageWriter: int mEstimatedNativeAllocBytes>;
+
+        virtualinvoke $r12.<dalvik.system.VMRuntime: void registerNativeAllocation(int)>($i5);
+
+        return;
+
+     label2:
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Illegal input argument: surface ");
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r13);
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", maxImages: ");
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i6);
+
+        $r9 = new java.lang.IllegalArgumentException;
+
+        $r10 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r9.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>($r10);
+
+        throw $r9;
+    }
+
+    private void abortImage(android.media.Image)
+    {
+        android.media.ImageWriter r0;
+        android.media.Image r1;
+        android.media.ImageWriter$WriterSurfaceImage r2;
+        java.lang.IllegalArgumentException $r3;
+        java.util.List $r4, $r6;
+        boolean $z0, $z1;
+        java.lang.IllegalStateException $r5;
+        long $l0;
+
+        r0 := @this: android.media.ImageWriter;
+
+        r1 := @parameter0: android.media.Image;
+
+        if r1 == null goto label3;
+
+        $r4 = r0.<android.media.ImageWriter: java.util.List mDequeuedImages>;
+
+        $z0 = interfaceinvoke $r4.<java.util.List: boolean contains(java.lang.Object)>(r1);
+
+        if $z0 == 0 goto label2;
+
+        r2 = (android.media.ImageWriter$WriterSurfaceImage) r1;
+
+        $z1 = r2.<android.media.ImageWriter$WriterSurfaceImage: boolean mIsImageValid>;
+
+        if $z1 != 0 goto label1;
+
+        return;
+
+     label1:
+        $l0 = r0.<android.media.ImageWriter: long mNativeContext>;
+
+        specialinvoke r0.<android.media.ImageWriter: void cancelImage(long,android.media.Image)>($l0, r1);
+
+        $r6 = r0.<android.media.ImageWriter: java.util.List mDequeuedImages>;
+
+        interfaceinvoke $r6.<java.util.List: boolean remove(java.lang.Object)>(r1);
+
+        staticinvoke <android.media.ImageWriter$WriterSurfaceImage: void access$000(android.media.ImageWriter$WriterSurfaceImage)>(r2);
+
+        r2.<android.media.ImageWriter$WriterSurfaceImage: boolean mIsImageValid> = 0;
+
+        return;
+
+     label2:
+        $r5 = new java.lang.IllegalStateException;
+
+        specialinvoke $r5.<java.lang.IllegalStateException: void <init>(java.lang.String)>("It is illegal to abort some image that is not dequeued yet");
+
+        throw $r5;
+
+     label3:
+        $r3 = new java.lang.IllegalArgumentException;
+
+        specialinvoke $r3.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>("image shouldn\'t be null");
+
+        throw $r3;
+    }
+
+    static java.lang.Object access$100(android.media.ImageWriter)
+    {
+        android.media.ImageWriter r0;
+        java.lang.Object $r1;
+
+        r0 := @parameter0: android.media.ImageWriter;
+
+        $r1 = r0.<android.media.ImageWriter: java.lang.Object mListenerLock>;
+
+        return $r1;
+    }
+
+    static android.media.ImageWriter$OnImageReleasedListener access$200(android.media.ImageWriter)
+    {
+        android.media.ImageWriter r0;
+        android.media.ImageWriter$OnImageReleasedListener $r1;
+
+        r0 := @parameter0: android.media.ImageWriter;
+
+        $r1 = r0.<android.media.ImageWriter: android.media.ImageWriter$OnImageReleasedListener mListener>;
+
+        return $r1;
+    }
+
+    static void access$300(android.media.ImageWriter, android.media.Image)
+    {
+        android.media.ImageWriter r0;
+        android.media.Image r1;
+
+        r0 := @parameter0: android.media.ImageWriter;
+
+        r1 := @parameter1: android.media.Image;
+
+        specialinvoke r0.<android.media.ImageWriter: void abortImage(android.media.Image)>(r1);
+
+        return;
+    }
+
+    private void attachAndQueueInputImage(android.media.Image)
+    {
+        android.media.ImageWriter r0;
+        android.media.Image r1;
+        android.graphics.Rect r2;
+        java.lang.IllegalArgumentException $r3, $r4;
+        boolean $z0, $z1;
+        java.lang.IllegalStateException $r5;
+        long $l0, $l1, $l3;
+        int $i2, $i4, $i5, $i6, $i7, $i8, $i9;
+
+        r0 := @this: android.media.ImageWriter;
+
+        r1 := @parameter0: android.media.Image;
+
+        if r1 == null goto label3;
+
+        $z0 = specialinvoke r0.<android.media.ImageWriter: boolean isImageOwnedByMe(android.media.Image)>(r1);
+
+        if $z0 != 0 goto label2;
+
+        $z1 = virtualinvoke r1.<android.media.Image: boolean isAttachable()>();
+
+        if $z1 == 0 goto label1;
+
+        r2 = virtualinvoke r1.<android.media.Image: android.graphics.Rect getCropRect()>();
+
+        $l0 = r0.<android.media.ImageWriter: long mNativeContext>;
+
+        $l1 = virtualinvoke r1.<android.media.Image: long getNativeContext()>();
+
+        $i2 = virtualinvoke r1.<android.media.Image: int getFormat()>();
+
+        $l3 = virtualinvoke r1.<android.media.Image: long getTimestamp()>();
+
+        $i4 = r2.<android.graphics.Rect: int left>;
+
+        $i5 = r2.<android.graphics.Rect: int top>;
+
+        $i6 = r2.<android.graphics.Rect: int right>;
+
+        $i7 = r2.<android.graphics.Rect: int bottom>;
+
+        $i8 = virtualinvoke r1.<android.media.Image: int getTransform()>();
+
+        $i9 = virtualinvoke r1.<android.media.Image: int getScalingMode()>();
+
+        specialinvoke r0.<android.media.ImageWriter: int nativeAttachAndQueueImage(long,long,int,long,int,int,int,int,int,int)>($l0, $l1, $i2, $l3, $i4, $i5, $i6, $i7, $i8, $i9);
+
+        return;
+
+     label1:
+        $r5 = new java.lang.IllegalStateException;
+
+        specialinvoke $r5.<java.lang.IllegalStateException: void <init>(java.lang.String)>("Image was not detached from last owner, or image  is not detachable");
+
+        throw $r5;
+
+     label2:
+        $r4 = new java.lang.IllegalArgumentException;
+
+        specialinvoke $r4.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>("Can not attach an image that is owned ImageWriter already");
+
+        throw $r4;
+
+     label3:
+        $r3 = new java.lang.IllegalArgumentException;
+
+        specialinvoke $r3.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>("image shouldn\'t be null");
+
+        throw $r3;
+    }
+
+    private synchronized native void cancelImage(long, android.media.Image);
+
+    private boolean isImageOwnedByMe(android.media.Image)
+    {
+        android.media.ImageWriter r0, $r3;
+        android.media.Image r1;
+        boolean $z0;
+        android.media.ImageWriter$WriterSurfaceImage $r2;
+
+        r0 := @this: android.media.ImageWriter;
+
+        r1 := @parameter0: android.media.Image;
+
+        $z0 = r1 instanceof android.media.ImageWriter$WriterSurfaceImage;
+
+        if $z0 != 0 goto label1;
+
+        return 0;
+
+     label1:
+        $r2 = (android.media.ImageWriter$WriterSurfaceImage) r1;
+
+        $r3 = virtualinvoke $r2.<android.media.ImageWriter$WriterSurfaceImage: android.media.ImageWriter getOwner()>();
+
+        if $r3 == r0 goto label2;
+
+        return 0;
+
+     label2:
+        return 1;
+    }
+
+    private synchronized native int nativeAttachAndQueueImage(long, long, int, long, int, int, int, int, int, int);
+
+    private static native void nativeClassInit();
+
+    private synchronized native void nativeClose(long);
+
+    private synchronized native void nativeDequeueInputImage(long, android.media.Image);
+
+    private synchronized native long nativeInit(java.lang.Object, android.view.Surface, int, int);
+
+    private synchronized native void nativeQueueInputImage(long, android.media.Image, long, int, int, int, int, int, int);
+
+    public static android.media.ImageWriter newInstance(android.view.Surface, int)
+    {
+        android.view.Surface r0;
+        int i0;
+        android.media.ImageWriter $r1;
+
+        r0 := @parameter0: android.view.Surface;
+
+        i0 := @parameter1: int;
+
+        $r1 = new android.media.ImageWriter;
+
+        specialinvoke $r1.<android.media.ImageWriter: void <init>(android.view.Surface,int,int)>(r0, i0, 0);
+
+        return $r1;
+    }
+
+    public static android.media.ImageWriter newInstance(android.view.Surface, int, int)
+    {
+        int i0, i1;
+        boolean $z0, $z1;
+        android.media.ImageWriter $r0;
+        java.lang.StringBuilder $r1;
+        java.lang.IllegalArgumentException $r4;
+        java.lang.String $r5;
+        android.view.Surface r6;
+
+        r6 := @parameter0: android.view.Surface;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        $z0 = staticinvoke <android.graphics.ImageFormat: boolean isPublicFormat(int)>(i1);
+
+        if $z0 != 0 goto label2;
+
+        $z1 = staticinvoke <android.graphics.PixelFormat: boolean isPublicFormat(int)>(i1);
+
+        if $z1 == 0 goto label1;
+
+        goto label2;
+
+     label1:
+        $r1 = new java.lang.StringBuilder;
+
+        specialinvoke $r1.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Invalid format is specified: ");
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i1);
+
+        $r4 = new java.lang.IllegalArgumentException;
+
+        $r5 = virtualinvoke $r1.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r4.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>($r5);
+
+        throw $r4;
+
+     label2:
+        $r0 = new android.media.ImageWriter;
+
+        specialinvoke $r0.<android.media.ImageWriter: void <init>(android.view.Surface,int,int)>(r6, i0, i1);
+
+        return $r0;
+    }
+
+    private static void postEventFromNative(java.lang.Object)
+    {
+        java.lang.ref.WeakReference $r0;
+        java.lang.Object $r1, r3, r5;
+        java.lang.Throwable $r2;
+        android.media.ImageWriter r4;
+        android.media.ImageWriter$ListenerHandler r6;
+
+        r3 := @parameter0: java.lang.Object;
+
+        $r0 = (java.lang.ref.WeakReference) r3;
+
+        $r1 = virtualinvoke $r0.<java.lang.ref.WeakReference: java.lang.Object get()>();
+
+        r4 = (android.media.ImageWriter) $r1;
+
+        if r4 != null goto label1;
+
+        return;
+
+     label1:
+        r5 = r4.<android.media.ImageWriter: java.lang.Object mListenerLock>;
+
+        entermonitor r5;
+
+     label2:
+        r6 = r4.<android.media.ImageWriter: android.media.ImageWriter$ListenerHandler mListenerHandler>;
+
+        exitmonitor r5;
+
+     label3:
+        if r6 == null goto label4;
+
+        virtualinvoke r6.<android.os.Handler: boolean sendEmptyMessage(int)>(0);
+
+     label4:
+        return;
+
+     label5:
+        $r2 := @caughtexception;
+
+     label6:
+        exitmonitor r5;
+
+     label7:
+        throw $r2;
+
+        catch java.lang.Throwable from label2 to label3 with label5;
+        catch java.lang.Throwable from label6 to label7 with label5;
+    }
+
+    public void close()
+    {
+        android.media.ImageWriter r0;
+        java.util.Iterator r1;
+        java.util.List $r2, $r3;
+        boolean $z0;
+        long $l0;
+        int $i1, $i2;
+        dalvik.system.VMRuntime $r4;
+        java.lang.Object $r5;
+        android.media.Image $r6;
+
+        r0 := @this: android.media.ImageWriter;
+
+        virtualinvoke r0.<android.media.ImageWriter: void setOnImageReleasedListener(android.media.ImageWriter$OnImageReleasedListener,android.os.Handler)>(null, null);
+
+        $r2 = r0.<android.media.ImageWriter: java.util.List mDequeuedImages>;
+
+        r1 = interfaceinvoke $r2.<java.util.List: java.util.Iterator iterator()>();
+
+     label1:
+        $z0 = interfaceinvoke r1.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label2;
+
+        $r5 = interfaceinvoke r1.<java.util.Iterator: java.lang.Object next()>();
+
+        $r6 = (android.media.Image) $r5;
+
+        virtualinvoke $r6.<android.media.Image: void close()>();
+
+        goto label1;
+
+     label2:
+        $r3 = r0.<android.media.ImageWriter: java.util.List mDequeuedImages>;
+
+        interfaceinvoke $r3.<java.util.List: void clear()>();
+
+        $l0 = r0.<android.media.ImageWriter: long mNativeContext>;
+
+        specialinvoke r0.<android.media.ImageWriter: void nativeClose(long)>($l0);
+
+        r0.<android.media.ImageWriter: long mNativeContext> = 0L;
+
+        $i1 = r0.<android.media.ImageWriter: int mEstimatedNativeAllocBytes>;
+
+        if $i1 <= 0 goto label3;
+
+        $r4 = staticinvoke <dalvik.system.VMRuntime: dalvik.system.VMRuntime getRuntime()>();
+
+        $i2 = r0.<android.media.ImageWriter: int mEstimatedNativeAllocBytes>;
+
+        virtualinvoke $r4.<dalvik.system.VMRuntime: void registerNativeFree(int)>($i2);
+
+        r0.<android.media.ImageWriter: int mEstimatedNativeAllocBytes> = 0;
+
+     label3:
+        return;
+    }
+
+    public android.media.Image dequeueInputImage()
+    {
+        android.media.ImageWriter r0;
+        java.util.List $r1, $r8;
+        int $i0, $i1, $i2;
+        java.lang.StringBuilder $r2;
+        java.lang.IllegalStateException $r5;
+        java.lang.String $r6;
+        android.media.ImageWriter$WriterSurfaceImage $r7;
+        long $l3;
+
+        r0 := @this: android.media.ImageWriter;
+
+        $r1 = r0.<android.media.ImageWriter: java.util.List mDequeuedImages>;
+
+        $i0 = interfaceinvoke $r1.<java.util.List: int size()>();
+
+        $i1 = r0.<android.media.ImageWriter: int mMaxImages>;
+
+        if $i0 >= $i1 goto label1;
+
+        $r7 = new android.media.ImageWriter$WriterSurfaceImage;
+
+        specialinvoke $r7.<android.media.ImageWriter$WriterSurfaceImage: void <init>(android.media.ImageWriter)>(r0);
+
+        $l3 = r0.<android.media.ImageWriter: long mNativeContext>;
+
+        specialinvoke r0.<android.media.ImageWriter: void nativeDequeueInputImage(long,android.media.Image)>($l3, $r7);
+
+        $r8 = r0.<android.media.ImageWriter: java.util.List mDequeuedImages>;
+
+        interfaceinvoke $r8.<java.util.List: boolean add(java.lang.Object)>($r7);
+
+        $r7.<android.media.ImageWriter$WriterSurfaceImage: boolean mIsImageValid> = 1;
+
+        return $r7;
+
+     label1:
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Already dequeued max number of Images ");
+
+        $i2 = r0.<android.media.ImageWriter: int mMaxImages>;
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i2);
+
+        $r5 = new java.lang.IllegalStateException;
+
+        $r6 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r5.<java.lang.IllegalStateException: void <init>(java.lang.String)>($r6);
+
+        throw $r5;
+    }
+
+    protected void finalize() throws java.lang.Throwable
+    {
+        android.media.ImageWriter r0;
+        java.lang.Throwable $r2;
+
+        r0 := @this: android.media.ImageWriter;
+
+     label1:
+        virtualinvoke r0.<android.media.ImageWriter: void close()>();
+
+     label2:
+        specialinvoke r0.<java.lang.Object: void finalize()>();
+
+        return;
+
+     label3:
+        $r2 := @caughtexception;
+
+        specialinvoke r0.<java.lang.Object: void finalize()>();
+
+        throw $r2;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+    }
+
+    public int getFormat()
+    {
+        android.media.ImageWriter r0;
+        int $i0;
+
+        r0 := @this: android.media.ImageWriter;
+
+        $i0 = r0.<android.media.ImageWriter: int mWriterFormat>;
+
+        return $i0;
+    }
+
+    public int getMaxImages()
+    {
+        android.media.ImageWriter r0;
+        int $i0;
+
+        r0 := @this: android.media.ImageWriter;
+
+        $i0 = r0.<android.media.ImageWriter: int mMaxImages>;
+
+        return $i0;
+    }
+
+    public void queueInputImage(android.media.Image)
+    {
+        android.media.ImageWriter r0;
+        boolean z0, $z2, $z3;
+        android.graphics.Rect r1;
+        java.lang.IllegalArgumentException $r2, $r5;
+        long $l0, $l1;
+        int $i2, $i3, $i4, $i5, $i6, $i7;
+        java.util.List $r3;
+        java.lang.Object $r4, $r6;
+        android.media.ImageReader $r7;
+        android.media.ImageWriter$WriterSurfaceImage $r8, r11;
+        java.lang.IllegalStateException $r9;
+        android.media.Image r10;
+
+        r0 := @this: android.media.ImageWriter;
+
+        r10 := @parameter0: android.media.Image;
+
+        if r10 == null goto label6;
+
+        z0 = specialinvoke r0.<android.media.ImageWriter: boolean isImageOwnedByMe(android.media.Image)>(r10);
+
+        if z0 == 0 goto label2;
+
+        $r8 = (android.media.ImageWriter$WriterSurfaceImage) r10;
+
+        $z3 = $r8.<android.media.ImageWriter$WriterSurfaceImage: boolean mIsImageValid>;
+
+        if $z3 == 0 goto label1;
+
+        goto label2;
+
+     label1:
+        $r9 = new java.lang.IllegalStateException;
+
+        specialinvoke $r9.<java.lang.IllegalStateException: void <init>(java.lang.String)>("Image from ImageWriter is invalid");
+
+        throw $r9;
+
+     label2:
+        if z0 != 0 goto label4;
+
+        $r4 = virtualinvoke r10.<android.media.Image: java.lang.Object getOwner()>();
+
+        $z2 = $r4 instanceof android.media.ImageReader;
+
+        if $z2 == 0 goto label3;
+
+        $r6 = virtualinvoke r10.<android.media.Image: java.lang.Object getOwner()>();
+
+        $r7 = (android.media.ImageReader) $r6;
+
+        virtualinvoke $r7.<android.media.ImageReader: void detachImage(android.media.Image)>(r10);
+
+        specialinvoke r0.<android.media.ImageWriter: void attachAndQueueInputImage(android.media.Image)>(r10);
+
+        virtualinvoke r10.<android.media.Image: void close()>();
+
+        return;
+
+     label3:
+        $r5 = new java.lang.IllegalArgumentException;
+
+        specialinvoke $r5.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>("Only images from ImageReader can be queued to ImageWriter, other image source is not supported yet!");
+
+        throw $r5;
+
+     label4:
+        r1 = virtualinvoke r10.<android.media.Image: android.graphics.Rect getCropRect()>();
+
+        $l0 = r0.<android.media.ImageWriter: long mNativeContext>;
+
+        $l1 = virtualinvoke r10.<android.media.Image: long getTimestamp()>();
+
+        $i2 = r1.<android.graphics.Rect: int left>;
+
+        $i3 = r1.<android.graphics.Rect: int top>;
+
+        $i4 = r1.<android.graphics.Rect: int right>;
+
+        $i5 = r1.<android.graphics.Rect: int bottom>;
+
+        $i6 = virtualinvoke r10.<android.media.Image: int getTransform()>();
+
+        $i7 = virtualinvoke r10.<android.media.Image: int getScalingMode()>();
+
+        specialinvoke r0.<android.media.ImageWriter: void nativeQueueInputImage(long,android.media.Image,long,int,int,int,int,int,int)>($l0, r10, $l1, $i2, $i3, $i4, $i5, $i6, $i7);
+
+        if z0 == 0 goto label5;
+
+        $r3 = r0.<android.media.ImageWriter: java.util.List mDequeuedImages>;
+
+        interfaceinvoke $r3.<java.util.List: boolean remove(java.lang.Object)>(r10);
+
+        r11 = (android.media.ImageWriter$WriterSurfaceImage) r10;
+
+        staticinvoke <android.media.ImageWriter$WriterSurfaceImage: void access$000(android.media.ImageWriter$WriterSurfaceImage)>(r11);
+
+        r11.<android.media.ImageWriter$WriterSurfaceImage: boolean mIsImageValid> = 0;
+
+     label5:
+        return;
+
+     label6:
+        $r2 = new java.lang.IllegalArgumentException;
+
+        specialinvoke $r2.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>("image shouldn\'t be null");
+
+        throw $r2;
+    }
+
+    public void setOnImageReleasedListener(android.media.ImageWriter$OnImageReleasedListener, android.os.Handler)
+    {
+        android.media.ImageWriter r0;
+        java.lang.Object r1;
+        android.media.ImageWriter$ListenerHandler r2, $r3, $r4;
+        android.os.Looper $r5, r9;
+        java.lang.Throwable $r6;
+        android.media.ImageWriter$OnImageReleasedListener r7;
+        android.os.Handler r8;
+        java.lang.IllegalArgumentException r10;
+
+        r0 := @this: android.media.ImageWriter;
+
+        r7 := @parameter0: android.media.ImageWriter$OnImageReleasedListener;
+
+        r8 := @parameter1: android.os.Handler;
+
+        r1 = r0.<android.media.ImageWriter: java.lang.Object mListenerLock>;
+
+        entermonitor r1;
+
+        if r7 == null goto label10;
+
+        if r8 == null goto label03;
+
+     label01:
+        r9 = virtualinvoke r8.<android.os.Handler: android.os.Looper getLooper()>();
+
+     label02:
+        goto label04;
+
+     label03:
+        r9 = staticinvoke <android.os.Looper: android.os.Looper myLooper()>();
+
+     label04:
+        if r9 == null goto label09;
+
+     label05:
+        $r3 = r0.<android.media.ImageWriter: android.media.ImageWriter$ListenerHandler mListenerHandler>;
+
+        if $r3 == null goto label06;
+
+        $r4 = r0.<android.media.ImageWriter: android.media.ImageWriter$ListenerHandler mListenerHandler>;
+
+        $r5 = virtualinvoke $r4.<android.media.ImageWriter$ListenerHandler: android.os.Looper getLooper()>();
+
+        if $r5 == r9 goto label07;
+
+     label06:
+        r2 = new android.media.ImageWriter$ListenerHandler;
+
+        specialinvoke r2.<android.media.ImageWriter$ListenerHandler: void <init>(android.media.ImageWriter,android.os.Looper)>(r0, r9);
+
+        r0.<android.media.ImageWriter: android.media.ImageWriter$ListenerHandler mListenerHandler> = r2;
+
+     label07:
+        r0.<android.media.ImageWriter: android.media.ImageWriter$OnImageReleasedListener mListener> = r7;
+
+     label08:
+        goto label11;
+
+     label09:
+        r10 = new java.lang.IllegalArgumentException;
+
+        specialinvoke r10.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>("handler is null but the current thread is not a looper");
+
+        throw r10;
+
+     label10:
+        r0.<android.media.ImageWriter: android.media.ImageWriter$OnImageReleasedListener mListener> = null;
+
+        r0.<android.media.ImageWriter: android.media.ImageWriter$ListenerHandler mListenerHandler> = null;
+
+     label11:
+        exitmonitor r1;
+
+     label12:
+        return;
+
+     label13:
+        $r6 := @caughtexception;
+
+     label14:
+        exitmonitor r1;
+
+     label15:
+        throw $r6;
+
+        catch java.lang.Throwable from label01 to label02 with label13;
+        catch java.lang.Throwable from label03 to label04 with label13;
+        catch java.lang.Throwable from label05 to label06 with label13;
+        catch java.lang.Throwable from label06 to label07 with label13;
+        catch java.lang.Throwable from label07 to label08 with label13;
+        catch java.lang.Throwable from label09 to label10 with label13;
+        catch java.lang.Throwable from label10 to label11 with label13;
+        catch java.lang.Throwable from label11 to label12 with label13;
+        catch java.lang.Throwable from label14 to label15 with label13;
+    }
+}

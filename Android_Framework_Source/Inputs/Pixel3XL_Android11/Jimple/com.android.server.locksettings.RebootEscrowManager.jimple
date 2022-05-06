@@ -1,0 +1,1020 @@
+class com.android.server.locksettings.RebootEscrowManager extends java.lang.Object
+{
+    private static final int BOOT_COUNT_TOLERANCE;
+    public static final java.lang.String REBOOT_ESCROW_ARMED_KEY;
+    private static final java.lang.String TAG;
+    private final com.android.server.locksettings.RebootEscrowManager$Callbacks mCallbacks;
+    private final com.android.server.locksettings.RebootEscrowManager$RebootEscrowEventLog mEventLog;
+    private final com.android.server.locksettings.RebootEscrowManager$Injector mInjector;
+    private final java.lang.Object mKeyGenerationLock;
+    private com.android.server.locksettings.RebootEscrowKey mPendingRebootEscrowKey;
+    private com.android.internal.widget.RebootEscrowListener mRebootEscrowListener;
+    private boolean mRebootEscrowReady;
+    private boolean mRebootEscrowWanted;
+    private final com.android.server.locksettings.LockSettingsStorage mStorage;
+    private final android.os.UserManager mUserManager;
+
+    void <init>(android.content.Context, com.android.server.locksettings.RebootEscrowManager$Callbacks, com.android.server.locksettings.LockSettingsStorage)
+    {
+        com.android.server.locksettings.RebootEscrowManager r0;
+        android.content.Context r1;
+        com.android.server.locksettings.RebootEscrowManager$Callbacks r2;
+        com.android.server.locksettings.LockSettingsStorage r3;
+        com.android.server.locksettings.RebootEscrowManager$Injector $r4;
+
+        r0 := @this: com.android.server.locksettings.RebootEscrowManager;
+
+        r1 := @parameter0: android.content.Context;
+
+        r2 := @parameter1: com.android.server.locksettings.RebootEscrowManager$Callbacks;
+
+        r3 := @parameter2: com.android.server.locksettings.LockSettingsStorage;
+
+        $r4 = new com.android.server.locksettings.RebootEscrowManager$Injector;
+
+        specialinvoke $r4.<com.android.server.locksettings.RebootEscrowManager$Injector: void <init>(android.content.Context)>(r1);
+
+        specialinvoke r0.<com.android.server.locksettings.RebootEscrowManager: void <init>(com.android.server.locksettings.RebootEscrowManager$Injector,com.android.server.locksettings.RebootEscrowManager$Callbacks,com.android.server.locksettings.LockSettingsStorage)>($r4, r2, r3);
+
+        return;
+    }
+
+    void <init>(com.android.server.locksettings.RebootEscrowManager$Injector, com.android.server.locksettings.RebootEscrowManager$Callbacks, com.android.server.locksettings.LockSettingsStorage)
+    {
+        com.android.server.locksettings.RebootEscrowManager r0;
+        com.android.server.locksettings.RebootEscrowManager$Injector r1;
+        com.android.server.locksettings.RebootEscrowManager$Callbacks r2;
+        com.android.server.locksettings.LockSettingsStorage r3;
+        java.lang.Object $r4;
+        android.os.UserManager $r5;
+        com.android.server.locksettings.RebootEscrowManager$RebootEscrowEventLog $r6;
+
+        r0 := @this: com.android.server.locksettings.RebootEscrowManager;
+
+        r1 := @parameter0: com.android.server.locksettings.RebootEscrowManager$Injector;
+
+        r2 := @parameter1: com.android.server.locksettings.RebootEscrowManager$Callbacks;
+
+        r3 := @parameter2: com.android.server.locksettings.LockSettingsStorage;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        $r4 = new java.lang.Object;
+
+        specialinvoke $r4.<java.lang.Object: void <init>()>();
+
+        r0.<com.android.server.locksettings.RebootEscrowManager: java.lang.Object mKeyGenerationLock> = $r4;
+
+        r0.<com.android.server.locksettings.RebootEscrowManager: com.android.server.locksettings.RebootEscrowManager$Injector mInjector> = r1;
+
+        r0.<com.android.server.locksettings.RebootEscrowManager: com.android.server.locksettings.RebootEscrowManager$Callbacks mCallbacks> = r2;
+
+        r0.<com.android.server.locksettings.RebootEscrowManager: com.android.server.locksettings.LockSettingsStorage mStorage> = r3;
+
+        $r5 = virtualinvoke r1.<com.android.server.locksettings.RebootEscrowManager$Injector: android.os.UserManager getUserManager()>();
+
+        r0.<com.android.server.locksettings.RebootEscrowManager: android.os.UserManager mUserManager> = $r5;
+
+        $r6 = virtualinvoke r1.<com.android.server.locksettings.RebootEscrowManager$Injector: com.android.server.locksettings.RebootEscrowManager$RebootEscrowEventLog getEventLog()>();
+
+        r0.<com.android.server.locksettings.RebootEscrowManager: com.android.server.locksettings.RebootEscrowManager$RebootEscrowEventLog mEventLog> = $r6;
+
+        return;
+    }
+
+    private void clearRebootEscrowIfNeeded()
+    {
+        com.android.server.locksettings.RebootEscrowManager r0;
+        android.content.pm.UserInfo r1;
+        com.android.server.locksettings.RebootEscrowManager$Injector $r2;
+        com.android.server.locksettings.LockSettingsStorage $r3, $r9;
+        byte[] $r4;
+        android.os.UserManager $r5;
+        java.util.List $r6;
+        com.android.server.locksettings.RebootEscrowManager$RebootEscrowEventLog $r7;
+        java.lang.Object $r8;
+        int $i0;
+        java.lang.Exception $r10;
+        android.hardware.rebootescrow.IRebootEscrow r11;
+        java.util.Iterator r13;
+        boolean $z0;
+
+        r0 := @this: com.android.server.locksettings.RebootEscrowManager;
+
+        r0.<com.android.server.locksettings.RebootEscrowManager: boolean mRebootEscrowWanted> = 0;
+
+        specialinvoke r0.<com.android.server.locksettings.RebootEscrowManager: void setRebootEscrowReady(boolean)>(0);
+
+        $r2 = r0.<com.android.server.locksettings.RebootEscrowManager: com.android.server.locksettings.RebootEscrowManager$Injector mInjector>;
+
+        r11 = virtualinvoke $r2.<com.android.server.locksettings.RebootEscrowManager$Injector: android.hardware.rebootescrow.IRebootEscrow getRebootEscrow()>();
+
+        if r11 != null goto label1;
+
+        return;
+
+     label1:
+        $r3 = r0.<com.android.server.locksettings.RebootEscrowManager: com.android.server.locksettings.LockSettingsStorage mStorage>;
+
+        virtualinvoke $r3.<com.android.server.locksettings.LockSettingsStorage: void removeKey(java.lang.String,int)>("reboot_escrow_armed_count", 0);
+
+     label2:
+        $r4 = newarray (byte)[32];
+
+        interfaceinvoke r11.<android.hardware.rebootescrow.IRebootEscrow: void storeKey(byte[])>($r4);
+
+     label3:
+        goto label5;
+
+     label4:
+        $r10 := @caughtexception;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("RebootEscrowManager", "Could not call RebootEscrow HAL to shred key");
+
+     label5:
+        $r5 = r0.<com.android.server.locksettings.RebootEscrowManager: android.os.UserManager mUserManager>;
+
+        $r6 = virtualinvoke $r5.<android.os.UserManager: java.util.List getUsers()>();
+
+        r13 = interfaceinvoke $r6.<java.util.List: java.util.Iterator iterator()>();
+
+     label6:
+        $z0 = interfaceinvoke r13.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label7;
+
+        $r8 = interfaceinvoke r13.<java.util.Iterator: java.lang.Object next()>();
+
+        r1 = (android.content.pm.UserInfo) $r8;
+
+        $r9 = r0.<com.android.server.locksettings.RebootEscrowManager: com.android.server.locksettings.LockSettingsStorage mStorage>;
+
+        $i0 = r1.<android.content.pm.UserInfo: int id>;
+
+        virtualinvoke $r9.<com.android.server.locksettings.LockSettingsStorage: void removeRebootEscrow(int)>($i0);
+
+        goto label6;
+
+     label7:
+        $r7 = r0.<com.android.server.locksettings.RebootEscrowManager: com.android.server.locksettings.RebootEscrowManager$RebootEscrowEventLog mEventLog>;
+
+        virtualinvoke $r7.<com.android.server.locksettings.RebootEscrowManager$RebootEscrowEventLog: void addEntry(int)>(3);
+
+        return;
+
+        catch android.os.RemoteException from label2 to label3 with label4;
+        catch android.os.ServiceSpecificException from label2 to label3 with label4;
+    }
+
+    private com.android.server.locksettings.RebootEscrowKey generateEscrowKeyIfNeeded()
+    {
+        com.android.server.locksettings.RebootEscrowManager r0;
+        java.lang.Object r1;
+        com.android.server.locksettings.RebootEscrowKey $r2, r5, r6;
+        java.lang.Throwable $r3, $r4;
+
+        r0 := @this: com.android.server.locksettings.RebootEscrowManager;
+
+        r1 = r0.<com.android.server.locksettings.RebootEscrowManager: java.lang.Object mKeyGenerationLock>;
+
+        entermonitor r1;
+
+     label01:
+        $r2 = r0.<com.android.server.locksettings.RebootEscrowManager: com.android.server.locksettings.RebootEscrowKey mPendingRebootEscrowKey>;
+
+        if $r2 == null goto label03;
+
+        r5 = r0.<com.android.server.locksettings.RebootEscrowManager: com.android.server.locksettings.RebootEscrowKey mPendingRebootEscrowKey>;
+
+        exitmonitor r1;
+
+     label02:
+        return r5;
+
+     label03:
+        r6 = staticinvoke <com.android.server.locksettings.RebootEscrowKey: com.android.server.locksettings.RebootEscrowKey generate()>();
+
+     label04:
+        r0.<com.android.server.locksettings.RebootEscrowManager: com.android.server.locksettings.RebootEscrowKey mPendingRebootEscrowKey> = r6;
+
+        exitmonitor r1;
+
+     label05:
+        return r6;
+
+     label06:
+        $r3 := @caughtexception;
+
+     label07:
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("RebootEscrowManager", "Could not generate reboot escrow key");
+
+        exitmonitor r1;
+
+     label08:
+        return null;
+
+     label09:
+        $r4 := @caughtexception;
+
+     label10:
+        exitmonitor r1;
+
+     label11:
+        throw $r4;
+
+        catch java.lang.Throwable from label01 to label02 with label09;
+        catch java.io.IOException from label03 to label04 with label06;
+        catch java.lang.Throwable from label03 to label04 with label09;
+        catch java.lang.Throwable from label04 to label05 with label09;
+        catch java.lang.Throwable from label07 to label08 with label09;
+        catch java.lang.Throwable from label10 to label11 with label09;
+    }
+
+    private com.android.server.locksettings.RebootEscrowKey getAndClearRebootEscrowKey()
+    {
+        com.android.server.locksettings.RebootEscrowManager r0;
+        com.android.server.locksettings.RebootEscrowManager$Injector $r1;
+        int $i0, $i1, $i4, $i9, i12;
+        byte[] $r2, r14;
+        com.android.server.locksettings.RebootEscrowManager$RebootEscrowEventLog $r3;
+        byte $b3, b11;
+        java.lang.String $r6, $r12;
+        android.os.RemoteException $r7;
+        android.os.ServiceSpecificException $r8;
+        java.lang.StringBuilder $r9, r15;
+        android.hardware.rebootescrow.IRebootEscrow r13;
+        com.android.server.locksettings.RebootEscrowKey r16;
+
+        r0 := @this: com.android.server.locksettings.RebootEscrowManager;
+
+        $r1 = r0.<com.android.server.locksettings.RebootEscrowManager: com.android.server.locksettings.RebootEscrowManager$Injector mInjector>;
+
+        r13 = virtualinvoke $r1.<com.android.server.locksettings.RebootEscrowManager$Injector: android.hardware.rebootescrow.IRebootEscrow getRebootEscrow()>();
+
+        if r13 != null goto label01;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("RebootEscrowManager", "Had reboot escrow data for users, but RebootEscrow HAL is unavailable");
+
+        return null;
+
+     label01:
+        r14 = interfaceinvoke r13.<android.hardware.rebootescrow.IRebootEscrow: byte[] retrieveKey()>();
+
+     label02:
+        if r14 != null goto label05;
+
+     label03:
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("RebootEscrowManager", "Had reboot escrow data for users, but could not retrieve key");
+
+     label04:
+        return null;
+
+     label05:
+        $i0 = lengthof r14;
+
+        if $i0 == 32 goto label07;
+
+        r15 = new java.lang.StringBuilder;
+
+        specialinvoke r15.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r15.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("IRebootEscrow returned key of incorrect size ");
+
+        $i4 = lengthof r14;
+
+        virtualinvoke r15.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i4);
+
+        $r6 = virtualinvoke r15.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("RebootEscrowManager", $r6);
+
+     label06:
+        return null;
+
+     label07:
+        b11 = 0;
+
+        i12 = 0;
+
+     label08:
+        $i1 = lengthof r14;
+
+        if i12 >= $i1 goto label10;
+
+     label09:
+        $b3 = r14[i12];
+
+        b11 = b11 | $b3;
+
+        i12 = i12 + 1;
+
+        goto label08;
+
+     label10:
+        if b11 != 0 goto label13;
+
+     label11:
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("RebootEscrowManager", "IRebootEscrow returned an all-zeroes key");
+
+     label12:
+        return null;
+
+     label13:
+        $r2 = newarray (byte)[32];
+
+        interfaceinvoke r13.<android.hardware.rebootescrow.IRebootEscrow: void storeKey(byte[])>($r2);
+
+        $r3 = r0.<com.android.server.locksettings.RebootEscrowManager: com.android.server.locksettings.RebootEscrowManager$RebootEscrowEventLog mEventLog>;
+
+        virtualinvoke $r3.<com.android.server.locksettings.RebootEscrowManager$RebootEscrowEventLog: void addEntry(int)>(4);
+
+        r16 = staticinvoke <com.android.server.locksettings.RebootEscrowKey: com.android.server.locksettings.RebootEscrowKey fromKeyBytes(byte[])>(r14);
+
+     label14:
+        return r16;
+
+     label15:
+        $r8 := @caughtexception;
+
+        $r9 = new java.lang.StringBuilder;
+
+        specialinvoke $r9.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Got service-specific exception: ");
+
+        $i9 = $r8.<android.os.ServiceSpecificException: int errorCode>;
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i9);
+
+        $r12 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("RebootEscrowManager", $r12);
+
+        return null;
+
+     label16:
+        $r7 := @caughtexception;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("RebootEscrowManager", "Could not retrieve escrow data");
+
+        return null;
+
+        catch android.os.RemoteException from label01 to label02 with label16;
+        catch android.os.ServiceSpecificException from label01 to label02 with label15;
+        catch android.os.RemoteException from label03 to label04 with label16;
+        catch android.os.ServiceSpecificException from label03 to label04 with label15;
+        catch android.os.RemoteException from label05 to label06 with label16;
+        catch android.os.ServiceSpecificException from label05 to label06 with label15;
+        catch android.os.RemoteException from label08 to label09 with label16;
+        catch android.os.ServiceSpecificException from label08 to label09 with label15;
+        catch android.os.RemoteException from label11 to label12 with label16;
+        catch android.os.ServiceSpecificException from label11 to label12 with label15;
+        catch android.os.RemoteException from label13 to label14 with label16;
+        catch android.os.ServiceSpecificException from label13 to label14 with label15;
+    }
+
+    private void onEscrowRestoreComplete(boolean)
+    {
+        com.android.server.locksettings.RebootEscrowManager r0;
+        boolean z0;
+        int i0, i1, $i2;
+        com.android.server.locksettings.LockSettingsStorage $r1, $r2;
+        com.android.server.locksettings.RebootEscrowManager$Injector $r3, $r4;
+
+        r0 := @this: com.android.server.locksettings.RebootEscrowManager;
+
+        z0 := @parameter0: boolean;
+
+        $r1 = r0.<com.android.server.locksettings.RebootEscrowManager: com.android.server.locksettings.LockSettingsStorage mStorage>;
+
+        i0 = virtualinvoke $r1.<com.android.server.locksettings.LockSettingsStorage: int getInt(java.lang.String,int,int)>("reboot_escrow_armed_count", -1, 0);
+
+        $r2 = r0.<com.android.server.locksettings.RebootEscrowManager: com.android.server.locksettings.LockSettingsStorage mStorage>;
+
+        virtualinvoke $r2.<com.android.server.locksettings.LockSettingsStorage: void removeKey(java.lang.String,int)>("reboot_escrow_armed_count", 0);
+
+        $r3 = r0.<com.android.server.locksettings.RebootEscrowManager: com.android.server.locksettings.RebootEscrowManager$Injector mInjector>;
+
+        i1 = virtualinvoke $r3.<com.android.server.locksettings.RebootEscrowManager$Injector: int getBootCount()>();
+
+        if z0 != 0 goto label1;
+
+        if i0 == -1 goto label2;
+
+        $i2 = i1 - i0;
+
+        if $i2 > 5 goto label2;
+
+     label1:
+        $r4 = r0.<com.android.server.locksettings.RebootEscrowManager: com.android.server.locksettings.RebootEscrowManager$Injector mInjector>;
+
+        virtualinvoke $r4.<com.android.server.locksettings.RebootEscrowManager$Injector: void reportMetric(boolean)>(z0);
+
+     label2:
+        return;
+    }
+
+    private boolean restoreRebootEscrowForUser(int, com.android.server.locksettings.RebootEscrowKey)
+    {
+        com.android.server.locksettings.RebootEscrowManager r0;
+        int i0;
+        com.android.server.locksettings.LockSettingsStorage $r1, $r2, $r3;
+        boolean $z0;
+        com.android.server.locksettings.RebootEscrowManager$Callbacks $r4;
+        byte $b1;
+        byte[] $r5, r16;
+        java.lang.String $r8, $r14;
+        com.android.server.locksettings.RebootEscrowManager$RebootEscrowEventLog $r9;
+        java.lang.Throwable $r10;
+        java.lang.StringBuilder $r11, r18;
+        com.android.server.locksettings.RebootEscrowKey r15;
+        com.android.server.locksettings.RebootEscrowData r17;
+
+        r0 := @this: com.android.server.locksettings.RebootEscrowManager;
+
+        i0 := @parameter0: int;
+
+        r15 := @parameter1: com.android.server.locksettings.RebootEscrowKey;
+
+        $r1 = r0.<com.android.server.locksettings.RebootEscrowManager: com.android.server.locksettings.LockSettingsStorage mStorage>;
+
+        $z0 = virtualinvoke $r1.<com.android.server.locksettings.LockSettingsStorage: boolean hasRebootEscrow(int)>(i0);
+
+        if $z0 != 0 goto label1;
+
+        return 0;
+
+     label1:
+        $r2 = r0.<com.android.server.locksettings.RebootEscrowManager: com.android.server.locksettings.LockSettingsStorage mStorage>;
+
+        r16 = virtualinvoke $r2.<com.android.server.locksettings.LockSettingsStorage: byte[] readRebootEscrow(int)>(i0);
+
+        $r3 = r0.<com.android.server.locksettings.RebootEscrowManager: com.android.server.locksettings.LockSettingsStorage mStorage>;
+
+        virtualinvoke $r3.<com.android.server.locksettings.LockSettingsStorage: void removeRebootEscrow(int)>(i0);
+
+        r17 = staticinvoke <com.android.server.locksettings.RebootEscrowData: com.android.server.locksettings.RebootEscrowData fromEncryptedData(com.android.server.locksettings.RebootEscrowKey,byte[])>(r15, r16);
+
+        $r4 = r0.<com.android.server.locksettings.RebootEscrowManager: com.android.server.locksettings.RebootEscrowManager$Callbacks mCallbacks>;
+
+        $b1 = virtualinvoke r17.<com.android.server.locksettings.RebootEscrowData: byte getSpVersion()>();
+
+        $r5 = virtualinvoke r17.<com.android.server.locksettings.RebootEscrowData: byte[] getSyntheticPassword()>();
+
+        interfaceinvoke $r4.<com.android.server.locksettings.RebootEscrowManager$Callbacks: void onRebootEscrowRestored(byte,byte[],int)>($b1, $r5, i0);
+
+        r18 = new java.lang.StringBuilder;
+
+        specialinvoke r18.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r18.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Restored reboot escrow data for user ");
+
+        virtualinvoke r18.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r8 = virtualinvoke r18.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("RebootEscrowManager", $r8);
+
+        $r9 = r0.<com.android.server.locksettings.RebootEscrowManager: com.android.server.locksettings.RebootEscrowManager$RebootEscrowEventLog mEventLog>;
+
+        virtualinvoke $r9.<com.android.server.locksettings.RebootEscrowManager$RebootEscrowEventLog: void addEntry(int,int)>(7, i0);
+
+     label2:
+        return 1;
+
+     label3:
+        $r10 := @caughtexception;
+
+        $r11 = new java.lang.StringBuilder;
+
+        specialinvoke $r11.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Could not load reboot escrow data for user ");
+
+        virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r14 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String,java.lang.Throwable)>("RebootEscrowManager", $r14, $r10);
+
+        return 0;
+
+        catch java.io.IOException from label1 to label2 with label3;
+    }
+
+    private void setRebootEscrowReady(boolean)
+    {
+        com.android.server.locksettings.RebootEscrowManager r0;
+        boolean z0, $z1;
+        com.android.internal.widget.RebootEscrowListener $r1;
+
+        r0 := @this: com.android.server.locksettings.RebootEscrowManager;
+
+        z0 := @parameter0: boolean;
+
+        $z1 = r0.<com.android.server.locksettings.RebootEscrowManager: boolean mRebootEscrowReady>;
+
+        if $z1 == z0 goto label1;
+
+        $r1 = r0.<com.android.server.locksettings.RebootEscrowManager: com.android.internal.widget.RebootEscrowListener mRebootEscrowListener>;
+
+        interfaceinvoke $r1.<com.android.internal.widget.RebootEscrowListener: void onPreparedForReboot(boolean)>(z0);
+
+     label1:
+        r0.<com.android.server.locksettings.RebootEscrowManager: boolean mRebootEscrowReady> = z0;
+
+        return;
+    }
+
+    boolean armRebootEscrowIfNeeded()
+    {
+        com.android.server.locksettings.RebootEscrowManager r0;
+        android.hardware.rebootescrow.IRebootEscrow r1;
+        boolean $z1, z2;
+        com.android.server.locksettings.RebootEscrowManager$Injector $r2, $r4;
+        byte[] $r3;
+        com.android.server.locksettings.LockSettingsStorage $r5;
+        int $i1;
+        com.android.server.locksettings.RebootEscrowManager$RebootEscrowEventLog $r6;
+        java.lang.Throwable $r7;
+        java.lang.Exception $r8;
+        java.lang.Object r9;
+        com.android.server.locksettings.RebootEscrowKey r10;
+
+        r0 := @this: com.android.server.locksettings.RebootEscrowManager;
+
+        $z1 = r0.<com.android.server.locksettings.RebootEscrowManager: boolean mRebootEscrowReady>;
+
+        if $z1 != 0 goto label01;
+
+        return 0;
+
+     label01:
+        $r2 = r0.<com.android.server.locksettings.RebootEscrowManager: com.android.server.locksettings.RebootEscrowManager$Injector mInjector>;
+
+        r1 = virtualinvoke $r2.<com.android.server.locksettings.RebootEscrowManager$Injector: android.hardware.rebootescrow.IRebootEscrow getRebootEscrow()>();
+
+        if r1 != null goto label02;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("RebootEscrowManager", "Escrow marked as ready, but RebootEscrow HAL is unavailable");
+
+        return 0;
+
+     label02:
+        r9 = r0.<com.android.server.locksettings.RebootEscrowManager: java.lang.Object mKeyGenerationLock>;
+
+        entermonitor r9;
+
+     label03:
+        r10 = r0.<com.android.server.locksettings.RebootEscrowManager: com.android.server.locksettings.RebootEscrowKey mPendingRebootEscrowKey>;
+
+        exitmonitor r9;
+
+     label04:
+        if r10 != null goto label05;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("RebootEscrowManager", "Escrow key is null, but escrow was marked as ready");
+
+        return 0;
+
+     label05:
+        z2 = 0;
+
+     label06:
+        $r3 = virtualinvoke r10.<com.android.server.locksettings.RebootEscrowKey: byte[] getKeyBytes()>();
+
+        interfaceinvoke r1.<android.hardware.rebootescrow.IRebootEscrow: void storeKey(byte[])>($r3);
+
+     label07:
+        z2 = 1;
+
+     label08:
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("RebootEscrowManager", "Reboot escrow key stored with RebootEscrow HAL");
+
+     label09:
+        z2 = 1;
+
+        goto label11;
+
+     label10:
+        $r8 := @caughtexception;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("RebootEscrowManager", "Failed escrow secret to RebootEscrow HAL", $r8);
+
+     label11:
+        if z2 == 0 goto label12;
+
+        $r5 = r0.<com.android.server.locksettings.RebootEscrowManager: com.android.server.locksettings.LockSettingsStorage mStorage>;
+
+        $r4 = r0.<com.android.server.locksettings.RebootEscrowManager: com.android.server.locksettings.RebootEscrowManager$Injector mInjector>;
+
+        $i1 = virtualinvoke $r4.<com.android.server.locksettings.RebootEscrowManager$Injector: int getBootCount()>();
+
+        virtualinvoke $r5.<com.android.server.locksettings.LockSettingsStorage: void setInt(java.lang.String,int,int)>("reboot_escrow_armed_count", $i1, 0);
+
+        $r6 = r0.<com.android.server.locksettings.RebootEscrowManager: com.android.server.locksettings.RebootEscrowManager$RebootEscrowEventLog mEventLog>;
+
+        virtualinvoke $r6.<com.android.server.locksettings.RebootEscrowManager$RebootEscrowEventLog: void addEntry(int)>(2);
+
+     label12:
+        return z2;
+
+     label13:
+        $r7 := @caughtexception;
+
+     label14:
+        exitmonitor r9;
+
+     label15:
+        throw $r7;
+
+        catch java.lang.Throwable from label03 to label04 with label13;
+        catch android.os.RemoteException from label06 to label07 with label10;
+        catch android.os.ServiceSpecificException from label06 to label07 with label10;
+        catch android.os.RemoteException from label08 to label09 with label10;
+        catch android.os.ServiceSpecificException from label08 to label09 with label10;
+        catch java.lang.Throwable from label14 to label15 with label13;
+    }
+
+    void callToRebootEscrowIfNeeded(int, byte, byte[])
+    {
+        com.android.server.locksettings.RebootEscrowManager r0;
+        int i0;
+        byte b1;
+        com.android.server.locksettings.RebootEscrowKey r1;
+        boolean $z0;
+        com.android.server.locksettings.RebootEscrowManager$Injector $r2;
+        android.hardware.rebootescrow.IRebootEscrow $r3;
+        com.android.server.locksettings.LockSettingsStorage $r4;
+        byte[] $r5, r8;
+        com.android.server.locksettings.RebootEscrowManager$RebootEscrowEventLog $r6;
+        java.lang.Throwable $r7;
+        com.android.server.locksettings.RebootEscrowData r9;
+
+        r0 := @this: com.android.server.locksettings.RebootEscrowManager;
+
+        i0 := @parameter0: int;
+
+        b1 := @parameter1: byte;
+
+        r8 := @parameter2: byte[];
+
+        $z0 = r0.<com.android.server.locksettings.RebootEscrowManager: boolean mRebootEscrowWanted>;
+
+        if $z0 != 0 goto label1;
+
+        return;
+
+     label1:
+        $r2 = r0.<com.android.server.locksettings.RebootEscrowManager: com.android.server.locksettings.RebootEscrowManager$Injector mInjector>;
+
+        $r3 = virtualinvoke $r2.<com.android.server.locksettings.RebootEscrowManager$Injector: android.hardware.rebootescrow.IRebootEscrow getRebootEscrow()>();
+
+        if $r3 != null goto label2;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("RebootEscrowManager", "Reboot escrow requested, but RebootEscrow HAL is unavailable");
+
+        return;
+
+     label2:
+        r1 = specialinvoke r0.<com.android.server.locksettings.RebootEscrowManager: com.android.server.locksettings.RebootEscrowKey generateEscrowKeyIfNeeded()>();
+
+        if r1 != null goto label3;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("RebootEscrowManager", "Could not generate escrow key");
+
+        return;
+
+     label3:
+        r9 = staticinvoke <com.android.server.locksettings.RebootEscrowData: com.android.server.locksettings.RebootEscrowData fromSyntheticPassword(com.android.server.locksettings.RebootEscrowKey,byte,byte[])>(r1, b1, r8);
+
+     label4:
+        $r4 = r0.<com.android.server.locksettings.RebootEscrowManager: com.android.server.locksettings.LockSettingsStorage mStorage>;
+
+        $r5 = virtualinvoke r9.<com.android.server.locksettings.RebootEscrowData: byte[] getBlob()>();
+
+        virtualinvoke $r4.<com.android.server.locksettings.LockSettingsStorage: void writeRebootEscrow(int,byte[])>(i0, $r5);
+
+        $r6 = r0.<com.android.server.locksettings.RebootEscrowManager: com.android.server.locksettings.RebootEscrowManager$RebootEscrowEventLog mEventLog>;
+
+        virtualinvoke $r6.<com.android.server.locksettings.RebootEscrowManager$RebootEscrowEventLog: void addEntry(int,int)>(6, i0);
+
+        specialinvoke r0.<com.android.server.locksettings.RebootEscrowManager: void setRebootEscrowReady(boolean)>(1);
+
+        return;
+
+     label5:
+        $r7 := @caughtexception;
+
+        specialinvoke r0.<com.android.server.locksettings.RebootEscrowManager: void setRebootEscrowReady(boolean)>(0);
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String,java.lang.Throwable)>("RebootEscrowManager", "Could not escrow reboot data", $r7);
+
+        return;
+
+        catch java.io.IOException from label3 to label4 with label5;
+    }
+
+    boolean clearRebootEscrow()
+    {
+        com.android.server.locksettings.RebootEscrowManager r0;
+        com.android.server.locksettings.RebootEscrowManager$Injector $r1;
+        android.hardware.rebootescrow.IRebootEscrow $r2;
+
+        r0 := @this: com.android.server.locksettings.RebootEscrowManager;
+
+        $r1 = r0.<com.android.server.locksettings.RebootEscrowManager: com.android.server.locksettings.RebootEscrowManager$Injector mInjector>;
+
+        $r2 = virtualinvoke $r1.<com.android.server.locksettings.RebootEscrowManager$Injector: android.hardware.rebootescrow.IRebootEscrow getRebootEscrow()>();
+
+        if $r2 != null goto label1;
+
+        return 0;
+
+     label1:
+        specialinvoke r0.<com.android.server.locksettings.RebootEscrowManager: void clearRebootEscrowIfNeeded()>();
+
+        return 1;
+    }
+
+    void dump(com.android.internal.util.IndentingPrintWriter)
+    {
+        com.android.server.locksettings.RebootEscrowManager r0;
+        boolean $z0, $z1, z2;
+        com.android.internal.widget.RebootEscrowListener $r1;
+        com.android.server.locksettings.RebootEscrowKey $r2;
+        com.android.server.locksettings.RebootEscrowManager$RebootEscrowEventLog $r4;
+        java.lang.Throwable $r6;
+        com.android.internal.util.IndentingPrintWriter r7;
+        java.lang.Object r8;
+        java.lang.String r9;
+
+        r0 := @this: com.android.server.locksettings.RebootEscrowManager;
+
+        r7 := @parameter0: com.android.internal.util.IndentingPrintWriter;
+
+        virtualinvoke r7.<com.android.internal.util.IndentingPrintWriter: void print(java.lang.String)>("mRebootEscrowWanted=");
+
+        $z0 = r0.<com.android.server.locksettings.RebootEscrowManager: boolean mRebootEscrowWanted>;
+
+        virtualinvoke r7.<com.android.internal.util.IndentingPrintWriter: void println(boolean)>($z0);
+
+        virtualinvoke r7.<com.android.internal.util.IndentingPrintWriter: void print(java.lang.String)>("mRebootEscrowReady=");
+
+        $z1 = r0.<com.android.server.locksettings.RebootEscrowManager: boolean mRebootEscrowReady>;
+
+        virtualinvoke r7.<com.android.internal.util.IndentingPrintWriter: void println(boolean)>($z1);
+
+        virtualinvoke r7.<com.android.internal.util.IndentingPrintWriter: void print(java.lang.String)>("mRebootEscrowListener=");
+
+        $r1 = r0.<com.android.server.locksettings.RebootEscrowManager: com.android.internal.widget.RebootEscrowListener mRebootEscrowListener>;
+
+        virtualinvoke r7.<com.android.internal.util.IndentingPrintWriter: void println(java.lang.Object)>($r1);
+
+        r8 = r0.<com.android.server.locksettings.RebootEscrowManager: java.lang.Object mKeyGenerationLock>;
+
+        entermonitor r8;
+
+     label01:
+        $r2 = r0.<com.android.server.locksettings.RebootEscrowManager: com.android.server.locksettings.RebootEscrowKey mPendingRebootEscrowKey>;
+
+        if $r2 == null goto label03;
+
+     label02:
+        z2 = 1;
+
+        goto label04;
+
+     label03:
+        z2 = 0;
+
+     label04:
+        exitmonitor r8;
+
+     label05:
+        virtualinvoke r7.<com.android.internal.util.IndentingPrintWriter: void print(java.lang.String)>("mPendingRebootEscrowKey is ");
+
+        if z2 == 0 goto label06;
+
+        r9 = "set";
+
+        goto label07;
+
+     label06:
+        r9 = "not set";
+
+     label07:
+        virtualinvoke r7.<com.android.internal.util.IndentingPrintWriter: void println(java.lang.String)>(r9);
+
+        virtualinvoke r7.<com.android.internal.util.IndentingPrintWriter: void println()>();
+
+        virtualinvoke r7.<com.android.internal.util.IndentingPrintWriter: void println(java.lang.String)>("Event log:");
+
+        virtualinvoke r7.<com.android.internal.util.IndentingPrintWriter: com.android.internal.util.IndentingPrintWriter increaseIndent()>();
+
+        $r4 = r0.<com.android.server.locksettings.RebootEscrowManager: com.android.server.locksettings.RebootEscrowManager$RebootEscrowEventLog mEventLog>;
+
+        virtualinvoke $r4.<com.android.server.locksettings.RebootEscrowManager$RebootEscrowEventLog: void dump(com.android.internal.util.IndentingPrintWriter)>(r7);
+
+        virtualinvoke r7.<com.android.internal.util.IndentingPrintWriter: void println()>();
+
+        virtualinvoke r7.<com.android.internal.util.IndentingPrintWriter: com.android.internal.util.IndentingPrintWriter decreaseIndent()>();
+
+        return;
+
+     label08:
+        $r6 := @caughtexception;
+
+     label09:
+        exitmonitor r8;
+
+     label10:
+        throw $r6;
+
+        catch java.lang.Throwable from label01 to label02 with label08;
+        catch java.lang.Throwable from label04 to label05 with label08;
+        catch java.lang.Throwable from label09 to label10 with label08;
+    }
+
+    void loadRebootEscrowDataIfAvailable()
+    {
+        com.android.server.locksettings.RebootEscrowManager r0;
+        android.content.pm.UserInfo r1, $r6, r17;
+        android.os.UserManager $r2;
+        java.util.ArrayList $r3;
+        boolean $z0, $z1, $z2, $z3, $z4, $z5, $z6, z8;
+        com.android.server.locksettings.RebootEscrowManager$RebootEscrowEventLog $r4;
+        java.lang.Object $r5, $r7, $r9;
+        int $i0, $i2, $i3, $i4;
+        com.android.server.locksettings.LockSettingsStorage $r8, $r11;
+        com.android.server.locksettings.RebootEscrowManager$Callbacks $r10;
+        java.util.List r12;
+        java.util.Iterator r14, r16, r18;
+        com.android.server.locksettings.RebootEscrowKey r15;
+
+        r0 := @this: com.android.server.locksettings.RebootEscrowManager;
+
+        $r2 = r0.<com.android.server.locksettings.RebootEscrowManager: android.os.UserManager mUserManager>;
+
+        r12 = virtualinvoke $r2.<android.os.UserManager: java.util.List getUsers()>();
+
+        $r3 = new java.util.ArrayList;
+
+        specialinvoke $r3.<java.util.ArrayList: void <init>()>();
+
+        r14 = interfaceinvoke r12.<java.util.List: java.util.Iterator iterator()>();
+
+     label1:
+        $z0 = interfaceinvoke r14.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label3;
+
+        $r9 = interfaceinvoke r14.<java.util.Iterator: java.lang.Object next()>();
+
+        r1 = (android.content.pm.UserInfo) $r9;
+
+        $r10 = r0.<com.android.server.locksettings.RebootEscrowManager: com.android.server.locksettings.RebootEscrowManager$Callbacks mCallbacks>;
+
+        $i3 = r1.<android.content.pm.UserInfo: int id>;
+
+        $z5 = interfaceinvoke $r10.<com.android.server.locksettings.RebootEscrowManager$Callbacks: boolean isUserSecure(int)>($i3);
+
+        if $z5 == 0 goto label2;
+
+        $r11 = r0.<com.android.server.locksettings.RebootEscrowManager: com.android.server.locksettings.LockSettingsStorage mStorage>;
+
+        $i4 = r1.<android.content.pm.UserInfo: int id>;
+
+        $z6 = virtualinvoke $r11.<com.android.server.locksettings.LockSettingsStorage: boolean hasRebootEscrow(int)>($i4);
+
+        if $z6 == 0 goto label2;
+
+        interfaceinvoke $r3.<java.util.List: boolean add(java.lang.Object)>(r1);
+
+     label2:
+        goto label1;
+
+     label3:
+        $z1 = interfaceinvoke $r3.<java.util.List: boolean isEmpty()>();
+
+        if $z1 == 0 goto label4;
+
+        return;
+
+     label4:
+        r15 = specialinvoke r0.<com.android.server.locksettings.RebootEscrowManager: com.android.server.locksettings.RebootEscrowKey getAndClearRebootEscrowKey()>();
+
+        if r15 != null goto label7;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("RebootEscrowManager", "Had reboot escrow data for users, but no key; removing escrow storage.");
+
+        r16 = interfaceinvoke r12.<java.util.List: java.util.Iterator iterator()>();
+
+     label5:
+        $z4 = interfaceinvoke r16.<java.util.Iterator: boolean hasNext()>();
+
+        if $z4 == 0 goto label6;
+
+        $r7 = interfaceinvoke r16.<java.util.Iterator: java.lang.Object next()>();
+
+        r17 = (android.content.pm.UserInfo) $r7;
+
+        $r8 = r0.<com.android.server.locksettings.RebootEscrowManager: com.android.server.locksettings.LockSettingsStorage mStorage>;
+
+        $i2 = r17.<android.content.pm.UserInfo: int id>;
+
+        virtualinvoke $r8.<com.android.server.locksettings.LockSettingsStorage: void removeRebootEscrow(int)>($i2);
+
+        goto label5;
+
+     label6:
+        specialinvoke r0.<com.android.server.locksettings.RebootEscrowManager: void onEscrowRestoreComplete(boolean)>(0);
+
+        return;
+
+     label7:
+        $r4 = r0.<com.android.server.locksettings.RebootEscrowManager: com.android.server.locksettings.RebootEscrowManager$RebootEscrowEventLog mEventLog>;
+
+        virtualinvoke $r4.<com.android.server.locksettings.RebootEscrowManager$RebootEscrowEventLog: void addEntry(int)>(1);
+
+        z8 = 1;
+
+        r18 = interfaceinvoke $r3.<java.util.List: java.util.Iterator iterator()>();
+
+     label8:
+        $z2 = interfaceinvoke r18.<java.util.Iterator: boolean hasNext()>();
+
+        if $z2 == 0 goto label9;
+
+        $r5 = interfaceinvoke r18.<java.util.Iterator: java.lang.Object next()>();
+
+        $r6 = (android.content.pm.UserInfo) $r5;
+
+        $i0 = $r6.<android.content.pm.UserInfo: int id>;
+
+        $z3 = specialinvoke r0.<com.android.server.locksettings.RebootEscrowManager: boolean restoreRebootEscrowForUser(int,com.android.server.locksettings.RebootEscrowKey)>($i0, r15);
+
+        z8 = z8 & $z3;
+
+        goto label8;
+
+     label9:
+        specialinvoke r0.<com.android.server.locksettings.RebootEscrowManager: void onEscrowRestoreComplete(boolean)>(z8);
+
+        return;
+    }
+
+    boolean prepareRebootEscrow()
+    {
+        com.android.server.locksettings.RebootEscrowManager r0;
+        com.android.server.locksettings.RebootEscrowManager$Injector $r1;
+        android.hardware.rebootescrow.IRebootEscrow $r2;
+        com.android.server.locksettings.RebootEscrowManager$RebootEscrowEventLog $r3;
+
+        r0 := @this: com.android.server.locksettings.RebootEscrowManager;
+
+        $r1 = r0.<com.android.server.locksettings.RebootEscrowManager: com.android.server.locksettings.RebootEscrowManager$Injector mInjector>;
+
+        $r2 = virtualinvoke $r1.<com.android.server.locksettings.RebootEscrowManager$Injector: android.hardware.rebootescrow.IRebootEscrow getRebootEscrow()>();
+
+        if $r2 != null goto label1;
+
+        return 0;
+
+     label1:
+        specialinvoke r0.<com.android.server.locksettings.RebootEscrowManager: void clearRebootEscrowIfNeeded()>();
+
+        r0.<com.android.server.locksettings.RebootEscrowManager: boolean mRebootEscrowWanted> = 1;
+
+        $r3 = r0.<com.android.server.locksettings.RebootEscrowManager: com.android.server.locksettings.RebootEscrowManager$RebootEscrowEventLog mEventLog>;
+
+        virtualinvoke $r3.<com.android.server.locksettings.RebootEscrowManager$RebootEscrowEventLog: void addEntry(int)>(5);
+
+        return 1;
+    }
+
+    void setRebootEscrowListener(com.android.internal.widget.RebootEscrowListener)
+    {
+        com.android.server.locksettings.RebootEscrowManager r0;
+        com.android.internal.widget.RebootEscrowListener r1;
+
+        r0 := @this: com.android.server.locksettings.RebootEscrowManager;
+
+        r1 := @parameter0: com.android.internal.widget.RebootEscrowListener;
+
+        r0.<com.android.server.locksettings.RebootEscrowManager: com.android.internal.widget.RebootEscrowListener mRebootEscrowListener> = r1;
+
+        return;
+    }
+
+    public static void <clinit>()
+    {
+        <com.android.server.locksettings.RebootEscrowManager: java.lang.String TAG> = "RebootEscrowManager";
+
+        <com.android.server.locksettings.RebootEscrowManager: java.lang.String REBOOT_ESCROW_ARMED_KEY> = "reboot_escrow_armed_count";
+
+        <com.android.server.locksettings.RebootEscrowManager: int BOOT_COUNT_TOLERANCE> = 5;
+
+        return;
+    }
+}

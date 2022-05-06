@@ -1,0 +1,760 @@
+class com.android.server.accessibility.gestures.MultiFingerMultiTap extends com.android.server.accessibility.gestures.GestureMatcher
+{
+    private android.graphics.PointF[] mBases;
+    protected int mCompletedTapCount;
+    private int mDoubleTapSlop;
+    private java.util.ArrayList mExcludedPointsForDownSlopChecked;
+    protected boolean mIsTargetFingerCountReached;
+    final int mTargetFingerCount;
+    final int mTargetTapCount;
+    private int mTouchSlop;
+
+    void <init>(android.content.Context, int, int, int, com.android.server.accessibility.gestures.GestureMatcher$StateChangeListener)
+    {
+        com.android.server.accessibility.gestures.MultiFingerMultiTap r0;
+        int i0, i1, $i3, $i4, $i5, $i6, $i7, $i8, i9, i10, $i11;
+        com.android.server.accessibility.gestures.GestureMatcher$StateChangeListener r1;
+        android.os.Handler $r2;
+        android.os.Looper $r3;
+        android.view.ViewConfiguration $r4, $r5;
+        android.graphics.PointF[] $r6, r10;
+        java.util.ArrayList $r7;
+        android.graphics.PointF $r8;
+        android.content.Context r9;
+        boolean z0;
+
+        r0 := @this: com.android.server.accessibility.gestures.MultiFingerMultiTap;
+
+        r9 := @parameter0: android.content.Context;
+
+        i9 := @parameter1: int;
+
+        i0 := @parameter2: int;
+
+        i1 := @parameter3: int;
+
+        r1 := @parameter4: com.android.server.accessibility.gestures.GestureMatcher$StateChangeListener;
+
+        $r2 = new android.os.Handler;
+
+        $r3 = virtualinvoke r9.<android.content.Context: android.os.Looper getMainLooper()>();
+
+        specialinvoke $r2.<android.os.Handler: void <init>(android.os.Looper)>($r3);
+
+        specialinvoke r0.<com.android.server.accessibility.gestures.GestureMatcher: void <init>(int,android.os.Handler,com.android.server.accessibility.gestures.GestureMatcher$StateChangeListener)>(i1, $r2, r1);
+
+        z0 = 0;
+
+        r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: boolean mIsTargetFingerCountReached> = 0;
+
+        if i9 < 2 goto label1;
+
+        z0 = 1;
+
+     label1:
+        staticinvoke <com.android.internal.util.Preconditions: void checkArgument(boolean)>(z0);
+
+        staticinvoke <com.android.internal.util.Preconditions: int checkArgumentPositive(int,java.lang.String)>(i0, "Tap count must greater than 0.");
+
+        r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: int mTargetTapCount> = i0;
+
+        r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: int mTargetFingerCount> = i9;
+
+        $r4 = staticinvoke <android.view.ViewConfiguration: android.view.ViewConfiguration get(android.content.Context)>(r9);
+
+        $i3 = virtualinvoke $r4.<android.view.ViewConfiguration: int getScaledDoubleTapSlop()>();
+
+        $i4 = $i3 * i9;
+
+        r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: int mDoubleTapSlop> = $i4;
+
+        $r5 = staticinvoke <android.view.ViewConfiguration: android.view.ViewConfiguration get(android.content.Context)>(r9);
+
+        $i5 = virtualinvoke $r5.<android.view.ViewConfiguration: int getScaledTouchSlop()>();
+
+        $i6 = $i5 * i9;
+
+        r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: int mTouchSlop> = $i6;
+
+        $i7 = r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: int mTargetFingerCount>;
+
+        $r6 = newarray (android.graphics.PointF)[$i7];
+
+        r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: android.graphics.PointF[] mBases> = $r6;
+
+        i10 = 0;
+
+     label2:
+        r10 = r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: android.graphics.PointF[] mBases>;
+
+        $i11 = lengthof r10;
+
+        if i10 >= $i11 goto label3;
+
+        $r8 = new android.graphics.PointF;
+
+        specialinvoke $r8.<android.graphics.PointF: void <init>()>();
+
+        r10[i10] = $r8;
+
+        i10 = i10 + 1;
+
+        goto label2;
+
+     label3:
+        $r7 = new java.util.ArrayList;
+
+        $i8 = r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: int mTargetFingerCount>;
+
+        specialinvoke $r7.<java.util.ArrayList: void <init>(int)>($i8);
+
+        r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: java.util.ArrayList mExcludedPointsForDownSlopChecked> = $r7;
+
+        virtualinvoke r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: void clear()>();
+
+        return;
+    }
+
+    private android.graphics.PointF findNearestPoint(android.view.MotionEvent, float, boolean)
+    {
+        com.android.server.accessibility.gestures.MultiFingerMultiTap r0;
+        android.view.MotionEvent r1;
+        float f0, $f1, $f2, $f3, $f4, $f5, $f6, f7, f8, f9, f10, f11;
+        boolean z0, $z2, $z4, $z5;
+        int i0, $i1, i6;
+        byte $b2, $b3, $b4, $b5;
+        java.util.ArrayList $r2, $r3, $r4;
+        double $d0, $d1, $d2;
+        android.graphics.PointF r5, r7;
+        android.graphics.PointF[] r6;
+
+        r0 := @this: com.android.server.accessibility.gestures.MultiFingerMultiTap;
+
+        r1 := @parameter0: android.view.MotionEvent;
+
+        f0 := @parameter1: float;
+
+        z0 := @parameter2: boolean;
+
+        f7 = 3.4028235E38F;
+
+        r5 = null;
+
+        i6 = 0;
+
+     label1:
+        r6 = r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: android.graphics.PointF[] mBases>;
+
+        $i1 = lengthof r6;
+
+        if i6 >= $i1 goto label7;
+
+        r7 = r6[i6];
+
+        $f1 = r7.<android.graphics.PointF: float x>;
+
+        $z2 = staticinvoke <java.lang.Float: boolean isNaN(float)>($f1);
+
+        if $z2 == 0 goto label2;
+
+        $f6 = r7.<android.graphics.PointF: float y>;
+
+        $z5 = staticinvoke <java.lang.Float: boolean isNaN(float)>($f6);
+
+        if $z5 == 0 goto label2;
+
+        f8 = f7;
+
+        goto label6;
+
+     label2:
+        if z0 == 0 goto label3;
+
+        $r4 = r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: java.util.ArrayList mExcludedPointsForDownSlopChecked>;
+
+        $z4 = virtualinvoke $r4.<java.util.ArrayList: boolean contains(java.lang.Object)>(r7);
+
+        if $z4 == 0 goto label3;
+
+        f8 = f7;
+
+        goto label6;
+
+     label3:
+        i0 = virtualinvoke r1.<android.view.MotionEvent: int getActionIndex()>();
+
+        $f2 = r7.<android.graphics.PointF: float x>;
+
+        $f3 = virtualinvoke r1.<android.view.MotionEvent: float getX(int)>(i0);
+
+        f9 = $f2 - $f3;
+
+        $f4 = r7.<android.graphics.PointF: float y>;
+
+        $f5 = virtualinvoke r1.<android.view.MotionEvent: float getY(int)>(i0);
+
+        f10 = $f4 - $f5;
+
+        $b3 = f9 cmpl 0.0F;
+
+        if $b3 != 0 goto label5;
+
+        $b5 = f10 cmpl 0.0F;
+
+        if $b5 != 0 goto label5;
+
+        if z0 == 0 goto label4;
+
+        $r3 = r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: java.util.ArrayList mExcludedPointsForDownSlopChecked>;
+
+        virtualinvoke $r3.<java.util.ArrayList: boolean add(java.lang.Object)>(r7);
+
+     label4:
+        return r7;
+
+     label5:
+        $d1 = (double) f9;
+
+        $d0 = (double) f10;
+
+        $d2 = staticinvoke <java.lang.Math: double hypot(double,double)>($d1, $d0);
+
+        f11 = (float) $d2;
+
+        f8 = f7;
+
+        $b4 = f7 cmpl f11;
+
+        if $b4 <= 0 goto label6;
+
+        f8 = f11;
+
+        r5 = r7;
+
+     label6:
+        i6 = i6 + 1;
+
+        f7 = f8;
+
+        goto label1;
+
+     label7:
+        $b2 = f7 cmpg f0;
+
+        if $b2 >= 0 goto label9;
+
+        if z0 == 0 goto label8;
+
+        $r2 = r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: java.util.ArrayList mExcludedPointsForDownSlopChecked>;
+
+        virtualinvoke $r2.<java.util.ArrayList: boolean add(java.lang.Object)>(r5);
+
+     label8:
+        return r5;
+
+     label9:
+        return null;
+    }
+
+    private android.graphics.PointF initBaseLocation(android.view.MotionEvent)
+    {
+        com.android.server.accessibility.gestures.MultiFingerMultiTap r0;
+        android.view.MotionEvent r1;
+        int i0, i1, $i2;
+        android.graphics.PointF r2;
+        android.graphics.PointF[] $r3;
+        float $f0, $f1, $f2, $f3;
+        boolean $z0, $z1;
+
+        r0 := @this: com.android.server.accessibility.gestures.MultiFingerMultiTap;
+
+        r1 := @parameter0: android.view.MotionEvent;
+
+        i0 = virtualinvoke r1.<android.view.MotionEvent: int getActionIndex()>();
+
+        i1 = virtualinvoke r1.<android.view.MotionEvent: int getPointerCount()>();
+
+        $r3 = r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: android.graphics.PointF[] mBases>;
+
+        $i2 = i1 - 1;
+
+        r2 = $r3[$i2];
+
+        $f0 = r2.<android.graphics.PointF: float x>;
+
+        $z0 = staticinvoke <java.lang.Float: boolean isNaN(float)>($f0);
+
+        if $z0 == 0 goto label1;
+
+        $f1 = r2.<android.graphics.PointF: float y>;
+
+        $z1 = staticinvoke <java.lang.Float: boolean isNaN(float)>($f1);
+
+        if $z1 == 0 goto label1;
+
+        $f2 = virtualinvoke r1.<android.view.MotionEvent: float getX(int)>(i0);
+
+        $f3 = virtualinvoke r1.<android.view.MotionEvent: float getY(int)>(i0);
+
+        virtualinvoke r2.<android.graphics.PointF: void set(float,float)>($f2, $f3);
+
+     label1:
+        return r2;
+    }
+
+    protected void clear()
+    {
+        com.android.server.accessibility.gestures.MultiFingerMultiTap r0;
+        android.graphics.PointF[] r1;
+        int $i0, i1;
+        java.util.ArrayList $r2;
+        android.graphics.PointF $r3;
+
+        r0 := @this: com.android.server.accessibility.gestures.MultiFingerMultiTap;
+
+        r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: int mCompletedTapCount> = 0;
+
+        r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: boolean mIsTargetFingerCountReached> = 0;
+
+        i1 = 0;
+
+     label1:
+        r1 = r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: android.graphics.PointF[] mBases>;
+
+        $i0 = lengthof r1;
+
+        if i1 >= $i0 goto label2;
+
+        $r3 = r1[i1];
+
+        virtualinvoke $r3.<android.graphics.PointF: void set(float,float)>(#NaNF, #NaNF);
+
+        i1 = i1 + 1;
+
+        goto label1;
+
+     label2:
+        $r2 = r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: java.util.ArrayList mExcludedPointsForDownSlopChecked>;
+
+        virtualinvoke $r2.<java.util.ArrayList: void clear()>();
+
+        specialinvoke r0.<com.android.server.accessibility.gestures.GestureMatcher: void clear()>();
+
+        return;
+    }
+
+    public java.lang.String getGestureName()
+    {
+        com.android.server.accessibility.gestures.MultiFingerMultiTap r0;
+        int i0, $i1;
+        java.lang.StringBuilder $r2;
+        java.lang.String $r10;
+
+        r0 := @this: com.android.server.accessibility.gestures.MultiFingerMultiTap;
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        $i1 = r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: int mTargetFingerCount>;
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i1);
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("-Finger ");
+
+        i0 = r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: int mTargetTapCount>;
+
+        if i0 != 1 goto label1;
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Single");
+
+        goto label4;
+
+     label1:
+        if i0 != 2 goto label2;
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Double");
+
+        goto label4;
+
+     label2:
+        if i0 != 3 goto label3;
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Triple");
+
+        goto label4;
+
+     label3:
+        if i0 <= 3 goto label4;
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+     label4:
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" Tap");
+
+        $r10 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        return $r10;
+    }
+
+    protected void onDown(android.view.MotionEvent, android.view.MotionEvent, int)
+    {
+        com.android.server.accessibility.gestures.MultiFingerMultiTap r0;
+        android.view.MotionEvent r1, r2;
+        android.graphics.PointF r3;
+        int $i0, $i1, $i2, $i3, i4, i5;
+        float $f0, $f1, $f2;
+
+        r0 := @this: com.android.server.accessibility.gestures.MultiFingerMultiTap;
+
+        r1 := @parameter0: android.view.MotionEvent;
+
+        r2 := @parameter1: android.view.MotionEvent;
+
+        i4 := @parameter2: int;
+
+        $i1 = r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: int mCompletedTapCount>;
+
+        $i0 = r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: int mTargetTapCount>;
+
+        if $i1 != $i0 goto label1;
+
+        virtualinvoke r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: void cancelGesture(android.view.MotionEvent,android.view.MotionEvent,int)>(r1, r2, i4);
+
+        return;
+
+     label1:
+        virtualinvoke r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: void cancelAfterTapTimeout(android.view.MotionEvent,android.view.MotionEvent,int)>(r1, r2, i4);
+
+        $i2 = r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: int mCompletedTapCount>;
+
+        if $i2 != 0 goto label2;
+
+        specialinvoke r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: android.graphics.PointF initBaseLocation(android.view.MotionEvent)>(r2);
+
+        return;
+
+     label2:
+        $i3 = r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: int mDoubleTapSlop>;
+
+        $f0 = (float) $i3;
+
+        r3 = specialinvoke r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: android.graphics.PointF findNearestPoint(android.view.MotionEvent,float,boolean)>(r2, $f0, 1);
+
+        if r3 == null goto label3;
+
+        i5 = virtualinvoke r1.<android.view.MotionEvent: int getActionIndex()>();
+
+        $f1 = virtualinvoke r1.<android.view.MotionEvent: float getX(int)>(i5);
+
+        $f2 = virtualinvoke r1.<android.view.MotionEvent: float getY(int)>(i5);
+
+        virtualinvoke r3.<android.graphics.PointF: void set(float,float)>($f1, $f2);
+
+        goto label4;
+
+     label3:
+        virtualinvoke r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: void cancelGesture(android.view.MotionEvent,android.view.MotionEvent,int)>(r1, r2, i4);
+
+     label4:
+        return;
+    }
+
+    protected void onMove(android.view.MotionEvent, android.view.MotionEvent, int)
+    {
+        com.android.server.accessibility.gestures.MultiFingerMultiTap r0;
+        android.view.MotionEvent r1, r2;
+        int i0, $i1;
+        float $f0;
+        android.graphics.PointF $r3;
+
+        r0 := @this: com.android.server.accessibility.gestures.MultiFingerMultiTap;
+
+        r1 := @parameter0: android.view.MotionEvent;
+
+        r2 := @parameter1: android.view.MotionEvent;
+
+        i0 := @parameter2: int;
+
+        $i1 = r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: int mTouchSlop>;
+
+        $f0 = (float) $i1;
+
+        $r3 = specialinvoke r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: android.graphics.PointF findNearestPoint(android.view.MotionEvent,float,boolean)>(r2, $f0, 0);
+
+        if $r3 != null goto label1;
+
+        virtualinvoke r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: void cancelGesture(android.view.MotionEvent,android.view.MotionEvent,int)>(r1, r2, i0);
+
+     label1:
+        return;
+    }
+
+    protected void onPointerDown(android.view.MotionEvent, android.view.MotionEvent, int)
+    {
+        com.android.server.accessibility.gestures.MultiFingerMultiTap r0;
+        android.view.MotionEvent r1, r2;
+        int i0, $i1, $i2, $i3, $i4, $i5, $i6, i7, i8;
+        boolean $z0;
+        float $f0, $f1, $f2;
+        android.graphics.PointF r3;
+
+        r0 := @this: com.android.server.accessibility.gestures.MultiFingerMultiTap;
+
+        r1 := @parameter0: android.view.MotionEvent;
+
+        r2 := @parameter1: android.view.MotionEvent;
+
+        i7 := @parameter2: int;
+
+        virtualinvoke r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: void cancelAfterTapTimeout(android.view.MotionEvent,android.view.MotionEvent,int)>(r1, r2, i7);
+
+        i0 = virtualinvoke r1.<android.view.MotionEvent: int getPointerCount()>();
+
+        $i1 = r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: int mTargetFingerCount>;
+
+        if i0 > $i1 goto label8;
+
+        $z0 = r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: boolean mIsTargetFingerCountReached>;
+
+        if $z0 == 0 goto label1;
+
+        goto label8;
+
+     label1:
+        $i2 = r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: int mCompletedTapCount>;
+
+        if $i2 != 0 goto label2;
+
+        r3 = specialinvoke r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: android.graphics.PointF initBaseLocation(android.view.MotionEvent)>(r2);
+
+        goto label3;
+
+     label2:
+        $i3 = r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: int mDoubleTapSlop>;
+
+        $f0 = (float) $i3;
+
+        r3 = specialinvoke r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: android.graphics.PointF findNearestPoint(android.view.MotionEvent,float,boolean)>(r2, $f0, 1);
+
+     label3:
+        $i4 = virtualinvoke r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: int getState()>();
+
+        if $i4 == 1 goto label4;
+
+        $i6 = virtualinvoke r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: int getState()>();
+
+        if $i6 != 0 goto label6;
+
+     label4:
+        if r3 == null goto label6;
+
+        $i5 = r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: int mTargetFingerCount>;
+
+        if i0 != $i5 goto label5;
+
+        r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: boolean mIsTargetFingerCountReached> = 1;
+
+     label5:
+        i8 = virtualinvoke r1.<android.view.MotionEvent: int getActionIndex()>();
+
+        $f1 = virtualinvoke r1.<android.view.MotionEvent: float getX(int)>(i8);
+
+        $f2 = virtualinvoke r1.<android.view.MotionEvent: float getY(int)>(i8);
+
+        virtualinvoke r3.<android.graphics.PointF: void set(float,float)>($f1, $f2);
+
+        goto label7;
+
+     label6:
+        virtualinvoke r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: void cancelGesture(android.view.MotionEvent,android.view.MotionEvent,int)>(r1, r2, i7);
+
+     label7:
+        return;
+
+     label8:
+        virtualinvoke r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: void cancelGesture(android.view.MotionEvent,android.view.MotionEvent,int)>(r1, r2, i7);
+
+        return;
+    }
+
+    protected void onPointerUp(android.view.MotionEvent, android.view.MotionEvent, int)
+    {
+        com.android.server.accessibility.gestures.MultiFingerMultiTap r0;
+        android.view.MotionEvent r1, r2;
+        int i0, $i1, $i2;
+        boolean $z0;
+
+        r0 := @this: com.android.server.accessibility.gestures.MultiFingerMultiTap;
+
+        r1 := @parameter0: android.view.MotionEvent;
+
+        r2 := @parameter1: android.view.MotionEvent;
+
+        i0 := @parameter2: int;
+
+        $z0 = r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: boolean mIsTargetFingerCountReached>;
+
+        if $z0 != 0 goto label1;
+
+        virtualinvoke r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: void cancelGesture(android.view.MotionEvent,android.view.MotionEvent,int)>(r1, r2, i0);
+
+        return;
+
+     label1:
+        $i1 = virtualinvoke r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: int getState()>();
+
+        if $i1 == 1 goto label3;
+
+        $i2 = virtualinvoke r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: int getState()>();
+
+        if $i2 != 0 goto label2;
+
+        goto label3;
+
+     label2:
+        virtualinvoke r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: void cancelGesture(android.view.MotionEvent,android.view.MotionEvent,int)>(r1, r2, i0);
+
+        goto label4;
+
+     label3:
+        virtualinvoke r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: void cancelAfterTapTimeout(android.view.MotionEvent,android.view.MotionEvent,int)>(r1, r2, i0);
+
+     label4:
+        return;
+    }
+
+    protected void onUp(android.view.MotionEvent, android.view.MotionEvent, int)
+    {
+        com.android.server.accessibility.gestures.MultiFingerMultiTap r0;
+        android.view.MotionEvent r1, r2;
+        int i0, $i1, $i2, $i3, $i4, $i5, $i6, $i7, $i8;
+        android.graphics.PointF r3;
+        float $f0;
+        boolean $z0;
+        java.util.ArrayList $r4;
+
+        r0 := @this: com.android.server.accessibility.gestures.MultiFingerMultiTap;
+
+        r1 := @parameter0: android.view.MotionEvent;
+
+        r2 := @parameter1: android.view.MotionEvent;
+
+        i0 := @parameter2: int;
+
+        virtualinvoke r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: void cancelAfterDoubleTapTimeout(android.view.MotionEvent,android.view.MotionEvent,int)>(r1, r2, i0);
+
+        $i1 = r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: int mTouchSlop>;
+
+        $f0 = (float) $i1;
+
+        r3 = specialinvoke r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: android.graphics.PointF findNearestPoint(android.view.MotionEvent,float,boolean)>(r2, $f0, 0);
+
+        $i2 = virtualinvoke r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: int getState()>();
+
+        if $i2 == 1 goto label1;
+
+        $i8 = virtualinvoke r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: int getState()>();
+
+        if $i8 != 0 goto label4;
+
+     label1:
+        if r3 == null goto label4;
+
+        $z0 = r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: boolean mIsTargetFingerCountReached>;
+
+        if $z0 == 0 goto label2;
+
+        $i6 = r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: int mCompletedTapCount>;
+
+        $i7 = $i6 + 1;
+
+        r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: int mCompletedTapCount> = $i7;
+
+        r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: boolean mIsTargetFingerCountReached> = 0;
+
+        $r4 = r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: java.util.ArrayList mExcludedPointsForDownSlopChecked>;
+
+        virtualinvoke $r4.<java.util.ArrayList: void clear()>();
+
+     label2:
+        $i3 = r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: int mCompletedTapCount>;
+
+        if $i3 != 1 goto label3;
+
+        virtualinvoke r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: void startGesture(android.view.MotionEvent,android.view.MotionEvent,int)>(r1, r2, i0);
+
+     label3:
+        $i5 = r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: int mCompletedTapCount>;
+
+        $i4 = r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: int mTargetTapCount>;
+
+        if $i5 != $i4 goto label5;
+
+        virtualinvoke r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: void completeAfterDoubleTapTimeout(android.view.MotionEvent,android.view.MotionEvent,int)>(r1, r2, i0);
+
+        goto label5;
+
+     label4:
+        virtualinvoke r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: void cancelGesture(android.view.MotionEvent,android.view.MotionEvent,int)>(r1, r2, i0);
+
+     label5:
+        return;
+    }
+
+    public java.lang.String toString()
+    {
+        com.android.server.accessibility.gestures.MultiFingerMultiTap r0;
+        java.lang.StringBuilder $r2;
+        java.lang.String $r3, $r4, $r11, $r15;
+        int $i0, $i1;
+        boolean $z0;
+        android.graphics.PointF[] $r10;
+        java.util.ArrayList $r14;
+
+        r0 := @this: com.android.server.accessibility.gestures.MultiFingerMultiTap;
+
+        $r2 = new java.lang.StringBuilder;
+
+        $r3 = specialinvoke r0.<com.android.server.accessibility.gestures.GestureMatcher: java.lang.String toString()>();
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>(java.lang.String)>($r3);
+
+        $i0 = virtualinvoke r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: int getState()>();
+
+        if $i0 == 3 goto label1;
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", CompletedTapCount: ");
+
+        $i1 = r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: int mCompletedTapCount>;
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i1);
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", IsTargetFingerCountReached: ");
+
+        $z0 = r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: boolean mIsTargetFingerCountReached>;
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>($z0);
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", Bases: ");
+
+        $r10 = r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: android.graphics.PointF[] mBases>;
+
+        $r11 = staticinvoke <java.util.Arrays: java.lang.String toString(java.lang.Object[])>($r10);
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r11);
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", ExcludedPointsForDownSlopChecked: ");
+
+        $r14 = r0.<com.android.server.accessibility.gestures.MultiFingerMultiTap: java.util.ArrayList mExcludedPointsForDownSlopChecked>;
+
+        $r15 = virtualinvoke $r14.<java.util.ArrayList: java.lang.String toString()>();
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r15);
+
+     label1:
+        $r4 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        return $r4;
+    }
+}

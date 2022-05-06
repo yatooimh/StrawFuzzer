@@ -1,0 +1,2545 @@
+public class android.hardware.camera2.legacy.SurfaceTextureRenderer extends java.lang.Object
+{
+    private static final boolean DEBUG;
+    private static final int EGL_COLOR_BITLENGTH;
+    private static final int EGL_RECORDABLE_ANDROID;
+    private static final int FLIP_TYPE_BOTH;
+    private static final int FLIP_TYPE_HORIZONTAL;
+    private static final int FLIP_TYPE_NONE;
+    private static final int FLIP_TYPE_VERTICAL;
+    private static final int FLOAT_SIZE_BYTES;
+    private static final java.lang.String FRAGMENT_SHADER;
+    private static final int GLES_VERSION;
+    private static final int GL_MATRIX_SIZE;
+    private static final java.lang.String LEGACY_PERF_PROPERTY;
+    private static final java.time.format.DateTimeFormatter LOG_NAME_TIME_FORMATTER;
+    private static final int PBUFFER_PIXEL_BYTES;
+    private static final java.lang.String TAG;
+    private static final int TRIANGLE_VERTICES_DATA_POS_OFFSET;
+    private static final int TRIANGLE_VERTICES_DATA_STRIDE_BYTES;
+    private static final int TRIANGLE_VERTICES_DATA_UV_OFFSET;
+    private static final int VERTEX_POS_SIZE;
+    private static final java.lang.String VERTEX_SHADER;
+    private static final int VERTEX_UV_SIZE;
+    private static final float[] sBothFlipTriangleVertices;
+    private static final float[] sHorizontalFlipTriangleVertices;
+    private static final float[] sRegularTriangleVertices;
+    private static final float[] sVerticalFlipTriangleVertices;
+    private java.nio.FloatBuffer mBothFlipTriangleVertices;
+    private android.opengl.EGLConfig mConfigs;
+    private java.util.List mConversionSurfaces;
+    private android.opengl.EGLContext mEGLContext;
+    private android.opengl.EGLDisplay mEGLDisplay;
+    private final int mFacing;
+    private java.nio.FloatBuffer mHorizontalFlipTriangleVertices;
+    private float[] mMVPMatrix;
+    private java.nio.ByteBuffer mPBufferPixels;
+    private android.hardware.camera2.legacy.PerfMeasurement mPerfMeasurer;
+    private int mProgram;
+    private java.nio.FloatBuffer mRegularTriangleVertices;
+    private float[] mSTMatrix;
+    private volatile android.graphics.SurfaceTexture mSurfaceTexture;
+    private java.util.List mSurfaces;
+    private int mTextureID;
+    private java.nio.FloatBuffer mVerticalFlipTriangleVertices;
+    private int maPositionHandle;
+    private int maTextureHandle;
+    private int muMVPMatrixHandle;
+    private int muSTMatrixHandle;
+
+    static void <clinit>()
+    {
+        java.lang.Class $r0;
+        java.lang.String $r1;
+        java.util.Locale $r2;
+        java.time.format.DateTimeFormatter $r3;
+        float[] $r4, $r5, $r6, $r7;
+
+        <android.hardware.camera2.legacy.SurfaceTextureRenderer: int VERTEX_UV_SIZE> = 2;
+
+        <android.hardware.camera2.legacy.SurfaceTextureRenderer: java.lang.String VERTEX_SHADER> = "uniform mat4 uMVPMatrix;\nuniform mat4 uSTMatrix;\nattribute vec4 aPosition;\nattribute vec4 aTextureCoord;\nvarying vec2 vTextureCoord;\nvoid main() {\n  gl_Position = uMVPMatrix * aPosition;\n  vTextureCoord = (uSTMatrix * aTextureCoord).xy;\n}\n";
+
+        <android.hardware.camera2.legacy.SurfaceTextureRenderer: int VERTEX_POS_SIZE> = 3;
+
+        <android.hardware.camera2.legacy.SurfaceTextureRenderer: int TRIANGLE_VERTICES_DATA_UV_OFFSET> = 3;
+
+        <android.hardware.camera2.legacy.SurfaceTextureRenderer: int TRIANGLE_VERTICES_DATA_STRIDE_BYTES> = 20;
+
+        <android.hardware.camera2.legacy.SurfaceTextureRenderer: int TRIANGLE_VERTICES_DATA_POS_OFFSET> = 0;
+
+        <android.hardware.camera2.legacy.SurfaceTextureRenderer: int PBUFFER_PIXEL_BYTES> = 4;
+
+        <android.hardware.camera2.legacy.SurfaceTextureRenderer: java.lang.String LEGACY_PERF_PROPERTY> = "persist.camera.legacy_perf";
+
+        <android.hardware.camera2.legacy.SurfaceTextureRenderer: int GL_MATRIX_SIZE> = 16;
+
+        <android.hardware.camera2.legacy.SurfaceTextureRenderer: int GLES_VERSION> = 2;
+
+        <android.hardware.camera2.legacy.SurfaceTextureRenderer: java.lang.String FRAGMENT_SHADER> = "#extension GL_OES_EGL_image_external : require\nprecision mediump float;\nvarying vec2 vTextureCoord;\nuniform samplerExternalOES sTexture;\nvoid main() {\n  gl_FragColor = texture2D(sTexture, vTextureCoord);\n}\n";
+
+        <android.hardware.camera2.legacy.SurfaceTextureRenderer: int FLOAT_SIZE_BYTES> = 4;
+
+        <android.hardware.camera2.legacy.SurfaceTextureRenderer: int FLIP_TYPE_VERTICAL> = 2;
+
+        <android.hardware.camera2.legacy.SurfaceTextureRenderer: int FLIP_TYPE_NONE> = 0;
+
+        <android.hardware.camera2.legacy.SurfaceTextureRenderer: int FLIP_TYPE_HORIZONTAL> = 1;
+
+        <android.hardware.camera2.legacy.SurfaceTextureRenderer: int FLIP_TYPE_BOTH> = 3;
+
+        <android.hardware.camera2.legacy.SurfaceTextureRenderer: int EGL_RECORDABLE_ANDROID> = 12610;
+
+        <android.hardware.camera2.legacy.SurfaceTextureRenderer: int EGL_COLOR_BITLENGTH> = 8;
+
+        <android.hardware.camera2.legacy.SurfaceTextureRenderer: boolean DEBUG> = 0;
+
+        $r0 = class "Landroid/hardware/camera2/legacy/SurfaceTextureRenderer;";
+
+        $r1 = virtualinvoke $r0.<java.lang.Class: java.lang.String getSimpleName()>();
+
+        <android.hardware.camera2.legacy.SurfaceTextureRenderer: java.lang.String TAG> = $r1;
+
+        $r2 = <java.util.Locale: java.util.Locale ROOT>;
+
+        $r3 = staticinvoke <java.time.format.DateTimeFormatter: java.time.format.DateTimeFormatter ofPattern(java.lang.String,java.util.Locale)>("yyyyMMdd\'T\'HHmmss", $r2);
+
+        <android.hardware.camera2.legacy.SurfaceTextureRenderer: java.time.format.DateTimeFormatter LOG_NAME_TIME_FORMATTER> = $r3;
+
+        $r4 = newarray (float)[20];
+
+        $r4[0] = -1.0F;
+
+        $r4[1] = -1.0F;
+
+        $r4[2] = 0.0F;
+
+        $r4[3] = 1.0F;
+
+        $r4[4] = 0.0F;
+
+        $r4[5] = 1.0F;
+
+        $r4[6] = -1.0F;
+
+        $r4[7] = 0.0F;
+
+        $r4[8] = 0.0F;
+
+        $r4[9] = 0.0F;
+
+        $r4[10] = -1.0F;
+
+        $r4[11] = 1.0F;
+
+        $r4[12] = 0.0F;
+
+        $r4[13] = 1.0F;
+
+        $r4[14] = 1.0F;
+
+        $r4[15] = 1.0F;
+
+        $r4[16] = 1.0F;
+
+        $r4[17] = 0.0F;
+
+        $r4[18] = 0.0F;
+
+        $r4[19] = 1.0F;
+
+        <android.hardware.camera2.legacy.SurfaceTextureRenderer: float[] sHorizontalFlipTriangleVertices> = $r4;
+
+        $r5 = newarray (float)[20];
+
+        $r5[0] = -1.0F;
+
+        $r5[1] = -1.0F;
+
+        $r5[2] = 0.0F;
+
+        $r5[3] = 0.0F;
+
+        $r5[4] = 1.0F;
+
+        $r5[5] = 1.0F;
+
+        $r5[6] = -1.0F;
+
+        $r5[7] = 0.0F;
+
+        $r5[8] = 1.0F;
+
+        $r5[9] = 1.0F;
+
+        $r5[10] = -1.0F;
+
+        $r5[11] = 1.0F;
+
+        $r5[12] = 0.0F;
+
+        $r5[13] = 0.0F;
+
+        $r5[14] = 0.0F;
+
+        $r5[15] = 1.0F;
+
+        $r5[16] = 1.0F;
+
+        $r5[17] = 0.0F;
+
+        $r5[18] = 1.0F;
+
+        $r5[19] = 0.0F;
+
+        <android.hardware.camera2.legacy.SurfaceTextureRenderer: float[] sVerticalFlipTriangleVertices> = $r5;
+
+        $r6 = newarray (float)[20];
+
+        $r6[0] = -1.0F;
+
+        $r6[1] = -1.0F;
+
+        $r6[2] = 0.0F;
+
+        $r6[3] = 1.0F;
+
+        $r6[4] = 1.0F;
+
+        $r6[5] = 1.0F;
+
+        $r6[6] = -1.0F;
+
+        $r6[7] = 0.0F;
+
+        $r6[8] = 0.0F;
+
+        $r6[9] = 1.0F;
+
+        $r6[10] = -1.0F;
+
+        $r6[11] = 1.0F;
+
+        $r6[12] = 0.0F;
+
+        $r6[13] = 1.0F;
+
+        $r6[14] = 0.0F;
+
+        $r6[15] = 1.0F;
+
+        $r6[16] = 1.0F;
+
+        $r6[17] = 0.0F;
+
+        $r6[18] = 0.0F;
+
+        $r6[19] = 0.0F;
+
+        <android.hardware.camera2.legacy.SurfaceTextureRenderer: float[] sBothFlipTriangleVertices> = $r6;
+
+        $r7 = newarray (float)[20];
+
+        $r7[0] = -1.0F;
+
+        $r7[1] = -1.0F;
+
+        $r7[2] = 0.0F;
+
+        $r7[3] = 0.0F;
+
+        $r7[4] = 0.0F;
+
+        $r7[5] = 1.0F;
+
+        $r7[6] = -1.0F;
+
+        $r7[7] = 0.0F;
+
+        $r7[8] = 1.0F;
+
+        $r7[9] = 0.0F;
+
+        $r7[10] = -1.0F;
+
+        $r7[11] = 1.0F;
+
+        $r7[12] = 0.0F;
+
+        $r7[13] = 0.0F;
+
+        $r7[14] = 1.0F;
+
+        $r7[15] = 1.0F;
+
+        $r7[16] = 1.0F;
+
+        $r7[17] = 0.0F;
+
+        $r7[18] = 1.0F;
+
+        $r7[19] = 1.0F;
+
+        <android.hardware.camera2.legacy.SurfaceTextureRenderer: float[] sRegularTriangleVertices> = $r7;
+
+        return;
+    }
+
+    public void <init>(int)
+    {
+        android.hardware.camera2.legacy.SurfaceTextureRenderer r0;
+        int i0, $i1, $i2, $i3, $i4, $i5, $i6, $i7, $i8;
+        android.opengl.EGLDisplay $r1;
+        android.opengl.EGLContext $r2;
+        java.util.ArrayList $r3, $r4;
+        float[] $r5, $r6, $r7, $r11, $r14, $r18, $r21, $r25, $r28, $r32, $r35;
+        java.nio.ByteBuffer $r8, $r10, $r15, $r17, $r22, $r24, $r29, $r31;
+        java.nio.ByteOrder $r9, $r16, $r23, $r30;
+        java.nio.FloatBuffer $r12, $r19, $r26, $r33, r36, r37, r38, r39;
+
+        r0 := @this: android.hardware.camera2.legacy.SurfaceTextureRenderer;
+
+        i0 := @parameter0: int;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        $r1 = <android.opengl.EGL14: android.opengl.EGLDisplay EGL_NO_DISPLAY>;
+
+        r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: android.opengl.EGLDisplay mEGLDisplay> = $r1;
+
+        $r2 = <android.opengl.EGL14: android.opengl.EGLContext EGL_NO_CONTEXT>;
+
+        r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: android.opengl.EGLContext mEGLContext> = $r2;
+
+        $r3 = new java.util.ArrayList;
+
+        specialinvoke $r3.<java.util.ArrayList: void <init>()>();
+
+        r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: java.util.List mSurfaces> = $r3;
+
+        $r4 = new java.util.ArrayList;
+
+        specialinvoke $r4.<java.util.ArrayList: void <init>()>();
+
+        r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: java.util.List mConversionSurfaces> = $r4;
+
+        $r5 = newarray (float)[16];
+
+        r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: float[] mMVPMatrix> = $r5;
+
+        $r6 = newarray (float)[16];
+
+        r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: float[] mSTMatrix> = $r6;
+
+        r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: int mTextureID> = 0;
+
+        r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: android.hardware.camera2.legacy.PerfMeasurement mPerfMeasurer> = null;
+
+        r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: int mFacing> = i0;
+
+        $r7 = <android.hardware.camera2.legacy.SurfaceTextureRenderer: float[] sRegularTriangleVertices>;
+
+        $i1 = lengthof $r7;
+
+        $i2 = $i1 * 4;
+
+        $r8 = staticinvoke <java.nio.ByteBuffer: java.nio.ByteBuffer allocateDirect(int)>($i2);
+
+        $r9 = staticinvoke <java.nio.ByteOrder: java.nio.ByteOrder nativeOrder()>();
+
+        $r10 = virtualinvoke $r8.<java.nio.ByteBuffer: java.nio.ByteBuffer order(java.nio.ByteOrder)>($r9);
+
+        r36 = virtualinvoke $r10.<java.nio.ByteBuffer: java.nio.FloatBuffer asFloatBuffer()>();
+
+        r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: java.nio.FloatBuffer mRegularTriangleVertices> = r36;
+
+        $r11 = <android.hardware.camera2.legacy.SurfaceTextureRenderer: float[] sRegularTriangleVertices>;
+
+        $r12 = virtualinvoke r36.<java.nio.FloatBuffer: java.nio.FloatBuffer put(float[])>($r11);
+
+        virtualinvoke $r12.<java.nio.FloatBuffer: java.nio.Buffer position(int)>(0);
+
+        $r14 = <android.hardware.camera2.legacy.SurfaceTextureRenderer: float[] sHorizontalFlipTriangleVertices>;
+
+        $i3 = lengthof $r14;
+
+        $i4 = $i3 * 4;
+
+        $r15 = staticinvoke <java.nio.ByteBuffer: java.nio.ByteBuffer allocateDirect(int)>($i4);
+
+        $r16 = staticinvoke <java.nio.ByteOrder: java.nio.ByteOrder nativeOrder()>();
+
+        $r17 = virtualinvoke $r15.<java.nio.ByteBuffer: java.nio.ByteBuffer order(java.nio.ByteOrder)>($r16);
+
+        r37 = virtualinvoke $r17.<java.nio.ByteBuffer: java.nio.FloatBuffer asFloatBuffer()>();
+
+        r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: java.nio.FloatBuffer mHorizontalFlipTriangleVertices> = r37;
+
+        $r18 = <android.hardware.camera2.legacy.SurfaceTextureRenderer: float[] sHorizontalFlipTriangleVertices>;
+
+        $r19 = virtualinvoke r37.<java.nio.FloatBuffer: java.nio.FloatBuffer put(float[])>($r18);
+
+        virtualinvoke $r19.<java.nio.FloatBuffer: java.nio.Buffer position(int)>(0);
+
+        $r21 = <android.hardware.camera2.legacy.SurfaceTextureRenderer: float[] sVerticalFlipTriangleVertices>;
+
+        $i5 = lengthof $r21;
+
+        $i6 = $i5 * 4;
+
+        $r22 = staticinvoke <java.nio.ByteBuffer: java.nio.ByteBuffer allocateDirect(int)>($i6);
+
+        $r23 = staticinvoke <java.nio.ByteOrder: java.nio.ByteOrder nativeOrder()>();
+
+        $r24 = virtualinvoke $r22.<java.nio.ByteBuffer: java.nio.ByteBuffer order(java.nio.ByteOrder)>($r23);
+
+        r38 = virtualinvoke $r24.<java.nio.ByteBuffer: java.nio.FloatBuffer asFloatBuffer()>();
+
+        r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: java.nio.FloatBuffer mVerticalFlipTriangleVertices> = r38;
+
+        $r25 = <android.hardware.camera2.legacy.SurfaceTextureRenderer: float[] sVerticalFlipTriangleVertices>;
+
+        $r26 = virtualinvoke r38.<java.nio.FloatBuffer: java.nio.FloatBuffer put(float[])>($r25);
+
+        virtualinvoke $r26.<java.nio.FloatBuffer: java.nio.Buffer position(int)>(0);
+
+        $r28 = <android.hardware.camera2.legacy.SurfaceTextureRenderer: float[] sBothFlipTriangleVertices>;
+
+        $i7 = lengthof $r28;
+
+        $i8 = $i7 * 4;
+
+        $r29 = staticinvoke <java.nio.ByteBuffer: java.nio.ByteBuffer allocateDirect(int)>($i8);
+
+        $r30 = staticinvoke <java.nio.ByteOrder: java.nio.ByteOrder nativeOrder()>();
+
+        $r31 = virtualinvoke $r29.<java.nio.ByteBuffer: java.nio.ByteBuffer order(java.nio.ByteOrder)>($r30);
+
+        r39 = virtualinvoke $r31.<java.nio.ByteBuffer: java.nio.FloatBuffer asFloatBuffer()>();
+
+        r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: java.nio.FloatBuffer mBothFlipTriangleVertices> = r39;
+
+        $r32 = <android.hardware.camera2.legacy.SurfaceTextureRenderer: float[] sBothFlipTriangleVertices>;
+
+        $r33 = virtualinvoke r39.<java.nio.FloatBuffer: java.nio.FloatBuffer put(float[])>($r32);
+
+        virtualinvoke $r33.<java.nio.FloatBuffer: java.nio.Buffer position(int)>(0);
+
+        $r35 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: float[] mSTMatrix>;
+
+        staticinvoke <android.opengl.Matrix: void setIdentityM(float[],int)>($r35, 0);
+
+        return;
+    }
+
+    private void addGlTimestamp(long)
+    {
+        android.hardware.camera2.legacy.SurfaceTextureRenderer r0;
+        long l0;
+        android.hardware.camera2.legacy.PerfMeasurement r1;
+
+        r0 := @this: android.hardware.camera2.legacy.SurfaceTextureRenderer;
+
+        l0 := @parameter0: long;
+
+        r1 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: android.hardware.camera2.legacy.PerfMeasurement mPerfMeasurer>;
+
+        if r1 != null goto label1;
+
+        return;
+
+     label1:
+        virtualinvoke r1.<android.hardware.camera2.legacy.PerfMeasurement: void addTimestamp(long)>(l0);
+
+        return;
+    }
+
+    private void beginGlTiming()
+    {
+        android.hardware.camera2.legacy.SurfaceTextureRenderer r0;
+        android.hardware.camera2.legacy.PerfMeasurement r1;
+
+        r0 := @this: android.hardware.camera2.legacy.SurfaceTextureRenderer;
+
+        r1 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: android.hardware.camera2.legacy.PerfMeasurement mPerfMeasurer>;
+
+        if r1 != null goto label1;
+
+        return;
+
+     label1:
+        virtualinvoke r1.<android.hardware.camera2.legacy.PerfMeasurement: void startTimer()>();
+
+        return;
+    }
+
+    private void checkEglDrawError(java.lang.String) throws android.hardware.camera2.legacy.LegacyExceptionUtils$BufferQueueAbandonedException
+    {
+        android.hardware.camera2.legacy.SurfaceTextureRenderer r0;
+        java.lang.String r1, $r7, $r10;
+        int i0, $i1;
+        android.hardware.camera2.legacy.LegacyExceptionUtils$BufferQueueAbandonedException $r3;
+        java.lang.StringBuilder $r4;
+        java.lang.IllegalStateException $r9;
+
+        r0 := @this: android.hardware.camera2.legacy.SurfaceTextureRenderer;
+
+        r1 := @parameter0: java.lang.String;
+
+        $i1 = staticinvoke <android.opengl.EGL14: int eglGetError()>();
+
+        if $i1 == 12299 goto label2;
+
+        i0 = staticinvoke <android.opengl.EGL14: int eglGetError()>();
+
+        if i0 != 12288 goto label1;
+
+        return;
+
+     label1:
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(": EGL error: 0x");
+
+        $r7 = staticinvoke <java.lang.Integer: java.lang.String toHexString(int)>(i0);
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r7);
+
+        $r9 = new java.lang.IllegalStateException;
+
+        $r10 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r9.<java.lang.IllegalStateException: void <init>(java.lang.String)>($r10);
+
+        throw $r9;
+
+     label2:
+        $r3 = new android.hardware.camera2.legacy.LegacyExceptionUtils$BufferQueueAbandonedException;
+
+        specialinvoke $r3.<android.hardware.camera2.legacy.LegacyExceptionUtils$BufferQueueAbandonedException: void <init>()>();
+
+        throw $r3;
+    }
+
+    private void checkEglError(java.lang.String)
+    {
+        android.hardware.camera2.legacy.SurfaceTextureRenderer r0;
+        java.lang.String r1, $r6, $r9;
+        int i0;
+        java.lang.StringBuilder $r3;
+        java.lang.IllegalStateException $r8;
+
+        r0 := @this: android.hardware.camera2.legacy.SurfaceTextureRenderer;
+
+        r1 := @parameter0: java.lang.String;
+
+        i0 = staticinvoke <android.opengl.EGL14: int eglGetError()>();
+
+        if i0 != 12288 goto label1;
+
+        return;
+
+     label1:
+        $r3 = new java.lang.StringBuilder;
+
+        specialinvoke $r3.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(": EGL error: 0x");
+
+        $r6 = staticinvoke <java.lang.Integer: java.lang.String toHexString(int)>(i0);
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r6);
+
+        $r8 = new java.lang.IllegalStateException;
+
+        $r9 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r8.<java.lang.IllegalStateException: void <init>(java.lang.String)>($r9);
+
+        throw $r8;
+    }
+
+    private void checkGlDrawError(java.lang.String) throws android.hardware.camera2.legacy.LegacyExceptionUtils$BufferQueueAbandonedException
+    {
+        android.hardware.camera2.legacy.SurfaceTextureRenderer r0;
+        java.lang.String r1, $r6, $r9;
+        int i0;
+        java.lang.StringBuilder $r3;
+        java.lang.IllegalStateException $r8;
+        android.hardware.camera2.legacy.LegacyExceptionUtils$BufferQueueAbandonedException $r10;
+        boolean z0, z1;
+
+        r0 := @this: android.hardware.camera2.legacy.SurfaceTextureRenderer;
+
+        r1 := @parameter0: java.lang.String;
+
+        z0 = 0;
+
+        z1 = 0;
+
+     label1:
+        i0 = staticinvoke <android.opengl.GLES20: int glGetError()>();
+
+        if i0 == 0 goto label3;
+
+        if i0 != 1285 goto label2;
+
+        z0 = 1;
+
+        goto label1;
+
+     label2:
+        z1 = 1;
+
+        goto label1;
+
+     label3:
+        if z1 != 0 goto label5;
+
+        if z0 != 0 goto label4;
+
+        return;
+
+     label4:
+        $r10 = new android.hardware.camera2.legacy.LegacyExceptionUtils$BufferQueueAbandonedException;
+
+        specialinvoke $r10.<android.hardware.camera2.legacy.LegacyExceptionUtils$BufferQueueAbandonedException: void <init>()>();
+
+        throw $r10;
+
+     label5:
+        $r3 = new java.lang.StringBuilder;
+
+        specialinvoke $r3.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(": GLES20 error: 0x");
+
+        $r6 = staticinvoke <java.lang.Integer: java.lang.String toHexString(int)>(i0);
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r6);
+
+        $r8 = new java.lang.IllegalStateException;
+
+        $r9 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r8.<java.lang.IllegalStateException: void <init>(java.lang.String)>($r9);
+
+        throw $r8;
+    }
+
+    private void checkGlError(java.lang.String)
+    {
+        android.hardware.camera2.legacy.SurfaceTextureRenderer r0;
+        java.lang.String r1, $r6, $r9;
+        int i0;
+        java.lang.StringBuilder $r3;
+        java.lang.IllegalStateException $r8;
+
+        r0 := @this: android.hardware.camera2.legacy.SurfaceTextureRenderer;
+
+        r1 := @parameter0: java.lang.String;
+
+        i0 = staticinvoke <android.opengl.GLES20: int glGetError()>();
+
+        if i0 != 0 goto label1;
+
+        return;
+
+     label1:
+        $r3 = new java.lang.StringBuilder;
+
+        specialinvoke $r3.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(": GLES20 error: 0x");
+
+        $r6 = staticinvoke <java.lang.Integer: java.lang.String toHexString(int)>(i0);
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r6);
+
+        $r8 = new java.lang.IllegalStateException;
+
+        $r9 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r8.<java.lang.IllegalStateException: void <init>(java.lang.String)>($r9);
+
+        throw $r8;
+    }
+
+    private void clearState()
+    {
+        android.hardware.camera2.legacy.SurfaceTextureRenderer r0;
+        java.util.Iterator r1;
+        java.util.List $r2, $r3, $r4;
+        boolean $z0;
+        android.graphics.SurfaceTexture $r5, $r6;
+        java.lang.Object $r7;
+        android.view.Surface $r8;
+        android.hardware.camera2.legacy.LegacyExceptionUtils$BufferQueueAbandonedException $r9;
+        java.lang.String $r10;
+        android.hardware.camera2.legacy.SurfaceTextureRenderer$EGLSurfaceHolder r11;
+
+        r0 := @this: android.hardware.camera2.legacy.SurfaceTextureRenderer;
+
+        $r2 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: java.util.List mSurfaces>;
+
+        interfaceinvoke $r2.<java.util.List: void clear()>();
+
+        $r3 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: java.util.List mConversionSurfaces>;
+
+        r1 = interfaceinvoke $r3.<java.util.List: java.util.Iterator iterator()>();
+
+     label1:
+        $z0 = interfaceinvoke r1.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label6;
+
+        $r7 = interfaceinvoke r1.<java.util.Iterator: java.lang.Object next()>();
+
+        r11 = (android.hardware.camera2.legacy.SurfaceTextureRenderer$EGLSurfaceHolder) $r7;
+
+     label2:
+        $r8 = r11.<android.hardware.camera2.legacy.SurfaceTextureRenderer$EGLSurfaceHolder: android.view.Surface surface>;
+
+        staticinvoke <android.hardware.camera2.legacy.LegacyCameraDevice: void disconnectSurface(android.view.Surface)>($r8);
+
+     label3:
+        goto label5;
+
+     label4:
+        $r9 := @caughtexception;
+
+        $r10 = <android.hardware.camera2.legacy.SurfaceTextureRenderer: java.lang.String TAG>;
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String,java.lang.Throwable)>($r10, "Surface abandoned, skipping...", $r9);
+
+     label5:
+        goto label1;
+
+     label6:
+        $r4 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: java.util.List mConversionSurfaces>;
+
+        interfaceinvoke $r4.<java.util.List: void clear()>();
+
+        r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: java.nio.ByteBuffer mPBufferPixels> = null;
+
+        $r5 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: android.graphics.SurfaceTexture mSurfaceTexture>;
+
+        if $r5 == null goto label7;
+
+        $r6 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: android.graphics.SurfaceTexture mSurfaceTexture>;
+
+        virtualinvoke $r6.<android.graphics.SurfaceTexture: void release()>();
+
+     label7:
+        r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: android.graphics.SurfaceTexture mSurfaceTexture> = null;
+
+        return;
+
+        catch android.hardware.camera2.legacy.LegacyExceptionUtils$BufferQueueAbandonedException from label2 to label3 with label4;
+    }
+
+    private void configureEGLContext()
+    {
+        android.hardware.camera2.legacy.SurfaceTextureRenderer r0;
+        android.opengl.EGLConfig[] r1;
+        android.opengl.EGLDisplay r2, $r3, $r5, $r12, r17;
+        int i0;
+        java.lang.IllegalStateException $r4, $r6, $r16;
+        boolean $z0;
+        int[] $r7, $r9, r18, r19;
+        android.opengl.EGLConfig $r8, $r11;
+        android.opengl.EGLContext $r10, $r13, $r14, $r15;
+
+        r0 := @this: android.hardware.camera2.legacy.SurfaceTextureRenderer;
+
+        r17 = staticinvoke <android.opengl.EGL14: android.opengl.EGLDisplay eglGetDisplay(int)>(0);
+
+        r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: android.opengl.EGLDisplay mEGLDisplay> = r17;
+
+        $r3 = <android.opengl.EGL14: android.opengl.EGLDisplay EGL_NO_DISPLAY>;
+
+        if r17 == $r3 goto label3;
+
+        r18 = newarray (int)[2];
+
+        $r5 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: android.opengl.EGLDisplay mEGLDisplay>;
+
+        $z0 = staticinvoke <android.opengl.EGL14: boolean eglInitialize(android.opengl.EGLDisplay,int[],int,int[],int)>($r5, r18, 0, r18, 1);
+
+        if $z0 == 0 goto label2;
+
+        r1 = newarray (android.opengl.EGLConfig)[1];
+
+        r19 = newarray (int)[1];
+
+        r2 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: android.opengl.EGLDisplay mEGLDisplay>;
+
+        i0 = lengthof r1;
+
+        $r7 = newarray (int)[13];
+
+        $r7[0] = 12324;
+
+        $r7[1] = 8;
+
+        $r7[2] = 12323;
+
+        $r7[3] = 8;
+
+        $r7[4] = 12322;
+
+        $r7[5] = 8;
+
+        $r7[6] = 12352;
+
+        $r7[7] = 4;
+
+        $r7[8] = 12610;
+
+        $r7[9] = 1;
+
+        $r7[10] = 12339;
+
+        $r7[11] = 5;
+
+        $r7[12] = 12344;
+
+        staticinvoke <android.opengl.EGL14: boolean eglChooseConfig(android.opengl.EGLDisplay,int[],int,android.opengl.EGLConfig[],int,int,int[],int)>(r2, $r7, 0, r1, 0, i0, r19, 0);
+
+        specialinvoke r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: void checkEglError(java.lang.String)>("eglCreateContext RGB888+recordable ES2");
+
+        $r8 = r1[0];
+
+        r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: android.opengl.EGLConfig mConfigs> = $r8;
+
+        $r12 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: android.opengl.EGLDisplay mEGLDisplay>;
+
+        $r11 = r1[0];
+
+        $r10 = <android.opengl.EGL14: android.opengl.EGLContext EGL_NO_CONTEXT>;
+
+        $r9 = newarray (int)[3];
+
+        $r9[0] = 12440;
+
+        $r9[1] = 2;
+
+        $r9[2] = 12344;
+
+        $r13 = staticinvoke <android.opengl.EGL14: android.opengl.EGLContext eglCreateContext(android.opengl.EGLDisplay,android.opengl.EGLConfig,android.opengl.EGLContext,int[],int)>($r12, $r11, $r10, $r9, 0);
+
+        r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: android.opengl.EGLContext mEGLContext> = $r13;
+
+        specialinvoke r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: void checkEglError(java.lang.String)>("eglCreateContext");
+
+        $r15 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: android.opengl.EGLContext mEGLContext>;
+
+        $r14 = <android.opengl.EGL14: android.opengl.EGLContext EGL_NO_CONTEXT>;
+
+        if $r15 == $r14 goto label1;
+
+        return;
+
+     label1:
+        $r16 = new java.lang.IllegalStateException;
+
+        specialinvoke $r16.<java.lang.IllegalStateException: void <init>(java.lang.String)>("No EGLContext could be made");
+
+        throw $r16;
+
+     label2:
+        $r6 = new java.lang.IllegalStateException;
+
+        specialinvoke $r6.<java.lang.IllegalStateException: void <init>(java.lang.String)>("Cannot initialize EGL14");
+
+        throw $r6;
+
+     label3:
+        $r4 = new java.lang.IllegalStateException;
+
+        specialinvoke $r4.<java.lang.IllegalStateException: void <init>(java.lang.String)>("No EGL14 display");
+
+        throw $r4;
+    }
+
+    private void configureEGLOutputSurfaces(java.util.Collection)
+    {
+        android.hardware.camera2.legacy.SurfaceTextureRenderer r0;
+        java.util.Iterator r1;
+        java.lang.IllegalStateException $r2;
+        int $i0;
+        boolean $z0;
+        java.lang.Object $r3;
+        int[] $r4;
+        android.view.Surface $r5;
+        android.opengl.EGLConfig $r6;
+        android.opengl.EGLDisplay $r7;
+        android.opengl.EGLSurface $r8;
+        java.util.Collection r9;
+        android.hardware.camera2.legacy.SurfaceTextureRenderer$EGLSurfaceHolder r10;
+
+        r0 := @this: android.hardware.camera2.legacy.SurfaceTextureRenderer;
+
+        r9 := @parameter0: java.util.Collection;
+
+        if r9 == null goto label3;
+
+        $i0 = interfaceinvoke r9.<java.util.Collection: int size()>();
+
+        if $i0 == 0 goto label3;
+
+        r1 = interfaceinvoke r9.<java.util.Collection: java.util.Iterator iterator()>();
+
+     label1:
+        $z0 = interfaceinvoke r1.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label2;
+
+        $r3 = interfaceinvoke r1.<java.util.Iterator: java.lang.Object next()>();
+
+        r10 = (android.hardware.camera2.legacy.SurfaceTextureRenderer$EGLSurfaceHolder) $r3;
+
+        $r7 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: android.opengl.EGLDisplay mEGLDisplay>;
+
+        $r6 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: android.opengl.EGLConfig mConfigs>;
+
+        $r5 = r10.<android.hardware.camera2.legacy.SurfaceTextureRenderer$EGLSurfaceHolder: android.view.Surface surface>;
+
+        $r4 = newarray (int)[1];
+
+        $r4[0] = 12344;
+
+        $r8 = staticinvoke <android.opengl.EGL14: android.opengl.EGLSurface eglCreateWindowSurface(android.opengl.EGLDisplay,android.opengl.EGLConfig,java.lang.Object,int[],int)>($r7, $r6, $r5, $r4, 0);
+
+        r10.<android.hardware.camera2.legacy.SurfaceTextureRenderer$EGLSurfaceHolder: android.opengl.EGLSurface eglSurface> = $r8;
+
+        specialinvoke r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: void checkEglError(java.lang.String)>("eglCreateWindowSurface");
+
+        goto label1;
+
+     label2:
+        return;
+
+     label3:
+        $r2 = new java.lang.IllegalStateException;
+
+        specialinvoke $r2.<java.lang.IllegalStateException: void <init>(java.lang.String)>("No Surfaces were provided to draw to");
+
+        throw $r2;
+    }
+
+    private void configureEGLPbufferSurfaces(java.util.Collection)
+    {
+        android.hardware.camera2.legacy.SurfaceTextureRenderer r0;
+        android.hardware.camera2.legacy.SurfaceTextureRenderer$EGLSurfaceHolder r1;
+        int i0, $i1, $i2, $i3, $i4, i5, i6, i7;
+        java.lang.IllegalStateException $r2;
+        boolean $z0;
+        java.nio.ByteBuffer $r3, $r5;
+        java.nio.ByteOrder $r4;
+        java.lang.Object $r6;
+        int[] $r7;
+        android.opengl.EGLConfig $r8;
+        android.opengl.EGLDisplay $r9;
+        android.opengl.EGLSurface $r10;
+        java.util.Collection r11;
+        java.util.Iterator r12;
+
+        r0 := @this: android.hardware.camera2.legacy.SurfaceTextureRenderer;
+
+        r11 := @parameter0: java.util.Collection;
+
+        if r11 == null goto label4;
+
+        $i1 = interfaceinvoke r11.<java.util.Collection: int size()>();
+
+        if $i1 == 0 goto label4;
+
+        i5 = 0;
+
+        r12 = interfaceinvoke r11.<java.util.Collection: java.util.Iterator iterator()>();
+
+     label1:
+        $z0 = interfaceinvoke r12.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label3;
+
+        $r6 = interfaceinvoke r12.<java.util.Iterator: java.lang.Object next()>();
+
+        r1 = (android.hardware.camera2.legacy.SurfaceTextureRenderer$EGLSurfaceHolder) $r6;
+
+        $i4 = r1.<android.hardware.camera2.legacy.SurfaceTextureRenderer$EGLSurfaceHolder: int width>;
+
+        $i3 = r1.<android.hardware.camera2.legacy.SurfaceTextureRenderer$EGLSurfaceHolder: int height>;
+
+        i6 = $i4 * $i3;
+
+        if i6 <= i5 goto label2;
+
+        i5 = i6;
+
+        goto label2;
+
+     label2:
+        i7 = r1.<android.hardware.camera2.legacy.SurfaceTextureRenderer$EGLSurfaceHolder: int width>;
+
+        i0 = r1.<android.hardware.camera2.legacy.SurfaceTextureRenderer$EGLSurfaceHolder: int height>;
+
+        $r9 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: android.opengl.EGLDisplay mEGLDisplay>;
+
+        $r8 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: android.opengl.EGLConfig mConfigs>;
+
+        $r7 = newarray (int)[5];
+
+        $r7[0] = 12375;
+
+        $r7[1] = i7;
+
+        $r7[2] = 12374;
+
+        $r7[3] = i0;
+
+        $r7[4] = 12344;
+
+        $r10 = staticinvoke <android.opengl.EGL14: android.opengl.EGLSurface eglCreatePbufferSurface(android.opengl.EGLDisplay,android.opengl.EGLConfig,int[],int)>($r9, $r8, $r7, 0);
+
+        r1.<android.hardware.camera2.legacy.SurfaceTextureRenderer$EGLSurfaceHolder: android.opengl.EGLSurface eglSurface> = $r10;
+
+        specialinvoke r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: void checkEglError(java.lang.String)>("eglCreatePbufferSurface");
+
+        goto label1;
+
+     label3:
+        $i2 = i5 * 4;
+
+        $r3 = staticinvoke <java.nio.ByteBuffer: java.nio.ByteBuffer allocateDirect(int)>($i2);
+
+        $r4 = staticinvoke <java.nio.ByteOrder: java.nio.ByteOrder nativeOrder()>();
+
+        $r5 = virtualinvoke $r3.<java.nio.ByteBuffer: java.nio.ByteBuffer order(java.nio.ByteOrder)>($r4);
+
+        r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: java.nio.ByteBuffer mPBufferPixels> = $r5;
+
+        return;
+
+     label4:
+        $r2 = new java.lang.IllegalStateException;
+
+        specialinvoke $r2.<java.lang.IllegalStateException: void <init>(java.lang.String)>("No Surfaces were provided to draw to");
+
+        throw $r2;
+    }
+
+    private int createProgram(java.lang.String, java.lang.String)
+    {
+        android.hardware.camera2.legacy.SurfaceTextureRenderer r0;
+        java.lang.String r1, $r2, $r3, $r4, $r6, r7;
+        int i0, i1, i2, $i3;
+        java.lang.IllegalStateException $r5;
+        int[] r8;
+
+        r0 := @this: android.hardware.camera2.legacy.SurfaceTextureRenderer;
+
+        r7 := @parameter0: java.lang.String;
+
+        r1 := @parameter1: java.lang.String;
+
+        i0 = specialinvoke r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: int loadShader(int,java.lang.String)>(35633, r7);
+
+        if i0 != 0 goto label1;
+
+        return 0;
+
+     label1:
+        i1 = specialinvoke r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: int loadShader(int,java.lang.String)>(35632, r1);
+
+        if i1 != 0 goto label2;
+
+        return 0;
+
+     label2:
+        i2 = staticinvoke <android.opengl.GLES20: int glCreateProgram()>();
+
+        specialinvoke r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: void checkGlError(java.lang.String)>("glCreateProgram");
+
+        if i2 != 0 goto label3;
+
+        $r6 = <android.hardware.camera2.legacy.SurfaceTextureRenderer: java.lang.String TAG>;
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>($r6, "Could not create program");
+
+     label3:
+        staticinvoke <android.opengl.GLES20: void glAttachShader(int,int)>(i2, i0);
+
+        specialinvoke r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: void checkGlError(java.lang.String)>("glAttachShader");
+
+        staticinvoke <android.opengl.GLES20: void glAttachShader(int,int)>(i2, i1);
+
+        specialinvoke r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: void checkGlError(java.lang.String)>("glAttachShader");
+
+        staticinvoke <android.opengl.GLES20: void glLinkProgram(int)>(i2);
+
+        r8 = newarray (int)[1];
+
+        staticinvoke <android.opengl.GLES20: void glGetProgramiv(int,int,int[],int)>(i2, 35714, r8, 0);
+
+        $i3 = r8[0];
+
+        if $i3 != 1 goto label4;
+
+        return i2;
+
+     label4:
+        $r2 = <android.hardware.camera2.legacy.SurfaceTextureRenderer: java.lang.String TAG>;
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>($r2, "Could not link program: ");
+
+        $r3 = <android.hardware.camera2.legacy.SurfaceTextureRenderer: java.lang.String TAG>;
+
+        $r4 = staticinvoke <android.opengl.GLES20: java.lang.String glGetProgramInfoLog(int)>(i2);
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>($r3, $r4);
+
+        staticinvoke <android.opengl.GLES20: void glDeleteProgram(int)>(i2);
+
+        $r5 = new java.lang.IllegalStateException;
+
+        specialinvoke $r5.<java.lang.IllegalStateException: void <init>(java.lang.String)>("Could not link program");
+
+        throw $r5;
+    }
+
+    private void drawFrame(android.graphics.SurfaceTexture, int, int, int) throws android.hardware.camera2.legacy.LegacyExceptionUtils$BufferQueueAbandonedException
+    {
+        android.hardware.camera2.legacy.SurfaceTextureRenderer r0;
+        int i0, i1, i2, $i3, $i4, $i7, $i8, $i9, $i10, $i11, $i12, $i13, $i14;
+        float[] $r3, $r4, $r10, $r19, $r20;
+        byte $b5, $b6;
+        java.lang.IllegalStateException $r5, $r14;
+        android.graphics.RectF $r6, $r7;
+        float $f0, $f1, $f2, $f3, $f4, $f5, f6, f7, f8, f9;
+        android.graphics.Matrix $r8;
+        android.graphics.Matrix$ScaleToFit $r9;
+        android.hardware.camera2.legacy.LegacyExceptionUtils$BufferQueueAbandonedException $r13;
+        android.graphics.SurfaceTexture r15;
+        android.util.Size r16;
+        java.nio.FloatBuffer r18;
+
+        r0 := @this: android.hardware.camera2.legacy.SurfaceTextureRenderer;
+
+        r15 := @parameter0: android.graphics.SurfaceTexture;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        i2 := @parameter3: int;
+
+        specialinvoke r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: void checkGlError(java.lang.String)>("onDrawFrame start");
+
+        $r3 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: float[] mSTMatrix>;
+
+        virtualinvoke r15.<android.graphics.SurfaceTexture: void getTransformMatrix(float[])>($r3);
+
+        $r4 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: float[] mMVPMatrix>;
+
+        staticinvoke <android.opengl.Matrix: void setIdentityM(float[],int)>($r4, 0);
+
+     label1:
+        r16 = staticinvoke <android.hardware.camera2.legacy.LegacyCameraDevice: android.util.Size getTextureSize(android.graphics.SurfaceTexture)>(r15);
+
+     label2:
+        $i3 = virtualinvoke r16.<android.util.Size: int getWidth()>();
+
+        f6 = (float) $i3;
+
+        $i4 = virtualinvoke r16.<android.util.Size: int getHeight()>();
+
+        f7 = (float) $i4;
+
+        $b5 = f6 cmpg 0.0F;
+
+        if $b5 <= 0 goto label7;
+
+        $b6 = f7 cmpg 0.0F;
+
+        if $b6 <= 0 goto label7;
+
+        $r6 = new android.graphics.RectF;
+
+        specialinvoke $r6.<android.graphics.RectF: void <init>(float,float,float,float)>(0.0F, 0.0F, f6, f7);
+
+        $r7 = new android.graphics.RectF;
+
+        $f1 = (float) i0;
+
+        $f0 = (float) i1;
+
+        specialinvoke $r7.<android.graphics.RectF: void <init>(float,float,float,float)>(0.0F, 0.0F, $f1, $f0);
+
+        $r8 = new android.graphics.Matrix;
+
+        specialinvoke $r8.<android.graphics.Matrix: void <init>()>();
+
+        $r9 = <android.graphics.Matrix$ScaleToFit: android.graphics.Matrix$ScaleToFit CENTER>;
+
+        virtualinvoke $r8.<android.graphics.Matrix: boolean setRectToRect(android.graphics.RectF,android.graphics.RectF,android.graphics.Matrix$ScaleToFit)>($r7, $r6, $r9);
+
+        virtualinvoke $r8.<android.graphics.Matrix: boolean mapRect(android.graphics.RectF)>($r7);
+
+        $f2 = virtualinvoke $r6.<android.graphics.RectF: float width()>();
+
+        $f3 = virtualinvoke $r7.<android.graphics.RectF: float width()>();
+
+        f8 = $f2 / $f3;
+
+        $f4 = virtualinvoke $r6.<android.graphics.RectF: float height()>();
+
+        $f5 = virtualinvoke $r7.<android.graphics.RectF: float height()>();
+
+        f9 = $f4 / $f5;
+
+        $r10 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: float[] mMVPMatrix>;
+
+        staticinvoke <android.opengl.Matrix: void scaleM(float[],int,float,float,float)>($r10, 0, f8, f9, 1.0F);
+
+        staticinvoke <android.opengl.GLES20: void glViewport(int,int,int,int)>(0, 0, i0, i1);
+
+        $i7 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: int mProgram>;
+
+        staticinvoke <android.opengl.GLES20: void glUseProgram(int)>($i7);
+
+        specialinvoke r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: void checkGlError(java.lang.String)>("glUseProgram");
+
+        staticinvoke <android.opengl.GLES20: void glActiveTexture(int)>(33984);
+
+        $i8 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: int mTextureID>;
+
+        staticinvoke <android.opengl.GLES20: void glBindTexture(int,int)>(36197, $i8);
+
+        if i2 == 1 goto label5;
+
+        if i2 == 2 goto label4;
+
+        if i2 == 3 goto label3;
+
+        r18 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: java.nio.FloatBuffer mRegularTriangleVertices>;
+
+        goto label6;
+
+     label3:
+        r18 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: java.nio.FloatBuffer mBothFlipTriangleVertices>;
+
+        goto label6;
+
+     label4:
+        r18 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: java.nio.FloatBuffer mVerticalFlipTriangleVertices>;
+
+        goto label6;
+
+     label5:
+        r18 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: java.nio.FloatBuffer mHorizontalFlipTriangleVertices>;
+
+     label6:
+        virtualinvoke r18.<java.nio.FloatBuffer: java.nio.Buffer position(int)>(0);
+
+        $i9 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: int maPositionHandle>;
+
+        staticinvoke <android.opengl.GLES20: void glVertexAttribPointer(int,int,int,boolean,int,java.nio.Buffer)>($i9, 3, 5126, 0, 20, r18);
+
+        specialinvoke r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: void checkGlError(java.lang.String)>("glVertexAttribPointer maPosition");
+
+        $i10 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: int maPositionHandle>;
+
+        staticinvoke <android.opengl.GLES20: void glEnableVertexAttribArray(int)>($i10);
+
+        specialinvoke r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: void checkGlError(java.lang.String)>("glEnableVertexAttribArray maPositionHandle");
+
+        virtualinvoke r18.<java.nio.FloatBuffer: java.nio.Buffer position(int)>(3);
+
+        $i11 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: int maTextureHandle>;
+
+        staticinvoke <android.opengl.GLES20: void glVertexAttribPointer(int,int,int,boolean,int,java.nio.Buffer)>($i11, 2, 5126, 0, 20, r18);
+
+        specialinvoke r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: void checkGlError(java.lang.String)>("glVertexAttribPointer maTextureHandle");
+
+        $i12 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: int maTextureHandle>;
+
+        staticinvoke <android.opengl.GLES20: void glEnableVertexAttribArray(int)>($i12);
+
+        specialinvoke r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: void checkGlError(java.lang.String)>("glEnableVertexAttribArray maTextureHandle");
+
+        $i13 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: int muMVPMatrixHandle>;
+
+        $r19 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: float[] mMVPMatrix>;
+
+        staticinvoke <android.opengl.GLES20: void glUniformMatrix4fv(int,int,boolean,float[],int)>($i13, 1, 0, $r19, 0);
+
+        $i14 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: int muSTMatrixHandle>;
+
+        $r20 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: float[] mSTMatrix>;
+
+        staticinvoke <android.opengl.GLES20: void glUniformMatrix4fv(int,int,boolean,float[],int)>($i14, 1, 0, $r20, 0);
+
+        staticinvoke <android.opengl.GLES20: void glDrawArrays(int,int,int)>(5, 0, 4);
+
+        specialinvoke r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: void checkGlDrawError(java.lang.String)>("glDrawArrays");
+
+        return;
+
+     label7:
+        $r5 = new java.lang.IllegalStateException;
+
+        specialinvoke $r5.<java.lang.IllegalStateException: void <init>(java.lang.String)>("Illegal intermediate texture with dimension of 0");
+
+        throw $r5;
+
+     label8:
+        $r13 := @caughtexception;
+
+        $r14 = new java.lang.IllegalStateException;
+
+        specialinvoke $r14.<java.lang.IllegalStateException: void <init>(java.lang.String,java.lang.Throwable)>("Surface abandoned, skipping drawFrame...", $r13);
+
+        throw $r14;
+
+        catch android.hardware.camera2.legacy.LegacyExceptionUtils$BufferQueueAbandonedException from label1 to label2 with label8;
+    }
+
+    private void dumpGlTiming()
+    {
+        android.hardware.camera2.legacy.SurfaceTextureRenderer r0;
+        android.hardware.camera2.legacy.PerfMeasurement $r1, $r16;
+        java.io.File $r2, $r3;
+        boolean $z0, $z1, $z2, $z3;
+        java.lang.StringBuilder $r4;
+        java.lang.String $r5, $r6, $r9, $r17, $r22, $r28, $r30;
+        long $l0;
+        java.util.List $r12, $r14;
+        java.lang.Object $r18, $r24;
+        java.lang.Object[] $r19, $r25;
+        int $i1, $i2, $i3, $i4;
+        java.lang.Integer $r20, $r21, $r26, $r27;
+        java.util.Iterator r33, r35;
+        android.hardware.camera2.legacy.SurfaceTextureRenderer$EGLSurfaceHolder r34, r36;
+
+        r0 := @this: android.hardware.camera2.legacy.SurfaceTextureRenderer;
+
+        $r1 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: android.hardware.camera2.legacy.PerfMeasurement mPerfMeasurer>;
+
+        if $r1 != null goto label1;
+
+        return;
+
+     label1:
+        $r2 = new java.io.File;
+
+        $r3 = staticinvoke <android.os.Environment: java.io.File getExternalStorageDirectory()>();
+
+        specialinvoke $r2.<java.io.File: void <init>(java.io.File,java.lang.String)>($r3, "CameraLegacy");
+
+        $z0 = virtualinvoke $r2.<java.io.File: boolean exists()>();
+
+        if $z0 != 0 goto label2;
+
+        $z2 = virtualinvoke $r2.<java.io.File: boolean mkdirs()>();
+
+        if $z2 != 0 goto label2;
+
+        $r30 = <android.hardware.camera2.legacy.SurfaceTextureRenderer: java.lang.String TAG>;
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>($r30, "Failed to create directory for data dump");
+
+        return;
+
+     label2:
+        $r4 = new java.lang.StringBuilder;
+
+        $r5 = virtualinvoke $r2.<java.io.File: java.lang.String getPath()>();
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>(java.lang.String)>($r5);
+
+        $r6 = <java.io.File: java.lang.String separator>;
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r6);
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("durations_");
+
+        $l0 = staticinvoke <java.lang.System: long currentTimeMillis()>();
+
+        $r9 = staticinvoke <android.hardware.camera2.legacy.SurfaceTextureRenderer: java.lang.String formatTimestamp(long)>($l0);
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r9);
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("_S");
+
+        $r12 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: java.util.List mSurfaces>;
+
+        r33 = interfaceinvoke $r12.<java.util.List: java.util.Iterator iterator()>();
+
+     label3:
+        $z3 = interfaceinvoke r33.<java.util.Iterator: boolean hasNext()>();
+
+        if $z3 == 0 goto label4;
+
+        $r24 = interfaceinvoke r33.<java.util.Iterator: java.lang.Object next()>();
+
+        r34 = (android.hardware.camera2.legacy.SurfaceTextureRenderer$EGLSurfaceHolder) $r24;
+
+        $r25 = newarray (java.lang.Object)[2];
+
+        $i3 = r34.<android.hardware.camera2.legacy.SurfaceTextureRenderer$EGLSurfaceHolder: int width>;
+
+        $r26 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i3);
+
+        $r25[0] = $r26;
+
+        $i4 = r34.<android.hardware.camera2.legacy.SurfaceTextureRenderer$EGLSurfaceHolder: int height>;
+
+        $r27 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i4);
+
+        $r25[1] = $r27;
+
+        $r28 = staticinvoke <java.lang.String: java.lang.String format(java.lang.String,java.lang.Object[])>("_%d_%d", $r25);
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r28);
+
+        goto label3;
+
+     label4:
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("_C");
+
+        $r14 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: java.util.List mConversionSurfaces>;
+
+        r35 = interfaceinvoke $r14.<java.util.List: java.util.Iterator iterator()>();
+
+     label5:
+        $z1 = interfaceinvoke r35.<java.util.Iterator: boolean hasNext()>();
+
+        if $z1 == 0 goto label6;
+
+        $r18 = interfaceinvoke r35.<java.util.Iterator: java.lang.Object next()>();
+
+        r36 = (android.hardware.camera2.legacy.SurfaceTextureRenderer$EGLSurfaceHolder) $r18;
+
+        $r19 = newarray (java.lang.Object)[2];
+
+        $i1 = r36.<android.hardware.camera2.legacy.SurfaceTextureRenderer$EGLSurfaceHolder: int width>;
+
+        $r20 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i1);
+
+        $r19[0] = $r20;
+
+        $i2 = r36.<android.hardware.camera2.legacy.SurfaceTextureRenderer$EGLSurfaceHolder: int height>;
+
+        $r21 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i2);
+
+        $r19[1] = $r21;
+
+        $r22 = staticinvoke <java.lang.String: java.lang.String format(java.lang.String,java.lang.Object[])>("_%d_%d", $r19);
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r22);
+
+        goto label5;
+
+     label6:
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(".txt");
+
+        $r16 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: android.hardware.camera2.legacy.PerfMeasurement mPerfMeasurer>;
+
+        $r17 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke $r16.<android.hardware.camera2.legacy.PerfMeasurement: void dumpPerformanceData(java.lang.String)>($r17);
+
+        return;
+    }
+
+    private void endGlTiming()
+    {
+        android.hardware.camera2.legacy.SurfaceTextureRenderer r0;
+        android.hardware.camera2.legacy.PerfMeasurement r1;
+
+        r0 := @this: android.hardware.camera2.legacy.SurfaceTextureRenderer;
+
+        r1 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: android.hardware.camera2.legacy.PerfMeasurement mPerfMeasurer>;
+
+        if r1 != null goto label1;
+
+        return;
+
+     label1:
+        virtualinvoke r1.<android.hardware.camera2.legacy.PerfMeasurement: void stopTimer()>();
+
+        return;
+    }
+
+    private static java.lang.String formatTimestamp(long)
+    {
+        long l0;
+        java.time.LocalDateTime r0;
+        java.time.Instant $r1;
+        java.time.ZoneId $r2;
+        java.time.format.DateTimeFormatter $r3;
+        java.lang.String $r4;
+
+        l0 := @parameter0: long;
+
+        $r1 = staticinvoke <java.time.Instant: java.time.Instant ofEpochMilli(long)>(l0);
+
+        $r2 = staticinvoke <java.time.ZoneId: java.time.ZoneId systemDefault()>();
+
+        r0 = staticinvoke <java.time.LocalDateTime: java.time.LocalDateTime ofInstant(java.time.Instant,java.time.ZoneId)>($r1, $r2);
+
+        $r3 = <android.hardware.camera2.legacy.SurfaceTextureRenderer: java.time.format.DateTimeFormatter LOG_NAME_TIME_FORMATTER>;
+
+        $r4 = virtualinvoke $r3.<java.time.format.DateTimeFormatter: java.lang.String format(java.time.temporal.TemporalAccessor)>(r0);
+
+        return $r4;
+    }
+
+    private int getTextureId()
+    {
+        android.hardware.camera2.legacy.SurfaceTextureRenderer r0;
+        int $i0;
+
+        r0 := @this: android.hardware.camera2.legacy.SurfaceTextureRenderer;
+
+        $i0 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: int mTextureID>;
+
+        return $i0;
+    }
+
+    private void initializeGLState()
+    {
+        android.hardware.camera2.legacy.SurfaceTextureRenderer r0;
+        int[] r1;
+        java.lang.IllegalStateException $r2, $r3, $r4, $r5, $r6;
+        int $i0, $i1, $i2, $i3, $i4, $i5, $i6, $i7, $i8, $i9, $i10, i11, i12;
+
+        r0 := @this: android.hardware.camera2.legacy.SurfaceTextureRenderer;
+
+        i11 = specialinvoke r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: int createProgram(java.lang.String,java.lang.String)>("uniform mat4 uMVPMatrix;\nuniform mat4 uSTMatrix;\nattribute vec4 aPosition;\nattribute vec4 aTextureCoord;\nvarying vec2 vTextureCoord;\nvoid main() {\n  gl_Position = uMVPMatrix * aPosition;\n  vTextureCoord = (uSTMatrix * aTextureCoord).xy;\n}\n", "#extension GL_OES_EGL_image_external : require\nprecision mediump float;\nvarying vec2 vTextureCoord;\nuniform samplerExternalOES sTexture;\nvoid main() {\n  gl_FragColor = texture2D(sTexture, vTextureCoord);\n}\n");
+
+        r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: int mProgram> = i11;
+
+        if i11 == 0 goto label5;
+
+        $i0 = staticinvoke <android.opengl.GLES20: int glGetAttribLocation(int,java.lang.String)>(i11, "aPosition");
+
+        r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: int maPositionHandle> = $i0;
+
+        specialinvoke r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: void checkGlError(java.lang.String)>("glGetAttribLocation aPosition");
+
+        $i1 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: int maPositionHandle>;
+
+        if $i1 == -1 goto label4;
+
+        $i2 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: int mProgram>;
+
+        $i3 = staticinvoke <android.opengl.GLES20: int glGetAttribLocation(int,java.lang.String)>($i2, "aTextureCoord");
+
+        r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: int maTextureHandle> = $i3;
+
+        specialinvoke r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: void checkGlError(java.lang.String)>("glGetAttribLocation aTextureCoord");
+
+        $i4 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: int maTextureHandle>;
+
+        if $i4 == -1 goto label3;
+
+        $i5 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: int mProgram>;
+
+        $i6 = staticinvoke <android.opengl.GLES20: int glGetUniformLocation(int,java.lang.String)>($i5, "uMVPMatrix");
+
+        r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: int muMVPMatrixHandle> = $i6;
+
+        specialinvoke r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: void checkGlError(java.lang.String)>("glGetUniformLocation uMVPMatrix");
+
+        $i7 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: int muMVPMatrixHandle>;
+
+        if $i7 == -1 goto label2;
+
+        $i8 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: int mProgram>;
+
+        $i9 = staticinvoke <android.opengl.GLES20: int glGetUniformLocation(int,java.lang.String)>($i8, "uSTMatrix");
+
+        r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: int muSTMatrixHandle> = $i9;
+
+        specialinvoke r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: void checkGlError(java.lang.String)>("glGetUniformLocation uSTMatrix");
+
+        $i10 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: int muSTMatrixHandle>;
+
+        if $i10 == -1 goto label1;
+
+        r1 = newarray (int)[1];
+
+        staticinvoke <android.opengl.GLES20: void glGenTextures(int,int[],int)>(1, r1, 0);
+
+        i12 = r1[0];
+
+        r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: int mTextureID> = i12;
+
+        staticinvoke <android.opengl.GLES20: void glBindTexture(int,int)>(36197, i12);
+
+        specialinvoke r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: void checkGlError(java.lang.String)>("glBindTexture mTextureID");
+
+        staticinvoke <android.opengl.GLES20: void glTexParameterf(int,int,float)>(36197, 10241, 9728.0F);
+
+        staticinvoke <android.opengl.GLES20: void glTexParameterf(int,int,float)>(36197, 10240, 9729.0F);
+
+        staticinvoke <android.opengl.GLES20: void glTexParameteri(int,int,int)>(36197, 10242, 33071);
+
+        staticinvoke <android.opengl.GLES20: void glTexParameteri(int,int,int)>(36197, 10243, 33071);
+
+        specialinvoke r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: void checkGlError(java.lang.String)>("glTexParameter");
+
+        return;
+
+     label1:
+        $r6 = new java.lang.IllegalStateException;
+
+        specialinvoke $r6.<java.lang.IllegalStateException: void <init>(java.lang.String)>("Could not get attrib location for uSTMatrix");
+
+        throw $r6;
+
+     label2:
+        $r5 = new java.lang.IllegalStateException;
+
+        specialinvoke $r5.<java.lang.IllegalStateException: void <init>(java.lang.String)>("Could not get attrib location for uMVPMatrix");
+
+        throw $r5;
+
+     label3:
+        $r4 = new java.lang.IllegalStateException;
+
+        specialinvoke $r4.<java.lang.IllegalStateException: void <init>(java.lang.String)>("Could not get attrib location for aTextureCoord");
+
+        throw $r4;
+
+     label4:
+        $r3 = new java.lang.IllegalStateException;
+
+        specialinvoke $r3.<java.lang.IllegalStateException: void <init>(java.lang.String)>("Could not get attrib location for aPosition");
+
+        throw $r3;
+
+     label5:
+        $r2 = new java.lang.IllegalStateException;
+
+        specialinvoke $r2.<java.lang.IllegalStateException: void <init>(java.lang.String)>("failed creating program");
+
+        throw $r2;
+    }
+
+    private int loadShader(int, java.lang.String)
+    {
+        android.hardware.camera2.legacy.SurfaceTextureRenderer r0;
+        int i0, i1, $i2;
+        java.lang.StringBuilder $r1, $r5, $r10, $r15;
+        java.lang.String $r4, $r9, $r12, $r14, $r19, r20, r23, r25;
+        java.lang.IllegalStateException $r18;
+        int[] r22;
+
+        r0 := @this: android.hardware.camera2.legacy.SurfaceTextureRenderer;
+
+        i0 := @parameter0: int;
+
+        r20 := @parameter1: java.lang.String;
+
+        i1 = staticinvoke <android.opengl.GLES20: int glCreateShader(int)>(i0);
+
+        $r1 = new java.lang.StringBuilder;
+
+        specialinvoke $r1.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("glCreateShader type=");
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r4 = virtualinvoke $r1.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: void checkGlError(java.lang.String)>($r4);
+
+        staticinvoke <android.opengl.GLES20: void glShaderSource(int,java.lang.String)>(i1, r20);
+
+        staticinvoke <android.opengl.GLES20: void glCompileShader(int)>(i1);
+
+        r22 = newarray (int)[1];
+
+        staticinvoke <android.opengl.GLES20: void glGetShaderiv(int,int,int[],int)>(i1, 35713, r22, 0);
+
+        $i2 = r22[0];
+
+        if $i2 == 0 goto label1;
+
+        return i1;
+
+     label1:
+        r23 = <android.hardware.camera2.legacy.SurfaceTextureRenderer: java.lang.String TAG>;
+
+        $r5 = new java.lang.StringBuilder;
+
+        specialinvoke $r5.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Could not compile shader ");
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(":");
+
+        $r9 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>(r23, $r9);
+
+        r25 = <android.hardware.camera2.legacy.SurfaceTextureRenderer: java.lang.String TAG>;
+
+        $r10 = new java.lang.StringBuilder;
+
+        specialinvoke $r10.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" ");
+
+        $r12 = staticinvoke <android.opengl.GLES20: java.lang.String glGetShaderInfoLog(int)>(i1);
+
+        virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r12);
+
+        $r14 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>(r25, $r14);
+
+        staticinvoke <android.opengl.GLES20: void glDeleteShader(int)>(i1);
+
+        $r15 = new java.lang.StringBuilder;
+
+        specialinvoke $r15.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r15.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Could not compile shader ");
+
+        virtualinvoke $r15.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r18 = new java.lang.IllegalStateException;
+
+        $r19 = virtualinvoke $r15.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r18.<java.lang.IllegalStateException: void <init>(java.lang.String)>($r19);
+
+        throw $r18;
+    }
+
+    private void makeCurrent(android.opengl.EGLSurface) throws android.hardware.camera2.legacy.LegacyExceptionUtils$BufferQueueAbandonedException
+    {
+        android.hardware.camera2.legacy.SurfaceTextureRenderer r0;
+        android.opengl.EGLSurface r1;
+        android.opengl.EGLContext $r2;
+        android.opengl.EGLDisplay $r3;
+
+        r0 := @this: android.hardware.camera2.legacy.SurfaceTextureRenderer;
+
+        r1 := @parameter0: android.opengl.EGLSurface;
+
+        $r3 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: android.opengl.EGLDisplay mEGLDisplay>;
+
+        $r2 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: android.opengl.EGLContext mEGLContext>;
+
+        staticinvoke <android.opengl.EGL14: boolean eglMakeCurrent(android.opengl.EGLDisplay,android.opengl.EGLSurface,android.opengl.EGLSurface,android.opengl.EGLContext)>($r3, r1, r1, $r2);
+
+        specialinvoke r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: void checkEglDrawError(java.lang.String)>("makeCurrent");
+
+        return;
+    }
+
+    private void releaseEGLContext()
+    {
+        android.hardware.camera2.legacy.SurfaceTextureRenderer r0;
+        android.opengl.EGLDisplay $r1, $r2, $r6, $r8, $r9, $r13, $r17, $r24;
+        android.opengl.EGLContext $r3, $r7, $r25;
+        android.opengl.EGLSurface $r4, $r5, $r11, $r12, $r15, $r16;
+        boolean $z4, $z6;
+        java.lang.Object $r10, $r14;
+        java.util.List r18, r21;
+        java.util.Iterator r19, r22;
+        android.hardware.camera2.legacy.SurfaceTextureRenderer$EGLSurfaceHolder r20, r23;
+
+        r0 := @this: android.hardware.camera2.legacy.SurfaceTextureRenderer;
+
+        $r2 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: android.opengl.EGLDisplay mEGLDisplay>;
+
+        $r1 = <android.opengl.EGL14: android.opengl.EGLDisplay EGL_NO_DISPLAY>;
+
+        if $r2 == $r1 goto label7;
+
+        $r6 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: android.opengl.EGLDisplay mEGLDisplay>;
+
+        $r5 = <android.opengl.EGL14: android.opengl.EGLSurface EGL_NO_SURFACE>;
+
+        $r4 = <android.opengl.EGL14: android.opengl.EGLSurface EGL_NO_SURFACE>;
+
+        $r3 = <android.opengl.EGL14: android.opengl.EGLContext EGL_NO_CONTEXT>;
+
+        staticinvoke <android.opengl.EGL14: boolean eglMakeCurrent(android.opengl.EGLDisplay,android.opengl.EGLSurface,android.opengl.EGLSurface,android.opengl.EGLContext)>($r6, $r5, $r4, $r3);
+
+        specialinvoke r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: void dumpGlTiming()>();
+
+        r18 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: java.util.List mSurfaces>;
+
+        if r18 == null goto label3;
+
+        r19 = interfaceinvoke r18.<java.util.List: java.util.Iterator iterator()>();
+
+     label1:
+        $z6 = interfaceinvoke r19.<java.util.Iterator: boolean hasNext()>();
+
+        if $z6 == 0 goto label3;
+
+        $r14 = interfaceinvoke r19.<java.util.Iterator: java.lang.Object next()>();
+
+        r20 = (android.hardware.camera2.legacy.SurfaceTextureRenderer$EGLSurfaceHolder) $r14;
+
+        $r15 = r20.<android.hardware.camera2.legacy.SurfaceTextureRenderer$EGLSurfaceHolder: android.opengl.EGLSurface eglSurface>;
+
+        if $r15 == null goto label2;
+
+        $r17 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: android.opengl.EGLDisplay mEGLDisplay>;
+
+        $r16 = r20.<android.hardware.camera2.legacy.SurfaceTextureRenderer$EGLSurfaceHolder: android.opengl.EGLSurface eglSurface>;
+
+        staticinvoke <android.opengl.EGL14: boolean eglDestroySurface(android.opengl.EGLDisplay,android.opengl.EGLSurface)>($r17, $r16);
+
+     label2:
+        goto label1;
+
+     label3:
+        r21 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: java.util.List mConversionSurfaces>;
+
+        if r21 == null goto label6;
+
+        r22 = interfaceinvoke r21.<java.util.List: java.util.Iterator iterator()>();
+
+     label4:
+        $z4 = interfaceinvoke r22.<java.util.Iterator: boolean hasNext()>();
+
+        if $z4 == 0 goto label6;
+
+        $r10 = interfaceinvoke r22.<java.util.Iterator: java.lang.Object next()>();
+
+        r23 = (android.hardware.camera2.legacy.SurfaceTextureRenderer$EGLSurfaceHolder) $r10;
+
+        $r11 = r23.<android.hardware.camera2.legacy.SurfaceTextureRenderer$EGLSurfaceHolder: android.opengl.EGLSurface eglSurface>;
+
+        if $r11 == null goto label5;
+
+        $r13 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: android.opengl.EGLDisplay mEGLDisplay>;
+
+        $r12 = r23.<android.hardware.camera2.legacy.SurfaceTextureRenderer$EGLSurfaceHolder: android.opengl.EGLSurface eglSurface>;
+
+        staticinvoke <android.opengl.EGL14: boolean eglDestroySurface(android.opengl.EGLDisplay,android.opengl.EGLSurface)>($r13, $r12);
+
+     label5:
+        goto label4;
+
+     label6:
+        $r8 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: android.opengl.EGLDisplay mEGLDisplay>;
+
+        $r7 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: android.opengl.EGLContext mEGLContext>;
+
+        staticinvoke <android.opengl.EGL14: boolean eglDestroyContext(android.opengl.EGLDisplay,android.opengl.EGLContext)>($r8, $r7);
+
+        staticinvoke <android.opengl.EGL14: boolean eglReleaseThread()>();
+
+        $r9 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: android.opengl.EGLDisplay mEGLDisplay>;
+
+        staticinvoke <android.opengl.EGL14: boolean eglTerminate(android.opengl.EGLDisplay)>($r9);
+
+     label7:
+        r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: android.opengl.EGLConfig mConfigs> = null;
+
+        $r24 = <android.opengl.EGL14: android.opengl.EGLDisplay EGL_NO_DISPLAY>;
+
+        r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: android.opengl.EGLDisplay mEGLDisplay> = $r24;
+
+        $r25 = <android.opengl.EGL14: android.opengl.EGLContext EGL_NO_CONTEXT>;
+
+        r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: android.opengl.EGLContext mEGLContext> = $r25;
+
+        specialinvoke r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: void clearState()>();
+
+        return;
+    }
+
+    private void setupGlTiming()
+    {
+        android.hardware.camera2.legacy.SurfaceTextureRenderer r0;
+        boolean $z0;
+        java.lang.String $r1, $r2;
+        android.hardware.camera2.legacy.PerfMeasurement $r3;
+
+        r0 := @this: android.hardware.camera2.legacy.SurfaceTextureRenderer;
+
+        $z0 = staticinvoke <android.hardware.camera2.legacy.PerfMeasurement: boolean isGlTimingSupported()>();
+
+        if $z0 == 0 goto label1;
+
+        $r2 = <android.hardware.camera2.legacy.SurfaceTextureRenderer: java.lang.String TAG>;
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>($r2, "Enabling GL performance measurement");
+
+        $r3 = new android.hardware.camera2.legacy.PerfMeasurement;
+
+        specialinvoke $r3.<android.hardware.camera2.legacy.PerfMeasurement: void <init>()>();
+
+        r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: android.hardware.camera2.legacy.PerfMeasurement mPerfMeasurer> = $r3;
+
+        goto label2;
+
+     label1:
+        $r1 = <android.hardware.camera2.legacy.SurfaceTextureRenderer: java.lang.String TAG>;
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>($r1, "GL performance measurement not supported on this device");
+
+        r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: android.hardware.camera2.legacy.PerfMeasurement mPerfMeasurer> = null;
+
+     label2:
+        return;
+    }
+
+    private boolean swapBuffers(android.opengl.EGLSurface) throws android.hardware.camera2.legacy.LegacyExceptionUtils$BufferQueueAbandonedException
+    {
+        android.hardware.camera2.legacy.SurfaceTextureRenderer r0;
+        boolean z0;
+        int i0;
+        android.opengl.EGLDisplay $r1;
+        android.hardware.camera2.legacy.LegacyExceptionUtils$BufferQueueAbandonedException $r2;
+        java.lang.StringBuilder $r3;
+        java.lang.String $r5, $r8;
+        java.lang.IllegalStateException $r7;
+        android.opengl.EGLSurface r9;
+
+        r0 := @this: android.hardware.camera2.legacy.SurfaceTextureRenderer;
+
+        r9 := @parameter0: android.opengl.EGLSurface;
+
+        $r1 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: android.opengl.EGLDisplay mEGLDisplay>;
+
+        z0 = staticinvoke <android.opengl.EGL14: boolean eglSwapBuffers(android.opengl.EGLDisplay,android.opengl.EGLSurface)>($r1, r9);
+
+        i0 = staticinvoke <android.opengl.EGL14: int eglGetError()>();
+
+        if i0 == 12288 goto label2;
+
+        if i0 == 12299 goto label1;
+
+        if i0 == 12301 goto label1;
+
+        $r3 = new java.lang.StringBuilder;
+
+        specialinvoke $r3.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("swapBuffers: EGL error: 0x");
+
+        $r5 = staticinvoke <java.lang.Integer: java.lang.String toHexString(int)>(i0);
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r5);
+
+        $r7 = new java.lang.IllegalStateException;
+
+        $r8 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r7.<java.lang.IllegalStateException: void <init>(java.lang.String)>($r8);
+
+        throw $r7;
+
+     label1:
+        $r2 = new android.hardware.camera2.legacy.LegacyExceptionUtils$BufferQueueAbandonedException;
+
+        specialinvoke $r2.<android.hardware.camera2.legacy.LegacyExceptionUtils$BufferQueueAbandonedException: void <init>()>();
+
+        throw $r2;
+
+     label2:
+        return z0;
+    }
+
+    public void cleanupEGLContext()
+    {
+        android.hardware.camera2.legacy.SurfaceTextureRenderer r0;
+
+        r0 := @this: android.hardware.camera2.legacy.SurfaceTextureRenderer;
+
+        specialinvoke r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: void releaseEGLContext()>();
+
+        return;
+    }
+
+    public void configureSurfaces(java.util.Collection)
+    {
+        android.hardware.camera2.legacy.SurfaceTextureRenderer r0;
+        android.hardware.camera2.legacy.SurfaceTextureRenderer$EGLSurfaceHolder r1, $r8, $r12;
+        java.lang.String $r2, $r21, $r23;
+        int $i1, $i2, $i3, $i4, $i5, $i6, $i7;
+        boolean $z0, $z1, $z2;
+        java.util.List $r3, $r4, $r5, $r6, $r10, $r13, $r14, $r18, $r19;
+        java.lang.Object $r7, $r11, $r15, $r16, $r17;
+        android.graphics.SurfaceTexture $r9;
+        android.hardware.camera2.legacy.LegacyExceptionUtils$BufferQueueAbandonedException $r20, $r22;
+        java.util.Collection r24;
+        java.util.Iterator r25;
+        android.util.Pair r26;
+        android.view.Surface r27;
+        android.util.Size r28;
+        android.opengl.EGLSurface r30;
+
+        r0 := @this: android.hardware.camera2.legacy.SurfaceTextureRenderer;
+
+        r24 := @parameter0: java.util.Collection;
+
+        specialinvoke r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: void releaseEGLContext()>();
+
+        if r24 == null goto label19;
+
+        $i1 = interfaceinvoke r24.<java.util.Collection: int size()>();
+
+        if $i1 != 0 goto label01;
+
+        goto label19;
+
+     label01:
+        r25 = interfaceinvoke r24.<java.util.Collection: java.util.Iterator iterator()>();
+
+     label02:
+        $z0 = interfaceinvoke r25.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label09;
+
+        $r15 = interfaceinvoke r25.<java.util.Iterator: java.lang.Object next()>();
+
+        r26 = (android.util.Pair) $r15;
+
+        $r16 = r26.<android.util.Pair: java.lang.Object first>;
+
+        r27 = (android.view.Surface) $r16;
+
+        $r17 = r26.<android.util.Pair: java.lang.Object second>;
+
+        r28 = (android.util.Size) $r17;
+
+     label03:
+        r1 = new android.hardware.camera2.legacy.SurfaceTextureRenderer$EGLSurfaceHolder;
+
+        specialinvoke r1.<android.hardware.camera2.legacy.SurfaceTextureRenderer$EGLSurfaceHolder: void <init>(android.hardware.camera2.legacy.SurfaceTextureRenderer,android.hardware.camera2.legacy.SurfaceTextureRenderer$1)>(r0, null);
+
+        r1.<android.hardware.camera2.legacy.SurfaceTextureRenderer$EGLSurfaceHolder: android.view.Surface surface> = r27;
+
+        $i6 = virtualinvoke r28.<android.util.Size: int getWidth()>();
+
+        r1.<android.hardware.camera2.legacy.SurfaceTextureRenderer$EGLSurfaceHolder: int width> = $i6;
+
+        $i7 = virtualinvoke r28.<android.util.Size: int getHeight()>();
+
+        r1.<android.hardware.camera2.legacy.SurfaceTextureRenderer$EGLSurfaceHolder: int height> = $i7;
+
+        $z2 = staticinvoke <android.hardware.camera2.legacy.LegacyCameraDevice: boolean needsConversion(android.view.Surface)>(r27);
+
+        if $z2 == 0 goto label05;
+
+        $r19 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: java.util.List mConversionSurfaces>;
+
+        interfaceinvoke $r19.<java.util.List: boolean add(java.lang.Object)>(r1);
+
+        staticinvoke <android.hardware.camera2.legacy.LegacyCameraDevice: void connectSurface(android.view.Surface)>(r27);
+
+     label04:
+        goto label06;
+
+     label05:
+        $r18 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: java.util.List mSurfaces>;
+
+        interfaceinvoke $r18.<java.util.List: boolean add(java.lang.Object)>(r1);
+
+     label06:
+        goto label08;
+
+     label07:
+        $r20 := @caughtexception;
+
+        $r21 = <android.hardware.camera2.legacy.SurfaceTextureRenderer: java.lang.String TAG>;
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String,java.lang.Throwable)>($r21, "Surface abandoned, skipping configuration... ", $r20);
+
+     label08:
+        goto label02;
+
+     label09:
+        specialinvoke r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: void configureEGLContext()>();
+
+        $r3 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: java.util.List mSurfaces>;
+
+        $i2 = interfaceinvoke $r3.<java.util.List: int size()>();
+
+        if $i2 <= 0 goto label10;
+
+        $r14 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: java.util.List mSurfaces>;
+
+        specialinvoke r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: void configureEGLOutputSurfaces(java.util.Collection)>($r14);
+
+     label10:
+        $r4 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: java.util.List mConversionSurfaces>;
+
+        $i3 = interfaceinvoke $r4.<java.util.List: int size()>();
+
+        if $i3 <= 0 goto label11;
+
+        $r13 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: java.util.List mConversionSurfaces>;
+
+        specialinvoke r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: void configureEGLPbufferSurfaces(java.util.Collection)>($r13);
+
+     label11:
+        $r5 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: java.util.List mSurfaces>;
+
+        $i4 = interfaceinvoke $r5.<java.util.List: int size()>();
+
+        if $i4 <= 0 goto label13;
+
+        $r10 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: java.util.List mSurfaces>;
+
+        $r11 = interfaceinvoke $r10.<java.util.List: java.lang.Object get(int)>(0);
+
+        $r12 = (android.hardware.camera2.legacy.SurfaceTextureRenderer$EGLSurfaceHolder) $r11;
+
+        r30 = $r12.<android.hardware.camera2.legacy.SurfaceTextureRenderer$EGLSurfaceHolder: android.opengl.EGLSurface eglSurface>;
+
+     label12:
+        goto label14;
+
+     label13:
+        $r6 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: java.util.List mConversionSurfaces>;
+
+        $r7 = interfaceinvoke $r6.<java.util.List: java.lang.Object get(int)>(0);
+
+        $r8 = (android.hardware.camera2.legacy.SurfaceTextureRenderer$EGLSurfaceHolder) $r7;
+
+        r30 = $r8.<android.hardware.camera2.legacy.SurfaceTextureRenderer$EGLSurfaceHolder: android.opengl.EGLSurface eglSurface>;
+
+     label14:
+        specialinvoke r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: void makeCurrent(android.opengl.EGLSurface)>(r30);
+
+     label15:
+        goto label17;
+
+     label16:
+        $r22 := @caughtexception;
+
+        $r23 = <android.hardware.camera2.legacy.SurfaceTextureRenderer: java.lang.String TAG>;
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String,java.lang.Throwable)>($r23, "Surface abandoned, skipping configuration... ", $r22);
+
+     label17:
+        specialinvoke r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: void initializeGLState()>();
+
+        $r9 = new android.graphics.SurfaceTexture;
+
+        $i5 = specialinvoke r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: int getTextureId()>();
+
+        specialinvoke $r9.<android.graphics.SurfaceTexture: void <init>(int)>($i5);
+
+        r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: android.graphics.SurfaceTexture mSurfaceTexture> = $r9;
+
+        $z1 = staticinvoke <android.os.SystemProperties: boolean getBoolean(java.lang.String,boolean)>("persist.camera.legacy_perf", 0);
+
+        if $z1 == 0 goto label18;
+
+        specialinvoke r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: void setupGlTiming()>();
+
+     label18:
+        return;
+
+     label19:
+        $r2 = <android.hardware.camera2.legacy.SurfaceTextureRenderer: java.lang.String TAG>;
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>($r2, "No output surfaces configured for GL drawing.");
+
+        return;
+
+        catch android.hardware.camera2.legacy.LegacyExceptionUtils$BufferQueueAbandonedException from label03 to label04 with label07;
+        catch android.hardware.camera2.legacy.LegacyExceptionUtils$BufferQueueAbandonedException from label05 to label06 with label07;
+        catch android.hardware.camera2.legacy.LegacyExceptionUtils$BufferQueueAbandonedException from label11 to label12 with label16;
+        catch android.hardware.camera2.legacy.LegacyExceptionUtils$BufferQueueAbandonedException from label13 to label14 with label16;
+        catch android.hardware.camera2.legacy.LegacyExceptionUtils$BufferQueueAbandonedException from label14 to label15 with label16;
+    }
+
+    public void drawIntoSurfaces(android.hardware.camera2.legacy.CaptureCollector)
+    {
+        android.hardware.camera2.legacy.SurfaceTextureRenderer r0;
+        boolean z0, $z1, $z2, $z3, $z5;
+        long l0, $l7, $l12;
+        android.util.Pair r1;
+        android.hardware.camera2.legacy.RequestHolder r2;
+        int $i1, $i2, $i3, $i4, $i5, $i6, $i8, $i9, $i10, $i11, $i13, $i14, i18, i19, i21, i22, i24;
+        android.graphics.SurfaceTexture $r3, $r4, r49, r53;
+        java.lang.Object $r5, $r10, $r18, $r24, $r28, r44;
+        java.util.List $r7, $r8, r41, r42, r45;
+        android.view.Surface $r11, $r16, $r17, $r20, $r22, $r25, $r26, $r30;
+        android.opengl.EGLSurface $r12, $r27, $r31;
+        java.nio.ByteBuffer $r13, $r15, $r21;
+        java.lang.Long $r19, $r29;
+        byte[] $r23;
+        android.hardware.camera2.legacy.LegacyExceptionUtils$BufferQueueAbandonedException $r32, $r34, $r36, $r38;
+        java.lang.String $r33, $r35, $r37;
+        android.hardware.camera2.legacy.CaptureCollector r40;
+        java.util.Collection r43, r58, r59;
+        java.util.Iterator r47, r51;
+        android.hardware.camera2.legacy.SurfaceTextureRenderer$EGLSurfaceHolder r48, r52;
+        byte b20, b23;
+        java.util.ArrayList r56;
+        java.lang.IllegalStateException r57;
+
+        r0 := @this: android.hardware.camera2.legacy.SurfaceTextureRenderer;
+
+        r40 := @parameter0: android.hardware.camera2.legacy.CaptureCollector;
+
+        r41 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: java.util.List mSurfaces>;
+
+        if r41 == null goto label01;
+
+        $i14 = interfaceinvoke r41.<java.util.List: int size()>();
+
+        if $i14 != 0 goto label02;
+
+     label01:
+        r42 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: java.util.List mConversionSurfaces>;
+
+        if r42 == null goto label33;
+
+        $i1 = interfaceinvoke r42.<java.util.List: int size()>();
+
+        if $i1 != 0 goto label02;
+
+        goto label33;
+
+     label02:
+        z0 = virtualinvoke r40.<android.hardware.camera2.legacy.CaptureCollector: boolean hasPendingPreviewCaptures()>();
+
+        specialinvoke r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: void checkGlError(java.lang.String)>("before updateTexImage");
+
+        if z0 == 0 goto label03;
+
+        specialinvoke r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: void beginGlTiming()>();
+
+     label03:
+        $r3 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: android.graphics.SurfaceTexture mSurfaceTexture>;
+
+        virtualinvoke $r3.<android.graphics.SurfaceTexture: void updateTexImage()>();
+
+        $r4 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: android.graphics.SurfaceTexture mSurfaceTexture>;
+
+        l0 = virtualinvoke $r4.<android.graphics.SurfaceTexture: long getTimestamp()>();
+
+        r1 = virtualinvoke r40.<android.hardware.camera2.legacy.CaptureCollector: android.util.Pair previewCaptured(long)>(l0);
+
+        if r1 != null goto label05;
+
+        if z0 == 0 goto label04;
+
+        specialinvoke r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: void endGlTiming()>();
+
+     label04:
+        return;
+
+     label05:
+        $r5 = r1.<android.util.Pair: java.lang.Object first>;
+
+        r2 = (android.hardware.camera2.legacy.RequestHolder) $r5;
+
+        r43 = virtualinvoke r2.<android.hardware.camera2.legacy.RequestHolder: java.util.Collection getHolderTargets()>();
+
+        if z0 == 0 goto label06;
+
+        specialinvoke r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: void addGlTimestamp(long)>(l0);
+
+     label06:
+        r56 = new java.util.ArrayList;
+
+        specialinvoke r56.<java.util.ArrayList: void <init>()>();
+
+        r44 = r56;
+
+     label07:
+        r45 = staticinvoke <android.hardware.camera2.legacy.LegacyCameraDevice: java.util.List getSurfaceIds(java.util.Collection)>(r43);
+
+     label08:
+        r44 = r45;
+
+        goto label10;
+
+     label09:
+        $r32 := @caughtexception;
+
+        $r33 = <android.hardware.camera2.legacy.SurfaceTextureRenderer: java.lang.String TAG>;
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String,java.lang.Throwable)>($r33, "Surface abandoned, dropping frame. ", $r32);
+
+        virtualinvoke r2.<android.hardware.camera2.legacy.RequestHolder: void setOutputAbandoned()>();
+
+     label10:
+        $r7 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: java.util.List mSurfaces>;
+
+        r47 = interfaceinvoke $r7.<java.util.List: java.util.Iterator iterator()>();
+
+     label11:
+        $z5 = interfaceinvoke r47.<java.util.Iterator: boolean hasNext()>();
+
+        if $z5 == 0 goto label19;
+
+        $r24 = interfaceinvoke r47.<java.util.Iterator: java.lang.Object next()>();
+
+        r48 = (android.hardware.camera2.legacy.SurfaceTextureRenderer$EGLSurfaceHolder) $r24;
+
+        $r25 = r48.<android.hardware.camera2.legacy.SurfaceTextureRenderer$EGLSurfaceHolder: android.view.Surface surface>;
+
+        r58 = (java.util.Collection) r44;
+
+        $z3 = staticinvoke <android.hardware.camera2.legacy.LegacyCameraDevice: boolean containsSurfaceId(android.view.Surface,java.util.Collection)>($r25, r58);
+
+        if $z3 == 0 goto label18;
+
+     label12:
+        $r26 = r48.<android.hardware.camera2.legacy.SurfaceTextureRenderer$EGLSurfaceHolder: android.view.Surface surface>;
+
+        $i11 = r48.<android.hardware.camera2.legacy.SurfaceTextureRenderer$EGLSurfaceHolder: int width>;
+
+        $i10 = r48.<android.hardware.camera2.legacy.SurfaceTextureRenderer$EGLSurfaceHolder: int height>;
+
+        staticinvoke <android.hardware.camera2.legacy.LegacyCameraDevice: void setSurfaceDimens(android.view.Surface,int,int)>($r26, $i11, $i10);
+
+        $r27 = r48.<android.hardware.camera2.legacy.SurfaceTextureRenderer$EGLSurfaceHolder: android.opengl.EGLSurface eglSurface>;
+
+        specialinvoke r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: void makeCurrent(android.opengl.EGLSurface)>($r27);
+
+        $r30 = r48.<android.hardware.camera2.legacy.SurfaceTextureRenderer$EGLSurfaceHolder: android.view.Surface surface>;
+
+        $r28 = r1.<android.util.Pair: java.lang.Object second>;
+
+        $r29 = (java.lang.Long) $r28;
+
+        $l12 = virtualinvoke $r29.<java.lang.Long: long longValue()>();
+
+        staticinvoke <android.hardware.camera2.legacy.LegacyCameraDevice: void setNextTimestamp(android.view.Surface,long)>($r30, $l12);
+
+        r49 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: android.graphics.SurfaceTexture mSurfaceTexture>;
+
+        i18 = r48.<android.hardware.camera2.legacy.SurfaceTextureRenderer$EGLSurfaceHolder: int width>;
+
+        i19 = r48.<android.hardware.camera2.legacy.SurfaceTextureRenderer$EGLSurfaceHolder: int height>;
+
+        $i13 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: int mFacing>;
+
+        if $i13 != 0 goto label14;
+
+     label13:
+        b20 = 1;
+
+        goto label15;
+
+     label14:
+        b20 = 0;
+
+     label15:
+        specialinvoke r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: void drawFrame(android.graphics.SurfaceTexture,int,int,int)>(r49, i18, i19, b20);
+
+        $r31 = r48.<android.hardware.camera2.legacy.SurfaceTextureRenderer$EGLSurfaceHolder: android.opengl.EGLSurface eglSurface>;
+
+        specialinvoke r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: boolean swapBuffers(android.opengl.EGLSurface)>($r31);
+
+     label16:
+        goto label18;
+
+     label17:
+        $r34 := @caughtexception;
+
+        $r35 = <android.hardware.camera2.legacy.SurfaceTextureRenderer: java.lang.String TAG>;
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String,java.lang.Throwable)>($r35, "Surface abandoned, dropping frame. ", $r34);
+
+        virtualinvoke r2.<android.hardware.camera2.legacy.RequestHolder: void setOutputAbandoned()>();
+
+     label18:
+        goto label11;
+
+     label19:
+        $r8 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: java.util.List mConversionSurfaces>;
+
+        r51 = interfaceinvoke $r8.<java.util.List: java.util.Iterator iterator()>();
+
+     label20:
+        $z1 = interfaceinvoke r51.<java.util.Iterator: boolean hasNext()>();
+
+        if $z1 == 0 goto label31;
+
+        $r10 = interfaceinvoke r51.<java.util.Iterator: java.lang.Object next()>();
+
+        r52 = (android.hardware.camera2.legacy.SurfaceTextureRenderer$EGLSurfaceHolder) $r10;
+
+        $r11 = r52.<android.hardware.camera2.legacy.SurfaceTextureRenderer$EGLSurfaceHolder: android.view.Surface surface>;
+
+        r59 = (java.util.Collection) r44;
+
+        $z2 = staticinvoke <android.hardware.camera2.legacy.LegacyCameraDevice: boolean containsSurfaceId(android.view.Surface,java.util.Collection)>($r11, r59);
+
+        if $z2 == 0 goto label30;
+
+     label21:
+        $r12 = r52.<android.hardware.camera2.legacy.SurfaceTextureRenderer$EGLSurfaceHolder: android.opengl.EGLSurface eglSurface>;
+
+        specialinvoke r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: void makeCurrent(android.opengl.EGLSurface)>($r12);
+
+        r53 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: android.graphics.SurfaceTexture mSurfaceTexture>;
+
+        i21 = r52.<android.hardware.camera2.legacy.SurfaceTextureRenderer$EGLSurfaceHolder: int width>;
+
+        i22 = r52.<android.hardware.camera2.legacy.SurfaceTextureRenderer$EGLSurfaceHolder: int height>;
+
+        $i2 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: int mFacing>;
+
+        if $i2 != 0 goto label23;
+
+     label22:
+        b23 = 3;
+
+        goto label24;
+
+     label23:
+        b23 = 2;
+
+     label24:
+        specialinvoke r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: void drawFrame(android.graphics.SurfaceTexture,int,int,int)>(r53, i21, i22, b23);
+
+     label25:
+        $r13 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: java.nio.ByteBuffer mPBufferPixels>;
+
+        virtualinvoke $r13.<java.nio.ByteBuffer: java.nio.Buffer clear()>();
+
+        $i4 = r52.<android.hardware.camera2.legacy.SurfaceTextureRenderer$EGLSurfaceHolder: int width>;
+
+        $i3 = r52.<android.hardware.camera2.legacy.SurfaceTextureRenderer$EGLSurfaceHolder: int height>;
+
+        $r15 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: java.nio.ByteBuffer mPBufferPixels>;
+
+        staticinvoke <android.opengl.GLES20: void glReadPixels(int,int,int,int,int,int,java.nio.Buffer)>(0, 0, $i4, $i3, 6408, 5121, $r15);
+
+        specialinvoke r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: void checkGlError(java.lang.String)>("glReadPixels");
+
+     label26:
+        $r16 = r52.<android.hardware.camera2.legacy.SurfaceTextureRenderer$EGLSurfaceHolder: android.view.Surface surface>;
+
+        i24 = staticinvoke <android.hardware.camera2.legacy.LegacyCameraDevice: int detectSurfaceType(android.view.Surface)>($r16);
+
+        $r17 = r52.<android.hardware.camera2.legacy.SurfaceTextureRenderer$EGLSurfaceHolder: android.view.Surface surface>;
+
+        $i6 = r52.<android.hardware.camera2.legacy.SurfaceTextureRenderer$EGLSurfaceHolder: int width>;
+
+        $i5 = r52.<android.hardware.camera2.legacy.SurfaceTextureRenderer$EGLSurfaceHolder: int height>;
+
+        staticinvoke <android.hardware.camera2.legacy.LegacyCameraDevice: void setSurfaceDimens(android.view.Surface,int,int)>($r17, $i6, $i5);
+
+        $r20 = r52.<android.hardware.camera2.legacy.SurfaceTextureRenderer$EGLSurfaceHolder: android.view.Surface surface>;
+
+        $r18 = r1.<android.util.Pair: java.lang.Object second>;
+
+        $r19 = (java.lang.Long) $r18;
+
+        $l7 = virtualinvoke $r19.<java.lang.Long: long longValue()>();
+
+        staticinvoke <android.hardware.camera2.legacy.LegacyCameraDevice: void setNextTimestamp(android.view.Surface,long)>($r20, $l7);
+
+        $r22 = r52.<android.hardware.camera2.legacy.SurfaceTextureRenderer$EGLSurfaceHolder: android.view.Surface surface>;
+
+        $r21 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: java.nio.ByteBuffer mPBufferPixels>;
+
+        $r23 = virtualinvoke $r21.<java.nio.ByteBuffer: byte[] array()>();
+
+        $i9 = r52.<android.hardware.camera2.legacy.SurfaceTextureRenderer$EGLSurfaceHolder: int width>;
+
+        $i8 = r52.<android.hardware.camera2.legacy.SurfaceTextureRenderer$EGLSurfaceHolder: int height>;
+
+        staticinvoke <android.hardware.camera2.legacy.LegacyCameraDevice: void produceFrame(android.view.Surface,byte[],int,int,int)>($r22, $r23, $i9, $i8, i24);
+
+     label27:
+        goto label30;
+
+     label28:
+        $r36 := @caughtexception;
+
+        $r37 = <android.hardware.camera2.legacy.SurfaceTextureRenderer: java.lang.String TAG>;
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String,java.lang.Throwable)>($r37, "Surface abandoned, dropping frame. ", $r36);
+
+        virtualinvoke r2.<android.hardware.camera2.legacy.RequestHolder: void setOutputAbandoned()>();
+
+        goto label30;
+
+     label29:
+        $r38 := @caughtexception;
+
+        r57 = new java.lang.IllegalStateException;
+
+        specialinvoke r57.<java.lang.IllegalStateException: void <init>(java.lang.String,java.lang.Throwable)>("Surface abandoned, skipping drawFrame...", $r38);
+
+        throw r57;
+
+     label30:
+        goto label20;
+
+     label31:
+        virtualinvoke r40.<android.hardware.camera2.legacy.CaptureCollector: android.hardware.camera2.legacy.RequestHolder previewProduced()>();
+
+        if z0 == 0 goto label32;
+
+        specialinvoke r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: void endGlTiming()>();
+
+     label32:
+        return;
+
+     label33:
+        return;
+
+        catch android.hardware.camera2.legacy.LegacyExceptionUtils$BufferQueueAbandonedException from label07 to label08 with label09;
+        catch android.hardware.camera2.legacy.LegacyExceptionUtils$BufferQueueAbandonedException from label12 to label13 with label17;
+        catch android.hardware.camera2.legacy.LegacyExceptionUtils$BufferQueueAbandonedException from label15 to label16 with label17;
+        catch android.hardware.camera2.legacy.LegacyExceptionUtils$BufferQueueAbandonedException from label21 to label22 with label29;
+        catch android.hardware.camera2.legacy.LegacyExceptionUtils$BufferQueueAbandonedException from label24 to label25 with label29;
+        catch android.hardware.camera2.legacy.LegacyExceptionUtils$BufferQueueAbandonedException from label26 to label27 with label28;
+    }
+
+    public void flush()
+    {
+        android.hardware.camera2.legacy.SurfaceTextureRenderer r0;
+        java.lang.String $r1;
+
+        r0 := @this: android.hardware.camera2.legacy.SurfaceTextureRenderer;
+
+        $r1 = <android.hardware.camera2.legacy.SurfaceTextureRenderer: java.lang.String TAG>;
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>($r1, "Flush not yet implemented.");
+
+        return;
+    }
+
+    public android.graphics.SurfaceTexture getSurfaceTexture()
+    {
+        android.hardware.camera2.legacy.SurfaceTextureRenderer r0;
+        android.graphics.SurfaceTexture $r1;
+
+        r0 := @this: android.hardware.camera2.legacy.SurfaceTextureRenderer;
+
+        $r1 = r0.<android.hardware.camera2.legacy.SurfaceTextureRenderer: android.graphics.SurfaceTexture mSurfaceTexture>;
+
+        return $r1;
+    }
+}

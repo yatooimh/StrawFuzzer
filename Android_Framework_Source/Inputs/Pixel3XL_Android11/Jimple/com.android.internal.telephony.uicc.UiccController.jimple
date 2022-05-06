@@ -1,0 +1,4305 @@
+public class com.android.internal.telephony.uicc.UiccController extends android.os.Handler
+{
+    public static final int APP_FAM_3GPP;
+    public static final int APP_FAM_3GPP2;
+    public static final int APP_FAM_IMS;
+    private static final java.lang.String CARD_STRINGS;
+    private static final boolean DBG;
+    private static final java.lang.String DEFAULT_CARD;
+    private static final int EID_LENGTH;
+    private static final int EVENT_EID_READY;
+    private static final int EVENT_GET_ICC_STATUS_DONE;
+    private static final int EVENT_GET_SLOT_STATUS_DONE;
+    private static final int EVENT_ICC_STATUS_CHANGED;
+    private static final int EVENT_MULTI_SIM_CONFIG_CHANGED;
+    private static final int EVENT_RADIO_AVAILABLE;
+    private static final int EVENT_RADIO_ON;
+    private static final int EVENT_RADIO_UNAVAILABLE;
+    private static final int EVENT_SIM_REFRESH;
+    private static final int EVENT_SLOT_STATUS_CHANGED;
+    public static final int INVALID_SLOT_ID;
+    private static final java.lang.String LOG_TAG;
+    private static final int TEMPORARILY_UNSUPPORTED_CARD_ID;
+    private static final boolean VDBG;
+    private static com.android.internal.telephony.uicc.UiccController mInstance;
+    private static final java.lang.Object mLock;
+    public static java.util.ArrayList sLastSlotStatus;
+    private static com.android.internal.telephony.LocalLog sLocalLog;
+    private java.util.ArrayList mCardStrings;
+    private com.android.internal.telephony.CommandsInterface[] mCis;
+    public android.content.Context mContext;
+    private int mDefaultEuiccCardId;
+    private final int[] mEuiccSlots;
+    private boolean mHasActiveBuiltInEuicc;
+    private boolean mHasBuiltInEuicc;
+    protected com.android.internal.telephony.RegistrantList mIccChangedRegistrants;
+    private boolean mIsSlotStatusSupported;
+    private com.android.internal.telephony.uicc.UiccStateChangedLauncher mLauncher;
+    private int[] mPhoneIdToSlotId;
+    private com.android.internal.telephony.RadioConfig mRadioConfig;
+    public com.android.internal.telephony.uicc.UiccSlot[] mUiccSlots;
+
+    static void <clinit>()
+    {
+        java.lang.Object $r0;
+        boolean $z0;
+        com.android.internal.telephony.LocalLog $r1;
+        short s0;
+
+        <com.android.internal.telephony.uicc.UiccController: boolean VDBG> = 0;
+
+        <com.android.internal.telephony.uicc.UiccController: int TEMPORARILY_UNSUPPORTED_CARD_ID> = -3;
+
+        <com.android.internal.telephony.uicc.UiccController: java.lang.String LOG_TAG> = "UiccController";
+
+        <com.android.internal.telephony.uicc.UiccController: int INVALID_SLOT_ID> = -1;
+
+        <com.android.internal.telephony.uicc.UiccController: int EVENT_SLOT_STATUS_CHANGED> = 2;
+
+        <com.android.internal.telephony.uicc.UiccController: int EVENT_SIM_REFRESH> = 8;
+
+        <com.android.internal.telephony.uicc.UiccController: int EVENT_RADIO_UNAVAILABLE> = 7;
+
+        <com.android.internal.telephony.uicc.UiccController: int EVENT_RADIO_ON> = 5;
+
+        <com.android.internal.telephony.uicc.UiccController: int EVENT_RADIO_AVAILABLE> = 6;
+
+        <com.android.internal.telephony.uicc.UiccController: int EVENT_MULTI_SIM_CONFIG_CHANGED> = 10;
+
+        <com.android.internal.telephony.uicc.UiccController: int EVENT_ICC_STATUS_CHANGED> = 1;
+
+        <com.android.internal.telephony.uicc.UiccController: int EVENT_GET_SLOT_STATUS_DONE> = 4;
+
+        <com.android.internal.telephony.uicc.UiccController: int EVENT_GET_ICC_STATUS_DONE> = 3;
+
+        <com.android.internal.telephony.uicc.UiccController: int EVENT_EID_READY> = 9;
+
+        <com.android.internal.telephony.uicc.UiccController: int EID_LENGTH> = 32;
+
+        <com.android.internal.telephony.uicc.UiccController: java.lang.String DEFAULT_CARD> = "default_card";
+
+        <com.android.internal.telephony.uicc.UiccController: boolean DBG> = 1;
+
+        <com.android.internal.telephony.uicc.UiccController: java.lang.String CARD_STRINGS> = "card_strings";
+
+        <com.android.internal.telephony.uicc.UiccController: int APP_FAM_IMS> = 3;
+
+        <com.android.internal.telephony.uicc.UiccController: int APP_FAM_3GPP2> = 2;
+
+        <com.android.internal.telephony.uicc.UiccController: int APP_FAM_3GPP> = 1;
+
+        $r0 = new java.lang.Object;
+
+        specialinvoke $r0.<java.lang.Object: void <init>()>();
+
+        <com.android.internal.telephony.uicc.UiccController: java.lang.Object mLock> = $r0;
+
+        $z0 = <com.android.internal.telephony.util.TelephonyUtils: boolean IS_DEBUGGABLE>;
+
+        if $z0 == 0 goto label1;
+
+        s0 = 250;
+
+        goto label2;
+
+     label1:
+        s0 = 100;
+
+     label2:
+        $r1 = new com.android.internal.telephony.LocalLog;
+
+        specialinvoke $r1.<com.android.internal.telephony.LocalLog: void <init>(int)>(s0);
+
+        <com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.LocalLog sLocalLog> = $r1;
+
+        return;
+    }
+
+    private void <init>(android.content.Context)
+    {
+        com.android.internal.telephony.uicc.UiccController r0;
+        android.content.Context r1, $r15, $r18;
+        int i0, $i1, $i2, i3, i4, i5, $i6;
+        com.android.internal.telephony.RegistrantList $r2;
+        com.android.internal.telephony.CommandsInterface[] $r3, $r14, $r23, $r26, $r29, $r32, r36, r39;
+        android.content.res.Resources $r4, $r19;
+        java.util.Optional $r5;
+        java.lang.Integer $r6, $r8, $r22, $r25, $r28, $r31, $r34;
+        java.lang.Object $r7;
+        java.lang.StringBuilder $r9;
+        java.lang.String $r12;
+        com.android.internal.telephony.uicc.UiccSlot[] $r13;
+        com.android.internal.telephony.uicc.UiccStateChangedLauncher $r16;
+        java.util.ArrayList $r17;
+        int[] $r20, r37;
+        boolean $z0, $z1;
+        com.android.internal.telephony.CommandsInterface $r21, $r24, $r27, $r30, $r33;
+        com.android.internal.telephony.RadioConfig r38;
+
+        r0 := @this: com.android.internal.telephony.uicc.UiccController;
+
+        r1 := @parameter0: android.content.Context;
+
+        specialinvoke r0.<android.os.Handler: void <init>()>();
+
+        r0.<com.android.internal.telephony.uicc.UiccController: boolean mIsSlotStatusSupported> = 1;
+
+        r0.<com.android.internal.telephony.uicc.UiccController: boolean mHasBuiltInEuicc> = 0;
+
+        r0.<com.android.internal.telephony.uicc.UiccController: boolean mHasActiveBuiltInEuicc> = 0;
+
+        $r2 = new com.android.internal.telephony.RegistrantList;
+
+        specialinvoke $r2.<com.android.internal.telephony.RegistrantList: void <init>()>();
+
+        r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.RegistrantList mIccChangedRegistrants> = $r2;
+
+        specialinvoke r0.<com.android.internal.telephony.uicc.UiccController: void log(java.lang.String)>("Creating UiccController");
+
+        r0.<com.android.internal.telephony.uicc.UiccController: android.content.Context mContext> = r1;
+
+        $r3 = staticinvoke <com.android.internal.telephony.PhoneFactory: com.android.internal.telephony.CommandsInterface[] getCommandsInterfaces()>();
+
+        r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.CommandsInterface[] mCis> = $r3;
+
+        $r4 = virtualinvoke r1.<android.content.Context: android.content.res.Resources getResources()>();
+
+        i3 = virtualinvoke $r4.<android.content.res.Resources: int getInteger(int)>(17694875);
+
+        $r5 = staticinvoke <android.internal.telephony.sysprop.TelephonyProperties: java.util.Optional sim_slots_count()>();
+
+        $r6 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i3);
+
+        $r7 = virtualinvoke $r5.<java.util.Optional: java.lang.Object orElse(java.lang.Object)>($r6);
+
+        $r8 = (java.lang.Integer) $r7;
+
+        i0 = virtualinvoke $r8.<java.lang.Integer: int intValue()>();
+
+        $r9 = new java.lang.StringBuilder;
+
+        specialinvoke $r9.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("config_num_physical_slots = ");
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r12 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.internal.telephony.uicc.UiccController: void logWithLocalLog(java.lang.String)>($r12);
+
+        r36 = r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.CommandsInterface[] mCis>;
+
+        i4 = i0;
+
+        $i1 = lengthof r36;
+
+        if i0 >= $i1 goto label1;
+
+        i4 = lengthof r36;
+
+     label1:
+        $r13 = newarray (com.android.internal.telephony.uicc.UiccSlot)[i4];
+
+        r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.uicc.UiccSlot[] mUiccSlots> = $r13;
+
+        $r14 = r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.CommandsInterface[] mCis>;
+
+        $i2 = lengthof $r14;
+
+        r37 = newarray (int)[$i2];
+
+        r0.<com.android.internal.telephony.uicc.UiccController: int[] mPhoneIdToSlotId> = r37;
+
+        staticinvoke <java.util.Arrays: void fill(int[],int)>(r37, -1);
+
+        $r15 = r0.<com.android.internal.telephony.uicc.UiccController: android.content.Context mContext>;
+
+        r38 = staticinvoke <com.android.internal.telephony.RadioConfig: com.android.internal.telephony.RadioConfig getInstance(android.content.Context)>($r15);
+
+        r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.RadioConfig mRadioConfig> = r38;
+
+        virtualinvoke r38.<com.android.internal.telephony.RadioConfig: void registerForSimSlotStatusChanged(android.os.Handler,int,java.lang.Object)>(r0, 2, null);
+
+        i5 = 0;
+
+     label2:
+        r39 = r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.CommandsInterface[] mCis>;
+
+        $i6 = lengthof r39;
+
+        if i5 >= $i6 goto label5;
+
+        $r21 = r39[i5];
+
+        $r22 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i5);
+
+        interfaceinvoke $r21.<com.android.internal.telephony.CommandsInterface: void registerForIccStatusChanged(android.os.Handler,int,java.lang.Object)>(r0, 1, $r22);
+
+        $z1 = staticinvoke <android.os.storage.StorageManager: boolean inCryptKeeperBounce()>();
+
+        if $z1 != 0 goto label3;
+
+        $r32 = r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.CommandsInterface[] mCis>;
+
+        $r33 = $r32[i5];
+
+        $r34 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i5);
+
+        interfaceinvoke $r33.<com.android.internal.telephony.CommandsInterface: void registerForAvailable(android.os.Handler,int,java.lang.Object)>(r0, 6, $r34);
+
+        goto label4;
+
+     label3:
+        $r23 = r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.CommandsInterface[] mCis>;
+
+        $r24 = $r23[i5];
+
+        $r25 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i5);
+
+        interfaceinvoke $r24.<com.android.internal.telephony.CommandsInterface: void registerForOn(android.os.Handler,int,java.lang.Object)>(r0, 5, $r25);
+
+     label4:
+        $r26 = r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.CommandsInterface[] mCis>;
+
+        $r27 = $r26[i5];
+
+        $r28 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i5);
+
+        interfaceinvoke $r27.<com.android.internal.telephony.CommandsInterface: void registerForNotAvailable(android.os.Handler,int,java.lang.Object)>(r0, 7, $r28);
+
+        $r29 = r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.CommandsInterface[] mCis>;
+
+        $r30 = $r29[i5];
+
+        $r31 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i5);
+
+        interfaceinvoke $r30.<com.android.internal.telephony.CommandsInterface: void registerForIccRefresh(android.os.Handler,int,java.lang.Object)>(r0, 8, $r31);
+
+        i5 = i5 + 1;
+
+        goto label2;
+
+     label5:
+        $r16 = new com.android.internal.telephony.uicc.UiccStateChangedLauncher;
+
+        specialinvoke $r16.<com.android.internal.telephony.uicc.UiccStateChangedLauncher: void <init>(android.content.Context,com.android.internal.telephony.uicc.UiccController)>(r1, r0);
+
+        r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.uicc.UiccStateChangedLauncher mLauncher> = $r16;
+
+        $r17 = specialinvoke r0.<com.android.internal.telephony.uicc.UiccController: java.util.ArrayList loadCardStrings()>();
+
+        r0.<com.android.internal.telephony.uicc.UiccController: java.util.ArrayList mCardStrings> = $r17;
+
+        r0.<com.android.internal.telephony.uicc.UiccController: int mDefaultEuiccCardId> = -2;
+
+        $r18 = r0.<com.android.internal.telephony.uicc.UiccController: android.content.Context mContext>;
+
+        $r19 = virtualinvoke $r18.<android.content.Context: android.content.res.Resources getResources()>();
+
+        $r20 = virtualinvoke $r19.<android.content.res.Resources: int[] getIntArray(int)>(17236112);
+
+        r0.<com.android.internal.telephony.uicc.UiccController: int[] mEuiccSlots> = $r20;
+
+        $z0 = specialinvoke r0.<com.android.internal.telephony.uicc.UiccController: boolean hasBuiltInEuicc()>();
+
+        r0.<com.android.internal.telephony.uicc.UiccController: boolean mHasBuiltInEuicc> = $z0;
+
+        staticinvoke <com.android.internal.telephony.PhoneConfigurationManager: void registerForMultiSimConfigChange(android.os.Handler,int,java.lang.Object)>(r0, 10, null);
+
+        return;
+    }
+
+    private void addCardId(java.lang.String)
+    {
+        com.android.internal.telephony.uicc.UiccController r0;
+        java.lang.String r1, r4;
+        boolean $z0, $z1;
+        int $i0;
+        java.util.ArrayList $r2, $r3;
+
+        r0 := @this: com.android.internal.telephony.uicc.UiccController;
+
+        r1 := @parameter0: java.lang.String;
+
+        $z0 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>(r1);
+
+        if $z0 == 0 goto label1;
+
+        return;
+
+     label1:
+        r4 = r1;
+
+        $i0 = virtualinvoke r1.<java.lang.String: int length()>();
+
+        if $i0 >= 32 goto label2;
+
+        r4 = staticinvoke <com.android.internal.telephony.uicc.IccUtils: java.lang.String stripTrailingFs(java.lang.String)>(r1);
+
+     label2:
+        $r2 = r0.<com.android.internal.telephony.uicc.UiccController: java.util.ArrayList mCardStrings>;
+
+        $z1 = virtualinvoke $r2.<java.util.ArrayList: boolean contains(java.lang.Object)>(r4);
+
+        if $z1 != 0 goto label3;
+
+        $r3 = r0.<com.android.internal.telephony.uicc.UiccController: java.util.ArrayList mCardStrings>;
+
+        virtualinvoke $r3.<java.util.ArrayList: boolean add(java.lang.Object)>(r4);
+
+        specialinvoke r0.<com.android.internal.telephony.uicc.UiccController: void saveCardStrings()>();
+
+     label3:
+        return;
+    }
+
+    public static void addLocalLog(java.lang.String)
+    {
+        java.lang.String r0;
+        com.android.internal.telephony.LocalLog $r1;
+
+        r0 := @parameter0: java.lang.String;
+
+        $r1 = <com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.LocalLog sLocalLog>;
+
+        virtualinvoke $r1.<com.android.internal.telephony.LocalLog: void log(java.lang.String)>(r0);
+
+        return;
+    }
+
+    private boolean eidIsNotSupported(com.android.internal.telephony.uicc.IccCardStatus)
+    {
+        com.android.internal.telephony.uicc.UiccController r0;
+        com.android.internal.telephony.uicc.IccCardStatus r1;
+        int $i0;
+        boolean z0;
+
+        r0 := @this: com.android.internal.telephony.uicc.UiccController;
+
+        r1 := @parameter0: com.android.internal.telephony.uicc.IccCardStatus;
+
+        $i0 = r1.<com.android.internal.telephony.uicc.IccCardStatus: int physicalSlotIndex>;
+
+        if $i0 != -1 goto label1;
+
+        z0 = 1;
+
+        goto label2;
+
+     label1:
+        z0 = 0;
+
+     label2:
+        return z0;
+    }
+
+    private static java.lang.String eventToString(int)
+    {
+        int i0;
+        java.lang.StringBuilder $r1;
+        java.lang.String $r5;
+
+        i0 := @parameter0: int;
+
+        tableswitch(i0)
+        {
+            case 1: goto label11;
+            case 2: goto label10;
+            case 3: goto label09;
+            case 4: goto label08;
+            case 5: goto label07;
+            case 6: goto label06;
+            case 7: goto label05;
+            case 8: goto label04;
+            case 9: goto label03;
+            case 10: goto label02;
+            default: goto label01;
+        };
+
+     label01:
+        $r1 = new java.lang.StringBuilder;
+
+        specialinvoke $r1.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("UNKNOWN(");
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(")");
+
+        $r5 = virtualinvoke $r1.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        return $r5;
+
+     label02:
+        return "MULTI_SIM_CONFIG_CHANGED";
+
+     label03:
+        return "EID_READY";
+
+     label04:
+        return "SIM_REFRESH";
+
+     label05:
+        return "RADIO_UNAVAILABLE";
+
+     label06:
+        return "RADIO_AVAILABLE";
+
+     label07:
+        return "RADIO_ON";
+
+     label08:
+        return "GET_SLOT_STATUS_DONE";
+
+     label09:
+        return "GET_ICC_STATUS_DONE";
+
+     label10:
+        return "SLOT_STATUS_CHANGED";
+
+     label11:
+        return "ICC_STATUS_CHANGED";
+    }
+
+    private java.lang.Integer getCiIndex(android.os.Message)
+    {
+        com.android.internal.telephony.uicc.UiccController r0;
+        java.lang.Integer $r2, r13;
+        java.lang.Object $r3, $r4, $r5, $r6, $r7, $r8, $r9, $r10, $r11;
+        boolean $z0, $z1, $z2;
+        android.os.Message r12;
+        android.os.AsyncResult r14;
+
+        r0 := @this: com.android.internal.telephony.uicc.UiccController;
+
+        r12 := @parameter0: android.os.Message;
+
+        $r2 = new java.lang.Integer;
+
+        specialinvoke $r2.<java.lang.Integer: void <init>(int)>(0);
+
+        r13 = $r2;
+
+        if r12 == null goto label2;
+
+        $r3 = r12.<android.os.Message: java.lang.Object obj>;
+
+        if $r3 == null goto label1;
+
+        $r10 = r12.<android.os.Message: java.lang.Object obj>;
+
+        $z2 = $r10 instanceof java.lang.Integer;
+
+        if $z2 == 0 goto label1;
+
+        $r11 = r12.<android.os.Message: java.lang.Object obj>;
+
+        r13 = (java.lang.Integer) $r11;
+
+        goto label2;
+
+     label1:
+        r13 = $r2;
+
+        $r4 = r12.<android.os.Message: java.lang.Object obj>;
+
+        if $r4 == null goto label2;
+
+        r13 = $r2;
+
+        $r5 = r12.<android.os.Message: java.lang.Object obj>;
+
+        $z0 = $r5 instanceof android.os.AsyncResult;
+
+        if $z0 == 0 goto label2;
+
+        $r6 = r12.<android.os.Message: java.lang.Object obj>;
+
+        r14 = (android.os.AsyncResult) $r6;
+
+        r13 = $r2;
+
+        $r7 = r14.<android.os.AsyncResult: java.lang.Object userObj>;
+
+        if $r7 == null goto label2;
+
+        r13 = $r2;
+
+        $r8 = r14.<android.os.AsyncResult: java.lang.Object userObj>;
+
+        $z1 = $r8 instanceof java.lang.Integer;
+
+        if $z1 == 0 goto label2;
+
+        $r9 = r14.<android.os.AsyncResult: java.lang.Object userObj>;
+
+        r13 = (java.lang.Integer) $r9;
+
+     label2:
+        return r13;
+    }
+
+    static java.lang.String getIccStateIntentString(com.android.internal.telephony.IccCardConstants$State)
+    {
+        com.android.internal.telephony.IccCardConstants$State r0;
+        int[] $r1;
+        int $i0, $i1;
+
+        r0 := @parameter0: com.android.internal.telephony.IccCardConstants$State;
+
+        $r1 = <com.android.internal.telephony.uicc.UiccController$1: int[] $SwitchMap$com$android$internal$telephony$IccCardConstants$State>;
+
+        $i0 = virtualinvoke r0.<com.android.internal.telephony.IccCardConstants$State: int ordinal()>();
+
+        $i1 = $r1[$i0];
+
+        tableswitch($i1)
+        {
+            case 1: goto label11;
+            case 2: goto label10;
+            case 3: goto label09;
+            case 4: goto label08;
+            case 5: goto label07;
+            case 6: goto label06;
+            case 7: goto label05;
+            case 8: goto label04;
+            case 9: goto label03;
+            case 10: goto label02;
+            default: goto label01;
+        };
+
+     label01:
+        return "UNKNOWN";
+
+     label02:
+        return "LOADED";
+
+     label03:
+        return "CARD_RESTRICTED";
+
+     label04:
+        return "CARD_IO_ERROR";
+
+     label05:
+        return "LOCKED";
+
+     label06:
+        return "NOT_READY";
+
+     label07:
+        return "READY";
+
+     label08:
+        return "LOCKED";
+
+     label09:
+        return "LOCKED";
+
+     label10:
+        return "LOCKED";
+
+     label11:
+        return "ABSENT";
+    }
+
+    public static com.android.internal.telephony.uicc.UiccController getInstance()
+    {
+        java.lang.Object r0;
+        com.android.internal.telephony.uicc.UiccController $r1, r3;
+        java.lang.Throwable $r2;
+        java.lang.RuntimeException r4;
+
+        r0 = <com.android.internal.telephony.uicc.UiccController: java.lang.Object mLock>;
+
+        entermonitor r0;
+
+     label1:
+        $r1 = <com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.uicc.UiccController mInstance>;
+
+        if $r1 == null goto label3;
+
+        r3 = <com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.uicc.UiccController mInstance>;
+
+        exitmonitor r0;
+
+     label2:
+        return r3;
+
+     label3:
+        r4 = new java.lang.RuntimeException;
+
+        specialinvoke r4.<java.lang.RuntimeException: void <init>(java.lang.String)>("UiccController.getInstance can\'t be called before make()");
+
+        throw r4;
+
+     label4:
+        $r2 := @caughtexception;
+
+     label5:
+        exitmonitor r0;
+
+     label6:
+        throw $r2;
+
+        catch java.lang.Throwable from label1 to label2 with label4;
+        catch java.lang.Throwable from label3 to label4 with label4;
+        catch java.lang.Throwable from label5 to label6 with label4;
+    }
+
+    private boolean hasBuiltInEuicc()
+    {
+        com.android.internal.telephony.uicc.UiccController r0;
+        int[] r1;
+        int $i0;
+        boolean z0;
+
+        r0 := @this: com.android.internal.telephony.uicc.UiccController;
+
+        r1 = r0.<com.android.internal.telephony.uicc.UiccController: int[] mEuiccSlots>;
+
+        if r1 == null goto label1;
+
+        $i0 = lengthof r1;
+
+        if $i0 <= 0 goto label1;
+
+        z0 = 1;
+
+        goto label2;
+
+     label1:
+        z0 = 0;
+
+     label2:
+        return z0;
+    }
+
+    private boolean isBuiltInEuiccSlot(int)
+    {
+        com.android.internal.telephony.uicc.UiccController r0;
+        int i0, i1, $i2, i3;
+        int[] r1;
+        boolean $z0;
+
+        r0 := @this: com.android.internal.telephony.uicc.UiccController;
+
+        i0 := @parameter0: int;
+
+        $z0 = r0.<com.android.internal.telephony.uicc.UiccController: boolean mHasBuiltInEuicc>;
+
+        if $z0 != 0 goto label1;
+
+        return 0;
+
+     label1:
+        r1 = r0.<com.android.internal.telephony.uicc.UiccController: int[] mEuiccSlots>;
+
+        i1 = lengthof r1;
+
+        i3 = 0;
+
+     label2:
+        if i3 >= i1 goto label4;
+
+        $i2 = r1[i3];
+
+        if $i2 != i0 goto label3;
+
+        return 1;
+
+     label3:
+        i3 = i3 + 1;
+
+        goto label2;
+
+     label4:
+        return 0;
+    }
+
+    public static boolean isCdmaSupported(android.content.Context)
+    {
+        boolean $z0;
+        android.content.Context r0;
+        android.content.pm.PackageManager r1;
+
+        r0 := @parameter0: android.content.Context;
+
+        r1 = virtualinvoke r0.<android.content.Context: android.content.pm.PackageManager getPackageManager()>();
+
+        $z0 = virtualinvoke r1.<android.content.pm.PackageManager: boolean hasSystemFeature(java.lang.String)>("android.hardware.telephony.cdma");
+
+        return $z0;
+    }
+
+    private boolean isValidPhoneIndex(int)
+    {
+        com.android.internal.telephony.uicc.UiccController r0;
+        int i0, $i1;
+        android.telephony.TelephonyManager $r1;
+        boolean z0;
+
+        r0 := @this: com.android.internal.telephony.uicc.UiccController;
+
+        i0 := @parameter0: int;
+
+        if i0 < 0 goto label1;
+
+        $r1 = staticinvoke <android.telephony.TelephonyManager: android.telephony.TelephonyManager getDefault()>();
+
+        $i1 = virtualinvoke $r1.<android.telephony.TelephonyManager: int getPhoneCount()>();
+
+        if i0 >= $i1 goto label1;
+
+        z0 = 1;
+
+        goto label2;
+
+     label1:
+        z0 = 0;
+
+     label2:
+        return z0;
+    }
+
+    private boolean isValidSlotIndex(int)
+    {
+        com.android.internal.telephony.uicc.UiccController r0;
+        int i0, $i1;
+        com.android.internal.telephony.uicc.UiccSlot[] $r1;
+        boolean z0;
+
+        r0 := @this: com.android.internal.telephony.uicc.UiccController;
+
+        i0 := @parameter0: int;
+
+        if i0 < 0 goto label1;
+
+        $r1 = r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.uicc.UiccSlot[] mUiccSlots>;
+
+        $i1 = lengthof $r1;
+
+        if i0 >= $i1 goto label1;
+
+        z0 = 1;
+
+        goto label2;
+
+     label1:
+        z0 = 0;
+
+     label2:
+        return z0;
+    }
+
+    private java.util.ArrayList loadCardStrings()
+    {
+        com.android.internal.telephony.uicc.UiccController r0;
+        java.lang.String r1;
+        android.content.Context $r2;
+        android.content.SharedPreferences $r3;
+        boolean $z0;
+        java.util.ArrayList $r4, $r7;
+        java.lang.String[] $r5;
+        java.util.List $r6;
+
+        r0 := @this: com.android.internal.telephony.uicc.UiccController;
+
+        $r2 = r0.<com.android.internal.telephony.uicc.UiccController: android.content.Context mContext>;
+
+        $r3 = staticinvoke <android.preference.PreferenceManager: android.content.SharedPreferences getDefaultSharedPreferences(android.content.Context)>($r2);
+
+        r1 = interfaceinvoke $r3.<android.content.SharedPreferences: java.lang.String getString(java.lang.String,java.lang.String)>("card_strings", "");
+
+        $z0 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>(r1);
+
+        if $z0 == 0 goto label1;
+
+        $r7 = new java.util.ArrayList;
+
+        specialinvoke $r7.<java.util.ArrayList: void <init>()>();
+
+        return $r7;
+
+     label1:
+        $r4 = new java.util.ArrayList;
+
+        $r5 = virtualinvoke r1.<java.lang.String: java.lang.String[] split(java.lang.String)>(",");
+
+        $r6 = staticinvoke <java.util.Arrays: java.util.List asList(java.lang.Object[])>($r5);
+
+        specialinvoke $r4.<java.util.ArrayList: void <init>(java.util.Collection)>($r6);
+
+        return $r4;
+    }
+
+    private void log(java.lang.String)
+    {
+        com.android.internal.telephony.uicc.UiccController r0;
+        java.lang.String r1;
+
+        r0 := @this: com.android.internal.telephony.uicc.UiccController;
+
+        r1 := @parameter0: java.lang.String;
+
+        staticinvoke <com.android.telephony.Rlog: int d(java.lang.String,java.lang.String)>("UiccController", r1);
+
+        return;
+    }
+
+    private void logPhoneIdToSlotIdMapping()
+    {
+        com.android.internal.telephony.uicc.UiccController r0;
+        int[] $r2, $r7;
+        int $i0, $i1, i2;
+        java.lang.StringBuilder $r3;
+        java.lang.String $r9;
+
+        r0 := @this: com.android.internal.telephony.uicc.UiccController;
+
+        specialinvoke r0.<com.android.internal.telephony.uicc.UiccController: void log(java.lang.String)>("mPhoneIdToSlotId mapping:");
+
+        i2 = 0;
+
+     label1:
+        $r2 = r0.<com.android.internal.telephony.uicc.UiccController: int[] mPhoneIdToSlotId>;
+
+        $i0 = lengthof $r2;
+
+        if i2 >= $i0 goto label2;
+
+        $r3 = new java.lang.StringBuilder;
+
+        specialinvoke $r3.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("    phoneId ");
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i2);
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" slotId ");
+
+        $r7 = r0.<com.android.internal.telephony.uicc.UiccController: int[] mPhoneIdToSlotId>;
+
+        $i1 = $r7[i2];
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i1);
+
+        $r9 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.internal.telephony.uicc.UiccController: void log(java.lang.String)>($r9);
+
+        i2 = i2 + 1;
+
+        goto label1;
+
+     label2:
+        return;
+    }
+
+    private void logWithLocalLog(java.lang.String)
+    {
+        com.android.internal.telephony.uicc.UiccController r0;
+        java.lang.String r1, $r7;
+        com.android.internal.telephony.LocalLog r2;
+        java.lang.StringBuilder $r4;
+
+        r0 := @this: com.android.internal.telephony.uicc.UiccController;
+
+        r1 := @parameter0: java.lang.String;
+
+        staticinvoke <com.android.telephony.Rlog: int d(java.lang.String,java.lang.String)>("UiccController", r1);
+
+        r2 = <com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.LocalLog sLocalLog>;
+
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("UiccController: ");
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r7 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r2.<com.android.internal.telephony.LocalLog: void log(java.lang.String)>($r7);
+
+        return;
+    }
+
+    private void logeWithLocalLog(java.lang.String)
+    {
+        com.android.internal.telephony.uicc.UiccController r0;
+        java.lang.String r1, $r7;
+        com.android.internal.telephony.LocalLog r2;
+        java.lang.StringBuilder $r4;
+
+        r0 := @this: com.android.internal.telephony.uicc.UiccController;
+
+        r1 := @parameter0: java.lang.String;
+
+        staticinvoke <com.android.telephony.Rlog: int e(java.lang.String,java.lang.String)>("UiccController", r1);
+
+        r2 = <com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.LocalLog sLocalLog>;
+
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("UiccController: ");
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r7 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r2.<com.android.internal.telephony.LocalLog: void log(java.lang.String)>($r7);
+
+        return;
+    }
+
+    public static com.android.internal.telephony.uicc.UiccController make(android.content.Context)
+    {
+        java.lang.Object r0;
+        com.android.internal.telephony.uicc.UiccController r1, $r2;
+        java.lang.Throwable $r3;
+        android.content.Context r4;
+        java.lang.RuntimeException r5;
+
+        r4 := @parameter0: android.content.Context;
+
+        r0 = <com.android.internal.telephony.uicc.UiccController: java.lang.Object mLock>;
+
+        entermonitor r0;
+
+     label1:
+        $r2 = <com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.uicc.UiccController mInstance>;
+
+        if $r2 != null goto label3;
+
+        r1 = new com.android.internal.telephony.uicc.UiccController;
+
+        specialinvoke r1.<com.android.internal.telephony.uicc.UiccController: void <init>(android.content.Context)>(r4);
+
+        <com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.uicc.UiccController mInstance> = r1;
+
+        exitmonitor r0;
+
+     label2:
+        return r1;
+
+     label3:
+        r5 = new java.lang.RuntimeException;
+
+        specialinvoke r5.<java.lang.RuntimeException: void <init>(java.lang.String)>("UiccController.make() should only be called once");
+
+        throw r5;
+
+     label4:
+        $r3 := @caughtexception;
+
+     label5:
+        exitmonitor r0;
+
+     label6:
+        throw $r3;
+
+        catch java.lang.Throwable from label1 to label2 with label4;
+        catch java.lang.Throwable from label3 to label4 with label4;
+        catch java.lang.Throwable from label5 to label6 with label4;
+    }
+
+    private void onEidReady(android.os.AsyncResult, java.lang.Integer)
+    {
+        com.android.internal.telephony.uicc.UiccController r0;
+        int i0, i1, $i2, $i3, $i4, $i5, $i6, $i7;
+        java.lang.Throwable $r1, $r35;
+        boolean $z0, $z1, $z2;
+        int[] $r2;
+        com.android.internal.telephony.uicc.UiccSlot[] $r3, $r6;
+        com.android.internal.telephony.uicc.UiccSlot $r4, $r7;
+        com.android.internal.telephony.uicc.UiccCard $r5;
+        java.lang.StringBuilder $r8, $r16, $r24, $r29, $r33;
+        java.lang.String $r15, $r23, $r28, $r32, $r37, r44;
+        android.os.AsyncResult r38;
+        java.lang.Integer r39;
+        com.android.internal.telephony.uicc.euicc.EuiccCard r42;
+
+        r0 := @this: com.android.internal.telephony.uicc.UiccController;
+
+        r38 := @parameter0: android.os.AsyncResult;
+
+        r39 := @parameter1: java.lang.Integer;
+
+        $r1 = r38.<android.os.AsyncResult: java.lang.Throwable exception>;
+
+        if $r1 == null goto label1;
+
+        $r33 = new java.lang.StringBuilder;
+
+        specialinvoke $r33.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r33.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("onEidReady: exception: ");
+
+        $r35 = r38.<android.os.AsyncResult: java.lang.Throwable exception>;
+
+        virtualinvoke $r33.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r35);
+
+        $r37 = virtualinvoke $r33.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.telephony.Rlog: int e(java.lang.String,java.lang.String)>("UiccController", $r37);
+
+        return;
+
+     label1:
+        $i2 = virtualinvoke r39.<java.lang.Integer: int intValue()>();
+
+        $z0 = specialinvoke r0.<com.android.internal.telephony.uicc.UiccController: boolean isValidPhoneIndex(int)>($i2);
+
+        if $z0 != 0 goto label2;
+
+        $r29 = new java.lang.StringBuilder;
+
+        specialinvoke $r29.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r29.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("onEidReady: invalid index: ");
+
+        virtualinvoke $r29.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r39);
+
+        $r32 = virtualinvoke $r29.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.telephony.Rlog: int e(java.lang.String,java.lang.String)>("UiccController", $r32);
+
+        return;
+
+     label2:
+        $r2 = r0.<com.android.internal.telephony.uicc.UiccController: int[] mPhoneIdToSlotId>;
+
+        $i3 = virtualinvoke r39.<java.lang.Integer: int intValue()>();
+
+        i0 = $r2[$i3];
+
+        $r3 = r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.uicc.UiccSlot[] mUiccSlots>;
+
+        $r4 = $r3[i0];
+
+        $r5 = virtualinvoke $r4.<com.android.internal.telephony.uicc.UiccSlot: com.android.internal.telephony.uicc.UiccCard getUiccCard()>();
+
+        r42 = (com.android.internal.telephony.uicc.euicc.EuiccCard) $r5;
+
+        if r42 != null goto label3;
+
+        $r24 = new java.lang.StringBuilder;
+
+        specialinvoke $r24.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r24.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("onEidReady: UiccCard in slot ");
+
+        virtualinvoke $r24.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        virtualinvoke $r24.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" is null");
+
+        $r28 = virtualinvoke $r24.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.telephony.Rlog: int e(java.lang.String,java.lang.String)>("UiccController", $r28);
+
+        return;
+
+     label3:
+        r44 = virtualinvoke r42.<com.android.internal.telephony.uicc.euicc.EuiccCard: java.lang.String getEid()>();
+
+        specialinvoke r0.<com.android.internal.telephony.uicc.UiccController: void addCardId(java.lang.String)>(r44);
+
+        i1 = r0.<com.android.internal.telephony.uicc.UiccController: int mDefaultEuiccCardId>;
+
+        if i1 == -2 goto label4;
+
+        if i1 != -3 goto label6;
+
+     label4:
+        $r6 = r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.uicc.UiccSlot[] mUiccSlots>;
+
+        $r7 = $r6[i0];
+
+        $z1 = virtualinvoke $r7.<com.android.internal.telephony.uicc.UiccSlot: boolean isRemovable()>();
+
+        if $z1 != 0 goto label5;
+
+        $i6 = virtualinvoke r0.<com.android.internal.telephony.uicc.UiccController: int convertToPublicCardId(java.lang.String)>(r44);
+
+        r0.<com.android.internal.telephony.uicc.UiccController: int mDefaultEuiccCardId> = $i6;
+
+        $r16 = new java.lang.StringBuilder;
+
+        specialinvoke $r16.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r16.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("onEidReady: eid=");
+
+        virtualinvoke $r16.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r44);
+
+        virtualinvoke $r16.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" slot=");
+
+        virtualinvoke $r16.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        virtualinvoke $r16.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" mDefaultEuiccCardId=");
+
+        $i7 = r0.<com.android.internal.telephony.uicc.UiccController: int mDefaultEuiccCardId>;
+
+        virtualinvoke $r16.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i7);
+
+        $r23 = virtualinvoke $r16.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.internal.telephony.uicc.UiccController: void logWithLocalLog(java.lang.String)>($r23);
+
+        goto label6;
+
+     label5:
+        $z2 = r0.<com.android.internal.telephony.uicc.UiccController: boolean mHasActiveBuiltInEuicc>;
+
+        if $z2 != 0 goto label6;
+
+        $i4 = virtualinvoke r0.<com.android.internal.telephony.uicc.UiccController: int convertToPublicCardId(java.lang.String)>(r44);
+
+        r0.<com.android.internal.telephony.uicc.UiccController: int mDefaultEuiccCardId> = $i4;
+
+        $r8 = new java.lang.StringBuilder;
+
+        specialinvoke $r8.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("onEidReady: eid=");
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r44);
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" from removable eUICC in slot=");
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" mDefaultEuiccCardId=");
+
+        $i5 = r0.<com.android.internal.telephony.uicc.UiccController: int mDefaultEuiccCardId>;
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i5);
+
+        $r15 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.internal.telephony.uicc.UiccController: void logWithLocalLog(java.lang.String)>($r15);
+
+     label6:
+        virtualinvoke r42.<com.android.internal.telephony.uicc.euicc.EuiccCard: void unregisterForEidReady(android.os.Handler)>(r0);
+
+        return;
+    }
+
+    private void onGetIccCardStatusDone(android.os.AsyncResult, java.lang.Integer)
+    {
+        com.android.internal.telephony.uicc.UiccController r0;
+        java.lang.Integer r1;
+        int i0, $i1, $i2, $i3, $i4, $i5, $i6, $i7, $i8, $i9, i12;
+        com.android.internal.telephony.uicc.UiccSlot r2, $r12, $r14, $r18, $r20;
+        boolean z0, $z1, $z2;
+        java.lang.Throwable $r3, $r38, $r39;
+        java.lang.Object $r4;
+        java.lang.String $r9, $r27, $r33, $r37, r49;
+        int[] $r10;
+        com.android.internal.telephony.uicc.UiccSlot[] $r11, $r13, $r17, $r19, r44;
+        com.android.internal.telephony.CommandsInterface[] $r15;
+        com.android.internal.telephony.CommandsInterface $r16;
+        com.android.internal.telephony.uicc.euicc.EuiccCard $r28, $r29;
+        android.content.Context $r34;
+        android.os.AsyncResult r40, r48, r52;
+        java.lang.StringBuilder r41, r43, r46, r50;
+        com.android.internal.telephony.uicc.IccCardStatus r42;
+        com.android.internal.telephony.uicc.UiccCard r45;
+        com.android.internal.telephony.RegistrantList r47, r51;
+
+        r0 := @this: com.android.internal.telephony.uicc.UiccController;
+
+        r40 := @parameter0: android.os.AsyncResult;
+
+        r1 := @parameter1: java.lang.Integer;
+
+        entermonitor r0;
+
+     label01:
+        $r3 = r40.<android.os.AsyncResult: java.lang.Throwable exception>;
+
+        if $r3 == null goto label03;
+
+        $r38 = r40.<android.os.AsyncResult: java.lang.Throwable exception>;
+
+        staticinvoke <com.android.telephony.Rlog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("UiccController", "Error getting ICC status. RIL_REQUEST_GET_ICC_STATUS should never return an error", $r38);
+
+     label02:
+        exitmonitor r0;
+
+        return;
+
+     label03:
+        $i1 = virtualinvoke r1.<java.lang.Integer: int intValue()>();
+
+        $z1 = specialinvoke r0.<com.android.internal.telephony.uicc.UiccController: boolean isValidPhoneIndex(int)>($i1);
+
+        if $z1 != 0 goto label05;
+
+        r41 = new java.lang.StringBuilder;
+
+        specialinvoke r41.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r41.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("onGetIccCardStatusDone: invalid index : ");
+
+        virtualinvoke r41.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r1);
+
+        $r37 = virtualinvoke r41.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.telephony.Rlog: int e(java.lang.String,java.lang.String)>("UiccController", $r37);
+
+     label04:
+        exitmonitor r0;
+
+        return;
+
+     label05:
+        $r4 = r40.<android.os.AsyncResult: java.lang.Object result>;
+
+        r42 = (com.android.internal.telephony.uicc.IccCardStatus) $r4;
+
+        r43 = new java.lang.StringBuilder;
+
+        specialinvoke r43.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r43.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("onGetIccCardStatusDone: phoneId ");
+
+        virtualinvoke r43.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r1);
+
+        virtualinvoke r43.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" IccCardStatus: ");
+
+        virtualinvoke r43.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r42);
+
+        $r9 = virtualinvoke r43.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.internal.telephony.uicc.UiccController: void logWithLocalLog(java.lang.String)>($r9);
+
+        i0 = r42.<com.android.internal.telephony.uicc.IccCardStatus: int physicalSlotIndex>;
+
+     label06:
+        i12 = i0;
+
+        if i0 != -1 goto label08;
+
+     label07:
+        i12 = virtualinvoke r1.<java.lang.Integer: int intValue()>();
+
+     label08:
+        $z2 = specialinvoke r0.<com.android.internal.telephony.uicc.UiccController: boolean eidIsNotSupported(com.android.internal.telephony.uicc.IccCardStatus)>(r42);
+
+        if $z2 == 0 goto label09;
+
+        specialinvoke r0.<com.android.internal.telephony.uicc.UiccController: void log(java.lang.String)>("eid is not supported");
+
+        r0.<com.android.internal.telephony.uicc.UiccController: int mDefaultEuiccCardId> = -1;
+
+     label09:
+        $r10 = r0.<com.android.internal.telephony.uicc.UiccController: int[] mPhoneIdToSlotId>;
+
+        $i2 = virtualinvoke r1.<java.lang.Integer: int intValue()>();
+
+        $r10[$i2] = i12;
+
+        $r11 = r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.uicc.UiccSlot[] mUiccSlots>;
+
+        $r12 = $r11[i12];
+
+        if $r12 != null goto label11;
+
+        r44 = r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.uicc.UiccSlot[] mUiccSlots>;
+
+        r2 = new com.android.internal.telephony.uicc.UiccSlot;
+
+        $r34 = r0.<com.android.internal.telephony.uicc.UiccController: android.content.Context mContext>;
+
+        specialinvoke r2.<com.android.internal.telephony.uicc.UiccSlot: void <init>(android.content.Context,boolean)>($r34, 1);
+
+     label10:
+        r44[i12] = r2;
+
+     label11:
+        $r13 = r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.uicc.UiccSlot[] mUiccSlots>;
+
+        $r14 = $r13[i12];
+
+        $r15 = r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.CommandsInterface[] mCis>;
+
+        $i3 = virtualinvoke r1.<java.lang.Integer: int intValue()>();
+
+        $r16 = $r15[$i3];
+
+        $i4 = virtualinvoke r1.<java.lang.Integer: int intValue()>();
+
+        virtualinvoke $r14.<com.android.internal.telephony.uicc.UiccSlot: void update(com.android.internal.telephony.CommandsInterface,com.android.internal.telephony.uicc.IccCardStatus,int,int)>($r16, r42, $i4, i12);
+
+        $r17 = r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.uicc.UiccSlot[] mUiccSlots>;
+
+        $r18 = $r17[i12];
+
+        r45 = virtualinvoke $r18.<com.android.internal.telephony.uicc.UiccSlot: com.android.internal.telephony.uicc.UiccCard getUiccCard()>();
+
+     label12:
+        if r45 != null goto label15;
+
+     label13:
+        r46 = new java.lang.StringBuilder;
+
+        specialinvoke r46.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r46.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("mUiccSlots[");
+
+        virtualinvoke r46.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i12);
+
+        virtualinvoke r46.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("] has no card. Notifying IccChangedRegistrants");
+
+        $r33 = virtualinvoke r46.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.internal.telephony.uicc.UiccController: void log(java.lang.String)>($r33);
+
+        r47 = r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.RegistrantList mIccChangedRegistrants>;
+
+        r48 = new android.os.AsyncResult;
+
+        specialinvoke r48.<android.os.AsyncResult: void <init>(java.lang.Object,java.lang.Object,java.lang.Throwable)>(null, r1, null);
+
+        virtualinvoke r47.<com.android.internal.telephony.RegistrantList: void notifyRegistrants(android.os.AsyncResult)>(r48);
+
+     label14:
+        exitmonitor r0;
+
+        return;
+
+     label15:
+        $r19 = r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.uicc.UiccSlot[] mUiccSlots>;
+
+        $r20 = $r19[i12];
+
+        z0 = virtualinvoke $r20.<com.android.internal.telephony.uicc.UiccSlot: boolean isEuicc()>();
+
+     label16:
+        if z0 == 0 goto label19;
+
+     label17:
+        $r29 = (com.android.internal.telephony.uicc.euicc.EuiccCard) r45;
+
+        r49 = virtualinvoke $r29.<com.android.internal.telephony.uicc.euicc.EuiccCard: java.lang.String getEid()>();
+
+     label18:
+        goto label20;
+
+     label19:
+        r49 = virtualinvoke r45.<com.android.internal.telephony.uicc.UiccCard: java.lang.String getIccId()>();
+
+     label20:
+        if r49 == null goto label22;
+
+     label21:
+        specialinvoke r0.<com.android.internal.telephony.uicc.UiccController: void addCardId(java.lang.String)>(r49);
+
+     label22:
+        if z0 == 0 goto label29;
+
+     label23:
+        $i5 = r0.<com.android.internal.telephony.uicc.UiccController: int mDefaultEuiccCardId>;
+
+        if $i5 == -1 goto label29;
+
+     label24:
+        if r49 != null goto label27;
+
+     label25:
+        $r28 = (com.android.internal.telephony.uicc.euicc.EuiccCard) r45;
+
+        virtualinvoke $r28.<com.android.internal.telephony.uicc.euicc.EuiccCard: void registerForEidReady(android.os.Handler,int,java.lang.Object)>(r0, 9, r1);
+
+     label26:
+        goto label29;
+
+     label27:
+        $i6 = r0.<com.android.internal.telephony.uicc.UiccController: int mDefaultEuiccCardId>;
+
+        if $i6 == -2 goto label28;
+
+        $i9 = r0.<com.android.internal.telephony.uicc.UiccController: int mDefaultEuiccCardId>;
+
+        if $i9 != -3 goto label29;
+
+     label28:
+        $i7 = virtualinvoke r0.<com.android.internal.telephony.uicc.UiccController: int convertToPublicCardId(java.lang.String)>(r49);
+
+        r0.<com.android.internal.telephony.uicc.UiccController: int mDefaultEuiccCardId> = $i7;
+
+        r50 = new java.lang.StringBuilder;
+
+        specialinvoke r50.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r50.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("IccCardStatus eid=");
+
+        virtualinvoke r50.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r49);
+
+        virtualinvoke r50.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" slot=");
+
+        virtualinvoke r50.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i12);
+
+        virtualinvoke r50.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" mDefaultEuiccCardId=");
+
+        $i8 = r0.<com.android.internal.telephony.uicc.UiccController: int mDefaultEuiccCardId>;
+
+        virtualinvoke r50.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i8);
+
+        $r27 = virtualinvoke r50.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.internal.telephony.uicc.UiccController: void logWithLocalLog(java.lang.String)>($r27);
+
+     label29:
+        specialinvoke r0.<com.android.internal.telephony.uicc.UiccController: void log(java.lang.String)>("Notifying IccChangedRegistrants");
+
+        r51 = r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.RegistrantList mIccChangedRegistrants>;
+
+        r52 = new android.os.AsyncResult;
+
+        specialinvoke r52.<android.os.AsyncResult: void <init>(java.lang.Object,java.lang.Object,java.lang.Throwable)>(null, r1, null);
+
+        virtualinvoke r51.<com.android.internal.telephony.RegistrantList: void notifyRegistrants(android.os.AsyncResult)>(r52);
+
+     label30:
+        exitmonitor r0;
+
+        return;
+
+     label31:
+        $r39 := @caughtexception;
+
+        exitmonitor r0;
+
+        throw $r39;
+
+        catch java.lang.Throwable from label01 to label02 with label31;
+        catch java.lang.Throwable from label03 to label04 with label31;
+        catch java.lang.Throwable from label05 to label06 with label31;
+        catch java.lang.Throwable from label07 to label08 with label31;
+        catch java.lang.Throwable from label08 to label09 with label31;
+        catch java.lang.Throwable from label09 to label10 with label31;
+        catch java.lang.Throwable from label11 to label12 with label31;
+        catch java.lang.Throwable from label13 to label14 with label31;
+        catch java.lang.Throwable from label15 to label16 with label31;
+        catch java.lang.Throwable from label17 to label18 with label31;
+        catch java.lang.Throwable from label19 to label20 with label31;
+        catch java.lang.Throwable from label21 to label22 with label31;
+        catch java.lang.Throwable from label23 to label24 with label31;
+        catch java.lang.Throwable from label25 to label26 with label31;
+        catch java.lang.Throwable from label27 to label28 with label31;
+        catch java.lang.Throwable from label28 to label29 with label31;
+        catch java.lang.Throwable from label29 to label30 with label31;
+    }
+
+    private void onGetSlotStatusDone(android.os.AsyncResult)
+    {
+        com.android.internal.telephony.uicc.UiccController r0;
+        boolean z0, $z1, $z2, $z3, $z5, $z6, $z7, $z8, $z9, $z10, $z11, z12, z13, z14, z15, z16, z17, $z18, $z20, z21, z22, $z23, z24;
+        java.lang.Object $r1, $r22, $r33, $r42;
+        java.lang.String $r4, $r13, $r20, $r26, $r29, $r30, $r41, $r54, $r65, $r71, $r76, r97, r99, r101;
+        com.android.internal.telephony.uicc.UiccSlot[] $r5, $r31, $r45, $r46, $r56, $r69, $r72, $r89, r91, $r95, r102;
+        int $i0, $i1, $i3, $i4, $i5, $i6, $i7, $i8, $i9, $i10, $i11, $i12, $i13, $i14, $i16, i17, i18, i19, i20, i21, i22, i23, i24, $i25, i26, i27, i28;
+        android.content.Context $r7, $r58;
+        android.os.Bundle $r8;
+        java.lang.Integer $r9, $r14;
+        int[] $r18, $r59, $r105, r108;
+        java.util.ArrayList $r21, r84;
+        com.android.internal.telephony.uicc.UiccCard $r27, $r28;
+        com.android.internal.telephony.uicc.UiccSlot $r32, $r47, $r57, $r90, r92, r94, $r96, r103;
+        com.android.internal.telephony.uicc.IccSlotStatus $r34, r87;
+        com.android.internal.telephony.uicc.IccSlotStatus$SlotState $r43, $r44;
+        com.android.internal.telephony.CommandsInterface[] $r55;
+        java.lang.Throwable $r74, $r80, r82;
+        com.android.internal.telephony.CommandException $r77;
+        com.android.internal.telephony.CommandException$Error $r78, $r79;
+        android.os.AsyncResult r81;
+        java.lang.StringBuilder r83, r85, r86, r88, r98, r100, r104, r106, r110;
+        com.android.internal.telephony.CommandsInterface r93;
+        java.util.HashSet r107;
+        java.lang.RuntimeException r109;
+        android.app.BroadcastOptions r111;
+        android.content.Intent r112;
+
+        r0 := @this: com.android.internal.telephony.uicc.UiccController;
+
+        r81 := @parameter0: android.os.AsyncResult;
+
+        entermonitor r0;
+
+     label01:
+        z12 = r0.<com.android.internal.telephony.uicc.UiccController: boolean mIsSlotStatusSupported>;
+
+     label02:
+        if z12 != 0 goto label03;
+
+        exitmonitor r0;
+
+        return;
+
+     label03:
+        r82 = r81.<android.os.AsyncResult: java.lang.Throwable exception>;
+
+     label04:
+        if r82 == null goto label11;
+
+     label05:
+        $z11 = r82 instanceof com.android.internal.telephony.CommandException;
+
+        if $z11 == 0 goto label09;
+
+        $r77 = (com.android.internal.telephony.CommandException) r82;
+
+        $r78 = virtualinvoke $r77.<com.android.internal.telephony.CommandException: com.android.internal.telephony.CommandException$Error getCommandError()>();
+
+        $r79 = <com.android.internal.telephony.CommandException$Error: com.android.internal.telephony.CommandException$Error REQUEST_NOT_SUPPORTED>;
+
+        if $r78 == $r79 goto label07;
+
+     label06:
+        goto label09;
+
+     label07:
+        specialinvoke r0.<com.android.internal.telephony.uicc.UiccController: void logWithLocalLog(java.lang.String)>("onGetSlotStatusDone: request not supported; marking mIsSlotStatusSupported to false");
+
+        r0.<com.android.internal.telephony.uicc.UiccController: boolean mIsSlotStatusSupported> = 0;
+
+     label08:
+        goto label10;
+
+     label09:
+        r83 = new java.lang.StringBuilder;
+
+        specialinvoke r83.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r83.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Unexpected error getting slot status: ");
+
+        $r74 = r81.<android.os.AsyncResult: java.lang.Throwable exception>;
+
+        virtualinvoke r83.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r74);
+
+        $r76 = virtualinvoke r83.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.internal.telephony.uicc.UiccController: void logeWithLocalLog(java.lang.String)>($r76);
+
+     label10:
+        exitmonitor r0;
+
+        return;
+
+     label11:
+        $r1 = r81.<android.os.AsyncResult: java.lang.Object result>;
+
+        r84 = (java.util.ArrayList) $r1;
+
+        $z1 = specialinvoke r0.<com.android.internal.telephony.uicc.UiccController: boolean slotStatusChanged(java.util.ArrayList)>(r84);
+
+        if $z1 != 0 goto label13;
+
+        specialinvoke r0.<com.android.internal.telephony.uicc.UiccController: void log(java.lang.String)>("onGetSlotStatusDone: No change in slot status");
+
+     label12:
+        exitmonitor r0;
+
+        return;
+
+     label13:
+        r85 = new java.lang.StringBuilder;
+
+        specialinvoke r85.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r85.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("onGetSlotStatusDone: ");
+
+        virtualinvoke r85.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r84);
+
+        $r4 = virtualinvoke r85.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.internal.telephony.uicc.UiccController: void logWithLocalLog(java.lang.String)>($r4);
+
+        <com.android.internal.telephony.uicc.UiccController: java.util.ArrayList sLastSlotStatus> = r84;
+
+     label14:
+        i17 = 0;
+
+        z13 = 0;
+
+        z14 = 0;
+
+     label15:
+        r0.<com.android.internal.telephony.uicc.UiccController: boolean mHasActiveBuiltInEuicc> = 0;
+
+        i18 = virtualinvoke r84.<java.util.ArrayList: int size()>();
+
+     label16:
+        i19 = i18;
+
+     label17:
+        $r5 = r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.uicc.UiccSlot[] mUiccSlots>;
+
+        $i0 = lengthof $r5;
+
+        if $i0 >= i18 goto label18;
+
+        r86 = new java.lang.StringBuilder;
+
+        specialinvoke r86.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r86.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("The number of the physical slots reported ");
+
+        virtualinvoke r86.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i18);
+
+        virtualinvoke r86.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" is greater than the expectation ");
+
+        $r69 = r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.uicc.UiccSlot[] mUiccSlots>;
+
+        $i16 = lengthof $r69;
+
+        virtualinvoke r86.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i16);
+
+        $r71 = virtualinvoke r86.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.internal.telephony.uicc.UiccController: void logeWithLocalLog(java.lang.String)>($r71);
+
+        $r72 = r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.uicc.UiccSlot[] mUiccSlots>;
+
+        i19 = lengthof $r72;
+
+     label18:
+        i20 = 0;
+
+     label19:
+        if i20 >= i19 goto label51;
+
+     label20:
+        $r42 = virtualinvoke r84.<java.util.ArrayList: java.lang.Object get(int)>(i20);
+
+        r87 = (com.android.internal.telephony.uicc.IccSlotStatus) $r42;
+
+        $r44 = r87.<com.android.internal.telephony.uicc.IccSlotStatus: com.android.internal.telephony.uicc.IccSlotStatus$SlotState slotState>;
+
+        $r43 = <com.android.internal.telephony.uicc.IccSlotStatus$SlotState: com.android.internal.telephony.uicc.IccSlotStatus$SlotState SLOTSTATE_ACTIVE>;
+
+        if $r44 != $r43 goto label22;
+
+     label21:
+        z15 = 1;
+
+        goto label23;
+
+     label22:
+        z15 = 0;
+
+     label23:
+        i21 = i17;
+
+        if z15 == 0 goto label27;
+
+        i21 = i17 + 1;
+
+     label24:
+        $i12 = r87.<com.android.internal.telephony.uicc.IccSlotStatus: int logicalSlotIndex>;
+
+        $z10 = specialinvoke r0.<com.android.internal.telephony.uicc.UiccController: boolean isValidPhoneIndex(int)>($i12);
+
+        if $z10 != 0 goto label26;
+
+        r88 = new java.lang.StringBuilder;
+
+        specialinvoke r88.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r88.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Skipping slot ");
+
+        virtualinvoke r88.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i20);
+
+        virtualinvoke r88.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" as phone ");
+
+        $i14 = r87.<com.android.internal.telephony.uicc.IccSlotStatus: int logicalSlotIndex>;
+
+        virtualinvoke r88.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i14);
+
+        virtualinvoke r88.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" is not available to communicate with this slot");
+
+        $r65 = virtualinvoke r88.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.telephony.Rlog: int e(java.lang.String,java.lang.String)>("UiccController", $r65);
+
+     label25:
+        goto label27;
+
+     label26:
+        $r59 = r0.<com.android.internal.telephony.uicc.UiccController: int[] mPhoneIdToSlotId>;
+
+        $i13 = r87.<com.android.internal.telephony.uicc.IccSlotStatus: int logicalSlotIndex>;
+
+        $r59[$i13] = i20;
+
+     label27:
+        $r89 = r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.uicc.UiccSlot[] mUiccSlots>;
+
+        $r90 = $r89[i20];
+
+        if $r90 != null goto label29;
+
+        r91 = r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.uicc.UiccSlot[] mUiccSlots>;
+
+        r92 = new com.android.internal.telephony.uicc.UiccSlot;
+
+        $r58 = r0.<com.android.internal.telephony.uicc.UiccController: android.content.Context mContext>;
+
+        specialinvoke r92.<com.android.internal.telephony.uicc.UiccSlot: void <init>(android.content.Context,boolean)>($r58, z15);
+
+     label28:
+        r91[i20] = r92;
+
+     label29:
+        $i8 = r87.<com.android.internal.telephony.uicc.IccSlotStatus: int logicalSlotIndex>;
+
+        z0 = specialinvoke r0.<com.android.internal.telephony.uicc.UiccController: boolean isValidPhoneIndex(int)>($i8);
+
+     label30:
+        r93 = null;
+
+        if z0 != 0 goto label33;
+
+     label31:
+        $r56 = r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.uicc.UiccSlot[] mUiccSlots>;
+
+        $r57 = $r56[i20];
+
+        virtualinvoke $r57.<com.android.internal.telephony.uicc.UiccSlot: void update(com.android.internal.telephony.CommandsInterface,com.android.internal.telephony.uicc.IccSlotStatus,int)>(null, r87, i20);
+
+     label32:
+        goto label37;
+
+     label33:
+        $r45 = r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.uicc.UiccSlot[] mUiccSlots>;
+
+        r94 = $r45[i20];
+
+     label34:
+        if z15 == 0 goto label36;
+
+     label35:
+        $r55 = r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.CommandsInterface[] mCis>;
+
+        $i11 = r87.<com.android.internal.telephony.uicc.IccSlotStatus: int logicalSlotIndex>;
+
+        r93 = $r55[$i11];
+
+     label36:
+        virtualinvoke r94.<com.android.internal.telephony.uicc.UiccSlot: void update(com.android.internal.telephony.CommandsInterface,com.android.internal.telephony.uicc.IccSlotStatus,int)>(r93, r87, i20);
+
+     label37:
+        z16 = z13;
+
+        z17 = z14;
+
+     label38:
+        $r95 = r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.uicc.UiccSlot[] mUiccSlots>;
+
+        $r96 = $r95[i20];
+
+        $z18 = virtualinvoke $r96.<com.android.internal.telephony.uicc.UiccSlot: boolean isEuicc()>();
+
+        if $z18 == 0 goto label50;
+
+     label39:
+        if z15 == 0 goto label42;
+
+        z14 = 1;
+
+     label40:
+        $z9 = specialinvoke r0.<com.android.internal.telephony.uicc.UiccController: boolean isBuiltInEuiccSlot(int)>(i20);
+
+        if $z9 == 0 goto label42;
+
+        r0.<com.android.internal.telephony.uicc.UiccController: boolean mHasActiveBuiltInEuicc> = 1;
+
+     label41:
+        z14 = 1;
+
+     label42:
+        r97 = r87.<com.android.internal.telephony.uicc.IccSlotStatus: java.lang.String eid>;
+
+        $z20 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>(r97);
+
+        if $z20 == 0 goto label44;
+
+     label43:
+        z16 = z13;
+
+        z17 = z14;
+
+        goto label50;
+
+     label44:
+        specialinvoke r0.<com.android.internal.telephony.uicc.UiccController: void addCardId(java.lang.String)>(r97);
+
+     label45:
+        z16 = z13;
+
+        z17 = z14;
+
+     label46:
+        $r46 = r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.uicc.UiccSlot[] mUiccSlots>;
+
+        $r47 = $r46[i20];
+
+        $z8 = virtualinvoke $r47.<com.android.internal.telephony.uicc.UiccSlot: boolean isRemovable()>();
+
+        if $z8 != 0 goto label50;
+
+     label47:
+        z16 = z13;
+
+        z17 = z14;
+
+        if z13 != 0 goto label50;
+
+        z16 = 1;
+
+     label48:
+        $i9 = virtualinvoke r0.<com.android.internal.telephony.uicc.UiccController: int convertToPublicCardId(java.lang.String)>(r97);
+
+        r0.<com.android.internal.telephony.uicc.UiccController: int mDefaultEuiccCardId> = $i9;
+
+        r98 = new java.lang.StringBuilder;
+
+        specialinvoke r98.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r98.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Using eid=");
+
+        virtualinvoke r98.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r97);
+
+        virtualinvoke r98.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" in slot=");
+
+        virtualinvoke r98.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i20);
+
+        virtualinvoke r98.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" to set mDefaultEuiccCardId=");
+
+        $i10 = r0.<com.android.internal.telephony.uicc.UiccController: int mDefaultEuiccCardId>;
+
+        virtualinvoke r98.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i10);
+
+        $r54 = virtualinvoke r98.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.internal.telephony.uicc.UiccController: void logWithLocalLog(java.lang.String)>($r54);
+
+     label49:
+        z17 = z14;
+
+     label50:
+        i20 = i20 + 1;
+
+        i17 = i21;
+
+        z13 = z16;
+
+        z14 = z17;
+
+        goto label19;
+
+     label51:
+        z21 = z13;
+
+     label52:
+        $z2 = r0.<com.android.internal.telephony.uicc.UiccController: boolean mHasActiveBuiltInEuicc>;
+
+        if $z2 != 0 goto label60;
+
+     label53:
+        z21 = z13;
+
+        if z13 != 0 goto label60;
+
+        i22 = 0;
+
+     label54:
+        z21 = z13;
+
+        if i22 >= i19 goto label60;
+
+     label55:
+        $r31 = r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.uicc.UiccSlot[] mUiccSlots>;
+
+        $r32 = $r31[i22];
+
+        $z6 = virtualinvoke $r32.<com.android.internal.telephony.uicc.UiccSlot: boolean isEuicc()>();
+
+        if $z6 == 0 goto label59;
+
+        $r33 = virtualinvoke r84.<java.util.ArrayList: java.lang.Object get(int)>(i22);
+
+        $r34 = (com.android.internal.telephony.uicc.IccSlotStatus) $r33;
+
+        r99 = $r34.<com.android.internal.telephony.uicc.IccSlotStatus: java.lang.String eid>;
+
+        $z7 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>(r99);
+
+        if $z7 != 0 goto label59;
+
+     label56:
+        z21 = 1;
+
+     label57:
+        $i6 = virtualinvoke r0.<com.android.internal.telephony.uicc.UiccController: int convertToPublicCardId(java.lang.String)>(r99);
+
+        r0.<com.android.internal.telephony.uicc.UiccController: int mDefaultEuiccCardId> = $i6;
+
+        r100 = new java.lang.StringBuilder;
+
+        specialinvoke r100.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r100.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Using eid=");
+
+        virtualinvoke r100.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r99);
+
+        virtualinvoke r100.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" from removable eUICC in slot=");
+
+        virtualinvoke r100.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i22);
+
+        virtualinvoke r100.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" to set mDefaultEuiccCardId=");
+
+        $i7 = r0.<com.android.internal.telephony.uicc.UiccController: int mDefaultEuiccCardId>;
+
+        virtualinvoke r100.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i7);
+
+        $r41 = virtualinvoke r100.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.internal.telephony.uicc.UiccController: void logWithLocalLog(java.lang.String)>($r41);
+
+     label58:
+        goto label60;
+
+     label59:
+        i22 = i22 + 1;
+
+        goto label54;
+
+     label60:
+        z22 = z21;
+
+     label61:
+        $z23 = r0.<com.android.internal.telephony.uicc.UiccController: boolean mHasBuiltInEuicc>;
+
+        if $z23 == 0 goto label66;
+
+     label62:
+        z22 = z21;
+
+        if z14 != 0 goto label66;
+
+        z22 = z21;
+
+        if z21 != 0 goto label66;
+
+     label63:
+        specialinvoke r0.<com.android.internal.telephony.uicc.UiccController: void logWithLocalLog(java.lang.String)>("onGetSlotStatusDone: mDefaultEuiccCardId=TEMPORARILY_UNSUPPORTED_CARD_ID");
+
+     label64:
+        z22 = 1;
+
+     label65:
+        r0.<com.android.internal.telephony.uicc.UiccController: int mDefaultEuiccCardId> = -3;
+
+     label66:
+        if z22 != 0 goto label81;
+
+     label67:
+        $i3 = r0.<com.android.internal.telephony.uicc.UiccController: int mDefaultEuiccCardId>;
+
+        if $i3 < 0 goto label80;
+
+     label68:
+        z24 = 0;
+
+     label69:
+        $r21 = r0.<com.android.internal.telephony.uicc.UiccController: java.util.ArrayList mCardStrings>;
+
+        $i4 = r0.<com.android.internal.telephony.uicc.UiccController: int mDefaultEuiccCardId>;
+
+        $r22 = virtualinvoke $r21.<java.util.ArrayList: java.lang.Object get(int)>($i4);
+
+        r101 = (java.lang.String) $r22;
+
+        r102 = r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.uicc.UiccSlot[] mUiccSlots>;
+
+        i23 = lengthof r102;
+
+     label70:
+        i24 = 0;
+
+     label71:
+        if i24 >= i23 goto label77;
+
+        r103 = r102[i24];
+
+     label72:
+        $r27 = virtualinvoke r103.<com.android.internal.telephony.uicc.UiccSlot: com.android.internal.telephony.uicc.UiccCard getUiccCard()>();
+
+        if $r27 != null goto label74;
+
+     label73:
+        goto label76;
+
+     label74:
+        $r28 = virtualinvoke r103.<com.android.internal.telephony.uicc.UiccSlot: com.android.internal.telephony.uicc.UiccCard getUiccCard()>();
+
+        $r29 = virtualinvoke $r28.<com.android.internal.telephony.uicc.UiccCard: java.lang.String getCardId()>();
+
+        $r30 = staticinvoke <com.android.internal.telephony.uicc.IccUtils: java.lang.String stripTrailingFs(java.lang.String)>($r29);
+
+        $z5 = virtualinvoke r101.<java.lang.String: boolean equals(java.lang.Object)>($r30);
+
+        if $z5 == 0 goto label76;
+
+     label75:
+        z24 = 1;
+
+     label76:
+        i24 = i24 + 1;
+
+        goto label71;
+
+     label77:
+        if z24 != 0 goto label79;
+
+     label78:
+        r104 = new java.lang.StringBuilder;
+
+        specialinvoke r104.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r104.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("onGetSlotStatusDone: mDefaultEuiccCardId=");
+
+        $i5 = r0.<com.android.internal.telephony.uicc.UiccController: int mDefaultEuiccCardId>;
+
+        virtualinvoke r104.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i5);
+
+        virtualinvoke r104.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" is no longer inserted. Setting mDefaultEuiccCardId=UNINITIALIZED");
+
+        $r26 = virtualinvoke r104.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.internal.telephony.uicc.UiccController: void logWithLocalLog(java.lang.String)>($r26);
+
+        r0.<com.android.internal.telephony.uicc.UiccController: int mDefaultEuiccCardId> = -2;
+
+     label79:
+        goto label81;
+
+     label80:
+        specialinvoke r0.<com.android.internal.telephony.uicc.UiccController: void logWithLocalLog(java.lang.String)>("onGetSlotStatusDone: mDefaultEuiccCardId=UNINITIALIZED");
+
+        r0.<com.android.internal.telephony.uicc.UiccController: int mDefaultEuiccCardId> = -2;
+
+     label81:
+        $r105 = r0.<com.android.internal.telephony.uicc.UiccController: int[] mPhoneIdToSlotId>;
+
+        $i25 = lengthof $r105;
+
+        if i17 == $i25 goto label82;
+
+        r106 = new java.lang.StringBuilder;
+
+        specialinvoke r106.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r106.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Number of active slots ");
+
+        virtualinvoke r106.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i17);
+
+        virtualinvoke r106.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" does not match the number of Phones");
+
+        $r18 = r0.<com.android.internal.telephony.uicc.UiccController: int[] mPhoneIdToSlotId>;
+
+        $i1 = lengthof $r18;
+
+        virtualinvoke r106.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i1);
+
+        $r20 = virtualinvoke r106.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.telephony.Rlog: int e(java.lang.String,java.lang.String)>("UiccController", $r20);
+
+     label82:
+        r107 = new java.util.HashSet;
+
+        specialinvoke r107.<java.util.HashSet: void <init>()>();
+
+        r108 = r0.<com.android.internal.telephony.uicc.UiccController: int[] mPhoneIdToSlotId>;
+
+        i26 = lengthof r108;
+
+     label83:
+        i27 = 0;
+
+     label84:
+        if i27 >= i26 goto label88;
+
+        i28 = r108[i27];
+
+     label85:
+        $r9 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i28);
+
+        $z3 = interfaceinvoke r107.<java.util.Set: boolean contains(java.lang.Object)>($r9);
+
+        if $z3 != 0 goto label87;
+
+        $r14 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i28);
+
+        interfaceinvoke r107.<java.util.Set: boolean add(java.lang.Object)>($r14);
+
+     label86:
+        i27 = i27 + 1;
+
+        goto label84;
+
+     label87:
+        r109 = new java.lang.RuntimeException;
+
+        r110 = new java.lang.StringBuilder;
+
+        specialinvoke r110.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r110.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("slotId ");
+
+        virtualinvoke r110.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i28);
+
+        virtualinvoke r110.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" mapped to multiple phoneIds");
+
+        $r13 = virtualinvoke r110.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r109.<java.lang.RuntimeException: void <init>(java.lang.String)>($r13);
+
+        throw r109;
+
+     label88:
+        r111 = staticinvoke <android.app.BroadcastOptions: android.app.BroadcastOptions makeBasic()>();
+
+        virtualinvoke r111.<android.app.BroadcastOptions: void setBackgroundActivityStartsAllowed(boolean)>(1);
+
+        r112 = new android.content.Intent;
+
+        specialinvoke r112.<android.content.Intent: void <init>(java.lang.String)>("android.telephony.action.SIM_SLOT_STATUS_CHANGED");
+
+        virtualinvoke r112.<android.content.Intent: android.content.Intent addFlags(int)>(67108864);
+
+        $r7 = r0.<com.android.internal.telephony.uicc.UiccController: android.content.Context mContext>;
+
+        $r8 = virtualinvoke r111.<android.app.BroadcastOptions: android.os.Bundle toBundle()>();
+
+        virtualinvoke $r7.<android.content.Context: void sendBroadcast(android.content.Intent,java.lang.String,android.os.Bundle)>(r112, "android.permission.READ_PRIVILEGED_PHONE_STATE", $r8);
+
+     label89:
+        exitmonitor r0;
+
+        return;
+
+     label90:
+        $r80 := @caughtexception;
+
+        exitmonitor r0;
+
+        throw $r80;
+
+        catch java.lang.Throwable from label01 to label02 with label90;
+        catch java.lang.Throwable from label03 to label04 with label90;
+        catch java.lang.Throwable from label05 to label06 with label90;
+        catch java.lang.Throwable from label07 to label08 with label90;
+        catch java.lang.Throwable from label09 to label10 with label90;
+        catch java.lang.Throwable from label11 to label12 with label90;
+        catch java.lang.Throwable from label13 to label14 with label90;
+        catch java.lang.Throwable from label15 to label16 with label90;
+        catch java.lang.Throwable from label17 to label18 with label90;
+        catch java.lang.Throwable from label20 to label21 with label90;
+        catch java.lang.Throwable from label24 to label25 with label90;
+        catch java.lang.Throwable from label26 to label27 with label90;
+        catch java.lang.Throwable from label27 to label28 with label90;
+        catch java.lang.Throwable from label29 to label30 with label90;
+        catch java.lang.Throwable from label31 to label32 with label90;
+        catch java.lang.Throwable from label33 to label34 with label90;
+        catch java.lang.Throwable from label35 to label36 with label90;
+        catch java.lang.Throwable from label36 to label37 with label90;
+        catch java.lang.Throwable from label38 to label39 with label90;
+        catch java.lang.Throwable from label40 to label41 with label90;
+        catch java.lang.Throwable from label42 to label43 with label90;
+        catch java.lang.Throwable from label44 to label45 with label90;
+        catch java.lang.Throwable from label46 to label47 with label90;
+        catch java.lang.Throwable from label48 to label49 with label90;
+        catch java.lang.Throwable from label52 to label53 with label90;
+        catch java.lang.Throwable from label55 to label56 with label90;
+        catch java.lang.Throwable from label57 to label58 with label90;
+        catch java.lang.Throwable from label61 to label62 with label90;
+        catch java.lang.Throwable from label63 to label64 with label90;
+        catch java.lang.Throwable from label65 to label66 with label90;
+        catch java.lang.Throwable from label67 to label68 with label90;
+        catch java.lang.Throwable from label69 to label70 with label90;
+        catch java.lang.Throwable from label72 to label73 with label90;
+        catch java.lang.Throwable from label74 to label75 with label90;
+        catch java.lang.Throwable from label78 to label79 with label90;
+        catch java.lang.Throwable from label80 to label81 with label90;
+        catch java.lang.Throwable from label81 to label82 with label90;
+        catch java.lang.Throwable from label82 to label83 with label90;
+        catch java.lang.Throwable from label85 to label86 with label90;
+        catch java.lang.Throwable from label87 to label88 with label90;
+        catch java.lang.Throwable from label88 to label89 with label90;
+    }
+
+    private void onMultiSimConfigChanged(int)
+    {
+        com.android.internal.telephony.uicc.UiccController r0;
+        int i0, i1;
+        com.android.internal.telephony.CommandsInterface[] $r2, $r3, $r13, $r16, $r19, $r22;
+        java.lang.StringBuilder $r4;
+        java.lang.String $r9;
+        int[] $r10, $r11, $r12;
+        com.android.internal.telephony.CommandsInterface $r14, $r17, $r20, $r23;
+        java.lang.Integer $r15, $r18, $r21, $r24;
+
+        r0 := @this: com.android.internal.telephony.uicc.UiccController;
+
+        i0 := @parameter0: int;
+
+        $r2 = r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.CommandsInterface[] mCis>;
+
+        i1 = lengthof $r2;
+
+        $r3 = staticinvoke <com.android.internal.telephony.PhoneFactory: com.android.internal.telephony.CommandsInterface[] getCommandsInterfaces()>();
+
+        r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.CommandsInterface[] mCis> = $r3;
+
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("onMultiSimConfigChanged: prevActiveModemCount ");
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i1);
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", newActiveModemCount ");
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r9 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.internal.telephony.uicc.UiccController: void logWithLocalLog(java.lang.String)>($r9);
+
+        $r10 = r0.<com.android.internal.telephony.uicc.UiccController: int[] mPhoneIdToSlotId>;
+
+        $r11 = staticinvoke <java.util.Arrays: int[] copyOf(int[],int)>($r10, i0);
+
+        r0.<com.android.internal.telephony.uicc.UiccController: int[] mPhoneIdToSlotId> = $r11;
+
+     label1:
+        if i1 >= i0 goto label2;
+
+        $r12 = r0.<com.android.internal.telephony.uicc.UiccController: int[] mPhoneIdToSlotId>;
+
+        $r12[i1] = -1;
+
+        $r13 = r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.CommandsInterface[] mCis>;
+
+        $r14 = $r13[i1];
+
+        $r15 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i1);
+
+        interfaceinvoke $r14.<com.android.internal.telephony.CommandsInterface: void registerForIccStatusChanged(android.os.Handler,int,java.lang.Object)>(r0, 1, $r15);
+
+        $r16 = r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.CommandsInterface[] mCis>;
+
+        $r17 = $r16[i1];
+
+        $r18 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i1);
+
+        interfaceinvoke $r17.<com.android.internal.telephony.CommandsInterface: void registerForAvailable(android.os.Handler,int,java.lang.Object)>(r0, 6, $r18);
+
+        $r19 = r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.CommandsInterface[] mCis>;
+
+        $r20 = $r19[i1];
+
+        $r21 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i1);
+
+        interfaceinvoke $r20.<com.android.internal.telephony.CommandsInterface: void registerForNotAvailable(android.os.Handler,int,java.lang.Object)>(r0, 7, $r21);
+
+        $r22 = r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.CommandsInterface[] mCis>;
+
+        $r23 = $r22[i1];
+
+        $r24 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i1);
+
+        interfaceinvoke $r23.<com.android.internal.telephony.CommandsInterface: void registerForIccRefresh(android.os.Handler,int,java.lang.Object)>(r0, 8, $r24);
+
+        i1 = i1 + 1;
+
+        goto label1;
+
+     label2:
+        return;
+    }
+
+    private void onSimRefresh(android.os.AsyncResult, java.lang.Integer)
+    {
+        com.android.internal.telephony.uicc.UiccController r0;
+        int i0, $i1, $i2, $i3, $i4, $i5, $i10;
+        java.lang.Throwable $r1, $r28;
+        boolean $z0, $z1, z2;
+        java.lang.Object $r2, $r11;
+        java.lang.StringBuilder $r3, $r18, $r22, $r26;
+        java.lang.String $r8, $r9, $r17, $r21, $r25, $r30;
+        android.content.Context $r10, $r13;
+        android.telephony.CarrierConfigManager $r12;
+        android.content.res.Resources $r14;
+        com.android.internal.telephony.CommandsInterface[] $r15, $r39;
+        com.android.internal.telephony.CommandsInterface $r16, $r40;
+        android.os.AsyncResult r31;
+        java.lang.Integer r32;
+        com.android.internal.telephony.uicc.IccRefreshResponse r35;
+        com.android.internal.telephony.uicc.UiccCard r37;
+        android.os.Message $r41;
+
+        r0 := @this: com.android.internal.telephony.uicc.UiccController;
+
+        r31 := @parameter0: android.os.AsyncResult;
+
+        r32 := @parameter1: java.lang.Integer;
+
+        $r1 = r31.<android.os.AsyncResult: java.lang.Throwable exception>;
+
+        if $r1 == null goto label1;
+
+        $r26 = new java.lang.StringBuilder;
+
+        specialinvoke $r26.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r26.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("onSimRefresh: Sim REFRESH with exception: ");
+
+        $r28 = r31.<android.os.AsyncResult: java.lang.Throwable exception>;
+
+        virtualinvoke $r26.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r28);
+
+        $r30 = virtualinvoke $r26.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.telephony.Rlog: int e(java.lang.String,java.lang.String)>("UiccController", $r30);
+
+        return;
+
+     label1:
+        $i1 = virtualinvoke r32.<java.lang.Integer: int intValue()>();
+
+        $z0 = specialinvoke r0.<com.android.internal.telephony.uicc.UiccController: boolean isValidPhoneIndex(int)>($i1);
+
+        if $z0 != 0 goto label2;
+
+        $r22 = new java.lang.StringBuilder;
+
+        specialinvoke $r22.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r22.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("onSimRefresh: invalid index : ");
+
+        virtualinvoke $r22.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r32);
+
+        $r25 = virtualinvoke $r22.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.telephony.Rlog: int e(java.lang.String,java.lang.String)>("UiccController", $r25);
+
+        return;
+
+     label2:
+        $r2 = r31.<android.os.AsyncResult: java.lang.Object result>;
+
+        r35 = (com.android.internal.telephony.uicc.IccRefreshResponse) $r2;
+
+        $r3 = new java.lang.StringBuilder;
+
+        specialinvoke $r3.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("onSimRefresh: index ");
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r32);
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", ");
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r35);
+
+        $r8 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.internal.telephony.uicc.UiccController: void logWithLocalLog(java.lang.String)>($r8);
+
+        if r35 != null goto label3;
+
+        staticinvoke <com.android.telephony.Rlog: int e(java.lang.String,java.lang.String)>("UiccController", "onSimRefresh: received without input");
+
+        return;
+
+     label3:
+        $i2 = virtualinvoke r32.<java.lang.Integer: int intValue()>();
+
+        r37 = virtualinvoke r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.uicc.UiccCard getUiccCardForPhone(int)>($i2);
+
+        if r37 != null goto label4;
+
+        $r18 = new java.lang.StringBuilder;
+
+        specialinvoke $r18.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r18.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("onSimRefresh: refresh on null card : ");
+
+        virtualinvoke $r18.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r32);
+
+        $r21 = virtualinvoke $r18.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.telephony.Rlog: int e(java.lang.String,java.lang.String)>("UiccController", $r21);
+
+        return;
+
+     label4:
+        i0 = r35.<com.android.internal.telephony.uicc.IccRefreshResponse: int refreshResult>;
+
+        if i0 == 1 goto label6;
+
+        if i0 == 2 goto label5;
+
+        return;
+
+     label5:
+        $r17 = r35.<com.android.internal.telephony.uicc.IccRefreshResponse: java.lang.String aid>;
+
+        z2 = virtualinvoke r37.<com.android.internal.telephony.uicc.UiccCard: boolean resetAppWithAid(java.lang.String,boolean)>($r17, 1);
+
+        goto label7;
+
+     label6:
+        $r9 = r35.<com.android.internal.telephony.uicc.IccRefreshResponse: java.lang.String aid>;
+
+        z2 = virtualinvoke r37.<com.android.internal.telephony.uicc.UiccCard: boolean resetAppWithAid(java.lang.String,boolean)>($r9, 0);
+
+     label7:
+        if z2 == 0 goto label8;
+
+        $i3 = r35.<com.android.internal.telephony.uicc.IccRefreshResponse: int refreshResult>;
+
+        if $i3 != 2 goto label8;
+
+        $r10 = r0.<com.android.internal.telephony.uicc.UiccController: android.content.Context mContext>;
+
+        $r11 = virtualinvoke $r10.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("carrier_config");
+
+        $r12 = (android.telephony.CarrierConfigManager) $r11;
+
+        $i4 = virtualinvoke r32.<java.lang.Integer: int intValue()>();
+
+        virtualinvoke $r12.<android.telephony.CarrierConfigManager: void updateConfigForPhoneId(int,java.lang.String)>($i4, "UNKNOWN");
+
+        $r13 = r0.<com.android.internal.telephony.uicc.UiccController: android.content.Context mContext>;
+
+        $r14 = virtualinvoke $r13.<android.content.Context: android.content.res.Resources getResources()>();
+
+        $z1 = virtualinvoke $r14.<android.content.res.Resources: boolean getBoolean(int)>(17891509);
+
+        if $z1 == 0 goto label8;
+
+        $r15 = r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.CommandsInterface[] mCis>;
+
+        $i5 = virtualinvoke r32.<java.lang.Integer: int intValue()>();
+
+        $r16 = $r15[$i5];
+
+        interfaceinvoke $r16.<com.android.internal.telephony.CommandsInterface: void setRadioPower(boolean,android.os.Message)>(0, null);
+
+     label8:
+        $r39 = r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.CommandsInterface[] mCis>;
+
+        $i10 = virtualinvoke r32.<java.lang.Integer: int intValue()>();
+
+        $r40 = $r39[$i10];
+
+        $r41 = virtualinvoke r0.<com.android.internal.telephony.uicc.UiccController: android.os.Message obtainMessage(int,java.lang.Object)>(3, r32);
+
+        interfaceinvoke $r40.<com.android.internal.telephony.CommandsInterface: void getIccCardStatus(android.os.Message)>($r41);
+
+        return;
+    }
+
+    private void saveCardStrings()
+    {
+        com.android.internal.telephony.uicc.UiccController r0;
+        android.content.SharedPreferences$Editor r1;
+        android.content.Context $r2;
+        android.content.SharedPreferences $r3;
+        java.util.ArrayList $r4;
+        java.lang.String $r5;
+
+        r0 := @this: com.android.internal.telephony.uicc.UiccController;
+
+        $r2 = r0.<com.android.internal.telephony.uicc.UiccController: android.content.Context mContext>;
+
+        $r3 = staticinvoke <android.preference.PreferenceManager: android.content.SharedPreferences getDefaultSharedPreferences(android.content.Context)>($r2);
+
+        r1 = interfaceinvoke $r3.<android.content.SharedPreferences: android.content.SharedPreferences$Editor edit()>();
+
+        $r4 = r0.<com.android.internal.telephony.uicc.UiccController: java.util.ArrayList mCardStrings>;
+
+        $r5 = staticinvoke <android.text.TextUtils: java.lang.String join(java.lang.CharSequence,java.lang.Iterable)>(",", $r4);
+
+        interfaceinvoke r1.<android.content.SharedPreferences$Editor: android.content.SharedPreferences$Editor putString(java.lang.String,java.lang.String)>("card_strings", $r5);
+
+        interfaceinvoke r1.<android.content.SharedPreferences$Editor: boolean commit()>();
+
+        return;
+    }
+
+    private boolean slotStatusChanged(java.util.ArrayList)
+    {
+        com.android.internal.telephony.uicc.UiccController r0;
+        int $i0, $i1;
+        boolean $z0, $z1;
+        java.lang.Object $r1;
+        java.util.ArrayList $r2, r3, r4;
+        java.util.Iterator r5;
+        com.android.internal.telephony.uicc.IccSlotStatus r6;
+
+        r0 := @this: com.android.internal.telephony.uicc.UiccController;
+
+        r3 := @parameter0: java.util.ArrayList;
+
+        r4 = <com.android.internal.telephony.uicc.UiccController: java.util.ArrayList sLastSlotStatus>;
+
+        if r4 == null goto label5;
+
+        $i0 = virtualinvoke r4.<java.util.ArrayList: int size()>();
+
+        $i1 = virtualinvoke r3.<java.util.ArrayList: int size()>();
+
+        if $i0 == $i1 goto label1;
+
+        goto label5;
+
+     label1:
+        r5 = virtualinvoke r3.<java.util.ArrayList: java.util.Iterator iterator()>();
+
+     label2:
+        $z0 = interfaceinvoke r5.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label4;
+
+        $r1 = interfaceinvoke r5.<java.util.Iterator: java.lang.Object next()>();
+
+        r6 = (com.android.internal.telephony.uicc.IccSlotStatus) $r1;
+
+        $r2 = <com.android.internal.telephony.uicc.UiccController: java.util.ArrayList sLastSlotStatus>;
+
+        $z1 = virtualinvoke $r2.<java.util.ArrayList: boolean contains(java.lang.Object)>(r6);
+
+        if $z1 != 0 goto label3;
+
+        return 1;
+
+     label3:
+        goto label2;
+
+     label4:
+        return 0;
+
+     label5:
+        return 1;
+    }
+
+    static void updateInternalIccState(android.content.Context, com.android.internal.telephony.IccCardConstants$State, java.lang.String, int)
+    {
+        com.android.internal.telephony.IccCardConstants$State r0;
+        java.lang.String r1, $r4, $r5;
+        int i0;
+        java.lang.Object $r2;
+        android.telephony.TelephonyManager $r3;
+        android.content.Context r6;
+        com.android.internal.telephony.SubscriptionInfoUpdater r7;
+
+        r6 := @parameter0: android.content.Context;
+
+        r0 := @parameter1: com.android.internal.telephony.IccCardConstants$State;
+
+        r1 := @parameter2: java.lang.String;
+
+        i0 := @parameter3: int;
+
+        $r2 = virtualinvoke r6.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("phone");
+
+        $r3 = (android.telephony.TelephonyManager) $r2;
+
+        $r4 = virtualinvoke r0.<com.android.internal.telephony.IccCardConstants$State: java.lang.String toString()>();
+
+        virtualinvoke $r3.<android.telephony.TelephonyManager: void setSimStateForPhone(int,java.lang.String)>(i0, $r4);
+
+        r7 = staticinvoke <com.android.internal.telephony.PhoneFactory: com.android.internal.telephony.SubscriptionInfoUpdater getSubscriptionInfoUpdater()>();
+
+        if r7 == null goto label1;
+
+        $r5 = staticinvoke <com.android.internal.telephony.uicc.UiccController: java.lang.String getIccStateIntentString(com.android.internal.telephony.IccCardConstants$State)>(r0);
+
+        virtualinvoke r7.<com.android.internal.telephony.SubscriptionInfoUpdater: void updateInternalIccState(java.lang.String,java.lang.String,int)>($r5, r1, i0);
+
+        goto label2;
+
+     label1:
+        staticinvoke <com.android.telephony.Rlog: int e(java.lang.String,java.lang.String)>("UiccController", "subInfoUpdate is null.");
+
+     label2:
+        return;
+    }
+
+    static void updateInternalIccStateForInactiveSlot(android.content.Context, int, java.lang.String)
+    {
+        int i0;
+        java.lang.String r0, $r4;
+        boolean $z0;
+        java.lang.Object $r1;
+        com.android.internal.telephony.IccCardConstants$State $r2;
+        android.telephony.TelephonyManager $r3;
+        android.content.Context r5;
+        com.android.internal.telephony.SubscriptionInfoUpdater r6;
+
+        r5 := @parameter0: android.content.Context;
+
+        i0 := @parameter1: int;
+
+        r0 := @parameter2: java.lang.String;
+
+        $z0 = staticinvoke <android.telephony.SubscriptionManager: boolean isValidPhoneId(int)>(i0);
+
+        if $z0 == 0 goto label1;
+
+        $r1 = virtualinvoke r5.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("phone");
+
+        $r3 = (android.telephony.TelephonyManager) $r1;
+
+        $r2 = <com.android.internal.telephony.IccCardConstants$State: com.android.internal.telephony.IccCardConstants$State ABSENT>;
+
+        $r4 = virtualinvoke $r2.<com.android.internal.telephony.IccCardConstants$State: java.lang.String toString()>();
+
+        virtualinvoke $r3.<android.telephony.TelephonyManager: void setSimStateForPhone(int,java.lang.String)>(i0, $r4);
+
+     label1:
+        r6 = staticinvoke <com.android.internal.telephony.PhoneFactory: com.android.internal.telephony.SubscriptionInfoUpdater getSubscriptionInfoUpdater()>();
+
+        if r6 == null goto label2;
+
+        virtualinvoke r6.<com.android.internal.telephony.SubscriptionInfoUpdater: void updateInternalIccStateForInactiveSlot(int,java.lang.String)>(i0, r0);
+
+        goto label3;
+
+     label2:
+        staticinvoke <com.android.telephony.Rlog: int e(java.lang.String,java.lang.String)>("UiccController", "subInfoUpdate is null.");
+
+     label3:
+        return;
+    }
+
+    public java.lang.String convertToCardString(int)
+    {
+        com.android.internal.telephony.uicc.UiccController r0;
+        int i0, $i1;
+        java.lang.StringBuilder $r2;
+        java.lang.String $r6, $r10;
+        java.util.ArrayList $r7, $r8;
+        java.lang.Object $r9;
+
+        r0 := @this: com.android.internal.telephony.uicc.UiccController;
+
+        i0 := @parameter0: int;
+
+        if i0 < 0 goto label2;
+
+        $r7 = r0.<com.android.internal.telephony.uicc.UiccController: java.util.ArrayList mCardStrings>;
+
+        $i1 = virtualinvoke $r7.<java.util.ArrayList: int size()>();
+
+        if i0 < $i1 goto label1;
+
+        goto label2;
+
+     label1:
+        $r8 = r0.<com.android.internal.telephony.uicc.UiccController: java.util.ArrayList mCardStrings>;
+
+        $r9 = virtualinvoke $r8.<java.util.ArrayList: java.lang.Object get(int)>(i0);
+
+        $r10 = (java.lang.String) $r9;
+
+        return $r10;
+
+     label2:
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("convertToCardString: cardId ");
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" is not valid");
+
+        $r6 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.internal.telephony.uicc.UiccController: void log(java.lang.String)>($r6);
+
+        return null;
+    }
+
+    public int convertToPublicCardId(java.lang.String)
+    {
+        com.android.internal.telephony.uicc.UiccController r0;
+        java.lang.String r1, r3;
+        int i0, $i1, $i2;
+        boolean $z0;
+        java.util.ArrayList $r2;
+
+        r0 := @this: com.android.internal.telephony.uicc.UiccController;
+
+        r1 := @parameter0: java.lang.String;
+
+        $i1 = r0.<com.android.internal.telephony.uicc.UiccController: int mDefaultEuiccCardId>;
+
+        if $i1 != -1 goto label1;
+
+        return -1;
+
+     label1:
+        $z0 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>(r1);
+
+        if $z0 == 0 goto label2;
+
+        return -2;
+
+     label2:
+        r3 = r1;
+
+        $i2 = virtualinvoke r1.<java.lang.String: int length()>();
+
+        if $i2 >= 32 goto label3;
+
+        r3 = staticinvoke <com.android.internal.telephony.uicc.IccUtils: java.lang.String stripTrailingFs(java.lang.String)>(r1);
+
+     label3:
+        $r2 = r0.<com.android.internal.telephony.uicc.UiccController: java.util.ArrayList mCardStrings>;
+
+        i0 = virtualinvoke $r2.<java.util.ArrayList: int indexOf(java.lang.Object)>(r3);
+
+        if i0 != -1 goto label4;
+
+        return -2;
+
+     label4:
+        return i0;
+    }
+
+    public void dump(java.io.FileDescriptor, java.io.PrintWriter, java.lang.String[])
+    {
+        com.android.internal.telephony.uicc.UiccController r0, $r15;
+        java.io.FileDescriptor r1;
+        java.io.PrintWriter r2;
+        java.lang.String[] r3;
+        java.lang.StringBuilder $r4, $r8, $r13, $r18, $r24, $r29, $r33, $r37, $r42, $r47, $r53, $r63, $r68;
+        java.lang.String $r7, $r12, $r17, $r22, $r28, $r32, $r36, $r41, $r46, $r50, $r60, $r67, $r77;
+        android.content.Context $r10, $r26;
+        com.android.internal.telephony.RegistrantList $r20, $r23, $r72;
+        int $i0, $i1, $i2, $i3, $i4, i5, i6;
+        boolean $z0, $z1, $z2;
+        com.android.internal.telephony.uicc.UiccSlot[] $r39, $r57, $r61, r89;
+        java.util.ArrayList $r44;
+        com.android.internal.telephony.LocalLog $r51;
+        com.android.internal.telephony.uicc.UiccSlot $r52, $r58, $r62;
+        java.lang.Object $r73;
+        com.android.internal.telephony.Registrant $r74;
+        android.os.Handler $r75;
+
+        r0 := @this: com.android.internal.telephony.uicc.UiccController;
+
+        r1 := @parameter0: java.io.FileDescriptor;
+
+        r2 := @parameter1: java.io.PrintWriter;
+
+        r3 := @parameter2: java.lang.String[];
+
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("UiccController: ");
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r0);
+
+        $r7 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r7);
+
+        $r8 = new java.lang.StringBuilder;
+
+        specialinvoke $r8.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" mContext=");
+
+        $r10 = r0.<com.android.internal.telephony.uicc.UiccController: android.content.Context mContext>;
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r10);
+
+        $r12 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r12);
+
+        $r13 = new java.lang.StringBuilder;
+
+        specialinvoke $r13.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" mInstance=");
+
+        $r15 = <com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.uicc.UiccController mInstance>;
+
+        virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r15);
+
+        $r17 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r17);
+
+        $r18 = new java.lang.StringBuilder;
+
+        specialinvoke $r18.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r18.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" mIccChangedRegistrants: size=");
+
+        $r20 = r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.RegistrantList mIccChangedRegistrants>;
+
+        $i0 = virtualinvoke $r20.<com.android.internal.telephony.RegistrantList: int size()>();
+
+        virtualinvoke $r18.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i0);
+
+        $r22 = virtualinvoke $r18.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r22);
+
+        i5 = 0;
+
+     label1:
+        $r23 = r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.RegistrantList mIccChangedRegistrants>;
+
+        $i1 = virtualinvoke $r23.<com.android.internal.telephony.RegistrantList: int size()>();
+
+        if i5 >= $i1 goto label2;
+
+        $r68 = new java.lang.StringBuilder;
+
+        specialinvoke $r68.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r68.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  mIccChangedRegistrants[");
+
+        virtualinvoke $r68.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i5);
+
+        virtualinvoke $r68.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("]=");
+
+        $r72 = r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.RegistrantList mIccChangedRegistrants>;
+
+        $r73 = virtualinvoke $r72.<com.android.internal.telephony.RegistrantList: java.lang.Object get(int)>(i5);
+
+        $r74 = (com.android.internal.telephony.Registrant) $r73;
+
+        $r75 = virtualinvoke $r74.<com.android.internal.telephony.Registrant: android.os.Handler getHandler()>();
+
+        virtualinvoke $r68.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r75);
+
+        $r77 = virtualinvoke $r68.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r77);
+
+        i5 = i5 + 1;
+
+        goto label1;
+
+     label2:
+        virtualinvoke r2.<java.io.PrintWriter: void println()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void flush()>();
+
+        $r24 = new java.lang.StringBuilder;
+
+        specialinvoke $r24.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r24.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" mIsCdmaSupported=");
+
+        $r26 = r0.<com.android.internal.telephony.uicc.UiccController: android.content.Context mContext>;
+
+        $z0 = staticinvoke <com.android.internal.telephony.uicc.UiccController: boolean isCdmaSupported(android.content.Context)>($r26);
+
+        virtualinvoke $r24.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>($z0);
+
+        $r28 = virtualinvoke $r24.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r28);
+
+        $r29 = new java.lang.StringBuilder;
+
+        specialinvoke $r29.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r29.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" mHasBuiltInEuicc=");
+
+        $z1 = r0.<com.android.internal.telephony.uicc.UiccController: boolean mHasBuiltInEuicc>;
+
+        virtualinvoke $r29.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>($z1);
+
+        $r32 = virtualinvoke $r29.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r32);
+
+        $r33 = new java.lang.StringBuilder;
+
+        specialinvoke $r33.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r33.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" mHasActiveBuiltInEuicc=");
+
+        $z2 = r0.<com.android.internal.telephony.uicc.UiccController: boolean mHasActiveBuiltInEuicc>;
+
+        virtualinvoke $r33.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>($z2);
+
+        $r36 = virtualinvoke $r33.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r36);
+
+        $r37 = new java.lang.StringBuilder;
+
+        specialinvoke $r37.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r37.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" mUiccSlots: size=");
+
+        $r39 = r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.uicc.UiccSlot[] mUiccSlots>;
+
+        $i2 = lengthof $r39;
+
+        virtualinvoke $r37.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i2);
+
+        $r41 = virtualinvoke $r37.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r41);
+
+        $r42 = new java.lang.StringBuilder;
+
+        specialinvoke $r42.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r42.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" mCardStrings=");
+
+        $r44 = r0.<com.android.internal.telephony.uicc.UiccController: java.util.ArrayList mCardStrings>;
+
+        virtualinvoke $r42.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r44);
+
+        $r46 = virtualinvoke $r42.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r46);
+
+        $r47 = new java.lang.StringBuilder;
+
+        specialinvoke $r47.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r47.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" mDefaultEuiccCardId=");
+
+        $i3 = r0.<com.android.internal.telephony.uicc.UiccController: int mDefaultEuiccCardId>;
+
+        virtualinvoke $r47.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i3);
+
+        $r50 = virtualinvoke $r47.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r50);
+
+        i6 = 0;
+
+     label3:
+        r89 = r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.uicc.UiccSlot[] mUiccSlots>;
+
+        $i4 = lengthof r89;
+
+        if i6 >= $i4 goto label6;
+
+        $r52 = r89[i6];
+
+        if $r52 != null goto label4;
+
+        $r63 = new java.lang.StringBuilder;
+
+        specialinvoke $r63.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r63.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  mUiccSlots[");
+
+        virtualinvoke $r63.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i6);
+
+        virtualinvoke $r63.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("]=null");
+
+        $r67 = virtualinvoke $r63.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r67);
+
+        goto label5;
+
+     label4:
+        $r53 = new java.lang.StringBuilder;
+
+        specialinvoke $r53.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r53.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  mUiccSlots[");
+
+        virtualinvoke $r53.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i6);
+
+        virtualinvoke $r53.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("]=");
+
+        $r57 = r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.uicc.UiccSlot[] mUiccSlots>;
+
+        $r58 = $r57[i6];
+
+        virtualinvoke $r53.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r58);
+
+        $r60 = virtualinvoke $r53.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>($r60);
+
+        $r61 = r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.uicc.UiccSlot[] mUiccSlots>;
+
+        $r62 = $r61[i6];
+
+        virtualinvoke $r62.<com.android.internal.telephony.uicc.UiccSlot: void dump(java.io.FileDescriptor,java.io.PrintWriter,java.lang.String[])>(r1, r2, r3);
+
+     label5:
+        i6 = i6 + 1;
+
+        goto label3;
+
+     label6:
+        virtualinvoke r2.<java.io.PrintWriter: void println(java.lang.String)>(" sLocalLog= ");
+
+        $r51 = <com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.LocalLog sLocalLog>;
+
+        virtualinvoke $r51.<com.android.internal.telephony.LocalLog: void dump(java.io.FileDescriptor,java.io.PrintWriter,java.lang.String[])>(r1, r2, r3);
+
+        return;
+    }
+
+    public java.util.ArrayList getAllUiccCardInfos()
+    {
+        com.android.internal.telephony.uicc.UiccController r0;
+        boolean z0, z1, $z2;
+        java.util.ArrayList $r2;
+        int $i0, i1, i2;
+        com.android.internal.telephony.uicc.euicc.EuiccCard $r3;
+        com.android.internal.telephony.uicc.UiccSlot[] r4;
+        com.android.internal.telephony.uicc.UiccSlot r5;
+        com.android.internal.telephony.uicc.UiccCard r6;
+        java.lang.String r7, r8, r9, r10, $r12;
+        android.telephony.UiccCardInfo $r11;
+
+        r0 := @this: com.android.internal.telephony.uicc.UiccController;
+
+        $r2 = new java.util.ArrayList;
+
+        specialinvoke $r2.<java.util.ArrayList: void <init>()>();
+
+        i1 = 0;
+
+     label1:
+        r4 = r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.uicc.UiccSlot[] mUiccSlots>;
+
+        $i0 = lengthof r4;
+
+        if i1 >= $i0 goto label8;
+
+        r5 = r4[i1];
+
+        if r5 != null goto label2;
+
+        goto label7;
+
+     label2:
+        z0 = virtualinvoke r5.<com.android.internal.telephony.uicc.UiccSlot: boolean isEuicc()>();
+
+        r6 = virtualinvoke r5.<com.android.internal.telephony.uicc.UiccSlot: com.android.internal.telephony.uicc.UiccCard getUiccCard()>();
+
+        z1 = virtualinvoke r5.<com.android.internal.telephony.uicc.UiccSlot: boolean isRemovable()>();
+
+        if r6 == null goto label4;
+
+        r7 = virtualinvoke r6.<com.android.internal.telephony.uicc.UiccCard: java.lang.String getIccId()>();
+
+        if z0 == 0 goto label3;
+
+        $r3 = (com.android.internal.telephony.uicc.euicc.EuiccCard) r6;
+
+        r8 = virtualinvoke $r3.<com.android.internal.telephony.uicc.euicc.EuiccCard: java.lang.String getEid()>();
+
+        i2 = virtualinvoke r0.<com.android.internal.telephony.uicc.UiccController: int convertToPublicCardId(java.lang.String)>(r8);
+
+        r9 = r7;
+
+        r10 = r8;
+
+        goto label6;
+
+     label3:
+        i2 = virtualinvoke r0.<com.android.internal.telephony.uicc.UiccController: int convertToPublicCardId(java.lang.String)>(r7);
+
+        r9 = r7;
+
+        r10 = null;
+
+        goto label6;
+
+     label4:
+        r9 = virtualinvoke r5.<com.android.internal.telephony.uicc.UiccSlot: java.lang.String getIccId()>();
+
+        if z0 != 0 goto label5;
+
+        $z2 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>(r9);
+
+        if $z2 != 0 goto label5;
+
+        i2 = virtualinvoke r0.<com.android.internal.telephony.uicc.UiccController: int convertToPublicCardId(java.lang.String)>(r9);
+
+        r10 = null;
+
+        goto label6;
+
+     label5:
+        r10 = null;
+
+        i2 = -2;
+
+     label6:
+        $r11 = new android.telephony.UiccCardInfo;
+
+        $r12 = staticinvoke <com.android.internal.telephony.uicc.IccUtils: java.lang.String stripTrailingFs(java.lang.String)>(r9);
+
+        specialinvoke $r11.<android.telephony.UiccCardInfo: void <init>(boolean,int,java.lang.String,java.lang.String,int,boolean)>(z0, i2, r10, $r12, i1, z1);
+
+        virtualinvoke $r2.<java.util.ArrayList: boolean add(java.lang.Object)>($r11);
+
+     label7:
+        i1 = i1 + 1;
+
+        goto label1;
+
+     label8:
+        return $r2;
+    }
+
+    public int getCardIdForDefaultEuicc()
+    {
+        com.android.internal.telephony.uicc.UiccController r0;
+        int i0;
+
+        r0 := @this: com.android.internal.telephony.uicc.UiccController;
+
+        i0 = r0.<com.android.internal.telephony.uicc.UiccController: int mDefaultEuiccCardId>;
+
+        if i0 != -3 goto label1;
+
+        return -1;
+
+     label1:
+        return i0;
+    }
+
+    public com.android.internal.telephony.uicc.IccFileHandler getIccFileHandler(int, int)
+    {
+        com.android.internal.telephony.uicc.UiccController r0;
+        int i0, i1;
+        java.lang.Object r1;
+        java.lang.Throwable $r2;
+        com.android.internal.telephony.uicc.UiccCardApplication r3;
+        com.android.internal.telephony.uicc.IccFileHandler r4;
+
+        r0 := @this: com.android.internal.telephony.uicc.UiccController;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        r1 = <com.android.internal.telephony.uicc.UiccController: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        r3 = virtualinvoke r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.uicc.UiccCardApplication getUiccCardApplication(int,int)>(i0, i1);
+
+     label2:
+        if r3 == null goto label5;
+
+     label3:
+        r4 = virtualinvoke r3.<com.android.internal.telephony.uicc.UiccCardApplication: com.android.internal.telephony.uicc.IccFileHandler getIccFileHandler()>();
+
+        exitmonitor r1;
+
+     label4:
+        return r4;
+
+     label5:
+        exitmonitor r1;
+
+     label6:
+        return null;
+
+     label7:
+        $r2 := @caughtexception;
+
+     label8:
+        exitmonitor r1;
+
+     label9:
+        throw $r2;
+
+        catch java.lang.Throwable from label1 to label2 with label7;
+        catch java.lang.Throwable from label3 to label4 with label7;
+        catch java.lang.Throwable from label5 to label6 with label7;
+        catch java.lang.Throwable from label8 to label9 with label7;
+    }
+
+    public com.android.internal.telephony.uicc.IccRecords getIccRecords(int, int)
+    {
+        com.android.internal.telephony.uicc.UiccController r0;
+        int i0, i1;
+        java.lang.Object r1;
+        java.lang.Throwable $r2;
+        com.android.internal.telephony.uicc.UiccCardApplication r3;
+        com.android.internal.telephony.uicc.IccRecords r4;
+
+        r0 := @this: com.android.internal.telephony.uicc.UiccController;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        r1 = <com.android.internal.telephony.uicc.UiccController: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        r3 = virtualinvoke r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.uicc.UiccCardApplication getUiccCardApplication(int,int)>(i0, i1);
+
+     label2:
+        if r3 == null goto label5;
+
+     label3:
+        r4 = virtualinvoke r3.<com.android.internal.telephony.uicc.UiccCardApplication: com.android.internal.telephony.uicc.IccRecords getIccRecords()>();
+
+        exitmonitor r1;
+
+     label4:
+        return r4;
+
+     label5:
+        exitmonitor r1;
+
+     label6:
+        return null;
+
+     label7:
+        $r2 := @caughtexception;
+
+     label8:
+        exitmonitor r1;
+
+     label9:
+        throw $r2;
+
+        catch java.lang.Throwable from label1 to label2 with label7;
+        catch java.lang.Throwable from label3 to label4 with label7;
+        catch java.lang.Throwable from label5 to label6 with label7;
+        catch java.lang.Throwable from label8 to label9 with label7;
+    }
+
+    public int getPhoneIdFromSlotId(int)
+    {
+        com.android.internal.telephony.uicc.UiccController r0;
+        int i0, $i1, $i2, i3;
+        int[] r1;
+
+        r0 := @this: com.android.internal.telephony.uicc.UiccController;
+
+        i0 := @parameter0: int;
+
+        i3 = 0;
+
+     label1:
+        r1 = r0.<com.android.internal.telephony.uicc.UiccController: int[] mPhoneIdToSlotId>;
+
+        $i1 = lengthof r1;
+
+        if i3 >= $i1 goto label3;
+
+        $i2 = r1[i3];
+
+        if $i2 != i0 goto label2;
+
+        return i3;
+
+     label2:
+        i3 = i3 + 1;
+
+        goto label1;
+
+     label3:
+        return -1;
+    }
+
+    public int getSlotIdFromPhoneId(int)
+    {
+        com.android.internal.telephony.uicc.UiccController r0;
+        int[] $r2;
+        java.lang.ArrayIndexOutOfBoundsException $r3;
+        int i0, i1;
+
+        r0 := @this: com.android.internal.telephony.uicc.UiccController;
+
+        i0 := @parameter0: int;
+
+     label1:
+        $r2 = r0.<com.android.internal.telephony.uicc.UiccController: int[] mPhoneIdToSlotId>;
+
+        i1 = $r2[i0];
+
+     label2:
+        return i1;
+
+     label3:
+        $r3 := @caughtexception;
+
+        return -1;
+
+        catch java.lang.ArrayIndexOutOfBoundsException from label1 to label2 with label3;
+    }
+
+    public com.android.internal.telephony.uicc.UiccCard getUiccCard(int)
+    {
+        com.android.internal.telephony.uicc.UiccController r0;
+        int i0;
+        java.lang.Object r1;
+        java.lang.Throwable $r2;
+        com.android.internal.telephony.uicc.UiccCard r3;
+
+        r0 := @this: com.android.internal.telephony.uicc.UiccController;
+
+        i0 := @parameter0: int;
+
+        r1 = <com.android.internal.telephony.uicc.UiccController: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        r3 = virtualinvoke r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.uicc.UiccCard getUiccCardForPhone(int)>(i0);
+
+        exitmonitor r1;
+
+     label2:
+        return r3;
+
+     label3:
+        $r2 := @caughtexception;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        throw $r2;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    public com.android.internal.telephony.uicc.UiccCardApplication getUiccCardApplication(int, int)
+    {
+        com.android.internal.telephony.uicc.UiccController r0;
+        int i0, i1;
+        java.lang.Object r1;
+        java.lang.Throwable $r2;
+        com.android.internal.telephony.uicc.UiccCard r3;
+        com.android.internal.telephony.uicc.UiccCardApplication r4;
+
+        r0 := @this: com.android.internal.telephony.uicc.UiccController;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        r1 = <com.android.internal.telephony.uicc.UiccController: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        r3 = virtualinvoke r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.uicc.UiccCard getUiccCardForPhone(int)>(i0);
+
+     label2:
+        if r3 == null goto label5;
+
+     label3:
+        r4 = virtualinvoke r3.<com.android.internal.telephony.uicc.UiccCard: com.android.internal.telephony.uicc.UiccCardApplication getApplication(int)>(i1);
+
+        exitmonitor r1;
+
+     label4:
+        return r4;
+
+     label5:
+        exitmonitor r1;
+
+     label6:
+        return null;
+
+     label7:
+        $r2 := @caughtexception;
+
+     label8:
+        exitmonitor r1;
+
+     label9:
+        throw $r2;
+
+        catch java.lang.Throwable from label1 to label2 with label7;
+        catch java.lang.Throwable from label3 to label4 with label7;
+        catch java.lang.Throwable from label5 to label6 with label7;
+        catch java.lang.Throwable from label8 to label9 with label7;
+    }
+
+    public com.android.internal.telephony.uicc.UiccCard getUiccCardForPhone(int)
+    {
+        com.android.internal.telephony.uicc.UiccController r0;
+        int i0;
+        java.lang.Object r1;
+        boolean $z0;
+        java.lang.Throwable $r2;
+        com.android.internal.telephony.uicc.UiccSlot r3;
+        com.android.internal.telephony.uicc.UiccCard r4;
+
+        r0 := @this: com.android.internal.telephony.uicc.UiccController;
+
+        i0 := @parameter0: int;
+
+        r1 = <com.android.internal.telephony.uicc.UiccController: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        $z0 = specialinvoke r0.<com.android.internal.telephony.uicc.UiccController: boolean isValidPhoneIndex(int)>(i0);
+
+        if $z0 == 0 goto label5;
+
+        r3 = virtualinvoke r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.uicc.UiccSlot getUiccSlotForPhone(int)>(i0);
+
+     label2:
+        if r3 == null goto label5;
+
+     label3:
+        r4 = virtualinvoke r3.<com.android.internal.telephony.uicc.UiccSlot: com.android.internal.telephony.uicc.UiccCard getUiccCard()>();
+
+        exitmonitor r1;
+
+     label4:
+        return r4;
+
+     label5:
+        exitmonitor r1;
+
+     label6:
+        return null;
+
+     label7:
+        $r2 := @caughtexception;
+
+     label8:
+        exitmonitor r1;
+
+     label9:
+        throw $r2;
+
+        catch java.lang.Throwable from label1 to label2 with label7;
+        catch java.lang.Throwable from label3 to label4 with label7;
+        catch java.lang.Throwable from label5 to label6 with label7;
+        catch java.lang.Throwable from label8 to label9 with label7;
+    }
+
+    public com.android.internal.telephony.uicc.UiccCard getUiccCardForSlot(int)
+    {
+        com.android.internal.telephony.uicc.UiccController r0;
+        int i0;
+        java.lang.Object r1;
+        java.lang.Throwable $r2;
+        com.android.internal.telephony.uicc.UiccSlot r3;
+        com.android.internal.telephony.uicc.UiccCard r4;
+
+        r0 := @this: com.android.internal.telephony.uicc.UiccController;
+
+        i0 := @parameter0: int;
+
+        r1 = <com.android.internal.telephony.uicc.UiccController: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        r3 = virtualinvoke r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.uicc.UiccSlot getUiccSlot(int)>(i0);
+
+     label2:
+        if r3 == null goto label5;
+
+     label3:
+        r4 = virtualinvoke r3.<com.android.internal.telephony.uicc.UiccSlot: com.android.internal.telephony.uicc.UiccCard getUiccCard()>();
+
+        exitmonitor r1;
+
+     label4:
+        return r4;
+
+     label5:
+        exitmonitor r1;
+
+     label6:
+        return null;
+
+     label7:
+        $r2 := @caughtexception;
+
+     label8:
+        exitmonitor r1;
+
+     label9:
+        throw $r2;
+
+        catch java.lang.Throwable from label1 to label2 with label7;
+        catch java.lang.Throwable from label3 to label4 with label7;
+        catch java.lang.Throwable from label5 to label6 with label7;
+        catch java.lang.Throwable from label8 to label9 with label7;
+    }
+
+    public com.android.internal.telephony.uicc.UiccProfile getUiccProfileForPhone(int)
+    {
+        com.android.internal.telephony.uicc.UiccController r0;
+        int i0;
+        java.lang.Object r1;
+        boolean z0;
+        com.android.internal.telephony.uicc.UiccCard r2;
+        java.lang.Throwable $r3;
+        com.android.internal.telephony.uicc.UiccProfile r4;
+
+        r0 := @this: com.android.internal.telephony.uicc.UiccController;
+
+        i0 := @parameter0: int;
+
+        r1 = <com.android.internal.telephony.uicc.UiccController: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label01:
+        z0 = specialinvoke r0.<com.android.internal.telephony.uicc.UiccController: boolean isValidPhoneIndex(int)>(i0);
+
+     label02:
+        r4 = null;
+
+        if z0 == 0 goto label08;
+
+     label03:
+        r2 = virtualinvoke r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.uicc.UiccCard getUiccCardForPhone(int)>(i0);
+
+     label04:
+        if r2 == null goto label06;
+
+     label05:
+        r4 = virtualinvoke r2.<com.android.internal.telephony.uicc.UiccCard: com.android.internal.telephony.uicc.UiccProfile getUiccProfile()>();
+
+     label06:
+        exitmonitor r1;
+
+     label07:
+        return r4;
+
+     label08:
+        exitmonitor r1;
+
+     label09:
+        return null;
+
+     label10:
+        $r3 := @caughtexception;
+
+     label11:
+        exitmonitor r1;
+
+     label12:
+        throw $r3;
+
+        catch java.lang.Throwable from label01 to label02 with label10;
+        catch java.lang.Throwable from label03 to label04 with label10;
+        catch java.lang.Throwable from label05 to label06 with label10;
+        catch java.lang.Throwable from label06 to label07 with label10;
+        catch java.lang.Throwable from label08 to label09 with label10;
+        catch java.lang.Throwable from label11 to label12 with label10;
+    }
+
+    public com.android.internal.telephony.uicc.UiccSlot getUiccSlot(int)
+    {
+        com.android.internal.telephony.uicc.UiccController r0;
+        int i0;
+        java.lang.Object r1;
+        boolean $z0;
+        com.android.internal.telephony.uicc.UiccSlot[] $r2;
+        java.lang.Throwable $r3;
+        com.android.internal.telephony.uicc.UiccSlot r4;
+
+        r0 := @this: com.android.internal.telephony.uicc.UiccController;
+
+        i0 := @parameter0: int;
+
+        r1 = <com.android.internal.telephony.uicc.UiccController: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        $z0 = specialinvoke r0.<com.android.internal.telephony.uicc.UiccController: boolean isValidSlotIndex(int)>(i0);
+
+        if $z0 == 0 goto label3;
+
+        $r2 = r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.uicc.UiccSlot[] mUiccSlots>;
+
+        r4 = $r2[i0];
+
+        exitmonitor r1;
+
+     label2:
+        return r4;
+
+     label3:
+        exitmonitor r1;
+
+     label4:
+        return null;
+
+     label5:
+        $r3 := @caughtexception;
+
+     label6:
+        exitmonitor r1;
+
+     label7:
+        throw $r3;
+
+        catch java.lang.Throwable from label1 to label2 with label5;
+        catch java.lang.Throwable from label3 to label4 with label5;
+        catch java.lang.Throwable from label6 to label7 with label5;
+    }
+
+    public int getUiccSlotForCardId(java.lang.String)
+    {
+        com.android.internal.telephony.uicc.UiccController r0;
+        java.lang.Object r1;
+        com.android.internal.telephony.uicc.UiccCard r2;
+        com.android.internal.telephony.uicc.UiccSlot[] $r3, $r4, $r5, $r7, $r10, $r12;
+        int $i0, $i1, i2, i3;
+        com.android.internal.telephony.uicc.UiccSlot $r6, $r8, $r11, $r13;
+        java.lang.String $r9, $r14, r16;
+        boolean $z0, $z1;
+        java.lang.Throwable $r15;
+
+        r0 := @this: com.android.internal.telephony.uicc.UiccController;
+
+        r16 := @parameter0: java.lang.String;
+
+        r1 = <com.android.internal.telephony.uicc.UiccController: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+        i2 = 0;
+
+     label01:
+        $r3 = r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.uicc.UiccSlot[] mUiccSlots>;
+
+        $i0 = lengthof $r3;
+
+        if i2 >= $i0 goto label06;
+
+        $r10 = r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.uicc.UiccSlot[] mUiccSlots>;
+
+        $r11 = $r10[i2];
+
+        if $r11 == null goto label05;
+
+        $r12 = r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.uicc.UiccSlot[] mUiccSlots>;
+
+        $r13 = $r12[i2];
+
+        r2 = virtualinvoke $r13.<com.android.internal.telephony.uicc.UiccSlot: com.android.internal.telephony.uicc.UiccCard getUiccCard()>();
+
+     label02:
+        if r2 == null goto label05;
+
+     label03:
+        $r14 = virtualinvoke r2.<com.android.internal.telephony.uicc.UiccCard: java.lang.String getCardId()>();
+
+        $z1 = virtualinvoke r16.<java.lang.String: boolean equals(java.lang.Object)>($r14);
+
+        if $z1 == 0 goto label05;
+
+        exitmonitor r1;
+
+     label04:
+        return i2;
+
+     label05:
+        i2 = i2 + 1;
+
+        goto label01;
+
+     label06:
+        i3 = 0;
+
+     label07:
+        $r4 = r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.uicc.UiccSlot[] mUiccSlots>;
+
+        $i1 = lengthof $r4;
+
+        if i3 >= $i1 goto label10;
+
+        $r5 = r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.uicc.UiccSlot[] mUiccSlots>;
+
+        $r6 = $r5[i3];
+
+        if $r6 == null goto label09;
+
+        $r7 = r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.uicc.UiccSlot[] mUiccSlots>;
+
+        $r8 = $r7[i3];
+
+        $r9 = virtualinvoke $r8.<com.android.internal.telephony.uicc.UiccSlot: java.lang.String getIccId()>();
+
+        $z0 = virtualinvoke r16.<java.lang.String: boolean equals(java.lang.Object)>($r9);
+
+        if $z0 == 0 goto label09;
+
+        exitmonitor r1;
+
+     label08:
+        return i3;
+
+     label09:
+        i3 = i3 + 1;
+
+        goto label07;
+
+     label10:
+        exitmonitor r1;
+
+     label11:
+        return -1;
+
+     label12:
+        $r15 := @caughtexception;
+
+     label13:
+        exitmonitor r1;
+
+     label14:
+        throw $r15;
+
+        catch java.lang.Throwable from label01 to label02 with label12;
+        catch java.lang.Throwable from label03 to label04 with label12;
+        catch java.lang.Throwable from label07 to label08 with label12;
+        catch java.lang.Throwable from label10 to label11 with label12;
+        catch java.lang.Throwable from label13 to label14 with label12;
+    }
+
+    public com.android.internal.telephony.uicc.UiccSlot getUiccSlotForPhone(int)
+    {
+        com.android.internal.telephony.uicc.UiccController r0;
+        java.lang.Object r1;
+        boolean $z0, $z1;
+        com.android.internal.telephony.uicc.UiccSlot[] $r2;
+        java.lang.Throwable $r3;
+        int i0, i1;
+        com.android.internal.telephony.uicc.UiccSlot r4;
+
+        r0 := @this: com.android.internal.telephony.uicc.UiccController;
+
+        i0 := @parameter0: int;
+
+        r1 = <com.android.internal.telephony.uicc.UiccController: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        $z0 = specialinvoke r0.<com.android.internal.telephony.uicc.UiccController: boolean isValidPhoneIndex(int)>(i0);
+
+        if $z0 == 0 goto label3;
+
+        i1 = virtualinvoke r0.<com.android.internal.telephony.uicc.UiccController: int getSlotIdFromPhoneId(int)>(i0);
+
+        $z1 = specialinvoke r0.<com.android.internal.telephony.uicc.UiccController: boolean isValidSlotIndex(int)>(i1);
+
+        if $z1 == 0 goto label3;
+
+        $r2 = r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.uicc.UiccSlot[] mUiccSlots>;
+
+        r4 = $r2[i1];
+
+        exitmonitor r1;
+
+     label2:
+        return r4;
+
+     label3:
+        exitmonitor r1;
+
+     label4:
+        return null;
+
+     label5:
+        $r3 := @caughtexception;
+
+     label6:
+        exitmonitor r1;
+
+     label7:
+        throw $r3;
+
+        catch java.lang.Throwable from label1 to label2 with label5;
+        catch java.lang.Throwable from label3 to label4 with label5;
+        catch java.lang.Throwable from label6 to label7 with label5;
+    }
+
+    public com.android.internal.telephony.uicc.UiccSlot[] getUiccSlots()
+    {
+        com.android.internal.telephony.uicc.UiccController r0;
+        java.lang.Object r1;
+        java.lang.Throwable $r2;
+        com.android.internal.telephony.uicc.UiccSlot[] r3;
+
+        r0 := @this: com.android.internal.telephony.uicc.UiccController;
+
+        r1 = <com.android.internal.telephony.uicc.UiccController: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        r3 = r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.uicc.UiccSlot[] mUiccSlots>;
+
+        exitmonitor r1;
+
+     label2:
+        return r3;
+
+     label3:
+        $r2 := @caughtexception;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        throw $r2;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    public void handleMessage(android.os.Message)
+    {
+        com.android.internal.telephony.uicc.UiccController r0;
+        java.lang.Object r1, $r14, $r15, $r17;
+        java.lang.StringBuilder r2, r38, r39;
+        int $i0, $i1, $i3, $i4, $i5, $i6, $i7, $i8, $i9, $i10, $i11;
+        java.lang.String $r7, $r13, $r29, r33;
+        com.android.internal.telephony.CommandsInterface[] $r8, $r19, $r24;
+        android.os.AsyncResult $r16, r34, r37;
+        java.lang.Integer $r18, r32;
+        com.android.internal.telephony.CommandsInterface $r20, $r25;
+        android.os.Message $r21, $r23, $r26, r31;
+        com.android.internal.telephony.RadioConfig $r22;
+        java.lang.Throwable $r30;
+        com.android.internal.telephony.uicc.UiccSlot r35;
+        com.android.internal.telephony.RegistrantList r36;
+
+        r0 := @this: com.android.internal.telephony.uicc.UiccController;
+
+        r31 := @parameter0: android.os.Message;
+
+        r1 = <com.android.internal.telephony.uicc.UiccController: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label01:
+        r32 = specialinvoke r0.<com.android.internal.telephony.uicc.UiccController: java.lang.Integer getCiIndex(android.os.Message)>(r31);
+
+        $i0 = r31.<android.os.Message: int what>;
+
+        r33 = staticinvoke <com.android.internal.telephony.uicc.UiccController: java.lang.String eventToString(int)>($i0);
+
+        $i1 = virtualinvoke r32.<java.lang.Integer: int intValue()>();
+
+        if $i1 < 0 goto label27;
+
+        $i3 = virtualinvoke r32.<java.lang.Integer: int intValue()>();
+
+        $r8 = r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.CommandsInterface[] mCis>;
+
+        $i4 = lengthof $r8;
+
+        if $i3 < $i4 goto label03;
+
+     label02:
+        goto label27;
+
+     label03:
+        r2 = new java.lang.StringBuilder;
+
+        specialinvoke r2.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("handleMessage: Received ");
+
+        virtualinvoke r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r33);
+
+        virtualinvoke r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" for phoneId ");
+
+        virtualinvoke r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r32);
+
+        $r13 = virtualinvoke r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.internal.telephony.uicc.UiccController: void logWithLocalLog(java.lang.String)>($r13);
+
+        $r14 = r31.<android.os.Message: java.lang.Object obj>;
+
+        r34 = (android.os.AsyncResult) $r14;
+
+        $i5 = r31.<android.os.Message: int what>;
+
+        tableswitch($i5)
+        {
+            case 1: goto label22;
+            case 2: goto label20;
+            case 3: goto label18;
+            case 4: goto label20;
+            case 5: goto label16;
+            case 6: goto label16;
+            case 7: goto label11;
+            case 8: goto label09;
+            case 9: goto label07;
+            case 10: goto label05;
+            default: goto label04;
+        };
+
+     label04:
+        goto label24;
+
+     label05:
+        specialinvoke r0.<com.android.internal.telephony.uicc.UiccController: void log(java.lang.String)>("Received EVENT_MULTI_SIM_CONFIG_CHANGED");
+
+        $r15 = r31.<android.os.Message: java.lang.Object obj>;
+
+        $r16 = (android.os.AsyncResult) $r15;
+
+        $r17 = $r16.<android.os.AsyncResult: java.lang.Object result>;
+
+        $r18 = (java.lang.Integer) $r17;
+
+        $i6 = virtualinvoke $r18.<java.lang.Integer: int intValue()>();
+
+        specialinvoke r0.<com.android.internal.telephony.uicc.UiccController: void onMultiSimConfigChanged(int)>($i6);
+
+     label06:
+        goto label25;
+
+     label07:
+        specialinvoke r0.<com.android.internal.telephony.uicc.UiccController: void log(java.lang.String)>("Received EVENT_EID_READY");
+
+        specialinvoke r0.<com.android.internal.telephony.uicc.UiccController: void onEidReady(android.os.AsyncResult,java.lang.Integer)>(r34, r32);
+
+     label08:
+        goto label25;
+
+     label09:
+        specialinvoke r0.<com.android.internal.telephony.uicc.UiccController: void log(java.lang.String)>("Received EVENT_SIM_REFRESH");
+
+        specialinvoke r0.<com.android.internal.telephony.uicc.UiccController: void onSimRefresh(android.os.AsyncResult,java.lang.Integer)>(r34, r32);
+
+     label10:
+        goto label25;
+
+     label11:
+        specialinvoke r0.<com.android.internal.telephony.uicc.UiccController: void log(java.lang.String)>("EVENT_RADIO_UNAVAILABLE, dispose card");
+
+        $i7 = virtualinvoke r32.<java.lang.Integer: int intValue()>();
+
+        r35 = virtualinvoke r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.uicc.UiccSlot getUiccSlotForPhone(int)>($i7);
+
+     label12:
+        if r35 == null goto label14;
+
+     label13:
+        virtualinvoke r35.<com.android.internal.telephony.uicc.UiccSlot: void onRadioStateUnavailable()>();
+
+     label14:
+        r36 = r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.RegistrantList mIccChangedRegistrants>;
+
+        r37 = new android.os.AsyncResult;
+
+        specialinvoke r37.<android.os.AsyncResult: void <init>(java.lang.Object,java.lang.Object,java.lang.Throwable)>(null, r32, null);
+
+        virtualinvoke r36.<com.android.internal.telephony.RegistrantList: void notifyRegistrants(android.os.AsyncResult)>(r37);
+
+     label15:
+        goto label25;
+
+     label16:
+        specialinvoke r0.<com.android.internal.telephony.uicc.UiccController: void log(java.lang.String)>("Received EVENT_RADIO_AVAILABLE/EVENT_RADIO_ON, calling getIccCardStatus");
+
+        $r19 = r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.CommandsInterface[] mCis>;
+
+        $i8 = virtualinvoke r32.<java.lang.Integer: int intValue()>();
+
+        $r20 = $r19[$i8];
+
+        $r21 = virtualinvoke r0.<com.android.internal.telephony.uicc.UiccController: android.os.Message obtainMessage(int,java.lang.Object)>(3, r32);
+
+        interfaceinvoke $r20.<com.android.internal.telephony.CommandsInterface: void getIccCardStatus(android.os.Message)>($r21);
+
+        $i9 = virtualinvoke r32.<java.lang.Integer: int intValue()>();
+
+        if $i9 != 0 goto label25;
+
+        specialinvoke r0.<com.android.internal.telephony.uicc.UiccController: void log(java.lang.String)>("Received EVENT_RADIO_AVAILABLE/EVENT_RADIO_ON for phoneId 0, calling getIccSlotsStatus");
+
+        $r22 = r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.RadioConfig mRadioConfig>;
+
+        $r23 = virtualinvoke r0.<com.android.internal.telephony.uicc.UiccController: android.os.Message obtainMessage(int,java.lang.Object)>(4, r32);
+
+        virtualinvoke $r22.<com.android.internal.telephony.RadioConfig: void getSimSlotsStatus(android.os.Message)>($r23);
+
+     label17:
+        goto label25;
+
+     label18:
+        specialinvoke r0.<com.android.internal.telephony.uicc.UiccController: void log(java.lang.String)>("Received EVENT_GET_ICC_STATUS_DONE");
+
+        specialinvoke r0.<com.android.internal.telephony.uicc.UiccController: void onGetIccCardStatusDone(android.os.AsyncResult,java.lang.Integer)>(r34, r32);
+
+     label19:
+        goto label25;
+
+     label20:
+        specialinvoke r0.<com.android.internal.telephony.uicc.UiccController: void log(java.lang.String)>("Received EVENT_SLOT_STATUS_CHANGED or EVENT_GET_SLOT_STATUS_DONE");
+
+        specialinvoke r0.<com.android.internal.telephony.uicc.UiccController: void onGetSlotStatusDone(android.os.AsyncResult)>(r34);
+
+     label21:
+        goto label25;
+
+     label22:
+        specialinvoke r0.<com.android.internal.telephony.uicc.UiccController: void log(java.lang.String)>("Received EVENT_ICC_STATUS_CHANGED, calling getIccCardStatus");
+
+        $r24 = r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.CommandsInterface[] mCis>;
+
+        $i10 = virtualinvoke r32.<java.lang.Integer: int intValue()>();
+
+        $r25 = $r24[$i10];
+
+        $r26 = virtualinvoke r0.<com.android.internal.telephony.uicc.UiccController: android.os.Message obtainMessage(int,java.lang.Object)>(3, r32);
+
+        interfaceinvoke $r25.<com.android.internal.telephony.CommandsInterface: void getIccCardStatus(android.os.Message)>($r26);
+
+     label23:
+        goto label25;
+
+     label24:
+        r38 = new java.lang.StringBuilder;
+
+        specialinvoke r38.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r38.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" Unknown Event ");
+
+        $i11 = r31.<android.os.Message: int what>;
+
+        virtualinvoke r38.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i11);
+
+        $r29 = virtualinvoke r38.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.telephony.Rlog: int e(java.lang.String,java.lang.String)>("UiccController", $r29);
+
+     label25:
+        exitmonitor r1;
+
+     label26:
+        return;
+
+     label27:
+        r39 = new java.lang.StringBuilder;
+
+        specialinvoke r39.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r39.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Invalid phoneId : ");
+
+        virtualinvoke r39.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r32);
+
+        virtualinvoke r39.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" received with event ");
+
+        virtualinvoke r39.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r33);
+
+        $r7 = virtualinvoke r39.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.telephony.Rlog: int e(java.lang.String,java.lang.String)>("UiccController", $r7);
+
+        exitmonitor r1;
+
+     label28:
+        return;
+
+     label29:
+        $r30 := @caughtexception;
+
+     label30:
+        exitmonitor r1;
+
+     label31:
+        throw $r30;
+
+        catch java.lang.Throwable from label01 to label02 with label29;
+        catch java.lang.Throwable from label03 to label04 with label29;
+        catch java.lang.Throwable from label05 to label06 with label29;
+        catch java.lang.Throwable from label07 to label08 with label29;
+        catch java.lang.Throwable from label09 to label10 with label29;
+        catch java.lang.Throwable from label11 to label12 with label29;
+        catch java.lang.Throwable from label13 to label14 with label29;
+        catch java.lang.Throwable from label14 to label15 with label29;
+        catch java.lang.Throwable from label16 to label17 with label29;
+        catch java.lang.Throwable from label18 to label19 with label29;
+        catch java.lang.Throwable from label20 to label21 with label29;
+        catch java.lang.Throwable from label22 to label23 with label29;
+        catch java.lang.Throwable from label24 to label25 with label29;
+        catch java.lang.Throwable from label25 to label26 with label29;
+        catch java.lang.Throwable from label27 to label28 with label29;
+        catch java.lang.Throwable from label30 to label31 with label29;
+    }
+
+    public void registerForIccChanged(android.os.Handler, int, java.lang.Object)
+    {
+        com.android.internal.telephony.uicc.UiccController r0;
+        int i0;
+        java.lang.Object r1, r2;
+        com.android.internal.telephony.RegistrantList $r3;
+        android.os.AsyncResult $r4;
+        android.os.Message $r5;
+        java.lang.Throwable $r6;
+        android.os.Handler r7;
+
+        r0 := @this: com.android.internal.telephony.uicc.UiccController;
+
+        r7 := @parameter0: android.os.Handler;
+
+        i0 := @parameter1: int;
+
+        r1 := @parameter2: java.lang.Object;
+
+        r2 = <com.android.internal.telephony.uicc.UiccController: java.lang.Object mLock>;
+
+        entermonitor r2;
+
+     label1:
+        $r3 = r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.RegistrantList mIccChangedRegistrants>;
+
+        virtualinvoke $r3.<com.android.internal.telephony.RegistrantList: void addUnique(android.os.Handler,int,java.lang.Object)>(r7, i0, r1);
+
+        exitmonitor r2;
+
+     label2:
+        $r4 = new android.os.AsyncResult;
+
+        specialinvoke $r4.<android.os.AsyncResult: void <init>(java.lang.Object,java.lang.Object,java.lang.Throwable)>(r1, null, null);
+
+        $r5 = staticinvoke <android.os.Message: android.os.Message obtain(android.os.Handler,int,java.lang.Object)>(r7, i0, $r4);
+
+        virtualinvoke $r5.<android.os.Message: void sendToTarget()>();
+
+        return;
+
+     label3:
+        $r6 := @caughtexception;
+
+     label4:
+        exitmonitor r2;
+
+     label5:
+        throw $r6;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    public void switchSlots(int[], android.os.Message)
+    {
+        com.android.internal.telephony.uicc.UiccController r0;
+        int[] r1;
+        android.os.Message r2;
+        java.lang.StringBuilder $r4;
+        java.lang.String $r6, $r8;
+        com.android.internal.telephony.RadioConfig $r9;
+
+        r0 := @this: com.android.internal.telephony.uicc.UiccController;
+
+        r1 := @parameter0: int[];
+
+        r2 := @parameter1: android.os.Message;
+
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("switchSlots: ");
+
+        $r6 = staticinvoke <java.util.Arrays: java.lang.String toString(int[])>(r1);
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r6);
+
+        $r8 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.internal.telephony.uicc.UiccController: void logWithLocalLog(java.lang.String)>($r8);
+
+        $r9 = r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.RadioConfig mRadioConfig>;
+
+        virtualinvoke $r9.<com.android.internal.telephony.RadioConfig: void setSimSlotsMapping(int[],android.os.Message)>(r1, r2);
+
+        return;
+    }
+
+    public void unregisterForIccChanged(android.os.Handler)
+    {
+        com.android.internal.telephony.uicc.UiccController r0;
+        java.lang.Object r1;
+        com.android.internal.telephony.RegistrantList $r2;
+        java.lang.Throwable $r3;
+        android.os.Handler r4;
+
+        r0 := @this: com.android.internal.telephony.uicc.UiccController;
+
+        r4 := @parameter0: android.os.Handler;
+
+        r1 = <com.android.internal.telephony.uicc.UiccController: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        $r2 = r0.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.RegistrantList mIccChangedRegistrants>;
+
+        virtualinvoke $r2.<com.android.internal.telephony.RegistrantList: void remove(android.os.Handler)>(r4);
+
+        exitmonitor r1;
+
+     label2:
+        return;
+
+     label3:
+        $r3 := @caughtexception;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        throw $r3;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+}

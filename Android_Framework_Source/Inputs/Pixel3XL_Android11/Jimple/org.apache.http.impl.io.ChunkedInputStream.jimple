@@ -1,0 +1,455 @@
+public class org.apache.http.impl.io.ChunkedInputStream extends java.io.InputStream
+{
+    private boolean bof;
+    private final org.apache.http.util.CharArrayBuffer buffer;
+    private int chunkSize;
+    private boolean closed;
+    private boolean eof;
+    private org.apache.http.Header[] footers;
+    private org.apache.http.io.SessionInputBuffer in;
+    private int pos;
+
+    public void <init>(org.apache.http.io.SessionInputBuffer)
+    {
+        org.apache.http.impl.io.ChunkedInputStream r0;
+        org.apache.http.io.SessionInputBuffer r1;
+        org.apache.http.Header[] $r2;
+        java.lang.IllegalArgumentException $r3;
+        org.apache.http.util.CharArrayBuffer $r4;
+
+        r0 := @this: org.apache.http.impl.io.ChunkedInputStream;
+
+        r1 := @parameter0: org.apache.http.io.SessionInputBuffer;
+
+        specialinvoke r0.<java.io.InputStream: void <init>()>();
+
+        r0.<org.apache.http.impl.io.ChunkedInputStream: boolean bof> = 1;
+
+        r0.<org.apache.http.impl.io.ChunkedInputStream: boolean eof> = 0;
+
+        r0.<org.apache.http.impl.io.ChunkedInputStream: boolean closed> = 0;
+
+        $r2 = newarray (org.apache.http.Header)[0];
+
+        r0.<org.apache.http.impl.io.ChunkedInputStream: org.apache.http.Header[] footers> = $r2;
+
+        if r1 == null goto label1;
+
+        r0.<org.apache.http.impl.io.ChunkedInputStream: org.apache.http.io.SessionInputBuffer in> = r1;
+
+        r0.<org.apache.http.impl.io.ChunkedInputStream: int pos> = 0;
+
+        $r4 = new org.apache.http.util.CharArrayBuffer;
+
+        specialinvoke $r4.<org.apache.http.util.CharArrayBuffer: void <init>(int)>(16);
+
+        r0.<org.apache.http.impl.io.ChunkedInputStream: org.apache.http.util.CharArrayBuffer buffer> = $r4;
+
+        return;
+
+     label1:
+        $r3 = new java.lang.IllegalArgumentException;
+
+        specialinvoke $r3.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>("Session input buffer may not be null");
+
+        throw $r3;
+    }
+
+    static void exhaustInputStream(java.io.InputStream) throws java.io.IOException
+    {
+        java.io.InputStream r0;
+        byte[] r1;
+        int $i0;
+
+        r0 := @parameter0: java.io.InputStream;
+
+        r1 = newarray (byte)[1024];
+
+     label1:
+        $i0 = virtualinvoke r0.<java.io.InputStream: int read(byte[])>(r1);
+
+        if $i0 < 0 goto label2;
+
+        goto label1;
+
+     label2:
+        return;
+    }
+
+    private int getChunkSize() throws java.io.IOException
+    {
+        org.apache.http.impl.io.ChunkedInputStream r0;
+        boolean $z0;
+        org.apache.http.util.CharArrayBuffer $r2, $r3, $r6, $r7, $r9;
+        org.apache.http.io.SessionInputBuffer $r4, $r10, $r11;
+        int $i0, i1, i2, i3, i4, i5;
+        org.apache.http.MalformedChunkCodingException $r5, $r12, $r14;
+        java.lang.String $r8;
+        java.lang.Throwable $r13;
+
+        r0 := @this: org.apache.http.impl.io.ChunkedInputStream;
+
+        $z0 = r0.<org.apache.http.impl.io.ChunkedInputStream: boolean bof>;
+
+        if $z0 != 0 goto label2;
+
+        $r10 = r0.<org.apache.http.impl.io.ChunkedInputStream: org.apache.http.io.SessionInputBuffer in>;
+
+        i1 = interfaceinvoke $r10.<org.apache.http.io.SessionInputBuffer: int read()>();
+
+        $r11 = r0.<org.apache.http.impl.io.ChunkedInputStream: org.apache.http.io.SessionInputBuffer in>;
+
+        i2 = interfaceinvoke $r11.<org.apache.http.io.SessionInputBuffer: int read()>();
+
+        if i1 != 13 goto label1;
+
+        if i2 != 10 goto label1;
+
+        goto label2;
+
+     label1:
+        $r12 = new org.apache.http.MalformedChunkCodingException;
+
+        specialinvoke $r12.<org.apache.http.MalformedChunkCodingException: void <init>(java.lang.String)>("CRLF expected at end of chunk");
+
+        throw $r12;
+
+     label2:
+        $r2 = r0.<org.apache.http.impl.io.ChunkedInputStream: org.apache.http.util.CharArrayBuffer buffer>;
+
+        virtualinvoke $r2.<org.apache.http.util.CharArrayBuffer: void clear()>();
+
+        $r4 = r0.<org.apache.http.impl.io.ChunkedInputStream: org.apache.http.io.SessionInputBuffer in>;
+
+        $r3 = r0.<org.apache.http.impl.io.ChunkedInputStream: org.apache.http.util.CharArrayBuffer buffer>;
+
+        $i0 = interfaceinvoke $r4.<org.apache.http.io.SessionInputBuffer: int readLine(org.apache.http.util.CharArrayBuffer)>($r3);
+
+        if $i0 == -1 goto label6;
+
+        $r6 = r0.<org.apache.http.impl.io.ChunkedInputStream: org.apache.http.util.CharArrayBuffer buffer>;
+
+        i3 = virtualinvoke $r6.<org.apache.http.util.CharArrayBuffer: int indexOf(int)>(59);
+
+        i4 = i3;
+
+        if i3 >= 0 goto label3;
+
+        $r9 = r0.<org.apache.http.impl.io.ChunkedInputStream: org.apache.http.util.CharArrayBuffer buffer>;
+
+        i4 = virtualinvoke $r9.<org.apache.http.util.CharArrayBuffer: int length()>();
+
+     label3:
+        $r7 = r0.<org.apache.http.impl.io.ChunkedInputStream: org.apache.http.util.CharArrayBuffer buffer>;
+
+        $r8 = virtualinvoke $r7.<org.apache.http.util.CharArrayBuffer: java.lang.String substringTrimmed(int,int)>(0, i4);
+
+        i5 = staticinvoke <java.lang.Integer: int parseInt(java.lang.String,int)>($r8, 16);
+
+     label4:
+        return i5;
+
+     label5:
+        $r13 := @caughtexception;
+
+        $r14 = new org.apache.http.MalformedChunkCodingException;
+
+        specialinvoke $r14.<org.apache.http.MalformedChunkCodingException: void <init>(java.lang.String)>("Bad chunk header");
+
+        throw $r14;
+
+     label6:
+        $r5 = new org.apache.http.MalformedChunkCodingException;
+
+        specialinvoke $r5.<org.apache.http.MalformedChunkCodingException: void <init>(java.lang.String)>("Chunked stream ended unexpectedly");
+
+        throw $r5;
+
+        catch java.lang.NumberFormatException from label3 to label4 with label5;
+    }
+
+    private void nextChunk() throws java.io.IOException
+    {
+        org.apache.http.impl.io.ChunkedInputStream r0;
+        int i0;
+        org.apache.http.MalformedChunkCodingException $r1;
+
+        r0 := @this: org.apache.http.impl.io.ChunkedInputStream;
+
+        i0 = specialinvoke r0.<org.apache.http.impl.io.ChunkedInputStream: int getChunkSize()>();
+
+        r0.<org.apache.http.impl.io.ChunkedInputStream: int chunkSize> = i0;
+
+        if i0 < 0 goto label2;
+
+        r0.<org.apache.http.impl.io.ChunkedInputStream: boolean bof> = 0;
+
+        r0.<org.apache.http.impl.io.ChunkedInputStream: int pos> = 0;
+
+        if i0 != 0 goto label1;
+
+        r0.<org.apache.http.impl.io.ChunkedInputStream: boolean eof> = 1;
+
+        specialinvoke r0.<org.apache.http.impl.io.ChunkedInputStream: void parseTrailerHeaders()>();
+
+     label1:
+        return;
+
+     label2:
+        $r1 = new org.apache.http.MalformedChunkCodingException;
+
+        specialinvoke $r1.<org.apache.http.MalformedChunkCodingException: void <init>(java.lang.String)>("Negative chunk size");
+
+        throw $r1;
+    }
+
+    private void parseTrailerHeaders() throws java.io.IOException
+    {
+        org.apache.http.impl.io.ChunkedInputStream r0;
+        org.apache.http.io.SessionInputBuffer $r2;
+        org.apache.http.Header[] $r3;
+        org.apache.http.HttpException $r4;
+        java.lang.StringBuilder $r5;
+        java.lang.String $r7, $r10;
+        org.apache.http.MalformedChunkCodingException $r9;
+
+        r0 := @this: org.apache.http.impl.io.ChunkedInputStream;
+
+     label1:
+        $r2 = r0.<org.apache.http.impl.io.ChunkedInputStream: org.apache.http.io.SessionInputBuffer in>;
+
+        $r3 = staticinvoke <org.apache.http.impl.io.AbstractMessageParser: org.apache.http.Header[] parseHeaders(org.apache.http.io.SessionInputBuffer,int,int,org.apache.http.message.LineParser)>($r2, -1, -1, null);
+
+        r0.<org.apache.http.impl.io.ChunkedInputStream: org.apache.http.Header[] footers> = $r3;
+
+     label2:
+        return;
+
+     label3:
+        $r4 := @caughtexception;
+
+        $r5 = new java.lang.StringBuilder;
+
+        specialinvoke $r5.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Invalid footer: ");
+
+        $r7 = virtualinvoke $r4.<org.apache.http.HttpException: java.lang.String getMessage()>();
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r7);
+
+        $r9 = new org.apache.http.MalformedChunkCodingException;
+
+        $r10 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r9.<org.apache.http.MalformedChunkCodingException: void <init>(java.lang.String)>($r10);
+
+        staticinvoke <org.apache.http.util.ExceptionUtils: void initCause(java.lang.Throwable,java.lang.Throwable)>($r9, $r4);
+
+        throw $r9;
+
+        catch org.apache.http.HttpException from label1 to label2 with label3;
+    }
+
+    public void close() throws java.io.IOException
+    {
+        org.apache.http.impl.io.ChunkedInputStream r0;
+        boolean $z0, $z1;
+        java.lang.Throwable $r2;
+
+        r0 := @this: org.apache.http.impl.io.ChunkedInputStream;
+
+        $z0 = r0.<org.apache.http.impl.io.ChunkedInputStream: boolean closed>;
+
+        if $z0 != 0 goto label4;
+
+     label1:
+        $z1 = r0.<org.apache.http.impl.io.ChunkedInputStream: boolean eof>;
+
+        if $z1 != 0 goto label2;
+
+        staticinvoke <org.apache.http.impl.io.ChunkedInputStream: void exhaustInputStream(java.io.InputStream)>(r0);
+
+     label2:
+        r0.<org.apache.http.impl.io.ChunkedInputStream: boolean eof> = 1;
+
+        r0.<org.apache.http.impl.io.ChunkedInputStream: boolean closed> = 1;
+
+        goto label4;
+
+     label3:
+        $r2 := @caughtexception;
+
+        r0.<org.apache.http.impl.io.ChunkedInputStream: boolean eof> = 1;
+
+        r0.<org.apache.http.impl.io.ChunkedInputStream: boolean closed> = 1;
+
+        throw $r2;
+
+     label4:
+        return;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+    }
+
+    public org.apache.http.Header[] getFooters()
+    {
+        org.apache.http.impl.io.ChunkedInputStream r0;
+        org.apache.http.Header[] $r1, $r3;
+        java.lang.Object $r2;
+
+        r0 := @this: org.apache.http.impl.io.ChunkedInputStream;
+
+        $r1 = r0.<org.apache.http.impl.io.ChunkedInputStream: org.apache.http.Header[] footers>;
+
+        $r2 = virtualinvoke $r1.<java.lang.Object: java.lang.Object clone()>();
+
+        $r3 = (org.apache.http.Header[]) $r2;
+
+        return $r3;
+    }
+
+    public int read() throws java.io.IOException
+    {
+        org.apache.http.impl.io.ChunkedInputStream r0;
+        boolean $z0, $z1, $z2;
+        java.io.IOException $r1;
+        int $i0, $i1, $i2, $i3, $i4;
+        org.apache.http.io.SessionInputBuffer $r2;
+
+        r0 := @this: org.apache.http.impl.io.ChunkedInputStream;
+
+        $z0 = r0.<org.apache.http.impl.io.ChunkedInputStream: boolean closed>;
+
+        if $z0 != 0 goto label3;
+
+        $z1 = r0.<org.apache.http.impl.io.ChunkedInputStream: boolean eof>;
+
+        if $z1 == 0 goto label1;
+
+        return -1;
+
+     label1:
+        $i1 = r0.<org.apache.http.impl.io.ChunkedInputStream: int pos>;
+
+        $i0 = r0.<org.apache.http.impl.io.ChunkedInputStream: int chunkSize>;
+
+        if $i1 < $i0 goto label2;
+
+        specialinvoke r0.<org.apache.http.impl.io.ChunkedInputStream: void nextChunk()>();
+
+        $z2 = r0.<org.apache.http.impl.io.ChunkedInputStream: boolean eof>;
+
+        if $z2 == 0 goto label2;
+
+        return -1;
+
+     label2:
+        $i2 = r0.<org.apache.http.impl.io.ChunkedInputStream: int pos>;
+
+        $i3 = $i2 + 1;
+
+        r0.<org.apache.http.impl.io.ChunkedInputStream: int pos> = $i3;
+
+        $r2 = r0.<org.apache.http.impl.io.ChunkedInputStream: org.apache.http.io.SessionInputBuffer in>;
+
+        $i4 = interfaceinvoke $r2.<org.apache.http.io.SessionInputBuffer: int read()>();
+
+        return $i4;
+
+     label3:
+        $r1 = new java.io.IOException;
+
+        specialinvoke $r1.<java.io.IOException: void <init>(java.lang.String)>("Attempted read from closed stream.");
+
+        throw $r1;
+    }
+
+    public int read(byte[]) throws java.io.IOException
+    {
+        org.apache.http.impl.io.ChunkedInputStream r0;
+        byte[] r1;
+        int $i0, $i1;
+
+        r0 := @this: org.apache.http.impl.io.ChunkedInputStream;
+
+        r1 := @parameter0: byte[];
+
+        $i0 = lengthof r1;
+
+        $i1 = virtualinvoke r0.<org.apache.http.impl.io.ChunkedInputStream: int read(byte[],int,int)>(r1, 0, $i0);
+
+        return $i1;
+    }
+
+    public int read(byte[], int, int) throws java.io.IOException
+    {
+        org.apache.http.impl.io.ChunkedInputStream r0;
+        byte[] r1;
+        boolean $z0, $z1, $z2;
+        java.io.IOException $r2;
+        int $i0, $i1, $i2, $i3, $i4, $i5, $i6, i7, i8, i9, i10;
+        org.apache.http.io.SessionInputBuffer $r3;
+
+        r0 := @this: org.apache.http.impl.io.ChunkedInputStream;
+
+        r1 := @parameter0: byte[];
+
+        i7 := @parameter1: int;
+
+        i8 := @parameter2: int;
+
+        $z0 = r0.<org.apache.http.impl.io.ChunkedInputStream: boolean closed>;
+
+        if $z0 != 0 goto label3;
+
+        $z1 = r0.<org.apache.http.impl.io.ChunkedInputStream: boolean eof>;
+
+        if $z1 == 0 goto label1;
+
+        return -1;
+
+     label1:
+        $i1 = r0.<org.apache.http.impl.io.ChunkedInputStream: int pos>;
+
+        $i0 = r0.<org.apache.http.impl.io.ChunkedInputStream: int chunkSize>;
+
+        if $i1 < $i0 goto label2;
+
+        specialinvoke r0.<org.apache.http.impl.io.ChunkedInputStream: void nextChunk()>();
+
+        $z2 = r0.<org.apache.http.impl.io.ChunkedInputStream: boolean eof>;
+
+        if $z2 == 0 goto label2;
+
+        return -1;
+
+     label2:
+        $i3 = r0.<org.apache.http.impl.io.ChunkedInputStream: int chunkSize>;
+
+        $i2 = r0.<org.apache.http.impl.io.ChunkedInputStream: int pos>;
+
+        $i4 = $i3 - $i2;
+
+        i9 = staticinvoke <java.lang.Math: int min(int,int)>(i8, $i4);
+
+        $r3 = r0.<org.apache.http.impl.io.ChunkedInputStream: org.apache.http.io.SessionInputBuffer in>;
+
+        i10 = interfaceinvoke $r3.<org.apache.http.io.SessionInputBuffer: int read(byte[],int,int)>(r1, i7, i9);
+
+        $i5 = r0.<org.apache.http.impl.io.ChunkedInputStream: int pos>;
+
+        $i6 = $i5 + i10;
+
+        r0.<org.apache.http.impl.io.ChunkedInputStream: int pos> = $i6;
+
+        return i10;
+
+     label3:
+        $r2 = new java.io.IOException;
+
+        specialinvoke $r2.<java.io.IOException: void <init>(java.lang.String)>("Attempted read from closed stream.");
+
+        throw $r2;
+    }
+}

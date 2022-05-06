@@ -1,0 +1,3363 @@
+public class com.android.server.audio.MediaFocusControl extends java.lang.Object implements com.android.server.audio.PlayerFocusEnforcer
+{
+    static final boolean DEBUG;
+    static final int DUCKING_IN_APP_SDK_LEVEL;
+    static final boolean ENFORCE_DUCKING;
+    static final boolean ENFORCE_DUCKING_FOR_NEW;
+    static final boolean ENFORCE_MUTING_FOR_RING_OR_CALL;
+    private static final int MAX_STACK_SIZE;
+    private static final int RING_CALL_MUTING_ENFORCEMENT_DELAY_MS;
+    private static final java.lang.String TAG;
+    private static final int[] USAGES_TO_MUTE_IN_RING_OR_CALL;
+    private static final java.lang.Object mAudioFocusLock;
+    private static final com.android.server.audio.AudioEventLogger mEventLogger;
+    private static final java.lang.String mMetricsId;
+    private final android.app.AppOpsManager mAppOps;
+    private final android.content.Context mContext;
+    private long mExtFocusChangeCounter;
+    private final java.lang.Object mExtFocusChangeLock;
+    private com.android.server.audio.PlayerFocusEnforcer mFocusEnforcer;
+    private java.util.ArrayList mFocusFollowers;
+    private java.util.HashMap mFocusOwnersForFocusPolicy;
+    private android.media.audiopolicy.IAudioPolicyCallback mFocusPolicy;
+    private final java.util.Stack mFocusStack;
+    private boolean mMultiAudioFocusEnabled;
+    java.util.ArrayList mMultiAudioFocusList;
+    private boolean mNotifyFocusOwnerOnDuck;
+    private android.media.audiopolicy.IAudioPolicyCallback mPreviousFocusPolicy;
+    private boolean mRingOrCallActive;
+
+    static void <clinit>()
+    {
+        java.lang.Object $r0;
+        com.android.server.audio.AudioEventLogger $r1;
+        int[] $r2;
+
+        <com.android.server.audio.MediaFocusControl: java.lang.String mMetricsId> = "audio.focus";
+
+        <com.android.server.audio.MediaFocusControl: java.lang.String TAG> = "MediaFocusControl";
+
+        <com.android.server.audio.MediaFocusControl: int RING_CALL_MUTING_ENFORCEMENT_DELAY_MS> = 100;
+
+        <com.android.server.audio.MediaFocusControl: int MAX_STACK_SIZE> = 100;
+
+        <com.android.server.audio.MediaFocusControl: boolean ENFORCE_MUTING_FOR_RING_OR_CALL> = 1;
+
+        <com.android.server.audio.MediaFocusControl: boolean ENFORCE_DUCKING_FOR_NEW> = 1;
+
+        <com.android.server.audio.MediaFocusControl: boolean ENFORCE_DUCKING> = 1;
+
+        <com.android.server.audio.MediaFocusControl: int DUCKING_IN_APP_SDK_LEVEL> = 25;
+
+        <com.android.server.audio.MediaFocusControl: boolean DEBUG> = 0;
+
+        $r0 = new java.lang.Object;
+
+        specialinvoke $r0.<java.lang.Object: void <init>()>();
+
+        <com.android.server.audio.MediaFocusControl: java.lang.Object mAudioFocusLock> = $r0;
+
+        $r1 = new com.android.server.audio.AudioEventLogger;
+
+        specialinvoke $r1.<com.android.server.audio.AudioEventLogger: void <init>(int,java.lang.String)>(50, "focus commands as seen by MediaFocusControl");
+
+        <com.android.server.audio.MediaFocusControl: com.android.server.audio.AudioEventLogger mEventLogger> = $r1;
+
+        $r2 = newarray (int)[2];
+
+        $r2[0] = 1;
+
+        $r2[1] = 14;
+
+        <com.android.server.audio.MediaFocusControl: int[] USAGES_TO_MUTE_IN_RING_OR_CALL> = $r2;
+
+        return;
+    }
+
+    protected void <init>(android.content.Context, com.android.server.audio.PlayerFocusEnforcer)
+    {
+        com.android.server.audio.MediaFocusControl r0;
+        android.content.Context r1, $r10;
+        com.android.server.audio.PlayerFocusEnforcer r2;
+        java.lang.Object $r3, $r8;
+        java.util.Stack $r4;
+        java.util.ArrayList $r5, $r6;
+        java.util.HashMap $r7;
+        android.app.AppOpsManager $r9;
+        android.content.ContentResolver $r11;
+        int $i0;
+        boolean z0;
+
+        r0 := @this: com.android.server.audio.MediaFocusControl;
+
+        r1 := @parameter0: android.content.Context;
+
+        r2 := @parameter1: com.android.server.audio.PlayerFocusEnforcer;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        z0 = 0;
+
+        r0.<com.android.server.audio.MediaFocusControl: boolean mMultiAudioFocusEnabled> = 0;
+
+        r0.<com.android.server.audio.MediaFocusControl: boolean mRingOrCallActive> = 0;
+
+        $r3 = new java.lang.Object;
+
+        specialinvoke $r3.<java.lang.Object: void <init>()>();
+
+        r0.<com.android.server.audio.MediaFocusControl: java.lang.Object mExtFocusChangeLock> = $r3;
+
+        $r4 = new java.util.Stack;
+
+        specialinvoke $r4.<java.util.Stack: void <init>()>();
+
+        r0.<com.android.server.audio.MediaFocusControl: java.util.Stack mFocusStack> = $r4;
+
+        $r5 = new java.util.ArrayList;
+
+        specialinvoke $r5.<java.util.ArrayList: void <init>()>();
+
+        r0.<com.android.server.audio.MediaFocusControl: java.util.ArrayList mMultiAudioFocusList> = $r5;
+
+        r0.<com.android.server.audio.MediaFocusControl: boolean mNotifyFocusOwnerOnDuck> = 1;
+
+        $r6 = new java.util.ArrayList;
+
+        specialinvoke $r6.<java.util.ArrayList: void <init>()>();
+
+        r0.<com.android.server.audio.MediaFocusControl: java.util.ArrayList mFocusFollowers> = $r6;
+
+        r0.<com.android.server.audio.MediaFocusControl: android.media.audiopolicy.IAudioPolicyCallback mFocusPolicy> = null;
+
+        r0.<com.android.server.audio.MediaFocusControl: android.media.audiopolicy.IAudioPolicyCallback mPreviousFocusPolicy> = null;
+
+        $r7 = new java.util.HashMap;
+
+        specialinvoke $r7.<java.util.HashMap: void <init>()>();
+
+        r0.<com.android.server.audio.MediaFocusControl: java.util.HashMap mFocusOwnersForFocusPolicy> = $r7;
+
+        r0.<com.android.server.audio.MediaFocusControl: android.content.Context mContext> = r1;
+
+        $r8 = virtualinvoke r1.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("appops");
+
+        $r9 = (android.app.AppOpsManager) $r8;
+
+        r0.<com.android.server.audio.MediaFocusControl: android.app.AppOpsManager mAppOps> = $r9;
+
+        r0.<com.android.server.audio.MediaFocusControl: com.android.server.audio.PlayerFocusEnforcer mFocusEnforcer> = r2;
+
+        $r10 = r0.<com.android.server.audio.MediaFocusControl: android.content.Context mContext>;
+
+        $r11 = virtualinvoke $r10.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        $i0 = staticinvoke <android.provider.Settings$System: int getInt(android.content.ContentResolver,java.lang.String,int)>($r11, "multi_audio_focus_enabled", 0);
+
+        if $i0 == 0 goto label1;
+
+        z0 = 1;
+
+     label1:
+        r0.<com.android.server.audio.MediaFocusControl: boolean mMultiAudioFocusEnabled> = z0;
+
+        return;
+    }
+
+    static java.lang.Object access$000()
+    {
+        java.lang.Object $r0;
+
+        $r0 = <com.android.server.audio.MediaFocusControl: java.lang.Object mAudioFocusLock>;
+
+        return $r0;
+    }
+
+    static android.media.audiopolicy.IAudioPolicyCallback access$100(com.android.server.audio.MediaFocusControl)
+    {
+        com.android.server.audio.MediaFocusControl r0;
+        android.media.audiopolicy.IAudioPolicyCallback $r1;
+
+        r0 := @parameter0: com.android.server.audio.MediaFocusControl;
+
+        $r1 = r0.<com.android.server.audio.MediaFocusControl: android.media.audiopolicy.IAudioPolicyCallback mFocusPolicy>;
+
+        return $r1;
+    }
+
+    static void access$200(com.android.server.audio.MediaFocusControl, android.os.IBinder)
+    {
+        com.android.server.audio.MediaFocusControl r0;
+        android.os.IBinder r1;
+
+        r0 := @parameter0: com.android.server.audio.MediaFocusControl;
+
+        r1 := @parameter1: android.os.IBinder;
+
+        specialinvoke r0.<com.android.server.audio.MediaFocusControl: void removeFocusEntryForExtPolicy(android.os.IBinder)>(r1);
+
+        return;
+    }
+
+    static void access$300(com.android.server.audio.MediaFocusControl, android.os.IBinder)
+    {
+        com.android.server.audio.MediaFocusControl r0;
+        android.os.IBinder r1;
+
+        r0 := @parameter0: com.android.server.audio.MediaFocusControl;
+
+        r1 := @parameter1: android.os.IBinder;
+
+        specialinvoke r0.<com.android.server.audio.MediaFocusControl: void removeFocusStackEntryOnDeath(android.os.IBinder)>(r1);
+
+        return;
+    }
+
+    static boolean access$400(com.android.server.audio.MediaFocusControl)
+    {
+        com.android.server.audio.MediaFocusControl r0;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.server.audio.MediaFocusControl;
+
+        $z0 = r0.<com.android.server.audio.MediaFocusControl: boolean mMultiAudioFocusEnabled>;
+
+        return $z0;
+    }
+
+    static java.util.Stack access$500(com.android.server.audio.MediaFocusControl)
+    {
+        com.android.server.audio.MediaFocusControl r0;
+        java.util.Stack $r1;
+
+        r0 := @parameter0: com.android.server.audio.MediaFocusControl;
+
+        $r1 = r0.<com.android.server.audio.MediaFocusControl: java.util.Stack mFocusStack>;
+
+        return $r1;
+    }
+
+    static boolean access$600(com.android.server.audio.MediaFocusControl)
+    {
+        com.android.server.audio.MediaFocusControl r0;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.server.audio.MediaFocusControl;
+
+        $z0 = r0.<com.android.server.audio.MediaFocusControl: boolean mRingOrCallActive>;
+
+        return $z0;
+    }
+
+    static int[] access$700()
+    {
+        int[] $r0;
+
+        $r0 = <com.android.server.audio.MediaFocusControl: int[] USAGES_TO_MUTE_IN_RING_OR_CALL>;
+
+        return $r0;
+    }
+
+    static com.android.server.audio.PlayerFocusEnforcer access$800(com.android.server.audio.MediaFocusControl)
+    {
+        com.android.server.audio.MediaFocusControl r0;
+        com.android.server.audio.PlayerFocusEnforcer $r1;
+
+        r0 := @parameter0: com.android.server.audio.MediaFocusControl;
+
+        $r1 = r0.<com.android.server.audio.MediaFocusControl: com.android.server.audio.PlayerFocusEnforcer mFocusEnforcer>;
+
+        return $r1;
+    }
+
+    private boolean canReassignAudioFocus()
+    {
+        com.android.server.audio.MediaFocusControl r0;
+        java.util.Stack $r1, $r2;
+        boolean $z0, $z1;
+        java.lang.Object $r3;
+        com.android.server.audio.FocusRequester $r4;
+
+        r0 := @this: com.android.server.audio.MediaFocusControl;
+
+        $r1 = r0.<com.android.server.audio.MediaFocusControl: java.util.Stack mFocusStack>;
+
+        $z0 = virtualinvoke $r1.<java.util.Stack: boolean isEmpty()>();
+
+        if $z0 != 0 goto label1;
+
+        $r2 = r0.<com.android.server.audio.MediaFocusControl: java.util.Stack mFocusStack>;
+
+        $r3 = virtualinvoke $r2.<java.util.Stack: java.lang.Object peek()>();
+
+        $r4 = (com.android.server.audio.FocusRequester) $r3;
+
+        $z1 = specialinvoke r0.<com.android.server.audio.MediaFocusControl: boolean isLockedFocusOwner(com.android.server.audio.FocusRequester)>($r4);
+
+        if $z1 == 0 goto label1;
+
+        return 0;
+
+     label1:
+        return 1;
+    }
+
+    private void dumpExtFocusPolicyFocusOwners(java.io.PrintWriter)
+    {
+        com.android.server.audio.MediaFocusControl r0;
+        java.io.PrintWriter r1;
+        java.util.Iterator r2;
+        java.util.HashMap $r3;
+        java.util.Set $r4;
+        boolean $z0;
+        java.lang.Object $r5, $r7;
+        java.util.Map$Entry $r6;
+        com.android.server.audio.FocusRequester $r8;
+
+        r0 := @this: com.android.server.audio.MediaFocusControl;
+
+        r1 := @parameter0: java.io.PrintWriter;
+
+        $r3 = r0.<com.android.server.audio.MediaFocusControl: java.util.HashMap mFocusOwnersForFocusPolicy>;
+
+        $r4 = virtualinvoke $r3.<java.util.HashMap: java.util.Set entrySet()>();
+
+        r2 = interfaceinvoke $r4.<java.util.Set: java.util.Iterator iterator()>();
+
+     label1:
+        $z0 = interfaceinvoke r2.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label2;
+
+        $r5 = interfaceinvoke r2.<java.util.Iterator: java.lang.Object next()>();
+
+        $r6 = (java.util.Map$Entry) $r5;
+
+        $r7 = interfaceinvoke $r6.<java.util.Map$Entry: java.lang.Object getValue()>();
+
+        $r8 = (com.android.server.audio.FocusRequester) $r7;
+
+        virtualinvoke $r8.<com.android.server.audio.FocusRequester: void dump(java.io.PrintWriter)>(r1);
+
+        goto label1;
+
+     label2:
+        return;
+    }
+
+    private void dumpFocusStack(java.io.PrintWriter)
+    {
+        com.android.server.audio.MediaFocusControl r0;
+        java.util.Stack $r1;
+        boolean $z0, $z1, $z2;
+        android.media.audiopolicy.IAudioPolicyCallback $r2, $r4;
+        java.lang.String $r7, $r12, $r17;
+        java.lang.StringBuilder $r8, $r13, r24;
+        java.lang.Object $r18, r22;
+        com.android.server.audio.FocusRequester $r19;
+        java.lang.Throwable $r20;
+        java.io.PrintWriter r21;
+        java.util.Iterator r23;
+
+        r0 := @this: com.android.server.audio.MediaFocusControl;
+
+        r21 := @parameter0: java.io.PrintWriter;
+
+        virtualinvoke r21.<java.io.PrintWriter: void println(java.lang.String)>("\nAudio Focus stack entries (last is top of stack):");
+
+        r22 = <com.android.server.audio.MediaFocusControl: java.lang.Object mAudioFocusLock>;
+
+        entermonitor r22;
+
+     label01:
+        $r1 = r0.<com.android.server.audio.MediaFocusControl: java.util.Stack mFocusStack>;
+
+        r23 = virtualinvoke $r1.<java.util.Stack: java.util.Iterator iterator()>();
+
+     label02:
+        $z0 = interfaceinvoke r23.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label04;
+
+        $r18 = interfaceinvoke r23.<java.util.Iterator: java.lang.Object next()>();
+
+        $r19 = (com.android.server.audio.FocusRequester) $r18;
+
+        virtualinvoke $r19.<com.android.server.audio.FocusRequester: void dump(java.io.PrintWriter)>(r21);
+
+     label03:
+        goto label02;
+
+     label04:
+        virtualinvoke r21.<java.io.PrintWriter: void println(java.lang.String)>("\n");
+
+        $r2 = r0.<com.android.server.audio.MediaFocusControl: android.media.audiopolicy.IAudioPolicyCallback mFocusPolicy>;
+
+        if $r2 != null goto label06;
+
+        virtualinvoke r21.<java.io.PrintWriter: void println(java.lang.String)>("No external focus policy\n");
+
+     label05:
+        goto label07;
+
+     label06:
+        r24 = new java.lang.StringBuilder;
+
+        specialinvoke r24.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r24.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("External focus policy: ");
+
+        $r4 = r0.<com.android.server.audio.MediaFocusControl: android.media.audiopolicy.IAudioPolicyCallback mFocusPolicy>;
+
+        virtualinvoke r24.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r4);
+
+        virtualinvoke r24.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", focus owners:\n");
+
+        $r7 = virtualinvoke r24.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r21.<java.io.PrintWriter: void println(java.lang.String)>($r7);
+
+        specialinvoke r0.<com.android.server.audio.MediaFocusControl: void dumpExtFocusPolicyFocusOwners(java.io.PrintWriter)>(r21);
+
+     label07:
+        exitmonitor r22;
+
+     label08:
+        virtualinvoke r21.<java.io.PrintWriter: void println(java.lang.String)>("\n");
+
+        $r8 = new java.lang.StringBuilder;
+
+        specialinvoke $r8.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" Notify on duck:  ");
+
+        $z1 = r0.<com.android.server.audio.MediaFocusControl: boolean mNotifyFocusOwnerOnDuck>;
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>($z1);
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("\n");
+
+        $r12 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r21.<java.io.PrintWriter: void println(java.lang.String)>($r12);
+
+        $r13 = new java.lang.StringBuilder;
+
+        specialinvoke $r13.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" In ring or call: ");
+
+        $z2 = r0.<com.android.server.audio.MediaFocusControl: boolean mRingOrCallActive>;
+
+        virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>($z2);
+
+        virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("\n");
+
+        $r17 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r21.<java.io.PrintWriter: void println(java.lang.String)>($r17);
+
+        return;
+
+     label09:
+        $r20 := @caughtexception;
+
+     label10:
+        exitmonitor r22;
+
+     label11:
+        throw $r20;
+
+        catch java.lang.Throwable from label01 to label02 with label09;
+        catch java.lang.Throwable from label02 to label03 with label09;
+        catch java.lang.Throwable from label04 to label05 with label09;
+        catch java.lang.Throwable from label06 to label07 with label09;
+        catch java.lang.Throwable from label07 to label08 with label09;
+        catch java.lang.Throwable from label10 to label11 with label09;
+    }
+
+    private void dumpMultiAudioFocus(java.io.PrintWriter)
+    {
+        com.android.server.audio.MediaFocusControl r0;
+        java.io.PrintWriter r1;
+        java.lang.StringBuilder $r2;
+        boolean $z0, $z1, $z2;
+        java.lang.String $r5;
+        java.util.ArrayList $r6, $r7;
+        java.lang.Object $r8;
+        com.android.server.audio.FocusRequester $r9;
+        java.util.Iterator r11;
+
+        r0 := @this: com.android.server.audio.MediaFocusControl;
+
+        r1 := @parameter0: java.io.PrintWriter;
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Multi Audio Focus enabled :");
+
+        $z0 = r0.<com.android.server.audio.MediaFocusControl: boolean mMultiAudioFocusEnabled>;
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>($z0);
+
+        $r5 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r5);
+
+        $r6 = r0.<com.android.server.audio.MediaFocusControl: java.util.ArrayList mMultiAudioFocusList>;
+
+        $z1 = virtualinvoke $r6.<java.util.ArrayList: boolean isEmpty()>();
+
+        if $z1 != 0 goto label3;
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>("Multi Audio Focus List:");
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>("------------------------------");
+
+        $r7 = r0.<com.android.server.audio.MediaFocusControl: java.util.ArrayList mMultiAudioFocusList>;
+
+        r11 = virtualinvoke $r7.<java.util.ArrayList: java.util.Iterator iterator()>();
+
+     label1:
+        $z2 = interfaceinvoke r11.<java.util.Iterator: boolean hasNext()>();
+
+        if $z2 == 0 goto label2;
+
+        $r8 = interfaceinvoke r11.<java.util.Iterator: java.lang.Object next()>();
+
+        $r9 = (com.android.server.audio.FocusRequester) $r8;
+
+        virtualinvoke $r9.<com.android.server.audio.FocusRequester: void dump(java.io.PrintWriter)>(r1);
+
+        goto label1;
+
+     label2:
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>("------------------------------");
+
+     label3:
+        return;
+    }
+
+    protected static int getFocusRampTimeMs(int, android.media.AudioAttributes)
+    {
+        android.media.AudioAttributes r0;
+        int i0, i1;
+
+        i0 := @parameter0: int;
+
+        r0 := @parameter1: android.media.AudioAttributes;
+
+        i1 = virtualinvoke r0.<android.media.AudioAttributes: int getUsage()>();
+
+        if i1 == 16 goto label4;
+
+        if i1 == 1002 goto label3;
+
+        if i1 == 1003 goto label4;
+
+        tableswitch(i1)
+        {
+            case 1: goto label2;
+            case 2: goto label3;
+            case 3: goto label3;
+            case 4: goto label4;
+            case 5: goto label3;
+            case 6: goto label4;
+            case 7: goto label3;
+            case 8: goto label3;
+            case 9: goto label3;
+            case 10: goto label3;
+            case 11: goto label4;
+            case 12: goto label4;
+            case 13: goto label3;
+            case 14: goto label2;
+            default: goto label1;
+        };
+
+     label1:
+        return 0;
+
+     label2:
+        return 1000;
+
+     label3:
+        return 500;
+
+     label4:
+        return 700;
+    }
+
+    private boolean isLockedFocusOwner(com.android.server.audio.FocusRequester)
+    {
+        com.android.server.audio.MediaFocusControl r0;
+        com.android.server.audio.FocusRequester r1;
+        boolean $z0, $z1, z2;
+
+        r0 := @this: com.android.server.audio.MediaFocusControl;
+
+        r1 := @parameter0: com.android.server.audio.FocusRequester;
+
+        $z0 = virtualinvoke r1.<com.android.server.audio.FocusRequester: boolean hasSameClient(java.lang.String)>("AudioFocus_For_Phone_Ring_And_Calls");
+
+        if $z0 != 0 goto label2;
+
+        $z1 = virtualinvoke r1.<com.android.server.audio.FocusRequester: boolean isLockedFocusOwner()>();
+
+        if $z1 == 0 goto label1;
+
+        goto label2;
+
+     label1:
+        z2 = 0;
+
+        goto label3;
+
+     label2:
+        z2 = 1;
+
+     label3:
+        return z2;
+    }
+
+    private void notifyTopOfAudioFocusStack()
+    {
+        com.android.server.audio.MediaFocusControl r0;
+        java.util.Iterator r1;
+        com.android.server.audio.FocusRequester r2, $r9;
+        java.util.Stack $r3, $r7;
+        boolean $z0, $z1, $z2, $z3, $z4, $z5;
+        java.util.ArrayList $r4, $r5;
+        java.lang.Object $r6, $r8;
+
+        r0 := @this: com.android.server.audio.MediaFocusControl;
+
+        $r3 = r0.<com.android.server.audio.MediaFocusControl: java.util.Stack mFocusStack>;
+
+        $z0 = virtualinvoke $r3.<java.util.Stack: boolean empty()>();
+
+        if $z0 != 0 goto label1;
+
+        $z4 = specialinvoke r0.<com.android.server.audio.MediaFocusControl: boolean canReassignAudioFocus()>();
+
+        if $z4 == 0 goto label1;
+
+        $r7 = r0.<com.android.server.audio.MediaFocusControl: java.util.Stack mFocusStack>;
+
+        $r8 = virtualinvoke $r7.<java.util.Stack: java.lang.Object peek()>();
+
+        $r9 = (com.android.server.audio.FocusRequester) $r8;
+
+        virtualinvoke $r9.<com.android.server.audio.FocusRequester: void handleFocusGain(int)>(1);
+
+     label1:
+        $z5 = r0.<com.android.server.audio.MediaFocusControl: boolean mMultiAudioFocusEnabled>;
+
+        if $z5 == 0 goto label4;
+
+        $r4 = r0.<com.android.server.audio.MediaFocusControl: java.util.ArrayList mMultiAudioFocusList>;
+
+        $z1 = virtualinvoke $r4.<java.util.ArrayList: boolean isEmpty()>();
+
+        if $z1 != 0 goto label4;
+
+        $r5 = r0.<com.android.server.audio.MediaFocusControl: java.util.ArrayList mMultiAudioFocusList>;
+
+        r1 = virtualinvoke $r5.<java.util.ArrayList: java.util.Iterator iterator()>();
+
+     label2:
+        $z2 = interfaceinvoke r1.<java.util.Iterator: boolean hasNext()>();
+
+        if $z2 == 0 goto label4;
+
+        $r6 = interfaceinvoke r1.<java.util.Iterator: java.lang.Object next()>();
+
+        r2 = (com.android.server.audio.FocusRequester) $r6;
+
+        $z3 = specialinvoke r0.<com.android.server.audio.MediaFocusControl: boolean isLockedFocusOwner(com.android.server.audio.FocusRequester)>(r2);
+
+        if $z3 == 0 goto label3;
+
+        virtualinvoke r2.<com.android.server.audio.FocusRequester: void handleFocusGain(int)>(1);
+
+     label3:
+        goto label2;
+
+     label4:
+        return;
+    }
+
+    private void propagateFocusLossFromGain_syncAf(int, com.android.server.audio.FocusRequester, boolean)
+    {
+        com.android.server.audio.MediaFocusControl r0;
+        int i0;
+        boolean z0, $z1, $z2, $z3, $z4, $z5, $z7, $z8, $z10;
+        java.util.LinkedList $r2;
+        java.util.Stack $r3, $r10;
+        java.lang.Object $r4, $r8, $r11;
+        java.lang.String $r5, $r9, $r12;
+        java.util.ArrayList $r6, $r7;
+        com.android.server.audio.FocusRequester r13, r15, r17;
+        java.util.Iterator r14, r16, r18;
+
+        r0 := @this: com.android.server.audio.MediaFocusControl;
+
+        i0 := @parameter0: int;
+
+        r13 := @parameter1: com.android.server.audio.FocusRequester;
+
+        z0 := @parameter2: boolean;
+
+        $r2 = new java.util.LinkedList;
+
+        specialinvoke $r2.<java.util.LinkedList: void <init>()>();
+
+        $r3 = r0.<com.android.server.audio.MediaFocusControl: java.util.Stack mFocusStack>;
+
+        $z1 = virtualinvoke $r3.<java.util.Stack: boolean empty()>();
+
+        if $z1 != 0 goto label3;
+
+        $r10 = r0.<com.android.server.audio.MediaFocusControl: java.util.Stack mFocusStack>;
+
+        r14 = virtualinvoke $r10.<java.util.Stack: java.util.Iterator iterator()>();
+
+     label1:
+        $z7 = interfaceinvoke r14.<java.util.Iterator: boolean hasNext()>();
+
+        if $z7 == 0 goto label3;
+
+        $r11 = interfaceinvoke r14.<java.util.Iterator: java.lang.Object next()>();
+
+        r15 = (com.android.server.audio.FocusRequester) $r11;
+
+        $z8 = virtualinvoke r15.<com.android.server.audio.FocusRequester: boolean handleFocusLossFromGain(int,com.android.server.audio.FocusRequester,boolean)>(i0, r13, z0);
+
+        if $z8 == 0 goto label2;
+
+        $r12 = virtualinvoke r15.<com.android.server.audio.FocusRequester: java.lang.String getClientId()>();
+
+        interfaceinvoke $r2.<java.util.List: boolean add(java.lang.Object)>($r12);
+
+     label2:
+        goto label1;
+
+     label3:
+        $z2 = r0.<com.android.server.audio.MediaFocusControl: boolean mMultiAudioFocusEnabled>;
+
+        if $z2 == 0 goto label6;
+
+        $r6 = r0.<com.android.server.audio.MediaFocusControl: java.util.ArrayList mMultiAudioFocusList>;
+
+        $z3 = virtualinvoke $r6.<java.util.ArrayList: boolean isEmpty()>();
+
+        if $z3 != 0 goto label6;
+
+        $r7 = r0.<com.android.server.audio.MediaFocusControl: java.util.ArrayList mMultiAudioFocusList>;
+
+        r16 = virtualinvoke $r7.<java.util.ArrayList: java.util.Iterator iterator()>();
+
+     label4:
+        $z4 = interfaceinvoke r16.<java.util.Iterator: boolean hasNext()>();
+
+        if $z4 == 0 goto label6;
+
+        $r8 = interfaceinvoke r16.<java.util.Iterator: java.lang.Object next()>();
+
+        r17 = (com.android.server.audio.FocusRequester) $r8;
+
+        $z5 = virtualinvoke r17.<com.android.server.audio.FocusRequester: boolean handleFocusLossFromGain(int,com.android.server.audio.FocusRequester,boolean)>(i0, r13, z0);
+
+        if $z5 == 0 goto label5;
+
+        $r9 = virtualinvoke r17.<com.android.server.audio.FocusRequester: java.lang.String getClientId()>();
+
+        interfaceinvoke $r2.<java.util.List: boolean add(java.lang.Object)>($r9);
+
+     label5:
+        goto label4;
+
+     label6:
+        r18 = interfaceinvoke $r2.<java.util.List: java.util.Iterator iterator()>();
+
+     label7:
+        $z10 = interfaceinvoke r18.<java.util.Iterator: boolean hasNext()>();
+
+        if $z10 == 0 goto label8;
+
+        $r4 = interfaceinvoke r18.<java.util.Iterator: java.lang.Object next()>();
+
+        $r5 = (java.lang.String) $r4;
+
+        specialinvoke r0.<com.android.server.audio.MediaFocusControl: void removeFocusStackEntry(java.lang.String,boolean,boolean)>($r5, 0, 1);
+
+        goto label7;
+
+     label8:
+        return;
+    }
+
+    private int pushBelowLockedFocusOwners(com.android.server.audio.FocusRequester)
+    {
+        com.android.server.audio.MediaFocusControl r0;
+        com.android.server.audio.FocusRequester r1, $r11;
+        java.util.Stack $r2, $r3, $r4, $r5, $r7, $r9;
+        int $i0, $i1, $i3, i4, i5;
+        java.lang.Exception $r6;
+        java.lang.Object $r10;
+        boolean $z0;
+
+        r0 := @this: com.android.server.audio.MediaFocusControl;
+
+        r1 := @parameter0: com.android.server.audio.FocusRequester;
+
+        $r2 = r0.<com.android.server.audio.MediaFocusControl: java.util.Stack mFocusStack>;
+
+        i4 = virtualinvoke $r2.<java.util.Stack: int size()>();
+
+        $r3 = r0.<com.android.server.audio.MediaFocusControl: java.util.Stack mFocusStack>;
+
+        $i0 = virtualinvoke $r3.<java.util.Stack: int size()>();
+
+        i5 = $i0 - 1;
+
+     label1:
+        if i5 < 0 goto label3;
+
+        $r9 = r0.<com.android.server.audio.MediaFocusControl: java.util.Stack mFocusStack>;
+
+        $r10 = virtualinvoke $r9.<java.util.Stack: java.lang.Object elementAt(int)>(i5);
+
+        $r11 = (com.android.server.audio.FocusRequester) $r10;
+
+        $z0 = specialinvoke r0.<com.android.server.audio.MediaFocusControl: boolean isLockedFocusOwner(com.android.server.audio.FocusRequester)>($r11);
+
+        if $z0 == 0 goto label2;
+
+        i4 = i5;
+
+     label2:
+        i5 = i5 + -1;
+
+        goto label1;
+
+     label3:
+        $r4 = r0.<com.android.server.audio.MediaFocusControl: java.util.Stack mFocusStack>;
+
+        $i1 = virtualinvoke $r4.<java.util.Stack: int size()>();
+
+        if i4 != $i1 goto label4;
+
+        $r6 = new java.lang.Exception;
+
+        specialinvoke $r6.<java.lang.Exception: void <init>()>();
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("MediaFocusControl", "No exclusive focus owner found in propagateFocusLossFromGain_syncAf()", $r6);
+
+        $i3 = virtualinvoke r1.<com.android.server.audio.FocusRequester: int getGainRequest()>();
+
+        specialinvoke r0.<com.android.server.audio.MediaFocusControl: void propagateFocusLossFromGain_syncAf(int,com.android.server.audio.FocusRequester,boolean)>($i3, r1, 0);
+
+        $r7 = r0.<com.android.server.audio.MediaFocusControl: java.util.Stack mFocusStack>;
+
+        virtualinvoke $r7.<java.util.Stack: java.lang.Object push(java.lang.Object)>(r1);
+
+        return 1;
+
+     label4:
+        $r5 = r0.<com.android.server.audio.MediaFocusControl: java.util.Stack mFocusStack>;
+
+        virtualinvoke $r5.<java.util.Stack: void insertElementAt(java.lang.Object,int)>(r1, i4);
+
+        return 2;
+    }
+
+    private void removeFocusEntryForExtPolicy(android.os.IBinder)
+    {
+        com.android.server.audio.MediaFocusControl r0;
+        android.os.IBinder r1;
+        java.util.Iterator r2;
+        com.android.server.audio.FocusRequester r3;
+        java.util.HashMap $r4, $r5;
+        boolean $z0, $z1, $z2;
+        java.util.Set $r6;
+        java.lang.Object $r7, $r9;
+        java.util.Map$Entry $r8;
+        android.media.AudioFocusInfo $r10;
+
+        r0 := @this: com.android.server.audio.MediaFocusControl;
+
+        r1 := @parameter0: android.os.IBinder;
+
+        $r4 = r0.<com.android.server.audio.MediaFocusControl: java.util.HashMap mFocusOwnersForFocusPolicy>;
+
+        $z0 = virtualinvoke $r4.<java.util.HashMap: boolean isEmpty()>();
+
+        if $z0 == 0 goto label1;
+
+        return;
+
+     label1:
+        $r5 = r0.<com.android.server.audio.MediaFocusControl: java.util.HashMap mFocusOwnersForFocusPolicy>;
+
+        $r6 = virtualinvoke $r5.<java.util.HashMap: java.util.Set entrySet()>();
+
+        r2 = interfaceinvoke $r6.<java.util.Set: java.util.Iterator iterator()>();
+
+     label2:
+        $z1 = interfaceinvoke r2.<java.util.Iterator: boolean hasNext()>();
+
+        if $z1 == 0 goto label4;
+
+        $r7 = interfaceinvoke r2.<java.util.Iterator: java.lang.Object next()>();
+
+        $r8 = (java.util.Map$Entry) $r7;
+
+        $r9 = interfaceinvoke $r8.<java.util.Map$Entry: java.lang.Object getValue()>();
+
+        r3 = (com.android.server.audio.FocusRequester) $r9;
+
+        $z2 = virtualinvoke r3.<com.android.server.audio.FocusRequester: boolean hasSameBinder(android.os.IBinder)>(r1);
+
+        if $z2 == 0 goto label3;
+
+        interfaceinvoke r2.<java.util.Iterator: void remove()>();
+
+        virtualinvoke r3.<com.android.server.audio.FocusRequester: void release()>();
+
+        $r10 = virtualinvoke r3.<com.android.server.audio.FocusRequester: android.media.AudioFocusInfo toAudioFocusInfo()>();
+
+        virtualinvoke r0.<com.android.server.audio.MediaFocusControl: boolean notifyExtFocusPolicyFocusAbandon_syncAf(android.media.AudioFocusInfo)>($r10);
+
+        goto label4;
+
+     label3:
+        goto label2;
+
+     label4:
+        return;
+    }
+
+    private void removeFocusStackEntry(java.lang.String, boolean, boolean)
+    {
+        com.android.server.audio.MediaFocusControl r0;
+        java.lang.String r1, $r12;
+        boolean z0, z1, $z2, $z3, $z4, $z5, $z6, $z7, $z8, $z9;
+        java.util.Stack $r3, $r4, $r13, $r16;
+        java.util.ArrayList $r5, $r6;
+        java.lang.Object $r7, $r8, $r14, $r17;
+        java.lang.StringBuilder $r9;
+        com.android.server.audio.FocusRequester $r15, r18, r21, r23;
+        android.media.AudioFocusInfo r19;
+        java.util.Iterator r20, r22;
+
+        r0 := @this: com.android.server.audio.MediaFocusControl;
+
+        r1 := @parameter0: java.lang.String;
+
+        z0 := @parameter1: boolean;
+
+        z1 := @parameter2: boolean;
+
+        $r3 = r0.<com.android.server.audio.MediaFocusControl: java.util.Stack mFocusStack>;
+
+        $z2 = virtualinvoke $r3.<java.util.Stack: boolean empty()>();
+
+        if $z2 != 0 goto label03;
+
+        $r13 = r0.<com.android.server.audio.MediaFocusControl: java.util.Stack mFocusStack>;
+
+        $r14 = virtualinvoke $r13.<java.util.Stack: java.lang.Object peek()>();
+
+        $r15 = (com.android.server.audio.FocusRequester) $r14;
+
+        $z8 = virtualinvoke $r15.<com.android.server.audio.FocusRequester: boolean hasSameClient(java.lang.String)>(r1);
+
+        if $z8 == 0 goto label03;
+
+        $r16 = r0.<com.android.server.audio.MediaFocusControl: java.util.Stack mFocusStack>;
+
+        $r17 = virtualinvoke $r16.<java.util.Stack: java.lang.Object pop()>();
+
+        r18 = (com.android.server.audio.FocusRequester) $r17;
+
+        virtualinvoke r18.<com.android.server.audio.FocusRequester: void release()>();
+
+        if z1 == 0 goto label01;
+
+        r19 = virtualinvoke r18.<com.android.server.audio.FocusRequester: android.media.AudioFocusInfo toAudioFocusInfo()>();
+
+        virtualinvoke r19.<android.media.AudioFocusInfo: void clearLossReceived()>();
+
+        virtualinvoke r0.<com.android.server.audio.MediaFocusControl: void notifyExtPolicyFocusLoss_syncAf(android.media.AudioFocusInfo,boolean)>(r19, 0);
+
+     label01:
+        if z0 == 0 goto label02;
+
+        specialinvoke r0.<com.android.server.audio.MediaFocusControl: void notifyTopOfAudioFocusStack()>();
+
+     label02:
+        goto label06;
+
+     label03:
+        $r4 = r0.<com.android.server.audio.MediaFocusControl: java.util.Stack mFocusStack>;
+
+        r20 = virtualinvoke $r4.<java.util.Stack: java.util.Iterator iterator()>();
+
+     label04:
+        $z9 = interfaceinvoke r20.<java.util.Iterator: boolean hasNext()>();
+
+        if $z9 == 0 goto label06;
+
+        $r8 = interfaceinvoke r20.<java.util.Iterator: java.lang.Object next()>();
+
+        r21 = (com.android.server.audio.FocusRequester) $r8;
+
+        $z7 = virtualinvoke r21.<com.android.server.audio.FocusRequester: boolean hasSameClient(java.lang.String)>(r1);
+
+        if $z7 == 0 goto label05;
+
+        $r9 = new java.lang.StringBuilder;
+
+        specialinvoke $r9.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("AudioFocus  removeFocusStackEntry(): removing entry for ");
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r12 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int i(java.lang.String,java.lang.String)>("MediaFocusControl", $r12);
+
+        interfaceinvoke r20.<java.util.Iterator: void remove()>();
+
+        virtualinvoke r21.<com.android.server.audio.FocusRequester: void release()>();
+
+     label05:
+        goto label04;
+
+     label06:
+        $z3 = r0.<com.android.server.audio.MediaFocusControl: boolean mMultiAudioFocusEnabled>;
+
+        if $z3 == 0 goto label10;
+
+        $r5 = r0.<com.android.server.audio.MediaFocusControl: java.util.ArrayList mMultiAudioFocusList>;
+
+        $z4 = virtualinvoke $r5.<java.util.ArrayList: boolean isEmpty()>();
+
+        if $z4 != 0 goto label10;
+
+        $r6 = r0.<com.android.server.audio.MediaFocusControl: java.util.ArrayList mMultiAudioFocusList>;
+
+        r22 = virtualinvoke $r6.<java.util.ArrayList: java.util.Iterator iterator()>();
+
+     label07:
+        $z5 = interfaceinvoke r22.<java.util.Iterator: boolean hasNext()>();
+
+        if $z5 == 0 goto label09;
+
+        $r7 = interfaceinvoke r22.<java.util.Iterator: java.lang.Object next()>();
+
+        r23 = (com.android.server.audio.FocusRequester) $r7;
+
+        $z6 = virtualinvoke r23.<com.android.server.audio.FocusRequester: boolean hasSameClient(java.lang.String)>(r1);
+
+        if $z6 == 0 goto label08;
+
+        interfaceinvoke r22.<java.util.Iterator: void remove()>();
+
+        virtualinvoke r23.<com.android.server.audio.FocusRequester: void release()>();
+
+     label08:
+        goto label07;
+
+     label09:
+        if z0 == 0 goto label10;
+
+        specialinvoke r0.<com.android.server.audio.MediaFocusControl: void notifyTopOfAudioFocusStack()>();
+
+     label10:
+        return;
+    }
+
+    private void removeFocusStackEntryOnDeath(android.os.IBinder)
+    {
+        com.android.server.audio.MediaFocusControl r0;
+        android.os.IBinder r1;
+        java.util.Iterator r2;
+        com.android.server.audio.FocusRequester r3, $r13;
+        java.util.Stack $r5, $r11, $r14;
+        boolean $z0, $z1, $z2, z3, $z4;
+        java.lang.Object $r6, $r12;
+        java.lang.StringBuilder $r7;
+        java.lang.String $r10;
+
+        r0 := @this: com.android.server.audio.MediaFocusControl;
+
+        r1 := @parameter0: android.os.IBinder;
+
+        $r5 = r0.<com.android.server.audio.MediaFocusControl: java.util.Stack mFocusStack>;
+
+        $z0 = virtualinvoke $r5.<java.util.Stack: boolean isEmpty()>();
+
+        if $z0 != 0 goto label1;
+
+        $r11 = r0.<com.android.server.audio.MediaFocusControl: java.util.Stack mFocusStack>;
+
+        $r12 = virtualinvoke $r11.<java.util.Stack: java.lang.Object peek()>();
+
+        $r13 = (com.android.server.audio.FocusRequester) $r12;
+
+        $z2 = virtualinvoke $r13.<com.android.server.audio.FocusRequester: boolean hasSameBinder(android.os.IBinder)>(r1);
+
+        if $z2 == 0 goto label1;
+
+        z3 = 1;
+
+        goto label2;
+
+     label1:
+        z3 = 0;
+
+     label2:
+        $r14 = r0.<com.android.server.audio.MediaFocusControl: java.util.Stack mFocusStack>;
+
+        r2 = virtualinvoke $r14.<java.util.Stack: java.util.Iterator iterator()>();
+
+     label3:
+        $z4 = interfaceinvoke r2.<java.util.Iterator: boolean hasNext()>();
+
+        if $z4 == 0 goto label5;
+
+        $r6 = interfaceinvoke r2.<java.util.Iterator: java.lang.Object next()>();
+
+        r3 = (com.android.server.audio.FocusRequester) $r6;
+
+        $z1 = virtualinvoke r3.<com.android.server.audio.FocusRequester: boolean hasSameBinder(android.os.IBinder)>(r1);
+
+        if $z1 == 0 goto label4;
+
+        $r7 = new java.lang.StringBuilder;
+
+        specialinvoke $r7.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("AudioFocus  removeFocusStackEntryOnDeath(): removing entry for ");
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r1);
+
+        $r10 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int i(java.lang.String,java.lang.String)>("MediaFocusControl", $r10);
+
+        interfaceinvoke r2.<java.util.Iterator: void remove()>();
+
+        virtualinvoke r3.<com.android.server.audio.FocusRequester: void release()>();
+
+     label4:
+        goto label3;
+
+     label5:
+        if z3 == 0 goto label6;
+
+        specialinvoke r0.<com.android.server.audio.MediaFocusControl: void notifyTopOfAudioFocusStack()>();
+
+     label6:
+        return;
+    }
+
+    private void runAudioCheckerForRingOrCallAsync(boolean)
+    {
+        com.android.server.audio.MediaFocusControl r0;
+        boolean z0;
+        com.android.server.audio.MediaFocusControl$2 $r1;
+
+        r0 := @this: com.android.server.audio.MediaFocusControl;
+
+        z0 := @parameter0: boolean;
+
+        $r1 = new com.android.server.audio.MediaFocusControl$2;
+
+        specialinvoke $r1.<com.android.server.audio.MediaFocusControl$2: void <init>(com.android.server.audio.MediaFocusControl,boolean)>(r0, z0);
+
+        virtualinvoke $r1.<com.android.server.audio.MediaFocusControl$2: void start()>();
+
+        return;
+    }
+
+    protected int abandonAudioFocus(android.media.IAudioFocusDispatcher, java.lang.String, android.media.AudioAttributes, java.lang.String)
+    {
+        com.android.server.audio.MediaFocusControl r0;
+        android.media.AudioAttributes r1;
+        java.lang.String r2, $r19, $r22, $r27, r30;
+        boolean z0, $z2, $z3, z4, z5;
+        int $i0, $i1, $i2, $i3, $i4;
+        android.media.MediaMetrics$Item $r4, $r6, $r8, $r10, r38;
+        android.media.MediaMetrics$Key $r5, $r7, $r9;
+        com.android.server.audio.AudioEventLogger$Event $r20;
+        android.media.audiopolicy.IAudioPolicyCallback $r21;
+        java.lang.Throwable $r23, $r28;
+        android.media.IAudioFocusDispatcher r29;
+        com.android.server.audio.AudioEventLogger r31;
+        java.lang.Object r33;
+        java.lang.StringBuilder r39, r42;
+        com.android.server.audio.AudioEventLogger$StringEvent r40;
+        android.media.AudioFocusInfo r41;
+        java.util.ConcurrentModificationException r43;
+
+        r0 := @this: com.android.server.audio.MediaFocusControl;
+
+        r29 := @parameter0: android.media.IAudioFocusDispatcher;
+
+        r30 := @parameter1: java.lang.String;
+
+        r1 := @parameter2: android.media.AudioAttributes;
+
+        r2 := @parameter3: java.lang.String;
+
+        r38 = new android.media.MediaMetrics$Item;
+
+        specialinvoke r38.<android.media.MediaMetrics$Item: void <init>(java.lang.String)>("audio.focus");
+
+        $i0 = staticinvoke <android.os.Binder: int getCallingUid()>();
+
+        $r4 = virtualinvoke r38.<android.media.MediaMetrics$Item: android.media.MediaMetrics$Item setUid(int)>($i0);
+
+        $r5 = <android.media.MediaMetrics$Property: android.media.MediaMetrics$Key CALLING_PACKAGE>;
+
+        $r6 = virtualinvoke $r4.<android.media.MediaMetrics$Item: android.media.MediaMetrics$Item set(android.media.MediaMetrics$Key,java.lang.Object)>($r5, r2);
+
+        $r7 = <android.media.MediaMetrics$Property: android.media.MediaMetrics$Key CLIENT_NAME>;
+
+        $r8 = virtualinvoke $r6.<android.media.MediaMetrics$Item: android.media.MediaMetrics$Item set(android.media.MediaMetrics$Key,java.lang.Object)>($r7, r30);
+
+        $r9 = <android.media.MediaMetrics$Property: android.media.MediaMetrics$Key EVENT>;
+
+        $r10 = virtualinvoke $r8.<android.media.MediaMetrics$Item: android.media.MediaMetrics$Item set(android.media.MediaMetrics$Key,java.lang.Object)>($r9, "abandonAudioFocus");
+
+        virtualinvoke $r10.<android.media.MediaMetrics$Item: boolean record()>();
+
+        r31 = <com.android.server.audio.MediaFocusControl: com.android.server.audio.AudioEventLogger mEventLogger>;
+
+        r39 = new java.lang.StringBuilder;
+
+        specialinvoke r39.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r39.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("abandonAudioFocus() from uid/pid ");
+
+        $i1 = staticinvoke <android.os.Binder: int getCallingUid()>();
+
+        virtualinvoke r39.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i1);
+
+        virtualinvoke r39.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("/");
+
+        $i2 = staticinvoke <android.os.Binder: int getCallingPid()>();
+
+        virtualinvoke r39.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i2);
+
+        virtualinvoke r39.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" clientId=");
+
+        virtualinvoke r39.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r30);
+
+        r40 = new com.android.server.audio.AudioEventLogger$StringEvent;
+
+        $r19 = virtualinvoke r39.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r40.<com.android.server.audio.AudioEventLogger$StringEvent: void <init>(java.lang.String)>($r19);
+
+        $r20 = virtualinvoke r40.<com.android.server.audio.AudioEventLogger$StringEvent: com.android.server.audio.AudioEventLogger$Event printLog(java.lang.String)>("MediaFocusControl");
+
+        virtualinvoke r31.<com.android.server.audio.AudioEventLogger: void log(com.android.server.audio.AudioEventLogger$Event)>($r20);
+
+     label01:
+        r33 = <com.android.server.audio.MediaFocusControl: java.lang.Object mAudioFocusLock>;
+
+        entermonitor r33;
+
+     label02:
+        $r21 = r0.<com.android.server.audio.MediaFocusControl: android.media.audiopolicy.IAudioPolicyCallback mFocusPolicy>;
+
+        if $r21 == null goto label04;
+
+        r41 = new android.media.AudioFocusInfo;
+
+        $i4 = staticinvoke <android.os.Binder: int getCallingUid()>();
+
+        specialinvoke r41.<android.media.AudioFocusInfo: void <init>(android.media.AudioAttributes,int,java.lang.String,java.lang.String,int,int,int,int)>(r1, $i4, r30, r2, 0, 0, 0, 0);
+
+        $z3 = virtualinvoke r0.<com.android.server.audio.MediaFocusControl: boolean notifyExtFocusPolicyFocusAbandon_syncAf(android.media.AudioFocusInfo)>(r41);
+
+        if $z3 == 0 goto label04;
+
+        exitmonitor r33;
+
+     label03:
+        return 1;
+
+     label04:
+        z0 = r0.<com.android.server.audio.MediaFocusControl: boolean mRingOrCallActive>;
+
+        $r22 = "AudioFocus_For_Phone_Ring_And_Calls";
+
+        $i3 = virtualinvoke $r22.<java.lang.String: int compareTo(java.lang.String)>(r30);
+
+        if $i3 != 0 goto label06;
+
+     label05:
+        z4 = 1;
+
+        goto label07;
+
+     label06:
+        z4 = 0;
+
+     label07:
+        z5 = z0 & z4;
+
+        if z5 == 0 goto label09;
+
+     label08:
+        r0.<com.android.server.audio.MediaFocusControl: boolean mRingOrCallActive> = 0;
+
+     label09:
+        specialinvoke r0.<com.android.server.audio.MediaFocusControl: void removeFocusStackEntry(java.lang.String,boolean,boolean)>(r30, 1, 1);
+
+     label10:
+        $z2 = z5 & 1;
+
+        if $z2 == 0 goto label12;
+
+     label11:
+        specialinvoke r0.<com.android.server.audio.MediaFocusControl: void runAudioCheckerForRingOrCallAsync(boolean)>(0);
+
+     label12:
+        exitmonitor r33;
+
+     label13:
+        goto label18;
+
+     label14:
+        $r28 := @caughtexception;
+
+     label15:
+        exitmonitor r33;
+
+     label16:
+        throw $r28;
+
+     label17:
+        $r23 := @caughtexception;
+
+        r42 = new java.lang.StringBuilder;
+
+        specialinvoke r42.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r42.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("FATAL EXCEPTION AudioFocus  abandonAudioFocus() caused ");
+
+        virtualinvoke r42.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r23);
+
+        $r27 = virtualinvoke r42.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>("MediaFocusControl", $r27);
+
+        r43 = (java.util.ConcurrentModificationException) $r23;
+
+        virtualinvoke r43.<java.util.ConcurrentModificationException: void printStackTrace()>();
+
+     label18:
+        return 1;
+
+        catch java.util.ConcurrentModificationException from label01 to label02 with label17;
+        catch java.lang.Throwable from label02 to label03 with label14;
+        catch java.lang.Throwable from label04 to label05 with label14;
+        catch java.lang.Throwable from label08 to label09 with label14;
+        catch java.lang.Throwable from label09 to label10 with label14;
+        catch java.lang.Throwable from label11 to label12 with label14;
+        catch java.lang.Throwable from label12 to label13 with label14;
+        catch java.lang.Throwable from label15 to label16 with label14;
+        catch java.util.ConcurrentModificationException from label16 to label17 with label17;
+    }
+
+    void addFocusFollower(android.media.audiopolicy.IAudioPolicyCallback)
+    {
+        com.android.server.audio.MediaFocusControl r0;
+        java.lang.Object r1, $r5;
+        java.util.Iterator r2;
+        java.util.ArrayList $r3, $r4;
+        boolean $z1, $z3, z4;
+        android.media.audiopolicy.IAudioPolicyCallback $r6, r10;
+        android.os.IBinder $r7, $r8;
+        java.lang.Throwable $r9;
+
+        r0 := @this: com.android.server.audio.MediaFocusControl;
+
+        r10 := @parameter0: android.media.audiopolicy.IAudioPolicyCallback;
+
+        if r10 != null goto label01;
+
+        return;
+
+     label01:
+        r1 = <com.android.server.audio.MediaFocusControl: java.lang.Object mAudioFocusLock>;
+
+        entermonitor r1;
+
+     label02:
+        $r3 = r0.<com.android.server.audio.MediaFocusControl: java.util.ArrayList mFocusFollowers>;
+
+        r2 = virtualinvoke $r3.<java.util.ArrayList: java.util.Iterator iterator()>();
+
+     label03:
+        z4 = 0;
+
+     label04:
+        $z1 = interfaceinvoke r2.<java.util.Iterator: boolean hasNext()>();
+
+        if $z1 == 0 goto label07;
+
+        $r5 = interfaceinvoke r2.<java.util.Iterator: java.lang.Object next()>();
+
+        $r6 = (android.media.audiopolicy.IAudioPolicyCallback) $r5;
+
+        $r7 = interfaceinvoke $r6.<android.media.audiopolicy.IAudioPolicyCallback: android.os.IBinder asBinder()>();
+
+        $r8 = interfaceinvoke r10.<android.media.audiopolicy.IAudioPolicyCallback: android.os.IBinder asBinder()>();
+
+        $z3 = virtualinvoke $r7.<java.lang.Object: boolean equals(java.lang.Object)>($r8);
+
+        if $z3 == 0 goto label06;
+
+     label05:
+        z4 = 1;
+
+        goto label07;
+
+     label06:
+        goto label03;
+
+     label07:
+        if z4 == 0 goto label10;
+
+     label08:
+        exitmonitor r1;
+
+     label09:
+        return;
+
+     label10:
+        $r4 = r0.<com.android.server.audio.MediaFocusControl: java.util.ArrayList mFocusFollowers>;
+
+        virtualinvoke $r4.<java.util.ArrayList: boolean add(java.lang.Object)>(r10);
+
+        virtualinvoke r0.<com.android.server.audio.MediaFocusControl: void notifyExtPolicyCurrentFocusAsync(android.media.audiopolicy.IAudioPolicyCallback)>(r10);
+
+        exitmonitor r1;
+
+     label11:
+        return;
+
+     label12:
+        $r9 := @caughtexception;
+
+     label13:
+        exitmonitor r1;
+
+     label14:
+        throw $r9;
+
+        catch java.lang.Throwable from label02 to label03 with label12;
+        catch java.lang.Throwable from label04 to label05 with label12;
+        catch java.lang.Throwable from label08 to label09 with label12;
+        catch java.lang.Throwable from label10 to label11 with label12;
+        catch java.lang.Throwable from label13 to label14 with label12;
+    }
+
+    protected void discardAudioFocusOwner()
+    {
+        com.android.server.audio.MediaFocusControl r0;
+        java.lang.Object r1, $r4;
+        java.util.Stack $r2, $r3;
+        boolean $z0;
+        java.lang.Throwable $r5;
+        com.android.server.audio.FocusRequester r6;
+
+        r0 := @this: com.android.server.audio.MediaFocusControl;
+
+        r1 = <com.android.server.audio.MediaFocusControl: java.lang.Object mAudioFocusLock>;
+
+        entermonitor r1;
+
+     label1:
+        $r2 = r0.<com.android.server.audio.MediaFocusControl: java.util.Stack mFocusStack>;
+
+        $z0 = virtualinvoke $r2.<java.util.Stack: boolean empty()>();
+
+        if $z0 != 0 goto label2;
+
+        $r3 = r0.<com.android.server.audio.MediaFocusControl: java.util.Stack mFocusStack>;
+
+        $r4 = virtualinvoke $r3.<java.util.Stack: java.lang.Object pop()>();
+
+        r6 = (com.android.server.audio.FocusRequester) $r4;
+
+        virtualinvoke r6.<com.android.server.audio.FocusRequester: void handleFocusLoss(int,com.android.server.audio.FocusRequester,boolean)>(-1, null, 0);
+
+        virtualinvoke r6.<com.android.server.audio.FocusRequester: void release()>();
+
+     label2:
+        exitmonitor r1;
+
+     label3:
+        return;
+
+     label4:
+        $r5 := @caughtexception;
+
+     label5:
+        exitmonitor r1;
+
+     label6:
+        throw $r5;
+
+        catch java.lang.Throwable from label1 to label2 with label4;
+        catch java.lang.Throwable from label2 to label3 with label4;
+        catch java.lang.Throwable from label5 to label6 with label4;
+    }
+
+    int dispatchFocusChange(android.media.AudioFocusInfo, int)
+    {
+        com.android.server.audio.MediaFocusControl r0;
+        java.lang.Object r1, $r5, $r8;
+        android.media.audiopolicy.IAudioPolicyCallback $r2;
+        java.util.HashMap $r3, $r6;
+        java.lang.String $r4, $r7;
+        java.lang.Throwable $r9;
+        android.media.AudioFocusInfo r10;
+        int i0, i1;
+        com.android.server.audio.FocusRequester r11;
+
+        r0 := @this: com.android.server.audio.MediaFocusControl;
+
+        r10 := @parameter0: android.media.AudioFocusInfo;
+
+        i0 := @parameter1: int;
+
+        r1 = <com.android.server.audio.MediaFocusControl: java.lang.Object mAudioFocusLock>;
+
+        entermonitor r1;
+
+     label01:
+        $r2 = r0.<com.android.server.audio.MediaFocusControl: android.media.audiopolicy.IAudioPolicyCallback mFocusPolicy>;
+
+        if $r2 != null goto label03;
+
+        exitmonitor r1;
+
+     label02:
+        return 0;
+
+     label03:
+        if i0 != -1 goto label06;
+
+     label04:
+        $r6 = r0.<com.android.server.audio.MediaFocusControl: java.util.HashMap mFocusOwnersForFocusPolicy>;
+
+        $r7 = virtualinvoke r10.<android.media.AudioFocusInfo: java.lang.String getClientId()>();
+
+        $r8 = virtualinvoke $r6.<java.util.HashMap: java.lang.Object remove(java.lang.Object)>($r7);
+
+        r11 = (com.android.server.audio.FocusRequester) $r8;
+
+     label05:
+        goto label07;
+
+     label06:
+        $r3 = r0.<com.android.server.audio.MediaFocusControl: java.util.HashMap mFocusOwnersForFocusPolicy>;
+
+        $r4 = virtualinvoke r10.<android.media.AudioFocusInfo: java.lang.String getClientId()>();
+
+        $r5 = virtualinvoke $r3.<java.util.HashMap: java.lang.Object get(java.lang.Object)>($r4);
+
+        r11 = (com.android.server.audio.FocusRequester) $r5;
+
+     label07:
+        if r11 != null goto label10;
+
+     label08:
+        exitmonitor r1;
+
+     label09:
+        return 0;
+
+     label10:
+        i1 = virtualinvoke r11.<com.android.server.audio.FocusRequester: int dispatchFocusChange(int)>(i0);
+
+        exitmonitor r1;
+
+     label11:
+        return i1;
+
+     label12:
+        $r9 := @caughtexception;
+
+     label13:
+        exitmonitor r1;
+
+     label14:
+        throw $r9;
+
+        catch java.lang.Throwable from label01 to label02 with label12;
+        catch java.lang.Throwable from label04 to label05 with label12;
+        catch java.lang.Throwable from label06 to label07 with label12;
+        catch java.lang.Throwable from label08 to label09 with label12;
+        catch java.lang.Throwable from label10 to label11 with label12;
+        catch java.lang.Throwable from label13 to label14 with label12;
+    }
+
+    public boolean duckPlayers(com.android.server.audio.FocusRequester, com.android.server.audio.FocusRequester, boolean)
+    {
+        com.android.server.audio.MediaFocusControl r0;
+        com.android.server.audio.FocusRequester r1, r2;
+        boolean z0, $z1;
+        com.android.server.audio.PlayerFocusEnforcer $r3;
+
+        r0 := @this: com.android.server.audio.MediaFocusControl;
+
+        r1 := @parameter0: com.android.server.audio.FocusRequester;
+
+        r2 := @parameter1: com.android.server.audio.FocusRequester;
+
+        z0 := @parameter2: boolean;
+
+        $r3 = r0.<com.android.server.audio.MediaFocusControl: com.android.server.audio.PlayerFocusEnforcer mFocusEnforcer>;
+
+        $z1 = interfaceinvoke $r3.<com.android.server.audio.PlayerFocusEnforcer: boolean duckPlayers(com.android.server.audio.FocusRequester,com.android.server.audio.FocusRequester,boolean)>(r1, r2, z0);
+
+        return $z1;
+    }
+
+    protected void dump(java.io.PrintWriter)
+    {
+        com.android.server.audio.MediaFocusControl r0;
+        java.io.PrintWriter r1;
+        java.lang.StringBuilder $r3;
+        java.text.DateFormat $r5;
+        java.util.Date $r6;
+        java.lang.String $r7, $r9;
+        com.android.server.audio.AudioEventLogger $r10;
+
+        r0 := @this: com.android.server.audio.MediaFocusControl;
+
+        r1 := @parameter0: java.io.PrintWriter;
+
+        $r3 = new java.lang.StringBuilder;
+
+        specialinvoke $r3.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("\nMediaFocusControl dump time: ");
+
+        $r5 = staticinvoke <java.text.DateFormat: java.text.DateFormat getTimeInstance()>();
+
+        $r6 = new java.util.Date;
+
+        specialinvoke $r6.<java.util.Date: void <init>()>();
+
+        $r7 = virtualinvoke $r5.<java.text.DateFormat: java.lang.String format(java.util.Date)>($r6);
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r7);
+
+        $r9 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r9);
+
+        specialinvoke r0.<com.android.server.audio.MediaFocusControl: void dumpFocusStack(java.io.PrintWriter)>(r1);
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>("\n");
+
+        $r10 = <com.android.server.audio.MediaFocusControl: com.android.server.audio.AudioEventLogger mEventLogger>;
+
+        virtualinvoke $r10.<com.android.server.audio.AudioEventLogger: void dump(java.io.PrintWriter)>(r1);
+
+        specialinvoke r0.<com.android.server.audio.MediaFocusControl: void dumpMultiAudioFocus(java.io.PrintWriter)>(r1);
+
+        return;
+    }
+
+    protected int getCurrentAudioFocus()
+    {
+        com.android.server.audio.MediaFocusControl r0;
+        java.lang.Object r1, $r5;
+        int i0;
+        java.util.Stack $r3, $r4;
+        boolean $z0;
+        com.android.server.audio.FocusRequester $r6;
+        java.lang.Throwable $r7;
+
+        r0 := @this: com.android.server.audio.MediaFocusControl;
+
+        r1 = <com.android.server.audio.MediaFocusControl: java.lang.Object mAudioFocusLock>;
+
+        entermonitor r1;
+
+     label1:
+        $r3 = r0.<com.android.server.audio.MediaFocusControl: java.util.Stack mFocusStack>;
+
+        $z0 = virtualinvoke $r3.<java.util.Stack: boolean empty()>();
+
+        if $z0 == 0 goto label3;
+
+        exitmonitor r1;
+
+     label2:
+        return 0;
+
+     label3:
+        $r4 = r0.<com.android.server.audio.MediaFocusControl: java.util.Stack mFocusStack>;
+
+        $r5 = virtualinvoke $r4.<java.util.Stack: java.lang.Object peek()>();
+
+        $r6 = (com.android.server.audio.FocusRequester) $r5;
+
+        i0 = virtualinvoke $r6.<com.android.server.audio.FocusRequester: int getGainRequest()>();
+
+        exitmonitor r1;
+
+     label4:
+        return i0;
+
+     label5:
+        $r7 := @caughtexception;
+
+     label6:
+        exitmonitor r1;
+
+     label7:
+        throw $r7;
+
+        catch java.lang.Throwable from label1 to label2 with label5;
+        catch java.lang.Throwable from label3 to label4 with label5;
+        catch java.lang.Throwable from label6 to label7 with label5;
+    }
+
+    public boolean getMultiAudioFocusEnabled()
+    {
+        com.android.server.audio.MediaFocusControl r0;
+        boolean $z0;
+
+        r0 := @this: com.android.server.audio.MediaFocusControl;
+
+        $z0 = r0.<com.android.server.audio.MediaFocusControl: boolean mMultiAudioFocusEnabled>;
+
+        return $z0;
+    }
+
+    boolean hasAudioFocusUsers()
+    {
+        com.android.server.audio.MediaFocusControl r0;
+        java.lang.Object r1;
+        java.util.Stack $r3;
+        boolean $z0, z1;
+        java.lang.Throwable $r4;
+
+        r0 := @this: com.android.server.audio.MediaFocusControl;
+
+        r1 = <com.android.server.audio.MediaFocusControl: java.lang.Object mAudioFocusLock>;
+
+        entermonitor r1;
+
+     label1:
+        $r3 = r0.<com.android.server.audio.MediaFocusControl: java.util.Stack mFocusStack>;
+
+        $z0 = virtualinvoke $r3.<java.util.Stack: boolean empty()>();
+
+        if $z0 != 0 goto label3;
+
+     label2:
+        z1 = 1;
+
+        goto label4;
+
+     label3:
+        z1 = 0;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        return z1;
+
+     label6:
+        $r4 := @caughtexception;
+
+     label7:
+        exitmonitor r1;
+
+     label8:
+        throw $r4;
+
+        catch java.lang.Throwable from label1 to label2 with label6;
+        catch java.lang.Throwable from label4 to label5 with label6;
+        catch java.lang.Throwable from label7 to label8 with label6;
+    }
+
+    boolean mustNotifyFocusOwnerOnDuck()
+    {
+        com.android.server.audio.MediaFocusControl r0;
+        boolean $z0;
+
+        r0 := @this: com.android.server.audio.MediaFocusControl;
+
+        $z0 = r0.<com.android.server.audio.MediaFocusControl: boolean mNotifyFocusOwnerOnDuck>;
+
+        return $z0;
+    }
+
+    public void mutePlayersForCall(int[])
+    {
+        com.android.server.audio.MediaFocusControl r0;
+        int[] r1;
+        com.android.server.audio.PlayerFocusEnforcer $r2;
+
+        r0 := @this: com.android.server.audio.MediaFocusControl;
+
+        r1 := @parameter0: int[];
+
+        $r2 = r0.<com.android.server.audio.MediaFocusControl: com.android.server.audio.PlayerFocusEnforcer mFocusEnforcer>;
+
+        interfaceinvoke $r2.<com.android.server.audio.PlayerFocusEnforcer: void mutePlayersForCall(int[])>(r1);
+
+        return;
+    }
+
+    void noFocusForSuspendedApp(java.lang.String, int)
+    {
+        com.android.server.audio.MediaFocusControl r0;
+        int i0;
+        java.lang.Object r1, $r9, $r11;
+        java.util.Iterator r2, r25;
+        java.util.ArrayList r3;
+        com.android.server.audio.FocusRequester r4;
+        com.android.server.audio.AudioEventLogger r5;
+        com.android.server.audio.AudioEventLogger$StringEvent r6;
+        java.lang.StringBuilder r7;
+        java.util.Stack $r8;
+        boolean $z0, $z1, $z2, $z3;
+        java.lang.String $r10, $r12, $r14, $r21, r24;
+        com.android.server.audio.AudioEventLogger$Event $r22;
+        java.lang.Throwable $r23;
+
+        r0 := @this: com.android.server.audio.MediaFocusControl;
+
+        r24 := @parameter0: java.lang.String;
+
+        i0 := @parameter1: int;
+
+        r1 = <com.android.server.audio.MediaFocusControl: java.lang.Object mAudioFocusLock>;
+
+        entermonitor r1;
+
+     label01:
+        $r8 = r0.<com.android.server.audio.MediaFocusControl: java.util.Stack mFocusStack>;
+
+        r2 = virtualinvoke $r8.<java.util.Stack: java.util.Iterator iterator()>();
+
+        r3 = new java.util.ArrayList;
+
+        specialinvoke r3.<java.util.ArrayList: void <init>()>();
+
+     label02:
+        $z0 = interfaceinvoke r2.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label04;
+
+        $r11 = interfaceinvoke r2.<java.util.Iterator: java.lang.Object next()>();
+
+        r4 = (com.android.server.audio.FocusRequester) $r11;
+
+        $z2 = virtualinvoke r4.<com.android.server.audio.FocusRequester: boolean hasSameUid(int)>(i0);
+
+        if $z2 == 0 goto label03;
+
+        $z3 = virtualinvoke r4.<com.android.server.audio.FocusRequester: boolean hasSamePackage(java.lang.String)>(r24);
+
+        if $z3 == 0 goto label03;
+
+        $r12 = virtualinvoke r4.<com.android.server.audio.FocusRequester: java.lang.String getClientId()>();
+
+        interfaceinvoke r3.<java.util.List: boolean add(java.lang.Object)>($r12);
+
+        r5 = <com.android.server.audio.MediaFocusControl: com.android.server.audio.AudioEventLogger mEventLogger>;
+
+        r6 = new com.android.server.audio.AudioEventLogger$StringEvent;
+
+        r7 = new java.lang.StringBuilder;
+
+        specialinvoke r7.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("focus owner:");
+
+        $r14 = virtualinvoke r4.<com.android.server.audio.FocusRequester: java.lang.String getClientId()>();
+
+        virtualinvoke r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r14);
+
+        virtualinvoke r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" in uid:");
+
+        virtualinvoke r7.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        virtualinvoke r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" pack: ");
+
+        virtualinvoke r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r24);
+
+        virtualinvoke r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" getting AUDIOFOCUS_LOSS due to app suspension");
+
+        $r21 = virtualinvoke r7.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r6.<com.android.server.audio.AudioEventLogger$StringEvent: void <init>(java.lang.String)>($r21);
+
+        $r22 = virtualinvoke r6.<com.android.server.audio.AudioEventLogger$StringEvent: com.android.server.audio.AudioEventLogger$Event printLog(java.lang.String)>("MediaFocusControl");
+
+        virtualinvoke r5.<com.android.server.audio.AudioEventLogger: void log(com.android.server.audio.AudioEventLogger$Event)>($r22);
+
+        virtualinvoke r4.<com.android.server.audio.FocusRequester: int dispatchFocusChange(int)>(-1);
+
+     label03:
+        goto label02;
+
+     label04:
+        r25 = interfaceinvoke r3.<java.util.List: java.util.Iterator iterator()>();
+
+     label05:
+        $z1 = interfaceinvoke r25.<java.util.Iterator: boolean hasNext()>();
+
+        if $z1 == 0 goto label07;
+
+        $r9 = interfaceinvoke r25.<java.util.Iterator: java.lang.Object next()>();
+
+        $r10 = (java.lang.String) $r9;
+
+        specialinvoke r0.<com.android.server.audio.MediaFocusControl: void removeFocusStackEntry(java.lang.String,boolean,boolean)>($r10, 0, 1);
+
+     label06:
+        goto label05;
+
+     label07:
+        exitmonitor r1;
+
+     label08:
+        return;
+
+     label09:
+        $r23 := @caughtexception;
+
+     label10:
+        exitmonitor r1;
+
+     label11:
+        throw $r23;
+
+        catch java.lang.Throwable from label01 to label02 with label09;
+        catch java.lang.Throwable from label02 to label03 with label09;
+        catch java.lang.Throwable from label04 to label05 with label09;
+        catch java.lang.Throwable from label05 to label06 with label09;
+        catch java.lang.Throwable from label07 to label08 with label09;
+        catch java.lang.Throwable from label10 to label11 with label09;
+    }
+
+    boolean notifyExtFocusPolicyFocusAbandon_syncAf(android.media.AudioFocusInfo)
+    {
+        com.android.server.audio.MediaFocusControl r0;
+        android.media.audiopolicy.IAudioPolicyCallback $r1, $r5, $r9;
+        java.util.HashMap $r2;
+        java.lang.String $r3, $r12;
+        java.lang.Object $r4;
+        android.os.RemoteException $r6;
+        java.lang.StringBuilder $r7;
+        android.os.IBinder $r10;
+        android.media.AudioFocusInfo r13;
+        com.android.server.audio.FocusRequester r14;
+
+        r0 := @this: com.android.server.audio.MediaFocusControl;
+
+        r13 := @parameter0: android.media.AudioFocusInfo;
+
+        $r1 = r0.<com.android.server.audio.MediaFocusControl: android.media.audiopolicy.IAudioPolicyCallback mFocusPolicy>;
+
+        if $r1 != null goto label1;
+
+        return 0;
+
+     label1:
+        $r2 = r0.<com.android.server.audio.MediaFocusControl: java.util.HashMap mFocusOwnersForFocusPolicy>;
+
+        $r3 = virtualinvoke r13.<android.media.AudioFocusInfo: java.lang.String getClientId()>();
+
+        $r4 = virtualinvoke $r2.<java.util.HashMap: java.lang.Object remove(java.lang.Object)>($r3);
+
+        r14 = (com.android.server.audio.FocusRequester) $r4;
+
+        if r14 == null goto label2;
+
+        virtualinvoke r14.<com.android.server.audio.FocusRequester: void release()>();
+
+     label2:
+        $r5 = r0.<com.android.server.audio.MediaFocusControl: android.media.audiopolicy.IAudioPolicyCallback mFocusPolicy>;
+
+        interfaceinvoke $r5.<android.media.audiopolicy.IAudioPolicyCallback: void notifyAudioFocusAbandon(android.media.AudioFocusInfo)>(r13);
+
+     label3:
+        goto label5;
+
+     label4:
+        $r6 := @caughtexception;
+
+        $r7 = new java.lang.StringBuilder;
+
+        specialinvoke $r7.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Can\'t call notifyAudioFocusAbandon() on IAudioPolicyCallback ");
+
+        $r9 = r0.<com.android.server.audio.MediaFocusControl: android.media.audiopolicy.IAudioPolicyCallback mFocusPolicy>;
+
+        $r10 = interfaceinvoke $r9.<android.media.audiopolicy.IAudioPolicyCallback: android.os.IBinder asBinder()>();
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r10);
+
+        $r12 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("MediaFocusControl", $r12, $r6);
+
+     label5:
+        return 1;
+
+        catch android.os.RemoteException from label2 to label3 with label4;
+    }
+
+    boolean notifyExtFocusPolicyFocusRequest_syncAf(android.media.AudioFocusInfo, android.media.IAudioFocusDispatcher, android.os.IBinder)
+    {
+        com.android.server.audio.MediaFocusControl r0;
+        android.os.IBinder r1, $r16;
+        long l0, $l1;
+        java.util.HashMap $r2, $r7;
+        java.lang.String $r3, $r8, $r18;
+        java.lang.Object $r4, r23;
+        android.media.audiopolicy.IAudioPolicyCallback $r5, $r15;
+        com.android.server.audio.MediaFocusControl$AudioFocusDeathHandler $r6;
+        com.android.server.audio.FocusRequester $r9, r24;
+        boolean $z0, z1;
+        java.lang.Throwable $r11, $r20, r29;
+        android.os.RemoteException $r12, $r19;
+        java.lang.StringBuilder $r13;
+        android.media.AudioFocusInfo r21;
+        android.media.IAudioFocusDispatcher r22;
+
+        r0 := @this: com.android.server.audio.MediaFocusControl;
+
+        r21 := @parameter0: android.media.AudioFocusInfo;
+
+        r22 := @parameter1: android.media.IAudioFocusDispatcher;
+
+        r1 := @parameter2: android.os.IBinder;
+
+        r23 = r0.<com.android.server.audio.MediaFocusControl: java.lang.Object mExtFocusChangeLock>;
+
+        entermonitor r23;
+
+     label01:
+        l0 = r0.<com.android.server.audio.MediaFocusControl: long mExtFocusChangeCounter>;
+
+        $l1 = 1L + l0;
+
+        r0.<com.android.server.audio.MediaFocusControl: long mExtFocusChangeCounter> = $l1;
+
+        virtualinvoke r21.<android.media.AudioFocusInfo: void setGen(long)>(l0);
+
+        exitmonitor r23;
+
+     label02:
+        $r2 = r0.<com.android.server.audio.MediaFocusControl: java.util.HashMap mFocusOwnersForFocusPolicy>;
+
+        $r3 = virtualinvoke r21.<android.media.AudioFocusInfo: java.lang.String getClientId()>();
+
+        $r4 = virtualinvoke $r2.<java.util.HashMap: java.lang.Object get(java.lang.Object)>($r3);
+
+        r24 = (com.android.server.audio.FocusRequester) $r4;
+
+        if r24 == null goto label04;
+
+        $z0 = virtualinvoke r24.<com.android.server.audio.FocusRequester: boolean hasSameDispatcher(android.media.IAudioFocusDispatcher)>(r22);
+
+        if $z0 != 0 goto label03;
+
+        virtualinvoke r24.<com.android.server.audio.FocusRequester: void release()>();
+
+        z1 = 1;
+
+        goto label05;
+
+     label03:
+        z1 = 0;
+
+        goto label05;
+
+     label04:
+        z1 = 1;
+
+     label05:
+        if z1 == 0 goto label09;
+
+        $r6 = new com.android.server.audio.MediaFocusControl$AudioFocusDeathHandler;
+
+        specialinvoke $r6.<com.android.server.audio.MediaFocusControl$AudioFocusDeathHandler: void <init>(com.android.server.audio.MediaFocusControl,android.os.IBinder)>(r0, r1);
+
+     label06:
+        interfaceinvoke r1.<android.os.IBinder: void linkToDeath(android.os.IBinder$DeathRecipient,int)>($r6, 0);
+
+     label07:
+        $r7 = r0.<com.android.server.audio.MediaFocusControl: java.util.HashMap mFocusOwnersForFocusPolicy>;
+
+        $r8 = virtualinvoke r21.<android.media.AudioFocusInfo: java.lang.String getClientId()>();
+
+        $r9 = new com.android.server.audio.FocusRequester;
+
+        specialinvoke $r9.<com.android.server.audio.FocusRequester: void <init>(android.media.AudioFocusInfo,android.media.IAudioFocusDispatcher,android.os.IBinder,com.android.server.audio.MediaFocusControl$AudioFocusDeathHandler,com.android.server.audio.MediaFocusControl)>(r21, r22, r1, $r6, r0);
+
+        virtualinvoke $r7.<java.util.HashMap: java.lang.Object put(java.lang.Object,java.lang.Object)>($r8, $r9);
+
+        goto label09;
+
+     label08:
+        $r19 := @caughtexception;
+
+        return 0;
+
+     label09:
+        $r5 = r0.<com.android.server.audio.MediaFocusControl: android.media.audiopolicy.IAudioPolicyCallback mFocusPolicy>;
+
+        interfaceinvoke $r5.<android.media.audiopolicy.IAudioPolicyCallback: void notifyAudioFocusRequest(android.media.AudioFocusInfo,int)>(r21, 1);
+
+     label10:
+        return 1;
+
+     label11:
+        $r12 := @caughtexception;
+
+        $r13 = new java.lang.StringBuilder;
+
+        specialinvoke $r13.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Can\'t call notifyAudioFocusRequest() on IAudioPolicyCallback ");
+
+        $r15 = r0.<com.android.server.audio.MediaFocusControl: android.media.audiopolicy.IAudioPolicyCallback mFocusPolicy>;
+
+        $r16 = interfaceinvoke $r15.<android.media.audiopolicy.IAudioPolicyCallback: android.os.IBinder asBinder()>();
+
+        virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r16);
+
+        $r18 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("MediaFocusControl", $r18, $r12);
+
+        return 0;
+
+     label12:
+        $r20 := @caughtexception;
+
+        r29 = $r20;
+
+     label13:
+        exitmonitor r23;
+
+     label14:
+        throw r29;
+
+     label15:
+        $r11 := @caughtexception;
+
+        r29 = $r11;
+
+        goto label13;
+
+        catch java.lang.Throwable from label01 to label02 with label12;
+        catch android.os.RemoteException from label06 to label07 with label08;
+        catch android.os.RemoteException from label09 to label10 with label11;
+        catch java.lang.Throwable from label13 to label14 with label15;
+    }
+
+    void notifyExtPolicyCurrentFocusAsync(android.media.audiopolicy.IAudioPolicyCallback)
+    {
+        com.android.server.audio.MediaFocusControl r0;
+        android.media.audiopolicy.IAudioPolicyCallback r1;
+        com.android.server.audio.MediaFocusControl$1 $r2;
+
+        r0 := @this: com.android.server.audio.MediaFocusControl;
+
+        r1 := @parameter0: android.media.audiopolicy.IAudioPolicyCallback;
+
+        $r2 = new com.android.server.audio.MediaFocusControl$1;
+
+        specialinvoke $r2.<com.android.server.audio.MediaFocusControl$1: void <init>(com.android.server.audio.MediaFocusControl,android.media.audiopolicy.IAudioPolicyCallback)>(r0, r1);
+
+        virtualinvoke $r2.<java.lang.Thread: void start()>();
+
+        return;
+    }
+
+    void notifyExtPolicyFocusGrant_syncAf(android.media.AudioFocusInfo, int)
+    {
+        com.android.server.audio.MediaFocusControl r0;
+        android.media.AudioFocusInfo r1;
+        int i0;
+        java.util.Iterator r2;
+        android.media.audiopolicy.IAudioPolicyCallback r3;
+        java.util.ArrayList $r6;
+        boolean $z0;
+        java.lang.Object $r7;
+        android.os.RemoteException $r8;
+        java.lang.StringBuilder $r9;
+        android.os.IBinder $r11;
+        java.lang.String $r13;
+
+        r0 := @this: com.android.server.audio.MediaFocusControl;
+
+        r1 := @parameter0: android.media.AudioFocusInfo;
+
+        i0 := @parameter1: int;
+
+        $r6 = r0.<com.android.server.audio.MediaFocusControl: java.util.ArrayList mFocusFollowers>;
+
+        r2 = virtualinvoke $r6.<java.util.ArrayList: java.util.Iterator iterator()>();
+
+     label1:
+        $z0 = interfaceinvoke r2.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label6;
+
+        $r7 = interfaceinvoke r2.<java.util.Iterator: java.lang.Object next()>();
+
+        r3 = (android.media.audiopolicy.IAudioPolicyCallback) $r7;
+
+     label2:
+        interfaceinvoke r3.<android.media.audiopolicy.IAudioPolicyCallback: void notifyAudioFocusGrant(android.media.AudioFocusInfo,int)>(r1, i0);
+
+     label3:
+        goto label5;
+
+     label4:
+        $r8 := @caughtexception;
+
+        $r9 = new java.lang.StringBuilder;
+
+        specialinvoke $r9.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Can\'t call notifyAudioFocusGrant() on IAudioPolicyCallback ");
+
+        $r11 = interfaceinvoke r3.<android.media.audiopolicy.IAudioPolicyCallback: android.os.IBinder asBinder()>();
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r11);
+
+        $r13 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("MediaFocusControl", $r13, $r8);
+
+     label5:
+        goto label1;
+
+     label6:
+        return;
+
+        catch android.os.RemoteException from label2 to label3 with label4;
+    }
+
+    void notifyExtPolicyFocusLoss_syncAf(android.media.AudioFocusInfo, boolean)
+    {
+        com.android.server.audio.MediaFocusControl r0;
+        android.media.AudioFocusInfo r1;
+        boolean z0, $z1;
+        java.util.Iterator r2;
+        android.media.audiopolicy.IAudioPolicyCallback r3;
+        java.util.ArrayList $r6;
+        java.lang.Object $r7;
+        android.os.RemoteException $r8;
+        java.lang.StringBuilder $r9;
+        android.os.IBinder $r11;
+        java.lang.String $r13;
+
+        r0 := @this: com.android.server.audio.MediaFocusControl;
+
+        r1 := @parameter0: android.media.AudioFocusInfo;
+
+        z0 := @parameter1: boolean;
+
+        $r6 = r0.<com.android.server.audio.MediaFocusControl: java.util.ArrayList mFocusFollowers>;
+
+        r2 = virtualinvoke $r6.<java.util.ArrayList: java.util.Iterator iterator()>();
+
+     label1:
+        $z1 = interfaceinvoke r2.<java.util.Iterator: boolean hasNext()>();
+
+        if $z1 == 0 goto label6;
+
+        $r7 = interfaceinvoke r2.<java.util.Iterator: java.lang.Object next()>();
+
+        r3 = (android.media.audiopolicy.IAudioPolicyCallback) $r7;
+
+     label2:
+        interfaceinvoke r3.<android.media.audiopolicy.IAudioPolicyCallback: void notifyAudioFocusLoss(android.media.AudioFocusInfo,boolean)>(r1, z0);
+
+     label3:
+        goto label5;
+
+     label4:
+        $r8 := @caughtexception;
+
+        $r9 = new java.lang.StringBuilder;
+
+        specialinvoke $r9.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Can\'t call notifyAudioFocusLoss() on IAudioPolicyCallback ");
+
+        $r11 = interfaceinvoke r3.<android.media.audiopolicy.IAudioPolicyCallback: android.os.IBinder asBinder()>();
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r11);
+
+        $r13 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("MediaFocusControl", $r13, $r8);
+
+     label5:
+        goto label1;
+
+     label6:
+        return;
+
+        catch android.os.RemoteException from label2 to label3 with label4;
+    }
+
+    void removeFocusFollower(android.media.audiopolicy.IAudioPolicyCallback)
+    {
+        com.android.server.audio.MediaFocusControl r0;
+        java.lang.Object r1, $r5;
+        java.util.Iterator r2;
+        android.media.audiopolicy.IAudioPolicyCallback r3, r10;
+        java.util.ArrayList $r4, $r8;
+        boolean $z0, $z1;
+        android.os.IBinder $r6, $r7;
+        java.lang.Throwable $r9;
+
+        r0 := @this: com.android.server.audio.MediaFocusControl;
+
+        r10 := @parameter0: android.media.audiopolicy.IAudioPolicyCallback;
+
+        if r10 != null goto label01;
+
+        return;
+
+     label01:
+        r1 = <com.android.server.audio.MediaFocusControl: java.lang.Object mAudioFocusLock>;
+
+        entermonitor r1;
+
+     label02:
+        $r4 = r0.<com.android.server.audio.MediaFocusControl: java.util.ArrayList mFocusFollowers>;
+
+        r2 = virtualinvoke $r4.<java.util.ArrayList: java.util.Iterator iterator()>();
+
+     label03:
+        $z0 = interfaceinvoke r2.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label06;
+
+        $r5 = interfaceinvoke r2.<java.util.Iterator: java.lang.Object next()>();
+
+        r3 = (android.media.audiopolicy.IAudioPolicyCallback) $r5;
+
+        $r6 = interfaceinvoke r3.<android.media.audiopolicy.IAudioPolicyCallback: android.os.IBinder asBinder()>();
+
+        $r7 = interfaceinvoke r10.<android.media.audiopolicy.IAudioPolicyCallback: android.os.IBinder asBinder()>();
+
+        $z1 = virtualinvoke $r6.<java.lang.Object: boolean equals(java.lang.Object)>($r7);
+
+        if $z1 == 0 goto label05;
+
+        $r8 = r0.<com.android.server.audio.MediaFocusControl: java.util.ArrayList mFocusFollowers>;
+
+        virtualinvoke $r8.<java.util.ArrayList: boolean remove(java.lang.Object)>(r3);
+
+     label04:
+        goto label06;
+
+     label05:
+        goto label03;
+
+     label06:
+        exitmonitor r1;
+
+     label07:
+        return;
+
+     label08:
+        $r9 := @caughtexception;
+
+     label09:
+        exitmonitor r1;
+
+     label10:
+        throw $r9;
+
+        catch java.lang.Throwable from label02 to label03 with label08;
+        catch java.lang.Throwable from label03 to label04 with label08;
+        catch java.lang.Throwable from label06 to label07 with label08;
+        catch java.lang.Throwable from label09 to label10 with label08;
+    }
+
+    protected int requestAudioFocus(android.media.AudioAttributes, int, android.os.IBinder, android.media.IAudioFocusDispatcher, java.lang.String, java.lang.String, int, int, boolean)
+    {
+        com.android.server.audio.MediaFocusControl r0;
+        android.media.IAudioFocusDispatcher r1;
+        java.lang.String r2, r3, $r17, $r31, $r36, $r40, $r69;
+        int i0, $i1, $i2, $i3, $i4, $i5, $i6, $i7, $i8, $i9, $i10, $i11, $i12, $i13, i17, i18, $i19, i20;
+        boolean z0, z1, $z3, $z4, $z5, $z6, $z7, $z9, $z10, $z11, $z13, $z15, z16, z17, z18, z19, $z20, z22;
+        com.android.server.audio.MediaFocusControl$AudioFocusDeathHandler r4;
+        android.media.MediaMetrics$Item $r5, $r6, $r8, $r10, $r12, $r15, $r18;
+        android.media.MediaMetrics$Key $r7, $r9, $r11, $r13, $r16;
+        java.lang.Integer $r14;
+        java.lang.StringBuilder $r19, r88;
+        com.android.server.audio.AudioEventLogger$StringEvent $r35;
+        com.android.server.audio.AudioEventLogger$Event $r37;
+        android.app.AppOpsManager $r38;
+        java.util.Stack $r39, $r42, $r43, $r56, $r59, $r61;
+        android.media.audiopolicy.IAudioPolicyCallback $r41, r79;
+        android.media.AudioFocusInfo $r45, $r46, $r48, $r63, r80;
+        java.util.ArrayList $r47, $r49, $r50, $r53, $r54;
+        java.lang.Object $r51, $r55, $r57, $r60, r78;
+        com.android.server.audio.FocusRequester $r52, $r58, r82, r83, r85;
+        java.lang.Throwable $r64, $r70, $r71, $r72, $r73, r81;
+        android.os.RemoteException $r65;
+        android.media.AudioAttributes r74;
+        android.os.IBinder r75;
+        com.android.server.audio.AudioEventLogger r76;
+        java.util.Iterator r84, r86;
+
+        r0 := @this: com.android.server.audio.MediaFocusControl;
+
+        r74 := @parameter0: android.media.AudioAttributes;
+
+        i17 := @parameter1: int;
+
+        r75 := @parameter2: android.os.IBinder;
+
+        r1 := @parameter3: android.media.IAudioFocusDispatcher;
+
+        r2 := @parameter4: java.lang.String;
+
+        r3 := @parameter5: java.lang.String;
+
+        i18 := @parameter6: int;
+
+        i0 := @parameter7: int;
+
+        z0 := @parameter8: boolean;
+
+        $r5 = new android.media.MediaMetrics$Item;
+
+        specialinvoke $r5.<android.media.MediaMetrics$Item: void <init>(java.lang.String)>("audio.focus");
+
+        $i1 = staticinvoke <android.os.Binder: int getCallingUid()>();
+
+        $r6 = virtualinvoke $r5.<android.media.MediaMetrics$Item: android.media.MediaMetrics$Item setUid(int)>($i1);
+
+        $r7 = <android.media.MediaMetrics$Property: android.media.MediaMetrics$Key CALLING_PACKAGE>;
+
+        $r8 = virtualinvoke $r6.<android.media.MediaMetrics$Item: android.media.MediaMetrics$Item set(android.media.MediaMetrics$Key,java.lang.Object)>($r7, r3);
+
+        $r9 = <android.media.MediaMetrics$Property: android.media.MediaMetrics$Key CLIENT_NAME>;
+
+        $r10 = virtualinvoke $r8.<android.media.MediaMetrics$Item: android.media.MediaMetrics$Item set(android.media.MediaMetrics$Key,java.lang.Object)>($r9, r2);
+
+        $r11 = <android.media.MediaMetrics$Property: android.media.MediaMetrics$Key EVENT>;
+
+        $r12 = virtualinvoke $r10.<android.media.MediaMetrics$Item: android.media.MediaMetrics$Item set(android.media.MediaMetrics$Key,java.lang.Object)>($r11, "requestAudioFocus");
+
+        $r13 = <android.media.MediaMetrics$Property: android.media.MediaMetrics$Key FLAGS>;
+
+        $r14 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i18);
+
+        $r15 = virtualinvoke $r12.<android.media.MediaMetrics$Item: android.media.MediaMetrics$Item set(android.media.MediaMetrics$Key,java.lang.Object)>($r13, $r14);
+
+        $r16 = <android.media.MediaMetrics$Property: android.media.MediaMetrics$Key FOCUS_CHANGE_HINT>;
+
+        $r17 = staticinvoke <android.media.AudioManager: java.lang.String audioFocusToString(int)>(i17);
+
+        $r18 = virtualinvoke $r15.<android.media.MediaMetrics$Item: android.media.MediaMetrics$Item set(android.media.MediaMetrics$Key,java.lang.Object)>($r16, $r17);
+
+        virtualinvoke $r18.<android.media.MediaMetrics$Item: boolean record()>();
+
+        r76 = <com.android.server.audio.MediaFocusControl: com.android.server.audio.AudioEventLogger mEventLogger>;
+
+        $r19 = new java.lang.StringBuilder;
+
+        specialinvoke $r19.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("requestAudioFocus() from uid/pid ");
+
+        $i2 = staticinvoke <android.os.Binder: int getCallingUid()>();
+
+        virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i2);
+
+        virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("/");
+
+        $i3 = staticinvoke <android.os.Binder: int getCallingPid()>();
+
+        virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i3);
+
+        virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" clientId=");
+
+        virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r2);
+
+        virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" callingPack=");
+
+        virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r3);
+
+        virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" req=");
+
+        virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i17);
+
+        virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" flags=0x");
+
+        $r31 = staticinvoke <java.lang.Integer: java.lang.String toHexString(int)>(i18);
+
+        virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r31);
+
+        virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" sdk=");
+
+        virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r35 = new com.android.server.audio.AudioEventLogger$StringEvent;
+
+        $r36 = virtualinvoke $r19.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r35.<com.android.server.audio.AudioEventLogger$StringEvent: void <init>(java.lang.String)>($r36);
+
+        $r37 = virtualinvoke $r35.<com.android.server.audio.AudioEventLogger$StringEvent: com.android.server.audio.AudioEventLogger$Event printLog(java.lang.String)>("MediaFocusControl");
+
+        virtualinvoke r76.<com.android.server.audio.AudioEventLogger: void log(com.android.server.audio.AudioEventLogger$Event)>($r37);
+
+        $z3 = interfaceinvoke r75.<android.os.IBinder: boolean pingBinder()>();
+
+        if $z3 != 0 goto label01;
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>("MediaFocusControl", " AudioFocus DOA client for requestAudioFocus(), aborting.");
+
+        return 0;
+
+     label01:
+        $r38 = r0.<com.android.server.audio.MediaFocusControl: android.app.AppOpsManager mAppOps>;
+
+        $i4 = staticinvoke <android.os.Binder: int getCallingUid()>();
+
+        $i5 = virtualinvoke $r38.<android.app.AppOpsManager: int noteOp(int,int,java.lang.String)>(32, $i4, r3);
+
+        if $i5 == 0 goto label02;
+
+        return 0;
+
+     label02:
+        r78 = <com.android.server.audio.MediaFocusControl: java.lang.Object mAudioFocusLock>;
+
+        entermonitor r78;
+
+     label03:
+        $r39 = r0.<com.android.server.audio.MediaFocusControl: java.util.Stack mFocusStack>;
+
+        $i6 = virtualinvoke $r39.<java.util.Stack: int size()>();
+
+        if $i6 <= 100 goto label05;
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>("MediaFocusControl", "Max AudioFocus stack size reached, failing requestAudioFocus()");
+
+        exitmonitor r78;
+
+     label04:
+        return 0;
+
+     label05:
+        $z4 = r0.<com.android.server.audio.MediaFocusControl: boolean mRingOrCallActive>;
+
+        if $z4 != 0 goto label07;
+
+     label06:
+        z16 = 1;
+
+        goto label08;
+
+     label07:
+        z16 = 0;
+
+     label08:
+        $r40 = "AudioFocus_For_Phone_Ring_And_Calls";
+
+        $i7 = virtualinvoke $r40.<java.lang.String: int compareTo(java.lang.String)>(r2);
+
+        if $i7 != 0 goto label10;
+
+     label09:
+        z17 = 1;
+
+        goto label11;
+
+     label10:
+        z17 = 0;
+
+     label11:
+        z18 = z16 & z17;
+
+        if z18 == 0 goto label13;
+
+     label12:
+        r0.<com.android.server.audio.MediaFocusControl: boolean mRingOrCallActive> = 1;
+
+     label13:
+        r79 = r0.<com.android.server.audio.MediaFocusControl: android.media.audiopolicy.IAudioPolicyCallback mFocusPolicy>;
+
+     label14:
+        if r79 == null goto label18;
+
+     label15:
+        r80 = new android.media.AudioFocusInfo;
+
+        $i13 = staticinvoke <android.os.Binder: int getCallingUid()>();
+
+        specialinvoke r80.<android.media.AudioFocusInfo: void <init>(android.media.AudioAttributes,int,java.lang.String,java.lang.String,int,int,int,int)>(r74, $i13, r2, r3, i17, 0, i18, i0);
+
+     label16:
+        goto label19;
+
+     label17:
+        $r70 := @caughtexception;
+
+        r81 = $r70;
+
+        goto label75;
+
+     label18:
+        r80 = null;
+
+     label19:
+        $z5 = specialinvoke r0.<com.android.server.audio.MediaFocusControl: boolean canReassignAudioFocus()>();
+
+        if $z5 != 0 goto label24;
+
+     label20:
+        $i12 = i18 & 1;
+
+        if $i12 != 0 goto label23;
+
+     label21:
+        exitmonitor r78;
+
+     label22:
+        return 0;
+
+     label23:
+        z19 = 1;
+
+        goto label25;
+
+     label24:
+        z19 = 0;
+
+     label25:
+        $r41 = r0.<com.android.server.audio.MediaFocusControl: android.media.audiopolicy.IAudioPolicyCallback mFocusPolicy>;
+
+        if $r41 == null goto label29;
+
+        $z15 = virtualinvoke r0.<com.android.server.audio.MediaFocusControl: boolean notifyExtFocusPolicyFocusRequest_syncAf(android.media.AudioFocusInfo,android.media.IAudioFocusDispatcher,android.os.IBinder)>(r80, r1, r75);
+
+        if $z15 == 0 goto label27;
+
+        exitmonitor r78;
+
+     label26:
+        return 100;
+
+     label27:
+        exitmonitor r78;
+
+     label28:
+        return 0;
+
+     label29:
+        r4 = new com.android.server.audio.MediaFocusControl$AudioFocusDeathHandler;
+
+        specialinvoke r4.<com.android.server.audio.MediaFocusControl$AudioFocusDeathHandler: void <init>(com.android.server.audio.MediaFocusControl,android.os.IBinder)>(r0, r75);
+
+     label30:
+        interfaceinvoke r75.<android.os.IBinder: void linkToDeath(android.os.IBinder$DeathRecipient,int)>(r4, 0);
+
+     label31:
+        $r42 = r0.<com.android.server.audio.MediaFocusControl: java.util.Stack mFocusStack>;
+
+        z1 = virtualinvoke $r42.<java.util.Stack: boolean empty()>();
+
+     label32:
+        if z1 != 0 goto label38;
+
+     label33:
+        $r56 = r0.<com.android.server.audio.MediaFocusControl: java.util.Stack mFocusStack>;
+
+        $r57 = virtualinvoke $r56.<java.util.Stack: java.lang.Object peek()>();
+
+        $r58 = (com.android.server.audio.FocusRequester) $r57;
+
+        $z13 = virtualinvoke $r58.<com.android.server.audio.FocusRequester: boolean hasSameClient(java.lang.String)>(r2);
+
+        if $z13 == 0 goto label38;
+
+        $r59 = r0.<com.android.server.audio.MediaFocusControl: java.util.Stack mFocusStack>;
+
+        $r60 = virtualinvoke $r59.<java.util.Stack: java.lang.Object peek()>();
+
+        r82 = (com.android.server.audio.FocusRequester) $r60;
+
+        $i10 = virtualinvoke r82.<com.android.server.audio.FocusRequester: int getGainRequest()>();
+
+        if $i10 != i17 goto label35;
+
+        $i11 = virtualinvoke r82.<com.android.server.audio.FocusRequester: int getGrantFlags()>();
+
+        if $i11 != i18 goto label35;
+
+        interfaceinvoke r75.<android.os.IBinder: boolean unlinkToDeath(android.os.IBinder$DeathRecipient,int)>(r4, 0);
+
+        $r63 = virtualinvoke r82.<com.android.server.audio.FocusRequester: android.media.AudioFocusInfo toAudioFocusInfo()>();
+
+        virtualinvoke r0.<com.android.server.audio.MediaFocusControl: void notifyExtPolicyFocusGrant_syncAf(android.media.AudioFocusInfo,int)>($r63, 1);
+
+        exitmonitor r78;
+
+     label34:
+        return 1;
+
+     label35:
+        if z19 != 0 goto label38;
+
+     label36:
+        $r61 = r0.<com.android.server.audio.MediaFocusControl: java.util.Stack mFocusStack>;
+
+        virtualinvoke $r61.<java.util.Stack: java.lang.Object pop()>();
+
+        virtualinvoke r82.<com.android.server.audio.FocusRequester: void release()>();
+
+     label37:
+        goto label38;
+
+     label38:
+        specialinvoke r0.<com.android.server.audio.MediaFocusControl: void removeFocusStackEntry(java.lang.String,boolean,boolean)>(r2, 0, 0);
+
+        r83 = new com.android.server.audio.FocusRequester;
+
+        $i19 = staticinvoke <android.os.Binder: int getCallingUid()>();
+
+        specialinvoke r83.<com.android.server.audio.FocusRequester: void <init>(android.media.AudioAttributes,int,int,android.media.IAudioFocusDispatcher,android.os.IBinder,java.lang.String,com.android.server.audio.MediaFocusControl$AudioFocusDeathHandler,java.lang.String,int,com.android.server.audio.MediaFocusControl,int)>(r74, i17, i18, r1, r75, r2, r4, r3, $i19, r0, i0);
+
+        $z20 = r0.<com.android.server.audio.MediaFocusControl: boolean mMultiAudioFocusEnabled>;
+
+        if $z20 == 0 goto label56;
+
+     label39:
+        if i17 != 1 goto label56;
+
+        if z18 == 0 goto label46;
+
+     label40:
+        $r53 = r0.<com.android.server.audio.MediaFocusControl: java.util.ArrayList mMultiAudioFocusList>;
+
+        $z10 = virtualinvoke $r53.<java.util.ArrayList: boolean isEmpty()>();
+
+        if $z10 != 0 goto label45;
+
+        $r54 = r0.<com.android.server.audio.MediaFocusControl: java.util.ArrayList mMultiAudioFocusList>;
+
+        r84 = virtualinvoke $r54.<java.util.ArrayList: java.util.Iterator iterator()>();
+
+     label41:
+        $z11 = interfaceinvoke r84.<java.util.Iterator: boolean hasNext()>();
+
+        if $z11 == 0 goto label44;
+
+        $r55 = interfaceinvoke r84.<java.util.Iterator: java.lang.Object next()>();
+
+        r85 = (com.android.server.audio.FocusRequester) $r55;
+
+     label42:
+        virtualinvoke r85.<com.android.server.audio.FocusRequester: boolean handleFocusLossFromGain(int,com.android.server.audio.FocusRequester,boolean)>(i17, r83, z0);
+
+     label43:
+        goto label41;
+
+     label44:
+        goto label56;
+
+     label45:
+        goto label56;
+
+     label46:
+        z22 = 1;
+
+     label47:
+        $r47 = r0.<com.android.server.audio.MediaFocusControl: java.util.ArrayList mMultiAudioFocusList>;
+
+        $z7 = virtualinvoke $r47.<java.util.ArrayList: boolean isEmpty()>();
+
+        if $z7 != 0 goto label52;
+
+        $r50 = r0.<com.android.server.audio.MediaFocusControl: java.util.ArrayList mMultiAudioFocusList>;
+
+        r86 = virtualinvoke $r50.<java.util.ArrayList: java.util.Iterator iterator()>();
+
+     label48:
+        z22 = 1;
+
+     label49:
+        $z9 = interfaceinvoke r86.<java.util.Iterator: boolean hasNext()>();
+
+        if $z9 == 0 goto label52;
+
+        $r51 = interfaceinvoke r86.<java.util.Iterator: java.lang.Object next()>();
+
+        $r52 = (com.android.server.audio.FocusRequester) $r51;
+
+        $i8 = virtualinvoke $r52.<com.android.server.audio.FocusRequester: int getClientUid()>();
+
+        $i9 = staticinvoke <android.os.Binder: int getCallingUid()>();
+
+        if $i8 != $i9 goto label51;
+
+     label50:
+        z22 = 0;
+
+        goto label52;
+
+     label51:
+        goto label48;
+
+     label52:
+        if z22 == 0 goto label54;
+
+     label53:
+        $r49 = r0.<com.android.server.audio.MediaFocusControl: java.util.ArrayList mMultiAudioFocusList>;
+
+        virtualinvoke $r49.<java.util.ArrayList: boolean add(java.lang.Object)>(r83);
+
+     label54:
+        virtualinvoke r83.<com.android.server.audio.FocusRequester: void handleFocusGainFromRequest(int)>(1);
+
+        $r48 = virtualinvoke r83.<com.android.server.audio.FocusRequester: android.media.AudioFocusInfo toAudioFocusInfo()>();
+
+        virtualinvoke r0.<com.android.server.audio.MediaFocusControl: void notifyExtPolicyFocusGrant_syncAf(android.media.AudioFocusInfo,int)>($r48, 1);
+
+        exitmonitor r78;
+
+     label55:
+        return 1;
+
+     label56:
+        if z19 == 0 goto label62;
+
+     label57:
+        i20 = specialinvoke r0.<com.android.server.audio.MediaFocusControl: int pushBelowLockedFocusOwners(com.android.server.audio.FocusRequester)>(r83);
+
+     label58:
+        if i20 == 0 goto label60;
+
+     label59:
+        $r46 = virtualinvoke r83.<com.android.server.audio.FocusRequester: android.media.AudioFocusInfo toAudioFocusInfo()>();
+
+        virtualinvoke r0.<com.android.server.audio.MediaFocusControl: void notifyExtPolicyFocusGrant_syncAf(android.media.AudioFocusInfo,int)>($r46, i20);
+
+     label60:
+        exitmonitor r78;
+
+     label61:
+        return i20;
+
+     label62:
+        specialinvoke r0.<com.android.server.audio.MediaFocusControl: void propagateFocusLossFromGain_syncAf(int,com.android.server.audio.FocusRequester,boolean)>(i17, r83, z0);
+
+        $r43 = r0.<com.android.server.audio.MediaFocusControl: java.util.Stack mFocusStack>;
+
+        virtualinvoke $r43.<java.util.Stack: java.lang.Object push(java.lang.Object)>(r83);
+
+        virtualinvoke r83.<com.android.server.audio.FocusRequester: void handleFocusGainFromRequest(int)>(1);
+
+        $r45 = virtualinvoke r83.<com.android.server.audio.FocusRequester: android.media.AudioFocusInfo toAudioFocusInfo()>();
+
+        virtualinvoke r0.<com.android.server.audio.MediaFocusControl: void notifyExtPolicyFocusGrant_syncAf(android.media.AudioFocusInfo,int)>($r45, 1);
+
+     label63:
+        $z6 = z18 & 1;
+
+        if $z6 == 0 goto label65;
+
+     label64:
+        specialinvoke r0.<com.android.server.audio.MediaFocusControl: void runAudioCheckerForRingOrCallAsync(boolean)>(1);
+
+     label65:
+        exitmonitor r78;
+
+     label66:
+        return 1;
+
+     label67:
+        $r71 := @caughtexception;
+
+        r81 = $r71;
+
+     label68:
+        goto label75;
+
+     label69:
+        $r65 := @caughtexception;
+
+     label70:
+        r88 = new java.lang.StringBuilder;
+
+        specialinvoke r88.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r88.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("AudioFocus  requestAudioFocus() could not link to ");
+
+     label71:
+        virtualinvoke r88.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r75);
+
+        virtualinvoke r88.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" binder death");
+
+        $r69 = virtualinvoke r88.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("MediaFocusControl", $r69);
+
+        exitmonitor r78;
+
+     label72:
+        return 0;
+
+     label73:
+        $r64 := @caughtexception;
+
+        r81 = $r64;
+
+        goto label68;
+
+     label74:
+        $r72 := @caughtexception;
+
+        r81 = $r72;
+
+     label75:
+        exitmonitor r78;
+
+     label76:
+        throw r81;
+
+     label77:
+        $r73 := @caughtexception;
+
+        r81 = $r73;
+
+        goto label75;
+
+        catch java.lang.Throwable from label03 to label04 with label74;
+        catch java.lang.Throwable from label05 to label06 with label74;
+        catch java.lang.Throwable from label08 to label09 with label74;
+        catch java.lang.Throwable from label12 to label13 with label74;
+        catch java.lang.Throwable from label13 to label14 with label74;
+        catch java.lang.Throwable from label15 to label16 with label17;
+        catch java.lang.Throwable from label19 to label20 with label17;
+        catch java.lang.Throwable from label21 to label22 with label17;
+        catch java.lang.Throwable from label25 to label26 with label17;
+        catch java.lang.Throwable from label27 to label28 with label17;
+        catch java.lang.Throwable from label29 to label30 with label17;
+        catch android.os.RemoteException from label30 to label31 with label69;
+        catch java.lang.Throwable from label30 to label31 with label67;
+        catch java.lang.Throwable from label31 to label32 with label67;
+        catch java.lang.Throwable from label33 to label34 with label17;
+        catch java.lang.Throwable from label36 to label37 with label17;
+        catch java.lang.Throwable from label38 to label39 with label67;
+        catch java.lang.Throwable from label40 to label41 with label67;
+        catch java.lang.Throwable from label41 to label42 with label67;
+        catch java.lang.Throwable from label42 to label43 with label73;
+        catch java.lang.Throwable from label47 to label48 with label73;
+        catch java.lang.Throwable from label49 to label50 with label73;
+        catch java.lang.Throwable from label53 to label54 with label73;
+        catch java.lang.Throwable from label54 to label55 with label73;
+        catch java.lang.Throwable from label57 to label58 with label73;
+        catch java.lang.Throwable from label59 to label60 with label73;
+        catch java.lang.Throwable from label60 to label61 with label73;
+        catch java.lang.Throwable from label62 to label63 with label73;
+        catch java.lang.Throwable from label64 to label65 with label73;
+        catch java.lang.Throwable from label65 to label66 with label73;
+        catch java.lang.Throwable from label70 to label71 with label73;
+        catch java.lang.Throwable from label71 to label72 with label77;
+        catch java.lang.Throwable from label75 to label76 with label77;
+    }
+
+    protected void setDuckingInExtPolicyAvailable(boolean)
+    {
+        com.android.server.audio.MediaFocusControl r0;
+        boolean z0, $z1;
+
+        r0 := @this: com.android.server.audio.MediaFocusControl;
+
+        z0 := @parameter0: boolean;
+
+        $z1 = z0 ^ 1;
+
+        r0.<com.android.server.audio.MediaFocusControl: boolean mNotifyFocusOwnerOnDuck> = $z1;
+
+        return;
+    }
+
+    void setFocusPolicy(android.media.audiopolicy.IAudioPolicyCallback, boolean)
+    {
+        com.android.server.audio.MediaFocusControl r0;
+        boolean z0;
+        java.lang.Object r1;
+        android.media.audiopolicy.IAudioPolicyCallback $r2, r4;
+        java.lang.Throwable $r3;
+
+        r0 := @this: com.android.server.audio.MediaFocusControl;
+
+        r4 := @parameter0: android.media.audiopolicy.IAudioPolicyCallback;
+
+        z0 := @parameter1: boolean;
+
+        if r4 != null goto label1;
+
+        return;
+
+     label1:
+        r1 = <com.android.server.audio.MediaFocusControl: java.lang.Object mAudioFocusLock>;
+
+        entermonitor r1;
+
+        if z0 == 0 goto label3;
+
+     label2:
+        $r2 = r0.<com.android.server.audio.MediaFocusControl: android.media.audiopolicy.IAudioPolicyCallback mFocusPolicy>;
+
+        r0.<com.android.server.audio.MediaFocusControl: android.media.audiopolicy.IAudioPolicyCallback mPreviousFocusPolicy> = $r2;
+
+     label3:
+        r0.<com.android.server.audio.MediaFocusControl: android.media.audiopolicy.IAudioPolicyCallback mFocusPolicy> = r4;
+
+        exitmonitor r1;
+
+     label4:
+        return;
+
+     label5:
+        $r3 := @caughtexception;
+
+     label6:
+        exitmonitor r1;
+
+     label7:
+        throw $r3;
+
+        catch java.lang.Throwable from label2 to label3 with label5;
+        catch java.lang.Throwable from label3 to label4 with label5;
+        catch java.lang.Throwable from label6 to label7 with label5;
+    }
+
+    void setFocusRequestResultFromExtPolicy(android.media.AudioFocusInfo, int)
+    {
+        com.android.server.audio.MediaFocusControl r0;
+        int i0;
+        java.lang.Object r1, $r4;
+        long $l1, $l2;
+        byte $b3;
+        java.util.HashMap $r2;
+        java.lang.String $r3;
+        java.lang.Throwable $r5;
+        android.media.AudioFocusInfo r6;
+        com.android.server.audio.FocusRequester r7;
+
+        r0 := @this: com.android.server.audio.MediaFocusControl;
+
+        r6 := @parameter0: android.media.AudioFocusInfo;
+
+        i0 := @parameter1: int;
+
+        r1 = r0.<com.android.server.audio.MediaFocusControl: java.lang.Object mExtFocusChangeLock>;
+
+        entermonitor r1;
+
+     label1:
+        $l1 = virtualinvoke r6.<android.media.AudioFocusInfo: long getGen()>();
+
+        $l2 = r0.<com.android.server.audio.MediaFocusControl: long mExtFocusChangeCounter>;
+
+        $b3 = $l1 cmp $l2;
+
+        if $b3 <= 0 goto label3;
+
+        exitmonitor r1;
+
+     label2:
+        return;
+
+     label3:
+        exitmonitor r1;
+
+     label4:
+        $r2 = r0.<com.android.server.audio.MediaFocusControl: java.util.HashMap mFocusOwnersForFocusPolicy>;
+
+        $r3 = virtualinvoke r6.<android.media.AudioFocusInfo: java.lang.String getClientId()>();
+
+        $r4 = virtualinvoke $r2.<java.util.HashMap: java.lang.Object get(java.lang.Object)>($r3);
+
+        r7 = (com.android.server.audio.FocusRequester) $r4;
+
+        if r7 == null goto label5;
+
+        virtualinvoke r7.<com.android.server.audio.FocusRequester: void dispatchFocusResultFromExtPolicy(int)>(i0);
+
+     label5:
+        return;
+
+     label6:
+        $r5 := @caughtexception;
+
+     label7:
+        exitmonitor r1;
+
+     label8:
+        throw $r5;
+
+        catch java.lang.Throwable from label1 to label2 with label6;
+        catch java.lang.Throwable from label3 to label4 with label6;
+        catch java.lang.Throwable from label7 to label8 with label6;
+    }
+
+    public void unduckPlayers(com.android.server.audio.FocusRequester)
+    {
+        com.android.server.audio.MediaFocusControl r0;
+        com.android.server.audio.FocusRequester r1;
+        com.android.server.audio.PlayerFocusEnforcer $r2;
+
+        r0 := @this: com.android.server.audio.MediaFocusControl;
+
+        r1 := @parameter0: com.android.server.audio.FocusRequester;
+
+        $r2 = r0.<com.android.server.audio.MediaFocusControl: com.android.server.audio.PlayerFocusEnforcer mFocusEnforcer>;
+
+        interfaceinvoke $r2.<com.android.server.audio.PlayerFocusEnforcer: void unduckPlayers(com.android.server.audio.FocusRequester)>(r1);
+
+        return;
+    }
+
+    public void unmutePlayersForCall()
+    {
+        com.android.server.audio.MediaFocusControl r0;
+        com.android.server.audio.PlayerFocusEnforcer $r1;
+
+        r0 := @this: com.android.server.audio.MediaFocusControl;
+
+        $r1 = r0.<com.android.server.audio.MediaFocusControl: com.android.server.audio.PlayerFocusEnforcer mFocusEnforcer>;
+
+        interfaceinvoke $r1.<com.android.server.audio.PlayerFocusEnforcer: void unmutePlayersForCall()>();
+
+        return;
+    }
+
+    protected void unregisterAudioFocusClient(java.lang.String)
+    {
+        com.android.server.audio.MediaFocusControl r0;
+        java.lang.Object r1;
+        java.lang.Throwable $r2;
+        java.lang.String r3;
+
+        r0 := @this: com.android.server.audio.MediaFocusControl;
+
+        r3 := @parameter0: java.lang.String;
+
+        r1 = <com.android.server.audio.MediaFocusControl: java.lang.Object mAudioFocusLock>;
+
+        entermonitor r1;
+
+     label1:
+        specialinvoke r0.<com.android.server.audio.MediaFocusControl: void removeFocusStackEntry(java.lang.String,boolean,boolean)>(r3, 0, 1);
+
+        exitmonitor r1;
+
+     label2:
+        return;
+
+     label3:
+        $r2 := @caughtexception;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        throw $r2;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    void unsetFocusPolicy(android.media.audiopolicy.IAudioPolicyCallback, boolean)
+    {
+        com.android.server.audio.MediaFocusControl r0;
+        boolean z0;
+        java.lang.Object r1;
+        android.media.audiopolicy.IAudioPolicyCallback $r2, $r3, r5;
+        java.lang.Throwable $r4;
+
+        r0 := @this: com.android.server.audio.MediaFocusControl;
+
+        r5 := @parameter0: android.media.audiopolicy.IAudioPolicyCallback;
+
+        z0 := @parameter1: boolean;
+
+        if r5 != null goto label01;
+
+        return;
+
+     label01:
+        r1 = <com.android.server.audio.MediaFocusControl: java.lang.Object mAudioFocusLock>;
+
+        entermonitor r1;
+
+     label02:
+        $r2 = r0.<com.android.server.audio.MediaFocusControl: android.media.audiopolicy.IAudioPolicyCallback mFocusPolicy>;
+
+        if $r2 != r5 goto label07;
+
+     label03:
+        if z0 == 0 goto label06;
+
+     label04:
+        $r3 = r0.<com.android.server.audio.MediaFocusControl: android.media.audiopolicy.IAudioPolicyCallback mPreviousFocusPolicy>;
+
+        r0.<com.android.server.audio.MediaFocusControl: android.media.audiopolicy.IAudioPolicyCallback mFocusPolicy> = $r3;
+
+     label05:
+        goto label07;
+
+     label06:
+        r0.<com.android.server.audio.MediaFocusControl: android.media.audiopolicy.IAudioPolicyCallback mFocusPolicy> = null;
+
+     label07:
+        exitmonitor r1;
+
+     label08:
+        return;
+
+     label09:
+        $r4 := @caughtexception;
+
+     label10:
+        exitmonitor r1;
+
+     label11:
+        throw $r4;
+
+        catch java.lang.Throwable from label02 to label03 with label09;
+        catch java.lang.Throwable from label04 to label05 with label09;
+        catch java.lang.Throwable from label06 to label07 with label09;
+        catch java.lang.Throwable from label07 to label08 with label09;
+        catch java.lang.Throwable from label10 to label11 with label09;
+    }
+
+    public void updateMultiAudioFocus(boolean)
+    {
+        com.android.server.audio.MediaFocusControl r0;
+        boolean z0, $z2, $z3, $z4;
+        java.lang.StringBuilder $r1;
+        java.lang.String $r5;
+        android.content.Context $r6;
+        java.util.Stack $r7, $r13;
+        java.util.ArrayList $r8, $r9, $r10;
+        java.lang.Object $r11, $r14;
+        com.android.server.audio.FocusRequester $r12, $r15;
+        android.content.ContentResolver r17;
+        java.util.Iterator r18;
+        int i1;
+
+        r0 := @this: com.android.server.audio.MediaFocusControl;
+
+        z0 := @parameter0: boolean;
+
+        $r1 = new java.lang.StringBuilder;
+
+        specialinvoke $r1.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("updateMultiAudioFocus( ");
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>(z0);
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" )");
+
+        $r5 = virtualinvoke $r1.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("MediaFocusControl", $r5);
+
+        r0.<com.android.server.audio.MediaFocusControl: boolean mMultiAudioFocusEnabled> = z0;
+
+        $r6 = r0.<com.android.server.audio.MediaFocusControl: android.content.Context mContext>;
+
+        r17 = virtualinvoke $r6.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        i1 = (int) z0;
+
+        staticinvoke <android.provider.Settings$System: boolean putInt(android.content.ContentResolver,java.lang.String,int)>(r17, "multi_audio_focus_enabled", i1);
+
+        $r7 = r0.<com.android.server.audio.MediaFocusControl: java.util.Stack mFocusStack>;
+
+        $z2 = virtualinvoke $r7.<java.util.Stack: boolean isEmpty()>();
+
+        if $z2 != 0 goto label1;
+
+        $r13 = r0.<com.android.server.audio.MediaFocusControl: java.util.Stack mFocusStack>;
+
+        $r14 = virtualinvoke $r13.<java.util.Stack: java.lang.Object peek()>();
+
+        $r15 = (com.android.server.audio.FocusRequester) $r14;
+
+        virtualinvoke $r15.<com.android.server.audio.FocusRequester: void handleFocusLoss(int,com.android.server.audio.FocusRequester,boolean)>(-1, null, 0);
+
+     label1:
+        if z0 != 0 goto label4;
+
+        $r8 = r0.<com.android.server.audio.MediaFocusControl: java.util.ArrayList mMultiAudioFocusList>;
+
+        $z3 = virtualinvoke $r8.<java.util.ArrayList: boolean isEmpty()>();
+
+        if $z3 != 0 goto label4;
+
+        $r9 = r0.<com.android.server.audio.MediaFocusControl: java.util.ArrayList mMultiAudioFocusList>;
+
+        r18 = virtualinvoke $r9.<java.util.ArrayList: java.util.Iterator iterator()>();
+
+     label2:
+        $z4 = interfaceinvoke r18.<java.util.Iterator: boolean hasNext()>();
+
+        if $z4 == 0 goto label3;
+
+        $r11 = interfaceinvoke r18.<java.util.Iterator: java.lang.Object next()>();
+
+        $r12 = (com.android.server.audio.FocusRequester) $r11;
+
+        virtualinvoke $r12.<com.android.server.audio.FocusRequester: void handleFocusLoss(int,com.android.server.audio.FocusRequester,boolean)>(-1, null, 0);
+
+        goto label2;
+
+     label3:
+        $r10 = r0.<com.android.server.audio.MediaFocusControl: java.util.ArrayList mMultiAudioFocusList>;
+
+        virtualinvoke $r10.<java.util.ArrayList: void clear()>();
+
+     label4:
+        return;
+    }
+}

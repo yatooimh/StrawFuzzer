@@ -1,0 +1,2351 @@
+public class gov.nist.javax.sip.SipStackImpl extends gov.nist.javax.sip.stack.SIPTransactionStack implements javax.sip.SipStack, gov.nist.javax.sip.SipStackExt
+{
+    public static final java.lang.Integer MAX_DATAGRAM_SIZE;
+    private java.lang.String[] cipherSuites;
+    boolean deliverTerminatedEventForAck;
+    boolean deliverUnsolicitedNotify;
+    private java.lang.String[] enabledProtocols;
+    private gov.nist.javax.sip.EventScanner eventScanner;
+    private java.util.Hashtable listeningPoints;
+    boolean reEntrantListener;
+    javax.sip.SipListener sipListener;
+    private java.util.LinkedList sipProviders;
+    private java.util.concurrent.Semaphore stackSemaphore;
+
+    static void <clinit>()
+    {
+        java.lang.Integer $r0;
+
+        $r0 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(8192);
+
+        <gov.nist.javax.sip.SipStackImpl: java.lang.Integer MAX_DATAGRAM_SIZE> = $r0;
+
+        return;
+    }
+
+    protected void <init>()
+    {
+        gov.nist.javax.sip.SipStackImpl r0;
+        java.util.concurrent.Semaphore $r1;
+        java.lang.String[] $r2, $r3;
+        gov.nist.javax.sip.NistSipMessageFactoryImpl $r4;
+        gov.nist.javax.sip.EventScanner $r5;
+        java.util.Hashtable $r6;
+        java.util.LinkedList $r7;
+
+        r0 := @this: gov.nist.javax.sip.SipStackImpl;
+
+        specialinvoke r0.<gov.nist.javax.sip.stack.SIPTransactionStack: void <init>()>();
+
+        r0.<gov.nist.javax.sip.SipStackImpl: boolean deliverTerminatedEventForAck> = 0;
+
+        r0.<gov.nist.javax.sip.SipStackImpl: boolean deliverUnsolicitedNotify> = 0;
+
+        $r1 = new java.util.concurrent.Semaphore;
+
+        specialinvoke $r1.<java.util.concurrent.Semaphore: void <init>(int)>(1);
+
+        r0.<gov.nist.javax.sip.SipStackImpl: java.util.concurrent.Semaphore stackSemaphore> = $r1;
+
+        $r2 = newarray (java.lang.String)[4];
+
+        $r2[0] = "TLS_RSA_WITH_AES_128_CBC_SHA";
+
+        $r2[1] = "SSL_RSA_WITH_3DES_EDE_CBC_SHA";
+
+        $r2[2] = "TLS_DH_anon_WITH_AES_128_CBC_SHA";
+
+        $r2[3] = "SSL_DH_anon_WITH_3DES_EDE_CBC_SHA";
+
+        r0.<gov.nist.javax.sip.SipStackImpl: java.lang.String[] cipherSuites> = $r2;
+
+        $r3 = newarray (java.lang.String)[3];
+
+        $r3[0] = "SSLv3";
+
+        $r3[1] = "SSLv2Hello";
+
+        $r3[2] = "TLSv1";
+
+        r0.<gov.nist.javax.sip.SipStackImpl: java.lang.String[] enabledProtocols> = $r3;
+
+        $r4 = new gov.nist.javax.sip.NistSipMessageFactoryImpl;
+
+        specialinvoke $r4.<gov.nist.javax.sip.NistSipMessageFactoryImpl: void <init>(gov.nist.javax.sip.SipStackImpl)>(r0);
+
+        specialinvoke r0.<gov.nist.javax.sip.stack.SIPTransactionStack: void setMessageFactory(gov.nist.javax.sip.stack.StackMessageFactory)>($r4);
+
+        $r5 = new gov.nist.javax.sip.EventScanner;
+
+        specialinvoke $r5.<gov.nist.javax.sip.EventScanner: void <init>(gov.nist.javax.sip.SipStackImpl)>(r0);
+
+        r0.<gov.nist.javax.sip.SipStackImpl: gov.nist.javax.sip.EventScanner eventScanner> = $r5;
+
+        $r6 = new java.util.Hashtable;
+
+        specialinvoke $r6.<java.util.Hashtable: void <init>()>();
+
+        r0.<gov.nist.javax.sip.SipStackImpl: java.util.Hashtable listeningPoints> = $r6;
+
+        $r7 = new java.util.LinkedList;
+
+        specialinvoke $r7.<java.util.LinkedList: void <init>()>();
+
+        r0.<gov.nist.javax.sip.SipStackImpl: java.util.LinkedList sipProviders> = $r7;
+
+        return;
+    }
+
+    public void <init>(java.util.Properties) throws javax.sip.PeerUnavailableException
+    {
+        gov.nist.javax.sip.SipStackImpl r0;
+        long l0, $l2;
+        java.lang.Class[] $r2, $r6, $r17, $r42, $r57, $r62;
+        java.lang.reflect.Constructor $r3, $r7, $r18, $r43, $r58, $r63;
+        java.lang.Object[] $r4, $r8, $r19, $r44, $r59, $r64;
+        java.lang.Object $r5, $r9, $r21, $r45, $r60, $r65;
+        gov.nist.core.ServerLogger $r10, $r11, $r12;
+        java.lang.String $r13, $r15, $r20, $r23, $r24, $r25, $r27, $r28, $r29, $r30, $r38, $r40, $r48, $r52, $r53, $r54, $r55, $r56, $r69, $r72, $r76, $r80, $r82, $r86, $r88, $r94, $r96, $r103, $r108, $r117, $r123, $r131, $r135, $r137, $r144, $r159, $r161, $r169, $r176, $r181, $r183, r191, r194, r195, r198, r200, r201, r202, r204, $r208, r209, r210, r211, $r214, $r215, $r217, r218, r220, r221, r226, r231, r236, r241, r246, r251, r252, r253, $r262, r263, r268, r269, $r274, $r276, r278, r280, r287, $r291, $r292, $r295, $r296, $r298, $r299, $r301, $r302, $r304, $r305, $r307, $r308, $r309;
+        java.lang.Class $r16, $r31, $r41, r196, r199, r222, r227;
+        javax.sip.address.Router $r22;
+        boolean $z0, $z1, $z2, $z3, $z4, $z5, $z6, $z7, $z8, $z9, $z10, $z11, $z12, $z14, $z15, $z16, $z17, $z18, $z19, $z20, $z21, $z22, $z23, $z24, $z25, $z26, $z27, $z28, $z29, $z30, $z31, $z32, z33, $z34, $z35, z36, $z37, $z38, $z39, $z40;
+        gov.nist.core.StackLogger $r34, $r49, $r111, $r125, $r146, $r155, $r186, r197, r234, r239, r244, r249, r260, r266, r272, r283;
+        int $i1, $i3, $i4, $i5, $i6, $i7, $i8, $i9, $i10, $i11, $i12, $i13, $i14, $i15, i16, i17, i18, $i19, $i20, $i21;
+        gov.nist.javax.sip.LogRecordFactory $r46;
+        java.lang.Long $r47;
+        gov.nist.core.net.AddressResolver $r61;
+        gov.nist.core.net.NetworkLayer $r66;
+        java.util.HashSet $r68;
+        char[] $r71;
+        java.lang.Throwable $r77, $r83, $r89, $r97, $r104, $r109, $r110, $r126, $r132, $r138, $r147, $r150, $r151, $r152, $r156, $r177, $r178, $r185, $r187, r265, r271;
+        java.lang.Exception $r112, $r118, $r124, $r145, $r148, $r153, $r162, $r163, $r170, $r184, $r188;
+        java.util.Properties r190;
+        java.lang.Boolean $r216, $r275, $r277, $r297, $r300, $r303, $r306;
+        java.io.PrintStream r255;
+        gov.nist.core.ThreadAuditor r270;
+        java.lang.String[] r282;
+        java.io.InputStream r285;
+        java.lang.Integer $r290, $r294, r333, r335, r337, r339, r343, r352, r353;
+        java.lang.StringBuilder r320, r324, r329, r331, r334, r336, r338, r340, r341, r342, r344, r345, r349, r356, r358, r360, r362;
+        javax.sip.PeerUnavailableException r321, r325, r327, r330, r332, r354, r355, r364;
+        gov.nist.javax.sip.stack.DefaultRouter r322;
+        java.util.StringTokenizer r323, r328, r348;
+        gov.nist.core.net.SslNetworkLayer r326;
+        gov.nist.javax.sip.stack.DefaultMessageLogFactory r346, r347;
+        java.io.InputStreamReader r350;
+        java.io.BufferedReader r351;
+        java.lang.IllegalArgumentException r357, r359, r361, r363;
+        java.lang.NumberFormatException r365, r366, r367, r368, r369, r370;
+        java.lang.reflect.InvocationTargetException r371;
+
+        r0 := @this: gov.nist.javax.sip.SipStackImpl;
+
+        r190 := @parameter0: java.util.Properties;
+
+        specialinvoke r0.<gov.nist.javax.sip.SipStackImpl: void <init>()>();
+
+        r191 = virtualinvoke r190.<java.util.Properties: java.lang.String getProperty(java.lang.String)>("javax.sip.IP_ADDRESS");
+
+        if r191 == null goto label004;
+
+     label001:
+        specialinvoke r0.<gov.nist.javax.sip.stack.SIPTransactionStack: void setHostAddress(java.lang.String)>(r191);
+
+     label002:
+        goto label004;
+
+     label003:
+        $r126 := @caughtexception;
+
+        r320 = new java.lang.StringBuilder;
+
+        specialinvoke r320.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r320.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("bad address ");
+
+        virtualinvoke r320.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r191);
+
+        r321 = new javax.sip.PeerUnavailableException;
+
+        $r131 = virtualinvoke r320.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r321.<javax.sip.PeerUnavailableException: void <init>(java.lang.String)>($r131);
+
+        throw r321;
+
+     label004:
+        r194 = virtualinvoke r190.<java.util.Properties: java.lang.String getProperty(java.lang.String)>("javax.sip.STACK_NAME");
+
+        if r194 == null goto label125;
+
+        specialinvoke r0.<gov.nist.javax.sip.stack.SIPTransactionStack: void setStackName(java.lang.String)>(r194);
+
+        r195 = virtualinvoke r190.<java.util.Properties: java.lang.String getProperty(java.lang.String)>("gov.nist.javax.sip.STACK_LOGGER");
+
+        if r195 != null goto label005;
+
+        r195 = "gov.nist.core.LogWriter";
+
+        goto label005;
+
+     label005:
+        r196 = staticinvoke <java.lang.Class: java.lang.Class forName(java.lang.String)>(r195);
+
+     label006:
+        $r2 = newarray (java.lang.Class)[0];
+
+        $r3 = virtualinvoke r196.<java.lang.Class: java.lang.reflect.Constructor getConstructor(java.lang.Class[])>($r2);
+
+        $r4 = newarray (java.lang.Object)[0];
+
+        $r5 = virtualinvoke $r3.<java.lang.reflect.Constructor: java.lang.Object newInstance(java.lang.Object[])>($r4);
+
+        r197 = (gov.nist.core.StackLogger) $r5;
+
+        interfaceinvoke r197.<gov.nist.core.StackLogger: void setStackProperties(java.util.Properties)>(r190);
+
+        specialinvoke r0.<gov.nist.javax.sip.stack.SIPTransactionStack: void setStackLogger(gov.nist.core.StackLogger)>(r197);
+
+     label007:
+        r198 = virtualinvoke r190.<java.util.Properties: java.lang.String getProperty(java.lang.String)>("gov.nist.javax.sip.SERVER_LOGGER");
+
+        if r198 != null goto label008;
+
+        r198 = "gov.nist.javax.sip.stack.ServerLog";
+
+        goto label008;
+
+     label008:
+        r199 = staticinvoke <java.lang.Class: java.lang.Class forName(java.lang.String)>(r198);
+
+     label009:
+        $r6 = newarray (java.lang.Class)[0];
+
+        $r7 = virtualinvoke r199.<java.lang.Class: java.lang.reflect.Constructor getConstructor(java.lang.Class[])>($r6);
+
+        $r8 = newarray (java.lang.Object)[0];
+
+        $r9 = virtualinvoke $r7.<java.lang.reflect.Constructor: java.lang.Object newInstance(java.lang.Object[])>($r8);
+
+        $r10 = (gov.nist.core.ServerLogger) $r9;
+
+        r0.<gov.nist.javax.sip.SipStackImpl: gov.nist.core.ServerLogger serverLogger> = $r10;
+
+        $r11 = r0.<gov.nist.javax.sip.SipStackImpl: gov.nist.core.ServerLogger serverLogger>;
+
+        interfaceinvoke $r11.<gov.nist.core.ServerLogger: void setSipStack(javax.sip.SipStack)>(r0);
+
+        $r12 = r0.<gov.nist.javax.sip.SipStackImpl: gov.nist.core.ServerLogger serverLogger>;
+
+        interfaceinvoke $r12.<gov.nist.core.ServerLogger: void setStackProperties(java.util.Properties)>(r190);
+
+     label010:
+        $r13 = virtualinvoke r190.<java.util.Properties: java.lang.String getProperty(java.lang.String)>("javax.sip.OUTBOUND_PROXY");
+
+        r0.<gov.nist.javax.sip.SipStackImpl: java.lang.String outboundProxy> = $r13;
+
+        r322 = new gov.nist.javax.sip.stack.DefaultRouter;
+
+        $r15 = r0.<gov.nist.javax.sip.SipStackImpl: java.lang.String outboundProxy>;
+
+        specialinvoke r322.<gov.nist.javax.sip.stack.DefaultRouter: void <init>(javax.sip.SipStack,java.lang.String)>(r0, $r15);
+
+        r0.<gov.nist.javax.sip.SipStackImpl: gov.nist.javax.sip.stack.DefaultRouter defaultRouter> = r322;
+
+        r200 = virtualinvoke r190.<java.util.Properties: java.lang.String getProperty(java.lang.String)>("javax.sip.ROUTER_PATH");
+
+        if r200 != null goto label011;
+
+        r200 = "gov.nist.javax.sip.stack.DefaultRouter";
+
+        goto label011;
+
+     label011:
+        $r16 = staticinvoke <java.lang.Class: java.lang.Class forName(java.lang.String)>(r200);
+
+        $r17 = newarray (java.lang.Class)[2];
+
+        $r17[0] = class "Ljavax/sip/SipStack;";
+
+        $r17[1] = class "Ljava/lang/String;";
+
+        $r18 = virtualinvoke $r16.<java.lang.Class: java.lang.reflect.Constructor getConstructor(java.lang.Class[])>($r17);
+
+        $r19 = newarray (java.lang.Object)[2];
+
+        $r19[0] = r0;
+
+        $r20 = r0.<gov.nist.javax.sip.SipStackImpl: java.lang.String outboundProxy>;
+
+        $r19[1] = $r20;
+
+        $r21 = virtualinvoke $r18.<java.lang.reflect.Constructor: java.lang.Object newInstance(java.lang.Object[])>($r19);
+
+        $r22 = (javax.sip.address.Router) $r21;
+
+        specialinvoke r0.<gov.nist.javax.sip.stack.SIPTransactionStack: void setRouter(javax.sip.address.Router)>($r22);
+
+     label012:
+        r201 = virtualinvoke r190.<java.util.Properties: java.lang.String getProperty(java.lang.String)>("javax.sip.USE_ROUTER_FOR_ALL_URIS");
+
+        r0.<gov.nist.javax.sip.SipStackImpl: boolean useRouterForAll> = 1;
+
+        if r201 == null goto label013;
+
+        $r76 = "true";
+
+        $z21 = virtualinvoke $r76.<java.lang.String: boolean equalsIgnoreCase(java.lang.String)>(r201);
+
+        r0.<gov.nist.javax.sip.SipStackImpl: boolean useRouterForAll> = $z21;
+
+     label013:
+        r202 = virtualinvoke r190.<java.util.Properties: java.lang.String getProperty(java.lang.String)>("javax.sip.EXTENSION_METHODS");
+
+        if r202 == null goto label016;
+
+        r323 = new java.util.StringTokenizer;
+
+        specialinvoke r323.<java.util.StringTokenizer: void <init>(java.lang.String)>(r202);
+
+     label014:
+        $z14 = virtualinvoke r323.<java.util.StringTokenizer: boolean hasMoreTokens()>();
+
+        if $z14 == 0 goto label016;
+
+        r204 = virtualinvoke r323.<java.util.StringTokenizer: java.lang.String nextToken(java.lang.String)>(":");
+
+        $z15 = virtualinvoke r204.<java.lang.String: boolean equalsIgnoreCase(java.lang.String)>("BYE");
+
+        if $z15 != 0 goto label015;
+
+        $z16 = virtualinvoke r204.<java.lang.String: boolean equalsIgnoreCase(java.lang.String)>("INVITE");
+
+        if $z16 != 0 goto label015;
+
+        $z17 = virtualinvoke r204.<java.lang.String: boolean equalsIgnoreCase(java.lang.String)>("SUBSCRIBE");
+
+        if $z17 != 0 goto label015;
+
+        $z18 = virtualinvoke r204.<java.lang.String: boolean equalsIgnoreCase(java.lang.String)>("NOTIFY");
+
+        if $z18 != 0 goto label015;
+
+        $z19 = virtualinvoke r204.<java.lang.String: boolean equalsIgnoreCase(java.lang.String)>("ACK");
+
+        if $z19 != 0 goto label015;
+
+        $z20 = virtualinvoke r204.<java.lang.String: boolean equalsIgnoreCase(java.lang.String)>("OPTIONS");
+
+        if $z20 != 0 goto label015;
+
+        virtualinvoke r0.<gov.nist.javax.sip.SipStackImpl: void addExtensionMethod(java.lang.String)>(r204);
+
+        goto label014;
+
+     label015:
+        r324 = new java.lang.StringBuilder;
+
+        specialinvoke r324.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r324.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Bad extension method ");
+
+        virtualinvoke r324.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r204);
+
+        r325 = new javax.sip.PeerUnavailableException;
+
+        $r208 = virtualinvoke r324.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r325.<javax.sip.PeerUnavailableException: void <init>(java.lang.String)>($r208);
+
+        throw r325;
+
+     label016:
+        r209 = virtualinvoke r190.<java.util.Properties: java.lang.String getProperty(java.lang.String)>("javax.net.ssl.keyStore");
+
+        r210 = virtualinvoke r190.<java.util.Properties: java.lang.String getProperty(java.lang.String)>("javax.net.ssl.trustStore");
+
+        if r209 == null goto label021;
+
+        if r210 != null goto label017;
+
+        r210 = r209;
+
+        goto label017;
+
+     label017:
+        r211 = virtualinvoke r190.<java.util.Properties: java.lang.String getProperty(java.lang.String)>("javax.net.ssl.keyStorePassword");
+
+     label018:
+        r326 = new gov.nist.core.net.SslNetworkLayer;
+
+        $r71 = virtualinvoke r211.<java.lang.String: char[] toCharArray()>();
+
+        $r72 = virtualinvoke r190.<java.util.Properties: java.lang.String getProperty(java.lang.String)>("javax.net.ssl.keyStoreType");
+
+        specialinvoke r326.<gov.nist.core.net.SslNetworkLayer: void <init>(java.lang.String,java.lang.String,char[],java.lang.String)>(r210, r209, $r71, $r72);
+
+        r0.<gov.nist.javax.sip.SipStackImpl: gov.nist.core.net.NetworkLayer networkLayer> = r326;
+
+     label019:
+        goto label021;
+
+     label020:
+        $r124 := @caughtexception;
+
+        $r125 = virtualinvoke r0.<gov.nist.javax.sip.SipStackImpl: gov.nist.core.StackLogger getStackLogger()>();
+
+        interfaceinvoke $r125.<gov.nist.core.StackLogger: void logError(java.lang.String,java.lang.Exception)>("could not instantiate SSL networking", $r124);
+
+        goto label021;
+
+     label021:
+        $r214 = virtualinvoke r190.<java.util.Properties: java.lang.String getProperty(java.lang.String,java.lang.String)>("javax.sip.AUTOMATIC_DIALOG_SUPPORT", "on");
+
+        $z29 = virtualinvoke $r214.<java.lang.String: boolean equalsIgnoreCase(java.lang.String)>("on");
+
+        r0.<gov.nist.javax.sip.stack.SIPTransactionStack: boolean isAutomaticDialogSupportEnabled> = $z29;
+
+        $r215 = virtualinvoke r190.<java.util.Properties: java.lang.String getProperty(java.lang.String,java.lang.String)>("gov.nist.javax.sip.AUTOMATIC_DIALOG_ERROR_HANDLING", "true");
+
+        $r216 = <java.lang.Boolean: java.lang.Boolean TRUE>;
+
+        $r217 = virtualinvoke $r216.<java.lang.Boolean: java.lang.String toString()>();
+
+        $z30 = virtualinvoke $r215.<java.lang.String: boolean equals(java.lang.Object)>($r217);
+
+        r0.<gov.nist.javax.sip.stack.SIPTransactionStack: boolean isAutomaticDialogErrorHandlingEnabled> = $z30;
+
+        $z31 = r0.<gov.nist.javax.sip.stack.SIPTransactionStack: boolean isAutomaticDialogSupportEnabled>;
+
+        if $z31 == 0 goto label022;
+
+        r0.<gov.nist.javax.sip.stack.SIPTransactionStack: boolean isAutomaticDialogErrorHandlingEnabled> = 1;
+
+     label022:
+        $r23 = virtualinvoke r190.<java.util.Properties: java.lang.String getProperty(java.lang.String)>("gov.nist.javax.sip.MAX_LISTENER_RESPONSE_TIME");
+
+        if $r23 == null goto label024;
+
+        $r69 = virtualinvoke r190.<java.util.Properties: java.lang.String getProperty(java.lang.String)>("gov.nist.javax.sip.MAX_LISTENER_RESPONSE_TIME");
+
+        $i14 = staticinvoke <java.lang.Integer: int parseInt(java.lang.String)>($r69);
+
+        r0.<gov.nist.javax.sip.stack.SIPTransactionStack: int maxListenerResponseTime> = $i14;
+
+        $i15 = r0.<gov.nist.javax.sip.stack.SIPTransactionStack: int maxListenerResponseTime>;
+
+        if $i15 <= 0 goto label023;
+
+        goto label025;
+
+     label023:
+        r327 = new javax.sip.PeerUnavailableException;
+
+        specialinvoke r327.<javax.sip.PeerUnavailableException: void <init>(java.lang.String)>("Bad configuration parameter gov.nist.javax.sip.MAX_LISTENER_RESPONSE_TIME : should be positive");
+
+        throw r327;
+
+     label024:
+        r0.<gov.nist.javax.sip.stack.SIPTransactionStack: int maxListenerResponseTime> = -1;
+
+     label025:
+        $r24 = virtualinvoke r190.<java.util.Properties: java.lang.String getProperty(java.lang.String,java.lang.String)>("gov.nist.javax.sip.DELIVER_TERMINATED_EVENT_FOR_ACK", "false");
+
+        $z0 = virtualinvoke $r24.<java.lang.String: boolean equalsIgnoreCase(java.lang.String)>("true");
+
+        r0.<gov.nist.javax.sip.SipStackImpl: boolean deliverTerminatedEventForAck> = $z0;
+
+        $r25 = virtualinvoke r190.<java.util.Properties: java.lang.String getProperty(java.lang.String,java.lang.String)>("gov.nist.javax.sip.DELIVER_UNSOLICITED_NOTIFY", "false");
+
+        $z1 = virtualinvoke $r25.<java.lang.String: boolean equalsIgnoreCase(java.lang.String)>("true");
+
+        r0.<gov.nist.javax.sip.SipStackImpl: boolean deliverUnsolicitedNotify> = $z1;
+
+        r218 = virtualinvoke r190.<java.util.Properties: java.lang.String getProperty(java.lang.String)>("javax.sip.FORKABLE_EVENTS");
+
+        if r218 == null goto label027;
+
+        r328 = new java.util.StringTokenizer;
+
+        specialinvoke r328.<java.util.StringTokenizer: void <init>(java.lang.String)>(r218);
+
+     label026:
+        $z12 = virtualinvoke r328.<java.util.StringTokenizer: boolean hasMoreTokens()>();
+
+        if $z12 == 0 goto label027;
+
+        r220 = virtualinvoke r328.<java.util.StringTokenizer: java.lang.String nextToken()>();
+
+        $r68 = r0.<gov.nist.javax.sip.SipStackImpl: java.util.HashSet forkedEvents>;
+
+        virtualinvoke $r68.<java.util.HashSet: boolean add(java.lang.Object)>(r220);
+
+        goto label026;
+
+     label027:
+        $z2 = virtualinvoke r190.<java.util.Properties: boolean containsKey(java.lang.Object)>("gov.nist.javax.sip.NETWORK_LAYER");
+
+        if $z2 == 0 goto label034;
+
+        r221 = virtualinvoke r190.<java.util.Properties: java.lang.String getProperty(java.lang.String)>("gov.nist.javax.sip.NETWORK_LAYER");
+
+     label028:
+        r222 = staticinvoke <java.lang.Class: java.lang.Class forName(java.lang.String)>(r221);
+
+     label029:
+        $r62 = newarray (java.lang.Class)[0];
+
+        $r63 = virtualinvoke r222.<java.lang.Class: java.lang.reflect.Constructor getConstructor(java.lang.Class[])>($r62);
+
+        $r64 = newarray (java.lang.Object)[0];
+
+        $r65 = virtualinvoke $r63.<java.lang.reflect.Constructor: java.lang.Object newInstance(java.lang.Object[])>($r64);
+
+        $r66 = (gov.nist.core.net.NetworkLayer) $r65;
+
+        r0.<gov.nist.javax.sip.SipStackImpl: gov.nist.core.net.NetworkLayer networkLayer> = $r66;
+
+     label030:
+        goto label034;
+
+     label031:
+        $r184 := @caughtexception;
+
+        goto label033;
+
+     label032:
+        $r118 := @caughtexception;
+
+     label033:
+        r329 = new java.lang.StringBuilder;
+
+        specialinvoke r329.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r329.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("can\'t find or instantiate NetworkLayer implementation: ");
+
+        virtualinvoke r329.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r221);
+
+        r330 = new javax.sip.PeerUnavailableException;
+
+        $r123 = virtualinvoke r329.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r330.<javax.sip.PeerUnavailableException: void <init>(java.lang.String)>($r123);
+
+        throw r330;
+
+     label034:
+        $z3 = virtualinvoke r190.<java.util.Properties: boolean containsKey(java.lang.Object)>("gov.nist.javax.sip.ADDRESS_RESOLVER");
+
+        if $z3 == 0 goto label041;
+
+        r226 = virtualinvoke r190.<java.util.Properties: java.lang.String getProperty(java.lang.String)>("gov.nist.javax.sip.ADDRESS_RESOLVER");
+
+     label035:
+        r227 = staticinvoke <java.lang.Class: java.lang.Class forName(java.lang.String)>(r226);
+
+     label036:
+        $r57 = newarray (java.lang.Class)[0];
+
+        $r58 = virtualinvoke r227.<java.lang.Class: java.lang.reflect.Constructor getConstructor(java.lang.Class[])>($r57);
+
+        $r59 = newarray (java.lang.Object)[0];
+
+        $r60 = virtualinvoke $r58.<java.lang.reflect.Constructor: java.lang.Object newInstance(java.lang.Object[])>($r59);
+
+        $r61 = (gov.nist.core.net.AddressResolver) $r60;
+
+        r0.<gov.nist.javax.sip.SipStackImpl: gov.nist.core.net.AddressResolver addressResolver> = $r61;
+
+     label037:
+        goto label041;
+
+     label038:
+        $r112 := @caughtexception;
+
+        goto label040;
+
+     label039:
+        $r162 := @caughtexception;
+
+     label040:
+        r331 = new java.lang.StringBuilder;
+
+        specialinvoke r331.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r331.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("can\'t find or instantiate AddressResolver implementation: ");
+
+        virtualinvoke r331.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r226);
+
+        r332 = new javax.sip.PeerUnavailableException;
+
+        $r117 = virtualinvoke r331.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r332.<javax.sip.PeerUnavailableException: void <init>(java.lang.String)>($r117);
+
+        throw r332;
+
+     label041:
+        r231 = virtualinvoke r190.<java.util.Properties: java.lang.String getProperty(java.lang.String)>("gov.nist.javax.sip.MAX_CONNECTIONS");
+
+        if r231 == null goto label046;
+
+     label042:
+        r333 = new java.lang.Integer;
+
+        specialinvoke r333.<java.lang.Integer: void <init>(java.lang.String)>(r231);
+
+        $i13 = virtualinvoke r333.<java.lang.Integer: int intValue()>();
+
+        r0.<gov.nist.javax.sip.SipStackImpl: int maxConnections> = $i13;
+
+     label043:
+        goto label046;
+
+     label044:
+        $r156 := @caughtexception;
+
+        $z27 = virtualinvoke r0.<gov.nist.javax.sip.SipStackImpl: boolean isLoggingEnabled()>();
+
+        if $z27 == 0 goto label045;
+
+        r234 = virtualinvoke r0.<gov.nist.javax.sip.SipStackImpl: gov.nist.core.StackLogger getStackLogger()>();
+
+        r334 = new java.lang.StringBuilder;
+
+        specialinvoke r334.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r334.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("max connections - bad value ");
+
+        r365 = (java.lang.NumberFormatException) $r156;
+
+        $r159 = virtualinvoke r365.<java.lang.NumberFormatException: java.lang.String getMessage()>();
+
+        virtualinvoke r334.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r159);
+
+        $r161 = virtualinvoke r334.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        interfaceinvoke r234.<gov.nist.core.StackLogger: void logError(java.lang.String)>($r161);
+
+        goto label046;
+
+     label045:
+        goto label046;
+
+     label046:
+        r236 = virtualinvoke r190.<java.util.Properties: java.lang.String getProperty(java.lang.String)>("gov.nist.javax.sip.THREAD_POOL_SIZE");
+
+        if r236 == null goto label051;
+
+     label047:
+        r335 = new java.lang.Integer;
+
+        specialinvoke r335.<java.lang.Integer: void <init>(java.lang.String)>(r236);
+
+        $i12 = virtualinvoke r335.<java.lang.Integer: int intValue()>();
+
+        r0.<gov.nist.javax.sip.SipStackImpl: int threadPoolSize> = $i12;
+
+     label048:
+        goto label051;
+
+     label049:
+        $r178 := @caughtexception;
+
+        $z28 = virtualinvoke r0.<gov.nist.javax.sip.SipStackImpl: boolean isLoggingEnabled()>();
+
+        if $z28 == 0 goto label050;
+
+        r239 = virtualinvoke r0.<gov.nist.javax.sip.SipStackImpl: gov.nist.core.StackLogger getStackLogger()>();
+
+        r336 = new java.lang.StringBuilder;
+
+        specialinvoke r336.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r336.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("thread pool size - bad value ");
+
+        r366 = (java.lang.NumberFormatException) $r178;
+
+        $r181 = virtualinvoke r366.<java.lang.NumberFormatException: java.lang.String getMessage()>();
+
+        virtualinvoke r336.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r181);
+
+        $r183 = virtualinvoke r336.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        interfaceinvoke r239.<gov.nist.core.StackLogger: void logError(java.lang.String)>($r183);
+
+        goto label051;
+
+     label050:
+        goto label051;
+
+     label051:
+        r241 = virtualinvoke r190.<java.util.Properties: java.lang.String getProperty(java.lang.String)>("gov.nist.javax.sip.MAX_SERVER_TRANSACTIONS");
+
+        if r241 == null goto label056;
+
+     label052:
+        r337 = new java.lang.Integer;
+
+        specialinvoke r337.<java.lang.Integer: void <init>(java.lang.String)>(r241);
+
+        $i8 = virtualinvoke r337.<java.lang.Integer: int intValue()>();
+
+        r0.<gov.nist.javax.sip.SipStackImpl: int serverTransactionTableHighwaterMark> = $i8;
+
+        $i9 = r0.<gov.nist.javax.sip.SipStackImpl: int serverTransactionTableHighwaterMark>;
+
+        $i10 = $i9 * 80;
+
+        $i11 = $i10 / 100;
+
+        r0.<gov.nist.javax.sip.SipStackImpl: int serverTransactionTableLowaterMark> = $i11;
+
+     label053:
+        goto label057;
+
+     label054:
+        $r77 := @caughtexception;
+
+        $z22 = virtualinvoke r0.<gov.nist.javax.sip.SipStackImpl: boolean isLoggingEnabled()>();
+
+        if $z22 == 0 goto label055;
+
+        r244 = virtualinvoke r0.<gov.nist.javax.sip.SipStackImpl: gov.nist.core.StackLogger getStackLogger()>();
+
+        r338 = new java.lang.StringBuilder;
+
+        specialinvoke r338.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r338.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("transaction table size - bad value ");
+
+        r367 = (java.lang.NumberFormatException) $r77;
+
+        $r80 = virtualinvoke r367.<java.lang.NumberFormatException: java.lang.String getMessage()>();
+
+        virtualinvoke r338.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r80);
+
+        $r82 = virtualinvoke r338.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        interfaceinvoke r244.<gov.nist.core.StackLogger: void logError(java.lang.String)>($r82);
+
+        goto label055;
+
+     label055:
+        goto label057;
+
+     label056:
+        r0.<gov.nist.javax.sip.SipStackImpl: boolean unlimitedServerTransactionTableSize> = 1;
+
+     label057:
+        r246 = virtualinvoke r190.<java.util.Properties: java.lang.String getProperty(java.lang.String)>("gov.nist.javax.sip.MAX_CLIENT_TRANSACTIONS");
+
+        if r246 == null goto label062;
+
+     label058:
+        r339 = new java.lang.Integer;
+
+        specialinvoke r339.<java.lang.Integer: void <init>(java.lang.String)>(r246);
+
+        $i4 = virtualinvoke r339.<java.lang.Integer: int intValue()>();
+
+        r0.<gov.nist.javax.sip.SipStackImpl: int clientTransactionTableHiwaterMark> = $i4;
+
+        $i5 = r0.<gov.nist.javax.sip.SipStackImpl: int clientTransactionTableLowaterMark>;
+
+        $i6 = $i5 * 80;
+
+        $i7 = $i6 / 100;
+
+        r0.<gov.nist.javax.sip.SipStackImpl: int clientTransactionTableLowaterMark> = $i7;
+
+     label059:
+        goto label061;
+
+     label060:
+        $r132 := @caughtexception;
+
+        $z25 = virtualinvoke r0.<gov.nist.javax.sip.SipStackImpl: boolean isLoggingEnabled()>();
+
+        if $z25 == 0 goto label061;
+
+        r249 = virtualinvoke r0.<gov.nist.javax.sip.SipStackImpl: gov.nist.core.StackLogger getStackLogger()>();
+
+        r340 = new java.lang.StringBuilder;
+
+        specialinvoke r340.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r340.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("transaction table size - bad value ");
+
+        r368 = (java.lang.NumberFormatException) $r132;
+
+        $r135 = virtualinvoke r368.<java.lang.NumberFormatException: java.lang.String getMessage()>();
+
+        virtualinvoke r340.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r135);
+
+        $r137 = virtualinvoke r340.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        interfaceinvoke r249.<gov.nist.core.StackLogger: void logError(java.lang.String)>($r137);
+
+     label061:
+        goto label063;
+
+     label062:
+        r0.<gov.nist.javax.sip.SipStackImpl: boolean unlimitedClientTransactionTableSize> = 1;
+
+     label063:
+        r0.<gov.nist.javax.sip.stack.SIPTransactionStack: boolean cacheServerConnections> = 1;
+
+        r251 = virtualinvoke r190.<java.util.Properties: java.lang.String getProperty(java.lang.String)>("gov.nist.javax.sip.CACHE_SERVER_CONNECTIONS");
+
+        if r251 == null goto label064;
+
+        $r55 = "false";
+
+        $r56 = virtualinvoke r251.<java.lang.String: java.lang.String trim()>();
+
+        $z11 = virtualinvoke $r55.<java.lang.String: boolean equalsIgnoreCase(java.lang.String)>($r56);
+
+        if $z11 == 0 goto label064;
+
+        r0.<gov.nist.javax.sip.stack.SIPTransactionStack: boolean cacheServerConnections> = 0;
+
+     label064:
+        r0.<gov.nist.javax.sip.stack.SIPTransactionStack: boolean cacheClientConnections> = 1;
+
+        r252 = virtualinvoke r190.<java.util.Properties: java.lang.String getProperty(java.lang.String)>("gov.nist.javax.sip.CACHE_CLIENT_CONNECTIONS");
+
+        if r252 == null goto label065;
+
+        $r53 = "false";
+
+        $r54 = virtualinvoke r252.<java.lang.String: java.lang.String trim()>();
+
+        $z10 = virtualinvoke $r53.<java.lang.String: boolean equalsIgnoreCase(java.lang.String)>($r54);
+
+        if $z10 == 0 goto label065;
+
+        r0.<gov.nist.javax.sip.stack.SIPTransactionStack: boolean cacheClientConnections> = 0;
+
+     label065:
+        r253 = virtualinvoke r190.<java.util.Properties: java.lang.String getProperty(java.lang.String)>("gov.nist.javax.sip.READ_TIMEOUT");
+
+        if r253 == null goto label079;
+
+     label066:
+        i16 = staticinvoke <java.lang.Integer: int parseInt(java.lang.String)>(r253);
+
+     label067:
+        if i16 < 100 goto label071;
+
+     label068:
+        r0.<gov.nist.javax.sip.stack.SIPTransactionStack: int readTimeout> = i16;
+
+     label069:
+        goto label073;
+
+     label070:
+        $r109 := @caughtexception;
+
+        goto label077;
+
+     label071:
+        r255 = <java.lang.System: java.io.PrintStream err>;
+
+        r341 = new java.lang.StringBuilder;
+
+        specialinvoke r341.<java.lang.StringBuilder: void <init>()>();
+
+     label072:
+        virtualinvoke r341.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Value too low ");
+
+        virtualinvoke r341.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r253);
+
+        $r52 = virtualinvoke r341.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r255.<java.io.PrintStream: void println(java.lang.String)>($r52);
+
+     label073:
+        goto label079;
+
+     label074:
+        $r104 := @caughtexception;
+
+        goto label077;
+
+     label075:
+        $r152 := @caughtexception;
+
+        goto label077;
+
+     label076:
+        $r177 := @caughtexception;
+
+     label077:
+        $z32 = virtualinvoke r0.<gov.nist.javax.sip.SipStackImpl: boolean isLoggingEnabled()>();
+
+        if $z32 == 0 goto label078;
+
+        r260 = virtualinvoke r0.<gov.nist.javax.sip.SipStackImpl: gov.nist.core.StackLogger getStackLogger()>();
+
+        r342 = new java.lang.StringBuilder;
+
+        specialinvoke r342.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r342.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Bad read timeout ");
+
+        virtualinvoke r342.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r253);
+
+        $r108 = virtualinvoke r342.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        interfaceinvoke r260.<gov.nist.core.StackLogger: void logError(java.lang.String)>($r108);
+
+        goto label079;
+
+     label078:
+        goto label079;
+
+     label079:
+        $r262 = virtualinvoke r190.<java.util.Properties: java.lang.String getProperty(java.lang.String)>("gov.nist.javax.sip.STUN_SERVER");
+
+        if $r262 == null goto label080;
+
+        $r49 = virtualinvoke r0.<gov.nist.javax.sip.SipStackImpl: gov.nist.core.StackLogger getStackLogger()>();
+
+        interfaceinvoke $r49.<gov.nist.core.StackLogger: void logWarning(java.lang.String)>("Ignoring obsolete property gov.nist.javax.sip.STUN_SERVER");
+
+     label080:
+        r263 = virtualinvoke r190.<java.util.Properties: java.lang.String getProperty(java.lang.String)>("gov.nist.javax.sip.MAX_MESSAGE_SIZE");
+
+        if r263 == null goto label086;
+
+     label081:
+        r343 = new java.lang.Integer;
+
+        specialinvoke r343.<java.lang.Integer: void <init>(java.lang.String)>(r263);
+
+        $i3 = virtualinvoke r343.<java.lang.Integer: int intValue()>();
+
+        r0.<gov.nist.javax.sip.stack.SIPTransactionStack: int maxMessageSize> = $i3;
+
+        i17 = r0.<gov.nist.javax.sip.stack.SIPTransactionStack: int maxMessageSize>;
+
+     label082:
+        if i17 >= 4096 goto label087;
+
+     label083:
+        r0.<gov.nist.javax.sip.stack.SIPTransactionStack: int maxMessageSize> = 4096;
+
+     label084:
+        goto label087;
+
+     label085:
+        $r151 := @caughtexception;
+
+        r265 = $r151;
+
+        goto label089;
+
+     label086:
+        r0.<gov.nist.javax.sip.stack.SIPTransactionStack: int maxMessageSize> = 0;
+
+     label087:
+        goto label090;
+
+     label088:
+        $r83 := @caughtexception;
+
+        r265 = $r83;
+
+     label089:
+        $z23 = virtualinvoke r0.<gov.nist.javax.sip.SipStackImpl: boolean isLoggingEnabled()>();
+
+        if $z23 == 0 goto label090;
+
+        r266 = virtualinvoke r0.<gov.nist.javax.sip.SipStackImpl: gov.nist.core.StackLogger getStackLogger()>();
+
+        r344 = new java.lang.StringBuilder;
+
+        specialinvoke r344.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r344.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("maxMessageSize - bad value ");
+
+        r369 = (java.lang.NumberFormatException) r265;
+
+        $r86 = virtualinvoke r369.<java.lang.NumberFormatException: java.lang.String getMessage()>();
+
+        virtualinvoke r344.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r86);
+
+        $r88 = virtualinvoke r344.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        interfaceinvoke r266.<gov.nist.core.StackLogger: void logError(java.lang.String)>($r88);
+
+        goto label090;
+
+     label090:
+        r268 = virtualinvoke r190.<java.util.Properties: java.lang.String getProperty(java.lang.String)>("gov.nist.javax.sip.REENTRANT_LISTENER");
+
+        if r268 == null goto label091;
+
+        $r48 = "true";
+
+        $z9 = virtualinvoke $r48.<java.lang.String: boolean equalsIgnoreCase(java.lang.String)>(r268);
+
+        if $z9 == 0 goto label091;
+
+        z33 = 1;
+
+        goto label092;
+
+     label091:
+        z33 = 0;
+
+     label092:
+        r0.<gov.nist.javax.sip.SipStackImpl: boolean reEntrantListener> = z33;
+
+        r269 = virtualinvoke r190.<java.util.Properties: java.lang.String getProperty(java.lang.String)>("gov.nist.javax.sip.THREAD_AUDIT_INTERVAL_IN_MILLISECS");
+
+        if r269 == null goto label100;
+
+     label093:
+        r270 = virtualinvoke r0.<gov.nist.javax.sip.SipStackImpl: gov.nist.core.ThreadAuditor getThreadAuditor()>();
+
+        $r47 = staticinvoke <java.lang.Long: java.lang.Long valueOf(java.lang.String)>(r269);
+
+        l0 = virtualinvoke $r47.<java.lang.Long: long longValue()>();
+
+     label094:
+        $l2 = l0 / 2L;
+
+        virtualinvoke r270.<gov.nist.core.ThreadAuditor: void setPingIntervalInMillisecs(long)>($l2);
+
+     label095:
+        goto label100;
+
+     label096:
+        $r150 := @caughtexception;
+
+        r271 = $r150;
+
+        goto label098;
+
+     label097:
+        $r89 := @caughtexception;
+
+        r271 = $r89;
+
+     label098:
+        $z24 = virtualinvoke r0.<gov.nist.javax.sip.SipStackImpl: boolean isLoggingEnabled()>();
+
+        if $z24 == 0 goto label099;
+
+        r272 = virtualinvoke r0.<gov.nist.javax.sip.SipStackImpl: gov.nist.core.StackLogger getStackLogger()>();
+
+        r345 = new java.lang.StringBuilder;
+
+        specialinvoke r345.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r345.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("THREAD_AUDIT_INTERVAL_IN_MILLISECS - bad value [");
+
+        virtualinvoke r345.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r269);
+
+        virtualinvoke r345.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("] ");
+
+        r370 = (java.lang.NumberFormatException) r271;
+
+        $r94 = virtualinvoke r370.<java.lang.NumberFormatException: java.lang.String getMessage()>();
+
+        virtualinvoke r345.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r94);
+
+        $r96 = virtualinvoke r345.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        interfaceinvoke r272.<gov.nist.core.StackLogger: void logError(java.lang.String)>($r96);
+
+        goto label100;
+
+     label099:
+        goto label100;
+
+     label100:
+        $r274 = virtualinvoke r190.<java.util.Properties: java.lang.String getProperty(java.lang.String,java.lang.String)>("gov.nist.javax.sip.PASS_INVITE_NON_2XX_ACK_TO_LISTENER", "false");
+
+        $r275 = staticinvoke <java.lang.Boolean: java.lang.Boolean valueOf(java.lang.String)>($r274);
+
+        $z34 = virtualinvoke $r275.<java.lang.Boolean: boolean booleanValue()>();
+
+        virtualinvoke r0.<gov.nist.javax.sip.SipStackImpl: void setNon2XXAckPassedToListener(boolean)>($z34);
+
+        $r276 = virtualinvoke r190.<java.util.Properties: java.lang.String getProperty(java.lang.String,java.lang.String)>("gov.nist.javax.sip.AUTO_GENERATE_TIMESTAMP", "false");
+
+        $r277 = staticinvoke <java.lang.Boolean: java.lang.Boolean valueOf(java.lang.String)>($r276);
+
+        $z35 = virtualinvoke $r277.<java.lang.Boolean: boolean booleanValue()>();
+
+        r0.<gov.nist.javax.sip.SipStackImpl: boolean generateTimeStampHeader> = $z35;
+
+        r278 = virtualinvoke r190.<java.util.Properties: java.lang.String getProperty(java.lang.String)>("gov.nist.javax.sip.LOG_FACTORY");
+
+        if r278 == null goto label106;
+
+     label101:
+        $r41 = staticinvoke <java.lang.Class: java.lang.Class forName(java.lang.String)>(r278);
+
+        $r42 = newarray (java.lang.Class)[0];
+
+        $r43 = virtualinvoke $r41.<java.lang.Class: java.lang.reflect.Constructor getConstructor(java.lang.Class[])>($r42);
+
+        $r44 = newarray (java.lang.Object)[0];
+
+        $r45 = virtualinvoke $r43.<java.lang.reflect.Constructor: java.lang.Object newInstance(java.lang.Object[])>($r44);
+
+        $r46 = (gov.nist.javax.sip.LogRecordFactory) $r45;
+
+        r0.<gov.nist.javax.sip.SipStackImpl: gov.nist.javax.sip.LogRecordFactory logRecordFactory> = $r46;
+
+     label102:
+        goto label105;
+
+     label103:
+        $r153 := @caughtexception;
+
+        $z26 = virtualinvoke r0.<gov.nist.javax.sip.SipStackImpl: boolean isLoggingEnabled()>();
+
+        if $z26 == 0 goto label104;
+
+        $r155 = virtualinvoke r0.<gov.nist.javax.sip.SipStackImpl: gov.nist.core.StackLogger getStackLogger()>();
+
+        interfaceinvoke $r155.<gov.nist.core.StackLogger: void logError(java.lang.String)>("Bad configuration value for LOG_FACTORY -- using default logger");
+
+     label104:
+        r346 = new gov.nist.javax.sip.stack.DefaultMessageLogFactory;
+
+        specialinvoke r346.<gov.nist.javax.sip.stack.DefaultMessageLogFactory: void <init>()>();
+
+        r0.<gov.nist.javax.sip.SipStackImpl: gov.nist.javax.sip.LogRecordFactory logRecordFactory> = r346;
+
+     label105:
+        goto label107;
+
+     label106:
+        r347 = new gov.nist.javax.sip.stack.DefaultMessageLogFactory;
+
+        specialinvoke r347.<gov.nist.javax.sip.stack.DefaultMessageLogFactory: void <init>()>();
+
+        r0.<gov.nist.javax.sip.SipStackImpl: gov.nist.javax.sip.LogRecordFactory logRecordFactory> = r347;
+
+     label107:
+        $r27 = virtualinvoke r190.<java.util.Properties: java.lang.String getProperty(java.lang.String,java.lang.String)>("gov.nist.javax.sip.COMPUTE_CONTENT_LENGTH_FROM_MESSAGE_BODY", "false");
+
+        z36 = virtualinvoke $r27.<java.lang.String: boolean equalsIgnoreCase(java.lang.String)>("true");
+
+        staticinvoke <gov.nist.javax.sip.parser.StringMsgParser: void setComputeContentLengthFromMessage(boolean)>(z36);
+
+        r280 = virtualinvoke r190.<java.util.Properties: java.lang.String getProperty(java.lang.String)>("gov.nist.javax.sip.TLS_CLIENT_PROTOCOLS");
+
+        if r280 == null goto label110;
+
+        r348 = new java.util.StringTokenizer;
+
+        specialinvoke r348.<java.util.StringTokenizer: void <init>(java.lang.String,java.lang.String)>(r280, " ,");
+
+        $i1 = virtualinvoke r348.<java.util.StringTokenizer: int countTokens()>();
+
+        r282 = newarray (java.lang.String)[$i1];
+
+        i18 = 0;
+
+     label108:
+        $z8 = virtualinvoke r348.<java.util.StringTokenizer: boolean hasMoreTokens()>();
+
+        if $z8 == 0 goto label109;
+
+        $r40 = virtualinvoke r348.<java.util.StringTokenizer: java.lang.String nextToken()>();
+
+        r282[i18] = $r40;
+
+        i18 = i18 + 1;
+
+        goto label108;
+
+     label109:
+        r0.<gov.nist.javax.sip.SipStackImpl: java.lang.String[] enabledProtocols> = r282;
+
+        goto label110;
+
+     label110:
+        $r28 = virtualinvoke r190.<java.util.Properties: java.lang.String getProperty(java.lang.String,java.lang.String)>("gov.nist.javax.sip.RFC_2543_SUPPORT_ENABLED", "true");
+
+        $z4 = virtualinvoke $r28.<java.lang.String: boolean equalsIgnoreCase(java.lang.String)>("true");
+
+        r0.<gov.nist.javax.sip.stack.SIPTransactionStack: boolean rfc2543Supported> = $z4;
+
+        $r29 = virtualinvoke r190.<java.util.Properties: java.lang.String getProperty(java.lang.String,java.lang.String)>("gov.nist.javax.sip.CANCEL_CLIENT_TRANSACTION_CHECKED", "true");
+
+        $z5 = virtualinvoke $r29.<java.lang.String: boolean equalsIgnoreCase(java.lang.String)>("true");
+
+        r0.<gov.nist.javax.sip.stack.SIPTransactionStack: boolean cancelClientTransactionChecked> = $z5;
+
+        $r30 = virtualinvoke r190.<java.util.Properties: java.lang.String getProperty(java.lang.String,java.lang.String)>("gov.nist.javax.sip.LOG_STACK_TRACE_ON_MESSAGE_SEND", "false");
+
+        $z6 = virtualinvoke $r30.<java.lang.String: boolean equalsIgnoreCase(java.lang.String)>("true");
+
+        r0.<gov.nist.javax.sip.stack.SIPTransactionStack: boolean logStackTraceOnMessageSend> = $z6;
+
+        $z7 = virtualinvoke r0.<gov.nist.javax.sip.SipStackImpl: boolean isLoggingEnabled()>();
+
+        if $z7 == 0 goto label111;
+
+        r283 = virtualinvoke r0.<gov.nist.javax.sip.SipStackImpl: gov.nist.core.StackLogger getStackLogger()>();
+
+        r349 = new java.lang.StringBuilder;
+
+        specialinvoke r349.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r349.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("created Sip stack. Properties = ");
+
+        virtualinvoke r349.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r190);
+
+        $r38 = virtualinvoke r349.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        interfaceinvoke r283.<gov.nist.core.StackLogger: void logDebug(java.lang.String)>($r38);
+
+     label111:
+        $r31 = virtualinvoke r0.<java.lang.Object: java.lang.Class getClass()>();
+
+        r285 = virtualinvoke $r31.<java.lang.Class: java.io.InputStream getResourceAsStream(java.lang.String)>("/TIMESTAMP");
+
+        if r285 == null goto label118;
+
+        r351 = new java.io.BufferedReader;
+
+        r350 = new java.io.InputStreamReader;
+
+        specialinvoke r350.<java.io.InputStreamReader: void <init>(java.io.InputStream)>(r285);
+
+        specialinvoke r351.<java.io.BufferedReader: void <init>(java.io.Reader)>(r350);
+
+     label112:
+        r287 = virtualinvoke r351.<java.io.BufferedReader: java.lang.String readLine()>();
+
+     label113:
+        if r285 == null goto label115;
+
+     label114:
+        virtualinvoke r285.<java.io.InputStream: void close()>();
+
+     label115:
+        $r34 = virtualinvoke r0.<gov.nist.javax.sip.SipStackImpl: gov.nist.core.StackLogger getStackLogger()>();
+
+        interfaceinvoke $r34.<gov.nist.core.StackLogger: void setBuildTimeStamp(java.lang.String)>(r287);
+
+     label116:
+        goto label118;
+
+     label117:
+        $r110 := @caughtexception;
+
+        $r111 = virtualinvoke r0.<gov.nist.javax.sip.SipStackImpl: gov.nist.core.StackLogger getStackLogger()>();
+
+        interfaceinvoke $r111.<gov.nist.core.StackLogger: void logError(java.lang.String)>("Could not open build timestamp.");
+
+     label118:
+        r352 = new java.lang.Integer;
+
+        $r290 = <gov.nist.javax.sip.SipStackImpl: java.lang.Integer MAX_DATAGRAM_SIZE>;
+
+        $r291 = virtualinvoke $r290.<java.lang.Integer: java.lang.String toString()>();
+
+        $r292 = virtualinvoke r190.<java.util.Properties: java.lang.String getProperty(java.lang.String,java.lang.String)>("gov.nist.javax.sip.RECEIVE_UDP_BUFFER_SIZE", $r291);
+
+        specialinvoke r352.<java.lang.Integer: void <init>(java.lang.String)>($r292);
+
+        $i19 = virtualinvoke r352.<java.lang.Integer: int intValue()>();
+
+        specialinvoke r0.<gov.nist.javax.sip.stack.SIPTransactionStack: void setReceiveUdpBufferSize(int)>($i19);
+
+        r353 = new java.lang.Integer;
+
+        $r294 = <gov.nist.javax.sip.SipStackImpl: java.lang.Integer MAX_DATAGRAM_SIZE>;
+
+        $r295 = virtualinvoke $r294.<java.lang.Integer: java.lang.String toString()>();
+
+        $r296 = virtualinvoke r190.<java.util.Properties: java.lang.String getProperty(java.lang.String,java.lang.String)>("gov.nist.javax.sip.SEND_UDP_BUFFER_SIZE", $r295);
+
+        specialinvoke r353.<java.lang.Integer: void <init>(java.lang.String)>($r296);
+
+        $i20 = virtualinvoke r353.<java.lang.Integer: int intValue()>();
+
+        specialinvoke r0.<gov.nist.javax.sip.stack.SIPTransactionStack: void setSendUdpBufferSize(int)>($i20);
+
+        $r297 = <java.lang.Boolean: java.lang.Boolean TRUE>;
+
+        $r298 = virtualinvoke $r297.<java.lang.Boolean: java.lang.String toString()>();
+
+        $r299 = virtualinvoke r190.<java.util.Properties: java.lang.String getProperty(java.lang.String,java.lang.String)>("gov.nist.javax.sip.CONGESTION_CONTROL_ENABLED", $r298);
+
+        $z37 = staticinvoke <java.lang.Boolean: boolean parseBoolean(java.lang.String)>($r299);
+
+        r0.<gov.nist.javax.sip.stack.SIPTransactionStack: boolean stackDoesCongestionControl> = $z37;
+
+        $r300 = <java.lang.Boolean: java.lang.Boolean FALSE>;
+
+        $r301 = virtualinvoke $r300.<java.lang.Boolean: java.lang.String toString()>();
+
+        $r302 = virtualinvoke r190.<java.util.Properties: java.lang.String getProperty(java.lang.String,java.lang.String)>("gov.nist.javax.sip.IS_BACK_TO_BACK_USER_AGENT", $r301);
+
+        $z38 = staticinvoke <java.lang.Boolean: boolean parseBoolean(java.lang.String)>($r302);
+
+        r0.<gov.nist.javax.sip.stack.SIPTransactionStack: boolean isBackToBackUserAgent> = $z38;
+
+        $r303 = <java.lang.Boolean: java.lang.Boolean FALSE>;
+
+        $r304 = virtualinvoke $r303.<java.lang.Boolean: java.lang.String toString()>();
+
+        $r305 = virtualinvoke r190.<java.util.Properties: java.lang.String getProperty(java.lang.String,java.lang.String)>("gov.nist.javax.sip.REJECT_STRAY_RESPONSES", $r304);
+
+        $z39 = staticinvoke <java.lang.Boolean: boolean parseBoolean(java.lang.String)>($r305);
+
+        r0.<gov.nist.javax.sip.stack.SIPTransactionStack: boolean checkBranchId> = $z39;
+
+        $r306 = <java.lang.Boolean: java.lang.Boolean FALSE>;
+
+        $r307 = virtualinvoke $r306.<java.lang.Boolean: java.lang.String toString()>();
+
+        $r308 = virtualinvoke r190.<java.util.Properties: java.lang.String getProperty(java.lang.String,java.lang.String)>("gov.nist.javax.sip.DELIVER_TERMINATED_EVENT_FOR_NULL_DIALOG", $r307);
+
+        $z40 = staticinvoke <java.lang.Boolean: boolean parseBoolean(java.lang.String)>($r308);
+
+        r0.<gov.nist.javax.sip.stack.SIPTransactionStack: boolean isDialogTerminatedEventDeliveredForNullDialog> = $z40;
+
+        $r309 = virtualinvoke r190.<java.util.Properties: java.lang.String getProperty(java.lang.String,java.lang.String)>("gov.nist.javax.sip.MAX_FORK_TIME_SECONDS", "0");
+
+        $i21 = staticinvoke <java.lang.Integer: int parseInt(java.lang.String)>($r309);
+
+        r0.<gov.nist.javax.sip.stack.SIPTransactionStack: int maxForkTime> = $i21;
+
+        return;
+
+     label119:
+        $r145 := @caughtexception;
+
+        $r146 = virtualinvoke r0.<gov.nist.javax.sip.SipStackImpl: gov.nist.core.StackLogger getStackLogger()>();
+
+        $r147 = virtualinvoke $r145.<java.lang.Exception: java.lang.Throwable getCause()>();
+
+        $r148 = (java.lang.Exception) $r147;
+
+        interfaceinvoke $r146.<gov.nist.core.StackLogger: void logError(java.lang.String,java.lang.Exception)>("could not instantiate router", $r148);
+
+        r354 = new javax.sip.PeerUnavailableException;
+
+        specialinvoke r354.<javax.sip.PeerUnavailableException: void <init>(java.lang.String,java.lang.Throwable)>("Could not instantiate router", $r145);
+
+        throw r354;
+
+     label120:
+        $r185 := @caughtexception;
+
+        $r186 = virtualinvoke r0.<gov.nist.javax.sip.SipStackImpl: gov.nist.core.StackLogger getStackLogger()>();
+
+        r371 = (java.lang.reflect.InvocationTargetException) $r185;
+
+        $r187 = virtualinvoke r371.<java.lang.reflect.InvocationTargetException: java.lang.Throwable getCause()>();
+
+        $r188 = (java.lang.Exception) $r187;
+
+        interfaceinvoke $r186.<gov.nist.core.StackLogger: void logError(java.lang.String,java.lang.Exception)>("could not instantiate router -- invocation target problem", $r188);
+
+        r355 = new javax.sip.PeerUnavailableException;
+
+        specialinvoke r355.<javax.sip.PeerUnavailableException: void <init>(java.lang.String,java.lang.Throwable)>("Cound not instantiate router - check constructor", $r185);
+
+        throw r355;
+
+     label121:
+        $r170 := @caughtexception;
+
+        r356 = new java.lang.StringBuilder;
+
+        specialinvoke r356.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r356.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Cound not instantiate server logger ");
+
+        virtualinvoke r356.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r195);
+
+        virtualinvoke r356.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("- check that it is present on the classpath and that there is a no-args constructor defined");
+
+        r357 = new java.lang.IllegalArgumentException;
+
+        $r176 = virtualinvoke r356.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r357.<java.lang.IllegalArgumentException: void <init>(java.lang.String,java.lang.Throwable)>($r176, $r170);
+
+        throw r357;
+
+     label122:
+        $r97 := @caughtexception;
+
+        r358 = new java.lang.StringBuilder;
+
+        specialinvoke r358.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r358.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Cound not instantiate server logger ");
+
+        virtualinvoke r358.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r195);
+
+        virtualinvoke r358.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("- check that it is present on the classpath and that there is a no-args constructor defined");
+
+        r359 = new java.lang.IllegalArgumentException;
+
+        $r103 = virtualinvoke r358.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r359.<java.lang.IllegalArgumentException: void <init>(java.lang.String,java.lang.Throwable)>($r103, $r97);
+
+        throw r359;
+
+     label123:
+        $r163 := @caughtexception;
+
+        r360 = new java.lang.StringBuilder;
+
+        specialinvoke r360.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r360.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Cound not instantiate stack logger ");
+
+        virtualinvoke r360.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r195);
+
+        virtualinvoke r360.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("- check that it is present on the classpath and that there is a no-args constructor defined");
+
+        r361 = new java.lang.IllegalArgumentException;
+
+        $r169 = virtualinvoke r360.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r361.<java.lang.IllegalArgumentException: void <init>(java.lang.String,java.lang.Throwable)>($r169, $r163);
+
+        throw r361;
+
+     label124:
+        $r138 := @caughtexception;
+
+        r362 = new java.lang.StringBuilder;
+
+        specialinvoke r362.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r362.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Cound not instantiate stack logger ");
+
+        virtualinvoke r362.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r195);
+
+        virtualinvoke r362.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("- check that it is present on the classpath and that there is a no-args constructor defined");
+
+        r363 = new java.lang.IllegalArgumentException;
+
+        $r144 = virtualinvoke r362.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r363.<java.lang.IllegalArgumentException: void <init>(java.lang.String,java.lang.Throwable)>($r144, $r138);
+
+        throw r363;
+
+     label125:
+        r364 = new javax.sip.PeerUnavailableException;
+
+        specialinvoke r364.<javax.sip.PeerUnavailableException: void <init>(java.lang.String)>("stack name is missing");
+
+        throw r364;
+
+        catch java.net.UnknownHostException from label001 to label002 with label003;
+        catch java.lang.reflect.InvocationTargetException from label005 to label006 with label124;
+        catch java.lang.Exception from label005 to label006 with label123;
+        catch java.lang.reflect.InvocationTargetException from label006 to label007 with label124;
+        catch java.lang.Exception from label006 to label007 with label123;
+        catch java.lang.reflect.InvocationTargetException from label008 to label009 with label122;
+        catch java.lang.Exception from label008 to label009 with label121;
+        catch java.lang.reflect.InvocationTargetException from label009 to label010 with label122;
+        catch java.lang.Exception from label009 to label010 with label121;
+        catch java.lang.reflect.InvocationTargetException from label011 to label012 with label120;
+        catch java.lang.Exception from label011 to label012 with label119;
+        catch java.lang.Exception from label018 to label019 with label020;
+        catch java.lang.Exception from label028 to label029 with label032;
+        catch java.lang.Exception from label029 to label030 with label031;
+        catch java.lang.Exception from label035 to label036 with label039;
+        catch java.lang.Exception from label036 to label037 with label038;
+        catch java.lang.NumberFormatException from label042 to label043 with label044;
+        catch java.lang.NumberFormatException from label047 to label048 with label049;
+        catch java.lang.NumberFormatException from label052 to label053 with label054;
+        catch java.lang.NumberFormatException from label058 to label059 with label060;
+        catch java.lang.NumberFormatException from label066 to label067 with label076;
+        catch java.lang.NumberFormatException from label068 to label069 with label070;
+        catch java.lang.NumberFormatException from label071 to label072 with label075;
+        catch java.lang.NumberFormatException from label072 to label073 with label074;
+        catch java.lang.NumberFormatException from label081 to label082 with label085;
+        catch java.lang.NumberFormatException from label083 to label084 with label088;
+        catch java.lang.NumberFormatException from label086 to label087 with label088;
+        catch java.lang.NumberFormatException from label093 to label094 with label097;
+        catch java.lang.NumberFormatException from label094 to label095 with label096;
+        catch java.lang.Exception from label101 to label102 with label103;
+        catch java.io.IOException from label112 to label113 with label117;
+        catch java.io.IOException from label114 to label115 with label117;
+        catch java.io.IOException from label115 to label116 with label117;
+    }
+
+    private void reInitialize()
+    {
+        gov.nist.javax.sip.SipStackImpl r0;
+        gov.nist.javax.sip.EventScanner $r1;
+        java.util.Hashtable $r2;
+        java.util.LinkedList $r3;
+
+        r0 := @this: gov.nist.javax.sip.SipStackImpl;
+
+        specialinvoke r0.<gov.nist.javax.sip.stack.SIPTransactionStack: void reInit()>();
+
+        $r1 = new gov.nist.javax.sip.EventScanner;
+
+        specialinvoke $r1.<gov.nist.javax.sip.EventScanner: void <init>(gov.nist.javax.sip.SipStackImpl)>(r0);
+
+        r0.<gov.nist.javax.sip.SipStackImpl: gov.nist.javax.sip.EventScanner eventScanner> = $r1;
+
+        $r2 = new java.util.Hashtable;
+
+        specialinvoke $r2.<java.util.Hashtable: void <init>()>();
+
+        r0.<gov.nist.javax.sip.SipStackImpl: java.util.Hashtable listeningPoints> = $r2;
+
+        $r3 = new java.util.LinkedList;
+
+        specialinvoke $r3.<java.util.LinkedList: void <init>()>();
+
+        r0.<gov.nist.javax.sip.SipStackImpl: java.util.LinkedList sipProviders> = $r3;
+
+        r0.<gov.nist.javax.sip.SipStackImpl: javax.sip.SipListener sipListener> = null;
+
+        return;
+    }
+
+    public boolean acquireSem()
+    {
+        gov.nist.javax.sip.SipStackImpl r0;
+        boolean z0;
+        java.util.concurrent.TimeUnit $r2;
+        java.util.concurrent.Semaphore $r3;
+        java.lang.Throwable $r4;
+
+        r0 := @this: gov.nist.javax.sip.SipStackImpl;
+
+     label1:
+        $r3 = r0.<gov.nist.javax.sip.SipStackImpl: java.util.concurrent.Semaphore stackSemaphore>;
+
+        $r2 = <java.util.concurrent.TimeUnit: java.util.concurrent.TimeUnit SECONDS>;
+
+        z0 = virtualinvoke $r3.<java.util.concurrent.Semaphore: boolean tryAcquire(long,java.util.concurrent.TimeUnit)>(10L, $r2);
+
+     label2:
+        return z0;
+
+     label3:
+        $r4 := @caughtexception;
+
+        return 0;
+
+        catch java.lang.InterruptedException from label1 to label2 with label3;
+    }
+
+    public javax.sip.ListeningPoint createListeningPoint(int, java.lang.String) throws javax.sip.TransportNotSupportedException, javax.sip.InvalidArgumentException
+    {
+        gov.nist.javax.sip.SipStackImpl r0;
+        int i0;
+        java.lang.String r1, $r2, $r4;
+        java.lang.NullPointerException $r3;
+        javax.sip.ListeningPoint $r5;
+
+        r0 := @this: gov.nist.javax.sip.SipStackImpl;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: java.lang.String;
+
+        $r2 = r0.<gov.nist.javax.sip.stack.SIPTransactionStack: java.lang.String stackAddress>;
+
+        if $r2 == null goto label1;
+
+        $r4 = r0.<gov.nist.javax.sip.stack.SIPTransactionStack: java.lang.String stackAddress>;
+
+        $r5 = virtualinvoke r0.<gov.nist.javax.sip.SipStackImpl: javax.sip.ListeningPoint createListeningPoint(java.lang.String,int,java.lang.String)>($r4, i0, r1);
+
+        return $r5;
+
+     label1:
+        $r3 = new java.lang.NullPointerException;
+
+        specialinvoke $r3.<java.lang.NullPointerException: void <init>(java.lang.String)>("Stack does not have a default IP Address!");
+
+        throw $r3;
+    }
+
+    public javax.sip.ListeningPoint createListeningPoint(java.lang.String, int, java.lang.String) throws javax.sip.TransportNotSupportedException, javax.sip.InvalidArgumentException
+    {
+        gov.nist.javax.sip.SipStackImpl r0;
+        int i0;
+        java.lang.String r1, $r13, $r16, $r23, $r26, $r33, r34, r39;
+        boolean $z0, $z1, $z2, $z3, $z4, $z5, $z6, $z7;
+        java.util.Hashtable $r3, $r5;
+        java.lang.Object $r4;
+        java.lang.Throwable $r24, $r25;
+        gov.nist.core.StackLogger r35, r43, r46;
+        gov.nist.javax.sip.ListeningPointImpl r40, r57;
+        java.net.InetAddress r41;
+        gov.nist.javax.sip.stack.MessageProcessor r42;
+        java.lang.StringBuilder r53, r54, r56, r58;
+        javax.sip.TransportNotSupportedException r55;
+        javax.sip.InvalidArgumentException r59, r60;
+        java.lang.NullPointerException r61, r62;
+        java.io.IOException r63;
+
+        r0 := @this: gov.nist.javax.sip.SipStackImpl;
+
+        r34 := @parameter0: java.lang.String;
+
+        i0 := @parameter1: int;
+
+        r1 := @parameter2: java.lang.String;
+
+        entermonitor r0;
+
+     label01:
+        $z0 = virtualinvoke r0.<gov.nist.javax.sip.SipStackImpl: boolean isLoggingEnabled()>();
+
+        if $z0 == 0 goto label02;
+
+        r35 = virtualinvoke r0.<gov.nist.javax.sip.SipStackImpl: gov.nist.core.StackLogger getStackLogger()>();
+
+        r53 = new java.lang.StringBuilder;
+
+        specialinvoke r53.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r53.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("createListeningPoint : address = ");
+
+        virtualinvoke r53.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r34);
+
+        virtualinvoke r53.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" port = ");
+
+        virtualinvoke r53.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        virtualinvoke r53.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" transport = ");
+
+        virtualinvoke r53.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r23 = virtualinvoke r53.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        interfaceinvoke r35.<gov.nist.core.StackLogger: void logDebug(java.lang.String)>($r23);
+
+     label02:
+        if r34 == null goto label18;
+
+        if r1 == null goto label17;
+
+        if i0 <= 0 goto label16;
+
+     label03:
+        $z1 = virtualinvoke r1.<java.lang.String: boolean equalsIgnoreCase(java.lang.String)>("UDP");
+
+        if $z1 != 0 goto label06;
+
+        $z3 = virtualinvoke r1.<java.lang.String: boolean equalsIgnoreCase(java.lang.String)>("TLS");
+
+        if $z3 != 0 goto label06;
+
+        $z4 = virtualinvoke r1.<java.lang.String: boolean equalsIgnoreCase(java.lang.String)>("TCP");
+
+        if $z4 != 0 goto label06;
+
+        $z5 = virtualinvoke r1.<java.lang.String: boolean equalsIgnoreCase(java.lang.String)>("SCTP");
+
+        if $z5 == 0 goto label05;
+
+     label04:
+        goto label06;
+
+     label05:
+        r55 = new javax.sip.TransportNotSupportedException;
+
+        r54 = new java.lang.StringBuilder;
+
+        specialinvoke r54.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r54.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("bad transport ");
+
+        virtualinvoke r54.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r16 = virtualinvoke r54.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r55.<javax.sip.TransportNotSupportedException: void <init>(java.lang.String)>($r16);
+
+        throw r55;
+
+     label06:
+        $z7 = virtualinvoke r0.<gov.nist.javax.sip.SipStackImpl: boolean isAlive()>();
+
+        if $z7 != 0 goto label07;
+
+        r0.<gov.nist.javax.sip.SipStackImpl: boolean toExit> = 0;
+
+        specialinvoke r0.<gov.nist.javax.sip.SipStackImpl: void reInitialize()>();
+
+     label07:
+        r39 = staticinvoke <gov.nist.javax.sip.ListeningPointImpl: java.lang.String makeKey(java.lang.String,int,java.lang.String)>(r34, i0, r1);
+
+        $r3 = r0.<gov.nist.javax.sip.SipStackImpl: java.util.Hashtable listeningPoints>;
+
+        $r4 = virtualinvoke $r3.<java.util.Hashtable: java.lang.Object get(java.lang.Object)>(r39);
+
+        r40 = (gov.nist.javax.sip.ListeningPointImpl) $r4;
+
+     label08:
+        if r40 == null goto label09;
+
+        exitmonitor r0;
+
+        return r40;
+
+     label09:
+        r41 = staticinvoke <java.net.InetAddress: java.net.InetAddress getByName(java.lang.String)>(r34);
+
+     label10:
+        r42 = virtualinvoke r0.<gov.nist.javax.sip.SipStackImpl: gov.nist.javax.sip.stack.MessageProcessor createMessageProcessor(java.net.InetAddress,int,java.lang.String)>(r41, i0, r1);
+
+        $z2 = virtualinvoke r0.<gov.nist.javax.sip.SipStackImpl: boolean isLoggingEnabled()>();
+
+        if $z2 == 0 goto label11;
+
+        r43 = virtualinvoke r0.<gov.nist.javax.sip.SipStackImpl: gov.nist.core.StackLogger getStackLogger()>();
+
+        r56 = new java.lang.StringBuilder;
+
+        specialinvoke r56.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r56.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Created Message Processor: ");
+
+        virtualinvoke r56.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r34);
+
+        virtualinvoke r56.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" port = ");
+
+        virtualinvoke r56.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        virtualinvoke r56.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" transport = ");
+
+        virtualinvoke r56.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r13 = virtualinvoke r56.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        interfaceinvoke r43.<gov.nist.core.StackLogger: void logDebug(java.lang.String)>($r13);
+
+     label11:
+        r57 = new gov.nist.javax.sip.ListeningPointImpl;
+
+        specialinvoke r57.<gov.nist.javax.sip.ListeningPointImpl: void <init>(javax.sip.SipStack,int,java.lang.String)>(r0, i0, r1);
+
+        r57.<gov.nist.javax.sip.ListeningPointImpl: gov.nist.javax.sip.stack.MessageProcessor messageProcessor> = r42;
+
+        virtualinvoke r42.<gov.nist.javax.sip.stack.MessageProcessor: void setListeningPoint(gov.nist.javax.sip.ListeningPointImpl)>(r57);
+
+        $r5 = r0.<gov.nist.javax.sip.SipStackImpl: java.util.Hashtable listeningPoints>;
+
+        virtualinvoke $r5.<java.util.Hashtable: java.lang.Object put(java.lang.Object,java.lang.Object)>(r39, r57);
+
+        virtualinvoke r42.<gov.nist.javax.sip.stack.MessageProcessor: void start()>();
+
+     label12:
+        exitmonitor r0;
+
+        return r57;
+
+     label13:
+        $r25 := @caughtexception;
+
+     label14:
+        $z6 = virtualinvoke r0.<gov.nist.javax.sip.SipStackImpl: boolean isLoggingEnabled()>();
+
+        if $z6 == 0 goto label15;
+
+        r46 = virtualinvoke r0.<gov.nist.javax.sip.SipStackImpl: gov.nist.core.StackLogger getStackLogger()>();
+
+        r58 = new java.lang.StringBuilder;
+
+        specialinvoke r58.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r58.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Invalid argument address = ");
+
+        virtualinvoke r58.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r34);
+
+        virtualinvoke r58.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" port = ");
+
+        virtualinvoke r58.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        virtualinvoke r58.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" transport = ");
+
+        virtualinvoke r58.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r33 = virtualinvoke r58.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        interfaceinvoke r46.<gov.nist.core.StackLogger: void logError(java.lang.String)>($r33);
+
+     label15:
+        r59 = new javax.sip.InvalidArgumentException;
+
+        r63 = (java.io.IOException) $r25;
+
+        $r26 = virtualinvoke r63.<java.io.IOException: java.lang.String getMessage()>();
+
+        specialinvoke r59.<javax.sip.InvalidArgumentException: void <init>(java.lang.String,java.lang.Throwable)>($r26, $r25);
+
+        throw r59;
+
+     label16:
+        r60 = new javax.sip.InvalidArgumentException;
+
+        specialinvoke r60.<javax.sip.InvalidArgumentException: void <init>(java.lang.String)>("bad port");
+
+        throw r60;
+
+     label17:
+        r61 = new java.lang.NullPointerException;
+
+        specialinvoke r61.<java.lang.NullPointerException: void <init>(java.lang.String)>("null transport");
+
+        throw r61;
+
+     label18:
+        r62 = new java.lang.NullPointerException;
+
+        specialinvoke r62.<java.lang.NullPointerException: void <init>(java.lang.String)>("Address for listening point is null!");
+
+        throw r62;
+
+     label19:
+        $r24 := @caughtexception;
+
+        exitmonitor r0;
+
+        throw $r24;
+
+        catch java.lang.Throwable from label01 to label02 with label19;
+        catch java.lang.Throwable from label03 to label04 with label19;
+        catch java.lang.Throwable from label05 to label06 with label19;
+        catch java.lang.Throwable from label06 to label07 with label19;
+        catch java.lang.Throwable from label07 to label08 with label19;
+        catch java.io.IOException from label09 to label10 with label13;
+        catch java.lang.Throwable from label09 to label10 with label19;
+        catch java.io.IOException from label10 to label11 with label13;
+        catch java.lang.Throwable from label10 to label11 with label19;
+        catch java.io.IOException from label11 to label12 with label13;
+        catch java.lang.Throwable from label11 to label12 with label19;
+        catch java.lang.Throwable from label14 to label15 with label19;
+        catch java.lang.Throwable from label15 to label16 with label19;
+        catch java.lang.Throwable from label16 to label17 with label19;
+        catch java.lang.Throwable from label17 to label18 with label19;
+        catch java.lang.Throwable from label18 to label19 with label19;
+    }
+
+    public javax.sip.SipProvider createSipProvider(javax.sip.ListeningPoint) throws javax.sip.ObjectInUseException
+    {
+        gov.nist.javax.sip.SipStackImpl r0;
+        java.lang.NullPointerException $r2;
+        boolean $z0;
+        gov.nist.javax.sip.SipProviderImpl $r3, $r5;
+        javax.sip.ObjectInUseException $r4;
+        java.util.LinkedList $r6;
+        java.lang.StringBuilder $r7;
+        java.lang.String $r10;
+        javax.sip.ListeningPoint r11;
+        gov.nist.core.StackLogger r12;
+        gov.nist.javax.sip.ListeningPointImpl r13;
+
+        r0 := @this: gov.nist.javax.sip.SipStackImpl;
+
+        r11 := @parameter0: javax.sip.ListeningPoint;
+
+        if r11 == null goto label3;
+
+        $z0 = virtualinvoke r0.<gov.nist.javax.sip.SipStackImpl: boolean isLoggingEnabled()>();
+
+        if $z0 == 0 goto label1;
+
+        r12 = virtualinvoke r0.<gov.nist.javax.sip.SipStackImpl: gov.nist.core.StackLogger getStackLogger()>();
+
+        $r7 = new java.lang.StringBuilder;
+
+        specialinvoke $r7.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("createSipProvider: ");
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r11);
+
+        $r10 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        interfaceinvoke r12.<gov.nist.core.StackLogger: void logDebug(java.lang.String)>($r10);
+
+     label1:
+        r13 = (gov.nist.javax.sip.ListeningPointImpl) r11;
+
+        $r3 = r13.<gov.nist.javax.sip.ListeningPointImpl: gov.nist.javax.sip.SipProviderImpl sipProvider>;
+
+        if $r3 != null goto label2;
+
+        $r5 = new gov.nist.javax.sip.SipProviderImpl;
+
+        specialinvoke $r5.<gov.nist.javax.sip.SipProviderImpl: void <init>(gov.nist.javax.sip.SipStackImpl)>(r0);
+
+        virtualinvoke $r5.<gov.nist.javax.sip.SipProviderImpl: void setListeningPoint(javax.sip.ListeningPoint)>(r13);
+
+        r13.<gov.nist.javax.sip.ListeningPointImpl: gov.nist.javax.sip.SipProviderImpl sipProvider> = $r5;
+
+        $r6 = r0.<gov.nist.javax.sip.SipStackImpl: java.util.LinkedList sipProviders>;
+
+        virtualinvoke $r6.<java.util.LinkedList: boolean add(java.lang.Object)>($r5);
+
+        return $r5;
+
+     label2:
+        $r4 = new javax.sip.ObjectInUseException;
+
+        specialinvoke $r4.<javax.sip.ObjectInUseException: void <init>(java.lang.String)>("Provider already attached!");
+
+        throw $r4;
+
+     label3:
+        $r2 = new java.lang.NullPointerException;
+
+        specialinvoke $r2.<java.lang.NullPointerException: void <init>(java.lang.String)>("null listeningPoint");
+
+        throw $r2;
+    }
+
+    public void deleteListeningPoint(javax.sip.ListeningPoint) throws javax.sip.ObjectInUseException
+    {
+        gov.nist.javax.sip.SipStackImpl r0;
+        java.lang.NullPointerException $r1;
+        gov.nist.javax.sip.stack.MessageProcessor $r2;
+        java.util.Hashtable $r3;
+        javax.sip.ListeningPoint r5;
+        gov.nist.javax.sip.ListeningPointImpl r6;
+        java.lang.String r7;
+
+        r0 := @this: gov.nist.javax.sip.SipStackImpl;
+
+        r5 := @parameter0: javax.sip.ListeningPoint;
+
+        if r5 == null goto label1;
+
+        r6 = (gov.nist.javax.sip.ListeningPointImpl) r5;
+
+        $r2 = r6.<gov.nist.javax.sip.ListeningPointImpl: gov.nist.javax.sip.stack.MessageProcessor messageProcessor>;
+
+        specialinvoke r0.<gov.nist.javax.sip.stack.SIPTransactionStack: void removeMessageProcessor(gov.nist.javax.sip.stack.MessageProcessor)>($r2);
+
+        r7 = virtualinvoke r6.<gov.nist.javax.sip.ListeningPointImpl: java.lang.String getKey()>();
+
+        $r3 = r0.<gov.nist.javax.sip.SipStackImpl: java.util.Hashtable listeningPoints>;
+
+        virtualinvoke $r3.<java.util.Hashtable: java.lang.Object remove(java.lang.Object)>(r7);
+
+        return;
+
+     label1:
+        $r1 = new java.lang.NullPointerException;
+
+        specialinvoke $r1.<java.lang.NullPointerException: void <init>(java.lang.String)>("null listeningPoint arg");
+
+        throw $r1;
+    }
+
+    public void deleteSipProvider(javax.sip.SipProvider) throws javax.sip.ObjectInUseException
+    {
+        gov.nist.javax.sip.SipStackImpl r0;
+        javax.sip.SipProvider r1;
+        gov.nist.javax.sip.SipProviderImpl r2;
+        java.lang.NullPointerException $r3;
+        javax.sip.SipListener $r4;
+        javax.sip.ObjectInUseException $r5;
+        java.util.LinkedList $r6, $r7;
+        boolean $z1;
+
+        r0 := @this: gov.nist.javax.sip.SipStackImpl;
+
+        r1 := @parameter0: javax.sip.SipProvider;
+
+        if r1 == null goto label3;
+
+        r2 = (gov.nist.javax.sip.SipProviderImpl) r1;
+
+        $r4 = virtualinvoke r2.<gov.nist.javax.sip.SipProviderImpl: javax.sip.SipListener getSipListener()>();
+
+        if $r4 != null goto label2;
+
+        virtualinvoke r2.<gov.nist.javax.sip.SipProviderImpl: void removeListeningPoints()>();
+
+        virtualinvoke r2.<gov.nist.javax.sip.SipProviderImpl: void stop()>();
+
+        $r6 = r0.<gov.nist.javax.sip.SipStackImpl: java.util.LinkedList sipProviders>;
+
+        virtualinvoke $r6.<java.util.LinkedList: boolean remove(java.lang.Object)>(r1);
+
+        $r7 = r0.<gov.nist.javax.sip.SipStackImpl: java.util.LinkedList sipProviders>;
+
+        $z1 = virtualinvoke $r7.<java.util.LinkedList: boolean isEmpty()>();
+
+        if $z1 == 0 goto label1;
+
+        virtualinvoke r0.<gov.nist.javax.sip.SipStackImpl: void stopStack()>();
+
+     label1:
+        return;
+
+     label2:
+        $r5 = new javax.sip.ObjectInUseException;
+
+        specialinvoke $r5.<javax.sip.ObjectInUseException: void <init>(java.lang.String)>("SipProvider still has an associated SipListener!");
+
+        throw $r5;
+
+     label3:
+        $r3 = new java.lang.NullPointerException;
+
+        specialinvoke $r3.<java.lang.NullPointerException: void <init>(java.lang.String)>("null provider arg");
+
+        throw $r3;
+    }
+
+    protected void finalize()
+    {
+        gov.nist.javax.sip.SipStackImpl r0;
+
+        r0 := @this: gov.nist.javax.sip.SipStackImpl;
+
+        virtualinvoke r0.<gov.nist.javax.sip.SipStackImpl: void stopStack()>();
+
+        return;
+    }
+
+    public gov.nist.javax.sip.clientauthutils.AuthenticationHelper getAuthenticationHelper(gov.nist.javax.sip.clientauthutils.AccountManager, javax.sip.header.HeaderFactory)
+    {
+        gov.nist.javax.sip.SipStackImpl r0;
+        gov.nist.javax.sip.clientauthutils.AccountManager r1;
+        javax.sip.header.HeaderFactory r2;
+        gov.nist.javax.sip.clientauthutils.AuthenticationHelperImpl $r3;
+
+        r0 := @this: gov.nist.javax.sip.SipStackImpl;
+
+        r1 := @parameter0: gov.nist.javax.sip.clientauthutils.AccountManager;
+
+        r2 := @parameter1: javax.sip.header.HeaderFactory;
+
+        $r3 = new gov.nist.javax.sip.clientauthutils.AuthenticationHelperImpl;
+
+        specialinvoke $r3.<gov.nist.javax.sip.clientauthutils.AuthenticationHelperImpl: void <init>(gov.nist.javax.sip.SipStackImpl,gov.nist.javax.sip.clientauthutils.AccountManager,javax.sip.header.HeaderFactory)>(r0, r1, r2);
+
+        return $r3;
+    }
+
+    public java.lang.String[] getEnabledCipherSuites()
+    {
+        gov.nist.javax.sip.SipStackImpl r0;
+        java.lang.String[] $r1;
+
+        r0 := @this: gov.nist.javax.sip.SipStackImpl;
+
+        $r1 = r0.<gov.nist.javax.sip.SipStackImpl: java.lang.String[] cipherSuites>;
+
+        return $r1;
+    }
+
+    public java.lang.String[] getEnabledProtocols()
+    {
+        gov.nist.javax.sip.SipStackImpl r0;
+        java.lang.String[] $r1;
+
+        r0 := @this: gov.nist.javax.sip.SipStackImpl;
+
+        $r1 = r0.<gov.nist.javax.sip.SipStackImpl: java.lang.String[] enabledProtocols>;
+
+        return $r1;
+    }
+
+    public gov.nist.javax.sip.EventScanner getEventScanner()
+    {
+        gov.nist.javax.sip.SipStackImpl r0;
+        gov.nist.javax.sip.EventScanner $r1;
+
+        r0 := @this: gov.nist.javax.sip.SipStackImpl;
+
+        $r1 = r0.<gov.nist.javax.sip.SipStackImpl: gov.nist.javax.sip.EventScanner eventScanner>;
+
+        return $r1;
+    }
+
+    public java.lang.String getIPAddress()
+    {
+        gov.nist.javax.sip.SipStackImpl r0;
+        java.lang.String $r1;
+
+        r0 := @this: gov.nist.javax.sip.SipStackImpl;
+
+        $r1 = specialinvoke r0.<gov.nist.javax.sip.stack.SIPTransactionStack: java.lang.String getHostAddress()>();
+
+        return $r1;
+    }
+
+    public java.util.Iterator getListeningPoints()
+    {
+        gov.nist.javax.sip.SipStackImpl r0;
+        java.util.Hashtable $r1;
+        java.util.Collection $r2;
+        java.util.Iterator $r3;
+
+        r0 := @this: gov.nist.javax.sip.SipStackImpl;
+
+        $r1 = r0.<gov.nist.javax.sip.SipStackImpl: java.util.Hashtable listeningPoints>;
+
+        $r2 = virtualinvoke $r1.<java.util.Hashtable: java.util.Collection values()>();
+
+        $r3 = interfaceinvoke $r2.<java.util.Collection: java.util.Iterator iterator()>();
+
+        return $r3;
+    }
+
+    public gov.nist.javax.sip.LogRecordFactory getLogRecordFactory()
+    {
+        gov.nist.javax.sip.SipStackImpl r0;
+        gov.nist.javax.sip.LogRecordFactory $r1;
+
+        r0 := @this: gov.nist.javax.sip.SipStackImpl;
+
+        $r1 = r0.<gov.nist.javax.sip.stack.SIPTransactionStack: gov.nist.javax.sip.LogRecordFactory logRecordFactory>;
+
+        return $r1;
+    }
+
+    public gov.nist.javax.sip.clientauthutils.AuthenticationHelper getSecureAuthenticationHelper(gov.nist.javax.sip.clientauthutils.SecureAccountManager, javax.sip.header.HeaderFactory)
+    {
+        gov.nist.javax.sip.SipStackImpl r0;
+        gov.nist.javax.sip.clientauthutils.SecureAccountManager r1;
+        javax.sip.header.HeaderFactory r2;
+        gov.nist.javax.sip.clientauthutils.AuthenticationHelperImpl $r3;
+
+        r0 := @this: gov.nist.javax.sip.SipStackImpl;
+
+        r1 := @parameter0: gov.nist.javax.sip.clientauthutils.SecureAccountManager;
+
+        r2 := @parameter1: javax.sip.header.HeaderFactory;
+
+        $r3 = new gov.nist.javax.sip.clientauthutils.AuthenticationHelperImpl;
+
+        specialinvoke $r3.<gov.nist.javax.sip.clientauthutils.AuthenticationHelperImpl: void <init>(gov.nist.javax.sip.SipStackImpl,gov.nist.javax.sip.clientauthutils.SecureAccountManager,javax.sip.header.HeaderFactory)>(r0, r1, r2);
+
+        return $r3;
+    }
+
+    public javax.sip.SipListener getSipListener()
+    {
+        gov.nist.javax.sip.SipStackImpl r0;
+        javax.sip.SipListener $r1;
+
+        r0 := @this: gov.nist.javax.sip.SipStackImpl;
+
+        $r1 = r0.<gov.nist.javax.sip.SipStackImpl: javax.sip.SipListener sipListener>;
+
+        return $r1;
+    }
+
+    public java.util.Iterator getSipProviders()
+    {
+        gov.nist.javax.sip.SipStackImpl r0;
+        java.util.LinkedList $r1;
+        java.util.Iterator $r2;
+
+        r0 := @this: gov.nist.javax.sip.SipStackImpl;
+
+        $r1 = r0.<gov.nist.javax.sip.SipStackImpl: java.util.LinkedList sipProviders>;
+
+        $r2 = virtualinvoke $r1.<java.util.LinkedList: java.util.Iterator iterator()>();
+
+        return $r2;
+    }
+
+    public java.lang.String getStackName()
+    {
+        gov.nist.javax.sip.SipStackImpl r0;
+        java.lang.String $r1;
+
+        r0 := @this: gov.nist.javax.sip.SipStackImpl;
+
+        $r1 = r0.<gov.nist.javax.sip.SipStackImpl: java.lang.String stackName>;
+
+        return $r1;
+    }
+
+    public boolean isAutomaticDialogErrorHandlingEnabled()
+    {
+        gov.nist.javax.sip.SipStackImpl r0;
+        boolean $z0;
+
+        r0 := @this: gov.nist.javax.sip.SipStackImpl;
+
+        $z0 = r0.<gov.nist.javax.sip.stack.SIPTransactionStack: boolean isAutomaticDialogErrorHandlingEnabled>;
+
+        return $z0;
+    }
+
+    boolean isAutomaticDialogSupportEnabled()
+    {
+        gov.nist.javax.sip.SipStackImpl r0;
+        boolean $z0;
+
+        r0 := @this: gov.nist.javax.sip.SipStackImpl;
+
+        $z0 = r0.<gov.nist.javax.sip.stack.SIPTransactionStack: boolean isAutomaticDialogSupportEnabled>;
+
+        return $z0;
+    }
+
+    public boolean isBackToBackUserAgent()
+    {
+        gov.nist.javax.sip.SipStackImpl r0;
+        boolean $z0;
+
+        r0 := @this: gov.nist.javax.sip.SipStackImpl;
+
+        $z0 = r0.<gov.nist.javax.sip.stack.SIPTransactionStack: boolean isBackToBackUserAgent>;
+
+        return $z0;
+    }
+
+    public boolean isRetransmissionFilterActive()
+    {
+        gov.nist.javax.sip.SipStackImpl r0;
+
+        r0 := @this: gov.nist.javax.sip.SipStackImpl;
+
+        return 1;
+    }
+
+    public void releaseSem()
+    {
+        gov.nist.javax.sip.SipStackImpl r0;
+        java.util.concurrent.Semaphore $r1;
+
+        r0 := @this: gov.nist.javax.sip.SipStackImpl;
+
+        $r1 = r0.<gov.nist.javax.sip.SipStackImpl: java.util.concurrent.Semaphore stackSemaphore>;
+
+        virtualinvoke $r1.<java.util.concurrent.Semaphore: void release()>();
+
+        return;
+    }
+
+    public void setEnabledCipherSuites(java.lang.String[])
+    {
+        gov.nist.javax.sip.SipStackImpl r0;
+        java.lang.String[] r1;
+
+        r0 := @this: gov.nist.javax.sip.SipStackImpl;
+
+        r1 := @parameter0: java.lang.String[];
+
+        r0.<gov.nist.javax.sip.SipStackImpl: java.lang.String[] cipherSuites> = r1;
+
+        return;
+    }
+
+    public void setEnabledProtocols(java.lang.String[])
+    {
+        gov.nist.javax.sip.SipStackImpl r0;
+        java.lang.String[] r1;
+
+        r0 := @this: gov.nist.javax.sip.SipStackImpl;
+
+        r1 := @parameter0: java.lang.String[];
+
+        r0.<gov.nist.javax.sip.SipStackImpl: java.lang.String[] enabledProtocols> = r1;
+
+        return;
+    }
+
+    public void setIsBackToBackUserAgent(boolean)
+    {
+        gov.nist.javax.sip.SipStackImpl r0;
+        boolean z0;
+
+        r0 := @this: gov.nist.javax.sip.SipStackImpl;
+
+        z0 := @parameter0: boolean;
+
+        r0.<gov.nist.javax.sip.stack.SIPTransactionStack: boolean isBackToBackUserAgent> = z0;
+
+        return;
+    }
+
+    public void start() throws javax.sip.ProviderDoesNotExistException, javax.sip.SipException
+    {
+        gov.nist.javax.sip.SipStackImpl r0;
+        gov.nist.javax.sip.EventScanner $r1, $r2;
+
+        r0 := @this: gov.nist.javax.sip.SipStackImpl;
+
+        $r1 = r0.<gov.nist.javax.sip.SipStackImpl: gov.nist.javax.sip.EventScanner eventScanner>;
+
+        if $r1 != null goto label1;
+
+        $r2 = new gov.nist.javax.sip.EventScanner;
+
+        specialinvoke $r2.<gov.nist.javax.sip.EventScanner: void <init>(gov.nist.javax.sip.SipStackImpl)>(r0);
+
+        r0.<gov.nist.javax.sip.SipStackImpl: gov.nist.javax.sip.EventScanner eventScanner> = $r2;
+
+     label1:
+        return;
+    }
+
+    public void stop()
+    {
+        gov.nist.javax.sip.SipStackImpl r0;
+        gov.nist.javax.sip.EventScanner r1;
+        boolean $z0;
+        java.util.LinkedList $r2;
+        java.util.Hashtable $r3;
+        gov.nist.core.StackLogger $r4;
+
+        r0 := @this: gov.nist.javax.sip.SipStackImpl;
+
+        $z0 = virtualinvoke r0.<gov.nist.javax.sip.SipStackImpl: boolean isLoggingEnabled()>();
+
+        if $z0 == 0 goto label1;
+
+        $r4 = virtualinvoke r0.<gov.nist.javax.sip.SipStackImpl: gov.nist.core.StackLogger getStackLogger()>();
+
+        interfaceinvoke $r4.<gov.nist.core.StackLogger: void logDebug(java.lang.String)>("stopStack -- stoppping the stack");
+
+     label1:
+        virtualinvoke r0.<gov.nist.javax.sip.SipStackImpl: void stopStack()>();
+
+        $r2 = new java.util.LinkedList;
+
+        specialinvoke $r2.<java.util.LinkedList: void <init>()>();
+
+        r0.<gov.nist.javax.sip.SipStackImpl: java.util.LinkedList sipProviders> = $r2;
+
+        $r3 = new java.util.Hashtable;
+
+        specialinvoke $r3.<java.util.Hashtable: void <init>()>();
+
+        r0.<gov.nist.javax.sip.SipStackImpl: java.util.Hashtable listeningPoints> = $r3;
+
+        r1 = r0.<gov.nist.javax.sip.SipStackImpl: gov.nist.javax.sip.EventScanner eventScanner>;
+
+        if r1 == null goto label2;
+
+        virtualinvoke r1.<gov.nist.javax.sip.EventScanner: void forceStop()>();
+
+     label2:
+        r0.<gov.nist.javax.sip.SipStackImpl: gov.nist.javax.sip.EventScanner eventScanner> = null;
+
+        return;
+    }
+}

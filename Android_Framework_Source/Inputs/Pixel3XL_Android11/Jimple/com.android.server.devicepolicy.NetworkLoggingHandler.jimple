@@ -1,0 +1,888 @@
+final class com.android.server.devicepolicy.NetworkLoggingHandler extends android.os.Handler
+{
+    private static final long BATCH_FINALIZATION_TIMEOUT_ALARM_INTERVAL_MS;
+    private static final long BATCH_FINALIZATION_TIMEOUT_MS;
+    private static final long FORCE_FETCH_THROTTLE_NS;
+    static final int LOG_NETWORK_EVENT_MSG;
+    private static final int MAX_BATCHES;
+    private static final int MAX_EVENTS_PER_BATCH;
+    static final java.lang.String NETWORK_EVENT_KEY;
+    private static final java.lang.String NETWORK_LOGGING_TIMEOUT_ALARM_TAG;
+    private static final long RETRIEVED_BATCH_DISCARD_DELAY_MS;
+    private static final java.lang.String TAG;
+    private final android.app.AlarmManager mAlarmManager;
+    private final android.app.AlarmManager$OnAlarmListener mBatchTimeoutAlarmListener;
+    private final android.util.LongSparseArray mBatches;
+    private long mCurrentBatchToken;
+    private final com.android.server.devicepolicy.DevicePolicyManagerService mDpm;
+    private long mId;
+    private long mLastFinalizationNanos;
+    private long mLastRetrievedBatchToken;
+    private java.util.ArrayList mNetworkEvents;
+    private boolean mPaused;
+
+    static void <clinit>()
+    {
+        java.lang.Class $r0;
+        java.lang.String $r1;
+        java.util.concurrent.TimeUnit $r2;
+        long $l0;
+
+        <com.android.server.devicepolicy.NetworkLoggingHandler: long RETRIEVED_BATCH_DISCARD_DELAY_MS> = 300000L;
+
+        <com.android.server.devicepolicy.NetworkLoggingHandler: java.lang.String NETWORK_LOGGING_TIMEOUT_ALARM_TAG> = "NetworkLogging.batchTimeout";
+
+        <com.android.server.devicepolicy.NetworkLoggingHandler: java.lang.String NETWORK_EVENT_KEY> = "network_event";
+
+        <com.android.server.devicepolicy.NetworkLoggingHandler: int MAX_EVENTS_PER_BATCH> = 1200;
+
+        <com.android.server.devicepolicy.NetworkLoggingHandler: int MAX_BATCHES> = 5;
+
+        <com.android.server.devicepolicy.NetworkLoggingHandler: int LOG_NETWORK_EVENT_MSG> = 1;
+
+        <com.android.server.devicepolicy.NetworkLoggingHandler: long BATCH_FINALIZATION_TIMEOUT_MS> = 5400000L;
+
+        <com.android.server.devicepolicy.NetworkLoggingHandler: long BATCH_FINALIZATION_TIMEOUT_ALARM_INTERVAL_MS> = 1800000L;
+
+        $r0 = class "Lcom/android/server/devicepolicy/NetworkLoggingHandler;";
+
+        $r1 = virtualinvoke $r0.<java.lang.Class: java.lang.String getSimpleName()>();
+
+        <com.android.server.devicepolicy.NetworkLoggingHandler: java.lang.String TAG> = $r1;
+
+        $r2 = <java.util.concurrent.TimeUnit: java.util.concurrent.TimeUnit SECONDS>;
+
+        $l0 = virtualinvoke $r2.<java.util.concurrent.TimeUnit: long toNanos(long)>(10L);
+
+        <com.android.server.devicepolicy.NetworkLoggingHandler: long FORCE_FETCH_THROTTLE_NS> = $l0;
+
+        return;
+    }
+
+    void <init>(android.os.Looper, com.android.server.devicepolicy.DevicePolicyManagerService)
+    {
+        com.android.server.devicepolicy.NetworkLoggingHandler r0;
+        android.os.Looper r1;
+        com.android.server.devicepolicy.DevicePolicyManagerService r2;
+
+        r0 := @this: com.android.server.devicepolicy.NetworkLoggingHandler;
+
+        r1 := @parameter0: android.os.Looper;
+
+        r2 := @parameter1: com.android.server.devicepolicy.DevicePolicyManagerService;
+
+        specialinvoke r0.<com.android.server.devicepolicy.NetworkLoggingHandler: void <init>(android.os.Looper,com.android.server.devicepolicy.DevicePolicyManagerService,long)>(r1, r2, 0L);
+
+        return;
+    }
+
+    void <init>(android.os.Looper, com.android.server.devicepolicy.DevicePolicyManagerService, long)
+    {
+        com.android.server.devicepolicy.NetworkLoggingHandler r0;
+        android.os.Looper r1;
+        com.android.server.devicepolicy.DevicePolicyManagerService r2;
+        long l0;
+        com.android.server.devicepolicy.NetworkLoggingHandler$1 $r3;
+        java.util.ArrayList $r4;
+        android.util.LongSparseArray $r5;
+        com.android.server.devicepolicy.DevicePolicyManagerService$Injector $r6;
+        android.app.AlarmManager $r7;
+
+        r0 := @this: com.android.server.devicepolicy.NetworkLoggingHandler;
+
+        r1 := @parameter0: android.os.Looper;
+
+        r2 := @parameter1: com.android.server.devicepolicy.DevicePolicyManagerService;
+
+        l0 := @parameter2: long;
+
+        specialinvoke r0.<android.os.Handler: void <init>(android.os.Looper)>(r1);
+
+        r0.<com.android.server.devicepolicy.NetworkLoggingHandler: long mLastFinalizationNanos> = -1L;
+
+        $r3 = new com.android.server.devicepolicy.NetworkLoggingHandler$1;
+
+        specialinvoke $r3.<com.android.server.devicepolicy.NetworkLoggingHandler$1: void <init>(com.android.server.devicepolicy.NetworkLoggingHandler)>(r0);
+
+        r0.<com.android.server.devicepolicy.NetworkLoggingHandler: android.app.AlarmManager$OnAlarmListener mBatchTimeoutAlarmListener> = $r3;
+
+        $r4 = new java.util.ArrayList;
+
+        specialinvoke $r4.<java.util.ArrayList: void <init>()>();
+
+        r0.<com.android.server.devicepolicy.NetworkLoggingHandler: java.util.ArrayList mNetworkEvents> = $r4;
+
+        $r5 = new android.util.LongSparseArray;
+
+        specialinvoke $r5.<android.util.LongSparseArray: void <init>(int)>(5);
+
+        r0.<com.android.server.devicepolicy.NetworkLoggingHandler: android.util.LongSparseArray mBatches> = $r5;
+
+        r0.<com.android.server.devicepolicy.NetworkLoggingHandler: boolean mPaused> = 0;
+
+        r0.<com.android.server.devicepolicy.NetworkLoggingHandler: com.android.server.devicepolicy.DevicePolicyManagerService mDpm> = r2;
+
+        $r6 = r2.<com.android.server.devicepolicy.DevicePolicyManagerService: com.android.server.devicepolicy.DevicePolicyManagerService$Injector mInjector>;
+
+        $r7 = virtualinvoke $r6.<com.android.server.devicepolicy.DevicePolicyManagerService$Injector: android.app.AlarmManager getAlarmManager()>();
+
+        r0.<com.android.server.devicepolicy.NetworkLoggingHandler: android.app.AlarmManager mAlarmManager> = $r7;
+
+        r0.<com.android.server.devicepolicy.NetworkLoggingHandler: long mId> = l0;
+
+        return;
+    }
+
+    static java.lang.String access$000()
+    {
+        java.lang.String $r0;
+
+        $r0 = <com.android.server.devicepolicy.NetworkLoggingHandler: java.lang.String TAG>;
+
+        return $r0;
+    }
+
+    static java.util.ArrayList access$100(com.android.server.devicepolicy.NetworkLoggingHandler)
+    {
+        com.android.server.devicepolicy.NetworkLoggingHandler r0;
+        java.util.ArrayList $r1;
+
+        r0 := @parameter0: com.android.server.devicepolicy.NetworkLoggingHandler;
+
+        $r1 = r0.<com.android.server.devicepolicy.NetworkLoggingHandler: java.util.ArrayList mNetworkEvents>;
+
+        return $r1;
+    }
+
+    static android.os.Bundle access$200(com.android.server.devicepolicy.NetworkLoggingHandler)
+    {
+        com.android.server.devicepolicy.NetworkLoggingHandler r0;
+        android.os.Bundle $r1;
+
+        r0 := @parameter0: com.android.server.devicepolicy.NetworkLoggingHandler;
+
+        $r1 = specialinvoke r0.<com.android.server.devicepolicy.NetworkLoggingHandler: android.os.Bundle finalizeBatchAndBuildDeviceOwnerMessageLocked()>();
+
+        return $r1;
+    }
+
+    static void access$300(com.android.server.devicepolicy.NetworkLoggingHandler, android.os.Bundle)
+    {
+        com.android.server.devicepolicy.NetworkLoggingHandler r0;
+        android.os.Bundle r1;
+
+        r0 := @parameter0: com.android.server.devicepolicy.NetworkLoggingHandler;
+
+        r1 := @parameter1: android.os.Bundle;
+
+        specialinvoke r0.<com.android.server.devicepolicy.NetworkLoggingHandler: void notifyDeviceOwner(android.os.Bundle)>(r1);
+
+        return;
+    }
+
+    private android.os.Bundle buildDeviceOwnerMessageLocked()
+    {
+        com.android.server.devicepolicy.NetworkLoggingHandler r0;
+        android.util.LongSparseArray r2;
+        int i0, $i1, $i2;
+        android.os.Bundle $r3;
+        java.lang.Object $r4;
+        java.util.ArrayList $r5;
+        long $l3;
+
+        r0 := @this: com.android.server.devicepolicy.NetworkLoggingHandler;
+
+        $r3 = new android.os.Bundle;
+
+        specialinvoke $r3.<android.os.Bundle: void <init>()>();
+
+        r2 = r0.<com.android.server.devicepolicy.NetworkLoggingHandler: android.util.LongSparseArray mBatches>;
+
+        $i1 = virtualinvoke r2.<android.util.LongSparseArray: int size()>();
+
+        $i2 = $i1 - 1;
+
+        $r4 = virtualinvoke r2.<android.util.LongSparseArray: java.lang.Object valueAt(int)>($i2);
+
+        $r5 = (java.util.ArrayList) $r4;
+
+        i0 = virtualinvoke $r5.<java.util.ArrayList: int size()>();
+
+        $l3 = r0.<com.android.server.devicepolicy.NetworkLoggingHandler: long mCurrentBatchToken>;
+
+        virtualinvoke $r3.<android.os.Bundle: void putLong(java.lang.String,long)>("android.app.extra.EXTRA_NETWORK_LOGS_TOKEN", $l3);
+
+        virtualinvoke $r3.<android.os.Bundle: void putInt(java.lang.String,int)>("android.app.extra.EXTRA_NETWORK_LOGS_COUNT", i0);
+
+        return $r3;
+    }
+
+    private android.os.Bundle finalizeBatchAndBuildDeviceOwnerMessageLocked()
+    {
+        com.android.server.devicepolicy.NetworkLoggingHandler r0;
+        long $l0, $l2, $l5, $l6, $l8, $l9, l11, l12;
+        java.util.ArrayList $r2, $r7, $r9, $r11;
+        int $i1, $i4;
+        java.lang.StringBuilder $r3, $r15;
+        java.lang.String $r6, $r18, r21, r22;
+        boolean $z0, $z1;
+        android.util.LongSparseArray $r8, $r10, $r12;
+        java.lang.Object $r13;
+        android.app.admin.NetworkEvent $r14;
+        byte $b7;
+        android.os.Bundle r19;
+        java.util.Iterator r20;
+
+        r0 := @this: com.android.server.devicepolicy.NetworkLoggingHandler;
+
+        $l0 = staticinvoke <java.lang.System: long nanoTime()>();
+
+        r0.<com.android.server.devicepolicy.NetworkLoggingHandler: long mLastFinalizationNanos> = $l0;
+
+        r19 = null;
+
+        $r2 = r0.<com.android.server.devicepolicy.NetworkLoggingHandler: java.util.ArrayList mNetworkEvents>;
+
+        $i1 = virtualinvoke $r2.<java.util.ArrayList: int size()>();
+
+        if $i1 <= 0 goto label6;
+
+        $r7 = r0.<com.android.server.devicepolicy.NetworkLoggingHandler: java.util.ArrayList mNetworkEvents>;
+
+        r20 = virtualinvoke $r7.<java.util.ArrayList: java.util.Iterator iterator()>();
+
+     label1:
+        $z0 = interfaceinvoke r20.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label4;
+
+        $r13 = interfaceinvoke r20.<java.util.Iterator: java.lang.Object next()>();
+
+        $r14 = (android.app.admin.NetworkEvent) $r13;
+
+        $l6 = r0.<com.android.server.devicepolicy.NetworkLoggingHandler: long mId>;
+
+        virtualinvoke $r14.<android.app.admin.NetworkEvent: void setId(long)>($l6);
+
+        l11 = r0.<com.android.server.devicepolicy.NetworkLoggingHandler: long mId>;
+
+        $b7 = l11 cmp 9223372036854775807L;
+
+        if $b7 != 0 goto label2;
+
+        r21 = <com.android.server.devicepolicy.NetworkLoggingHandler: java.lang.String TAG>;
+
+        $r15 = new java.lang.StringBuilder;
+
+        specialinvoke $r15.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r15.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Reached maximum id value; wrapping around .");
+
+        $l9 = r0.<com.android.server.devicepolicy.NetworkLoggingHandler: long mCurrentBatchToken>;
+
+        virtualinvoke $r15.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l9);
+
+        $r18 = virtualinvoke $r15.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>(r21, $r18);
+
+        r0.<com.android.server.devicepolicy.NetworkLoggingHandler: long mId> = 0L;
+
+        goto label3;
+
+     label2:
+        $l8 = l11 + 1L;
+
+        r0.<com.android.server.devicepolicy.NetworkLoggingHandler: long mId> = $l8;
+
+     label3:
+        goto label1;
+
+     label4:
+        $r8 = r0.<com.android.server.devicepolicy.NetworkLoggingHandler: android.util.LongSparseArray mBatches>;
+
+        $i4 = virtualinvoke $r8.<android.util.LongSparseArray: int size()>();
+
+        if $i4 < 5 goto label5;
+
+        $r12 = r0.<com.android.server.devicepolicy.NetworkLoggingHandler: android.util.LongSparseArray mBatches>;
+
+        virtualinvoke $r12.<android.util.LongSparseArray: void removeAt(int)>(0);
+
+     label5:
+        $l5 = r0.<com.android.server.devicepolicy.NetworkLoggingHandler: long mCurrentBatchToken>;
+
+        l12 = $l5 + 1L;
+
+        r0.<com.android.server.devicepolicy.NetworkLoggingHandler: long mCurrentBatchToken> = l12;
+
+        $r10 = r0.<com.android.server.devicepolicy.NetworkLoggingHandler: android.util.LongSparseArray mBatches>;
+
+        $r9 = r0.<com.android.server.devicepolicy.NetworkLoggingHandler: java.util.ArrayList mNetworkEvents>;
+
+        virtualinvoke $r10.<android.util.LongSparseArray: void append(long,java.lang.Object)>(l12, $r9);
+
+        $r11 = new java.util.ArrayList;
+
+        specialinvoke $r11.<java.util.ArrayList: void <init>()>();
+
+        r0.<com.android.server.devicepolicy.NetworkLoggingHandler: java.util.ArrayList mNetworkEvents> = $r11;
+
+        $z1 = r0.<com.android.server.devicepolicy.NetworkLoggingHandler: boolean mPaused>;
+
+        if $z1 != 0 goto label7;
+
+        r19 = specialinvoke r0.<com.android.server.devicepolicy.NetworkLoggingHandler: android.os.Bundle buildDeviceOwnerMessageLocked()>();
+
+        goto label7;
+
+     label6:
+        r22 = <com.android.server.devicepolicy.NetworkLoggingHandler: java.lang.String TAG>;
+
+        $r3 = new java.lang.StringBuilder;
+
+        specialinvoke $r3.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Was about to finalize the batch, but there were no events to send to the DPC, the batchToken of last available batch: ");
+
+        $l2 = r0.<com.android.server.devicepolicy.NetworkLoggingHandler: long mCurrentBatchToken>;
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l2);
+
+        $r6 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>(r22, $r6);
+
+     label7:
+        virtualinvoke r0.<com.android.server.devicepolicy.NetworkLoggingHandler: void scheduleBatchFinalization()>();
+
+        return r19;
+    }
+
+    private void notifyDeviceOwner(android.os.Bundle)
+    {
+        com.android.server.devicepolicy.NetworkLoggingHandler r0;
+        android.os.Bundle r1;
+        java.lang.String r2, $r7, $r9;
+        java.lang.StringBuilder $r4;
+        long $l0;
+        boolean $z0;
+        com.android.server.devicepolicy.DevicePolicyManagerService $r8;
+
+        r0 := @this: com.android.server.devicepolicy.NetworkLoggingHandler;
+
+        r1 := @parameter0: android.os.Bundle;
+
+        r2 = <com.android.server.devicepolicy.NetworkLoggingHandler: java.lang.String TAG>;
+
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Sending network logging batch broadcast to device owner, batchToken: ");
+
+        $l0 = virtualinvoke r1.<android.os.Bundle: long getLong(java.lang.String,long)>("android.app.extra.EXTRA_NETWORK_LOGS_TOKEN", -1L);
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l0);
+
+        $r7 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>(r2, $r7);
+
+        $z0 = staticinvoke <java.lang.Thread: boolean holdsLock(java.lang.Object)>(r0);
+
+        if $z0 == 0 goto label1;
+
+        $r9 = <com.android.server.devicepolicy.NetworkLoggingHandler: java.lang.String TAG>;
+
+        staticinvoke <android.util.Slog: int wtfStack(java.lang.String,java.lang.String)>($r9, "Shouldn\'t be called with NetworkLoggingHandler lock held");
+
+        return;
+
+     label1:
+        $r8 = r0.<com.android.server.devicepolicy.NetworkLoggingHandler: com.android.server.devicepolicy.DevicePolicyManagerService mDpm>;
+
+        virtualinvoke $r8.<com.android.server.devicepolicy.DevicePolicyManagerService: void sendDeviceOwnerCommand(java.lang.String,android.os.Bundle)>("android.app.action.NETWORK_LOGS_AVAILABLE", r1);
+
+        return;
+    }
+
+    void discardLogs()
+    {
+        com.android.server.devicepolicy.NetworkLoggingHandler r0;
+        android.util.LongSparseArray $r1;
+        java.lang.String $r2;
+        java.lang.Throwable $r3;
+        java.util.ArrayList r4;
+
+        r0 := @this: com.android.server.devicepolicy.NetworkLoggingHandler;
+
+        entermonitor r0;
+
+     label1:
+        $r1 = r0.<com.android.server.devicepolicy.NetworkLoggingHandler: android.util.LongSparseArray mBatches>;
+
+        virtualinvoke $r1.<android.util.LongSparseArray: void clear()>();
+
+        r4 = new java.util.ArrayList;
+
+        specialinvoke r4.<java.util.ArrayList: void <init>()>();
+
+        r0.<com.android.server.devicepolicy.NetworkLoggingHandler: java.util.ArrayList mNetworkEvents> = r4;
+
+        $r2 = <com.android.server.devicepolicy.NetworkLoggingHandler: java.lang.String TAG>;
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>($r2, "Discarded all network logs");
+
+     label2:
+        exitmonitor r0;
+
+        return;
+
+     label3:
+        $r3 := @caughtexception;
+
+        exitmonitor r0;
+
+        throw $r3;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+    }
+
+    long forceBatchFinalization()
+    {
+        com.android.server.devicepolicy.NetworkLoggingHandler r0;
+        long $l0, $l1, $l2, $l3, $l5, l6, l7;
+        byte $b4;
+        java.util.concurrent.TimeUnit $r1;
+        java.lang.Throwable $r2;
+        android.os.Bundle r3;
+
+        r0 := @this: com.android.server.devicepolicy.NetworkLoggingHandler;
+
+        entermonitor r0;
+
+     label01:
+        $l1 = r0.<com.android.server.devicepolicy.NetworkLoggingHandler: long mLastFinalizationNanos>;
+
+        $l0 = <com.android.server.devicepolicy.NetworkLoggingHandler: long FORCE_FETCH_THROTTLE_NS>;
+
+        $l2 = $l1 + $l0;
+
+        $l3 = staticinvoke <java.lang.System: long nanoTime()>();
+
+        l6 = $l2 - $l3;
+
+     label02:
+        $b4 = l6 cmp 0L;
+
+        if $b4 <= 0 goto label05;
+
+     label03:
+        $r1 = <java.util.concurrent.TimeUnit: java.util.concurrent.TimeUnit NANOSECONDS>;
+
+        l7 = virtualinvoke $r1.<java.util.concurrent.TimeUnit: long toMillis(long)>(l6);
+
+        exitmonitor r0;
+
+     label04:
+        $l5 = l7 + 1L;
+
+        return $l5;
+
+     label05:
+        r3 = specialinvoke r0.<com.android.server.devicepolicy.NetworkLoggingHandler: android.os.Bundle finalizeBatchAndBuildDeviceOwnerMessageLocked()>();
+
+        exitmonitor r0;
+
+     label06:
+        if r3 == null goto label07;
+
+        specialinvoke r0.<com.android.server.devicepolicy.NetworkLoggingHandler: void notifyDeviceOwner(android.os.Bundle)>(r3);
+
+     label07:
+        return 0L;
+
+     label08:
+        $r2 := @caughtexception;
+
+     label09:
+        exitmonitor r0;
+
+     label10:
+        throw $r2;
+
+        catch java.lang.Throwable from label01 to label02 with label08;
+        catch java.lang.Throwable from label03 to label04 with label08;
+        catch java.lang.Throwable from label05 to label06 with label08;
+        catch java.lang.Throwable from label09 to label10 with label08;
+    }
+
+    public void handleMessage(android.os.Message)
+    {
+        com.android.server.devicepolicy.NetworkLoggingHandler r0;
+        android.app.admin.NetworkEvent r1;
+        int $i0, $i1;
+        android.os.Bundle $r2, r9;
+        android.os.Parcelable $r3;
+        java.util.ArrayList $r4, $r5;
+        java.lang.String $r6;
+        java.lang.Throwable $r7;
+        android.os.Message r8;
+
+        r0 := @this: com.android.server.devicepolicy.NetworkLoggingHandler;
+
+        r8 := @parameter0: android.os.Message;
+
+        $i0 = r8.<android.os.Message: int what>;
+
+        if $i0 == 1 goto label01;
+
+        $r6 = <com.android.server.devicepolicy.NetworkLoggingHandler: java.lang.String TAG>;
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>($r6, "NetworkLoggingHandler received an unknown of message.");
+
+        goto label10;
+
+     label01:
+        $r2 = virtualinvoke r8.<android.os.Message: android.os.Bundle getData()>();
+
+        $r3 = virtualinvoke $r2.<android.os.Bundle: android.os.Parcelable getParcelable(java.lang.String)>("network_event");
+
+        r1 = (android.app.admin.NetworkEvent) $r3;
+
+        if r1 == null goto label10;
+
+        r9 = null;
+
+        entermonitor r0;
+
+     label02:
+        $r4 = r0.<com.android.server.devicepolicy.NetworkLoggingHandler: java.util.ArrayList mNetworkEvents>;
+
+        virtualinvoke $r4.<java.util.ArrayList: boolean add(java.lang.Object)>(r1);
+
+     label03:
+        $r5 = r0.<com.android.server.devicepolicy.NetworkLoggingHandler: java.util.ArrayList mNetworkEvents>;
+
+        $i1 = virtualinvoke $r5.<java.util.ArrayList: int size()>();
+
+        if $i1 < 1200 goto label04;
+
+        r9 = specialinvoke r0.<com.android.server.devicepolicy.NetworkLoggingHandler: android.os.Bundle finalizeBatchAndBuildDeviceOwnerMessageLocked()>();
+
+     label04:
+        exitmonitor r0;
+
+     label05:
+        if r9 == null goto label06;
+
+        specialinvoke r0.<com.android.server.devicepolicy.NetworkLoggingHandler: void notifyDeviceOwner(android.os.Bundle)>(r9);
+
+     label06:
+        goto label10;
+
+     label07:
+        $r7 := @caughtexception;
+
+     label08:
+        exitmonitor r0;
+
+     label09:
+        throw $r7;
+
+     label10:
+        return;
+
+        catch java.lang.Throwable from label02 to label03 with label07;
+        catch java.lang.Throwable from label03 to label04 with label07;
+        catch java.lang.Throwable from label04 to label05 with label07;
+        catch java.lang.Throwable from label08 to label09 with label07;
+    }
+
+    public void lambda$retrieveFullLogBatch$0$NetworkLoggingHandler(long)
+    {
+        com.android.server.devicepolicy.NetworkLoggingHandler r0;
+        long l0, $l2;
+        android.util.LongSparseArray $r2, $r3, $r4;
+        int $i1;
+        byte $b3;
+        java.lang.Throwable $r5;
+
+        r0 := @this: com.android.server.devicepolicy.NetworkLoggingHandler;
+
+        l0 := @parameter0: long;
+
+        entermonitor r0;
+
+     label1:
+        $r2 = r0.<com.android.server.devicepolicy.NetworkLoggingHandler: android.util.LongSparseArray mBatches>;
+
+        $i1 = virtualinvoke $r2.<android.util.LongSparseArray: int size()>();
+
+        if $i1 <= 0 goto label3;
+
+        $r3 = r0.<com.android.server.devicepolicy.NetworkLoggingHandler: android.util.LongSparseArray mBatches>;
+
+        $l2 = virtualinvoke $r3.<android.util.LongSparseArray: long keyAt(int)>(0);
+
+        $b3 = $l2 cmp l0;
+
+        if $b3 > 0 goto label3;
+
+        $r4 = r0.<com.android.server.devicepolicy.NetworkLoggingHandler: android.util.LongSparseArray mBatches>;
+
+        virtualinvoke $r4.<android.util.LongSparseArray: void removeAt(int)>(0);
+
+     label2:
+        goto label1;
+
+     label3:
+        exitmonitor r0;
+
+     label4:
+        return;
+
+     label5:
+        $r5 := @caughtexception;
+
+     label6:
+        exitmonitor r0;
+
+     label7:
+        throw $r5;
+
+        catch java.lang.Throwable from label1 to label2 with label5;
+        catch java.lang.Throwable from label3 to label4 with label5;
+        catch java.lang.Throwable from label6 to label7 with label5;
+    }
+
+    void pause()
+    {
+        com.android.server.devicepolicy.NetworkLoggingHandler r0;
+        java.lang.String $r2;
+        java.lang.Throwable $r3;
+
+        r0 := @this: com.android.server.devicepolicy.NetworkLoggingHandler;
+
+        entermonitor r0;
+
+     label1:
+        $r2 = <com.android.server.devicepolicy.NetworkLoggingHandler: java.lang.String TAG>;
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>($r2, "Paused network logging");
+
+        r0.<com.android.server.devicepolicy.NetworkLoggingHandler: boolean mPaused> = 1;
+
+     label2:
+        exitmonitor r0;
+
+        return;
+
+     label3:
+        $r3 := @caughtexception;
+
+        exitmonitor r0;
+
+        throw $r3;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+    }
+
+    void resume()
+    {
+        com.android.server.devicepolicy.NetworkLoggingHandler r0;
+        java.lang.String r1, $r2, $r4;
+        boolean $z0;
+        long $l0, $l1, $l3, $l4;
+        android.util.LongSparseArray $r3;
+        int $i2;
+        byte $b5;
+        java.lang.Throwable $r5;
+        java.lang.StringBuilder r6;
+        android.os.Bundle r7;
+
+        r0 := @this: com.android.server.devicepolicy.NetworkLoggingHandler;
+
+        entermonitor r0;
+
+     label01:
+        $z0 = r0.<com.android.server.devicepolicy.NetworkLoggingHandler: boolean mPaused>;
+
+        if $z0 != 0 goto label03;
+
+        $r4 = <com.android.server.devicepolicy.NetworkLoggingHandler: java.lang.String TAG>;
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>($r4, "Attempted to resume network logging, but logging is not paused.");
+
+        exitmonitor r0;
+
+     label02:
+        return;
+
+     label03:
+        r1 = <com.android.server.devicepolicy.NetworkLoggingHandler: java.lang.String TAG>;
+
+        r6 = new java.lang.StringBuilder;
+
+        specialinvoke r6.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Resumed network logging. Current batch=");
+
+        $l0 = r0.<com.android.server.devicepolicy.NetworkLoggingHandler: long mCurrentBatchToken>;
+
+        virtualinvoke r6.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l0);
+
+        virtualinvoke r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", LastRetrievedBatch=");
+
+        $l1 = r0.<com.android.server.devicepolicy.NetworkLoggingHandler: long mLastRetrievedBatchToken>;
+
+        virtualinvoke r6.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l1);
+
+        $r2 = virtualinvoke r6.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>(r1, $r2);
+
+        r0.<com.android.server.devicepolicy.NetworkLoggingHandler: boolean mPaused> = 0;
+
+     label04:
+        r7 = null;
+
+     label05:
+        $r3 = r0.<com.android.server.devicepolicy.NetworkLoggingHandler: android.util.LongSparseArray mBatches>;
+
+        $i2 = virtualinvoke $r3.<android.util.LongSparseArray: int size()>();
+
+        if $i2 <= 0 goto label08;
+
+     label06:
+        r7 = null;
+
+     label07:
+        $l4 = r0.<com.android.server.devicepolicy.NetworkLoggingHandler: long mLastRetrievedBatchToken>;
+
+        $l3 = r0.<com.android.server.devicepolicy.NetworkLoggingHandler: long mCurrentBatchToken>;
+
+        $b5 = $l4 cmp $l3;
+
+        if $b5 == 0 goto label08;
+
+        virtualinvoke r0.<com.android.server.devicepolicy.NetworkLoggingHandler: void scheduleBatchFinalization()>();
+
+        r7 = specialinvoke r0.<com.android.server.devicepolicy.NetworkLoggingHandler: android.os.Bundle buildDeviceOwnerMessageLocked()>();
+
+     label08:
+        exitmonitor r0;
+
+     label09:
+        if r7 == null goto label10;
+
+        specialinvoke r0.<com.android.server.devicepolicy.NetworkLoggingHandler: void notifyDeviceOwner(android.os.Bundle)>(r7);
+
+     label10:
+        return;
+
+     label11:
+        $r5 := @caughtexception;
+
+     label12:
+        exitmonitor r0;
+
+     label13:
+        throw $r5;
+
+        catch java.lang.Throwable from label01 to label02 with label11;
+        catch java.lang.Throwable from label03 to label04 with label11;
+        catch java.lang.Throwable from label05 to label06 with label11;
+        catch java.lang.Throwable from label07 to label08 with label11;
+        catch java.lang.Throwable from label08 to label09 with label11;
+        catch java.lang.Throwable from label12 to label13 with label11;
+    }
+
+    java.util.List retrieveFullLogBatch(long)
+    {
+        com.android.server.devicepolicy.NetworkLoggingHandler r0;
+        long l0;
+        int i1;
+        android.util.LongSparseArray $r1, $r2;
+        java.lang.Object $r3;
+        java.lang.Throwable $r4;
+        com.android.server.devicepolicy._$$Lambda$NetworkLoggingHandler$VKC_fB9Ws13yQKJ8zNkiF3Wp0Jk r5;
+        java.util.List r6;
+
+        r0 := @this: com.android.server.devicepolicy.NetworkLoggingHandler;
+
+        l0 := @parameter0: long;
+
+        entermonitor r0;
+
+     label1:
+        $r1 = r0.<com.android.server.devicepolicy.NetworkLoggingHandler: android.util.LongSparseArray mBatches>;
+
+        i1 = virtualinvoke $r1.<android.util.LongSparseArray: int indexOfKey(long)>(l0);
+
+     label2:
+        if i1 >= 0 goto label3;
+
+        exitmonitor r0;
+
+        return null;
+
+     label3:
+        r5 = new com.android.server.devicepolicy._$$Lambda$NetworkLoggingHandler$VKC_fB9Ws13yQKJ8zNkiF3Wp0Jk;
+
+        specialinvoke r5.<com.android.server.devicepolicy._$$Lambda$NetworkLoggingHandler$VKC_fB9Ws13yQKJ8zNkiF3Wp0Jk: void <init>(com.android.server.devicepolicy.NetworkLoggingHandler,long)>(r0, l0);
+
+        virtualinvoke r0.<com.android.server.devicepolicy.NetworkLoggingHandler: boolean postDelayed(java.lang.Runnable,long)>(r5, 300000L);
+
+        r0.<com.android.server.devicepolicy.NetworkLoggingHandler: long mLastRetrievedBatchToken> = l0;
+
+        $r2 = r0.<com.android.server.devicepolicy.NetworkLoggingHandler: android.util.LongSparseArray mBatches>;
+
+        $r3 = virtualinvoke $r2.<android.util.LongSparseArray: java.lang.Object valueAt(int)>(i1);
+
+        r6 = (java.util.List) $r3;
+
+     label4:
+        exitmonitor r0;
+
+        return r6;
+
+     label5:
+        $r4 := @caughtexception;
+
+        exitmonitor r0;
+
+        throw $r4;
+
+        catch java.lang.Throwable from label1 to label2 with label5;
+        catch java.lang.Throwable from label3 to label4 with label5;
+    }
+
+    void scheduleBatchFinalization()
+    {
+        com.android.server.devicepolicy.NetworkLoggingHandler r0;
+        long l0, $l1;
+        android.app.AlarmManager$OnAlarmListener $r1;
+        android.app.AlarmManager $r2;
+        java.lang.String $r3;
+
+        r0 := @this: com.android.server.devicepolicy.NetworkLoggingHandler;
+
+        l0 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        $r2 = r0.<com.android.server.devicepolicy.NetworkLoggingHandler: android.app.AlarmManager mAlarmManager>;
+
+        $l1 = l0 + 5400000L;
+
+        $r1 = r0.<com.android.server.devicepolicy.NetworkLoggingHandler: android.app.AlarmManager$OnAlarmListener mBatchTimeoutAlarmListener>;
+
+        virtualinvoke $r2.<android.app.AlarmManager: void setWindow(int,long,long,java.lang.String,android.app.AlarmManager$OnAlarmListener,android.os.Handler)>(2, $l1, 1800000L, "NetworkLogging.batchTimeout", $r1, r0);
+
+        $r3 = <com.android.server.devicepolicy.NetworkLoggingHandler: java.lang.String TAG>;
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>($r3, "Scheduled a new batch finalization alarm 5400000ms from now.");
+
+        return;
+    }
+}

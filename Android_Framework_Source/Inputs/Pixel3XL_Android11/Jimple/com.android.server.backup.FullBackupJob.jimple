@@ -1,0 +1,334 @@
+public class com.android.server.backup.FullBackupJob extends android.app.job.JobService
+{
+    public static final int MAX_JOB_ID;
+    public static final int MIN_JOB_ID;
+    private static final java.lang.String USER_ID_EXTRA_KEY;
+    private static android.content.ComponentName sIdleService;
+    private final android.util.SparseArray mParamsForUser;
+
+    static void <clinit>()
+    {
+        android.content.ComponentName $r0;
+        java.lang.Class $r1;
+        java.lang.String $r2;
+
+        <com.android.server.backup.FullBackupJob: java.lang.String USER_ID_EXTRA_KEY> = "userId";
+
+        <com.android.server.backup.FullBackupJob: int MIN_JOB_ID> = 52418896;
+
+        <com.android.server.backup.FullBackupJob: int MAX_JOB_ID> = 52419896;
+
+        $r0 = new android.content.ComponentName;
+
+        $r1 = class "Lcom/android/server/backup/FullBackupJob;";
+
+        $r2 = virtualinvoke $r1.<java.lang.Class: java.lang.String getName()>();
+
+        specialinvoke $r0.<android.content.ComponentName: void <init>(java.lang.String,java.lang.String)>("android", $r2);
+
+        <com.android.server.backup.FullBackupJob: android.content.ComponentName sIdleService> = $r0;
+
+        return;
+    }
+
+    public void <init>()
+    {
+        com.android.server.backup.FullBackupJob r0;
+        android.util.SparseArray $r1;
+
+        r0 := @this: com.android.server.backup.FullBackupJob;
+
+        specialinvoke r0.<android.app.job.JobService: void <init>()>();
+
+        $r1 = new android.util.SparseArray;
+
+        specialinvoke $r1.<android.util.SparseArray: void <init>()>();
+
+        r0.<com.android.server.backup.FullBackupJob: android.util.SparseArray mParamsForUser> = $r1;
+
+        return;
+    }
+
+    public static void cancel(int, android.content.Context)
+    {
+        int i0, $i1;
+        android.content.Context r0;
+        java.lang.Object $r1;
+        android.app.job.JobScheduler $r2;
+
+        i0 := @parameter0: int;
+
+        r0 := @parameter1: android.content.Context;
+
+        $r1 = virtualinvoke r0.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("jobscheduler");
+
+        $r2 = (android.app.job.JobScheduler) $r1;
+
+        $i1 = staticinvoke <com.android.server.backup.FullBackupJob: int getJobIdForUserId(int)>(i0);
+
+        virtualinvoke $r2.<android.app.job.JobScheduler: void cancel(int)>($i1);
+
+        return;
+    }
+
+    private static int getJobIdForUserId(int)
+    {
+        int i0, $i1;
+
+        i0 := @parameter0: int;
+
+        $i1 = staticinvoke <com.android.server.backup.JobIdManager: int getJobIdForUserId(int,int,int)>(52418896, 52419896, i0);
+
+        return $i1;
+    }
+
+    public static void schedule(int, android.content.Context, long, com.android.server.backup.BackupManagerConstants)
+    {
+        int i0, $i2, $i3;
+        long l1;
+        android.app.job.JobScheduler r0;
+        java.lang.Object $r1;
+        android.app.job.JobInfo$Builder $r2, $r4, $r5;
+        android.content.ComponentName $r3;
+        boolean $z0;
+        byte $b4;
+        android.os.Bundle $r7;
+        android.app.job.JobInfo $r9;
+        java.lang.Throwable $r11;
+        android.content.Context r12;
+        com.android.server.backup.BackupManagerConstants r13;
+
+        i0 := @parameter0: int;
+
+        r12 := @parameter1: android.content.Context;
+
+        l1 := @parameter2: long;
+
+        r13 := @parameter3: com.android.server.backup.BackupManagerConstants;
+
+        $r1 = virtualinvoke r12.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("jobscheduler");
+
+        r0 = (android.app.job.JobScheduler) $r1;
+
+        $r2 = new android.app.job.JobInfo$Builder;
+
+        $i2 = staticinvoke <com.android.server.backup.FullBackupJob: int getJobIdForUserId(int)>(i0);
+
+        $r3 = <com.android.server.backup.FullBackupJob: android.content.ComponentName sIdleService>;
+
+        specialinvoke $r2.<android.app.job.JobInfo$Builder: void <init>(int,android.content.ComponentName)>($i2, $r3);
+
+        entermonitor r13;
+
+     label1:
+        $r4 = virtualinvoke $r2.<android.app.job.JobInfo$Builder: android.app.job.JobInfo$Builder setRequiresDeviceIdle(boolean)>(1);
+
+        $i3 = virtualinvoke r13.<com.android.server.backup.BackupManagerConstants: int getFullBackupRequiredNetworkType()>();
+
+        $r5 = virtualinvoke $r4.<android.app.job.JobInfo$Builder: android.app.job.JobInfo$Builder setRequiredNetworkType(int)>($i3);
+
+        $z0 = virtualinvoke r13.<com.android.server.backup.BackupManagerConstants: boolean getFullBackupRequireCharging()>();
+
+        virtualinvoke $r5.<android.app.job.JobInfo$Builder: android.app.job.JobInfo$Builder setRequiresCharging(boolean)>($z0);
+
+        exitmonitor r13;
+
+     label2:
+        $b4 = l1 cmp 0L;
+
+        if $b4 <= 0 goto label3;
+
+        virtualinvoke $r2.<android.app.job.JobInfo$Builder: android.app.job.JobInfo$Builder setMinimumLatency(long)>(l1);
+
+     label3:
+        $r7 = new android.os.Bundle;
+
+        specialinvoke $r7.<android.os.Bundle: void <init>()>();
+
+        virtualinvoke $r7.<android.os.Bundle: void putInt(java.lang.String,int)>("userId", i0);
+
+        virtualinvoke $r2.<android.app.job.JobInfo$Builder: android.app.job.JobInfo$Builder setTransientExtras(android.os.Bundle)>($r7);
+
+        $r9 = virtualinvoke $r2.<android.app.job.JobInfo$Builder: android.app.job.JobInfo build()>();
+
+        virtualinvoke r0.<android.app.job.JobScheduler: int schedule(android.app.job.JobInfo)>($r9);
+
+        return;
+
+     label4:
+        $r11 := @caughtexception;
+
+     label5:
+        exitmonitor r13;
+
+     label6:
+        throw $r11;
+
+        catch java.lang.Throwable from label1 to label2 with label4;
+        catch java.lang.Throwable from label5 to label6 with label4;
+    }
+
+    public void finishBackupPass(int)
+    {
+        com.android.server.backup.FullBackupJob r0;
+        int i0;
+        android.util.SparseArray r1, $r2, $r4;
+        java.lang.Object $r3;
+        java.lang.Throwable $r5;
+        android.app.job.JobParameters r6;
+
+        r0 := @this: com.android.server.backup.FullBackupJob;
+
+        i0 := @parameter0: int;
+
+        r1 = r0.<com.android.server.backup.FullBackupJob: android.util.SparseArray mParamsForUser>;
+
+        entermonitor r1;
+
+     label1:
+        $r2 = r0.<com.android.server.backup.FullBackupJob: android.util.SparseArray mParamsForUser>;
+
+        $r3 = virtualinvoke $r2.<android.util.SparseArray: java.lang.Object get(int)>(i0);
+
+        r6 = (android.app.job.JobParameters) $r3;
+
+     label2:
+        if r6 == null goto label4;
+
+     label3:
+        virtualinvoke r0.<com.android.server.backup.FullBackupJob: void jobFinished(android.app.job.JobParameters,boolean)>(r6, 0);
+
+        $r4 = r0.<com.android.server.backup.FullBackupJob: android.util.SparseArray mParamsForUser>;
+
+        virtualinvoke $r4.<android.util.SparseArray: void remove(int)>(i0);
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        return;
+
+     label6:
+        $r5 := @caughtexception;
+
+     label7:
+        exitmonitor r1;
+
+     label8:
+        throw $r5;
+
+        catch java.lang.Throwable from label1 to label2 with label6;
+        catch java.lang.Throwable from label3 to label4 with label6;
+        catch java.lang.Throwable from label4 to label5 with label6;
+        catch java.lang.Throwable from label7 to label8 with label6;
+    }
+
+    public boolean onStartJob(android.app.job.JobParameters)
+    {
+        com.android.server.backup.FullBackupJob r0;
+        int i0;
+        android.util.SparseArray r1, $r3;
+        android.os.Bundle $r2;
+        com.android.server.backup.BackupManagerService $r4;
+        boolean $z0;
+        java.lang.Throwable $r5;
+        android.app.job.JobParameters r6;
+
+        r0 := @this: com.android.server.backup.FullBackupJob;
+
+        r6 := @parameter0: android.app.job.JobParameters;
+
+        $r2 = virtualinvoke r6.<android.app.job.JobParameters: android.os.Bundle getTransientExtras()>();
+
+        i0 = virtualinvoke $r2.<android.os.Bundle: int getInt(java.lang.String)>("userId");
+
+        r1 = r0.<com.android.server.backup.FullBackupJob: android.util.SparseArray mParamsForUser>;
+
+        entermonitor r1;
+
+     label1:
+        $r3 = r0.<com.android.server.backup.FullBackupJob: android.util.SparseArray mParamsForUser>;
+
+        virtualinvoke $r3.<android.util.SparseArray: void put(int,java.lang.Object)>(i0, r6);
+
+        exitmonitor r1;
+
+     label2:
+        $r4 = staticinvoke <com.android.server.backup.BackupManagerService: com.android.server.backup.BackupManagerService getInstance()>();
+
+        $z0 = virtualinvoke $r4.<com.android.server.backup.BackupManagerService: boolean beginFullBackup(int,com.android.server.backup.FullBackupJob)>(i0, r0);
+
+        return $z0;
+
+     label3:
+        $r5 := @caughtexception;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        throw $r5;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    public boolean onStopJob(android.app.job.JobParameters)
+    {
+        com.android.server.backup.FullBackupJob r0;
+        int i0;
+        android.os.Bundle $r2;
+        android.util.SparseArray $r3, r8;
+        java.lang.Object $r4;
+        com.android.server.backup.BackupManagerService $r5;
+        java.lang.Throwable $r6;
+        android.app.job.JobParameters r7;
+
+        r0 := @this: com.android.server.backup.FullBackupJob;
+
+        r7 := @parameter0: android.app.job.JobParameters;
+
+        $r2 = virtualinvoke r7.<android.app.job.JobParameters: android.os.Bundle getTransientExtras()>();
+
+        i0 = virtualinvoke $r2.<android.os.Bundle: int getInt(java.lang.String)>("userId");
+
+        r8 = r0.<com.android.server.backup.FullBackupJob: android.util.SparseArray mParamsForUser>;
+
+        entermonitor r8;
+
+     label1:
+        $r3 = r0.<com.android.server.backup.FullBackupJob: android.util.SparseArray mParamsForUser>;
+
+        $r4 = virtualinvoke $r3.<android.util.SparseArray: java.lang.Object removeReturnOld(int)>(i0);
+
+        if $r4 != null goto label3;
+
+        exitmonitor r8;
+
+     label2:
+        return 0;
+
+     label3:
+        exitmonitor r8;
+
+     label4:
+        $r5 = staticinvoke <com.android.server.backup.BackupManagerService: com.android.server.backup.BackupManagerService getInstance()>();
+
+        virtualinvoke $r5.<com.android.server.backup.BackupManagerService: void endFullBackup(int)>(i0);
+
+        return 0;
+
+     label5:
+        $r6 := @caughtexception;
+
+     label6:
+        exitmonitor r8;
+
+     label7:
+        throw $r6;
+
+        catch java.lang.Throwable from label1 to label2 with label5;
+        catch java.lang.Throwable from label3 to label4 with label5;
+        catch java.lang.Throwable from label6 to label7 with label5;
+    }
+}

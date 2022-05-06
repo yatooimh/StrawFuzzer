@@ -1,0 +1,3322 @@
+public class gov.nist.javax.sip.stack.SIPClientTransaction extends gov.nist.javax.sip.stack.SIPTransaction implements gov.nist.javax.sip.stack.ServerResponseInterface, javax.sip.ClientTransaction, gov.nist.javax.sip.ClientTransactionExt
+{
+    private int callingStateTimeoutCount;
+    private gov.nist.javax.sip.stack.SIPDialog defaultDialog;
+    private gov.nist.javax.sip.message.SIPRequest lastRequest;
+    private javax.sip.address.Hop nextHop;
+    private boolean notifyOnRetransmit;
+    private transient gov.nist.javax.sip.stack.ServerResponseInterface respondTo;
+    private java.util.concurrent.ConcurrentHashMap sipDialogs;
+    private boolean timeoutIfStillInCallingState;
+    private java.lang.String viaHost;
+    private int viaPort;
+
+    protected void <init>(gov.nist.javax.sip.stack.SIPTransactionStack, gov.nist.javax.sip.stack.MessageChannel)
+    {
+        gov.nist.javax.sip.stack.SIPClientTransaction r0;
+        gov.nist.javax.sip.Utils $r1;
+        java.lang.String $r2, $r10;
+        gov.nist.javax.sip.stack.MessageProcessor $r3;
+        gov.nist.javax.sip.stack.SIPTransactionStack $r4, $r6, $r11, r13;
+        boolean $z0;
+        java.util.concurrent.ConcurrentHashMap $r5;
+        java.lang.StringBuilder $r7;
+        gov.nist.core.StackLogger $r12, r15;
+        gov.nist.javax.sip.stack.MessageChannel r14;
+
+        r0 := @this: gov.nist.javax.sip.stack.SIPClientTransaction;
+
+        r13 := @parameter0: gov.nist.javax.sip.stack.SIPTransactionStack;
+
+        r14 := @parameter1: gov.nist.javax.sip.stack.MessageChannel;
+
+        specialinvoke r0.<gov.nist.javax.sip.stack.SIPTransaction: void <init>(gov.nist.javax.sip.stack.SIPTransactionStack,gov.nist.javax.sip.stack.MessageChannel)>(r13, r14);
+
+        $r1 = staticinvoke <gov.nist.javax.sip.Utils: gov.nist.javax.sip.Utils getInstance()>();
+
+        $r2 = virtualinvoke $r1.<gov.nist.javax.sip.Utils: java.lang.String generateBranchId()>();
+
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void setBranch(java.lang.String)>($r2);
+
+        $r3 = r14.<gov.nist.javax.sip.stack.MessageChannel: gov.nist.javax.sip.stack.MessageProcessor messageProcessor>;
+
+        r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.MessageProcessor messageProcessor> = $r3;
+
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void setEncapsulatedChannel(gov.nist.javax.sip.stack.MessageChannel)>(r14);
+
+        r0.<gov.nist.javax.sip.stack.SIPClientTransaction: boolean notifyOnRetransmit> = 0;
+
+        r0.<gov.nist.javax.sip.stack.SIPClientTransaction: boolean timeoutIfStillInCallingState> = 0;
+
+        $r4 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $z0 = virtualinvoke $r4.<gov.nist.javax.sip.stack.SIPTransactionStack: boolean isLoggingEnabled()>();
+
+        if $z0 == 0 goto label1;
+
+        $r6 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        r15 = virtualinvoke $r6.<gov.nist.javax.sip.stack.SIPTransactionStack: gov.nist.core.StackLogger getStackLogger()>();
+
+        $r7 = new java.lang.StringBuilder;
+
+        specialinvoke $r7.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Creating clientTransaction ");
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r0);
+
+        $r10 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        interfaceinvoke r15.<gov.nist.core.StackLogger: void logDebug(java.lang.String)>($r10);
+
+        $r11 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $r12 = virtualinvoke $r11.<gov.nist.javax.sip.stack.SIPTransactionStack: gov.nist.core.StackLogger getStackLogger()>();
+
+        interfaceinvoke $r12.<gov.nist.core.StackLogger: void logStackTrace()>();
+
+     label1:
+        $r5 = new java.util.concurrent.ConcurrentHashMap;
+
+        specialinvoke $r5.<java.util.concurrent.ConcurrentHashMap: void <init>()>();
+
+        r0.<gov.nist.javax.sip.stack.SIPClientTransaction: java.util.concurrent.ConcurrentHashMap sipDialogs> = $r5;
+
+        return;
+    }
+
+    private final javax.sip.message.Request createErrorAck() throws javax.sip.SipException, java.text.ParseException
+    {
+        gov.nist.javax.sip.stack.SIPClientTransaction r0;
+        java.lang.StringBuilder $r2, $r20;
+        javax.sip.TransactionState $r4;
+        javax.sip.SipException $r6, $r9, $r11, $r18;
+        java.lang.String $r7, $r8, $r24;
+        boolean $z0, $z1;
+        gov.nist.javax.sip.message.SIPResponse $r10, $r12, $r13, $r22;
+        int $i0;
+        javax.sip.header.ToHeader $r14;
+        gov.nist.javax.sip.header.To $r15;
+        gov.nist.javax.sip.message.SIPRequest $r16, r25;
+        gov.nist.javax.sip.stack.SIPTransactionStack $r17, $r19;
+        gov.nist.core.StackLogger r26;
+
+        r0 := @this: gov.nist.javax.sip.stack.SIPClientTransaction;
+
+        r25 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.message.SIPRequest getOriginalRequest()>();
+
+        if r25 == null goto label5;
+
+        $r8 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: java.lang.String getMethod()>();
+
+        $z0 = virtualinvoke $r8.<java.lang.String: boolean equals(java.lang.Object)>("INVITE");
+
+        if $z0 == 0 goto label4;
+
+        $r10 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.message.SIPResponse lastResponse>;
+
+        if $r10 == null goto label3;
+
+        $r12 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.message.SIPResponse lastResponse>;
+
+        $i0 = virtualinvoke $r12.<gov.nist.javax.sip.message.SIPResponse: int getStatusCode()>();
+
+        if $i0 >= 200 goto label2;
+
+        $r17 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $z1 = virtualinvoke $r17.<gov.nist.javax.sip.stack.SIPTransactionStack: boolean isLoggingEnabled()>();
+
+        if $z1 == 0 goto label1;
+
+        $r19 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        r26 = virtualinvoke $r19.<gov.nist.javax.sip.stack.SIPTransactionStack: gov.nist.core.StackLogger getStackLogger()>();
+
+        $r20 = new java.lang.StringBuilder;
+
+        specialinvoke $r20.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r20.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("lastResponse = ");
+
+        $r22 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.message.SIPResponse lastResponse>;
+
+        virtualinvoke $r20.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r22);
+
+        $r24 = virtualinvoke $r20.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        interfaceinvoke r26.<gov.nist.core.StackLogger: void logDebug(java.lang.String)>($r24);
+
+     label1:
+        $r18 = new javax.sip.SipException;
+
+        specialinvoke $r18.<javax.sip.SipException: void <init>(java.lang.String)>("Cannot ACK a provisional response!");
+
+        throw $r18;
+
+     label2:
+        $r13 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.message.SIPResponse lastResponse>;
+
+        $r14 = virtualinvoke $r13.<gov.nist.javax.sip.message.SIPResponse: javax.sip.header.ToHeader getTo()>();
+
+        $r15 = (gov.nist.javax.sip.header.To) $r14;
+
+        $r16 = virtualinvoke r25.<gov.nist.javax.sip.message.SIPRequest: gov.nist.javax.sip.message.SIPRequest createErrorAck(gov.nist.javax.sip.header.To)>($r15);
+
+        return $r16;
+
+     label3:
+        $r11 = new javax.sip.SipException;
+
+        specialinvoke $r11.<javax.sip.SipException: void <init>(java.lang.String)>("bad Transaction state");
+
+        throw $r11;
+
+     label4:
+        $r9 = new javax.sip.SipException;
+
+        specialinvoke $r9.<javax.sip.SipException: void <init>(java.lang.String)>("Can only ACK an INVITE!");
+
+        throw $r9;
+
+     label5:
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("bad state ");
+
+        $r4 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: javax.sip.TransactionState getState()>();
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r4);
+
+        $r6 = new javax.sip.SipException;
+
+        $r7 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r6.<javax.sip.SipException: void <init>(java.lang.String)>($r7);
+
+        throw $r6;
+    }
+
+    private void inviteClientTransaction(gov.nist.javax.sip.message.SIPResponse, gov.nist.javax.sip.stack.MessageChannel, gov.nist.javax.sip.stack.SIPDialog) throws java.io.IOException
+    {
+        gov.nist.javax.sip.stack.SIPClientTransaction r0;
+        gov.nist.javax.sip.stack.SIPDialog r1, $r18, $r26, $r28;
+        javax.sip.TransactionState $r2, $r3, $r4, $r5, $r6, $r7, $r8, $r9, $r15, $r16, $r19, $r23, $r24, $r29, $r30;
+        javax.sip.message.Request $r10, $r12, $r20;
+        gov.nist.javax.sip.message.SIPRequest $r11, $r13, $r21, $r37, $r38, $r42;
+        int $i0, $i1, $i2, $i3, $i4, $i5, i9;
+        javax.sip.Dialog $r14, $r17, $r22, $r25, $r27;
+        boolean $z1, $z2, $z3, $z4, $z5, $z6, z7, $z8;
+        javax.sip.header.CSeqHeader $r31, $r39, $r40;
+        java.lang.String $r32, $r33, $r41, $r43;
+        gov.nist.javax.sip.stack.SIPTransactionStack $r34, $r35, $r48;
+        gov.nist.core.StackLogger $r36, $r49;
+        long $l6, $l7;
+        byte $b8;
+        java.lang.Exception $r44, $r46, $r47;
+        java.lang.Throwable $r45, $r50;
+        gov.nist.javax.sip.message.SIPResponse r51;
+        gov.nist.javax.sip.stack.MessageChannel r52;
+        gov.nist.javax.sip.stack.ServerResponseInterface r54, r55, r57, r58, r59, r61;
+
+        r0 := @this: gov.nist.javax.sip.stack.SIPClientTransaction;
+
+        r51 := @parameter0: gov.nist.javax.sip.message.SIPResponse;
+
+        r52 := @parameter1: gov.nist.javax.sip.stack.MessageChannel;
+
+        r1 := @parameter2: gov.nist.javax.sip.stack.SIPDialog;
+
+        i9 = virtualinvoke r51.<gov.nist.javax.sip.message.SIPResponse: int getStatusCode()>();
+
+        $r2 = <javax.sip.TransactionState: javax.sip.TransactionState TERMINATED>;
+
+        $r3 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: javax.sip.TransactionState getState()>();
+
+        if $r2 != $r3 goto label07;
+
+        z7 = 0;
+
+        if r1 == null goto label01;
+
+        z7 = 0;
+
+        $z5 = virtualinvoke r1.<gov.nist.javax.sip.stack.SIPDialog: boolean isAckSeen()>();
+
+        if $z5 == 0 goto label01;
+
+        z7 = 0;
+
+        $r37 = virtualinvoke r1.<gov.nist.javax.sip.stack.SIPDialog: gov.nist.javax.sip.message.SIPRequest getLastAckSent()>();
+
+        if $r37 == null goto label01;
+
+        z7 = 0;
+
+        $r38 = virtualinvoke r1.<gov.nist.javax.sip.stack.SIPDialog: gov.nist.javax.sip.message.SIPRequest getLastAckSent()>();
+
+        $r39 = virtualinvoke $r38.<gov.nist.javax.sip.message.SIPRequest: javax.sip.header.CSeqHeader getCSeq()>();
+
+        $l6 = interfaceinvoke $r39.<javax.sip.header.CSeqHeader: long getSeqNumber()>();
+
+        $r40 = virtualinvoke r51.<gov.nist.javax.sip.message.SIPResponse: javax.sip.header.CSeqHeader getCSeq()>();
+
+        $l7 = interfaceinvoke $r40.<javax.sip.header.CSeqHeader: long getSeqNumber()>();
+
+        $b8 = $l6 cmp $l7;
+
+        if $b8 != 0 goto label01;
+
+        z7 = 0;
+
+        $r41 = virtualinvoke r51.<gov.nist.javax.sip.message.SIPResponse: java.lang.String getFromTag()>();
+
+        $r42 = virtualinvoke r1.<gov.nist.javax.sip.stack.SIPDialog: gov.nist.javax.sip.message.SIPRequest getLastAckSent()>();
+
+        $r43 = virtualinvoke $r42.<gov.nist.javax.sip.message.SIPRequest: java.lang.String getFromTag()>();
+
+        $z6 = virtualinvoke $r41.<java.lang.String: boolean equals(java.lang.Object)>($r43);
+
+        if $z6 == 0 goto label01;
+
+        z7 = 1;
+
+     label01:
+        if r1 == null goto label06;
+
+        if z7 == 0 goto label06;
+
+        $r31 = virtualinvoke r51.<gov.nist.javax.sip.message.SIPResponse: javax.sip.header.CSeqHeader getCSeq()>();
+
+        $r32 = interfaceinvoke $r31.<javax.sip.header.CSeqHeader: java.lang.String getMethod()>();
+
+        $r33 = virtualinvoke r1.<gov.nist.javax.sip.stack.SIPDialog: java.lang.String getMethod()>();
+
+        $z3 = virtualinvoke $r32.<java.lang.String: boolean equals(java.lang.Object)>($r33);
+
+        if $z3 == 0 goto label06;
+
+     label02:
+        $r34 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $z4 = virtualinvoke $r34.<gov.nist.javax.sip.stack.SIPTransactionStack: boolean isLoggingEnabled()>();
+
+        if $z4 == 0 goto label03;
+
+        $r35 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $r36 = virtualinvoke $r35.<gov.nist.javax.sip.stack.SIPTransactionStack: gov.nist.core.StackLogger getStackLogger()>();
+
+        interfaceinvoke $r36.<gov.nist.core.StackLogger: void logDebug(java.lang.String)>("resending ACK");
+
+     label03:
+        virtualinvoke r1.<gov.nist.javax.sip.stack.SIPDialog: void resendAck()>();
+
+     label04:
+        goto label06;
+
+     label05:
+        $r50 := @caughtexception;
+
+     label06:
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void semRelease()>();
+
+        return;
+
+     label07:
+        $r4 = <javax.sip.TransactionState: javax.sip.TransactionState CALLING>;
+
+        $r5 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: javax.sip.TransactionState getState()>();
+
+        if $r4 != $r5 goto label20;
+
+        $i3 = i9 / 100;
+
+        if $i3 != 2 goto label09;
+
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void disableRetransmissionTimer()>();
+
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void disableTimeoutTimer()>();
+
+        $r30 = <javax.sip.TransactionState: javax.sip.TransactionState TERMINATED>;
+
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void setState(javax.sip.TransactionState)>($r30);
+
+        r54 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.ServerResponseInterface respondTo>;
+
+        if r54 == null goto label08;
+
+        interfaceinvoke r54.<gov.nist.javax.sip.stack.ServerResponseInterface: void processResponse(gov.nist.javax.sip.message.SIPResponse,gov.nist.javax.sip.stack.MessageChannel,gov.nist.javax.sip.stack.SIPDialog)>(r51, r0, r1);
+
+        goto label41;
+
+     label08:
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void semRelease()>();
+
+        goto label41;
+
+     label09:
+        $i4 = i9 / 100;
+
+        if $i4 != 1 goto label11;
+
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void disableRetransmissionTimer()>();
+
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void disableTimeoutTimer()>();
+
+        $r29 = <javax.sip.TransactionState: javax.sip.TransactionState PROCEEDING>;
+
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void setState(javax.sip.TransactionState)>($r29);
+
+        r55 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.ServerResponseInterface respondTo>;
+
+        if r55 == null goto label10;
+
+        interfaceinvoke r55.<gov.nist.javax.sip.stack.ServerResponseInterface: void processResponse(gov.nist.javax.sip.message.SIPResponse,gov.nist.javax.sip.stack.MessageChannel,gov.nist.javax.sip.stack.SIPDialog)>(r51, r0, r1);
+
+        goto label41;
+
+     label10:
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void semRelease()>();
+
+        goto label41;
+
+     label11:
+        if 300 > i9 goto label41;
+
+        if i9 > 699 goto label41;
+
+     label12:
+        $r20 = specialinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: javax.sip.message.Request createErrorAck()>();
+
+        $r21 = (gov.nist.javax.sip.message.SIPRequest) $r20;
+
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void sendMessage(gov.nist.javax.sip.message.SIPMessage)>($r21);
+
+     label13:
+        goto label15;
+
+     label14:
+        $r47 := @caughtexception;
+
+        $r48 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $r49 = virtualinvoke $r48.<gov.nist.javax.sip.stack.SIPTransactionStack: gov.nist.core.StackLogger getStackLogger()>();
+
+        interfaceinvoke $r49.<gov.nist.core.StackLogger: void logError(java.lang.String,java.lang.Exception)>("Unexpected Exception sending ACK -- sending error AcK ", $r47);
+
+     label15:
+        r57 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.ServerResponseInterface respondTo>;
+
+        if r57 == null goto label16;
+
+        interfaceinvoke r57.<gov.nist.javax.sip.stack.ServerResponseInterface: void processResponse(gov.nist.javax.sip.message.SIPResponse,gov.nist.javax.sip.stack.MessageChannel,gov.nist.javax.sip.stack.SIPDialog)>(r51, r0, r1);
+
+        goto label17;
+
+     label16:
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void semRelease()>();
+
+     label17:
+        $r22 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: javax.sip.Dialog getDialog()>();
+
+        if $r22 == null goto label18;
+
+        $r25 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: javax.sip.Dialog getDialog()>();
+
+        $r26 = (gov.nist.javax.sip.stack.SIPDialog) $r25;
+
+        $z2 = virtualinvoke $r26.<gov.nist.javax.sip.stack.SIPDialog: boolean isBackToBackUserAgent()>();
+
+        if $z2 == 0 goto label18;
+
+        $r27 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: javax.sip.Dialog getDialog()>();
+
+        $r28 = (gov.nist.javax.sip.stack.SIPDialog) $r27;
+
+        virtualinvoke $r28.<gov.nist.javax.sip.stack.SIPDialog: void releaseAckSem()>();
+
+     label18:
+        $z8 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: boolean isReliable()>();
+
+        if $z8 != 0 goto label19;
+
+        $r24 = <javax.sip.TransactionState: javax.sip.TransactionState COMPLETED>;
+
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void setState(javax.sip.TransactionState)>($r24);
+
+        $i5 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: int TIMER_D>;
+
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void enableTimeoutTimer(int)>($i5);
+
+        goto label41;
+
+     label19:
+        $r23 = <javax.sip.TransactionState: javax.sip.TransactionState TERMINATED>;
+
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void setState(javax.sip.TransactionState)>($r23);
+
+        goto label41;
+
+     label20:
+        $r6 = <javax.sip.TransactionState: javax.sip.TransactionState PROCEEDING>;
+
+        $r7 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: javax.sip.TransactionState getState()>();
+
+        if $r6 != $r7 goto label33;
+
+        $i0 = i9 / 100;
+
+        if $i0 != 1 goto label22;
+
+        r58 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.ServerResponseInterface respondTo>;
+
+        if r58 == null goto label21;
+
+        interfaceinvoke r58.<gov.nist.javax.sip.stack.ServerResponseInterface: void processResponse(gov.nist.javax.sip.message.SIPResponse,gov.nist.javax.sip.stack.MessageChannel,gov.nist.javax.sip.stack.SIPDialog)>(r51, r0, r1);
+
+        goto label41;
+
+     label21:
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void semRelease()>();
+
+        goto label41;
+
+     label22:
+        $i1 = i9 / 100;
+
+        if $i1 != 2 goto label24;
+
+        $r19 = <javax.sip.TransactionState: javax.sip.TransactionState TERMINATED>;
+
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void setState(javax.sip.TransactionState)>($r19);
+
+        r59 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.ServerResponseInterface respondTo>;
+
+        if r59 == null goto label23;
+
+        interfaceinvoke r59.<gov.nist.javax.sip.stack.ServerResponseInterface: void processResponse(gov.nist.javax.sip.message.SIPResponse,gov.nist.javax.sip.stack.MessageChannel,gov.nist.javax.sip.stack.SIPDialog)>(r51, r0, r1);
+
+        goto label41;
+
+     label23:
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void semRelease()>();
+
+        goto label41;
+
+     label24:
+        if 300 > i9 goto label41;
+
+        if i9 > 699 goto label41;
+
+     label25:
+        $r12 = specialinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: javax.sip.message.Request createErrorAck()>();
+
+        $r13 = (gov.nist.javax.sip.message.SIPRequest) $r12;
+
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void sendMessage(gov.nist.javax.sip.message.SIPMessage)>($r13);
+
+     label26:
+        goto label28;
+
+     label27:
+        $r44 := @caughtexception;
+
+        staticinvoke <gov.nist.core.InternalErrorHandler: void handleException(java.lang.Exception)>($r44);
+
+     label28:
+        $r14 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: javax.sip.Dialog getDialog()>();
+
+        if $r14 == null goto label29;
+
+        $r17 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: javax.sip.Dialog getDialog()>();
+
+        $r18 = (gov.nist.javax.sip.stack.SIPDialog) $r17;
+
+        virtualinvoke $r18.<gov.nist.javax.sip.stack.SIPDialog: void releaseAckSem()>();
+
+     label29:
+        $z1 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: boolean isReliable()>();
+
+        if $z1 != 0 goto label30;
+
+        $r16 = <javax.sip.TransactionState: javax.sip.TransactionState COMPLETED>;
+
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void setState(javax.sip.TransactionState)>($r16);
+
+        $i2 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: int TIMER_D>;
+
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void enableTimeoutTimer(int)>($i2);
+
+        goto label31;
+
+     label30:
+        $r15 = <javax.sip.TransactionState: javax.sip.TransactionState TERMINATED>;
+
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void setState(javax.sip.TransactionState)>($r15);
+
+     label31:
+        r61 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.ServerResponseInterface respondTo>;
+
+        if r61 == null goto label32;
+
+        interfaceinvoke r61.<gov.nist.javax.sip.stack.ServerResponseInterface: void processResponse(gov.nist.javax.sip.message.SIPResponse,gov.nist.javax.sip.stack.MessageChannel,gov.nist.javax.sip.stack.SIPDialog)>(r51, r0, r1);
+
+        goto label41;
+
+     label32:
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void semRelease()>();
+
+        goto label41;
+
+     label33:
+        $r8 = <javax.sip.TransactionState: javax.sip.TransactionState COMPLETED>;
+
+        $r9 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: javax.sip.TransactionState getState()>();
+
+        if $r8 != $r9 goto label41;
+
+        if 300 > i9 goto label41;
+
+        if i9 > 699 goto label41;
+
+     label34:
+        $r10 = specialinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: javax.sip.message.Request createErrorAck()>();
+
+        $r11 = (gov.nist.javax.sip.message.SIPRequest) $r10;
+
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void sendMessage(gov.nist.javax.sip.message.SIPMessage)>($r11);
+
+     label35:
+        goto label39;
+
+     label36:
+        $r45 := @caughtexception;
+
+        goto label40;
+
+     label37:
+        $r46 := @caughtexception;
+
+     label38:
+        staticinvoke <gov.nist.core.InternalErrorHandler: void handleException(java.lang.Exception)>($r46);
+
+     label39:
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void semRelease()>();
+
+        goto label41;
+
+     label40:
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void semRelease()>();
+
+        throw $r45;
+
+     label41:
+        return;
+
+        catch javax.sip.SipException from label02 to label03 with label05;
+        catch javax.sip.SipException from label03 to label04 with label05;
+        catch java.lang.Exception from label12 to label13 with label14;
+        catch java.lang.Exception from label25 to label26 with label27;
+        catch java.lang.Exception from label34 to label35 with label37;
+        catch java.lang.Throwable from label34 to label35 with label36;
+        catch java.lang.Throwable from label38 to label39 with label36;
+    }
+
+    private void nonInviteClientTransaction(gov.nist.javax.sip.message.SIPResponse, gov.nist.javax.sip.stack.MessageChannel, gov.nist.javax.sip.stack.SIPDialog) throws java.io.IOException
+    {
+        gov.nist.javax.sip.stack.SIPClientTransaction r0;
+        gov.nist.javax.sip.stack.SIPDialog r1;
+        int i0, $i1, $i2, $i3, $i4;
+        javax.sip.TransactionState $r2, $r3, $r4, $r5, $r10, $r13, $r14, $r15, $r16, $r17;
+        gov.nist.javax.sip.stack.SIPTransactionStack $r6, $r7;
+        boolean $z0, $z1, $z2;
+        java.lang.StringBuilder $r8;
+        java.lang.String $r12;
+        gov.nist.javax.sip.message.SIPResponse r18;
+        gov.nist.javax.sip.stack.MessageChannel r19;
+        gov.nist.javax.sip.stack.ServerResponseInterface r20, r21, r22, r23;
+        gov.nist.core.StackLogger r24;
+
+        r0 := @this: gov.nist.javax.sip.stack.SIPClientTransaction;
+
+        r18 := @parameter0: gov.nist.javax.sip.message.SIPResponse;
+
+        r19 := @parameter1: gov.nist.javax.sip.stack.MessageChannel;
+
+        r1 := @parameter2: gov.nist.javax.sip.stack.SIPDialog;
+
+        i0 = virtualinvoke r18.<gov.nist.javax.sip.message.SIPResponse: int getStatusCode()>();
+
+        $r2 = <javax.sip.TransactionState: javax.sip.TransactionState TRYING>;
+
+        $r3 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: javax.sip.TransactionState getState()>();
+
+        if $r2 != $r3 goto label06;
+
+        $i3 = i0 / 100;
+
+        if $i3 != 1 goto label02;
+
+        $r17 = <javax.sip.TransactionState: javax.sip.TransactionState PROCEEDING>;
+
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void setState(javax.sip.TransactionState)>($r17);
+
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void enableRetransmissionTimer(int)>(8);
+
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void enableTimeoutTimer(int)>(64);
+
+        r20 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.ServerResponseInterface respondTo>;
+
+        if r20 == null goto label01;
+
+        interfaceinvoke r20.<gov.nist.javax.sip.stack.ServerResponseInterface: void processResponse(gov.nist.javax.sip.message.SIPResponse,gov.nist.javax.sip.stack.MessageChannel,gov.nist.javax.sip.stack.SIPDialog)>(r18, r0, r1);
+
+        goto label14;
+
+     label01:
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void semRelease()>();
+
+        goto label14;
+
+     label02:
+        if 200 > i0 goto label14;
+
+        if i0 > 699 goto label14;
+
+        r21 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.ServerResponseInterface respondTo>;
+
+        if r21 == null goto label03;
+
+        interfaceinvoke r21.<gov.nist.javax.sip.stack.ServerResponseInterface: void processResponse(gov.nist.javax.sip.message.SIPResponse,gov.nist.javax.sip.stack.MessageChannel,gov.nist.javax.sip.stack.SIPDialog)>(r18, r0, r1);
+
+        goto label04;
+
+     label03:
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void semRelease()>();
+
+     label04:
+        $z2 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: boolean isReliable()>();
+
+        if $z2 != 0 goto label05;
+
+        $r16 = <javax.sip.TransactionState: javax.sip.TransactionState COMPLETED>;
+
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void setState(javax.sip.TransactionState)>($r16);
+
+        $i4 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: int TIMER_K>;
+
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void enableTimeoutTimer(int)>($i4);
+
+        goto label14;
+
+     label05:
+        $r15 = <javax.sip.TransactionState: javax.sip.TransactionState TERMINATED>;
+
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void setState(javax.sip.TransactionState)>($r15);
+
+        goto label14;
+
+     label06:
+        $r4 = <javax.sip.TransactionState: javax.sip.TransactionState PROCEEDING>;
+
+        $r5 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: javax.sip.TransactionState getState()>();
+
+        if $r4 != $r5 goto label12;
+
+        $i1 = i0 / 100;
+
+        if $i1 != 1 goto label08;
+
+        r22 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.ServerResponseInterface respondTo>;
+
+        if r22 == null goto label07;
+
+        interfaceinvoke r22.<gov.nist.javax.sip.stack.ServerResponseInterface: void processResponse(gov.nist.javax.sip.message.SIPResponse,gov.nist.javax.sip.stack.MessageChannel,gov.nist.javax.sip.stack.SIPDialog)>(r18, r0, r1);
+
+        goto label14;
+
+     label07:
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void semRelease()>();
+
+        goto label14;
+
+     label08:
+        if 200 > i0 goto label14;
+
+        if i0 > 699 goto label14;
+
+        r23 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.ServerResponseInterface respondTo>;
+
+        if r23 == null goto label09;
+
+        interfaceinvoke r23.<gov.nist.javax.sip.stack.ServerResponseInterface: void processResponse(gov.nist.javax.sip.message.SIPResponse,gov.nist.javax.sip.stack.MessageChannel,gov.nist.javax.sip.stack.SIPDialog)>(r18, r0, r1);
+
+        goto label10;
+
+     label09:
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void semRelease()>();
+
+     label10:
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void disableRetransmissionTimer()>();
+
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void disableTimeoutTimer()>();
+
+        $z1 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: boolean isReliable()>();
+
+        if $z1 != 0 goto label11;
+
+        $r14 = <javax.sip.TransactionState: javax.sip.TransactionState COMPLETED>;
+
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void setState(javax.sip.TransactionState)>($r14);
+
+        $i2 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: int TIMER_K>;
+
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void enableTimeoutTimer(int)>($i2);
+
+        goto label14;
+
+     label11:
+        $r13 = <javax.sip.TransactionState: javax.sip.TransactionState TERMINATED>;
+
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void setState(javax.sip.TransactionState)>($r13);
+
+        goto label14;
+
+     label12:
+        $r6 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $z0 = virtualinvoke $r6.<gov.nist.javax.sip.stack.SIPTransactionStack: boolean isLoggingEnabled()>();
+
+        if $z0 == 0 goto label13;
+
+        $r7 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        r24 = virtualinvoke $r7.<gov.nist.javax.sip.stack.SIPTransactionStack: gov.nist.core.StackLogger getStackLogger()>();
+
+        $r8 = new java.lang.StringBuilder;
+
+        specialinvoke $r8.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" Not sending response to TU! ");
+
+        $r10 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: javax.sip.TransactionState getState()>();
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r10);
+
+        $r12 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        interfaceinvoke r24.<gov.nist.core.StackLogger: void logDebug(java.lang.String)>($r12);
+
+     label13:
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void semRelease()>();
+
+     label14:
+        return;
+    }
+
+    public void alertIfStillInCallingStateBy(int)
+    {
+        gov.nist.javax.sip.stack.SIPClientTransaction r0;
+        int i0;
+
+        r0 := @this: gov.nist.javax.sip.stack.SIPClientTransaction;
+
+        i0 := @parameter0: int;
+
+        r0.<gov.nist.javax.sip.stack.SIPClientTransaction: boolean timeoutIfStillInCallingState> = 1;
+
+        r0.<gov.nist.javax.sip.stack.SIPClientTransaction: int callingStateTimeoutCount> = i0;
+
+        return;
+    }
+
+    public boolean checkFromTag(gov.nist.javax.sip.message.SIPResponse)
+    {
+        gov.nist.javax.sip.stack.SIPClientTransaction r0;
+        gov.nist.javax.sip.message.SIPResponse r1;
+        java.lang.String r2, $r7, $r9;
+        javax.sip.message.Request $r3;
+        gov.nist.javax.sip.message.SIPRequest $r4;
+        gov.nist.javax.sip.stack.SIPDialog $r5;
+        javax.sip.header.FromHeader $r6, $r8;
+        boolean $z0, $z1, $z2, $z3, z4, z5;
+        gov.nist.javax.sip.stack.SIPTransactionStack $r10, $r11, $r13, $r14;
+        gov.nist.core.StackLogger $r12, $r15;
+
+        r0 := @this: gov.nist.javax.sip.stack.SIPClientTransaction;
+
+        r1 := @parameter0: gov.nist.javax.sip.message.SIPResponse;
+
+        $r3 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: javax.sip.message.Request getRequest()>();
+
+        $r4 = (gov.nist.javax.sip.message.SIPRequest) $r3;
+
+        r2 = virtualinvoke $r4.<gov.nist.javax.sip.message.SIPRequest: java.lang.String getFromTag()>();
+
+        $r5 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPDialog defaultDialog>;
+
+        if $r5 == null goto label8;
+
+        if r2 != null goto label1;
+
+        z4 = 1;
+
+        goto label2;
+
+     label1:
+        z4 = 0;
+
+     label2:
+        $r6 = virtualinvoke r1.<gov.nist.javax.sip.message.SIPResponse: javax.sip.header.FromHeader getFrom()>();
+
+        $r7 = interfaceinvoke $r6.<javax.sip.header.FromHeader: java.lang.String getTag()>();
+
+        if $r7 != null goto label3;
+
+        z5 = 1;
+
+        goto label4;
+
+     label3:
+        z5 = 0;
+
+     label4:
+        $z0 = z4 ^ z5;
+
+        if $z0 == 0 goto label6;
+
+        $r13 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $z3 = virtualinvoke $r13.<gov.nist.javax.sip.stack.SIPTransactionStack: boolean isLoggingEnabled()>();
+
+        if $z3 == 0 goto label5;
+
+        $r14 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $r15 = virtualinvoke $r14.<gov.nist.javax.sip.stack.SIPTransactionStack: gov.nist.core.StackLogger getStackLogger()>();
+
+        interfaceinvoke $r15.<gov.nist.core.StackLogger: void logDebug(java.lang.String)>("From tag mismatch -- dropping response");
+
+     label5:
+        return 0;
+
+     label6:
+        if r2 == null goto label8;
+
+        $r8 = virtualinvoke r1.<gov.nist.javax.sip.message.SIPResponse: javax.sip.header.FromHeader getFrom()>();
+
+        $r9 = interfaceinvoke $r8.<javax.sip.header.FromHeader: java.lang.String getTag()>();
+
+        $z1 = virtualinvoke r2.<java.lang.String: boolean equalsIgnoreCase(java.lang.String)>($r9);
+
+        if $z1 != 0 goto label8;
+
+        $r10 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $z2 = virtualinvoke $r10.<gov.nist.javax.sip.stack.SIPTransactionStack: boolean isLoggingEnabled()>();
+
+        if $z2 == 0 goto label7;
+
+        $r11 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $r12 = virtualinvoke $r11.<gov.nist.javax.sip.stack.SIPTransactionStack: gov.nist.core.StackLogger getStackLogger()>();
+
+        interfaceinvoke $r12.<gov.nist.core.StackLogger: void logDebug(java.lang.String)>("From tag mismatch -- dropping response");
+
+     label7:
+        return 0;
+
+     label8:
+        return 1;
+    }
+
+    public void clearState()
+    {
+        gov.nist.javax.sip.stack.SIPClientTransaction r0;
+
+        r0 := @this: gov.nist.javax.sip.stack.SIPClientTransaction;
+
+        return;
+    }
+
+    public javax.sip.message.Request createAck() throws javax.sip.SipException
+    {
+        gov.nist.javax.sip.stack.SIPClientTransaction r0;
+        gov.nist.javax.sip.message.SIPRequest r1, r70;
+        java.util.ListIterator r3;
+        java.lang.StringBuilder $r4, $r65;
+        javax.sip.TransactionState $r6;
+        javax.sip.SipException $r8, $r11, $r13, $r63;
+        java.lang.String $r9, $r10, $r69;
+        boolean $z0, $z1, $z2, $z5;
+        gov.nist.javax.sip.message.SIPResponse $r12, $r14, $r15, $r18, $r20, $r39, $r51, $r53, $r54, $r67;
+        int $i0, $i1, $i2, $i3;
+        javax.sip.header.ToHeader $r16;
+        gov.nist.javax.sip.header.To $r17;
+        gov.nist.javax.sip.header.RouteList $r19;
+        gov.nist.javax.sip.header.ContactList $r21, $r40, $r52, $r55;
+        javax.sip.header.Header $r22, $r31, $r41, $r56;
+        gov.nist.javax.sip.header.Route $r23, $r34, $r43, r77, r78;
+        javax.sip.address.Address $r24, $r27, $r32, $r35, $r44, $r58;
+        javax.sip.address.URI $r25, $r28, $r30, $r33, $r59, $r61;
+        javax.sip.address.SipURI $r26;
+        java.lang.Object $r29, $r37, $r42, $r46, $r49, $r60;
+        gov.nist.javax.sip.address.AddressImpl $r36, $r38, $r45, $r47;
+        gov.nist.core.NameValueList $r48, $r50;
+        gov.nist.javax.sip.header.Contact $r57, r76;
+        gov.nist.javax.sip.stack.SIPTransactionStack $r62, $r64;
+        gov.nist.core.StackLogger r71;
+        gov.nist.javax.sip.header.RecordRouteList r73;
+        gov.nist.javax.sip.header.RecordRoute r74;
+
+        r0 := @this: gov.nist.javax.sip.stack.SIPClientTransaction;
+
+        r70 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.message.SIPRequest getOriginalRequest()>();
+
+        if r70 == null goto label14;
+
+        $r10 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: java.lang.String getMethod()>();
+
+        $z0 = virtualinvoke $r10.<java.lang.String: boolean equalsIgnoreCase(java.lang.String)>("ACK");
+
+        if $z0 != 0 goto label13;
+
+        $r12 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.message.SIPResponse lastResponse>;
+
+        if $r12 == null goto label12;
+
+        $r14 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.message.SIPResponse lastResponse>;
+
+        $i0 = virtualinvoke $r14.<gov.nist.javax.sip.message.SIPResponse: int getStatusCode()>();
+
+        if $i0 >= 200 goto label02;
+
+        $r62 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $z5 = virtualinvoke $r62.<gov.nist.javax.sip.stack.SIPTransactionStack: boolean isLoggingEnabled()>();
+
+        if $z5 == 0 goto label01;
+
+        $r64 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        r71 = virtualinvoke $r64.<gov.nist.javax.sip.stack.SIPTransactionStack: gov.nist.core.StackLogger getStackLogger()>();
+
+        $r65 = new java.lang.StringBuilder;
+
+        specialinvoke $r65.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r65.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("lastResponse = ");
+
+        $r67 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.message.SIPResponse lastResponse>;
+
+        virtualinvoke $r65.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r67);
+
+        $r69 = virtualinvoke $r65.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        interfaceinvoke r71.<gov.nist.core.StackLogger: void logDebug(java.lang.String)>($r69);
+
+     label01:
+        $r63 = new javax.sip.SipException;
+
+        specialinvoke $r63.<javax.sip.SipException: void <init>(java.lang.String)>("Cannot ACK a provisional response!");
+
+        throw $r63;
+
+     label02:
+        $r15 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.message.SIPResponse lastResponse>;
+
+        $r16 = virtualinvoke $r15.<gov.nist.javax.sip.message.SIPResponse: javax.sip.header.ToHeader getTo()>();
+
+        $r17 = (gov.nist.javax.sip.header.To) $r16;
+
+        r1 = virtualinvoke r70.<gov.nist.javax.sip.message.SIPRequest: gov.nist.javax.sip.message.SIPRequest createAckRequest(gov.nist.javax.sip.header.To)>($r17);
+
+        $r18 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.message.SIPResponse lastResponse>;
+
+        r73 = virtualinvoke $r18.<gov.nist.javax.sip.message.SIPResponse: gov.nist.javax.sip.header.RecordRouteList getRecordRouteHeaders()>();
+
+        if r73 != null goto label04;
+
+        $r51 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.message.SIPResponse lastResponse>;
+
+        $r52 = virtualinvoke $r51.<gov.nist.javax.sip.message.SIPResponse: gov.nist.javax.sip.header.ContactList getContactHeaders()>();
+
+        if $r52 == null goto label03;
+
+        $r53 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.message.SIPResponse lastResponse>;
+
+        $i2 = virtualinvoke $r53.<gov.nist.javax.sip.message.SIPResponse: int getStatusCode()>();
+
+        $i3 = $i2 / 100;
+
+        if $i3 == 3 goto label03;
+
+        $r54 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.message.SIPResponse lastResponse>;
+
+        $r55 = virtualinvoke $r54.<gov.nist.javax.sip.message.SIPResponse: gov.nist.javax.sip.header.ContactList getContactHeaders()>();
+
+        $r56 = virtualinvoke $r55.<gov.nist.javax.sip.header.ContactList: javax.sip.header.Header getFirst()>();
+
+        $r57 = (gov.nist.javax.sip.header.Contact) $r56;
+
+        $r58 = virtualinvoke $r57.<gov.nist.javax.sip.header.Contact: javax.sip.address.Address getAddress()>();
+
+        $r59 = interfaceinvoke $r58.<javax.sip.address.Address: javax.sip.address.URI getURI()>();
+
+        $r60 = interfaceinvoke $r59.<javax.sip.address.URI: java.lang.Object clone()>();
+
+        $r61 = (javax.sip.address.URI) $r60;
+
+        virtualinvoke r1.<gov.nist.javax.sip.message.SIPRequest: void setRequestURI(javax.sip.address.URI)>($r61);
+
+     label03:
+        return r1;
+
+     label04:
+        virtualinvoke r1.<gov.nist.javax.sip.message.SIPRequest: void removeHeader(java.lang.String)>("Route");
+
+        $r19 = new gov.nist.javax.sip.header.RouteList;
+
+        specialinvoke $r19.<gov.nist.javax.sip.header.RouteList: void <init>()>();
+
+        $i1 = virtualinvoke r73.<gov.nist.javax.sip.header.RecordRouteList: int size()>();
+
+        r3 = virtualinvoke r73.<gov.nist.javax.sip.header.RecordRouteList: java.util.ListIterator listIterator(int)>($i1);
+
+     label05:
+        $z1 = interfaceinvoke r3.<java.util.ListIterator: boolean hasPrevious()>();
+
+        if $z1 == 0 goto label06;
+
+        $r42 = interfaceinvoke r3.<java.util.ListIterator: java.lang.Object previous()>();
+
+        r74 = (gov.nist.javax.sip.header.RecordRoute) $r42;
+
+        $r43 = new gov.nist.javax.sip.header.Route;
+
+        specialinvoke $r43.<gov.nist.javax.sip.header.Route: void <init>()>();
+
+        $r44 = virtualinvoke r74.<gov.nist.javax.sip.header.RecordRoute: javax.sip.address.Address getAddress()>();
+
+        $r45 = (gov.nist.javax.sip.address.AddressImpl) $r44;
+
+        $r46 = virtualinvoke $r45.<gov.nist.javax.sip.address.AddressImpl: java.lang.Object clone()>();
+
+        $r47 = (gov.nist.javax.sip.address.AddressImpl) $r46;
+
+        virtualinvoke $r43.<gov.nist.javax.sip.header.Route: void setAddress(javax.sip.address.Address)>($r47);
+
+        $r48 = virtualinvoke r74.<gov.nist.javax.sip.header.RecordRoute: gov.nist.core.NameValueList getParameters()>();
+
+        $r49 = virtualinvoke $r48.<gov.nist.core.NameValueList: java.lang.Object clone()>();
+
+        $r50 = (gov.nist.core.NameValueList) $r49;
+
+        virtualinvoke $r43.<gov.nist.javax.sip.header.Route: void setParameters(gov.nist.core.NameValueList)>($r50);
+
+        virtualinvoke $r19.<gov.nist.javax.sip.header.RouteList: boolean add(gov.nist.javax.sip.header.SIPHeader)>($r43);
+
+        goto label05;
+
+     label06:
+        r76 = null;
+
+        $r20 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.message.SIPResponse lastResponse>;
+
+        $r21 = virtualinvoke $r20.<gov.nist.javax.sip.message.SIPResponse: gov.nist.javax.sip.header.ContactList getContactHeaders()>();
+
+        if $r21 == null goto label07;
+
+        $r39 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.message.SIPResponse lastResponse>;
+
+        $r40 = virtualinvoke $r39.<gov.nist.javax.sip.message.SIPResponse: gov.nist.javax.sip.header.ContactList getContactHeaders()>();
+
+        $r41 = virtualinvoke $r40.<gov.nist.javax.sip.header.ContactList: javax.sip.header.Header getFirst()>();
+
+        r76 = (gov.nist.javax.sip.header.Contact) $r41;
+
+     label07:
+        $r22 = virtualinvoke $r19.<gov.nist.javax.sip.header.RouteList: javax.sip.header.Header getFirst()>();
+
+        $r23 = (gov.nist.javax.sip.header.Route) $r22;
+
+        $r24 = virtualinvoke $r23.<gov.nist.javax.sip.header.Route: javax.sip.address.Address getAddress()>();
+
+        $r25 = interfaceinvoke $r24.<javax.sip.address.Address: javax.sip.address.URI getURI()>();
+
+        $r26 = (javax.sip.address.SipURI) $r25;
+
+        $z2 = interfaceinvoke $r26.<javax.sip.address.SipURI: boolean hasLrParam()>();
+
+        if $z2 != 0 goto label10;
+
+        r77 = null;
+
+        if r76 == null goto label08;
+
+        $r34 = new gov.nist.javax.sip.header.Route;
+
+        specialinvoke $r34.<gov.nist.javax.sip.header.Route: void <init>()>();
+
+        r77 = $r34;
+
+        $r35 = virtualinvoke r76.<gov.nist.javax.sip.header.Contact: javax.sip.address.Address getAddress()>();
+
+        $r36 = (gov.nist.javax.sip.address.AddressImpl) $r35;
+
+        $r37 = virtualinvoke $r36.<gov.nist.javax.sip.address.AddressImpl: java.lang.Object clone()>();
+
+        $r38 = (gov.nist.javax.sip.address.AddressImpl) $r37;
+
+        virtualinvoke $r34.<gov.nist.javax.sip.header.Route: void setAddress(javax.sip.address.Address)>($r38);
+
+     label08:
+        $r31 = virtualinvoke $r19.<gov.nist.javax.sip.header.RouteList: javax.sip.header.Header getFirst()>();
+
+        r78 = (gov.nist.javax.sip.header.Route) $r31;
+
+        virtualinvoke $r19.<gov.nist.javax.sip.header.RouteList: void removeFirst()>();
+
+        $r32 = virtualinvoke r78.<gov.nist.javax.sip.header.Route: javax.sip.address.Address getAddress()>();
+
+        $r33 = interfaceinvoke $r32.<javax.sip.address.Address: javax.sip.address.URI getURI()>();
+
+        virtualinvoke r1.<gov.nist.javax.sip.message.SIPRequest: void setRequestURI(javax.sip.address.URI)>($r33);
+
+        if r77 == null goto label09;
+
+        virtualinvoke $r19.<gov.nist.javax.sip.header.RouteList: boolean add(gov.nist.javax.sip.header.SIPHeader)>(r77);
+
+     label09:
+        virtualinvoke r1.<gov.nist.javax.sip.message.SIPRequest: void addHeader(javax.sip.header.Header)>($r19);
+
+        goto label11;
+
+     label10:
+        if r76 == null goto label11;
+
+        $r27 = virtualinvoke r76.<gov.nist.javax.sip.header.Contact: javax.sip.address.Address getAddress()>();
+
+        $r28 = interfaceinvoke $r27.<javax.sip.address.Address: javax.sip.address.URI getURI()>();
+
+        $r29 = interfaceinvoke $r28.<javax.sip.address.URI: java.lang.Object clone()>();
+
+        $r30 = (javax.sip.address.URI) $r29;
+
+        virtualinvoke r1.<gov.nist.javax.sip.message.SIPRequest: void setRequestURI(javax.sip.address.URI)>($r30);
+
+        virtualinvoke r1.<gov.nist.javax.sip.message.SIPRequest: void addHeader(javax.sip.header.Header)>($r19);
+
+     label11:
+        return r1;
+
+     label12:
+        $r13 = new javax.sip.SipException;
+
+        specialinvoke $r13.<javax.sip.SipException: void <init>(java.lang.String)>("bad Transaction state");
+
+        throw $r13;
+
+     label13:
+        $r11 = new javax.sip.SipException;
+
+        specialinvoke $r11.<javax.sip.SipException: void <init>(java.lang.String)>("Cannot ACK an ACK!");
+
+        throw $r11;
+
+     label14:
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("bad state ");
+
+        $r6 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: javax.sip.TransactionState getState()>();
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r6);
+
+        $r8 = new javax.sip.SipException;
+
+        $r9 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r8.<javax.sip.SipException: void <init>(java.lang.String)>($r9);
+
+        throw $r8;
+    }
+
+    public javax.sip.message.Request createCancel() throws javax.sip.SipException
+    {
+        gov.nist.javax.sip.stack.SIPClientTransaction r0;
+        java.lang.StringBuilder $r1;
+        javax.sip.TransactionState $r3;
+        javax.sip.SipException $r5, $r8, $r10;
+        java.lang.String $r6, $r7, $r9;
+        boolean $z0, $z1;
+        gov.nist.javax.sip.message.SIPRequest r11, r12;
+
+        r0 := @this: gov.nist.javax.sip.stack.SIPClientTransaction;
+
+        r11 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.message.SIPRequest getOriginalRequest()>();
+
+        if r11 == null goto label3;
+
+        $r7 = virtualinvoke r11.<gov.nist.javax.sip.message.SIPRequest: java.lang.String getMethod()>();
+
+        $z0 = virtualinvoke $r7.<java.lang.String: boolean equals(java.lang.Object)>("INVITE");
+
+        if $z0 == 0 goto label2;
+
+        $r9 = virtualinvoke r11.<gov.nist.javax.sip.message.SIPRequest: java.lang.String getMethod()>();
+
+        $z1 = virtualinvoke $r9.<java.lang.String: boolean equalsIgnoreCase(java.lang.String)>("ACK");
+
+        if $z1 != 0 goto label1;
+
+        r12 = virtualinvoke r11.<gov.nist.javax.sip.message.SIPRequest: gov.nist.javax.sip.message.SIPRequest createCancelRequest()>();
+
+        virtualinvoke r12.<gov.nist.javax.sip.message.SIPRequest: void setInviteTransaction(java.lang.Object)>(r0);
+
+        return r12;
+
+     label1:
+        $r10 = new javax.sip.SipException;
+
+        specialinvoke $r10.<javax.sip.SipException: void <init>(java.lang.String)>("Cannot Cancel ACK!");
+
+        throw $r10;
+
+     label2:
+        $r8 = new javax.sip.SipException;
+
+        specialinvoke $r8.<javax.sip.SipException: void <init>(java.lang.String)>("Only INIVTE may be cancelled");
+
+        throw $r8;
+
+     label3:
+        $r1 = new java.lang.StringBuilder;
+
+        specialinvoke $r1.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Bad state ");
+
+        $r3 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: javax.sip.TransactionState getState()>();
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r3);
+
+        $r5 = new javax.sip.SipException;
+
+        $r6 = virtualinvoke $r1.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r5.<javax.sip.SipException: void <init>(java.lang.String)>($r6);
+
+        throw $r5;
+    }
+
+    protected void fireRetransmissionTimer()
+    {
+        gov.nist.javax.sip.stack.SIPClientTransaction r0;
+        boolean z0, $z1, $z2, $z3, $z4;
+        long l0;
+        float f0;
+        int i1, $i2;
+        javax.sip.TransactionState $r2, $r3, $r5, $r6, $r16, $r17, r20;
+        gov.nist.javax.sip.stack.SIPTransactionStack $r4;
+        gov.nist.javax.sip.SipProviderImpl $r7, $r9, $r10, $r12;
+        javax.sip.Timeout $r8, $r11;
+        gov.nist.javax.sip.message.SIPRequest $r13, $r15, $r21, $r23;
+        javax.sip.header.Header $r14;
+        java.lang.Throwable $r18, $r19;
+        gov.nist.javax.sip.header.TimeStamp r27;
+        javax.sip.TimeoutEvent r28, r29;
+        java.lang.Exception r30;
+
+        r0 := @this: gov.nist.javax.sip.stack.SIPClientTransaction;
+
+     label01:
+        $r2 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: javax.sip.TransactionState getState()>();
+
+        if $r2 == null goto label20;
+
+        $z1 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: boolean isMapped>;
+
+        if $z1 != 0 goto label03;
+
+     label02:
+        goto label20;
+
+     label03:
+        z0 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: boolean isInviteTransaction()>();
+
+        r20 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: javax.sip.TransactionState getState()>();
+
+     label04:
+        if z0 == 0 goto label06;
+
+     label05:
+        $r17 = <javax.sip.TransactionState: javax.sip.TransactionState CALLING>;
+
+        if $r17 == r20 goto label08;
+
+     label06:
+        if z0 != 0 goto label19;
+
+     label07:
+        $r3 = <javax.sip.TransactionState: javax.sip.TransactionState TRYING>;
+
+        if $r3 == r20 goto label08;
+
+        $r16 = <javax.sip.TransactionState: javax.sip.TransactionState PROCEEDING>;
+
+        if $r16 != r20 goto label19;
+
+     label08:
+        $r21 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.message.SIPRequest lastRequest>;
+
+        if $r21 == null goto label19;
+
+        $r4 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $z2 = $r4.<gov.nist.javax.sip.stack.SIPTransactionStack: boolean generateTimeStampHeader>;
+
+        if $z2 == 0 goto label15;
+
+        $r13 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.message.SIPRequest lastRequest>;
+
+        $r14 = virtualinvoke $r13.<gov.nist.javax.sip.message.SIPRequest: javax.sip.header.Header getHeader(java.lang.String)>("Timestamp");
+
+        if $r14 == null goto label15;
+
+        l0 = staticinvoke <java.lang.System: long currentTimeMillis()>();
+
+        r27 = new gov.nist.javax.sip.header.TimeStamp;
+
+        specialinvoke r27.<gov.nist.javax.sip.header.TimeStamp: void <init>()>();
+
+     label09:
+        f0 = (float) l0;
+
+     label10:
+        virtualinvoke r27.<gov.nist.javax.sip.header.TimeStamp: void setTimeStamp(float)>(f0);
+
+     label11:
+        goto label14;
+
+     label12:
+        $r19 := @caughtexception;
+
+     label13:
+        r30 = (java.lang.Exception) $r19;
+
+        staticinvoke <gov.nist.core.InternalErrorHandler: void handleException(java.lang.Exception)>(r30);
+
+     label14:
+        $r15 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.message.SIPRequest lastRequest>;
+
+        virtualinvoke $r15.<gov.nist.javax.sip.message.SIPRequest: void setHeader(javax.sip.header.Header)>(r27);
+
+     label15:
+        $r23 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.message.SIPRequest lastRequest>;
+
+        specialinvoke r0.<gov.nist.javax.sip.stack.SIPTransaction: void sendMessage(gov.nist.javax.sip.message.SIPMessage)>($r23);
+
+        $z4 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: boolean notifyOnRetransmit>;
+
+        if $z4 == 0 goto label16;
+
+        r28 = new javax.sip.TimeoutEvent;
+
+        $r10 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.SipProviderImpl getSipProvider()>();
+
+        $r11 = <javax.sip.Timeout: javax.sip.Timeout RETRANSMIT>;
+
+        specialinvoke r28.<javax.sip.TimeoutEvent: void <init>(java.lang.Object,javax.sip.ClientTransaction,javax.sip.Timeout)>($r10, r0, $r11);
+
+        $r12 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.SipProviderImpl getSipProvider()>();
+
+        virtualinvoke $r12.<gov.nist.javax.sip.SipProviderImpl: void handleEvent(java.util.EventObject,gov.nist.javax.sip.stack.SIPTransaction)>(r28, r0);
+
+     label16:
+        $z3 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: boolean timeoutIfStillInCallingState>;
+
+        if $z3 == 0 goto label19;
+
+        $r5 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: javax.sip.TransactionState getState()>();
+
+        $r6 = <javax.sip.TransactionState: javax.sip.TransactionState CALLING>;
+
+        if $r5 != $r6 goto label19;
+
+        $i2 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: int callingStateTimeoutCount>;
+
+        i1 = $i2 - 1;
+
+        r0.<gov.nist.javax.sip.stack.SIPClientTransaction: int callingStateTimeoutCount> = i1;
+
+     label17:
+        if i1 != 0 goto label19;
+
+     label18:
+        r29 = new javax.sip.TimeoutEvent;
+
+        $r7 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.SipProviderImpl getSipProvider()>();
+
+        $r8 = <javax.sip.Timeout: javax.sip.Timeout RETRANSMIT>;
+
+        specialinvoke r29.<javax.sip.TimeoutEvent: void <init>(java.lang.Object,javax.sip.ClientTransaction,javax.sip.Timeout)>($r7, r0, $r8);
+
+        $r9 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.SipProviderImpl getSipProvider()>();
+
+        virtualinvoke $r9.<gov.nist.javax.sip.SipProviderImpl: void handleEvent(java.util.EventObject,gov.nist.javax.sip.stack.SIPTransaction)>(r29, r0);
+
+        r0.<gov.nist.javax.sip.stack.SIPClientTransaction: boolean timeoutIfStillInCallingState> = 0;
+
+     label19:
+        goto label22;
+
+     label20:
+        return;
+
+     label21:
+        $r18 := @caughtexception;
+
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void raiseIOExceptionEvent()>();
+
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void raiseErrorEvent(int)>(2);
+
+     label22:
+        return;
+
+        catch java.io.IOException from label01 to label02 with label21;
+        catch java.io.IOException from label03 to label04 with label21;
+        catch java.io.IOException from label05 to label06 with label21;
+        catch java.io.IOException from label07 to label08 with label21;
+        catch java.io.IOException from label08 to label09 with label21;
+        catch javax.sip.InvalidArgumentException from label10 to label11 with label12;
+        catch java.io.IOException from label10 to label11 with label21;
+        catch java.io.IOException from label13 to label14 with label21;
+        catch java.io.IOException from label14 to label15 with label21;
+        catch java.io.IOException from label15 to label16 with label21;
+        catch java.io.IOException from label16 to label17 with label21;
+        catch java.io.IOException from label18 to label19 with label21;
+    }
+
+    protected void fireTimeoutTimer()
+    {
+        gov.nist.javax.sip.stack.SIPClientTransaction r0, r38;
+        gov.nist.core.StackLogger r1;
+        gov.nist.javax.sip.stack.SIPTransactionStack $r2, $r29;
+        boolean $z0, $z1, $z2, $z3, $z4;
+        javax.sip.Dialog $r3, $r13;
+        javax.sip.TransactionState $r4, $r5, $r6, $r11, $r12, $r14, $r15, $r16, $r25, $r26, $r27, $r28, $r36, $r37;
+        gov.nist.javax.sip.message.SIPRequest $r7, $r9, $r17, $r21;
+        java.lang.String $r8, $r18, $r22, $r33;
+        java.lang.Object $r10;
+        javax.sip.DialogState $r19, $r23, $r24;
+        java.lang.StringBuilder $r30;
+        gov.nist.javax.sip.stack.SIPDialog r35;
+
+        r0 := @this: gov.nist.javax.sip.stack.SIPClientTransaction;
+
+        $r2 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $z0 = virtualinvoke $r2.<gov.nist.javax.sip.stack.SIPTransactionStack: boolean isLoggingEnabled()>();
+
+        if $z0 == 0 goto label1;
+
+        $r29 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        r1 = virtualinvoke $r29.<gov.nist.javax.sip.stack.SIPTransactionStack: gov.nist.core.StackLogger getStackLogger()>();
+
+        $r30 = new java.lang.StringBuilder;
+
+        specialinvoke $r30.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r30.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("fireTimeoutTimer ");
+
+        virtualinvoke $r30.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r0);
+
+        $r33 = virtualinvoke $r30.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        interfaceinvoke r1.<gov.nist.core.StackLogger: void logDebug(java.lang.String)>($r33);
+
+     label1:
+        $r3 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: javax.sip.Dialog getDialog()>();
+
+        r35 = (gov.nist.javax.sip.stack.SIPDialog) $r3;
+
+        $r4 = <javax.sip.TransactionState: javax.sip.TransactionState CALLING>;
+
+        $r5 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: javax.sip.TransactionState getState()>();
+
+        if $r4 == $r5 goto label2;
+
+        $r25 = <javax.sip.TransactionState: javax.sip.TransactionState TRYING>;
+
+        $r26 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: javax.sip.TransactionState getState()>();
+
+        if $r25 == $r26 goto label2;
+
+        $r27 = <javax.sip.TransactionState: javax.sip.TransactionState PROCEEDING>;
+
+        $r28 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: javax.sip.TransactionState getState()>();
+
+        if $r27 != $r28 goto label5;
+
+     label2:
+        if r35 == null goto label4;
+
+        $r19 = virtualinvoke r35.<gov.nist.javax.sip.stack.SIPDialog: javax.sip.DialogState getState()>();
+
+        if $r19 == null goto label3;
+
+        $r23 = virtualinvoke r35.<gov.nist.javax.sip.stack.SIPDialog: javax.sip.DialogState getState()>();
+
+        $r24 = <javax.sip.DialogState: javax.sip.DialogState EARLY>;
+
+        if $r23 != $r24 goto label4;
+
+     label3:
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPTransactionStack getSIPStack()>();
+
+        $r21 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.message.SIPRequest getOriginalRequest()>();
+
+        $r22 = virtualinvoke $r21.<gov.nist.javax.sip.message.SIPRequest: java.lang.String getMethod()>();
+
+        $z4 = staticinvoke <gov.nist.javax.sip.stack.SIPTransactionStack: boolean isDialogCreated(java.lang.String)>($r22);
+
+        if $z4 == 0 goto label5;
+
+        virtualinvoke r35.<gov.nist.javax.sip.stack.SIPDialog: void delete()>();
+
+        goto label5;
+
+     label4:
+        if r35 == null goto label5;
+
+        $r17 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.message.SIPRequest getOriginalRequest()>();
+
+        $r18 = virtualinvoke $r17.<gov.nist.javax.sip.message.SIPRequest: java.lang.String getMethod()>();
+
+        $z2 = virtualinvoke $r18.<java.lang.String: boolean equalsIgnoreCase(java.lang.String)>("BYE");
+
+        if $z2 == 0 goto label5;
+
+        $z3 = virtualinvoke r35.<gov.nist.javax.sip.stack.SIPDialog: boolean isTerminatedOnBye()>();
+
+        if $z3 == 0 goto label5;
+
+        virtualinvoke r35.<gov.nist.javax.sip.stack.SIPDialog: void delete()>();
+
+     label5:
+        $r36 = <javax.sip.TransactionState: javax.sip.TransactionState COMPLETED>;
+
+        $r37 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: javax.sip.TransactionState getState()>();
+
+        if $r36 == $r37 goto label8;
+
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void raiseErrorEvent(int)>(1);
+
+        $r7 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.message.SIPRequest getOriginalRequest()>();
+
+        $r8 = virtualinvoke $r7.<gov.nist.javax.sip.message.SIPRequest: java.lang.String getMethod()>();
+
+        $z1 = virtualinvoke $r8.<java.lang.String: boolean equalsIgnoreCase(java.lang.String)>("CANCEL");
+
+        if $z1 == 0 goto label9;
+
+        $r9 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.message.SIPRequest getOriginalRequest()>();
+
+        $r10 = virtualinvoke $r9.<gov.nist.javax.sip.message.SIPRequest: java.lang.Object getInviteTransaction()>();
+
+        r38 = (gov.nist.javax.sip.stack.SIPClientTransaction) $r10;
+
+        if r38 == null goto label7;
+
+        $r11 = virtualinvoke r38.<gov.nist.javax.sip.stack.SIPClientTransaction: javax.sip.TransactionState getState()>();
+
+        $r12 = <javax.sip.TransactionState: javax.sip.TransactionState CALLING>;
+
+        if $r11 == $r12 goto label6;
+
+        $r15 = virtualinvoke r38.<gov.nist.javax.sip.stack.SIPClientTransaction: javax.sip.TransactionState getState()>();
+
+        $r16 = <javax.sip.TransactionState: javax.sip.TransactionState PROCEEDING>;
+
+        if $r15 != $r16 goto label7;
+
+     label6:
+        $r13 = virtualinvoke r38.<gov.nist.javax.sip.stack.SIPClientTransaction: javax.sip.Dialog getDialog()>();
+
+        if $r13 == null goto label7;
+
+        $r14 = <javax.sip.TransactionState: javax.sip.TransactionState TERMINATED>;
+
+        virtualinvoke r38.<gov.nist.javax.sip.stack.SIPClientTransaction: void setState(javax.sip.TransactionState)>($r14);
+
+     label7:
+        goto label9;
+
+     label8:
+        $r6 = <javax.sip.TransactionState: javax.sip.TransactionState TERMINATED>;
+
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void setState(javax.sip.TransactionState)>($r6);
+
+     label9:
+        return;
+    }
+
+    public gov.nist.javax.sip.stack.SIPDialog getDefaultDialog()
+    {
+        gov.nist.javax.sip.stack.SIPClientTransaction r0;
+        gov.nist.javax.sip.stack.SIPDialog $r1;
+
+        r0 := @this: gov.nist.javax.sip.stack.SIPClientTransaction;
+
+        $r1 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPDialog defaultDialog>;
+
+        return $r1;
+    }
+
+    public gov.nist.javax.sip.stack.SIPDialog getDialog(java.lang.String)
+    {
+        gov.nist.javax.sip.stack.SIPClientTransaction r0;
+        java.lang.String r1;
+        java.util.concurrent.ConcurrentHashMap $r2;
+        java.lang.Object $r3;
+        gov.nist.javax.sip.stack.SIPDialog $r4;
+
+        r0 := @this: gov.nist.javax.sip.stack.SIPClientTransaction;
+
+        r1 := @parameter0: java.lang.String;
+
+        $r2 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: java.util.concurrent.ConcurrentHashMap sipDialogs>;
+
+        $r3 = virtualinvoke $r2.<java.util.concurrent.ConcurrentHashMap: java.lang.Object get(java.lang.Object)>(r1);
+
+        $r4 = (gov.nist.javax.sip.stack.SIPDialog) $r3;
+
+        return $r4;
+    }
+
+    public javax.sip.Dialog getDialog()
+    {
+        gov.nist.javax.sip.stack.SIPClientTransaction r0;
+        gov.nist.core.StackLogger r1;
+        gov.nist.javax.sip.message.SIPResponse $r2, $r9, $r11, $r13, $r14;
+        gov.nist.javax.sip.stack.SIPTransactionStack $r3, $r4;
+        boolean $z0;
+        java.lang.StringBuilder $r5;
+        java.util.concurrent.ConcurrentHashMap $r6;
+        gov.nist.javax.sip.stack.SIPDialog $r7, r16, r17;
+        java.lang.String $r8, $r10, $r12, $r15;
+        int $i0;
+
+        r0 := @this: gov.nist.javax.sip.stack.SIPClientTransaction;
+
+        r16 = null;
+
+        $r2 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.message.SIPResponse lastResponse>;
+
+        if $r2 == null goto label1;
+
+        r16 = null;
+
+        $r9 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.message.SIPResponse lastResponse>;
+
+        $r10 = virtualinvoke $r9.<gov.nist.javax.sip.message.SIPResponse: java.lang.String getFromTag()>();
+
+        if $r10 == null goto label1;
+
+        r16 = null;
+
+        $r11 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.message.SIPResponse lastResponse>;
+
+        $r12 = virtualinvoke $r11.<gov.nist.javax.sip.message.SIPResponse: java.lang.String getToTag()>();
+
+        if $r12 == null goto label1;
+
+        r16 = null;
+
+        $r13 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.message.SIPResponse lastResponse>;
+
+        $i0 = virtualinvoke $r13.<gov.nist.javax.sip.message.SIPResponse: int getStatusCode()>();
+
+        if $i0 == 100 goto label1;
+
+        $r14 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.message.SIPResponse lastResponse>;
+
+        $r15 = virtualinvoke $r14.<gov.nist.javax.sip.message.SIPResponse: java.lang.String getDialogId(boolean)>(0);
+
+        r16 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPDialog getDialog(java.lang.String)>($r15);
+
+     label1:
+        r17 = r16;
+
+        if r16 != null goto label2;
+
+        r17 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPDialog defaultDialog>;
+
+     label2:
+        $r3 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $z0 = virtualinvoke $r3.<gov.nist.javax.sip.stack.SIPTransactionStack: boolean isLoggingEnabled()>();
+
+        if $z0 == 0 goto label3;
+
+        $r4 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        r1 = virtualinvoke $r4.<gov.nist.javax.sip.stack.SIPTransactionStack: gov.nist.core.StackLogger getStackLogger()>();
+
+        $r5 = new java.lang.StringBuilder;
+
+        specialinvoke $r5.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" sipDialogs =  ");
+
+        $r6 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: java.util.concurrent.ConcurrentHashMap sipDialogs>;
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r6);
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" default dialog ");
+
+        $r7 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPDialog defaultDialog>;
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r7);
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" retval ");
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r17);
+
+        $r8 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        interfaceinvoke r1.<gov.nist.core.StackLogger: void logDebug(java.lang.String)>($r8);
+
+     label3:
+        return r17;
+    }
+
+    public javax.sip.address.Hop getNextHop()
+    {
+        gov.nist.javax.sip.stack.SIPClientTransaction r0;
+        javax.sip.address.Hop $r1;
+
+        r0 := @this: gov.nist.javax.sip.stack.SIPClientTransaction;
+
+        $r1 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: javax.sip.address.Hop nextHop>;
+
+        return $r1;
+    }
+
+    public gov.nist.javax.sip.header.Via getOutgoingViaHeader()
+    {
+        gov.nist.javax.sip.stack.SIPClientTransaction r0;
+        gov.nist.javax.sip.stack.MessageProcessor $r1;
+        gov.nist.javax.sip.header.Via $r2;
+
+        r0 := @this: gov.nist.javax.sip.stack.SIPClientTransaction;
+
+        $r1 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.MessageProcessor getMessageProcessor()>();
+
+        $r2 = virtualinvoke $r1.<gov.nist.javax.sip.stack.MessageProcessor: gov.nist.javax.sip.header.Via getViaHeader()>();
+
+        return $r2;
+    }
+
+    public gov.nist.javax.sip.stack.MessageChannel getRequestChannel()
+    {
+        gov.nist.javax.sip.stack.SIPClientTransaction r0;
+
+        r0 := @this: gov.nist.javax.sip.stack.SIPClientTransaction;
+
+        return r0;
+    }
+
+    public java.lang.String getViaHost()
+    {
+        gov.nist.javax.sip.stack.SIPClientTransaction r0;
+        java.lang.String $r1;
+
+        r0 := @this: gov.nist.javax.sip.stack.SIPClientTransaction;
+
+        $r1 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: java.lang.String viaHost>;
+
+        return $r1;
+    }
+
+    public int getViaPort()
+    {
+        gov.nist.javax.sip.stack.SIPClientTransaction r0;
+        int $i0;
+
+        r0 := @this: gov.nist.javax.sip.stack.SIPClientTransaction;
+
+        $i0 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: int viaPort>;
+
+        return $i0;
+    }
+
+    public boolean isMessagePartOfTransaction(gov.nist.javax.sip.message.SIPMessage)
+    {
+        gov.nist.javax.sip.stack.SIPClientTransaction r0;
+        gov.nist.javax.sip.message.SIPMessage r1;
+        gov.nist.javax.sip.header.ViaList r2;
+        java.lang.String r3, r4, $r7, $r9, $r10, $r11, $r12, $r13, $r16, $r19, $r21, $r22, $r23, $r24, $r27, $r28, $r30, $r31, $r32, $r33;
+        javax.sip.header.Header $r5, $r14, $r25;
+        gov.nist.javax.sip.header.Via $r6, $r15, $r26;
+        boolean $z1, $z2, $z3, $z4, $z5, $z6, z7, z8;
+        gov.nist.javax.sip.message.SIPRequest $r8, $r17;
+        javax.sip.header.CSeqHeader $r18, $r20, $r29;
+        javax.sip.TransactionState $r34, $r35;
+
+        r0 := @this: gov.nist.javax.sip.stack.SIPClientTransaction;
+
+        r1 := @parameter0: gov.nist.javax.sip.message.SIPMessage;
+
+        r2 = virtualinvoke r1.<gov.nist.javax.sip.message.SIPMessage: gov.nist.javax.sip.header.ViaList getViaHeaders()>();
+
+        $r5 = virtualinvoke r2.<gov.nist.javax.sip.header.ViaList: javax.sip.header.Header getFirst()>();
+
+        $r6 = (gov.nist.javax.sip.header.Via) $r5;
+
+        r3 = virtualinvoke $r6.<gov.nist.javax.sip.header.Via: java.lang.String getBranch()>();
+
+        r4 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: java.lang.String getBranch()>();
+
+        z7 = 1;
+
+        if r4 == null goto label1;
+
+        if r3 == null goto label1;
+
+        $r31 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: java.lang.String getBranch()>();
+
+        $r32 = virtualinvoke $r31.<java.lang.String: java.lang.String toLowerCase()>();
+
+        $z5 = virtualinvoke $r32.<java.lang.String: boolean startsWith(java.lang.String)>("z9hg4bk");
+
+        if $z5 == 0 goto label1;
+
+        $r33 = virtualinvoke r3.<java.lang.String: java.lang.String toLowerCase()>();
+
+        $z6 = virtualinvoke $r33.<java.lang.String: boolean startsWith(java.lang.String)>("z9hg4bk");
+
+        if $z6 == 0 goto label1;
+
+        z8 = 1;
+
+        goto label2;
+
+     label1:
+        z8 = 0;
+
+     label2:
+        $r34 = <javax.sip.TransactionState: javax.sip.TransactionState COMPLETED>;
+
+        $r35 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: javax.sip.TransactionState getState()>();
+
+        if $r34 != $r35 goto label6;
+
+        if z8 == 0 goto label5;
+
+        $r24 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: java.lang.String getBranch()>();
+
+        $r25 = virtualinvoke r2.<gov.nist.javax.sip.header.ViaList: javax.sip.header.Header getFirst()>();
+
+        $r26 = (gov.nist.javax.sip.header.Via) $r25;
+
+        $r27 = virtualinvoke $r26.<gov.nist.javax.sip.header.Via: java.lang.String getBranch()>();
+
+        $z3 = virtualinvoke $r24.<java.lang.String: boolean equalsIgnoreCase(java.lang.String)>($r27);
+
+        if $z3 == 0 goto label3;
+
+        $r28 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: java.lang.String getMethod()>();
+
+        $r29 = virtualinvoke r1.<gov.nist.javax.sip.message.SIPMessage: javax.sip.header.CSeqHeader getCSeq()>();
+
+        $r30 = interfaceinvoke $r29.<javax.sip.header.CSeqHeader: java.lang.String getMethod()>();
+
+        $z4 = virtualinvoke $r28.<java.lang.String: boolean equals(java.lang.Object)>($r30);
+
+        if $z4 == 0 goto label3;
+
+        goto label4;
+
+     label3:
+        z7 = 0;
+
+     label4:
+        goto label9;
+
+     label5:
+        $r22 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: java.lang.String getBranch()>();
+
+        $r23 = virtualinvoke r1.<gov.nist.javax.sip.message.SIPMessage: java.lang.String getTransactionId()>();
+
+        z7 = virtualinvoke $r22.<java.lang.String: boolean equals(java.lang.Object)>($r23);
+
+        goto label9;
+
+     label6:
+        z7 = 0;
+
+        $z1 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: boolean isTerminated()>();
+
+        if $z1 != 0 goto label9;
+
+        if z8 == 0 goto label7;
+
+        z7 = 0;
+
+        if r2 == null goto label9;
+
+        z7 = 0;
+
+        $r13 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: java.lang.String getBranch()>();
+
+        $r14 = virtualinvoke r2.<gov.nist.javax.sip.header.ViaList: javax.sip.header.Header getFirst()>();
+
+        $r15 = (gov.nist.javax.sip.header.Via) $r14;
+
+        $r16 = virtualinvoke $r15.<gov.nist.javax.sip.header.Via: java.lang.String getBranch()>();
+
+        $z2 = virtualinvoke $r13.<java.lang.String: boolean equalsIgnoreCase(java.lang.String)>($r16);
+
+        if $z2 == 0 goto label9;
+
+        $r17 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.message.SIPRequest getOriginalRequest()>();
+
+        $r18 = virtualinvoke $r17.<gov.nist.javax.sip.message.SIPRequest: javax.sip.header.CSeqHeader getCSeq()>();
+
+        $r19 = interfaceinvoke $r18.<javax.sip.header.CSeqHeader: java.lang.String getMethod()>();
+
+        $r20 = virtualinvoke r1.<gov.nist.javax.sip.message.SIPMessage: javax.sip.header.CSeqHeader getCSeq()>();
+
+        $r21 = interfaceinvoke $r20.<javax.sip.header.CSeqHeader: java.lang.String getMethod()>();
+
+        z7 = virtualinvoke $r19.<java.lang.String: boolean equals(java.lang.Object)>($r21);
+
+        goto label9;
+
+     label7:
+        $r7 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: java.lang.String getBranch()>();
+
+        if $r7 == null goto label8;
+
+        $r11 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: java.lang.String getBranch()>();
+
+        $r12 = virtualinvoke r1.<gov.nist.javax.sip.message.SIPMessage: java.lang.String getTransactionId()>();
+
+        z7 = virtualinvoke $r11.<java.lang.String: boolean equalsIgnoreCase(java.lang.String)>($r12);
+
+        goto label9;
+
+     label8:
+        $r8 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.message.SIPRequest getOriginalRequest()>();
+
+        $r9 = virtualinvoke $r8.<gov.nist.javax.sip.message.SIPRequest: java.lang.String getTransactionId()>();
+
+        $r10 = virtualinvoke r1.<gov.nist.javax.sip.message.SIPMessage: java.lang.String getTransactionId()>();
+
+        z7 = virtualinvoke $r9.<java.lang.String: boolean equalsIgnoreCase(java.lang.String)>($r10);
+
+     label9:
+        return z7;
+    }
+
+    public boolean isNotifyOnRetransmit()
+    {
+        gov.nist.javax.sip.stack.SIPClientTransaction r0;
+        boolean $z0;
+
+        r0 := @this: gov.nist.javax.sip.stack.SIPClientTransaction;
+
+        $z0 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: boolean notifyOnRetransmit>;
+
+        return $z0;
+    }
+
+    public void processResponse(gov.nist.javax.sip.message.SIPResponse, gov.nist.javax.sip.stack.MessageChannel)
+    {
+        gov.nist.javax.sip.stack.SIPClientTransaction r0, r26;
+        gov.nist.javax.sip.stack.MessageChannel r1;
+        int i0;
+        javax.sip.header.CSeqHeader $r2, $r16;
+        boolean $z0, $z1, $z2, $z3, $z4, $z5, $z6, $z7;
+        java.lang.String $r3, $r7, $r8, $r13, $r17, r23, r24, r29;
+        gov.nist.javax.sip.stack.SIPDialog $r4, $r9, $r10, $r11, $r14, r22, r31;
+        gov.nist.javax.sip.stack.SIPTransactionStack $r5, $r6, $r12, $r15, $r18, $r30;
+        java.lang.Object $r19;
+        java.lang.Throwable $r20;
+        gov.nist.javax.sip.message.SIPResponse r21, r28;
+        gov.nist.javax.sip.message.SIPRequest r25;
+        gov.nist.core.StackLogger r32;
+        java.lang.NullPointerException r33;
+        java.lang.RuntimeException r34;
+
+        r0 := @this: gov.nist.javax.sip.stack.SIPClientTransaction;
+
+        r21 := @parameter0: gov.nist.javax.sip.message.SIPResponse;
+
+        r1 := @parameter1: gov.nist.javax.sip.stack.MessageChannel;
+
+        r22 = null;
+
+        $r2 = virtualinvoke r21.<gov.nist.javax.sip.message.SIPResponse: javax.sip.header.CSeqHeader getCSeq()>();
+
+        r23 = interfaceinvoke $r2.<javax.sip.header.CSeqHeader: java.lang.String getMethod()>();
+
+        r24 = virtualinvoke r21.<gov.nist.javax.sip.message.SIPResponse: java.lang.String getDialogId(boolean)>(0);
+
+        $z0 = virtualinvoke r23.<java.lang.String: boolean equals(java.lang.Object)>("CANCEL");
+
+        if $z0 == 0 goto label02;
+
+        r25 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.message.SIPRequest lastRequest>;
+
+        if r25 == null goto label02;
+
+        $r19 = virtualinvoke r25.<gov.nist.javax.sip.message.SIPRequest: java.lang.Object getInviteTransaction()>();
+
+        r26 = (gov.nist.javax.sip.stack.SIPClientTransaction) $r19;
+
+        if r26 == null goto label01;
+
+        r22 = r26.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPDialog defaultDialog>;
+
+     label01:
+        goto label03;
+
+     label02:
+        r22 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPDialog getDialog(java.lang.String)>(r24);
+
+     label03:
+        if r22 != null goto label28;
+
+        i0 = virtualinvoke r21.<gov.nist.javax.sip.message.SIPResponse: int getStatusCode()>();
+
+        if i0 <= 100 goto label26;
+
+        if i0 >= 300 goto label26;
+
+        $r3 = virtualinvoke r21.<gov.nist.javax.sip.message.SIPResponse: java.lang.String getToTag()>();
+
+        if $r3 != null goto label04;
+
+        $r18 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $z7 = virtualinvoke $r18.<gov.nist.javax.sip.stack.SIPTransactionStack: boolean isRfc2543Supported()>();
+
+        if $z7 == 0 goto label26;
+
+     label04:
+        $z1 = staticinvoke <gov.nist.javax.sip.stack.SIPTransactionStack: boolean isDialogCreated(java.lang.String)>(r23);
+
+        if $z1 == 0 goto label26;
+
+        entermonitor r0;
+
+     label05:
+        $r4 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPDialog defaultDialog>;
+
+        if $r4 == null goto label20;
+
+        $r8 = virtualinvoke r21.<gov.nist.javax.sip.message.SIPResponse: java.lang.String getFromTag()>();
+
+        if $r8 == null goto label19;
+
+        $r9 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPDialog defaultDialog>;
+
+        r28 = virtualinvoke $r9.<gov.nist.javax.sip.stack.SIPDialog: gov.nist.javax.sip.message.SIPResponse getLastResponse()>();
+
+        $r10 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPDialog defaultDialog>;
+
+        r29 = virtualinvoke $r10.<gov.nist.javax.sip.stack.SIPDialog: java.lang.String getDialogId()>();
+
+     label06:
+        if r28 == null goto label13;
+
+     label07:
+        $z3 = virtualinvoke r23.<java.lang.String: boolean equals(java.lang.Object)>("SUBSCRIBE");
+
+        if $z3 == 0 goto label09;
+
+        $r16 = virtualinvoke r28.<gov.nist.javax.sip.message.SIPResponse: javax.sip.header.CSeqHeader getCSeq()>();
+
+        $r17 = interfaceinvoke $r16.<javax.sip.header.CSeqHeader: java.lang.String getMethod()>();
+
+        $z5 = virtualinvoke $r17.<java.lang.String: boolean equals(java.lang.Object)>("NOTIFY");
+
+        if $z5 == 0 goto label09;
+
+        $z6 = virtualinvoke r29.<java.lang.String: boolean equals(java.lang.Object)>(r24);
+
+        if $z6 == 0 goto label09;
+
+     label08:
+        goto label13;
+
+     label09:
+        $r30 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        r31 = virtualinvoke $r30.<gov.nist.javax.sip.stack.SIPTransactionStack: gov.nist.javax.sip.stack.SIPDialog getDialog(java.lang.String)>(r24);
+
+     label10:
+        r22 = r31;
+
+        if r31 != null goto label14;
+
+        r22 = r31;
+
+     label11:
+        $r14 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPDialog defaultDialog>;
+
+        $z4 = virtualinvoke $r14.<gov.nist.javax.sip.stack.SIPDialog: boolean isAssigned()>();
+
+        if $z4 == 0 goto label14;
+
+        $r15 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        r22 = virtualinvoke $r15.<gov.nist.javax.sip.stack.SIPTransactionStack: gov.nist.javax.sip.stack.SIPDialog createDialog(gov.nist.javax.sip.stack.SIPClientTransaction,gov.nist.javax.sip.message.SIPResponse)>(r0, r21);
+
+     label12:
+        goto label14;
+
+     label13:
+        $r11 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPDialog defaultDialog>;
+
+        virtualinvoke $r11.<gov.nist.javax.sip.stack.SIPDialog: void setLastResponse(gov.nist.javax.sip.stack.SIPTransaction,gov.nist.javax.sip.message.SIPResponse)>(r0, r21);
+
+        r22 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPDialog defaultDialog>;
+
+     label14:
+        if r22 == null goto label17;
+
+     label15:
+        $r13 = virtualinvoke r22.<gov.nist.javax.sip.stack.SIPDialog: java.lang.String getDialogId()>();
+
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void setDialog(gov.nist.javax.sip.stack.SIPDialog,java.lang.String)>(r22, $r13);
+
+     label16:
+        goto label18;
+
+     label17:
+        $r12 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        r32 = virtualinvoke $r12.<gov.nist.javax.sip.stack.SIPTransactionStack: gov.nist.core.StackLogger getStackLogger()>();
+
+        r33 = new java.lang.NullPointerException;
+
+        specialinvoke r33.<java.lang.NullPointerException: void <init>()>();
+
+        interfaceinvoke r32.<gov.nist.core.StackLogger: void logError(java.lang.String,java.lang.Exception)>("dialog is unexpectedly null", r33);
+
+     label18:
+        goto label21;
+
+     label19:
+        r34 = new java.lang.RuntimeException;
+
+        specialinvoke r34.<java.lang.RuntimeException: void <init>(java.lang.String)>("Response without from-tag");
+
+        throw r34;
+
+     label20:
+        $r5 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $z2 = $r5.<gov.nist.javax.sip.stack.SIPTransactionStack: boolean isAutomaticDialogSupportEnabled>;
+
+        if $z2 == 0 goto label21;
+
+        $r6 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        r22 = virtualinvoke $r6.<gov.nist.javax.sip.stack.SIPTransactionStack: gov.nist.javax.sip.stack.SIPDialog createDialog(gov.nist.javax.sip.stack.SIPClientTransaction,gov.nist.javax.sip.message.SIPResponse)>(r0, r21);
+
+        $r7 = virtualinvoke r22.<gov.nist.javax.sip.stack.SIPDialog: java.lang.String getDialogId()>();
+
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void setDialog(gov.nist.javax.sip.stack.SIPDialog,java.lang.String)>(r22, $r7);
+
+     label21:
+        exitmonitor r0;
+
+     label22:
+        goto label27;
+
+     label23:
+        $r20 := @caughtexception;
+
+     label24:
+        exitmonitor r0;
+
+     label25:
+        throw $r20;
+
+     label26:
+        r22 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPDialog defaultDialog>;
+
+     label27:
+        goto label29;
+
+     label28:
+        virtualinvoke r22.<gov.nist.javax.sip.stack.SIPDialog: void setLastResponse(gov.nist.javax.sip.stack.SIPTransaction,gov.nist.javax.sip.message.SIPResponse)>(r0, r21);
+
+     label29:
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void processResponse(gov.nist.javax.sip.message.SIPResponse,gov.nist.javax.sip.stack.MessageChannel,gov.nist.javax.sip.stack.SIPDialog)>(r21, r1, r22);
+
+        return;
+
+        catch java.lang.Throwable from label05 to label06 with label23;
+        catch java.lang.Throwable from label07 to label08 with label23;
+        catch java.lang.Throwable from label09 to label10 with label23;
+        catch java.lang.Throwable from label11 to label12 with label23;
+        catch java.lang.Throwable from label13 to label14 with label23;
+        catch java.lang.Throwable from label15 to label16 with label23;
+        catch java.lang.Throwable from label17 to label18 with label23;
+        catch java.lang.Throwable from label19 to label20 with label23;
+        catch java.lang.Throwable from label20 to label21 with label23;
+        catch java.lang.Throwable from label21 to label22 with label23;
+        catch java.lang.Throwable from label24 to label25 with label23;
+    }
+
+    public void processResponse(gov.nist.javax.sip.message.SIPResponse, gov.nist.javax.sip.stack.MessageChannel, gov.nist.javax.sip.stack.SIPDialog)
+    {
+        gov.nist.javax.sip.stack.SIPClientTransaction r0;
+        gov.nist.javax.sip.stack.MessageChannel r1;
+        gov.nist.javax.sip.stack.SIPDialog r2;
+        int i0, $i1;
+        javax.sip.TransactionState $r3, $r4, $r11, $r18, $r19, $r23, r27;
+        gov.nist.javax.sip.stack.SIPTransactionStack $r5, $r6, $r14, $r22, $r24;
+        boolean $z0, $z1, $z2;
+        java.lang.String $r8, $r13, $r17;
+        java.lang.Throwable $r20, $r21;
+        gov.nist.core.StackLogger $r25, r28, r30;
+        gov.nist.javax.sip.message.SIPResponse r26;
+        java.lang.StringBuilder r29, r31;
+
+        r0 := @this: gov.nist.javax.sip.stack.SIPClientTransaction;
+
+        r26 := @parameter0: gov.nist.javax.sip.message.SIPResponse;
+
+        r1 := @parameter1: gov.nist.javax.sip.stack.MessageChannel;
+
+        r2 := @parameter2: gov.nist.javax.sip.stack.SIPDialog;
+
+        entermonitor r0;
+
+     label01:
+        r27 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: javax.sip.TransactionState getState()>();
+
+     label02:
+        if r27 != null goto label03;
+
+        exitmonitor r0;
+
+        return;
+
+     label03:
+        $r3 = <javax.sip.TransactionState: javax.sip.TransactionState COMPLETED>;
+
+        $r4 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: javax.sip.TransactionState getState()>();
+
+        if $r3 == $r4 goto label04;
+
+        $r18 = <javax.sip.TransactionState: javax.sip.TransactionState TERMINATED>;
+
+        $r19 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: javax.sip.TransactionState getState()>();
+
+        if $r18 != $r19 goto label06;
+
+     label04:
+        $i1 = virtualinvoke r26.<gov.nist.javax.sip.message.SIPResponse: int getStatusCode()>();
+
+        i0 = $i1 / 100;
+
+     label05:
+        if i0 != 1 goto label06;
+
+        exitmonitor r0;
+
+        return;
+
+     label06:
+        $r5 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $z0 = virtualinvoke $r5.<gov.nist.javax.sip.stack.SIPTransactionStack: boolean isLoggingEnabled()>();
+
+        if $z0 == 0 goto label07;
+
+        $r6 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        r28 = virtualinvoke $r6.<gov.nist.javax.sip.stack.SIPTransactionStack: gov.nist.core.StackLogger getStackLogger()>();
+
+        r29 = new java.lang.StringBuilder;
+
+        specialinvoke r29.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r29.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("processing ");
+
+        $r8 = virtualinvoke r26.<gov.nist.javax.sip.message.SIPResponse: java.lang.String getFirstLine()>();
+
+        virtualinvoke r29.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r8);
+
+        virtualinvoke r29.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("current state = ");
+
+        $r11 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: javax.sip.TransactionState getState()>();
+
+        virtualinvoke r29.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r11);
+
+        $r13 = virtualinvoke r29.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        interfaceinvoke r28.<gov.nist.core.StackLogger: void logDebug(java.lang.String)>($r13);
+
+        $r14 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        r30 = virtualinvoke $r14.<gov.nist.javax.sip.stack.SIPTransactionStack: gov.nist.core.StackLogger getStackLogger()>();
+
+        r31 = new java.lang.StringBuilder;
+
+        specialinvoke r31.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r31.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("dialog = ");
+
+        virtualinvoke r31.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r2);
+
+        $r17 = virtualinvoke r31.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        interfaceinvoke r30.<gov.nist.core.StackLogger: void logDebug(java.lang.String)>($r17);
+
+     label07:
+        r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.message.SIPResponse lastResponse> = r26;
+
+     label08:
+        $z1 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: boolean isInviteTransaction()>();
+
+        if $z1 == 0 goto label10;
+
+        specialinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void inviteClientTransaction(gov.nist.javax.sip.message.SIPResponse,gov.nist.javax.sip.stack.MessageChannel,gov.nist.javax.sip.stack.SIPDialog)>(r26, r1, r2);
+
+     label09:
+        goto label11;
+
+     label10:
+        specialinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void nonInviteClientTransaction(gov.nist.javax.sip.message.SIPResponse,gov.nist.javax.sip.stack.MessageChannel,gov.nist.javax.sip.stack.SIPDialog)>(r26, r1, r2);
+
+     label11:
+        goto label15;
+
+     label12:
+        $r21 := @caughtexception;
+
+     label13:
+        $r22 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $z2 = virtualinvoke $r22.<gov.nist.javax.sip.stack.SIPTransactionStack: boolean isLoggingEnabled()>();
+
+        if $z2 == 0 goto label14;
+
+        $r24 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $r25 = virtualinvoke $r24.<gov.nist.javax.sip.stack.SIPTransactionStack: gov.nist.core.StackLogger getStackLogger()>();
+
+        interfaceinvoke $r25.<gov.nist.core.StackLogger: void logException(java.lang.Throwable)>($r21);
+
+     label14:
+        $r23 = <javax.sip.TransactionState: javax.sip.TransactionState TERMINATED>;
+
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void setState(javax.sip.TransactionState)>($r23);
+
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void raiseErrorEvent(int)>(2);
+
+     label15:
+        exitmonitor r0;
+
+        return;
+
+     label16:
+        $r20 := @caughtexception;
+
+        exitmonitor r0;
+
+        throw $r20;
+
+        catch java.lang.Throwable from label01 to label02 with label16;
+        catch java.lang.Throwable from label03 to label04 with label16;
+        catch java.lang.Throwable from label04 to label05 with label16;
+        catch java.lang.Throwable from label06 to label07 with label16;
+        catch java.lang.Throwable from label07 to label08 with label16;
+        catch java.io.IOException from label08 to label09 with label12;
+        catch java.lang.Throwable from label08 to label09 with label16;
+        catch java.io.IOException from label10 to label11 with label12;
+        catch java.lang.Throwable from label10 to label11 with label16;
+        catch java.lang.Throwable from label13 to label14 with label16;
+        catch java.lang.Throwable from label14 to label15 with label16;
+    }
+
+    public void sendMessage(gov.nist.javax.sip.message.SIPMessage) throws java.io.IOException
+    {
+        gov.nist.javax.sip.stack.SIPClientTransaction r0;
+        gov.nist.javax.sip.message.SIPRequest r1;
+        java.lang.StringBuilder r2, r36;
+        gov.nist.javax.sip.header.ViaList $r3;
+        javax.sip.header.Header $r4;
+        java.lang.String $r5, $r7, $r9, $r10, $r21, $r26;
+        gov.nist.javax.sip.stack.SIPTransactionStack $r6, $r18, $r22;
+        boolean $z0, $z1, $z2, $z3, $z4, $z5, $z6;
+        javax.sip.TransactionState $r8, $r11, $r12, $r13, $r14, $r15, $r16, $r17, $r24, $r30, r37, r38;
+        java.lang.Throwable $r27, $r28, $r29;
+        gov.nist.javax.sip.message.SIPMessage r31;
+        gov.nist.javax.sip.header.Via r32;
+        gov.nist.core.StackLogger r34, r35;
+
+        r0 := @this: gov.nist.javax.sip.stack.SIPClientTransaction;
+
+        r31 := @parameter0: gov.nist.javax.sip.message.SIPMessage;
+
+     label01:
+        r1 = (gov.nist.javax.sip.message.SIPRequest) r31;
+
+        $r3 = virtualinvoke r1.<gov.nist.javax.sip.message.SIPRequest: gov.nist.javax.sip.header.ViaList getViaHeaders()>();
+
+        $r4 = virtualinvoke $r3.<gov.nist.javax.sip.header.ViaList: javax.sip.header.Header getFirst()>();
+
+        r32 = (gov.nist.javax.sip.header.Via) $r4;
+
+     label02:
+        $r5 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: java.lang.String getBranch()>();
+
+        virtualinvoke r32.<gov.nist.javax.sip.header.Via: void setBranch(java.lang.String)>($r5);
+
+     label03:
+        goto label05;
+
+     label04:
+        $r27 := @caughtexception;
+
+     label05:
+        $r6 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $z0 = virtualinvoke $r6.<gov.nist.javax.sip.stack.SIPTransactionStack: boolean isLoggingEnabled()>();
+
+        if $z0 == 0 goto label06;
+
+        $r18 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        r34 = virtualinvoke $r18.<gov.nist.javax.sip.stack.SIPTransactionStack: gov.nist.core.StackLogger getStackLogger()>();
+
+        r2 = new java.lang.StringBuilder;
+
+        specialinvoke r2.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Sending Message ");
+
+        virtualinvoke r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r31);
+
+        $r21 = virtualinvoke r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        interfaceinvoke r34.<gov.nist.core.StackLogger: void logDebug(java.lang.String)>($r21);
+
+        $r22 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        r35 = virtualinvoke $r22.<gov.nist.javax.sip.stack.SIPTransactionStack: gov.nist.core.StackLogger getStackLogger()>();
+
+        r36 = new java.lang.StringBuilder;
+
+        specialinvoke r36.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r36.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("TransactionState ");
+
+        $r24 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: javax.sip.TransactionState getState()>();
+
+        virtualinvoke r36.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r24);
+
+        $r26 = virtualinvoke r36.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        interfaceinvoke r35.<gov.nist.core.StackLogger: void logDebug(java.lang.String)>($r26);
+
+     label06:
+        r37 = <javax.sip.TransactionState: javax.sip.TransactionState PROCEEDING>;
+
+        r38 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: javax.sip.TransactionState getState()>();
+
+     label07:
+        if r37 == r38 goto label09;
+
+     label08:
+        $r16 = <javax.sip.TransactionState: javax.sip.TransactionState CALLING>;
+
+        $r17 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: javax.sip.TransactionState getState()>();
+
+        if $r16 != $r17 goto label14;
+
+     label09:
+        $r7 = virtualinvoke r1.<gov.nist.javax.sip.message.SIPRequest: java.lang.String getMethod()>();
+
+        $z1 = virtualinvoke $r7.<java.lang.String: boolean equals(java.lang.Object)>("ACK");
+
+        if $z1 == 0 goto label14;
+
+        $z5 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: boolean isReliable()>();
+
+        if $z5 == 0 goto label11;
+
+        $r15 = <javax.sip.TransactionState: javax.sip.TransactionState TERMINATED>;
+
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void setState(javax.sip.TransactionState)>($r15);
+
+     label10:
+        goto label12;
+
+     label11:
+        $r14 = <javax.sip.TransactionState: javax.sip.TransactionState COMPLETED>;
+
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void setState(javax.sip.TransactionState)>($r14);
+
+     label12:
+        specialinvoke r0.<gov.nist.javax.sip.stack.SIPTransaction: void sendMessage(gov.nist.javax.sip.message.SIPMessage)>(r1);
+
+     label13:
+        r0.<gov.nist.javax.sip.stack.SIPClientTransaction: boolean isMapped> = 1;
+
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void startTransactionTimer()>();
+
+        return;
+
+     label14:
+        r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.message.SIPRequest lastRequest> = r1;
+
+        $r8 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: javax.sip.TransactionState getState()>();
+
+        if $r8 != null goto label23;
+
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void setOriginalRequest(gov.nist.javax.sip.message.SIPRequest)>(r1);
+
+        $r9 = virtualinvoke r1.<gov.nist.javax.sip.message.SIPRequest: java.lang.String getMethod()>();
+
+        $z2 = virtualinvoke $r9.<java.lang.String: boolean equals(java.lang.Object)>("INVITE");
+
+        if $z2 == 0 goto label16;
+
+        $r13 = <javax.sip.TransactionState: javax.sip.TransactionState CALLING>;
+
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void setState(javax.sip.TransactionState)>($r13);
+
+     label15:
+        goto label19;
+
+     label16:
+        $r10 = virtualinvoke r1.<gov.nist.javax.sip.message.SIPRequest: java.lang.String getMethod()>();
+
+        $z3 = virtualinvoke $r10.<java.lang.String: boolean equals(java.lang.Object)>("ACK");
+
+        if $z3 == 0 goto label18;
+
+        $r12 = <javax.sip.TransactionState: javax.sip.TransactionState TERMINATED>;
+
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void setState(javax.sip.TransactionState)>($r12);
+
+     label17:
+        goto label19;
+
+     label18:
+        $r11 = <javax.sip.TransactionState: javax.sip.TransactionState TRYING>;
+
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void setState(javax.sip.TransactionState)>($r11);
+
+     label19:
+        $z6 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: boolean isReliable()>();
+
+        if $z6 != 0 goto label20;
+
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void enableRetransmissionTimer()>();
+
+     label20:
+        $z4 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: boolean isInviteTransaction()>();
+
+        if $z4 == 0 goto label22;
+
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void enableTimeoutTimer(int)>(64);
+
+     label21:
+        goto label23;
+
+     label22:
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void enableTimeoutTimer(int)>(64);
+
+     label23:
+        specialinvoke r0.<gov.nist.javax.sip.stack.SIPTransaction: void sendMessage(gov.nist.javax.sip.message.SIPMessage)>(r1);
+
+     label24:
+        r0.<gov.nist.javax.sip.stack.SIPClientTransaction: boolean isMapped> = 1;
+
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void startTransactionTimer()>();
+
+        return;
+
+     label25:
+        $r29 := @caughtexception;
+
+     label26:
+        $r30 = <javax.sip.TransactionState: javax.sip.TransactionState TERMINATED>;
+
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void setState(javax.sip.TransactionState)>($r30);
+
+     label27:
+        throw $r29;
+
+     label28:
+        $r28 := @caughtexception;
+
+        r0.<gov.nist.javax.sip.stack.SIPClientTransaction: boolean isMapped> = 1;
+
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void startTransactionTimer()>();
+
+        throw $r28;
+
+        catch java.lang.Throwable from label01 to label02 with label28;
+        catch java.text.ParseException from label02 to label03 with label04;
+        catch java.lang.Throwable from label02 to label03 with label28;
+        catch java.lang.Throwable from label05 to label06 with label28;
+        catch java.lang.Throwable from label06 to label07 with label28;
+        catch java.lang.Throwable from label08 to label09 with label28;
+        catch java.lang.Throwable from label09 to label10 with label28;
+        catch java.lang.Throwable from label11 to label12 with label28;
+        catch java.lang.Throwable from label12 to label13 with label28;
+        catch java.io.IOException from label14 to label15 with label25;
+        catch java.lang.Throwable from label14 to label15 with label28;
+        catch java.io.IOException from label16 to label17 with label25;
+        catch java.lang.Throwable from label16 to label17 with label28;
+        catch java.io.IOException from label18 to label19 with label25;
+        catch java.lang.Throwable from label18 to label19 with label28;
+        catch java.io.IOException from label19 to label20 with label25;
+        catch java.lang.Throwable from label19 to label20 with label28;
+        catch java.io.IOException from label20 to label21 with label25;
+        catch java.lang.Throwable from label20 to label21 with label28;
+        catch java.io.IOException from label22 to label23 with label25;
+        catch java.lang.Throwable from label22 to label23 with label28;
+        catch java.io.IOException from label23 to label24 with label25;
+        catch java.lang.Throwable from label23 to label24 with label28;
+        catch java.lang.Throwable from label26 to label27 with label28;
+        catch java.lang.Throwable from label27 to label28 with label28;
+    }
+
+    public void sendRequest() throws javax.sip.SipException
+    {
+        gov.nist.javax.sip.stack.SIPClientTransaction r0, r42;
+        gov.nist.core.StackLogger r1, $r23, $r34;
+        boolean z0, $z1, $z2, $z3, $z4, $z5, $z6, $z7, $z8, $z9, $z10, $z11, $z12;
+        javax.sip.TransactionState $r2, $r18, $r36;
+        gov.nist.javax.sip.stack.SIPTransactionStack $r4, $r8, $r14, $r15, $r21, $r22, $r24, $r30, $r33;
+        java.lang.String $r5, $r7, $r10, $r13, $r19, $r28, $r32, $r41, $r48;
+        gov.nist.javax.sip.message.SIPRequest $r6, $r9, $r12, $r16, r38, $r40;
+        gov.nist.javax.sip.SipProviderImpl $r11;
+        gov.nist.javax.sip.stack.SIPTransaction $r17;
+        javax.sip.header.Header $r20;
+        java.lang.Throwable $r29, $r35;
+        gov.nist.javax.sip.stack.SIPDialog r46, r49;
+        java.lang.StringBuilder r53;
+        javax.sip.SipException r54, r55, r56, r57, r58, r59, r60, r61;
+        java.text.ParseException r62;
+
+        r0 := @this: gov.nist.javax.sip.stack.SIPClientTransaction;
+
+        r38 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.message.SIPRequest getOriginalRequest()>();
+
+        $r2 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: javax.sip.TransactionState getState()>();
+
+        if $r2 != null goto label26;
+
+        $r4 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $z1 = virtualinvoke $r4.<gov.nist.javax.sip.stack.SIPTransactionStack: boolean isLoggingEnabled()>();
+
+        if $z1 == 0 goto label01;
+
+        $r24 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        r1 = virtualinvoke $r24.<gov.nist.javax.sip.stack.SIPTransactionStack: gov.nist.core.StackLogger getStackLogger()>();
+
+        r53 = new java.lang.StringBuilder;
+
+        specialinvoke r53.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r53.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("sendRequest() ");
+
+        virtualinvoke r53.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r38);
+
+        $r28 = virtualinvoke r53.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        interfaceinvoke r1.<gov.nist.core.StackLogger: void logDebug(java.lang.String)>($r28);
+
+     label01:
+        virtualinvoke r38.<gov.nist.javax.sip.message.SIPRequest: void checkHeaders()>();
+
+     label02:
+        $r5 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: java.lang.String getMethod()>();
+
+        $z2 = virtualinvoke $r5.<java.lang.String: boolean equals(java.lang.Object)>("SUBSCRIBE");
+
+        if $z2 == 0 goto label03;
+
+        $r20 = virtualinvoke r38.<gov.nist.javax.sip.message.SIPRequest: javax.sip.header.Header getHeader(java.lang.String)>("Expires");
+
+        if $r20 != null goto label03;
+
+        $r21 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $z10 = virtualinvoke $r21.<gov.nist.javax.sip.stack.SIPTransactionStack: boolean isLoggingEnabled()>();
+
+        if $z10 == 0 goto label03;
+
+        $r22 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $r23 = virtualinvoke $r22.<gov.nist.javax.sip.stack.SIPTransactionStack: gov.nist.core.StackLogger getStackLogger()>();
+
+        interfaceinvoke $r23.<gov.nist.core.StackLogger: void logWarning(java.lang.String)>("Expires header missing in outgoing subscribe -- Notifier will assume implied value on event package");
+
+     label03:
+        $r40 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.message.SIPRequest getOriginalRequest()>();
+
+        $r41 = virtualinvoke $r40.<gov.nist.javax.sip.message.SIPRequest: java.lang.String getMethod()>();
+
+        z0 = virtualinvoke $r41.<java.lang.String: boolean equals(java.lang.Object)>("CANCEL");
+
+     label04:
+        if z0 == 0 goto label12;
+
+     label05:
+        $r14 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $z8 = virtualinvoke $r14.<gov.nist.javax.sip.stack.SIPTransactionStack: boolean isCancelClientTransactionChecked()>();
+
+        if $z8 == 0 goto label12;
+
+        $r15 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $r16 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.message.SIPRequest getOriginalRequest()>();
+
+        $r17 = virtualinvoke $r15.<gov.nist.javax.sip.stack.SIPTransactionStack: gov.nist.javax.sip.stack.SIPTransaction findCancelTransaction(gov.nist.javax.sip.message.SIPRequest,boolean)>($r16, 0);
+
+        r42 = (gov.nist.javax.sip.stack.SIPClientTransaction) $r17;
+
+     label06:
+        if r42 == null goto label11;
+
+     label07:
+        $r18 = virtualinvoke r42.<gov.nist.javax.sip.stack.SIPClientTransaction: javax.sip.TransactionState getState()>();
+
+        if $r18 == null goto label10;
+
+        $r19 = virtualinvoke r42.<gov.nist.javax.sip.stack.SIPClientTransaction: java.lang.String getMethod()>();
+
+        $z9 = virtualinvoke $r19.<java.lang.String: boolean equals(java.lang.Object)>("INVITE");
+
+        if $z9 == 0 goto label09;
+
+     label08:
+        goto label16;
+
+     label09:
+        r54 = new javax.sip.SipException;
+
+        specialinvoke r54.<javax.sip.SipException: void <init>(java.lang.String)>("Cannot cancel non-invite requests RFC 3261 9.1");
+
+        throw r54;
+
+     label10:
+        r55 = new javax.sip.SipException;
+
+        specialinvoke r55.<javax.sip.SipException: void <init>(java.lang.String)>("State is null no provisional response yet -- cannot cancel RFC 3261 9.1");
+
+        throw r55;
+
+     label11:
+        r56 = new javax.sip.SipException;
+
+        specialinvoke r56.<javax.sip.SipException: void <init>(java.lang.String)>("Could not find original tx to cancel. RFC 3261 9.1");
+
+        throw r56;
+
+     label12:
+        $r6 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.message.SIPRequest getOriginalRequest()>();
+
+        $r7 = virtualinvoke $r6.<gov.nist.javax.sip.message.SIPRequest: java.lang.String getMethod()>();
+
+        $z3 = virtualinvoke $r7.<java.lang.String: boolean equals(java.lang.Object)>("BYE");
+
+        if $z3 != 0 goto label13;
+
+        $r12 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.message.SIPRequest getOriginalRequest()>();
+
+        $r13 = virtualinvoke $r12.<gov.nist.javax.sip.message.SIPRequest: java.lang.String getMethod()>();
+
+        $z7 = virtualinvoke $r13.<java.lang.String: boolean equals(java.lang.Object)>("NOTIFY");
+
+        if $z7 == 0 goto label16;
+
+     label13:
+        $r8 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $r9 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.message.SIPRequest getOriginalRequest()>();
+
+        $r10 = virtualinvoke $r9.<gov.nist.javax.sip.message.SIPRequest: java.lang.String getDialogId(boolean)>(0);
+
+        r46 = virtualinvoke $r8.<gov.nist.javax.sip.stack.SIPTransactionStack: gov.nist.javax.sip.stack.SIPDialog getDialog(java.lang.String)>($r10);
+
+        $r11 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.SipProviderImpl getSipProvider()>();
+
+        $z4 = virtualinvoke $r11.<gov.nist.javax.sip.SipProviderImpl: boolean isAutomaticDialogSupportEnabled()>();
+
+        if $z4 == 0 goto label16;
+
+     label14:
+        if r46 != null goto label15;
+
+        goto label16;
+
+     label15:
+        r57 = new javax.sip.SipException;
+
+        specialinvoke r57.<javax.sip.SipException: void <init>(java.lang.String)>("Dialog is present and AutomaticDialogSupport is enabled for  the provider -- Send the Request using the Dialog.sendRequest(transaction)");
+
+        throw r57;
+
+     label16:
+        $r48 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: java.lang.String getMethod()>();
+
+        $z12 = virtualinvoke $r48.<java.lang.String: boolean equals(java.lang.Object)>("INVITE");
+
+        if $z12 == 0 goto label21;
+
+        r49 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPDialog getDefaultDialog()>();
+
+     label17:
+        if r49 == null goto label21;
+
+     label18:
+        $z5 = virtualinvoke r49.<gov.nist.javax.sip.stack.SIPDialog: boolean isBackToBackUserAgent()>();
+
+        if $z5 == 0 goto label21;
+
+        $z6 = virtualinvoke r49.<gov.nist.javax.sip.stack.SIPDialog: boolean takeAckSem()>();
+
+        if $z6 == 0 goto label20;
+
+     label19:
+        goto label21;
+
+     label20:
+        r58 = new javax.sip.SipException;
+
+        specialinvoke r58.<javax.sip.SipException: void <init>(java.lang.String)>("Failed to take ACK semaphore");
+
+        throw r58;
+
+     label21:
+        r0.<gov.nist.javax.sip.stack.SIPClientTransaction: boolean isMapped> = 1;
+
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void sendMessage(gov.nist.javax.sip.message.SIPMessage)>(r38);
+
+     label22:
+        return;
+
+     label23:
+        $r35 := @caughtexception;
+
+        $r36 = <javax.sip.TransactionState: javax.sip.TransactionState TERMINATED>;
+
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void setState(javax.sip.TransactionState)>($r36);
+
+        r59 = new javax.sip.SipException;
+
+        specialinvoke r59.<javax.sip.SipException: void <init>(java.lang.String,java.lang.Throwable)>("IO Error sending request", $r35);
+
+        throw r59;
+
+     label24:
+        $r29 := @caughtexception;
+
+        $r30 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $z11 = virtualinvoke $r30.<gov.nist.javax.sip.stack.SIPTransactionStack: boolean isLoggingEnabled()>();
+
+        if $z11 == 0 goto label25;
+
+        $r33 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $r34 = virtualinvoke $r33.<gov.nist.javax.sip.stack.SIPTransactionStack: gov.nist.core.StackLogger getStackLogger()>();
+
+        interfaceinvoke $r34.<gov.nist.core.StackLogger: void logError(java.lang.String)>("missing required header");
+
+     label25:
+        r60 = new javax.sip.SipException;
+
+        r62 = (java.text.ParseException) $r29;
+
+        $r32 = virtualinvoke r62.<java.text.ParseException: java.lang.String getMessage()>();
+
+        specialinvoke r60.<javax.sip.SipException: void <init>(java.lang.String)>($r32);
+
+        throw r60;
+
+     label26:
+        r61 = new javax.sip.SipException;
+
+        specialinvoke r61.<javax.sip.SipException: void <init>(java.lang.String)>("Request already sent");
+
+        throw r61;
+
+        catch java.text.ParseException from label01 to label02 with label24;
+        catch java.io.IOException from label03 to label04 with label23;
+        catch java.io.IOException from label05 to label06 with label23;
+        catch java.io.IOException from label07 to label08 with label23;
+        catch java.io.IOException from label09 to label10 with label23;
+        catch java.io.IOException from label10 to label11 with label23;
+        catch java.io.IOException from label11 to label12 with label23;
+        catch java.io.IOException from label12 to label13 with label23;
+        catch java.io.IOException from label13 to label14 with label23;
+        catch java.io.IOException from label15 to label16 with label23;
+        catch java.io.IOException from label16 to label17 with label23;
+        catch java.io.IOException from label18 to label19 with label23;
+        catch java.io.IOException from label20 to label21 with label23;
+        catch java.io.IOException from label21 to label22 with label23;
+    }
+
+    public void setDialog(gov.nist.javax.sip.stack.SIPDialog, java.lang.String)
+    {
+        gov.nist.javax.sip.stack.SIPClientTransaction r0;
+        gov.nist.javax.sip.stack.SIPDialog r1, $r6;
+        java.lang.String r2, $r7, $r10, $r23;
+        gov.nist.core.StackLogger r3, $r16;
+        gov.nist.javax.sip.stack.SIPTransactionStack $r5, $r11, $r12, $r13, $r15, $r17;
+        boolean $z0, $z1, $z2;
+        java.util.concurrent.ConcurrentHashMap $r8;
+        int $i0;
+        java.lang.NullPointerException $r14;
+        java.lang.StringBuilder $r18;
+
+        r0 := @this: gov.nist.javax.sip.stack.SIPClientTransaction;
+
+        r1 := @parameter0: gov.nist.javax.sip.stack.SIPDialog;
+
+        r2 := @parameter1: java.lang.String;
+
+        $r5 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $z0 = virtualinvoke $r5.<gov.nist.javax.sip.stack.SIPTransactionStack: boolean isLoggingEnabled()>();
+
+        if $z0 == 0 goto label1;
+
+        $r17 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        r3 = virtualinvoke $r17.<gov.nist.javax.sip.stack.SIPTransactionStack: gov.nist.core.StackLogger getStackLogger()>();
+
+        $r18 = new java.lang.StringBuilder;
+
+        specialinvoke $r18.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r18.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("setDialog: ");
+
+        virtualinvoke $r18.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r2);
+
+        virtualinvoke $r18.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("sipDialog = ");
+
+        virtualinvoke $r18.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r1);
+
+        $r23 = virtualinvoke $r18.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        interfaceinvoke r3.<gov.nist.core.StackLogger: void logDebug(java.lang.String)>($r23);
+
+     label1:
+        if r1 != null goto label3;
+
+        $r13 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $z2 = virtualinvoke $r13.<gov.nist.javax.sip.stack.SIPTransactionStack: boolean isLoggingEnabled()>();
+
+        if $z2 == 0 goto label2;
+
+        $r15 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $r16 = virtualinvoke $r15.<gov.nist.javax.sip.stack.SIPTransactionStack: gov.nist.core.StackLogger getStackLogger()>();
+
+        interfaceinvoke $r16.<gov.nist.core.StackLogger: void logError(java.lang.String)>("NULL DIALOG!!");
+
+     label2:
+        $r14 = new java.lang.NullPointerException;
+
+        specialinvoke $r14.<java.lang.NullPointerException: void <init>(java.lang.String)>("bad dialog null");
+
+        throw $r14;
+
+     label3:
+        $r6 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPDialog defaultDialog>;
+
+        if $r6 != null goto label4;
+
+        r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPDialog defaultDialog> = r1;
+
+        $r10 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: java.lang.String getMethod()>();
+
+        $z1 = virtualinvoke $r10.<java.lang.String: boolean equals(java.lang.Object)>("INVITE");
+
+        if $z1 == 0 goto label4;
+
+        $r11 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPTransactionStack getSIPStack()>();
+
+        $i0 = $r11.<gov.nist.javax.sip.stack.SIPTransactionStack: int maxForkTime>;
+
+        if $i0 == 0 goto label4;
+
+        $r12 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPTransactionStack getSIPStack()>();
+
+        virtualinvoke $r12.<gov.nist.javax.sip.stack.SIPTransactionStack: void addForkedClientTransaction(gov.nist.javax.sip.stack.SIPClientTransaction)>(r0);
+
+     label4:
+        if r2 == null goto label5;
+
+        $r7 = virtualinvoke r1.<gov.nist.javax.sip.stack.SIPDialog: java.lang.String getDialogId()>();
+
+        if $r7 == null goto label5;
+
+        $r8 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: java.util.concurrent.ConcurrentHashMap sipDialogs>;
+
+        virtualinvoke $r8.<java.util.concurrent.ConcurrentHashMap: java.lang.Object put(java.lang.Object,java.lang.Object)>(r2, r1);
+
+     label5:
+        return;
+    }
+
+    public void setNextHop(javax.sip.address.Hop)
+    {
+        gov.nist.javax.sip.stack.SIPClientTransaction r0;
+        javax.sip.address.Hop r1;
+
+        r0 := @this: gov.nist.javax.sip.stack.SIPClientTransaction;
+
+        r1 := @parameter0: javax.sip.address.Hop;
+
+        r0.<gov.nist.javax.sip.stack.SIPClientTransaction: javax.sip.address.Hop nextHop> = r1;
+
+        return;
+    }
+
+    public void setNotifyOnRetransmit(boolean)
+    {
+        gov.nist.javax.sip.stack.SIPClientTransaction r0;
+        boolean z0;
+
+        r0 := @this: gov.nist.javax.sip.stack.SIPClientTransaction;
+
+        z0 := @parameter0: boolean;
+
+        r0.<gov.nist.javax.sip.stack.SIPClientTransaction: boolean notifyOnRetransmit> = z0;
+
+        return;
+    }
+
+    public void setResponseInterface(gov.nist.javax.sip.stack.ServerResponseInterface)
+    {
+        gov.nist.javax.sip.stack.SIPClientTransaction r0;
+        gov.nist.javax.sip.stack.ServerResponseInterface r1;
+        gov.nist.core.StackLogger r2, $r13, $r15;
+        gov.nist.javax.sip.stack.SIPTransactionStack $r4, $r5, $r12, $r14;
+        boolean $z0;
+        java.lang.StringBuilder $r6;
+        java.lang.String $r11;
+
+        r0 := @this: gov.nist.javax.sip.stack.SIPClientTransaction;
+
+        r1 := @parameter0: gov.nist.javax.sip.stack.ServerResponseInterface;
+
+        $r4 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $z0 = virtualinvoke $r4.<gov.nist.javax.sip.stack.SIPTransactionStack: boolean isLoggingEnabled()>();
+
+        if $z0 == 0 goto label1;
+
+        $r5 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        r2 = virtualinvoke $r5.<gov.nist.javax.sip.stack.SIPTransactionStack: gov.nist.core.StackLogger getStackLogger()>();
+
+        $r6 = new java.lang.StringBuilder;
+
+        specialinvoke $r6.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Setting response interface for ");
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r0);
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" to ");
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r1);
+
+        $r11 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        interfaceinvoke r2.<gov.nist.core.StackLogger: void logDebug(java.lang.String)>($r11);
+
+        if r1 != null goto label1;
+
+        $r12 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $r13 = virtualinvoke $r12.<gov.nist.javax.sip.stack.SIPTransactionStack: gov.nist.core.StackLogger getStackLogger()>();
+
+        interfaceinvoke $r13.<gov.nist.core.StackLogger: void logStackTrace()>();
+
+        $r14 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $r15 = virtualinvoke $r14.<gov.nist.javax.sip.stack.SIPTransactionStack: gov.nist.core.StackLogger getStackLogger()>();
+
+        interfaceinvoke $r15.<gov.nist.core.StackLogger: void logDebug(java.lang.String)>("WARNING -- setting to null!");
+
+     label1:
+        r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.ServerResponseInterface respondTo> = r1;
+
+        return;
+    }
+
+    public void setState(javax.sip.TransactionState)
+    {
+        gov.nist.javax.sip.stack.SIPClientTransaction r0;
+        javax.sip.TransactionState r1, $r2, $r3, $r5, $r7, $r8;
+        gov.nist.javax.sip.stack.SIPTransactionStack $r4, $r6;
+        boolean $z0, $z1;
+
+        r0 := @this: gov.nist.javax.sip.stack.SIPClientTransaction;
+
+        r1 := @parameter0: javax.sip.TransactionState;
+
+        $r2 = <javax.sip.TransactionState: javax.sip.TransactionState TERMINATED>;
+
+        if r1 != $r2 goto label1;
+
+        $z0 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: boolean isReliable()>();
+
+        if $z0 == 0 goto label1;
+
+        $r6 = virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPTransactionStack getSIPStack()>();
+
+        $z1 = $r6.<gov.nist.javax.sip.stack.SIPTransactionStack: boolean cacheClientConnections>;
+
+        if $z1 != 0 goto label1;
+
+        r0.<gov.nist.javax.sip.stack.SIPClientTransaction: int collectionTime> = 64;
+
+     label1:
+        $r7 = specialinvoke r0.<gov.nist.javax.sip.stack.SIPTransaction: javax.sip.TransactionState getState()>();
+
+        $r8 = <javax.sip.TransactionState: javax.sip.TransactionState COMPLETED>;
+
+        if $r7 == $r8 goto label3;
+
+        $r3 = <javax.sip.TransactionState: javax.sip.TransactionState COMPLETED>;
+
+        if r1 == $r3 goto label2;
+
+        $r5 = <javax.sip.TransactionState: javax.sip.TransactionState TERMINATED>;
+
+        if r1 != $r5 goto label3;
+
+     label2:
+        $r4 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        virtualinvoke $r4.<gov.nist.javax.sip.stack.SIPTransactionStack: void decrementActiveClientTransactionCount()>();
+
+     label3:
+        specialinvoke r0.<gov.nist.javax.sip.stack.SIPTransaction: void setState(javax.sip.TransactionState)>(r1);
+
+        return;
+    }
+
+    protected void setViaHost(java.lang.String)
+    {
+        gov.nist.javax.sip.stack.SIPClientTransaction r0;
+        java.lang.String r1;
+
+        r0 := @this: gov.nist.javax.sip.stack.SIPClientTransaction;
+
+        r1 := @parameter0: java.lang.String;
+
+        r0.<gov.nist.javax.sip.stack.SIPClientTransaction: java.lang.String viaHost> = r1;
+
+        return;
+    }
+
+    protected void setViaPort(int)
+    {
+        gov.nist.javax.sip.stack.SIPClientTransaction r0;
+        int i0;
+
+        r0 := @this: gov.nist.javax.sip.stack.SIPClientTransaction;
+
+        i0 := @parameter0: int;
+
+        r0.<gov.nist.javax.sip.stack.SIPClientTransaction: int viaPort> = i0;
+
+        return;
+    }
+
+    protected void startTransactionTimer()
+    {
+        gov.nist.javax.sip.stack.SIPClientTransaction r0;
+        java.util.concurrent.atomic.AtomicBoolean $r2;
+        boolean $z0;
+        gov.nist.javax.sip.stack.SIPClientTransaction$TransactionTimer $r3;
+        gov.nist.javax.sip.stack.SIPTransactionStack $r4, $r6;
+        java.util.Timer $r5, $r7;
+        int $i0, $i1;
+        long $l2, $l3;
+
+        r0 := @this: gov.nist.javax.sip.stack.SIPClientTransaction;
+
+        $r2 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: java.util.concurrent.atomic.AtomicBoolean transactionTimerStarted>;
+
+        $z0 = virtualinvoke $r2.<java.util.concurrent.atomic.AtomicBoolean: boolean compareAndSet(boolean,boolean)>(0, 1);
+
+        if $z0 == 0 goto label1;
+
+        $r3 = new gov.nist.javax.sip.stack.SIPClientTransaction$TransactionTimer;
+
+        specialinvoke $r3.<gov.nist.javax.sip.stack.SIPClientTransaction$TransactionTimer: void <init>(gov.nist.javax.sip.stack.SIPClientTransaction)>(r0);
+
+        $r4 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $r5 = virtualinvoke $r4.<gov.nist.javax.sip.stack.SIPTransactionStack: java.util.Timer getTimer()>();
+
+        if $r5 == null goto label1;
+
+        $r6 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: gov.nist.javax.sip.stack.SIPTransactionStack sipStack>;
+
+        $r7 = virtualinvoke $r6.<gov.nist.javax.sip.stack.SIPTransactionStack: java.util.Timer getTimer()>();
+
+        $i0 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: int BASE_TIMER_INTERVAL>;
+
+        $l3 = (long) $i0;
+
+        $i1 = r0.<gov.nist.javax.sip.stack.SIPClientTransaction: int BASE_TIMER_INTERVAL>;
+
+        $l2 = (long) $i1;
+
+        virtualinvoke $r7.<java.util.Timer: void schedule(java.util.TimerTask,long,long)>($r3, $l3, $l2);
+
+     label1:
+        return;
+    }
+
+    public void terminate() throws javax.sip.ObjectInUseException
+    {
+        gov.nist.javax.sip.stack.SIPClientTransaction r0;
+        javax.sip.TransactionState $r1;
+
+        r0 := @this: gov.nist.javax.sip.stack.SIPClientTransaction;
+
+        $r1 = <javax.sip.TransactionState: javax.sip.TransactionState TERMINATED>;
+
+        virtualinvoke r0.<gov.nist.javax.sip.stack.SIPClientTransaction: void setState(javax.sip.TransactionState)>($r1);
+
+        return;
+    }
+}

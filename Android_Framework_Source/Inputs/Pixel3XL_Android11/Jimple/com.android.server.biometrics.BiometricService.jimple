@@ -1,0 +1,3382 @@
+public class com.android.server.biometrics.BiometricService extends com.android.server.SystemService
+{
+    private static final int BIOMETRIC_DISABLED_BY_DEVICE_POLICY;
+    private static final int BIOMETRIC_HARDWARE_NOT_DETECTED;
+    private static final int BIOMETRIC_INSUFFICIENT_STRENGTH;
+    private static final int BIOMETRIC_INSUFFICIENT_STRENGTH_AFTER_DOWNGRADE;
+    private static final int BIOMETRIC_NOT_ENABLED_FOR_APPS;
+    private static final int BIOMETRIC_NOT_ENROLLED;
+    private static final int BIOMETRIC_NO_HARDWARE;
+    private static final int BIOMETRIC_OK;
+    private static final boolean DEBUG;
+    private static final int MSG_AUTHENTICATE;
+    private static final int MSG_CANCEL_AUTHENTICATION;
+    private static final int MSG_CLIENT_DIED;
+    private static final int MSG_ON_ACQUIRED;
+    private static final int MSG_ON_AUTHENTICATION_REJECTED;
+    private static final int MSG_ON_AUTHENTICATION_SUCCEEDED;
+    private static final int MSG_ON_AUTHENTICATION_TIMED_OUT;
+    private static final int MSG_ON_DEVICE_CREDENTIAL_PRESSED;
+    private static final int MSG_ON_DISMISSED;
+    private static final int MSG_ON_ERROR;
+    private static final int MSG_ON_READY_FOR_AUTHENTICATION;
+    private static final int MSG_ON_SYSTEM_EVENT;
+    private static final int MSG_ON_TRY_AGAIN_PRESSED;
+    static final int STATE_AUTHENTICATED_PENDING_SYSUI;
+    static final int STATE_AUTH_CALLED;
+    static final int STATE_AUTH_IDLE;
+    static final int STATE_AUTH_PAUSED;
+    static final int STATE_AUTH_PENDING_CONFIRM;
+    static final int STATE_AUTH_STARTED;
+    static final int STATE_CLIENT_DIED_CANCELLING;
+    static final int STATE_ERROR_PENDING_SYSUI;
+    static final int STATE_SHOWING_DEVICE_CREDENTIAL;
+    static final java.lang.String TAG;
+    final java.util.ArrayList mAuthenticators;
+    com.android.server.biometrics.BiometricStrengthController mBiometricStrengthController;
+    com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession;
+    private final android.app.admin.DevicePolicyManager mDevicePolicyManager;
+    private final java.util.List mEnabledOnKeyguardCallbacks;
+    final android.os.Handler mHandler;
+    final android.hardware.biometrics.IBiometricService$Stub mImpl;
+    private final com.android.server.biometrics.BiometricService$Injector mInjector;
+    final android.hardware.biometrics.IBiometricServiceReceiverInternal mInternalReceiver;
+    android.security.KeyStore mKeyStore;
+    com.android.server.biometrics.BiometricService$AuthSession mPendingAuthSession;
+    private final java.util.Random mRandom;
+    final com.android.server.biometrics.BiometricService$SettingObserver mSettingObserver;
+    com.android.internal.statusbar.IStatusBarService mStatusBarService;
+    android.app.trust.ITrustManager mTrustManager;
+
+    public void <init>(android.content.Context)
+    {
+        com.android.server.biometrics.BiometricService r0;
+        android.content.Context r1;
+        com.android.server.biometrics.BiometricService$Injector $r2;
+
+        r0 := @this: com.android.server.biometrics.BiometricService;
+
+        r1 := @parameter0: android.content.Context;
+
+        $r2 = new com.android.server.biometrics.BiometricService$Injector;
+
+        specialinvoke $r2.<com.android.server.biometrics.BiometricService$Injector: void <init>()>();
+
+        specialinvoke r0.<com.android.server.biometrics.BiometricService: void <init>(android.content.Context,com.android.server.biometrics.BiometricService$Injector)>(r1, $r2);
+
+        return;
+    }
+
+    void <init>(android.content.Context, com.android.server.biometrics.BiometricService$Injector)
+    {
+        com.android.server.biometrics.BiometricService r0;
+        java.util.Random $r2;
+        java.util.ArrayList $r3, $r10;
+        com.android.server.biometrics.BiometricService$1 $r4;
+        android.os.Looper $r5;
+        com.android.server.biometrics.BiometricService$2 $r6;
+        java.lang.Object $r7;
+        android.app.admin.DevicePolicyManager $r8;
+        com.android.server.biometrics.BiometricService$BiometricServiceWrapper $r9;
+        android.os.Handler $r11;
+        com.android.server.biometrics.BiometricService$Injector $r12, r18;
+        com.android.server.biometrics.BiometricService$SettingObserver $r13;
+        java.lang.Class $r14;
+        java.lang.String $r15;
+        android.os.RemoteException $r16;
+        android.content.Context r17;
+        android.app.IActivityManager r19;
+        com.android.server.biometrics.BiometricService$3 r20;
+
+        r0 := @this: com.android.server.biometrics.BiometricService;
+
+        r17 := @parameter0: android.content.Context;
+
+        r18 := @parameter1: com.android.server.biometrics.BiometricService$Injector;
+
+        specialinvoke r0.<com.android.server.SystemService: void <init>(android.content.Context)>(r17);
+
+        $r2 = new java.util.Random;
+
+        specialinvoke $r2.<java.util.Random: void <init>()>();
+
+        r0.<com.android.server.biometrics.BiometricService: java.util.Random mRandom> = $r2;
+
+        $r3 = new java.util.ArrayList;
+
+        specialinvoke $r3.<java.util.ArrayList: void <init>()>();
+
+        r0.<com.android.server.biometrics.BiometricService: java.util.ArrayList mAuthenticators> = $r3;
+
+        $r4 = new com.android.server.biometrics.BiometricService$1;
+
+        $r5 = staticinvoke <android.os.Looper: android.os.Looper getMainLooper()>();
+
+        specialinvoke $r4.<com.android.server.biometrics.BiometricService$1: void <init>(com.android.server.biometrics.BiometricService,android.os.Looper)>(r0, $r5);
+
+        r0.<com.android.server.biometrics.BiometricService: android.os.Handler mHandler> = $r4;
+
+        $r6 = new com.android.server.biometrics.BiometricService$2;
+
+        specialinvoke $r6.<com.android.server.biometrics.BiometricService$2: void <init>(com.android.server.biometrics.BiometricService)>(r0);
+
+        r0.<com.android.server.biometrics.BiometricService: android.hardware.biometrics.IBiometricServiceReceiverInternal mInternalReceiver> = $r6;
+
+        r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$Injector mInjector> = r18;
+
+        $r7 = virtualinvoke r17.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("device_policy");
+
+        $r8 = (android.app.admin.DevicePolicyManager) $r7;
+
+        r0.<com.android.server.biometrics.BiometricService: android.app.admin.DevicePolicyManager mDevicePolicyManager> = $r8;
+
+        $r9 = new com.android.server.biometrics.BiometricService$BiometricServiceWrapper;
+
+        specialinvoke $r9.<com.android.server.biometrics.BiometricService$BiometricServiceWrapper: void <init>(com.android.server.biometrics.BiometricService,com.android.server.biometrics.BiometricService$1)>(r0, null);
+
+        r0.<com.android.server.biometrics.BiometricService: android.hardware.biometrics.IBiometricService$Stub mImpl> = $r9;
+
+        $r10 = new java.util.ArrayList;
+
+        specialinvoke $r10.<java.util.ArrayList: void <init>()>();
+
+        r0.<com.android.server.biometrics.BiometricService: java.util.List mEnabledOnKeyguardCallbacks> = $r10;
+
+        $r12 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$Injector mInjector>;
+
+        $r11 = r0.<com.android.server.biometrics.BiometricService: android.os.Handler mHandler>;
+
+        $r13 = virtualinvoke $r12.<com.android.server.biometrics.BiometricService$Injector: com.android.server.biometrics.BiometricService$SettingObserver getSettingObserver(android.content.Context,android.os.Handler,java.util.List)>(r17, $r11, $r10);
+
+        r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$SettingObserver mSettingObserver> = $r13;
+
+     label1:
+        r19 = virtualinvoke r18.<com.android.server.biometrics.BiometricService$Injector: android.app.IActivityManager getActivityManagerService()>();
+
+        r20 = new com.android.server.biometrics.BiometricService$3;
+
+        specialinvoke r20.<com.android.server.biometrics.BiometricService$3: void <init>(com.android.server.biometrics.BiometricService)>(r0);
+
+        $r14 = class "Lcom/android/server/biometrics/BiometricService;";
+
+        $r15 = virtualinvoke $r14.<java.lang.Class: java.lang.String getName()>();
+
+        interfaceinvoke r19.<android.app.IActivityManager: void registerUserSwitchObserver(android.app.IUserSwitchObserver,java.lang.String)>(r20, $r15);
+
+     label2:
+        goto label4;
+
+     label3:
+        $r16 := @caughtexception;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("BiometricService", "Failed to register user switch observer", $r16);
+
+     label4:
+        return;
+
+        catch android.os.RemoteException from label1 to label2 with label3;
+    }
+
+    static java.util.Random access$000(com.android.server.biometrics.BiometricService)
+    {
+        com.android.server.biometrics.BiometricService r0;
+        java.util.Random $r1;
+
+        r0 := @parameter0: com.android.server.biometrics.BiometricService;
+
+        $r1 = r0.<com.android.server.biometrics.BiometricService: java.util.Random mRandom>;
+
+        return $r1;
+    }
+
+    static void access$100(com.android.server.biometrics.BiometricService, boolean, byte[], boolean)
+    {
+        com.android.server.biometrics.BiometricService r0;
+        boolean z0, z1;
+        byte[] r1;
+
+        r0 := @parameter0: com.android.server.biometrics.BiometricService;
+
+        z0 := @parameter1: boolean;
+
+        r1 := @parameter2: byte[];
+
+        z1 := @parameter3: boolean;
+
+        specialinvoke r0.<com.android.server.biometrics.BiometricService: void handleAuthenticationSucceeded(boolean,byte[],boolean)>(z0, r1, z1);
+
+        return;
+    }
+
+    static void access$1000(com.android.server.biometrics.BiometricService, int, int, int)
+    {
+        com.android.server.biometrics.BiometricService r0;
+        int i0, i1, i2;
+
+        r0 := @parameter0: com.android.server.biometrics.BiometricService;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        i2 := @parameter3: int;
+
+        specialinvoke r0.<com.android.server.biometrics.BiometricService: void handleAuthenticationTimedOut(int,int,int)>(i0, i1, i2);
+
+        return;
+    }
+
+    static void access$1100(com.android.server.biometrics.BiometricService)
+    {
+        com.android.server.biometrics.BiometricService r0;
+
+        r0 := @parameter0: com.android.server.biometrics.BiometricService;
+
+        specialinvoke r0.<com.android.server.biometrics.BiometricService: void handleOnDeviceCredentialPressed()>();
+
+        return;
+    }
+
+    static void access$1200(com.android.server.biometrics.BiometricService, int)
+    {
+        com.android.server.biometrics.BiometricService r0;
+        int i0;
+
+        r0 := @parameter0: com.android.server.biometrics.BiometricService;
+
+        i0 := @parameter1: int;
+
+        specialinvoke r0.<com.android.server.biometrics.BiometricService: void handleOnSystemEvent(int)>(i0);
+
+        return;
+    }
+
+    static void access$1300(com.android.server.biometrics.BiometricService)
+    {
+        com.android.server.biometrics.BiometricService r0;
+
+        r0 := @parameter0: com.android.server.biometrics.BiometricService;
+
+        specialinvoke r0.<com.android.server.biometrics.BiometricService: void handleClientDied()>();
+
+        return;
+    }
+
+    static java.util.List access$1400(com.android.server.biometrics.BiometricService)
+    {
+        com.android.server.biometrics.BiometricService r0;
+        java.util.List $r1;
+
+        r0 := @parameter0: com.android.server.biometrics.BiometricService;
+
+        $r1 = r0.<com.android.server.biometrics.BiometricService: java.util.List mEnabledOnKeyguardCallbacks>;
+
+        return $r1;
+    }
+
+    static void access$1500(com.android.server.biometrics.BiometricService)
+    {
+        com.android.server.biometrics.BiometricService r0;
+
+        r0 := @parameter0: com.android.server.biometrics.BiometricService;
+
+        specialinvoke r0.<com.android.server.biometrics.BiometricService: void checkInternalPermission()>();
+
+        return;
+    }
+
+    static android.util.Pair access$1600(com.android.server.biometrics.BiometricService, int, android.os.Bundle, java.lang.String, boolean) throws android.os.RemoteException
+    {
+        com.android.server.biometrics.BiometricService r0;
+        int i0;
+        android.os.Bundle r1;
+        java.lang.String r2;
+        boolean z0;
+        android.util.Pair $r3;
+
+        r0 := @parameter0: com.android.server.biometrics.BiometricService;
+
+        i0 := @parameter1: int;
+
+        r1 := @parameter2: android.os.Bundle;
+
+        r2 := @parameter3: java.lang.String;
+
+        z0 := @parameter4: boolean;
+
+        $r3 = specialinvoke r0.<com.android.server.biometrics.BiometricService: android.util.Pair checkAndGetAuthenticators(int,android.os.Bundle,java.lang.String,boolean)>(i0, r1, r2, z0);
+
+        return $r3;
+    }
+
+    static com.android.server.biometrics.BiometricService$Injector access$1700(com.android.server.biometrics.BiometricService)
+    {
+        com.android.server.biometrics.BiometricService r0;
+        com.android.server.biometrics.BiometricService$Injector $r1;
+
+        r0 := @parameter0: com.android.server.biometrics.BiometricService;
+
+        $r1 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$Injector mInjector>;
+
+        return $r1;
+    }
+
+    static void access$1800(com.android.server.biometrics.BiometricService, java.lang.String, android.os.IBinder)
+    {
+        com.android.server.biometrics.BiometricService r0;
+        java.lang.String r1;
+        android.os.IBinder r2;
+
+        r0 := @parameter0: com.android.server.biometrics.BiometricService;
+
+        r1 := @parameter1: java.lang.String;
+
+        r2 := @parameter2: android.os.IBinder;
+
+        virtualinvoke r0.<com.android.server.biometrics.BiometricService: void publishBinderService(java.lang.String,android.os.IBinder)>(r1, r2);
+
+        return;
+    }
+
+    static void access$200(com.android.server.biometrics.BiometricService)
+    {
+        com.android.server.biometrics.BiometricService r0;
+
+        r0 := @parameter0: com.android.server.biometrics.BiometricService;
+
+        specialinvoke r0.<com.android.server.biometrics.BiometricService: void handleAuthenticationRejected()>();
+
+        return;
+    }
+
+    static void access$300(com.android.server.biometrics.BiometricService, int, int, int, int)
+    {
+        com.android.server.biometrics.BiometricService r0;
+        int i0, i1, i2, i3;
+
+        r0 := @parameter0: com.android.server.biometrics.BiometricService;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        i2 := @parameter3: int;
+
+        i3 := @parameter4: int;
+
+        specialinvoke r0.<com.android.server.biometrics.BiometricService: void handleOnError(int,int,int,int)>(i0, i1, i2, i3);
+
+        return;
+    }
+
+    static void access$400(com.android.server.biometrics.BiometricService, int, java.lang.String)
+    {
+        com.android.server.biometrics.BiometricService r0;
+        int i0;
+        java.lang.String r1;
+
+        r0 := @parameter0: com.android.server.biometrics.BiometricService;
+
+        i0 := @parameter1: int;
+
+        r1 := @parameter2: java.lang.String;
+
+        specialinvoke r0.<com.android.server.biometrics.BiometricService: void handleOnAcquired(int,java.lang.String)>(i0, r1);
+
+        return;
+    }
+
+    static void access$500(com.android.server.biometrics.BiometricService, int, byte[])
+    {
+        com.android.server.biometrics.BiometricService r0;
+        int i0;
+        byte[] r1;
+
+        r0 := @parameter0: com.android.server.biometrics.BiometricService;
+
+        i0 := @parameter1: int;
+
+        r1 := @parameter2: byte[];
+
+        specialinvoke r0.<com.android.server.biometrics.BiometricService: void handleOnDismissed(int,byte[])>(i0, r1);
+
+        return;
+    }
+
+    static void access$600(com.android.server.biometrics.BiometricService)
+    {
+        com.android.server.biometrics.BiometricService r0;
+
+        r0 := @parameter0: com.android.server.biometrics.BiometricService;
+
+        specialinvoke r0.<com.android.server.biometrics.BiometricService: void handleOnTryAgainPressed()>();
+
+        return;
+    }
+
+    static void access$700(com.android.server.biometrics.BiometricService, int, boolean, int)
+    {
+        com.android.server.biometrics.BiometricService r0;
+        int i0, i1;
+        boolean z0;
+
+        r0 := @parameter0: com.android.server.biometrics.BiometricService;
+
+        i0 := @parameter1: int;
+
+        z0 := @parameter2: boolean;
+
+        i1 := @parameter3: int;
+
+        specialinvoke r0.<com.android.server.biometrics.BiometricService: void handleOnReadyForAuthentication(int,boolean,int)>(i0, z0, i1);
+
+        return;
+    }
+
+    static void access$800(com.android.server.biometrics.BiometricService, android.os.IBinder, long, int, android.hardware.biometrics.IBiometricServiceReceiver, java.lang.String, android.os.Bundle, int, int, int)
+    {
+        com.android.server.biometrics.BiometricService r0;
+        android.os.IBinder r1;
+        long l0;
+        int i1, i2, i3, i4;
+        android.hardware.biometrics.IBiometricServiceReceiver r2;
+        java.lang.String r3;
+        android.os.Bundle r4;
+
+        r0 := @parameter0: com.android.server.biometrics.BiometricService;
+
+        r1 := @parameter1: android.os.IBinder;
+
+        l0 := @parameter2: long;
+
+        i1 := @parameter3: int;
+
+        r2 := @parameter4: android.hardware.biometrics.IBiometricServiceReceiver;
+
+        r3 := @parameter5: java.lang.String;
+
+        r4 := @parameter6: android.os.Bundle;
+
+        i2 := @parameter7: int;
+
+        i3 := @parameter8: int;
+
+        i4 := @parameter9: int;
+
+        specialinvoke r0.<com.android.server.biometrics.BiometricService: void handleAuthenticate(android.os.IBinder,long,int,android.hardware.biometrics.IBiometricServiceReceiver,java.lang.String,android.os.Bundle,int,int,int)>(r1, l0, i1, r2, r3, r4, i2, i3, i4);
+
+        return;
+    }
+
+    static void access$900(com.android.server.biometrics.BiometricService, android.os.IBinder, java.lang.String, int, int, int)
+    {
+        com.android.server.biometrics.BiometricService r0;
+        android.os.IBinder r1;
+        java.lang.String r2;
+        int i0, i1, i2;
+
+        r0 := @parameter0: com.android.server.biometrics.BiometricService;
+
+        r1 := @parameter1: android.os.IBinder;
+
+        r2 := @parameter2: java.lang.String;
+
+        i0 := @parameter3: int;
+
+        i1 := @parameter4: int;
+
+        i2 := @parameter5: int;
+
+        specialinvoke r0.<com.android.server.biometrics.BiometricService: void handleCancelAuthentication(android.os.IBinder,java.lang.String,int,int,int)>(r1, r2, i0, i1, i2);
+
+        return;
+    }
+
+    private void authenticateInternal(android.os.IBinder, long, int, android.hardware.biometrics.IBiometricServiceReceiver, java.lang.String, android.os.Bundle, int, int, int, int)
+    {
+        com.android.server.biometrics.BiometricService r0;
+        long l0;
+        int i1, i2, i3, i4, i5, i6, $i7, $i8, $i10, $i11, $i12, i14, i15;
+        java.lang.String r1, $r10, $r20;
+        java.util.Random $r2;
+        java.lang.StringBuilder $r3;
+        java.util.HashMap $r11;
+        com.android.server.biometrics.BiometricService$AuthSession $r12, $r17, $r18, $r19, r36;
+        java.util.ArrayList $r13;
+        boolean $z0, $z1, z2;
+        java.lang.Object $r14;
+        android.hardware.biometrics.IBiometricServiceReceiverInternal $r15, $r21;
+        android.hardware.biometrics.IBiometricAuthenticator $r16;
+        android.os.Bundle $r22, r32;
+        com.android.internal.statusbar.IStatusBarService $r23;
+        java.lang.Integer $r24, $r25;
+        com.android.server.biometrics.BiometricService$SettingObserver $r27;
+        android.os.RemoteException $r28, $r29, r39;
+        android.os.IBinder r30;
+        android.hardware.biometrics.IBiometricServiceReceiver r31;
+        java.util.Iterator r37;
+        com.android.server.biometrics.BiometricService$AuthenticatorWrapper r38;
+
+        r0 := @this: com.android.server.biometrics.BiometricService;
+
+        r30 := @parameter0: android.os.IBinder;
+
+        l0 := @parameter1: long;
+
+        i1 := @parameter2: int;
+
+        r31 := @parameter3: android.hardware.biometrics.IBiometricServiceReceiver;
+
+        r1 := @parameter4: java.lang.String;
+
+        r32 := @parameter5: android.os.Bundle;
+
+        i2 := @parameter6: int;
+
+        i3 := @parameter7: int;
+
+        i4 := @parameter8: int;
+
+        i5 := @parameter9: int;
+
+        z2 = virtualinvoke r32.<android.os.Bundle: boolean getBoolean(java.lang.String,boolean)>("require_confirmation", 1);
+
+        $i7 = i5 & 8;
+
+        if $i7 == 0 goto label04;
+
+        if z2 != 0 goto label02;
+
+        $r27 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$SettingObserver mSettingObserver>;
+
+        $z1 = virtualinvoke $r27.<com.android.server.biometrics.BiometricService$SettingObserver: boolean getFaceAlwaysRequireConfirmation(int)>(i1);
+
+        if $z1 == 0 goto label01;
+
+        goto label02;
+
+     label01:
+        z2 = 0;
+
+        goto label03;
+
+     label02:
+        z2 = 1;
+
+     label03:
+        goto label04;
+
+     label04:
+        $r2 = r0.<com.android.server.biometrics.BiometricService: java.util.Random mRandom>;
+
+        $i8 = virtualinvoke $r2.<java.util.Random: int nextInt(int)>(2147483646);
+
+        i6 = $i8 + 1;
+
+        i14 = virtualinvoke r32.<android.os.Bundle: int getInt(java.lang.String,int)>("authenticators_allowed", 0);
+
+        $r3 = new java.lang.StringBuilder;
+
+        specialinvoke $r3.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Creating auth session. Modality: ");
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i5);
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", cookie: ");
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i6);
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", authenticators: ");
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i14);
+
+        $r10 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("BiometricService", $r10);
+
+        $r11 = new java.util.HashMap;
+
+        specialinvoke $r11.<java.util.HashMap: void <init>()>();
+
+        $i10 = -32769 & i14;
+
+        if $i10 == 0 goto label05;
+
+        $r24 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i5);
+
+        $r25 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i6);
+
+        virtualinvoke $r11.<java.util.HashMap: java.lang.Object put(java.lang.Object,java.lang.Object)>($r24, $r25);
+
+     label05:
+        $r12 = new com.android.server.biometrics.BiometricService$AuthSession;
+
+        specialinvoke $r12.<com.android.server.biometrics.BiometricService$AuthSession: void <init>(com.android.server.biometrics.BiometricService,java.util.HashMap,android.os.IBinder,long,int,android.hardware.biometrics.IBiometricServiceReceiver,java.lang.String,android.os.Bundle,int,int,int,int,boolean)>(r0, $r11, r30, l0, i1, r31, r1, r32, i2, i3, i4, i5, z2);
+
+        r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mPendingAuthSession> = $r12;
+
+        if i14 != 32768 goto label08;
+
+     label06:
+        $r12.<com.android.server.biometrics.BiometricService$AuthSession: int mState> = 8;
+
+        r36 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mPendingAuthSession>;
+
+        r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession> = r36;
+
+        r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mPendingAuthSession> = null;
+
+        $r23 = r0.<com.android.server.biometrics.BiometricService: com.android.internal.statusbar.IStatusBarService mStatusBarService>;
+
+        $r22 = r36.<com.android.server.biometrics.BiometricService$AuthSession: android.os.Bundle mBundle>;
+
+        $r21 = r0.<com.android.server.biometrics.BiometricService: android.hardware.biometrics.IBiometricServiceReceiverInternal mInternalReceiver>;
+
+        $r17 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $i12 = $r17.<com.android.server.biometrics.BiometricService$AuthSession: int mUserId>;
+
+        $r18 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $r20 = $r18.<com.android.server.biometrics.BiometricService$AuthSession: java.lang.String mOpPackageName>;
+
+        $r19 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $i11 = $r19.<com.android.server.biometrics.BiometricService$AuthSession: int mSysUiSessionId>;
+
+        interfaceinvoke $r23.<com.android.internal.statusbar.IStatusBarService: void showAuthenticationDialog(android.os.Bundle,android.hardware.biometrics.IBiometricServiceReceiverInternal,int,boolean,int,java.lang.String,long,int)>($r22, $r21, 0, 0, $i12, $r20, l0, $i11);
+
+     label07:
+        goto label15;
+
+     label08:
+        $r12.<com.android.server.biometrics.BiometricService$AuthSession: int mState> = 1;
+
+        $r13 = r0.<com.android.server.biometrics.BiometricService: java.util.ArrayList mAuthenticators>;
+
+        r37 = virtualinvoke $r13.<java.util.ArrayList: java.util.Iterator iterator()>();
+
+     label09:
+        $z0 = interfaceinvoke r37.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label15;
+
+        $r14 = interfaceinvoke r37.<java.util.Iterator: java.lang.Object next()>();
+
+        r38 = (com.android.server.biometrics.BiometricService$AuthenticatorWrapper) $r14;
+
+        i15 = r38.<com.android.server.biometrics.BiometricService$AuthenticatorWrapper: int modality>;
+
+     label10:
+        if i15 != i5 goto label14;
+
+     label11:
+        $r16 = r38.<com.android.server.biometrics.BiometricService$AuthenticatorWrapper: android.hardware.biometrics.IBiometricAuthenticator impl>;
+
+        $r15 = r0.<com.android.server.biometrics.BiometricService: android.hardware.biometrics.IBiometricServiceReceiverInternal mInternalReceiver>;
+
+        interfaceinvoke $r16.<android.hardware.biometrics.IBiometricAuthenticator: void prepareForAuthentication(boolean,android.os.IBinder,long,int,android.hardware.biometrics.IBiometricServiceReceiverInternal,java.lang.String,int,int,int,int)>(z2, r30, l0, i1, $r15, r1, i6, i2, i3, i4);
+
+     label12:
+        goto label15;
+
+     label13:
+        $r28 := @caughtexception;
+
+        r39 = $r28;
+
+        goto label17;
+
+     label14:
+        goto label09;
+
+     label15:
+        goto label18;
+
+     label16:
+        $r29 := @caughtexception;
+
+        r39 = $r29;
+
+     label17:
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("BiometricService", "Unable to start authentication", r39);
+
+     label18:
+        return;
+
+        catch android.os.RemoteException from label06 to label07 with label16;
+        catch android.os.RemoteException from label08 to label09 with label16;
+        catch android.os.RemoteException from label09 to label10 with label16;
+        catch android.os.RemoteException from label11 to label12 with label13;
+    }
+
+    private static int biometricStatusToBiometricConstant(int)
+    {
+        int i0;
+
+        i0 := @parameter0: int;
+
+        if i0 == 0 goto label5;
+
+        if i0 == 1 goto label4;
+
+        if i0 == 3 goto label3;
+
+        if i0 == 4 goto label2;
+
+        if i0 == 6 goto label1;
+
+        return 1;
+
+     label1:
+        return 11;
+
+     label2:
+        return 15;
+
+     label3:
+        return 12;
+
+     label4:
+        return 0;
+
+     label5:
+        return 12;
+    }
+
+    private android.util.Pair checkAndGetAuthenticators(int, android.os.Bundle, java.lang.String, boolean) throws android.os.RemoteException
+    {
+        com.android.server.biometrics.BiometricService r0;
+        android.os.Bundle r1;
+        java.lang.String r2, $r45;
+        boolean z0, z1, z2, z3, $z4;
+        java.util.Iterator r3;
+        com.android.server.biometrics.BiometricService$AuthenticatorWrapper r4;
+        android.util.Pair r5, $r9, $r12, $r15, $r18, $r21, $r24, $r27;
+        android.app.trust.ITrustManager $r7;
+        java.util.ArrayList $r8;
+        java.lang.Integer $r10, $r11, $r13, $r14, $r16, $r17, $r19, $r20, $r22, $r23, $r25, $r26, $r28, $r29, $r32, $r47, $r49;
+        int $i2, $i3, $i4, $i5, $i6, i8, i9, i10, i11, i12, i13;
+        java.lang.Object $r30, $r31, $r41, $r46, $r48;
+        java.lang.StringBuilder $r33;
+
+        r0 := @this: com.android.server.biometrics.BiometricService;
+
+        i8 := @parameter0: int;
+
+        r1 := @parameter1: android.os.Bundle;
+
+        r2 := @parameter2: java.lang.String;
+
+        z0 := @parameter3: boolean;
+
+        z1 = staticinvoke <com.android.server.biometrics.Utils: boolean isBiometricRequested(android.os.Bundle)>(r1);
+
+        z2 = staticinvoke <com.android.server.biometrics.Utils: boolean isCredentialRequested(android.os.Bundle)>(r1);
+
+        $r7 = r0.<com.android.server.biometrics.BiometricService: android.app.trust.ITrustManager mTrustManager>;
+
+        z3 = interfaceinvoke $r7.<android.app.trust.ITrustManager: boolean isDeviceSecure(int)>(i8);
+
+        $r8 = r0.<com.android.server.biometrics.BiometricService: java.util.ArrayList mAuthenticators>;
+
+        r3 = virtualinvoke $r8.<java.util.ArrayList: java.util.Iterator iterator()>();
+
+        i9 = 0;
+
+        i10 = 0;
+
+        i11 = 0;
+
+     label01:
+        $z4 = interfaceinvoke r3.<java.util.Iterator: boolean hasNext()>();
+
+        if $z4 == 0 goto label04;
+
+        $r30 = interfaceinvoke r3.<java.util.Iterator: java.lang.Object next()>();
+
+        r4 = (com.android.server.biometrics.BiometricService$AuthenticatorWrapper) $r30;
+
+        $i4 = staticinvoke <com.android.server.biometrics.Utils: int getPublicBiometricStrength(android.os.Bundle)>(r1);
+
+        r5 = specialinvoke r0.<com.android.server.biometrics.BiometricService: android.util.Pair getStatusForBiometricAuthenticator(com.android.server.biometrics.BiometricService$AuthenticatorWrapper,int,java.lang.String,boolean,int)>(r4, i8, r2, z0, $i4);
+
+        $r31 = r5.<android.util.Pair: java.lang.Object second>;
+
+        $r32 = (java.lang.Integer) $r31;
+
+        i11 = virtualinvoke $r32.<java.lang.Integer: int intValue()>();
+
+        $r33 = new java.lang.StringBuilder;
+
+        specialinvoke $r33.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r33.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Package: ");
+
+        virtualinvoke $r33.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r2);
+
+        virtualinvoke $r33.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" Authenticator ID: ");
+
+        $i5 = r4.<com.android.server.biometrics.BiometricService$AuthenticatorWrapper: int id>;
+
+        virtualinvoke $r33.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i5);
+
+        virtualinvoke $r33.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" Modality: ");
+
+        $i6 = r4.<com.android.server.biometrics.BiometricService$AuthenticatorWrapper: int modality>;
+
+        virtualinvoke $r33.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i6);
+
+        virtualinvoke $r33.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" Reported Modality: ");
+
+        $r41 = r5.<android.util.Pair: java.lang.Object first>;
+
+        virtualinvoke $r33.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r41);
+
+        virtualinvoke $r33.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" Status: ");
+
+        virtualinvoke $r33.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i11);
+
+        $r45 = virtualinvoke $r33.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("BiometricService", $r45);
+
+        i12 = i9;
+
+        if i9 != 0 goto label02;
+
+        $r48 = r5.<android.util.Pair: java.lang.Object first>;
+
+        $r49 = (java.lang.Integer) $r48;
+
+        i12 = virtualinvoke $r49.<java.lang.Integer: int intValue()>();
+
+        i10 = i11;
+
+     label02:
+        if i11 != 1 goto label03;
+
+        $r46 = r5.<android.util.Pair: java.lang.Object first>;
+
+        $r47 = (java.lang.Integer) $r46;
+
+        i13 = virtualinvoke $r47.<java.lang.Integer: int intValue()>();
+
+        i9 = i12;
+
+        goto label05;
+
+     label03:
+        i9 = i12;
+
+        goto label01;
+
+     label04:
+        i13 = 0;
+
+     label05:
+        if z1 == 0 goto label09;
+
+        if z2 == 0 goto label09;
+
+        if z3 != 0 goto label07;
+
+        if i11 != 1 goto label06;
+
+        goto label07;
+
+     label06:
+        $r27 = new android.util.Pair;
+
+        $r28 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i9);
+
+        $r29 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(11);
+
+        specialinvoke $r27.<android.util.Pair: void <init>(java.lang.Object,java.lang.Object)>($r28, $r29);
+
+        return $r27;
+
+     label07:
+        if i11 == 1 goto label08;
+
+        virtualinvoke r1.<android.os.Bundle: void putInt(java.lang.String,int)>("authenticators_allowed", 32768);
+
+        goto label08;
+
+     label08:
+        $r24 = new android.util.Pair;
+
+        $r25 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i13);
+
+        $r26 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(0);
+
+        specialinvoke $r24.<android.util.Pair: void <init>(java.lang.Object,java.lang.Object)>($r25, $r26);
+
+        return $r24;
+
+     label09:
+        if z1 == 0 goto label11;
+
+        if i11 != 1 goto label10;
+
+        $r21 = new android.util.Pair;
+
+        $r22 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i13);
+
+        $i3 = staticinvoke <com.android.server.biometrics.BiometricService: int biometricStatusToBiometricConstant(int)>(i11);
+
+        $r23 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i3);
+
+        specialinvoke $r21.<android.util.Pair: void <init>(java.lang.Object,java.lang.Object)>($r22, $r23);
+
+        return $r21;
+
+     label10:
+        $r18 = new android.util.Pair;
+
+        $r19 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i9);
+
+        $i2 = staticinvoke <com.android.server.biometrics.BiometricService: int biometricStatusToBiometricConstant(int)>(i10);
+
+        $r20 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i2);
+
+        specialinvoke $r18.<android.util.Pair: void <init>(java.lang.Object,java.lang.Object)>($r19, $r20);
+
+        return $r18;
+
+     label11:
+        if z2 == 0 goto label13;
+
+        if z3 == 0 goto label12;
+
+        $r15 = new android.util.Pair;
+
+        $r16 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(0);
+
+        $r17 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(0);
+
+        specialinvoke $r15.<android.util.Pair: void <init>(java.lang.Object,java.lang.Object)>($r16, $r17);
+
+        return $r15;
+
+     label12:
+        $r12 = new android.util.Pair;
+
+        $r13 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(0);
+
+        $r14 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(14);
+
+        specialinvoke $r12.<android.util.Pair: void <init>(java.lang.Object,java.lang.Object)>($r13, $r14);
+
+        return $r12;
+
+     label13:
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("BiometricService", "No authenticators requested");
+
+        $r9 = new android.util.Pair;
+
+        $r10 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(0);
+
+        $r11 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(12);
+
+        specialinvoke $r9.<android.util.Pair: void <init>(java.lang.Object,java.lang.Object)>($r10, $r11);
+
+        return $r9;
+    }
+
+    private void checkInternalPermission()
+    {
+        com.android.server.biometrics.BiometricService r0;
+        android.content.Context $r1;
+
+        r0 := @this: com.android.server.biometrics.BiometricService;
+
+        $r1 = virtualinvoke r0.<com.android.server.biometrics.BiometricService: android.content.Context getContext()>();
+
+        virtualinvoke $r1.<android.content.Context: void enforceCallingOrSelfPermission(java.lang.String,java.lang.String)>("android.permission.USE_BIOMETRIC_INTERNAL", "Must have USE_BIOMETRIC_INTERNAL permission");
+
+        return;
+    }
+
+    private android.util.Pair getStatusForBiometricAuthenticator(com.android.server.biometrics.BiometricService$AuthenticatorWrapper, int, java.lang.String, boolean, int)
+    {
+        com.android.server.biometrics.BiometricService r0;
+        com.android.server.biometrics.BiometricService$AuthenticatorWrapper r1;
+        int i0, i1, $i2, $i3, $i4, $i5, $i6, $i7, $i8, $i9, $i10;
+        java.lang.Integer r2, $r6, $r7, $r9, $r11, $r12, $r14, $r15, $r17, $r19, $r20, $r22, $r25, $r26;
+        boolean z0, $z1, $z2, $z3, $z4, z5, z6;
+        android.hardware.biometrics.IBiometricAuthenticator $r3, $r4;
+        android.util.Pair $r5, $r8, $r10, $r13, $r16, $r18, $r21, $r24;
+        android.os.RemoteException $r23;
+        java.lang.String r27;
+
+        r0 := @this: com.android.server.biometrics.BiometricService;
+
+        r1 := @parameter0: com.android.server.biometrics.BiometricService$AuthenticatorWrapper;
+
+        i0 := @parameter1: int;
+
+        r27 := @parameter2: java.lang.String;
+
+        z5 := @parameter3: boolean;
+
+        i1 := @parameter4: int;
+
+        r2 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(0);
+
+        if z5 == 0 goto label1;
+
+        $i9 = r1.<com.android.server.biometrics.BiometricService$AuthenticatorWrapper: int modality>;
+
+        $z4 = specialinvoke r0.<com.android.server.biometrics.BiometricService: boolean isBiometricDisabledByDevicePolicy(int,int)>($i9, i0);
+
+        if $z4 == 0 goto label1;
+
+        $r21 = new android.util.Pair;
+
+        $r22 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(2);
+
+        specialinvoke $r21.<android.util.Pair: void <init>(java.lang.Object,java.lang.Object)>(r2, $r22);
+
+        return $r21;
+
+     label1:
+        $i2 = r1.<com.android.server.biometrics.BiometricService$AuthenticatorWrapper: int OEMStrength>;
+
+        z0 = staticinvoke <com.android.server.biometrics.Utils: boolean isAtLeastStrength(int,int)>($i2, i1);
+
+        $i3 = virtualinvoke r1.<com.android.server.biometrics.BiometricService$AuthenticatorWrapper: int getActualStrength()>();
+
+        z6 = staticinvoke <com.android.server.biometrics.Utils: boolean isAtLeastStrength(int,int)>($i3, i1);
+
+        if z0 == 0 goto label2;
+
+        if z6 != 0 goto label2;
+
+        $r18 = new android.util.Pair;
+
+        $i8 = r1.<com.android.server.biometrics.BiometricService$AuthenticatorWrapper: int modality>;
+
+        $r19 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i8);
+
+        $r20 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(4);
+
+        specialinvoke $r18.<android.util.Pair: void <init>(java.lang.Object,java.lang.Object)>($r19, $r20);
+
+        return $r18;
+
+     label2:
+        if z0 != 0 goto label3;
+
+        $r16 = new android.util.Pair;
+
+        $r17 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(3);
+
+        specialinvoke $r16.<android.util.Pair: void <init>(java.lang.Object,java.lang.Object)>(r2, $r17);
+
+        return $r16;
+
+     label3:
+        $r3 = r1.<com.android.server.biometrics.BiometricService$AuthenticatorWrapper: android.hardware.biometrics.IBiometricAuthenticator impl>;
+
+        $z1 = interfaceinvoke $r3.<android.hardware.biometrics.IBiometricAuthenticator: boolean isHardwareDetected(java.lang.String)>(r27);
+
+        if $z1 != 0 goto label4;
+
+        $r13 = new android.util.Pair;
+
+        $i7 = r1.<com.android.server.biometrics.BiometricService$AuthenticatorWrapper: int modality>;
+
+        $r14 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i7);
+
+        $r15 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(5);
+
+        specialinvoke $r13.<android.util.Pair: void <init>(java.lang.Object,java.lang.Object)>($r14, $r15);
+
+        return $r13;
+
+     label4:
+        $r4 = r1.<com.android.server.biometrics.BiometricService$AuthenticatorWrapper: android.hardware.biometrics.IBiometricAuthenticator impl>;
+
+        $z2 = interfaceinvoke $r4.<android.hardware.biometrics.IBiometricAuthenticator: boolean hasEnrolledTemplates(int,java.lang.String)>(i0, r27);
+
+        if $z2 != 0 goto label6;
+
+        $r10 = new android.util.Pair;
+
+        $i6 = r1.<com.android.server.biometrics.BiometricService$AuthenticatorWrapper: int modality>;
+
+        $r11 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i6);
+
+        $r12 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(6);
+
+        specialinvoke $r10.<android.util.Pair: void <init>(java.lang.Object,java.lang.Object)>($r11, $r12);
+
+     label5:
+        return $r10;
+
+     label6:
+        $i4 = r1.<com.android.server.biometrics.BiometricService$AuthenticatorWrapper: int modality>;
+
+        $z3 = specialinvoke r0.<com.android.server.biometrics.BiometricService: boolean isEnabledForApp(int,int)>($i4, i0);
+
+        if $z3 != 0 goto label7;
+
+        $r8 = new android.util.Pair;
+
+        $r9 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(7);
+
+        specialinvoke $r8.<android.util.Pair: void <init>(java.lang.Object,java.lang.Object)>(r2, $r9);
+
+        return $r8;
+
+     label7:
+        $r5 = new android.util.Pair;
+
+        $i5 = r1.<com.android.server.biometrics.BiometricService$AuthenticatorWrapper: int modality>;
+
+        $r6 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i5);
+
+        $r7 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(1);
+
+        specialinvoke $r5.<android.util.Pair: void <init>(java.lang.Object,java.lang.Object)>($r6, $r7);
+
+        return $r5;
+
+     label8:
+        $r23 := @caughtexception;
+
+        $r24 = new android.util.Pair;
+
+        $i10 = r1.<com.android.server.biometrics.BiometricService$AuthenticatorWrapper: int modality>;
+
+        $r25 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i10);
+
+        $r26 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(5);
+
+        specialinvoke $r24.<android.util.Pair: void <init>(java.lang.Object,java.lang.Object)>($r25, $r26);
+
+        return $r24;
+
+        catch android.os.RemoteException from label3 to label4 with label8;
+        catch android.os.RemoteException from label4 to label5 with label8;
+    }
+
+    private void handleAuthenticate(android.os.IBinder, long, int, android.hardware.biometrics.IBiometricServiceReceiver, java.lang.String, android.os.Bundle, int, int, int)
+    {
+        com.android.server.biometrics.BiometricService r0;
+        android.os.IBinder r1;
+        long l0;
+        int i1, i2, i3, i4;
+        android.hardware.biometrics.IBiometricServiceReceiver r2;
+        java.lang.String r3;
+        android.os.Bundle r4;
+        com.android.server.biometrics._$$Lambda$BiometricService$IIHhqSKogJZG56VmePRbTOf_5qo $r5;
+        android.os.Handler $r6;
+
+        r0 := @this: com.android.server.biometrics.BiometricService;
+
+        r1 := @parameter0: android.os.IBinder;
+
+        l0 := @parameter1: long;
+
+        i1 := @parameter2: int;
+
+        r2 := @parameter3: android.hardware.biometrics.IBiometricServiceReceiver;
+
+        r3 := @parameter4: java.lang.String;
+
+        r4 := @parameter5: android.os.Bundle;
+
+        i2 := @parameter6: int;
+
+        i3 := @parameter7: int;
+
+        i4 := @parameter8: int;
+
+        $r6 = r0.<com.android.server.biometrics.BiometricService: android.os.Handler mHandler>;
+
+        $r5 = new com.android.server.biometrics._$$Lambda$BiometricService$IIHhqSKogJZG56VmePRbTOf_5qo;
+
+        specialinvoke $r5.<com.android.server.biometrics._$$Lambda$BiometricService$IIHhqSKogJZG56VmePRbTOf_5qo: void <init>(com.android.server.biometrics.BiometricService,android.os.Bundle,int,java.lang.String,android.os.IBinder,long,android.hardware.biometrics.IBiometricServiceReceiver,int,int,int)>(r0, r4, i1, r3, r1, l0, r2, i2, i3, i4);
+
+        virtualinvoke $r6.<android.os.Handler: boolean post(java.lang.Runnable)>($r5);
+
+        return;
+    }
+
+    private void handleAuthenticationRejected()
+    {
+        com.android.server.biometrics.BiometricService r0;
+        com.android.server.biometrics.BiometricService$AuthSession $r2, $r4, $r5, $r7;
+        com.android.internal.statusbar.IStatusBarService $r3;
+        int $i1, $i2;
+        android.hardware.biometrics.IBiometricServiceReceiver $r6;
+        android.os.RemoteException $r8;
+
+        r0 := @this: com.android.server.biometrics.BiometricService;
+
+        staticinvoke <android.util.Slog: int v(java.lang.String,java.lang.String)>("BiometricService", "handleAuthenticationRejected()");
+
+     label1:
+        $r2 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        if $r2 != null goto label3;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("BiometricService", "handleAuthenticationRejected: Auth session is null");
+
+     label2:
+        return;
+
+     label3:
+        $r3 = r0.<com.android.server.biometrics.BiometricService: com.android.internal.statusbar.IStatusBarService mStatusBarService>;
+
+        interfaceinvoke $r3.<com.android.internal.statusbar.IStatusBarService: void onBiometricError(int,int,int)>(0, 100, 0);
+
+        $r4 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $i1 = $r4.<com.android.server.biometrics.BiometricService$AuthSession: int mModality>;
+
+        $i2 = $i1 & 8;
+
+        if $i2 == 0 goto label4;
+
+        $r7 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $r7.<com.android.server.biometrics.BiometricService$AuthSession: int mState> = 3;
+
+     label4:
+        $r5 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $r6 = $r5.<com.android.server.biometrics.BiometricService$AuthSession: android.hardware.biometrics.IBiometricServiceReceiver mClientReceiver>;
+
+        interfaceinvoke $r6.<android.hardware.biometrics.IBiometricServiceReceiver: void onAuthenticationFailed()>();
+
+     label5:
+        goto label7;
+
+     label6:
+        $r8 := @caughtexception;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("BiometricService", "Remote exception", $r8);
+
+     label7:
+        return;
+
+        catch android.os.RemoteException from label1 to label2 with label6;
+        catch android.os.RemoteException from label3 to label4 with label6;
+        catch android.os.RemoteException from label4 to label5 with label6;
+    }
+
+    private void handleAuthenticationSucceeded(boolean, byte[], boolean)
+    {
+        com.android.server.biometrics.BiometricService r0;
+        boolean z0, z1;
+        com.android.server.biometrics.BiometricService$AuthSession $r1, $r2, $r3, $r5, $r6;
+        long $l0;
+        com.android.internal.statusbar.IStatusBarService $r4;
+        android.os.RemoteException $r7;
+        byte[] r8;
+
+        r0 := @this: com.android.server.biometrics.BiometricService;
+
+        z0 := @parameter0: boolean;
+
+        r8 := @parameter1: byte[];
+
+        z1 := @parameter2: boolean;
+
+     label01:
+        $r1 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        if $r1 != null goto label03;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("BiometricService", "handleAuthenticationSucceeded: Auth session is null");
+
+     label02:
+        return;
+
+     label03:
+        if z1 == 0 goto label06;
+
+     label04:
+        $r6 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $r6.<com.android.server.biometrics.BiometricService$AuthSession: byte[] mTokenEscrow> = r8;
+
+     label05:
+        goto label08;
+
+     label06:
+        if r8 == null goto label08;
+
+     label07:
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("BiometricService", "Dropping authToken for non-strong biometric");
+
+     label08:
+        if z0 != 0 goto label11;
+
+     label09:
+        $r5 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $r5.<com.android.server.biometrics.BiometricService$AuthSession: int mState> = 6;
+
+     label10:
+        goto label12;
+
+     label11:
+        $r2 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $l0 = staticinvoke <java.lang.System: long currentTimeMillis()>();
+
+        staticinvoke <com.android.server.biometrics.BiometricService$AuthSession: long access$2002(com.android.server.biometrics.BiometricService$AuthSession,long)>($r2, $l0);
+
+        $r3 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $r3.<com.android.server.biometrics.BiometricService$AuthSession: int mState> = 5;
+
+     label12:
+        $r4 = r0.<com.android.server.biometrics.BiometricService: com.android.internal.statusbar.IStatusBarService mStatusBarService>;
+
+        interfaceinvoke $r4.<com.android.internal.statusbar.IStatusBarService: void onBiometricAuthenticated()>();
+
+     label13:
+        goto label15;
+
+     label14:
+        $r7 := @caughtexception;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("BiometricService", "Remote exception", $r7);
+
+     label15:
+        return;
+
+        catch android.os.RemoteException from label01 to label02 with label14;
+        catch android.os.RemoteException from label04 to label05 with label14;
+        catch android.os.RemoteException from label07 to label08 with label14;
+        catch android.os.RemoteException from label09 to label10 with label14;
+        catch android.os.RemoteException from label11 to label12 with label14;
+        catch android.os.RemoteException from label12 to label13 with label14;
+    }
+
+    private void handleAuthenticationTimedOut(int, int, int)
+    {
+        com.android.server.biometrics.BiometricService r0;
+        int i0, i1, i2;
+        java.lang.Object[] $r2;
+        java.lang.Integer $r3, $r4, $r5;
+        java.lang.String $r6;
+        com.android.server.biometrics.BiometricService$AuthSession $r7, $r9;
+        com.android.internal.statusbar.IStatusBarService $r8;
+        android.os.RemoteException $r10;
+
+        r0 := @this: com.android.server.biometrics.BiometricService;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        i2 := @parameter2: int;
+
+        $r2 = newarray (java.lang.Object)[3];
+
+        $r3 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i0);
+
+        $r2[0] = $r3;
+
+        $r4 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i1);
+
+        $r2[1] = $r4;
+
+        $r5 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i2);
+
+        $r2[2] = $r5;
+
+        $r6 = staticinvoke <java.lang.String: java.lang.String format(java.lang.String,java.lang.Object[])>("handleAuthenticationTimedOut(%d, %d, %d)", $r2);
+
+        staticinvoke <android.util.Slog: int v(java.lang.String,java.lang.String)>("BiometricService", $r6);
+
+     label1:
+        $r7 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        if $r7 != null goto label3;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("BiometricService", "handleAuthenticationTimedOut: Auth session is null");
+
+     label2:
+        return;
+
+     label3:
+        $r8 = r0.<com.android.server.biometrics.BiometricService: com.android.internal.statusbar.IStatusBarService mStatusBarService>;
+
+        interfaceinvoke $r8.<com.android.internal.statusbar.IStatusBarService: void onBiometricError(int,int,int)>(i0, i1, i2);
+
+        $r9 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $r9.<com.android.server.biometrics.BiometricService$AuthSession: int mState> = 3;
+
+     label4:
+        goto label6;
+
+     label5:
+        $r10 := @caughtexception;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("BiometricService", "Remote exception", $r10);
+
+     label6:
+        return;
+
+        catch android.os.RemoteException from label1 to label2 with label5;
+        catch android.os.RemoteException from label3 to label4 with label5;
+    }
+
+    private void handleCancelAuthentication(android.os.IBinder, java.lang.String, int, int, int)
+    {
+        com.android.server.biometrics.BiometricService r0;
+        java.lang.String r1;
+        int i0, i1, i2, $i4, $i5;
+        com.android.server.biometrics.BiometricService$AuthSession r2, $r3, $r4;
+        android.hardware.biometrics.IBiometricServiceReceiver $r5;
+        com.android.internal.statusbar.IStatusBarService $r6;
+        android.os.RemoteException $r7;
+        android.os.IBinder r8;
+
+        r0 := @this: com.android.server.biometrics.BiometricService;
+
+        r8 := @parameter0: android.os.IBinder;
+
+        r1 := @parameter1: java.lang.String;
+
+        i0 := @parameter2: int;
+
+        i1 := @parameter3: int;
+
+        i2 := @parameter4: int;
+
+        if r8 == null goto label8;
+
+        if r1 != null goto label1;
+
+        goto label8;
+
+     label1:
+        r2 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        if r2 == null goto label6;
+
+        $i4 = r2.<com.android.server.biometrics.BiometricService$AuthSession: int mState>;
+
+        if $i4 == 2 goto label6;
+
+     label2:
+        $r3 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $r5 = $r3.<com.android.server.biometrics.BiometricService$AuthSession: android.hardware.biometrics.IBiometricServiceReceiver mClientReceiver>;
+
+        $r4 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $i5 = $r4.<com.android.server.biometrics.BiometricService$AuthSession: int mModality>;
+
+        interfaceinvoke $r5.<android.hardware.biometrics.IBiometricServiceReceiver: void onError(int,int,int)>($i5, 5, 0);
+
+        r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession> = null;
+
+        $r6 = r0.<com.android.server.biometrics.BiometricService: com.android.internal.statusbar.IStatusBarService mStatusBarService>;
+
+        interfaceinvoke $r6.<com.android.internal.statusbar.IStatusBarService: void hideAuthenticationDialog()>();
+
+     label3:
+        goto label5;
+
+     label4:
+        $r7 := @caughtexception;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("BiometricService", "Remote exception", $r7);
+
+     label5:
+        goto label7;
+
+     label6:
+        virtualinvoke r0.<com.android.server.biometrics.BiometricService: void cancelInternal(android.os.IBinder,java.lang.String,int,int,int,boolean)>(r8, r1, i0, i1, i2, 1);
+
+     label7:
+        return;
+
+     label8:
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("BiometricService", "Unable to cancel, one or more null arguments");
+
+        return;
+
+        catch android.os.RemoteException from label2 to label3 with label4;
+    }
+
+    private void handleClientDied()
+    {
+        com.android.server.biometrics.BiometricService r0;
+        com.android.server.biometrics.BiometricService$AuthSession $r2, $r5, $r8, $r11, $r13, $r14, $r15, $r16, $r17, $r18;
+        java.lang.StringBuilder $r3, $r22;
+        int $i0, $i1, $i3, $i4, $i5, $i6;
+        java.lang.String $r10, $r19, $r25;
+        com.android.internal.statusbar.IStatusBarService $r12;
+        android.os.IBinder $r20;
+        android.os.RemoteException $r21;
+
+        r0 := @this: com.android.server.biometrics.BiometricService;
+
+        $r2 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        if $r2 != null goto label1;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("BiometricService", "Auth session null");
+
+        return;
+
+     label1:
+        $r3 = new java.lang.StringBuilder;
+
+        specialinvoke $r3.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("SysUiSessionId: ");
+
+        $r5 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $i0 = $r5.<com.android.server.biometrics.BiometricService$AuthSession: int mSysUiSessionId>;
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i0);
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" State: ");
+
+        $r8 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $i1 = $r8.<com.android.server.biometrics.BiometricService$AuthSession: int mState>;
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i1);
+
+        $r10 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("BiometricService", $r10);
+
+     label2:
+        $r11 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $i3 = $r11.<com.android.server.biometrics.BiometricService$AuthSession: int mState>;
+
+        if $i3 != 2 goto label4;
+
+        $r13 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $r13.<com.android.server.biometrics.BiometricService$AuthSession: int mState> = 9;
+
+        $r14 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $r20 = $r14.<com.android.server.biometrics.BiometricService$AuthSession: android.os.IBinder mToken>;
+
+        $r15 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $r19 = $r15.<com.android.server.biometrics.BiometricService$AuthSession: java.lang.String mOpPackageName>;
+
+        $r16 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $i6 = $r16.<com.android.server.biometrics.BiometricService$AuthSession: int mCallingUid>;
+
+        $r17 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $i5 = $r17.<com.android.server.biometrics.BiometricService$AuthSession: int mCallingPid>;
+
+        $r18 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $i4 = $r18.<com.android.server.biometrics.BiometricService$AuthSession: int mCallingUserId>;
+
+        virtualinvoke r0.<com.android.server.biometrics.BiometricService: void cancelInternal(android.os.IBinder,java.lang.String,int,int,int,boolean)>($r20, $r19, $i6, $i5, $i4, 0);
+
+     label3:
+        goto label5;
+
+     label4:
+        $r12 = r0.<com.android.server.biometrics.BiometricService: com.android.internal.statusbar.IStatusBarService mStatusBarService>;
+
+        interfaceinvoke $r12.<com.android.internal.statusbar.IStatusBarService: void hideAuthenticationDialog()>();
+
+        r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession> = null;
+
+     label5:
+        goto label7;
+
+     label6:
+        $r21 := @caughtexception;
+
+        $r22 = new java.lang.StringBuilder;
+
+        specialinvoke $r22.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r22.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Remote exception: ");
+
+        virtualinvoke $r22.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r21);
+
+        $r25 = virtualinvoke $r22.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("BiometricService", $r25);
+
+     label7:
+        return;
+
+        catch android.os.RemoteException from label2 to label3 with label6;
+        catch android.os.RemoteException from label4 to label5 with label6;
+    }
+
+    private void handleOnAcquired(int, java.lang.String)
+    {
+        com.android.server.biometrics.BiometricService r0;
+        int i0;
+        com.android.server.biometrics.BiometricService$AuthSession $r1;
+        com.android.internal.statusbar.IStatusBarService $r2;
+        java.lang.StringBuilder $r3;
+        java.lang.String $r6, r8;
+        android.os.RemoteException $r7;
+
+        r0 := @this: com.android.server.biometrics.BiometricService;
+
+        i0 := @parameter0: int;
+
+        r8 := @parameter1: java.lang.String;
+
+        $r1 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        if $r1 != null goto label1;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("BiometricService", "onAcquired(): Auth session is null");
+
+        return;
+
+     label1:
+        if r8 != null goto label2;
+
+        $r3 = new java.lang.StringBuilder;
+
+        specialinvoke $r3.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Ignoring null message: ");
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r6 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("BiometricService", $r6);
+
+        return;
+
+     label2:
+        $r2 = r0.<com.android.server.biometrics.BiometricService: com.android.internal.statusbar.IStatusBarService mStatusBarService>;
+
+        interfaceinvoke $r2.<com.android.internal.statusbar.IStatusBarService: void onBiometricHelp(java.lang.String)>(r8);
+
+     label3:
+        goto label5;
+
+     label4:
+        $r7 := @caughtexception;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("BiometricService", "Remote exception", $r7);
+
+     label5:
+        return;
+
+        catch android.os.RemoteException from label2 to label3 with label4;
+    }
+
+    private void handleOnDeviceCredentialPressed()
+    {
+        com.android.server.biometrics.BiometricService r0;
+        com.android.server.biometrics.BiometricService$AuthSession $r1, $r2;
+        int $i1, $i2, $i3;
+
+        r0 := @this: com.android.server.biometrics.BiometricService;
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("BiometricService", "onDeviceCredentialPressed");
+
+        $r1 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        if $r1 != null goto label1;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("BiometricService", "Auth session null");
+
+        return;
+
+     label1:
+        $i1 = staticinvoke <android.os.Binder: int getCallingUid()>();
+
+        $i2 = staticinvoke <android.os.Binder: int getCallingPid()>();
+
+        $i3 = staticinvoke <android.os.UserHandle: int getCallingUserId()>();
+
+        virtualinvoke r0.<com.android.server.biometrics.BiometricService: void cancelInternal(android.os.IBinder,java.lang.String,int,int,int,boolean)>(null, null, $i1, $i2, $i3, 0);
+
+        $r2 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $r2.<com.android.server.biometrics.BiometricService$AuthSession: int mState> = 8;
+
+        return;
+    }
+
+    private void handleOnDismissed(int, byte[])
+    {
+        com.android.server.biometrics.BiometricService r0;
+        int i0, $i3, $i6, $i7, $i8, $i9, $i10, $i11, $i12, $i13, $i14, $i15;
+        com.android.server.biometrics.BiometricService$AuthSession $r1, $r2, $r4, $r8, $r9, $r10, $r11, $r13, $r14, $r16, $r18, $r19, $r20, $r32;
+        android.hardware.biometrics.IBiometricServiceReceiver $r3, $r12, $r15, $r17;
+        byte[] $r5, r30, $r33;
+        android.security.KeyStore $r6, $r7;
+        java.lang.String $r23, $r28;
+        java.lang.StringBuilder $r24, r35;
+        android.os.RemoteException $r29;
+
+        r0 := @this: com.android.server.biometrics.BiometricService;
+
+        i0 := @parameter0: int;
+
+        r30 := @parameter1: byte[];
+
+        $r1 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        if $r1 != null goto label01;
+
+        $r24 = new java.lang.StringBuilder;
+
+        specialinvoke $r24.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r24.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("onDismissed: ");
+
+        virtualinvoke $r24.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        virtualinvoke $r24.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", auth session null");
+
+        $r28 = virtualinvoke $r24.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("BiometricService", $r28);
+
+        return;
+
+     label01:
+        specialinvoke r0.<com.android.server.biometrics.BiometricService: void logDialogDismissed(int)>(i0);
+
+        tableswitch(i0)
+        {
+            case 1: goto label14;
+            case 2: goto label12;
+            case 3: goto label10;
+            case 4: goto label14;
+            case 5: goto label08;
+            case 6: goto label08;
+            case 7: goto label03;
+            default: goto label02;
+        };
+
+     label02:
+        goto label20;
+
+     label03:
+        if r30 == null goto label06;
+
+     label04:
+        $r7 = r0.<com.android.server.biometrics.BiometricService: android.security.KeyStore mKeyStore>;
+
+        virtualinvoke $r7.<android.security.KeyStore: int addAuthToken(byte[])>(r30);
+
+     label05:
+        goto label14;
+
+     label06:
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("BiometricService", "Credential confirmed but attestation is null");
+
+     label07:
+        goto label14;
+
+     label08:
+        $r8 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $r12 = $r8.<com.android.server.biometrics.BiometricService$AuthSession: android.hardware.biometrics.IBiometricServiceReceiver mClientReceiver>;
+
+        $r9 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $i8 = $r9.<com.android.server.biometrics.BiometricService$AuthSession: int mModality>;
+
+        $r10 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $i7 = $r10.<com.android.server.biometrics.BiometricService$AuthSession: int mErrorEscrow>;
+
+        $r11 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $i6 = $r11.<com.android.server.biometrics.BiometricService$AuthSession: int mVendorCodeEscrow>;
+
+        interfaceinvoke $r12.<android.hardware.biometrics.IBiometricServiceReceiver: void onError(int,int,int)>($i8, $i7, $i6);
+
+     label09:
+        goto label21;
+
+     label10:
+        $r13 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $r15 = $r13.<com.android.server.biometrics.BiometricService$AuthSession: android.hardware.biometrics.IBiometricServiceReceiver mClientReceiver>;
+
+        $r14 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $i9 = $r14.<com.android.server.biometrics.BiometricService$AuthSession: int mModality>;
+
+        interfaceinvoke $r15.<android.hardware.biometrics.IBiometricServiceReceiver: void onError(int,int,int)>($i9, 10, 0);
+
+        $i10 = staticinvoke <android.os.Binder: int getCallingUid()>();
+
+        $i11 = staticinvoke <android.os.Binder: int getCallingPid()>();
+
+        $i12 = staticinvoke <android.os.UserHandle: int getCallingUserId()>();
+
+        virtualinvoke r0.<com.android.server.biometrics.BiometricService: void cancelInternal(android.os.IBinder,java.lang.String,int,int,int,boolean)>(null, null, $i10, $i11, $i12, 0);
+
+     label11:
+        goto label21;
+
+     label12:
+        $r16 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $r17 = $r16.<com.android.server.biometrics.BiometricService$AuthSession: android.hardware.biometrics.IBiometricServiceReceiver mClientReceiver>;
+
+        interfaceinvoke $r17.<android.hardware.biometrics.IBiometricServiceReceiver: void onDialogDismissed(int)>(i0);
+
+        $r18 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $i15 = $r18.<com.android.server.biometrics.BiometricService$AuthSession: int mCallingUid>;
+
+        $r19 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $i14 = $r19.<com.android.server.biometrics.BiometricService$AuthSession: int mCallingPid>;
+
+        $r20 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $i13 = $r20.<com.android.server.biometrics.BiometricService$AuthSession: int mCallingUserId>;
+
+        virtualinvoke r0.<com.android.server.biometrics.BiometricService: void cancelInternal(android.os.IBinder,java.lang.String,int,int,int,boolean)>(null, null, $i15, $i14, $i13, 0);
+
+     label13:
+        goto label21;
+
+     label14:
+        $r32 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $r33 = $r32.<com.android.server.biometrics.BiometricService$AuthSession: byte[] mTokenEscrow>;
+
+        if $r33 == null goto label16;
+
+        $r6 = r0.<com.android.server.biometrics.BiometricService: android.security.KeyStore mKeyStore>;
+
+        $r4 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $r5 = $r4.<com.android.server.biometrics.BiometricService$AuthSession: byte[] mTokenEscrow>;
+
+        virtualinvoke $r6.<android.security.KeyStore: int addAuthToken(byte[])>($r5);
+
+     label15:
+        goto label17;
+
+     label16:
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("BiometricService", "mTokenEscrow is null");
+
+     label17:
+        $r2 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $r3 = $r2.<com.android.server.biometrics.BiometricService$AuthSession: android.hardware.biometrics.IBiometricServiceReceiver mClientReceiver>;
+
+        $i3 = staticinvoke <com.android.server.biometrics.Utils: int getAuthenticationTypeForResult(int)>(i0);
+
+        interfaceinvoke $r3.<android.hardware.biometrics.IBiometricServiceReceiver: void onAuthenticationSucceeded(int)>($i3);
+
+     label18:
+        goto label21;
+
+     label19:
+        $r29 := @caughtexception;
+
+        goto label23;
+
+     label20:
+        r35 = new java.lang.StringBuilder;
+
+        specialinvoke r35.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r35.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Unhandled reason: ");
+
+        virtualinvoke r35.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r23 = virtualinvoke r35.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("BiometricService", $r23);
+
+     label21:
+        r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession> = null;
+
+     label22:
+        goto label24;
+
+     label23:
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("BiometricService", "Remote exception", $r29);
+
+     label24:
+        return;
+
+        catch android.os.RemoteException from label04 to label05 with label19;
+        catch android.os.RemoteException from label06 to label07 with label19;
+        catch android.os.RemoteException from label08 to label09 with label19;
+        catch android.os.RemoteException from label10 to label11 with label19;
+        catch android.os.RemoteException from label12 to label13 with label19;
+        catch android.os.RemoteException from label14 to label15 with label19;
+        catch android.os.RemoteException from label16 to label17 with label19;
+        catch android.os.RemoteException from label17 to label18 with label19;
+        catch android.os.RemoteException from label20 to label21 with label19;
+        catch android.os.RemoteException from label21 to label22 with label19;
+    }
+
+    private void handleOnError(int, int, int, int)
+    {
+        com.android.server.biometrics.BiometricService r0;
+        int i0, i1, i2, $i5, $i6, $i8, $i9, $i11, $i12, $i13, $i14, $i15, $i16, $i18, i21, i22;
+        java.lang.StringBuilder $r1, r63, r64, r66, r67;
+        java.lang.String $r6, $r10, $r16, $r29, $r43, $r48;
+        com.android.server.biometrics.BiometricService$AuthSession $r7, $r11, $r12, $r14, $r17, $r18, $r20, $r22, $r24, $r25, $r26, $r27, $r28, $r33, $r34, $r35, $r36, $r37, $r38, $r39, $r41, $r46, $r49, $r52, $r55, $r57, r61, $r62, r65;
+        boolean $z1, $z2, $z3, z4, $z5;
+        android.hardware.biometrics.IBiometricServiceReceiver $r19, $r50, $r56;
+        android.os.Bundle $r21, $r23, $r31;
+        long $l10;
+        android.hardware.biometrics.IBiometricServiceReceiverInternal $r30;
+        com.android.internal.statusbar.IStatusBarService $r32, $r44, $r51, $r53, $r54, $r58;
+        android.os.RemoteException $r59;
+
+        r0 := @this: com.android.server.biometrics.BiometricService;
+
+        i21 := @parameter0: int;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        i2 := @parameter3: int;
+
+        $r1 = new java.lang.StringBuilder;
+
+        specialinvoke $r1.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("handleOnError: ");
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i1);
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" cookie: ");
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i21);
+
+        $r6 = virtualinvoke $r1.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("BiometricService", $r6);
+
+     label01:
+        r61 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+     label02:
+        if r61 == null goto label23;
+
+     label03:
+        $r33 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $z3 = virtualinvoke $r33.<com.android.server.biometrics.BiometricService$AuthSession: boolean containsCookie(int)>(i21);
+
+        if $z3 == 0 goto label23;
+
+        $r34 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $r34.<com.android.server.biometrics.BiometricService$AuthSession: int mErrorEscrow> = i1;
+
+        $r35 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $r35.<com.android.server.biometrics.BiometricService$AuthSession: int mVendorCodeEscrow> = i2;
+
+        $r36 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $i12 = $r36.<com.android.server.biometrics.BiometricService$AuthSession: int mState>;
+
+        if $i12 != 2 goto label15;
+
+     label04:
+        if i1 == 7 goto label05;
+
+        z4 = 0;
+
+        if i1 != 9 goto label06;
+
+     label05:
+        z4 = 1;
+
+     label06:
+        $r62 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $z5 = virtualinvoke $r62.<com.android.server.biometrics.BiometricService$AuthSession: boolean isAllowDeviceCredential()>();
+
+        if $z5 == 0 goto label10;
+
+     label07:
+        if z4 == 0 goto label10;
+
+     label08:
+        $r57 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $r57.<com.android.server.biometrics.BiometricService$AuthSession: int mState> = 8;
+
+        $r58 = r0.<com.android.server.biometrics.BiometricService: com.android.internal.statusbar.IStatusBarService mStatusBarService>;
+
+        interfaceinvoke $r58.<com.android.internal.statusbar.IStatusBarService: void onBiometricError(int,int,int)>(i0, i1, i2);
+
+     label09:
+        goto label14;
+
+     label10:
+        if i1 != 5 goto label13;
+
+     label11:
+        $r54 = r0.<com.android.server.biometrics.BiometricService: com.android.internal.statusbar.IStatusBarService mStatusBarService>;
+
+        interfaceinvoke $r54.<com.android.internal.statusbar.IStatusBarService: void hideAuthenticationDialog()>();
+
+        $r55 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $r56 = $r55.<com.android.server.biometrics.BiometricService$AuthSession: android.hardware.biometrics.IBiometricServiceReceiver mClientReceiver>;
+
+        interfaceinvoke $r56.<android.hardware.biometrics.IBiometricServiceReceiver: void onError(int,int,int)>(i0, i1, i2);
+
+        r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession> = null;
+
+     label12:
+        goto label14;
+
+     label13:
+        $r52 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $r52.<com.android.server.biometrics.BiometricService$AuthSession: int mState> = 7;
+
+        $r53 = r0.<com.android.server.biometrics.BiometricService: com.android.internal.statusbar.IStatusBarService mStatusBarService>;
+
+        interfaceinvoke $r53.<com.android.internal.statusbar.IStatusBarService: void onBiometricError(int,int,int)>(i0, i1, i2);
+
+     label14:
+        goto label30;
+
+     label15:
+        $r37 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $i13 = $r37.<com.android.server.biometrics.BiometricService$AuthSession: int mState>;
+
+        if $i13 != 3 goto label17;
+
+        $r49 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $r50 = $r49.<com.android.server.biometrics.BiometricService$AuthSession: android.hardware.biometrics.IBiometricServiceReceiver mClientReceiver>;
+
+        interfaceinvoke $r50.<android.hardware.biometrics.IBiometricServiceReceiver: void onError(int,int,int)>(i0, i1, i2);
+
+        $r51 = r0.<com.android.server.biometrics.BiometricService: com.android.internal.statusbar.IStatusBarService mStatusBarService>;
+
+        interfaceinvoke $r51.<com.android.internal.statusbar.IStatusBarService: void hideAuthenticationDialog()>();
+
+        r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession> = null;
+
+     label16:
+        goto label30;
+
+     label17:
+        $r38 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $i14 = $r38.<com.android.server.biometrics.BiometricService$AuthSession: int mState>;
+
+        if $i14 != 8 goto label19;
+
+        r63 = new java.lang.StringBuilder;
+
+        specialinvoke r63.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r63.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Biometric canceled, ignoring from state: ");
+
+        $r46 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $i18 = $r46.<com.android.server.biometrics.BiometricService$AuthSession: int mState>;
+
+        virtualinvoke r63.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i18);
+
+        $r48 = virtualinvoke r63.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("BiometricService", $r48);
+
+     label18:
+        goto label30;
+
+     label19:
+        $r39 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $i15 = $r39.<com.android.server.biometrics.BiometricService$AuthSession: int mState>;
+
+        if $i15 != 9 goto label21;
+
+        $r44 = r0.<com.android.server.biometrics.BiometricService: com.android.internal.statusbar.IStatusBarService mStatusBarService>;
+
+        interfaceinvoke $r44.<com.android.internal.statusbar.IStatusBarService: void hideAuthenticationDialog()>();
+
+        r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession> = null;
+
+     label20:
+        goto label30;
+
+     label21:
+        r64 = new java.lang.StringBuilder;
+
+        specialinvoke r64.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r64.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Impossible session error state: ");
+
+        $r41 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $i16 = $r41.<com.android.server.biometrics.BiometricService$AuthSession: int mState>;
+
+        virtualinvoke r64.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i16);
+
+        $r43 = virtualinvoke r64.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("BiometricService", $r43);
+
+     label22:
+        goto label30;
+
+     label23:
+        $r7 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mPendingAuthSession>;
+
+        if $r7 == null goto label29;
+
+        $r11 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mPendingAuthSession>;
+
+        $z1 = virtualinvoke $r11.<com.android.server.biometrics.BiometricService$AuthSession: boolean containsCookie(int)>(i21);
+
+        if $z1 == 0 goto label29;
+
+        $r12 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mPendingAuthSession>;
+
+        $i5 = $r12.<com.android.server.biometrics.BiometricService$AuthSession: int mState>;
+
+        if $i5 != 1 goto label27;
+
+        $r17 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mPendingAuthSession>;
+
+        $z2 = virtualinvoke $r17.<com.android.server.biometrics.BiometricService$AuthSession: boolean isAllowDeviceCredential()>();
+
+        if $z2 == 0 goto label25;
+
+        $r20 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mPendingAuthSession>;
+
+        $r21 = $r20.<com.android.server.biometrics.BiometricService$AuthSession: android.os.Bundle mBundle>;
+
+        i22 = virtualinvoke $r21.<android.os.Bundle: int getInt(java.lang.String,int)>("authenticators_allowed", 0);
+
+        $r22 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mPendingAuthSession>;
+
+        $r23 = $r22.<com.android.server.biometrics.BiometricService$AuthSession: android.os.Bundle mBundle>;
+
+        $i8 = i22 & -256;
+
+        virtualinvoke $r23.<android.os.Bundle: void putInt(java.lang.String,int)>("authenticators_allowed", $i8);
+
+        r65 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mPendingAuthSession>;
+
+        r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession> = r65;
+
+        r65.<com.android.server.biometrics.BiometricService$AuthSession: int mState> = 8;
+
+        r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mPendingAuthSession> = null;
+
+        $r32 = r0.<com.android.server.biometrics.BiometricService: com.android.internal.statusbar.IStatusBarService mStatusBarService>;
+
+        $r24 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $r31 = $r24.<com.android.server.biometrics.BiometricService$AuthSession: android.os.Bundle mBundle>;
+
+        $r30 = r0.<com.android.server.biometrics.BiometricService: android.hardware.biometrics.IBiometricServiceReceiverInternal mInternalReceiver>;
+
+        $r25 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $i11 = $r25.<com.android.server.biometrics.BiometricService$AuthSession: int mUserId>;
+
+        $r26 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $r29 = $r26.<com.android.server.biometrics.BiometricService$AuthSession: java.lang.String mOpPackageName>;
+
+        $r27 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $l10 = $r27.<com.android.server.biometrics.BiometricService$AuthSession: long mSessionId>;
+
+        $r28 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $i9 = $r28.<com.android.server.biometrics.BiometricService$AuthSession: int mSysUiSessionId>;
+
+        interfaceinvoke $r32.<com.android.internal.statusbar.IStatusBarService: void showAuthenticationDialog(android.os.Bundle,android.hardware.biometrics.IBiometricServiceReceiverInternal,int,boolean,int,java.lang.String,long,int)>($r31, $r30, 0, 0, $i11, $r29, $l10, $i9);
+
+     label24:
+        goto label30;
+
+     label25:
+        $r18 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mPendingAuthSession>;
+
+        $r19 = $r18.<com.android.server.biometrics.BiometricService$AuthSession: android.hardware.biometrics.IBiometricServiceReceiver mClientReceiver>;
+
+        interfaceinvoke $r19.<android.hardware.biometrics.IBiometricServiceReceiver: void onError(int,int,int)>(i0, i1, i2);
+
+        r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mPendingAuthSession> = null;
+
+     label26:
+        goto label30;
+
+     label27:
+        r66 = new java.lang.StringBuilder;
+
+        specialinvoke r66.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r66.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Impossible pending session error state: ");
+
+        $r14 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mPendingAuthSession>;
+
+        $i6 = $r14.<com.android.server.biometrics.BiometricService$AuthSession: int mState>;
+
+        virtualinvoke r66.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i6);
+
+        $r16 = virtualinvoke r66.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("BiometricService", $r16);
+
+     label28:
+        goto label30;
+
+     label29:
+        r67 = new java.lang.StringBuilder;
+
+        specialinvoke r67.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r67.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Unknown cookie: ");
+
+        virtualinvoke r67.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i21);
+
+        $r10 = virtualinvoke r67.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("BiometricService", $r10);
+
+     label30:
+        goto label32;
+
+     label31:
+        $r59 := @caughtexception;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("BiometricService", "Remote exception", $r59);
+
+     label32:
+        return;
+
+        catch android.os.RemoteException from label01 to label02 with label31;
+        catch android.os.RemoteException from label03 to label04 with label31;
+        catch android.os.RemoteException from label06 to label07 with label31;
+        catch android.os.RemoteException from label08 to label09 with label31;
+        catch android.os.RemoteException from label11 to label12 with label31;
+        catch android.os.RemoteException from label13 to label14 with label31;
+        catch android.os.RemoteException from label15 to label16 with label31;
+        catch android.os.RemoteException from label17 to label18 with label31;
+        catch android.os.RemoteException from label19 to label20 with label31;
+        catch android.os.RemoteException from label21 to label22 with label31;
+        catch android.os.RemoteException from label23 to label24 with label31;
+        catch android.os.RemoteException from label25 to label26 with label31;
+        catch android.os.RemoteException from label27 to label28 with label31;
+        catch android.os.RemoteException from label29 to label30 with label31;
+    }
+
+    private void handleOnReadyForAuthentication(int, boolean, int)
+    {
+        com.android.server.biometrics.BiometricService r0;
+        boolean z0, $z1, $z2, $z3, z4, $z5, z6;
+        int i0, $i3, $i5, $i6, $i7, $i8, $i9, $i10, i15, i17, i18;
+        long l1, $l16;
+        java.util.HashMap $r1, $r4, $r28, $r35, $r43, $r58;
+        java.util.Set $r2, $r59;
+        com.android.server.biometrics.BiometricService$AuthSession $r3, $r5, $r6, $r7, $r8, $r27, $r34, $r42, r50, r54, r55, $r56, $r57;
+        java.lang.Object $r9, $r11, $r15, $r18, $r19, $r22, $r24, $r25, $r29, $r31, $r36;
+        java.util.ArrayList $r10;
+        java.lang.Integer $r12, $r20, $r23, $r26, $r30, $r32;
+        java.lang.StringBuilder $r13, $r38;
+        java.lang.String $r17, $r46, r69;
+        android.hardware.biometrics.IBiometricAuthenticator $r21;
+        android.os.RemoteException $r47, $r48, $r49, r70;
+        java.util.Iterator r51, r60, r62;
+        java.util.Map$Entry r52, r61;
+        com.android.server.biometrics.BiometricService$AuthenticatorWrapper r63;
+        com.android.internal.statusbar.IStatusBarService r66;
+        android.os.Bundle r67;
+        android.hardware.biometrics.IBiometricServiceReceiverInternal r68;
+
+        r0 := @this: com.android.server.biometrics.BiometricService;
+
+        i15 := @parameter0: int;
+
+        z0 := @parameter1: boolean;
+
+        i0 := @parameter2: int;
+
+        r50 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mPendingAuthSession>;
+
+        if r50 != null goto label01;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("BiometricService", "Pending auth session null");
+
+        return;
+
+     label01:
+        $r1 = r50.<com.android.server.biometrics.BiometricService$AuthSession: java.util.HashMap mModalitiesWaiting>;
+
+        $r2 = virtualinvoke $r1.<java.util.HashMap: java.util.Set entrySet()>();
+
+        r51 = interfaceinvoke $r2.<java.util.Set: java.util.Iterator iterator()>();
+
+     label02:
+        $z1 = interfaceinvoke r51.<java.util.Iterator: boolean hasNext()>();
+
+        if $z1 == 0 goto label04;
+
+        $r24 = interfaceinvoke r51.<java.util.Iterator: java.lang.Object next()>();
+
+        r52 = (java.util.Map$Entry) $r24;
+
+        $r25 = interfaceinvoke r52.<java.util.Map$Entry: java.lang.Object getValue()>();
+
+        $r26 = (java.lang.Integer) $r25;
+
+        $i9 = virtualinvoke $r26.<java.lang.Integer: int intValue()>();
+
+        if $i9 != i15 goto label03;
+
+        $r27 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mPendingAuthSession>;
+
+        $r28 = $r27.<com.android.server.biometrics.BiometricService$AuthSession: java.util.HashMap mModalitiesMatched>;
+
+        $r29 = interfaceinvoke r52.<java.util.Map$Entry: java.lang.Object getKey()>();
+
+        $r30 = (java.lang.Integer) $r29;
+
+        $r31 = interfaceinvoke r52.<java.util.Map$Entry: java.lang.Object getValue()>();
+
+        $r32 = (java.lang.Integer) $r31;
+
+        virtualinvoke $r28.<java.util.HashMap: java.lang.Object put(java.lang.Object,java.lang.Object)>($r30, $r32);
+
+        $r34 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mPendingAuthSession>;
+
+        $r35 = $r34.<com.android.server.biometrics.BiometricService$AuthSession: java.util.HashMap mModalitiesWaiting>;
+
+        $r36 = interfaceinvoke r52.<java.util.Map$Entry: java.lang.Object getKey()>();
+
+        virtualinvoke $r35.<java.util.HashMap: java.lang.Object remove(java.lang.Object)>($r36);
+
+        $r38 = new java.lang.StringBuilder;
+
+        specialinvoke $r38.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r38.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Matched cookie: ");
+
+        virtualinvoke $r38.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i15);
+
+        virtualinvoke $r38.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", ");
+
+        $r42 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mPendingAuthSession>;
+
+        $r43 = $r42.<com.android.server.biometrics.BiometricService$AuthSession: java.util.HashMap mModalitiesWaiting>;
+
+        $i10 = virtualinvoke $r43.<java.util.HashMap: int size()>();
+
+        virtualinvoke $r38.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i10);
+
+        virtualinvoke $r38.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" remaining");
+
+        $r46 = virtualinvoke $r38.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("BiometricService", $r46);
+
+        goto label04;
+
+     label03:
+        goto label02;
+
+     label04:
+        $r3 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mPendingAuthSession>;
+
+        $r4 = $r3.<com.android.server.biometrics.BiometricService$AuthSession: java.util.HashMap mModalitiesWaiting>;
+
+        $z2 = virtualinvoke $r4.<java.util.HashMap: boolean isEmpty()>();
+
+        if $z2 == 0 goto label23;
+
+        r54 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        if r54 == null goto label05;
+
+        $i8 = r54.<com.android.server.biometrics.BiometricService$AuthSession: int mState>;
+
+        if $i8 != 3 goto label05;
+
+        z4 = 1;
+
+        goto label06;
+
+     label05:
+        z4 = 0;
+
+     label06:
+        r55 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mPendingAuthSession>;
+
+        r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession> = r55;
+
+        $l16 = staticinvoke <java.lang.System: long currentTimeMillis()>();
+
+        staticinvoke <com.android.server.biometrics.BiometricService$AuthSession: long access$2102(com.android.server.biometrics.BiometricService$AuthSession,long)>(r55, $l16);
+
+        r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mPendingAuthSession> = null;
+
+        $r56 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $r56.<com.android.server.biometrics.BiometricService$AuthSession: int mState> = 2;
+
+        i17 = 0;
+
+        $r57 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $r58 = $r57.<com.android.server.biometrics.BiometricService$AuthSession: java.util.HashMap mModalitiesMatched>;
+
+        $r59 = virtualinvoke $r58.<java.util.HashMap: java.util.Set entrySet()>();
+
+        r60 = interfaceinvoke $r59.<java.util.Set: java.util.Iterator iterator()>();
+
+     label07:
+        $z5 = interfaceinvoke r60.<java.util.Iterator: boolean hasNext()>();
+
+        if $z5 == 0 goto label16;
+
+        $r9 = interfaceinvoke r60.<java.util.Iterator: java.lang.Object next()>();
+
+        r61 = (java.util.Map$Entry) $r9;
+
+        z6 = 0;
+
+        $r10 = r0.<com.android.server.biometrics.BiometricService: java.util.ArrayList mAuthenticators>;
+
+        r62 = virtualinvoke $r10.<java.util.ArrayList: java.util.Iterator iterator()>();
+
+     label08:
+        $z3 = interfaceinvoke r62.<java.util.Iterator: boolean hasNext()>();
+
+        if $z3 == 0 goto label14;
+
+        $r18 = interfaceinvoke r62.<java.util.Iterator: java.lang.Object next()>();
+
+        r63 = (com.android.server.biometrics.BiometricService$AuthenticatorWrapper) $r18;
+
+        $i5 = r63.<com.android.server.biometrics.BiometricService$AuthenticatorWrapper: int modality>;
+
+        $r19 = interfaceinvoke r61.<java.util.Map$Entry: java.lang.Object getKey()>();
+
+        $r20 = (java.lang.Integer) $r19;
+
+        $i6 = virtualinvoke $r20.<java.lang.Integer: int intValue()>();
+
+        if $i5 != $i6 goto label13;
+
+     label09:
+        $r21 = r63.<com.android.server.biometrics.BiometricService$AuthenticatorWrapper: android.hardware.biometrics.IBiometricAuthenticator impl>;
+
+        $r22 = interfaceinvoke r61.<java.util.Map$Entry: java.lang.Object getValue()>();
+
+        $r23 = (java.lang.Integer) $r22;
+
+        $i7 = virtualinvoke $r23.<java.lang.Integer: int intValue()>();
+
+        interfaceinvoke $r21.<android.hardware.biometrics.IBiometricAuthenticator: void startPreparedClient(int)>($i7);
+
+     label10:
+        goto label12;
+
+     label11:
+        $r49 := @caughtexception;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("BiometricService", "Remote exception", $r49);
+
+     label12:
+        z6 = 1;
+
+     label13:
+        goto label08;
+
+     label14:
+        if z6 != 0 goto label15;
+
+        $r13 = new java.lang.StringBuilder;
+
+        specialinvoke $r13.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Unknown modality: ");
+
+        $r15 = interfaceinvoke r61.<java.util.Map$Entry: java.lang.Object getKey()>();
+
+        virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r15);
+
+        $r17 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("BiometricService", $r17);
+
+     label15:
+        $r11 = interfaceinvoke r61.<java.util.Map$Entry: java.lang.Object getKey()>();
+
+        $r12 = (java.lang.Integer) $r11;
+
+        $i3 = virtualinvoke $r12.<java.lang.Integer: int intValue()>();
+
+        i17 = i17 | $i3;
+
+        goto label07;
+
+     label16:
+        if z4 != 0 goto label23;
+
+     label17:
+        r66 = r0.<com.android.server.biometrics.BiometricService: com.android.internal.statusbar.IStatusBarService mStatusBarService>;
+
+        $r5 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        r67 = $r5.<com.android.server.biometrics.BiometricService$AuthSession: android.os.Bundle mBundle>;
+
+        r68 = r0.<com.android.server.biometrics.BiometricService: android.hardware.biometrics.IBiometricServiceReceiverInternal mInternalReceiver>;
+
+        $r6 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        r69 = $r6.<com.android.server.biometrics.BiometricService$AuthSession: java.lang.String mOpPackageName>;
+
+        $r7 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        l1 = $r7.<com.android.server.biometrics.BiometricService$AuthSession: long mSessionId>;
+
+        $r8 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        i18 = $r8.<com.android.server.biometrics.BiometricService$AuthSession: int mSysUiSessionId>;
+
+     label18:
+        interfaceinvoke r66.<com.android.internal.statusbar.IStatusBarService: void showAuthenticationDialog(android.os.Bundle,android.hardware.biometrics.IBiometricServiceReceiverInternal,int,boolean,int,java.lang.String,long,int)>(r67, r68, i17, z0, i0, r69, l1, i18);
+
+     label19:
+        goto label23;
+
+     label20:
+        $r47 := @caughtexception;
+
+        r70 = $r47;
+
+        goto label22;
+
+     label21:
+        $r48 := @caughtexception;
+
+        r70 = $r48;
+
+     label22:
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("BiometricService", "Remote exception", r70);
+
+     label23:
+        return;
+
+        catch android.os.RemoteException from label09 to label10 with label11;
+        catch android.os.RemoteException from label17 to label18 with label21;
+        catch android.os.RemoteException from label18 to label19 with label20;
+    }
+
+    private void handleOnSystemEvent(int)
+    {
+        com.android.server.biometrics.BiometricService r0;
+        int i0;
+        boolean z0;
+        android.os.Bundle $r1;
+        java.lang.StringBuilder $r2;
+        java.lang.String $r7;
+        com.android.server.biometrics.BiometricService$AuthSession $r8, r11;
+        android.hardware.biometrics.IBiometricServiceReceiver $r9;
+        android.os.RemoteException $r10;
+
+        r0 := @this: com.android.server.biometrics.BiometricService;
+
+        i0 := @parameter0: int;
+
+        r11 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        if r11 != null goto label1;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("BiometricService", "Auth session null");
+
+        return;
+
+     label1:
+        $r1 = r11.<com.android.server.biometrics.BiometricService$AuthSession: android.os.Bundle mBundle>;
+
+        z0 = virtualinvoke $r1.<android.os.Bundle: boolean getBoolean(java.lang.String,boolean)>("receive_system_events", 0);
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("onSystemEvent: ");
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", shouldReceive: ");
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>(z0);
+
+        $r7 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("BiometricService", $r7);
+
+        if z0 != 0 goto label2;
+
+        return;
+
+     label2:
+        $r8 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $r9 = $r8.<com.android.server.biometrics.BiometricService$AuthSession: android.hardware.biometrics.IBiometricServiceReceiver mClientReceiver>;
+
+        interfaceinvoke $r9.<android.hardware.biometrics.IBiometricServiceReceiver: void onSystemEvent(int)>(i0);
+
+     label3:
+        goto label5;
+
+     label4:
+        $r10 := @caughtexception;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("BiometricService", "RemoteException", $r10);
+
+     label5:
+        return;
+
+        catch android.os.RemoteException from label2 to label3 with label4;
+    }
+
+    private void handleOnTryAgainPressed()
+    {
+        com.android.server.biometrics.BiometricService r0;
+        com.android.server.biometrics.BiometricService$AuthSession $r1, $r2, $r3, $r4, $r5, $r6, $r7, $r8, $r9, $r10;
+        int $i1, $i2, $i3, $i4, $i5;
+        android.os.Bundle $r11;
+        java.lang.String $r12;
+        android.hardware.biometrics.IBiometricServiceReceiver $r13;
+        long $l6;
+        android.os.IBinder $r14;
+
+        r0 := @this: com.android.server.biometrics.BiometricService;
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("BiometricService", "onTryAgainPressed");
+
+        $r1 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $r14 = $r1.<com.android.server.biometrics.BiometricService$AuthSession: android.os.IBinder mToken>;
+
+        $r2 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $l6 = $r2.<com.android.server.biometrics.BiometricService$AuthSession: long mSessionId>;
+
+        $r3 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $i5 = $r3.<com.android.server.biometrics.BiometricService$AuthSession: int mUserId>;
+
+        $r4 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $r13 = $r4.<com.android.server.biometrics.BiometricService$AuthSession: android.hardware.biometrics.IBiometricServiceReceiver mClientReceiver>;
+
+        $r5 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $r12 = $r5.<com.android.server.biometrics.BiometricService$AuthSession: java.lang.String mOpPackageName>;
+
+        $r6 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $r11 = $r6.<com.android.server.biometrics.BiometricService$AuthSession: android.os.Bundle mBundle>;
+
+        $r7 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $i4 = $r7.<com.android.server.biometrics.BiometricService$AuthSession: int mCallingUid>;
+
+        $r8 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $i3 = $r8.<com.android.server.biometrics.BiometricService$AuthSession: int mCallingPid>;
+
+        $r9 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $i2 = $r9.<com.android.server.biometrics.BiometricService$AuthSession: int mCallingUserId>;
+
+        $r10 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $i1 = $r10.<com.android.server.biometrics.BiometricService$AuthSession: int mModality>;
+
+        specialinvoke r0.<com.android.server.biometrics.BiometricService: void authenticateInternal(android.os.IBinder,long,int,android.hardware.biometrics.IBiometricServiceReceiver,java.lang.String,android.os.Bundle,int,int,int,int)>($r14, $l6, $i5, $r13, $r12, $r11, $i4, $i3, $i2, $i1);
+
+        return;
+    }
+
+    private boolean isBiometricDisabledByDevicePolicy(int, int)
+    {
+        com.android.server.biometrics.BiometricService r0;
+        int i0, i1, i2, $i3, $i4;
+        android.app.admin.DevicePolicyManager $r1;
+        java.lang.StringBuilder $r2, $r10;
+        java.lang.String $r9, $r14;
+        boolean z0;
+
+        r0 := @this: com.android.server.biometrics.BiometricService;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        i2 = specialinvoke r0.<com.android.server.biometrics.BiometricService: int mapModalityToDevicePolicyType(int)>(i0);
+
+        z0 = 0;
+
+        if i2 != 0 goto label1;
+
+        $r10 = new java.lang.StringBuilder;
+
+        specialinvoke $r10.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Allowing unknown modality ");
+
+        virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" to pass Device Policy check");
+
+        $r14 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("BiometricService", $r14);
+
+        return 0;
+
+     label1:
+        $r1 = r0.<com.android.server.biometrics.BiometricService: android.app.admin.DevicePolicyManager mDevicePolicyManager>;
+
+        $i3 = virtualinvoke $r1.<android.app.admin.DevicePolicyManager: int getKeyguardDisabledFeatures(android.content.ComponentName,int)>(null, i1);
+
+        $i4 = i2 & $i3;
+
+        if $i4 == 0 goto label2;
+
+        z0 = 1;
+
+     label2:
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("isBiometricDisabledByDevicePolicy(");
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(",");
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i1);
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(")=");
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>(z0);
+
+        $r9 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("BiometricService", $r9);
+
+        return z0;
+    }
+
+    private boolean isEnabledForApp(int, int)
+    {
+        com.android.server.biometrics.BiometricService r0;
+        int i0, i1;
+        com.android.server.biometrics.BiometricService$SettingObserver $r2;
+        boolean $z0;
+        java.lang.StringBuilder $r3;
+        java.lang.String $r6;
+
+        r0 := @this: com.android.server.biometrics.BiometricService;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        if i0 == 2 goto label3;
+
+        if i0 == 4 goto label2;
+
+        if i0 == 8 goto label1;
+
+        $r3 = new java.lang.StringBuilder;
+
+        specialinvoke $r3.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Unsupported modality: ");
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r6 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("BiometricService", $r6);
+
+        return 0;
+
+     label1:
+        $r2 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$SettingObserver mSettingObserver>;
+
+        $z0 = virtualinvoke $r2.<com.android.server.biometrics.BiometricService$SettingObserver: boolean getFaceEnabledForApps(int)>(i1);
+
+        return $z0;
+
+     label2:
+        return 1;
+
+     label3:
+        return 1;
+    }
+
+    private void logDialogDismissed(int)
+    {
+        com.android.server.biometrics.BiometricService r0;
+        com.android.server.biometrics.BiometricService$AuthSession $r1, $r2, $r3, $r4, $r5, $r8, $r9, $r10, $r13;
+        int $i0, $i1, $i3, i4, $i10, $i11, $i12;
+        boolean $z0, $z1, $z2, $z3, $z4;
+        long $l2, l5, l6, l7, l8, $l13;
+        com.android.server.biometrics.BiometricService$Injector $r6, $r11;
+        android.content.Context $r7, $r12;
+        byte b9;
+
+        r0 := @this: com.android.server.biometrics.BiometricService;
+
+        i4 := @parameter0: int;
+
+        if i4 != 1 goto label1;
+
+        l5 = staticinvoke <java.lang.System: long currentTimeMillis()>();
+
+        $r2 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        l6 = staticinvoke <com.android.server.biometrics.BiometricService$AuthSession: long access$2000(com.android.server.biometrics.BiometricService$AuthSession)>($r2);
+
+        $i0 = specialinvoke r0.<com.android.server.biometrics.BiometricService: int statsModality()>();
+
+        $r3 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $i1 = $r3.<com.android.server.biometrics.BiometricService$AuthSession: int mUserId>;
+
+        $r4 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $z0 = virtualinvoke $r4.<com.android.server.biometrics.BiometricService$AuthSession: boolean isCrypto()>();
+
+        $r5 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $z1 = $r5.<com.android.server.biometrics.BiometricService$AuthSession: boolean mRequireConfirmation>;
+
+        $l2 = l5 - l6;
+
+        $r6 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$Injector mInjector>;
+
+        $r7 = virtualinvoke r0.<com.android.server.biometrics.BiometricService: android.content.Context getContext()>();
+
+        $r8 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $i3 = $r8.<com.android.server.biometrics.BiometricService$AuthSession: int mUserId>;
+
+        $z2 = virtualinvoke $r6.<com.android.server.biometrics.BiometricService$Injector: boolean isDebugEnabled(android.content.Context,int)>($r7, $i3);
+
+        staticinvoke <com.android.internal.util.FrameworkStatsLog: void write(int,int,int,boolean,int,boolean,int,long,boolean)>(88, $i0, $i1, $z0, 2, $z1, 3, $l2, $z2);
+
+        goto label5;
+
+     label1:
+        l7 = staticinvoke <java.lang.System: long currentTimeMillis()>();
+
+        $r1 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        l8 = staticinvoke <com.android.server.biometrics.BiometricService$AuthSession: long access$2100(com.android.server.biometrics.BiometricService$AuthSession)>($r1);
+
+        if i4 != 2 goto label2;
+
+        b9 = 13;
+
+        goto label4;
+
+     label2:
+        if i4 != 3 goto label3;
+
+        b9 = 10;
+
+        goto label4;
+
+     label3:
+        b9 = 0;
+
+     label4:
+        $i10 = specialinvoke r0.<com.android.server.biometrics.BiometricService: int statsModality()>();
+
+        $r9 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $i11 = $r9.<com.android.server.biometrics.BiometricService$AuthSession: int mUserId>;
+
+        $r10 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $z3 = virtualinvoke $r10.<com.android.server.biometrics.BiometricService$AuthSession: boolean isCrypto()>();
+
+        $r11 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$Injector mInjector>;
+
+        $r12 = virtualinvoke r0.<com.android.server.biometrics.BiometricService: android.content.Context getContext()>();
+
+        $r13 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $i12 = $r13.<com.android.server.biometrics.BiometricService$AuthSession: int mUserId>;
+
+        $z4 = virtualinvoke $r11.<com.android.server.biometrics.BiometricService$Injector: boolean isDebugEnabled(android.content.Context,int)>($r12, $i12);
+
+        $l13 = l7 - l8;
+
+        staticinvoke <com.android.internal.util.FrameworkStatsLog: void write(int,int,int,boolean,int,int,int,int,boolean,long)>(89, $i10, $i11, $z3, 2, 2, b9, 0, $z4, $l13);
+
+     label5:
+        return;
+    }
+
+    private int mapModalityToDevicePolicyType(int)
+    {
+        com.android.server.biometrics.BiometricService r0;
+        int i0;
+        java.lang.StringBuilder $r2;
+        java.lang.String $r5;
+
+        r0 := @this: com.android.server.biometrics.BiometricService;
+
+        i0 := @parameter0: int;
+
+        if i0 == 2 goto label3;
+
+        if i0 == 4 goto label2;
+
+        if i0 == 8 goto label1;
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Error modality=");
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r5 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("BiometricService", $r5);
+
+        return 0;
+
+     label1:
+        return 128;
+
+     label2:
+        return 256;
+
+     label3:
+        return 32;
+    }
+
+    private int statsModality()
+    {
+        com.android.server.biometrics.BiometricService r0;
+        com.android.server.biometrics.BiometricService$AuthSession r1, $r2, $r3;
+        int $i0, $i1, $i2, $i3, $i4, $i5;
+        byte b6, b7, b8;
+
+        r0 := @this: com.android.server.biometrics.BiometricService;
+
+        b6 = 0;
+
+        r1 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        if r1 != null goto label1;
+
+        return 0;
+
+     label1:
+        $i0 = r1.<com.android.server.biometrics.BiometricService$AuthSession: int mModality>;
+
+        $i1 = $i0 & 2;
+
+        if $i1 == 0 goto label2;
+
+        b6 = 0 | 1;
+
+     label2:
+        b7 = b6;
+
+        $r2 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $i2 = $r2.<com.android.server.biometrics.BiometricService$AuthSession: int mModality>;
+
+        $i3 = $i2 & 4;
+
+        if $i3 == 0 goto label3;
+
+        b7 = b6 | 2;
+
+     label3:
+        b8 = b7;
+
+        $r3 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $i4 = $r3.<com.android.server.biometrics.BiometricService$AuthSession: int mModality>;
+
+        $i5 = $i4 & 8;
+
+        if $i5 == 0 goto label4;
+
+        b8 = b7 | 4;
+
+     label4:
+        return b8;
+    }
+
+    void cancelInternal(android.os.IBinder, java.lang.String, int, int, int, boolean)
+    {
+        com.android.server.biometrics.BiometricService r0;
+        java.lang.String r1, $r11;
+        int i0, i1, i2, $i3, $i4, $i5, $i6, $i7, $i8;
+        boolean z0, $z1;
+        java.util.ArrayList $r2;
+        java.lang.Object $r3;
+        com.android.server.biometrics.BiometricService$AuthSession $r4, $r6, $r9, r14;
+        android.hardware.biometrics.IBiometricAuthenticator $r5;
+        java.lang.StringBuilder $r7;
+        android.os.RemoteException $r12;
+        android.os.IBinder r13;
+        java.util.Iterator r16;
+        com.android.server.biometrics.BiometricService$AuthenticatorWrapper r17;
+
+        r0 := @this: com.android.server.biometrics.BiometricService;
+
+        r13 := @parameter0: android.os.IBinder;
+
+        r1 := @parameter1: java.lang.String;
+
+        i0 := @parameter2: int;
+
+        i1 := @parameter3: int;
+
+        i2 := @parameter4: int;
+
+        z0 := @parameter5: boolean;
+
+        r14 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        if r14 != null goto label1;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("BiometricService", "Skipping cancelInternal");
+
+        return;
+
+     label1:
+        $i3 = r14.<com.android.server.biometrics.BiometricService$AuthSession: int mState>;
+
+        if $i3 == 2 goto label2;
+
+        $r6 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $i7 = $r6.<com.android.server.biometrics.BiometricService$AuthSession: int mState>;
+
+        if $i7 == 9 goto label2;
+
+        $r7 = new java.lang.StringBuilder;
+
+        specialinvoke $r7.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Skipping cancelInternal, state: ");
+
+        $r9 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $i8 = $r9.<com.android.server.biometrics.BiometricService$AuthSession: int mState>;
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i8);
+
+        $r11 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("BiometricService", $r11);
+
+        return;
+
+     label2:
+        $r2 = r0.<com.android.server.biometrics.BiometricService: java.util.ArrayList mAuthenticators>;
+
+        r16 = virtualinvoke $r2.<java.util.ArrayList: java.util.Iterator iterator()>();
+
+     label3:
+        $z1 = interfaceinvoke r16.<java.util.Iterator: boolean hasNext()>();
+
+        if $z1 == 0 goto label8;
+
+        $r3 = interfaceinvoke r16.<java.util.Iterator: java.lang.Object next()>();
+
+        r17 = (com.android.server.biometrics.BiometricService$AuthenticatorWrapper) $r3;
+
+        $i5 = r17.<com.android.server.biometrics.BiometricService$AuthenticatorWrapper: int modality>;
+
+        $r4 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$AuthSession mCurrentAuthSession>;
+
+        $i4 = $r4.<com.android.server.biometrics.BiometricService$AuthSession: int mModality>;
+
+        $i6 = $i5 & $i4;
+
+        if $i6 == 0 goto label7;
+
+     label4:
+        $r5 = r17.<com.android.server.biometrics.BiometricService$AuthenticatorWrapper: android.hardware.biometrics.IBiometricAuthenticator impl>;
+
+        interfaceinvoke $r5.<android.hardware.biometrics.IBiometricAuthenticator: void cancelAuthenticationFromService(android.os.IBinder,java.lang.String,int,int,int,boolean)>(r13, r1, i0, i1, i2, z0);
+
+     label5:
+        goto label7;
+
+     label6:
+        $r12 := @caughtexception;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("BiometricService", "Unable to cancel authentication");
+
+     label7:
+        goto label3;
+
+     label8:
+        return;
+
+        catch android.os.RemoteException from label4 to label5 with label6;
+    }
+
+    public void lambda$handleAuthenticate$0$BiometricService(android.os.Bundle, int, java.lang.String, android.os.IBinder, long, android.hardware.biometrics.IBiometricServiceReceiver, int, int, int)
+    {
+        com.android.server.biometrics.BiometricService r0;
+        int i0, i2, i3, i4, i5, i6;
+        java.lang.String r1;
+        android.os.IBinder r2;
+        long l1;
+        android.hardware.biometrics.IBiometricServiceReceiver r3;
+        boolean z0;
+        android.util.Pair r4;
+        java.lang.Object $r5, $r7;
+        java.lang.Integer $r6, $r8;
+        android.os.RemoteException $r9, $r10, $r11, r13;
+        android.os.Bundle r12;
+
+        r0 := @this: com.android.server.biometrics.BiometricService;
+
+        r12 := @parameter0: android.os.Bundle;
+
+        i0 := @parameter1: int;
+
+        r1 := @parameter2: java.lang.String;
+
+        r2 := @parameter3: android.os.IBinder;
+
+        l1 := @parameter4: long;
+
+        r3 := @parameter5: android.hardware.biometrics.IBiometricServiceReceiver;
+
+        i2 := @parameter6: int;
+
+        i3 := @parameter7: int;
+
+        i4 := @parameter8: int;
+
+     label01:
+        z0 = virtualinvoke r12.<android.os.Bundle: boolean getBoolean(java.lang.String,boolean)>("check_dpm", 0);
+
+     label02:
+        r4 = specialinvoke r0.<com.android.server.biometrics.BiometricService: android.util.Pair checkAndGetAuthenticators(int,android.os.Bundle,java.lang.String,boolean)>(i0, r12, r1, z0);
+
+        $r5 = r4.<android.util.Pair: java.lang.Object first>;
+
+        $r6 = (java.lang.Integer) $r5;
+
+        i5 = virtualinvoke $r6.<java.lang.Integer: int intValue()>();
+
+        $r7 = r4.<android.util.Pair: java.lang.Object second>;
+
+        $r8 = (java.lang.Integer) $r7;
+
+        i6 = virtualinvoke $r8.<java.lang.Integer: int intValue()>();
+
+     label03:
+        if i6 != 0 goto label06;
+
+     label04:
+        specialinvoke r0.<com.android.server.biometrics.BiometricService: void authenticateInternal(android.os.IBinder,long,int,android.hardware.biometrics.IBiometricServiceReceiver,java.lang.String,android.os.Bundle,int,int,int,int)>(r2, l1, i0, r3, r1, r12, i2, i3, i4, i5);
+
+     label05:
+        goto label07;
+
+     label06:
+        interfaceinvoke r3.<android.hardware.biometrics.IBiometricServiceReceiver: void onError(int,int,int)>(i5, i6, 0);
+
+     label07:
+        goto label12;
+
+     label08:
+        $r10 := @caughtexception;
+
+        r13 = $r10;
+
+        goto label11;
+
+     label09:
+        $r9 := @caughtexception;
+
+        r13 = $r9;
+
+        goto label11;
+
+     label10:
+        $r11 := @caughtexception;
+
+        r13 = $r11;
+
+     label11:
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("BiometricService", "Remote exception", r13);
+
+     label12:
+        return;
+
+        catch android.os.RemoteException from label01 to label02 with label10;
+        catch android.os.RemoteException from label02 to label03 with label09;
+        catch android.os.RemoteException from label04 to label05 with label09;
+        catch android.os.RemoteException from label06 to label07 with label08;
+    }
+
+    public void onStart()
+    {
+        com.android.server.biometrics.BiometricService r0;
+        com.android.server.biometrics.BiometricStrengthController r1;
+        com.android.server.biometrics.BiometricService$Injector $r2, $r4, $r6, $r9, $r10;
+        android.security.KeyStore $r3;
+        com.android.internal.statusbar.IStatusBarService $r5;
+        android.app.trust.ITrustManager $r7;
+        android.hardware.biometrics.IBiometricService$Stub $r8;
+
+        r0 := @this: com.android.server.biometrics.BiometricService;
+
+        $r2 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$Injector mInjector>;
+
+        $r3 = virtualinvoke $r2.<com.android.server.biometrics.BiometricService$Injector: android.security.KeyStore getKeyStore()>();
+
+        r0.<com.android.server.biometrics.BiometricService: android.security.KeyStore mKeyStore> = $r3;
+
+        $r4 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$Injector mInjector>;
+
+        $r5 = virtualinvoke $r4.<com.android.server.biometrics.BiometricService$Injector: com.android.internal.statusbar.IStatusBarService getStatusBarService()>();
+
+        r0.<com.android.server.biometrics.BiometricService: com.android.internal.statusbar.IStatusBarService mStatusBarService> = $r5;
+
+        $r6 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$Injector mInjector>;
+
+        $r7 = virtualinvoke $r6.<com.android.server.biometrics.BiometricService$Injector: android.app.trust.ITrustManager getTrustManager()>();
+
+        r0.<com.android.server.biometrics.BiometricService: android.app.trust.ITrustManager mTrustManager> = $r7;
+
+        $r9 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$Injector mInjector>;
+
+        $r8 = r0.<com.android.server.biometrics.BiometricService: android.hardware.biometrics.IBiometricService$Stub mImpl>;
+
+        virtualinvoke $r9.<com.android.server.biometrics.BiometricService$Injector: void publishBinderService(com.android.server.biometrics.BiometricService,android.hardware.biometrics.IBiometricService$Stub)>(r0, $r8);
+
+        $r10 = r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricService$Injector mInjector>;
+
+        r1 = virtualinvoke $r10.<com.android.server.biometrics.BiometricService$Injector: com.android.server.biometrics.BiometricStrengthController getBiometricStrengthController(com.android.server.biometrics.BiometricService)>(r0);
+
+        r0.<com.android.server.biometrics.BiometricService: com.android.server.biometrics.BiometricStrengthController mBiometricStrengthController> = r1;
+
+        virtualinvoke r1.<com.android.server.biometrics.BiometricStrengthController: void startListening()>();
+
+        return;
+    }
+
+    public static void <clinit>()
+    {
+        <com.android.server.biometrics.BiometricService: java.lang.String TAG> = "BiometricService";
+
+        <com.android.server.biometrics.BiometricService: int STATE_SHOWING_DEVICE_CREDENTIAL> = 8;
+
+        <com.android.server.biometrics.BiometricService: int STATE_ERROR_PENDING_SYSUI> = 7;
+
+        <com.android.server.biometrics.BiometricService: int STATE_CLIENT_DIED_CANCELLING> = 9;
+
+        <com.android.server.biometrics.BiometricService: int STATE_AUTH_STARTED> = 2;
+
+        <com.android.server.biometrics.BiometricService: int STATE_AUTH_PENDING_CONFIRM> = 5;
+
+        <com.android.server.biometrics.BiometricService: int STATE_AUTH_PAUSED> = 3;
+
+        <com.android.server.biometrics.BiometricService: int STATE_AUTH_IDLE> = 0;
+
+        <com.android.server.biometrics.BiometricService: int STATE_AUTH_CALLED> = 1;
+
+        <com.android.server.biometrics.BiometricService: int STATE_AUTHENTICATED_PENDING_SYSUI> = 6;
+
+        <com.android.server.biometrics.BiometricService: int MSG_ON_TRY_AGAIN_PRESSED> = 7;
+
+        <com.android.server.biometrics.BiometricService: int MSG_ON_SYSTEM_EVENT> = 13;
+
+        <com.android.server.biometrics.BiometricService: int MSG_ON_READY_FOR_AUTHENTICATION> = 8;
+
+        <com.android.server.biometrics.BiometricService: int MSG_ON_ERROR> = 4;
+
+        <com.android.server.biometrics.BiometricService: int MSG_ON_DISMISSED> = 6;
+
+        <com.android.server.biometrics.BiometricService: int MSG_ON_DEVICE_CREDENTIAL_PRESSED> = 12;
+
+        <com.android.server.biometrics.BiometricService: int MSG_ON_AUTHENTICATION_TIMED_OUT> = 11;
+
+        <com.android.server.biometrics.BiometricService: int MSG_ON_AUTHENTICATION_SUCCEEDED> = 2;
+
+        <com.android.server.biometrics.BiometricService: int MSG_ON_AUTHENTICATION_REJECTED> = 3;
+
+        <com.android.server.biometrics.BiometricService: int MSG_ON_ACQUIRED> = 5;
+
+        <com.android.server.biometrics.BiometricService: int MSG_CLIENT_DIED> = 14;
+
+        <com.android.server.biometrics.BiometricService: int MSG_CANCEL_AUTHENTICATION> = 10;
+
+        <com.android.server.biometrics.BiometricService: int MSG_AUTHENTICATE> = 9;
+
+        <com.android.server.biometrics.BiometricService: boolean DEBUG> = 1;
+
+        <com.android.server.biometrics.BiometricService: int BIOMETRIC_OK> = 1;
+
+        <com.android.server.biometrics.BiometricService: int BIOMETRIC_NO_HARDWARE> = 0;
+
+        <com.android.server.biometrics.BiometricService: int BIOMETRIC_NOT_ENROLLED> = 6;
+
+        <com.android.server.biometrics.BiometricService: int BIOMETRIC_NOT_ENABLED_FOR_APPS> = 7;
+
+        <com.android.server.biometrics.BiometricService: int BIOMETRIC_INSUFFICIENT_STRENGTH_AFTER_DOWNGRADE> = 4;
+
+        <com.android.server.biometrics.BiometricService: int BIOMETRIC_INSUFFICIENT_STRENGTH> = 3;
+
+        <com.android.server.biometrics.BiometricService: int BIOMETRIC_HARDWARE_NOT_DETECTED> = 5;
+
+        <com.android.server.biometrics.BiometricService: int BIOMETRIC_DISABLED_BY_DEVICE_POLICY> = 2;
+
+        return;
+    }
+}

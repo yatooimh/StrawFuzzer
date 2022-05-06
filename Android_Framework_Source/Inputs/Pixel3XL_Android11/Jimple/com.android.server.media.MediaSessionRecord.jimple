@@ -1,0 +1,3462 @@
+public class com.android.server.media.MediaSessionRecord extends java.lang.Object implements android.os.IBinder$DeathRecipient, com.android.server.media.MediaSessionRecordImpl
+{
+    private static final java.util.List ALWAYS_PRIORITY_STATES;
+    private static final boolean DEBUG;
+    private static final android.media.AudioAttributes DEFAULT_ATTRIBUTES;
+    private static final int OPTIMISTIC_VOLUME_TIMEOUT;
+    private static final java.lang.String TAG;
+    private static final java.util.List TRANSITION_PRIORITY_STATES;
+    private android.media.AudioAttributes mAudioAttrs;
+    private android.media.AudioManager mAudioManager;
+    private android.media.AudioManagerInternal mAudioManagerInternal;
+    private final java.lang.Runnable mClearOptimisticVolumeRunnable;
+    private final android.content.Context mContext;
+    private final com.android.server.media.MediaSessionRecord$ControllerStub mController;
+    private final java.util.ArrayList mControllerCallbackHolders;
+    private int mCurrentVolume;
+    private boolean mDestroyed;
+    private long mDuration;
+    private android.os.Bundle mExtras;
+    private long mFlags;
+    private final com.android.server.media.MediaSessionRecord$MessageHandler mHandler;
+    private boolean mIsActive;
+    private android.app.PendingIntent mLaunchIntent;
+    private final java.lang.Object mLock;
+    private int mMaxVolume;
+    private com.android.server.media.MediaButtonReceiverHolder mMediaButtonReceiverHolder;
+    private android.media.MediaMetadata mMetadata;
+    private java.lang.String mMetadataDescription;
+    private int mOptimisticVolume;
+    private final int mOwnerPid;
+    private final int mOwnerUid;
+    private final java.lang.String mPackageName;
+    private android.media.session.PlaybackState mPlaybackState;
+    private int mPolicies;
+    private java.util.List mQueue;
+    private java.lang.CharSequence mQueueTitle;
+    private int mRatingType;
+    private final com.android.server.media.MediaSessionService mService;
+    private final com.android.server.media.MediaSessionRecord$SessionStub mSession;
+    private final com.android.server.media.MediaSessionRecord$SessionCb mSessionCb;
+    private final android.os.Bundle mSessionInfo;
+    private final android.media.session.MediaSession$Token mSessionToken;
+    private final java.lang.String mTag;
+    private final int mUserId;
+    private java.lang.String mVolumeControlId;
+    private int mVolumeControlType;
+    private int mVolumeType;
+
+    static void <clinit>()
+    {
+        boolean $z0;
+        java.lang.Integer[] $r0, $r6;
+        java.lang.Integer $r1, $r2, $r3, $r4, $r7, $r8, $r9;
+        java.util.List $r5, $r10;
+        android.media.AudioAttributes$Builder $r11, $r12;
+        android.media.AudioAttributes $r13;
+
+        <com.android.server.media.MediaSessionRecord: java.lang.String TAG> = "MediaSessionRecord";
+
+        <com.android.server.media.MediaSessionRecord: int OPTIMISTIC_VOLUME_TIMEOUT> = 1000;
+
+        $z0 = staticinvoke <android.util.Log: boolean isLoggable(java.lang.String,int)>("MediaSessionRecord", 3);
+
+        <com.android.server.media.MediaSessionRecord: boolean DEBUG> = $z0;
+
+        $r0 = newarray (java.lang.Integer)[4];
+
+        $r1 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(4);
+
+        $r0[0] = $r1;
+
+        $r2 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(5);
+
+        $r0[1] = $r2;
+
+        $r3 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(9);
+
+        $r0[2] = $r3;
+
+        $r4 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(10);
+
+        $r0[3] = $r4;
+
+        $r5 = staticinvoke <java.util.Arrays: java.util.List asList(java.lang.Object[])>($r0);
+
+        <com.android.server.media.MediaSessionRecord: java.util.List ALWAYS_PRIORITY_STATES> = $r5;
+
+        $r6 = newarray (java.lang.Integer)[3];
+
+        $r7 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(6);
+
+        $r6[0] = $r7;
+
+        $r8 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(8);
+
+        $r6[1] = $r8;
+
+        $r9 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(3);
+
+        $r6[2] = $r9;
+
+        $r10 = staticinvoke <java.util.Arrays: java.util.List asList(java.lang.Object[])>($r6);
+
+        <com.android.server.media.MediaSessionRecord: java.util.List TRANSITION_PRIORITY_STATES> = $r10;
+
+        $r11 = new android.media.AudioAttributes$Builder;
+
+        specialinvoke $r11.<android.media.AudioAttributes$Builder: void <init>()>();
+
+        $r12 = virtualinvoke $r11.<android.media.AudioAttributes$Builder: android.media.AudioAttributes$Builder setUsage(int)>(1);
+
+        $r13 = virtualinvoke $r12.<android.media.AudioAttributes$Builder: android.media.AudioAttributes build()>();
+
+        <com.android.server.media.MediaSessionRecord: android.media.AudioAttributes DEFAULT_ATTRIBUTES> = $r13;
+
+        return;
+    }
+
+    public void <init>(int, int, int, java.lang.String, android.media.session.ISessionCallback, java.lang.String, android.os.Bundle, com.android.server.media.MediaSessionService, android.os.Looper, int) throws android.os.RemoteException
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        int i0, i1, i2, i3;
+        java.lang.String r1, r3;
+        android.media.session.ISessionCallback r2, $r24;
+        android.os.Bundle r4;
+        com.android.server.media.MediaSessionService r5;
+        android.os.Looper r6;
+        java.lang.Object $r7, $r18, $r20;
+        java.util.ArrayList $r8;
+        com.android.server.media.MediaSessionRecord$3 $r9;
+        com.android.server.media.MediaSessionRecord$ControllerStub $r10, $r12;
+        android.media.session.MediaSession$Token $r11;
+        com.android.server.media.MediaSessionRecord$SessionStub $r13;
+        com.android.server.media.MediaSessionRecord$SessionCb $r14, $r23;
+        android.content.Context $r15, $r17;
+        com.android.server.media.MediaSessionRecord$MessageHandler $r16;
+        android.media.AudioManager $r19;
+        android.media.AudioManagerInternal $r21;
+        android.media.AudioAttributes $r22;
+        android.os.IBinder $r25;
+
+        r0 := @this: com.android.server.media.MediaSessionRecord;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        i2 := @parameter2: int;
+
+        r1 := @parameter3: java.lang.String;
+
+        r2 := @parameter4: android.media.session.ISessionCallback;
+
+        r3 := @parameter5: java.lang.String;
+
+        r4 := @parameter6: android.os.Bundle;
+
+        r5 := @parameter7: com.android.server.media.MediaSessionService;
+
+        r6 := @parameter8: android.os.Looper;
+
+        i3 := @parameter9: int;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        $r7 = new java.lang.Object;
+
+        specialinvoke $r7.<java.lang.Object: void <init>()>();
+
+        r0.<com.android.server.media.MediaSessionRecord: java.lang.Object mLock> = $r7;
+
+        $r8 = new java.util.ArrayList;
+
+        specialinvoke $r8.<java.util.ArrayList: void <init>()>();
+
+        r0.<com.android.server.media.MediaSessionRecord: java.util.ArrayList mControllerCallbackHolders> = $r8;
+
+        r0.<com.android.server.media.MediaSessionRecord: int mVolumeType> = 1;
+
+        r0.<com.android.server.media.MediaSessionRecord: int mVolumeControlType> = 2;
+
+        r0.<com.android.server.media.MediaSessionRecord: int mMaxVolume> = 0;
+
+        r0.<com.android.server.media.MediaSessionRecord: int mCurrentVolume> = 0;
+
+        r0.<com.android.server.media.MediaSessionRecord: int mOptimisticVolume> = -1;
+
+        r0.<com.android.server.media.MediaSessionRecord: boolean mIsActive> = 0;
+
+        r0.<com.android.server.media.MediaSessionRecord: boolean mDestroyed> = 0;
+
+        r0.<com.android.server.media.MediaSessionRecord: long mDuration> = -1L;
+
+        $r9 = new com.android.server.media.MediaSessionRecord$3;
+
+        specialinvoke $r9.<com.android.server.media.MediaSessionRecord$3: void <init>(com.android.server.media.MediaSessionRecord)>(r0);
+
+        r0.<com.android.server.media.MediaSessionRecord: java.lang.Runnable mClearOptimisticVolumeRunnable> = $r9;
+
+        r0.<com.android.server.media.MediaSessionRecord: int mOwnerPid> = i0;
+
+        r0.<com.android.server.media.MediaSessionRecord: int mOwnerUid> = i1;
+
+        r0.<com.android.server.media.MediaSessionRecord: int mUserId> = i2;
+
+        r0.<com.android.server.media.MediaSessionRecord: java.lang.String mPackageName> = r1;
+
+        r0.<com.android.server.media.MediaSessionRecord: java.lang.String mTag> = r3;
+
+        r0.<com.android.server.media.MediaSessionRecord: android.os.Bundle mSessionInfo> = r4;
+
+        $r10 = new com.android.server.media.MediaSessionRecord$ControllerStub;
+
+        specialinvoke $r10.<com.android.server.media.MediaSessionRecord$ControllerStub: void <init>(com.android.server.media.MediaSessionRecord)>(r0);
+
+        r0.<com.android.server.media.MediaSessionRecord: com.android.server.media.MediaSessionRecord$ControllerStub mController> = $r10;
+
+        $r11 = new android.media.session.MediaSession$Token;
+
+        $r12 = r0.<com.android.server.media.MediaSessionRecord: com.android.server.media.MediaSessionRecord$ControllerStub mController>;
+
+        specialinvoke $r11.<android.media.session.MediaSession$Token: void <init>(int,android.media.session.ISessionController)>(i1, $r12);
+
+        r0.<com.android.server.media.MediaSessionRecord: android.media.session.MediaSession$Token mSessionToken> = $r11;
+
+        $r13 = new com.android.server.media.MediaSessionRecord$SessionStub;
+
+        specialinvoke $r13.<com.android.server.media.MediaSessionRecord$SessionStub: void <init>(com.android.server.media.MediaSessionRecord,com.android.server.media.MediaSessionRecord$1)>(r0, null);
+
+        r0.<com.android.server.media.MediaSessionRecord: com.android.server.media.MediaSessionRecord$SessionStub mSession> = $r13;
+
+        $r14 = new com.android.server.media.MediaSessionRecord$SessionCb;
+
+        specialinvoke $r14.<com.android.server.media.MediaSessionRecord$SessionCb: void <init>(com.android.server.media.MediaSessionRecord,android.media.session.ISessionCallback)>(r0, r2);
+
+        r0.<com.android.server.media.MediaSessionRecord: com.android.server.media.MediaSessionRecord$SessionCb mSessionCb> = $r14;
+
+        r0.<com.android.server.media.MediaSessionRecord: com.android.server.media.MediaSessionService mService> = r5;
+
+        $r15 = virtualinvoke r5.<com.android.server.media.MediaSessionService: android.content.Context getContext()>();
+
+        r0.<com.android.server.media.MediaSessionRecord: android.content.Context mContext> = $r15;
+
+        $r16 = new com.android.server.media.MediaSessionRecord$MessageHandler;
+
+        specialinvoke $r16.<com.android.server.media.MediaSessionRecord$MessageHandler: void <init>(com.android.server.media.MediaSessionRecord,android.os.Looper)>(r0, r6);
+
+        r0.<com.android.server.media.MediaSessionRecord: com.android.server.media.MediaSessionRecord$MessageHandler mHandler> = $r16;
+
+        $r17 = r0.<com.android.server.media.MediaSessionRecord: android.content.Context mContext>;
+
+        $r18 = virtualinvoke $r17.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("audio");
+
+        $r19 = (android.media.AudioManager) $r18;
+
+        r0.<com.android.server.media.MediaSessionRecord: android.media.AudioManager mAudioManager> = $r19;
+
+        $r20 = staticinvoke <com.android.server.LocalServices: java.lang.Object getService(java.lang.Class)>(class "Landroid/media/AudioManagerInternal;");
+
+        $r21 = (android.media.AudioManagerInternal) $r20;
+
+        r0.<com.android.server.media.MediaSessionRecord: android.media.AudioManagerInternal mAudioManagerInternal> = $r21;
+
+        $r22 = <com.android.server.media.MediaSessionRecord: android.media.AudioAttributes DEFAULT_ATTRIBUTES>;
+
+        r0.<com.android.server.media.MediaSessionRecord: android.media.AudioAttributes mAudioAttrs> = $r22;
+
+        r0.<com.android.server.media.MediaSessionRecord: int mPolicies> = i3;
+
+        $r23 = r0.<com.android.server.media.MediaSessionRecord: com.android.server.media.MediaSessionRecord$SessionCb mSessionCb>;
+
+        $r24 = staticinvoke <com.android.server.media.MediaSessionRecord$SessionCb: android.media.session.ISessionCallback access$100(com.android.server.media.MediaSessionRecord$SessionCb)>($r23);
+
+        $r25 = interfaceinvoke $r24.<android.media.session.ISessionCallback: android.os.IBinder asBinder()>();
+
+        interfaceinvoke $r25.<android.os.IBinder: void linkToDeath(android.os.IBinder$DeathRecipient,int)>(r0, 0);
+
+        return;
+    }
+
+    static com.android.server.media.MediaSessionRecord$ControllerStub access$1000(com.android.server.media.MediaSessionRecord)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        com.android.server.media.MediaSessionRecord$ControllerStub $r1;
+
+        r0 := @parameter0: com.android.server.media.MediaSessionRecord;
+
+        $r1 = r0.<com.android.server.media.MediaSessionRecord: com.android.server.media.MediaSessionRecord$ControllerStub mController>;
+
+        return $r1;
+    }
+
+    static boolean access$1102(com.android.server.media.MediaSessionRecord, boolean)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        boolean z0;
+
+        r0 := @parameter0: com.android.server.media.MediaSessionRecord;
+
+        z0 := @parameter1: boolean;
+
+        r0.<com.android.server.media.MediaSessionRecord: boolean mIsActive> = z0;
+
+        return z0;
+    }
+
+    static long access$1200(com.android.server.media.MediaSessionRecord)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        long $l0;
+
+        r0 := @parameter0: com.android.server.media.MediaSessionRecord;
+
+        $l0 = r0.<com.android.server.media.MediaSessionRecord: long mFlags>;
+
+        return $l0;
+    }
+
+    static long access$1202(com.android.server.media.MediaSessionRecord, long)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        long l0;
+
+        r0 := @parameter0: com.android.server.media.MediaSessionRecord;
+
+        l0 := @parameter1: long;
+
+        r0.<com.android.server.media.MediaSessionRecord: long mFlags> = l0;
+
+        return l0;
+    }
+
+    static int access$1300(com.android.server.media.MediaSessionRecord)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        int $i0;
+
+        r0 := @parameter0: com.android.server.media.MediaSessionRecord;
+
+        $i0 = r0.<com.android.server.media.MediaSessionRecord: int mPolicies>;
+
+        return $i0;
+    }
+
+    static com.android.server.media.MediaButtonReceiverHolder access$1402(com.android.server.media.MediaSessionRecord, com.android.server.media.MediaButtonReceiverHolder)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        com.android.server.media.MediaButtonReceiverHolder r1;
+
+        r0 := @parameter0: com.android.server.media.MediaSessionRecord;
+
+        r1 := @parameter1: com.android.server.media.MediaButtonReceiverHolder;
+
+        r0.<com.android.server.media.MediaSessionRecord: com.android.server.media.MediaButtonReceiverHolder mMediaButtonReceiverHolder> = r1;
+
+        return r1;
+    }
+
+    static android.content.Context access$1500(com.android.server.media.MediaSessionRecord)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        android.content.Context $r1;
+
+        r0 := @parameter0: com.android.server.media.MediaSessionRecord;
+
+        $r1 = r0.<com.android.server.media.MediaSessionRecord: android.content.Context mContext>;
+
+        return $r1;
+    }
+
+    static int access$1600(com.android.server.media.MediaSessionRecord)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        int $i0;
+
+        r0 := @parameter0: com.android.server.media.MediaSessionRecord;
+
+        $i0 = r0.<com.android.server.media.MediaSessionRecord: int mUserId>;
+
+        return $i0;
+    }
+
+    static android.app.PendingIntent access$1700(com.android.server.media.MediaSessionRecord)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        android.app.PendingIntent $r1;
+
+        r0 := @parameter0: com.android.server.media.MediaSessionRecord;
+
+        $r1 = r0.<com.android.server.media.MediaSessionRecord: android.app.PendingIntent mLaunchIntent>;
+
+        return $r1;
+    }
+
+    static android.app.PendingIntent access$1702(com.android.server.media.MediaSessionRecord, android.app.PendingIntent)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        android.app.PendingIntent r1;
+
+        r0 := @parameter0: com.android.server.media.MediaSessionRecord;
+
+        r1 := @parameter1: android.app.PendingIntent;
+
+        r0.<com.android.server.media.MediaSessionRecord: android.app.PendingIntent mLaunchIntent> = r1;
+
+        return r1;
+    }
+
+    static java.lang.Object access$1800(com.android.server.media.MediaSessionRecord)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        java.lang.Object $r1;
+
+        r0 := @parameter0: com.android.server.media.MediaSessionRecord;
+
+        $r1 = r0.<com.android.server.media.MediaSessionRecord: java.lang.Object mLock>;
+
+        return $r1;
+    }
+
+    static android.media.MediaMetadata access$1900(com.android.server.media.MediaSessionRecord)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        android.media.MediaMetadata $r1;
+
+        r0 := @parameter0: com.android.server.media.MediaSessionRecord;
+
+        $r1 = r0.<com.android.server.media.MediaSessionRecord: android.media.MediaMetadata mMetadata>;
+
+        return $r1;
+    }
+
+    static android.media.MediaMetadata access$1902(com.android.server.media.MediaSessionRecord, android.media.MediaMetadata)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        android.media.MediaMetadata r1;
+
+        r0 := @parameter0: com.android.server.media.MediaSessionRecord;
+
+        r1 := @parameter1: android.media.MediaMetadata;
+
+        r0.<com.android.server.media.MediaSessionRecord: android.media.MediaMetadata mMetadata> = r1;
+
+        return r1;
+    }
+
+    static android.media.AudioManagerInternal access$200(com.android.server.media.MediaSessionRecord)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        android.media.AudioManagerInternal $r1;
+
+        r0 := @parameter0: com.android.server.media.MediaSessionRecord;
+
+        $r1 = r0.<com.android.server.media.MediaSessionRecord: android.media.AudioManagerInternal mAudioManagerInternal>;
+
+        return $r1;
+    }
+
+    static long access$2002(com.android.server.media.MediaSessionRecord, long)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        long l0;
+
+        r0 := @parameter0: com.android.server.media.MediaSessionRecord;
+
+        l0 := @parameter1: long;
+
+        r0.<com.android.server.media.MediaSessionRecord: long mDuration> = l0;
+
+        return l0;
+    }
+
+    static java.lang.String access$2102(com.android.server.media.MediaSessionRecord, java.lang.String)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        java.lang.String r1;
+
+        r0 := @parameter0: com.android.server.media.MediaSessionRecord;
+
+        r1 := @parameter1: java.lang.String;
+
+        r0.<com.android.server.media.MediaSessionRecord: java.lang.String mMetadataDescription> = r1;
+
+        return r1;
+    }
+
+    static android.media.session.PlaybackState access$2200(com.android.server.media.MediaSessionRecord)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        android.media.session.PlaybackState $r1;
+
+        r0 := @parameter0: com.android.server.media.MediaSessionRecord;
+
+        $r1 = r0.<com.android.server.media.MediaSessionRecord: android.media.session.PlaybackState mPlaybackState>;
+
+        return $r1;
+    }
+
+    static android.media.session.PlaybackState access$2202(com.android.server.media.MediaSessionRecord, android.media.session.PlaybackState)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        android.media.session.PlaybackState r1;
+
+        r0 := @parameter0: com.android.server.media.MediaSessionRecord;
+
+        r1 := @parameter1: android.media.session.PlaybackState;
+
+        r0.<com.android.server.media.MediaSessionRecord: android.media.session.PlaybackState mPlaybackState> = r1;
+
+        return r1;
+    }
+
+    static java.util.List access$2300()
+    {
+        java.util.List $r0;
+
+        $r0 = <com.android.server.media.MediaSessionRecord: java.util.List ALWAYS_PRIORITY_STATES>;
+
+        return $r0;
+    }
+
+    static java.util.List access$2400()
+    {
+        java.util.List $r0;
+
+        $r0 = <com.android.server.media.MediaSessionRecord: java.util.List TRANSITION_PRIORITY_STATES>;
+
+        return $r0;
+    }
+
+    static java.util.List access$2500(com.android.server.media.MediaSessionRecord)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        java.util.List $r1;
+
+        r0 := @parameter0: com.android.server.media.MediaSessionRecord;
+
+        $r1 = r0.<com.android.server.media.MediaSessionRecord: java.util.List mQueue>;
+
+        return $r1;
+    }
+
+    static java.util.List access$2502(com.android.server.media.MediaSessionRecord, java.util.List)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        java.util.List r1;
+
+        r0 := @parameter0: com.android.server.media.MediaSessionRecord;
+
+        r1 := @parameter1: java.util.List;
+
+        r0.<com.android.server.media.MediaSessionRecord: java.util.List mQueue> = r1;
+
+        return r1;
+    }
+
+    static java.lang.CharSequence access$2600(com.android.server.media.MediaSessionRecord)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        java.lang.CharSequence $r1;
+
+        r0 := @parameter0: com.android.server.media.MediaSessionRecord;
+
+        $r1 = r0.<com.android.server.media.MediaSessionRecord: java.lang.CharSequence mQueueTitle>;
+
+        return $r1;
+    }
+
+    static java.lang.CharSequence access$2602(com.android.server.media.MediaSessionRecord, java.lang.CharSequence)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        java.lang.CharSequence r1;
+
+        r0 := @parameter0: com.android.server.media.MediaSessionRecord;
+
+        r1 := @parameter1: java.lang.CharSequence;
+
+        r0.<com.android.server.media.MediaSessionRecord: java.lang.CharSequence mQueueTitle> = r1;
+
+        return r1;
+    }
+
+    static android.os.Bundle access$2700(com.android.server.media.MediaSessionRecord)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        android.os.Bundle $r1;
+
+        r0 := @parameter0: com.android.server.media.MediaSessionRecord;
+
+        $r1 = r0.<com.android.server.media.MediaSessionRecord: android.os.Bundle mExtras>;
+
+        return $r1;
+    }
+
+    static android.os.Bundle access$2702(com.android.server.media.MediaSessionRecord, android.os.Bundle)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        android.os.Bundle r1;
+
+        r0 := @parameter0: com.android.server.media.MediaSessionRecord;
+
+        r1 := @parameter1: android.os.Bundle;
+
+        r0.<com.android.server.media.MediaSessionRecord: android.os.Bundle mExtras> = r1;
+
+        return r1;
+    }
+
+    static int access$2800(com.android.server.media.MediaSessionRecord)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        int $i0;
+
+        r0 := @parameter0: com.android.server.media.MediaSessionRecord;
+
+        $i0 = r0.<com.android.server.media.MediaSessionRecord: int mRatingType>;
+
+        return $i0;
+    }
+
+    static int access$2802(com.android.server.media.MediaSessionRecord, int)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        int i0;
+
+        r0 := @parameter0: com.android.server.media.MediaSessionRecord;
+
+        i0 := @parameter1: int;
+
+        r0.<com.android.server.media.MediaSessionRecord: int mRatingType> = i0;
+
+        return i0;
+    }
+
+    static int access$2900(com.android.server.media.MediaSessionRecord)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        int $i0;
+
+        r0 := @parameter0: com.android.server.media.MediaSessionRecord;
+
+        $i0 = r0.<com.android.server.media.MediaSessionRecord: int mVolumeType>;
+
+        return $i0;
+    }
+
+    static int access$2902(com.android.server.media.MediaSessionRecord, int)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        int i0;
+
+        r0 := @parameter0: com.android.server.media.MediaSessionRecord;
+
+        i0 := @parameter1: int;
+
+        r0.<com.android.server.media.MediaSessionRecord: int mVolumeType> = i0;
+
+        return i0;
+    }
+
+    static java.lang.String access$3002(com.android.server.media.MediaSessionRecord, java.lang.String)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        java.lang.String r1;
+
+        r0 := @parameter0: com.android.server.media.MediaSessionRecord;
+
+        r1 := @parameter1: java.lang.String;
+
+        r0.<com.android.server.media.MediaSessionRecord: java.lang.String mVolumeControlId> = r1;
+
+        return r1;
+    }
+
+    static android.media.AudioAttributes access$3102(com.android.server.media.MediaSessionRecord, android.media.AudioAttributes)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        android.media.AudioAttributes r1;
+
+        r0 := @parameter0: com.android.server.media.MediaSessionRecord;
+
+        r1 := @parameter1: android.media.AudioAttributes;
+
+        r0.<com.android.server.media.MediaSessionRecord: android.media.AudioAttributes mAudioAttrs> = r1;
+
+        return r1;
+    }
+
+    static int access$3202(com.android.server.media.MediaSessionRecord, int)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        int i0;
+
+        r0 := @parameter0: com.android.server.media.MediaSessionRecord;
+
+        i0 := @parameter1: int;
+
+        r0.<com.android.server.media.MediaSessionRecord: int mVolumeControlType> = i0;
+
+        return i0;
+    }
+
+    static int access$3302(com.android.server.media.MediaSessionRecord, int)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        int i0;
+
+        r0 := @parameter0: com.android.server.media.MediaSessionRecord;
+
+        i0 := @parameter1: int;
+
+        r0.<com.android.server.media.MediaSessionRecord: int mMaxVolume> = i0;
+
+        return i0;
+    }
+
+    static com.android.server.media.MediaSessionRecord$SessionCb access$3400(com.android.server.media.MediaSessionRecord)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        com.android.server.media.MediaSessionRecord$SessionCb $r1;
+
+        r0 := @parameter0: com.android.server.media.MediaSessionRecord;
+
+        $r1 = r0.<com.android.server.media.MediaSessionRecord: com.android.server.media.MediaSessionRecord$SessionCb mSessionCb>;
+
+        return $r1;
+    }
+
+    static boolean access$3500(com.android.server.media.MediaSessionRecord)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.server.media.MediaSessionRecord;
+
+        $z0 = r0.<com.android.server.media.MediaSessionRecord: boolean mDestroyed>;
+
+        return $z0;
+    }
+
+    static int access$3600(com.android.server.media.MediaSessionRecord, android.media.session.ISessionControllerCallback)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        android.media.session.ISessionControllerCallback r1;
+        int $i0;
+
+        r0 := @parameter0: com.android.server.media.MediaSessionRecord;
+
+        r1 := @parameter1: android.media.session.ISessionControllerCallback;
+
+        $i0 = specialinvoke r0.<com.android.server.media.MediaSessionRecord: int getControllerHolderIndexForCb(android.media.session.ISessionControllerCallback)>(r1);
+
+        return $i0;
+    }
+
+    static java.util.ArrayList access$3700(com.android.server.media.MediaSessionRecord)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        java.util.ArrayList $r1;
+
+        r0 := @parameter0: com.android.server.media.MediaSessionRecord;
+
+        $r1 = r0.<com.android.server.media.MediaSessionRecord: java.util.ArrayList mControllerCallbackHolders>;
+
+        return $r1;
+    }
+
+    static boolean access$3800()
+    {
+        boolean $z0;
+
+        $z0 = <com.android.server.media.MediaSessionRecord: boolean DEBUG>;
+
+        return $z0;
+    }
+
+    static java.lang.String access$3900(com.android.server.media.MediaSessionRecord)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        java.lang.String $r1;
+
+        r0 := @parameter0: com.android.server.media.MediaSessionRecord;
+
+        $r1 = r0.<com.android.server.media.MediaSessionRecord: java.lang.String mPackageName>;
+
+        return $r1;
+    }
+
+    static java.lang.String access$4000(com.android.server.media.MediaSessionRecord)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        java.lang.String $r1;
+
+        r0 := @parameter0: com.android.server.media.MediaSessionRecord;
+
+        $r1 = r0.<com.android.server.media.MediaSessionRecord: java.lang.String mTag>;
+
+        return $r1;
+    }
+
+    static android.os.Bundle access$4100(com.android.server.media.MediaSessionRecord)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        android.os.Bundle $r1;
+
+        r0 := @parameter0: com.android.server.media.MediaSessionRecord;
+
+        $r1 = r0.<com.android.server.media.MediaSessionRecord: android.os.Bundle mSessionInfo>;
+
+        return $r1;
+    }
+
+    static android.media.session.MediaController$PlaybackInfo access$4200(com.android.server.media.MediaSessionRecord)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        android.media.session.MediaController$PlaybackInfo $r1;
+
+        r0 := @parameter0: com.android.server.media.MediaSessionRecord;
+
+        $r1 = specialinvoke r0.<com.android.server.media.MediaSessionRecord: android.media.session.MediaController$PlaybackInfo getVolumeAttributes()>();
+
+        return $r1;
+    }
+
+    static void access$4300(com.android.server.media.MediaSessionRecord, java.lang.String, java.lang.String, int, int, int, int)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        java.lang.String r1, r2;
+        int i0, i1, i2, i3;
+
+        r0 := @parameter0: com.android.server.media.MediaSessionRecord;
+
+        r1 := @parameter1: java.lang.String;
+
+        r2 := @parameter2: java.lang.String;
+
+        i0 := @parameter3: int;
+
+        i1 := @parameter4: int;
+
+        i2 := @parameter5: int;
+
+        i3 := @parameter6: int;
+
+        specialinvoke r0.<com.android.server.media.MediaSessionRecord: void setVolumeTo(java.lang.String,java.lang.String,int,int,int,int)>(r1, r2, i0, i1, i2, i3);
+
+        return;
+    }
+
+    static android.media.session.PlaybackState access$4400(com.android.server.media.MediaSessionRecord)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        android.media.session.PlaybackState $r1;
+
+        r0 := @parameter0: com.android.server.media.MediaSessionRecord;
+
+        $r1 = specialinvoke r0.<com.android.server.media.MediaSessionRecord: android.media.session.PlaybackState getStateWithUpdatedPosition()>();
+
+        return $r1;
+    }
+
+    static void access$4500(com.android.server.media.MediaSessionRecord)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+
+        r0 := @parameter0: com.android.server.media.MediaSessionRecord;
+
+        specialinvoke r0.<com.android.server.media.MediaSessionRecord: void pushMetadataUpdate()>();
+
+        return;
+    }
+
+    static void access$4600(com.android.server.media.MediaSessionRecord)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+
+        r0 := @parameter0: com.android.server.media.MediaSessionRecord;
+
+        specialinvoke r0.<com.android.server.media.MediaSessionRecord: void pushPlaybackStateUpdate()>();
+
+        return;
+    }
+
+    static void access$4700(com.android.server.media.MediaSessionRecord)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+
+        r0 := @parameter0: com.android.server.media.MediaSessionRecord;
+
+        specialinvoke r0.<com.android.server.media.MediaSessionRecord: void pushQueueUpdate()>();
+
+        return;
+    }
+
+    static void access$4800(com.android.server.media.MediaSessionRecord)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+
+        r0 := @parameter0: com.android.server.media.MediaSessionRecord;
+
+        specialinvoke r0.<com.android.server.media.MediaSessionRecord: void pushQueueTitleUpdate()>();
+
+        return;
+    }
+
+    static void access$4900(com.android.server.media.MediaSessionRecord)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+
+        r0 := @parameter0: com.android.server.media.MediaSessionRecord;
+
+        specialinvoke r0.<com.android.server.media.MediaSessionRecord: void pushExtrasUpdate()>();
+
+        return;
+    }
+
+    static int access$500(com.android.server.media.MediaSessionRecord)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        int $i0;
+
+        r0 := @parameter0: com.android.server.media.MediaSessionRecord;
+
+        $i0 = r0.<com.android.server.media.MediaSessionRecord: int mOptimisticVolume>;
+
+        return $i0;
+    }
+
+    static void access$5000(com.android.server.media.MediaSessionRecord, java.lang.String, android.os.Bundle)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        java.lang.String r1;
+        android.os.Bundle r2;
+
+        r0 := @parameter0: com.android.server.media.MediaSessionRecord;
+
+        r1 := @parameter1: java.lang.String;
+
+        r2 := @parameter2: android.os.Bundle;
+
+        specialinvoke r0.<com.android.server.media.MediaSessionRecord: void pushEvent(java.lang.String,android.os.Bundle)>(r1, r2);
+
+        return;
+    }
+
+    static int access$502(com.android.server.media.MediaSessionRecord, int)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        int i0;
+
+        r0 := @parameter0: com.android.server.media.MediaSessionRecord;
+
+        i0 := @parameter1: int;
+
+        r0.<com.android.server.media.MediaSessionRecord: int mOptimisticVolume> = i0;
+
+        return i0;
+    }
+
+    static void access$5100(com.android.server.media.MediaSessionRecord)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+
+        r0 := @parameter0: com.android.server.media.MediaSessionRecord;
+
+        specialinvoke r0.<com.android.server.media.MediaSessionRecord: void pushSessionDestroyed()>();
+
+        return;
+    }
+
+    static int access$600(com.android.server.media.MediaSessionRecord)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        int $i0;
+
+        r0 := @parameter0: com.android.server.media.MediaSessionRecord;
+
+        $i0 = r0.<com.android.server.media.MediaSessionRecord: int mCurrentVolume>;
+
+        return $i0;
+    }
+
+    static int access$602(com.android.server.media.MediaSessionRecord, int)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        int i0;
+
+        r0 := @parameter0: com.android.server.media.MediaSessionRecord;
+
+        i0 := @parameter1: int;
+
+        r0.<com.android.server.media.MediaSessionRecord: int mCurrentVolume> = i0;
+
+        return i0;
+    }
+
+    static void access$700(com.android.server.media.MediaSessionRecord)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+
+        r0 := @parameter0: com.android.server.media.MediaSessionRecord;
+
+        specialinvoke r0.<com.android.server.media.MediaSessionRecord: void pushVolumeUpdate()>();
+
+        return;
+    }
+
+    static com.android.server.media.MediaSessionService access$800(com.android.server.media.MediaSessionRecord)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        com.android.server.media.MediaSessionService $r1;
+
+        r0 := @parameter0: com.android.server.media.MediaSessionRecord;
+
+        $r1 = r0.<com.android.server.media.MediaSessionRecord: com.android.server.media.MediaSessionService mService>;
+
+        return $r1;
+    }
+
+    static com.android.server.media.MediaSessionRecord$MessageHandler access$900(com.android.server.media.MediaSessionRecord)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        com.android.server.media.MediaSessionRecord$MessageHandler $r1;
+
+        r0 := @parameter0: com.android.server.media.MediaSessionRecord;
+
+        $r1 = r0.<com.android.server.media.MediaSessionRecord: com.android.server.media.MediaSessionRecord$MessageHandler mHandler>;
+
+        return $r1;
+    }
+
+    private int getControllerHolderIndexForCb(android.media.session.ISessionControllerCallback)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        java.util.ArrayList $r1, $r2;
+        int $i0, i1;
+        java.lang.Object $r3;
+        com.android.server.media.MediaSessionRecord$ISessionControllerCallbackHolder $r4;
+        android.media.session.ISessionControllerCallback $r5, r7;
+        android.os.IBinder $r6, r8;
+        boolean $z0;
+
+        r0 := @this: com.android.server.media.MediaSessionRecord;
+
+        r7 := @parameter0: android.media.session.ISessionControllerCallback;
+
+        r8 = interfaceinvoke r7.<android.media.session.ISessionControllerCallback: android.os.IBinder asBinder()>();
+
+        $r1 = r0.<com.android.server.media.MediaSessionRecord: java.util.ArrayList mControllerCallbackHolders>;
+
+        $i0 = virtualinvoke $r1.<java.util.ArrayList: int size()>();
+
+        i1 = $i0 - 1;
+
+     label1:
+        if i1 < 0 goto label3;
+
+        $r2 = r0.<com.android.server.media.MediaSessionRecord: java.util.ArrayList mControllerCallbackHolders>;
+
+        $r3 = virtualinvoke $r2.<java.util.ArrayList: java.lang.Object get(int)>(i1);
+
+        $r4 = (com.android.server.media.MediaSessionRecord$ISessionControllerCallbackHolder) $r3;
+
+        $r5 = staticinvoke <com.android.server.media.MediaSessionRecord$ISessionControllerCallbackHolder: android.media.session.ISessionControllerCallback access$400(com.android.server.media.MediaSessionRecord$ISessionControllerCallbackHolder)>($r4);
+
+        $r6 = interfaceinvoke $r5.<android.media.session.ISessionControllerCallback: android.os.IBinder asBinder()>();
+
+        $z0 = virtualinvoke r8.<java.lang.Object: boolean equals(java.lang.Object)>($r6);
+
+        if $z0 == 0 goto label2;
+
+        return i1;
+
+     label2:
+        i1 = i1 + -1;
+
+        goto label1;
+
+     label3:
+        return -1;
+    }
+
+    private android.media.session.PlaybackState getStateWithUpdatedPosition()
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        long l0, $l2, $l3, $l4, l10, l11, l13;
+        boolean $z0;
+        int $i1, $i8, $i9, $i14;
+        float $f0, $f1, $f2, $f3;
+        byte $b5, $b6, $b7, $b12;
+        java.lang.Throwable $r1;
+        java.lang.Object r2;
+        android.media.session.PlaybackState r3, r4;
+        android.media.session.PlaybackState$Builder $r5;
+
+        r0 := @this: com.android.server.media.MediaSessionRecord;
+
+        r2 = r0.<com.android.server.media.MediaSessionRecord: java.lang.Object mLock>;
+
+        entermonitor r2;
+
+     label01:
+        $z0 = r0.<com.android.server.media.MediaSessionRecord: boolean mDestroyed>;
+
+        if $z0 == 0 goto label03;
+
+        exitmonitor r2;
+
+     label02:
+        return null;
+
+     label03:
+        r3 = r0.<com.android.server.media.MediaSessionRecord: android.media.session.PlaybackState mPlaybackState>;
+
+        l10 = r0.<com.android.server.media.MediaSessionRecord: long mDuration>;
+
+        exitmonitor r2;
+
+     label04:
+        r4 = null;
+
+        if r3 == null goto label09;
+
+        $i1 = virtualinvoke r3.<android.media.session.PlaybackState: int getState()>();
+
+        if $i1 == 3 goto label05;
+
+        $i8 = virtualinvoke r3.<android.media.session.PlaybackState: int getState()>();
+
+        if $i8 == 4 goto label05;
+
+        r4 = null;
+
+        $i9 = virtualinvoke r3.<android.media.session.PlaybackState: int getState()>();
+
+        if $i9 != 5 goto label09;
+
+     label05:
+        l11 = virtualinvoke r3.<android.media.session.PlaybackState: long getLastPositionUpdateTime()>();
+
+        l0 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        r4 = null;
+
+        $b12 = l11 cmp 0L;
+
+        if $b12 <= 0 goto label09;
+
+        $f0 = virtualinvoke r3.<android.media.session.PlaybackState: float getPlaybackSpeed()>();
+
+        $l2 = l0 - l11;
+
+        $f1 = (float) $l2;
+
+        $f2 = $f0 * $f1;
+
+        $l3 = (long) $f2;
+
+        $l4 = virtualinvoke r3.<android.media.session.PlaybackState: long getPosition()>();
+
+        l13 = $l3 + $l4;
+
+        $b5 = l10 cmp 0L;
+
+        if $b5 < 0 goto label06;
+
+        $b7 = l13 cmp l10;
+
+        if $b7 <= 0 goto label06;
+
+        goto label08;
+
+     label06:
+        $b6 = l13 cmp 0L;
+
+        if $b6 >= 0 goto label07;
+
+        l10 = 0L;
+
+        goto label08;
+
+     label07:
+        l10 = l13;
+
+     label08:
+        $r5 = new android.media.session.PlaybackState$Builder;
+
+        specialinvoke $r5.<android.media.session.PlaybackState$Builder: void <init>(android.media.session.PlaybackState)>(r3);
+
+        $i14 = virtualinvoke r3.<android.media.session.PlaybackState: int getState()>();
+
+        $f3 = virtualinvoke r3.<android.media.session.PlaybackState: float getPlaybackSpeed()>();
+
+        virtualinvoke $r5.<android.media.session.PlaybackState$Builder: android.media.session.PlaybackState$Builder setState(int,long,float,long)>($i14, l10, $f3, l0);
+
+        r4 = virtualinvoke $r5.<android.media.session.PlaybackState$Builder: android.media.session.PlaybackState build()>();
+
+     label09:
+        if r4 != null goto label10;
+
+        r4 = r3;
+
+        goto label10;
+
+     label10:
+        return r4;
+
+     label11:
+        $r1 := @caughtexception;
+
+     label12:
+        exitmonitor r2;
+
+     label13:
+        throw $r1;
+
+        catch java.lang.Throwable from label01 to label02 with label11;
+        catch java.lang.Throwable from label03 to label04 with label11;
+        catch java.lang.Throwable from label12 to label13 with label11;
+    }
+
+    private android.media.session.MediaController$PlaybackInfo getVolumeAttributes()
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        java.lang.Object r1;
+        int i0, $i1, $i2, $i3, $i4, $i5, $i6, $i7, i8, i9;
+        android.media.session.MediaController$PlaybackInfo $r2, r8;
+        android.media.AudioManager $r3, $r4;
+        java.lang.String $r5;
+        android.media.AudioAttributes $r6, r9;
+        java.lang.Throwable $r7;
+
+        r0 := @this: com.android.server.media.MediaSessionRecord;
+
+        r1 = r0.<com.android.server.media.MediaSessionRecord: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label01:
+        $i1 = r0.<com.android.server.media.MediaSessionRecord: int mVolumeType>;
+
+        if $i1 != 2 goto label06;
+
+        $i4 = r0.<com.android.server.media.MediaSessionRecord: int mOptimisticVolume>;
+
+        if $i4 == -1 goto label03;
+
+        i8 = r0.<com.android.server.media.MediaSessionRecord: int mOptimisticVolume>;
+
+     label02:
+        goto label04;
+
+     label03:
+        i8 = r0.<com.android.server.media.MediaSessionRecord: int mCurrentVolume>;
+
+     label04:
+        r8 = new android.media.session.MediaController$PlaybackInfo;
+
+        $i7 = r0.<com.android.server.media.MediaSessionRecord: int mVolumeType>;
+
+        $i6 = r0.<com.android.server.media.MediaSessionRecord: int mVolumeControlType>;
+
+        $i5 = r0.<com.android.server.media.MediaSessionRecord: int mMaxVolume>;
+
+        $r6 = r0.<com.android.server.media.MediaSessionRecord: android.media.AudioAttributes mAudioAttrs>;
+
+        $r5 = r0.<com.android.server.media.MediaSessionRecord: java.lang.String mVolumeControlId>;
+
+        specialinvoke r8.<android.media.session.MediaController$PlaybackInfo: void <init>(int,int,int,int,android.media.AudioAttributes,java.lang.String)>($i7, $i6, $i5, i8, $r6, $r5);
+
+        exitmonitor r1;
+
+     label05:
+        return r8;
+
+     label06:
+        i9 = r0.<com.android.server.media.MediaSessionRecord: int mVolumeType>;
+
+        r9 = r0.<com.android.server.media.MediaSessionRecord: android.media.AudioAttributes mAudioAttrs>;
+
+        exitmonitor r1;
+
+     label07:
+        i0 = staticinvoke <com.android.server.media.MediaSessionRecord: int getVolumeStream(android.media.AudioAttributes)>(r9);
+
+        $r2 = new android.media.session.MediaController$PlaybackInfo;
+
+        $r3 = r0.<com.android.server.media.MediaSessionRecord: android.media.AudioManager mAudioManager>;
+
+        $i2 = virtualinvoke $r3.<android.media.AudioManager: int getStreamMaxVolume(int)>(i0);
+
+        $r4 = r0.<com.android.server.media.MediaSessionRecord: android.media.AudioManager mAudioManager>;
+
+        $i3 = virtualinvoke $r4.<android.media.AudioManager: int getStreamVolume(int)>(i0);
+
+        specialinvoke $r2.<android.media.session.MediaController$PlaybackInfo: void <init>(int,int,int,int,android.media.AudioAttributes,java.lang.String)>(i9, 2, $i2, $i3, r9, null);
+
+        return $r2;
+
+     label08:
+        $r7 := @caughtexception;
+
+     label09:
+        exitmonitor r1;
+
+     label10:
+        throw $r7;
+
+        catch java.lang.Throwable from label01 to label02 with label08;
+        catch java.lang.Throwable from label03 to label04 with label08;
+        catch java.lang.Throwable from label04 to label05 with label08;
+        catch java.lang.Throwable from label06 to label07 with label08;
+        catch java.lang.Throwable from label09 to label10 with label08;
+    }
+
+    private static int getVolumeStream(android.media.AudioAttributes)
+    {
+        android.media.AudioAttributes r0, $r1, $r2;
+        int i0, $i1, $i2;
+
+        r0 := @parameter0: android.media.AudioAttributes;
+
+        if r0 != null goto label1;
+
+        $r2 = <com.android.server.media.MediaSessionRecord: android.media.AudioAttributes DEFAULT_ATTRIBUTES>;
+
+        $i2 = virtualinvoke $r2.<android.media.AudioAttributes: int getVolumeControlStream()>();
+
+        return $i2;
+
+     label1:
+        i0 = virtualinvoke r0.<android.media.AudioAttributes: int getVolumeControlStream()>();
+
+        if i0 != -2147483648 goto label2;
+
+        $r1 = <com.android.server.media.MediaSessionRecord: android.media.AudioAttributes DEFAULT_ATTRIBUTES>;
+
+        $i1 = virtualinvoke $r1.<android.media.AudioAttributes: int getVolumeControlStream()>();
+
+        return $i1;
+
+     label2:
+        return i0;
+    }
+
+    private void logCallbackException(java.lang.String, com.android.server.media.MediaSessionRecord$ISessionControllerCallbackHolder, java.lang.Exception)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        java.lang.String r1, $r10, $r14;
+        com.android.server.media.MediaSessionRecord$ISessionControllerCallbackHolder r2;
+        java.lang.Exception r3;
+        java.lang.StringBuilder $r5;
+
+        r0 := @this: com.android.server.media.MediaSessionRecord;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 := @parameter1: com.android.server.media.MediaSessionRecord$ISessionControllerCallbackHolder;
+
+        r3 := @parameter2: java.lang.Exception;
+
+        $r5 = new java.lang.StringBuilder;
+
+        specialinvoke $r5.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", this=");
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r0);
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", callback package=");
+
+        $r10 = staticinvoke <com.android.server.media.MediaSessionRecord$ISessionControllerCallbackHolder: java.lang.String access$300(com.android.server.media.MediaSessionRecord$ISessionControllerCallbackHolder)>(r2);
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r10);
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", exception=");
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r3);
+
+        $r14 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("MediaSessionRecord", $r14);
+
+        return;
+    }
+
+    private void postAdjustLocalVolume(int, int, int, java.lang.String, int, int, boolean, boolean, int)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        int i0, i1, i2, i3, i5, i6;
+        boolean z0, z1, $z2;
+        com.android.server.media.MediaSessionRecord$2 $r2;
+        com.android.server.media.MediaSessionRecord$MessageHandler $r3;
+        android.content.Context $r4;
+        java.lang.StringBuilder $r5;
+        java.lang.String $r14, r15;
+
+        r0 := @this: com.android.server.media.MediaSessionRecord;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        i2 := @parameter2: int;
+
+        r15 := @parameter3: java.lang.String;
+
+        i5 := @parameter4: int;
+
+        i6 := @parameter5: int;
+
+        z0 := @parameter6: boolean;
+
+        z1 := @parameter7: boolean;
+
+        i3 := @parameter8: int;
+
+        $z2 = <com.android.server.media.MediaSessionRecord: boolean DEBUG>;
+
+        if $z2 == 0 goto label1;
+
+        $r5 = new java.lang.StringBuilder;
+
+        specialinvoke $r5.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("adjusting local volume, stream=");
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", dir=");
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i1);
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", asSystemService=");
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>(z0);
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", useSuggested=");
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>(z1);
+
+        $r14 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("MediaSessionRecord", $r14);
+
+        goto label1;
+
+     label1:
+        if z0 == 0 goto label2;
+
+        $r4 = r0.<com.android.server.media.MediaSessionRecord: android.content.Context mContext>;
+
+        r15 = virtualinvoke $r4.<android.content.Context: java.lang.String getOpPackageName()>();
+
+        i5 = staticinvoke <android.os.Process: int myPid()>();
+
+        i6 = 1000;
+
+        goto label2;
+
+     label2:
+        $r3 = r0.<com.android.server.media.MediaSessionRecord: com.android.server.media.MediaSessionRecord$MessageHandler mHandler>;
+
+        $r2 = new com.android.server.media.MediaSessionRecord$2;
+
+        specialinvoke $r2.<com.android.server.media.MediaSessionRecord$2: void <init>(com.android.server.media.MediaSessionRecord,boolean,int,int,int,java.lang.String,int,int,int)>(r0, z1, i0, i1, i2, r15, i6, i5, i3);
+
+        virtualinvoke $r3.<com.android.server.media.MediaSessionRecord$MessageHandler: boolean post(java.lang.Runnable)>($r2);
+
+        return;
+    }
+
+    private void pushEvent(java.lang.String, android.os.Bundle)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        android.os.Bundle r1;
+        java.lang.Object r2, $r6;
+        com.android.server.media.MediaSessionRecord$ISessionControllerCallbackHolder r3;
+        boolean $z0;
+        java.util.ArrayList $r4, $r5, $r9;
+        int $i0, i1;
+        android.media.session.ISessionControllerCallback $r7;
+        android.os.DeadObjectException $r8;
+        java.lang.Throwable $r11;
+        android.os.RemoteException $r12;
+        java.lang.String r13;
+
+        r0 := @this: com.android.server.media.MediaSessionRecord;
+
+        r13 := @parameter0: java.lang.String;
+
+        r1 := @parameter1: android.os.Bundle;
+
+        r2 = r0.<com.android.server.media.MediaSessionRecord: java.lang.Object mLock>;
+
+        entermonitor r2;
+
+     label01:
+        $z0 = r0.<com.android.server.media.MediaSessionRecord: boolean mDestroyed>;
+
+        if $z0 == 0 goto label03;
+
+        exitmonitor r2;
+
+     label02:
+        return;
+
+     label03:
+        $r4 = r0.<com.android.server.media.MediaSessionRecord: java.util.ArrayList mControllerCallbackHolders>;
+
+        $i0 = virtualinvoke $r4.<java.util.ArrayList: int size()>();
+
+        i1 = $i0 - 1;
+
+     label04:
+        if i1 < 0 goto label15;
+
+     label05:
+        $r5 = r0.<com.android.server.media.MediaSessionRecord: java.util.ArrayList mControllerCallbackHolders>;
+
+        $r6 = virtualinvoke $r5.<java.util.ArrayList: java.lang.Object get(int)>(i1);
+
+        r3 = (com.android.server.media.MediaSessionRecord$ISessionControllerCallbackHolder) $r6;
+
+     label06:
+        $r7 = staticinvoke <com.android.server.media.MediaSessionRecord$ISessionControllerCallbackHolder: android.media.session.ISessionControllerCallback access$400(com.android.server.media.MediaSessionRecord$ISessionControllerCallbackHolder)>(r3);
+
+        interfaceinvoke $r7.<android.media.session.ISessionControllerCallback: void onEvent(java.lang.String,android.os.Bundle)>(r13, r1);
+
+     label07:
+        goto label14;
+
+     label08:
+        $r12 := @caughtexception;
+
+     label09:
+        specialinvoke r0.<com.android.server.media.MediaSessionRecord: void logCallbackException(java.lang.String,com.android.server.media.MediaSessionRecord$ISessionControllerCallbackHolder,java.lang.Exception)>("unexpected exception in pushEvent", r3, $r12);
+
+     label10:
+        goto label14;
+
+     label11:
+        $r8 := @caughtexception;
+
+     label12:
+        $r9 = r0.<com.android.server.media.MediaSessionRecord: java.util.ArrayList mControllerCallbackHolders>;
+
+        virtualinvoke $r9.<java.util.ArrayList: java.lang.Object remove(int)>(i1);
+
+        specialinvoke r0.<com.android.server.media.MediaSessionRecord: void logCallbackException(java.lang.String,com.android.server.media.MediaSessionRecord$ISessionControllerCallbackHolder,java.lang.Exception)>("Removing dead callback in pushEvent", r3, $r8);
+
+     label13:
+        goto label07;
+
+     label14:
+        i1 = i1 + -1;
+
+        goto label04;
+
+     label15:
+        exitmonitor r2;
+
+     label16:
+        return;
+
+     label17:
+        $r11 := @caughtexception;
+
+     label18:
+        exitmonitor r2;
+
+     label19:
+        throw $r11;
+
+        catch java.lang.Throwable from label01 to label02 with label17;
+        catch java.lang.Throwable from label03 to label04 with label17;
+        catch java.lang.Throwable from label05 to label06 with label17;
+        catch android.os.DeadObjectException from label06 to label07 with label11;
+        catch android.os.RemoteException from label06 to label07 with label08;
+        catch java.lang.Throwable from label06 to label07 with label17;
+        catch java.lang.Throwable from label09 to label10 with label17;
+        catch java.lang.Throwable from label12 to label13 with label17;
+        catch java.lang.Throwable from label15 to label16 with label17;
+        catch java.lang.Throwable from label18 to label19 with label17;
+    }
+
+    private void pushExtrasUpdate()
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        java.lang.Object r1, $r4;
+        boolean $z0;
+        java.util.ArrayList $r2, $r3, $r9;
+        int $i0, i1;
+        android.media.session.ISessionControllerCallback $r5;
+        android.os.Bundle $r6;
+        java.lang.Throwable $r7;
+        android.os.DeadObjectException $r8;
+        android.os.RemoteException $r11;
+        com.android.server.media.MediaSessionRecord$ISessionControllerCallbackHolder r12;
+
+        r0 := @this: com.android.server.media.MediaSessionRecord;
+
+        r1 = r0.<com.android.server.media.MediaSessionRecord: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label01:
+        $z0 = r0.<com.android.server.media.MediaSessionRecord: boolean mDestroyed>;
+
+        if $z0 == 0 goto label03;
+
+        exitmonitor r1;
+
+     label02:
+        return;
+
+     label03:
+        $r2 = r0.<com.android.server.media.MediaSessionRecord: java.util.ArrayList mControllerCallbackHolders>;
+
+        $i0 = virtualinvoke $r2.<java.util.ArrayList: int size()>();
+
+        i1 = $i0 - 1;
+
+     label04:
+        if i1 < 0 goto label15;
+
+     label05:
+        $r3 = r0.<com.android.server.media.MediaSessionRecord: java.util.ArrayList mControllerCallbackHolders>;
+
+        $r4 = virtualinvoke $r3.<java.util.ArrayList: java.lang.Object get(int)>(i1);
+
+        r12 = (com.android.server.media.MediaSessionRecord$ISessionControllerCallbackHolder) $r4;
+
+     label06:
+        $r5 = staticinvoke <com.android.server.media.MediaSessionRecord$ISessionControllerCallbackHolder: android.media.session.ISessionControllerCallback access$400(com.android.server.media.MediaSessionRecord$ISessionControllerCallbackHolder)>(r12);
+
+        $r6 = r0.<com.android.server.media.MediaSessionRecord: android.os.Bundle mExtras>;
+
+        interfaceinvoke $r5.<android.media.session.ISessionControllerCallback: void onExtrasChanged(android.os.Bundle)>($r6);
+
+     label07:
+        goto label14;
+
+     label08:
+        $r11 := @caughtexception;
+
+     label09:
+        specialinvoke r0.<com.android.server.media.MediaSessionRecord: void logCallbackException(java.lang.String,com.android.server.media.MediaSessionRecord$ISessionControllerCallbackHolder,java.lang.Exception)>("unexpected exception in pushExtrasUpdate", r12, $r11);
+
+     label10:
+        goto label14;
+
+     label11:
+        $r8 := @caughtexception;
+
+     label12:
+        $r9 = r0.<com.android.server.media.MediaSessionRecord: java.util.ArrayList mControllerCallbackHolders>;
+
+        virtualinvoke $r9.<java.util.ArrayList: java.lang.Object remove(int)>(i1);
+
+        specialinvoke r0.<com.android.server.media.MediaSessionRecord: void logCallbackException(java.lang.String,com.android.server.media.MediaSessionRecord$ISessionControllerCallbackHolder,java.lang.Exception)>("Removing dead callback in pushExtrasUpdate", r12, $r8);
+
+     label13:
+        goto label07;
+
+     label14:
+        i1 = i1 + -1;
+
+        goto label04;
+
+     label15:
+        exitmonitor r1;
+
+     label16:
+        return;
+
+     label17:
+        $r7 := @caughtexception;
+
+     label18:
+        exitmonitor r1;
+
+     label19:
+        throw $r7;
+
+        catch java.lang.Throwable from label01 to label02 with label17;
+        catch java.lang.Throwable from label03 to label04 with label17;
+        catch java.lang.Throwable from label05 to label06 with label17;
+        catch android.os.DeadObjectException from label06 to label07 with label11;
+        catch android.os.RemoteException from label06 to label07 with label08;
+        catch java.lang.Throwable from label06 to label07 with label17;
+        catch java.lang.Throwable from label09 to label10 with label17;
+        catch java.lang.Throwable from label12 to label13 with label17;
+        catch java.lang.Throwable from label15 to label16 with label17;
+        catch java.lang.Throwable from label18 to label19 with label17;
+    }
+
+    private void pushMetadataUpdate()
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        java.lang.Object r1, $r4;
+        boolean $z0;
+        java.util.ArrayList $r2, $r3, $r8;
+        int $i0, i1;
+        android.media.session.ISessionControllerCallback $r5;
+        android.media.MediaMetadata $r6;
+        android.os.DeadObjectException $r7;
+        java.lang.Throwable $r10;
+        android.os.RemoteException $r11;
+        com.android.server.media.MediaSessionRecord$ISessionControllerCallbackHolder r12;
+
+        r0 := @this: com.android.server.media.MediaSessionRecord;
+
+        r1 = r0.<com.android.server.media.MediaSessionRecord: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label01:
+        $z0 = r0.<com.android.server.media.MediaSessionRecord: boolean mDestroyed>;
+
+        if $z0 == 0 goto label03;
+
+        exitmonitor r1;
+
+     label02:
+        return;
+
+     label03:
+        $r2 = r0.<com.android.server.media.MediaSessionRecord: java.util.ArrayList mControllerCallbackHolders>;
+
+        $i0 = virtualinvoke $r2.<java.util.ArrayList: int size()>();
+
+        i1 = $i0 - 1;
+
+     label04:
+        if i1 < 0 goto label15;
+
+     label05:
+        $r3 = r0.<com.android.server.media.MediaSessionRecord: java.util.ArrayList mControllerCallbackHolders>;
+
+        $r4 = virtualinvoke $r3.<java.util.ArrayList: java.lang.Object get(int)>(i1);
+
+        r12 = (com.android.server.media.MediaSessionRecord$ISessionControllerCallbackHolder) $r4;
+
+     label06:
+        $r5 = staticinvoke <com.android.server.media.MediaSessionRecord$ISessionControllerCallbackHolder: android.media.session.ISessionControllerCallback access$400(com.android.server.media.MediaSessionRecord$ISessionControllerCallbackHolder)>(r12);
+
+        $r6 = r0.<com.android.server.media.MediaSessionRecord: android.media.MediaMetadata mMetadata>;
+
+        interfaceinvoke $r5.<android.media.session.ISessionControllerCallback: void onMetadataChanged(android.media.MediaMetadata)>($r6);
+
+     label07:
+        goto label14;
+
+     label08:
+        $r11 := @caughtexception;
+
+     label09:
+        specialinvoke r0.<com.android.server.media.MediaSessionRecord: void logCallbackException(java.lang.String,com.android.server.media.MediaSessionRecord$ISessionControllerCallbackHolder,java.lang.Exception)>("unexpected exception in pushMetadataUpdate", r12, $r11);
+
+     label10:
+        goto label14;
+
+     label11:
+        $r7 := @caughtexception;
+
+     label12:
+        $r8 = r0.<com.android.server.media.MediaSessionRecord: java.util.ArrayList mControllerCallbackHolders>;
+
+        virtualinvoke $r8.<java.util.ArrayList: java.lang.Object remove(int)>(i1);
+
+        specialinvoke r0.<com.android.server.media.MediaSessionRecord: void logCallbackException(java.lang.String,com.android.server.media.MediaSessionRecord$ISessionControllerCallbackHolder,java.lang.Exception)>("Removing dead callback in pushMetadataUpdate", r12, $r7);
+
+     label13:
+        goto label07;
+
+     label14:
+        i1 = i1 + -1;
+
+        goto label04;
+
+     label15:
+        exitmonitor r1;
+
+     label16:
+        return;
+
+     label17:
+        $r10 := @caughtexception;
+
+     label18:
+        exitmonitor r1;
+
+     label19:
+        throw $r10;
+
+        catch java.lang.Throwable from label01 to label02 with label17;
+        catch java.lang.Throwable from label03 to label04 with label17;
+        catch java.lang.Throwable from label05 to label06 with label17;
+        catch android.os.DeadObjectException from label06 to label07 with label11;
+        catch android.os.RemoteException from label06 to label07 with label08;
+        catch java.lang.Throwable from label06 to label07 with label17;
+        catch java.lang.Throwable from label09 to label10 with label17;
+        catch java.lang.Throwable from label12 to label13 with label17;
+        catch java.lang.Throwable from label15 to label16 with label17;
+        catch java.lang.Throwable from label18 to label19 with label17;
+    }
+
+    private void pushPlaybackStateUpdate()
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        java.lang.Object r1, $r4;
+        boolean $z0;
+        java.util.ArrayList $r2, $r3, $r10;
+        int $i0, i1;
+        android.media.session.ISessionControllerCallback $r5;
+        android.media.session.PlaybackState $r6;
+        android.os.RemoteException $r7;
+        java.lang.Throwable $r8;
+        android.os.DeadObjectException $r9;
+        com.android.server.media.MediaSessionRecord$ISessionControllerCallbackHolder r12;
+
+        r0 := @this: com.android.server.media.MediaSessionRecord;
+
+        r1 = r0.<com.android.server.media.MediaSessionRecord: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label01:
+        $z0 = r0.<com.android.server.media.MediaSessionRecord: boolean mDestroyed>;
+
+        if $z0 == 0 goto label03;
+
+        exitmonitor r1;
+
+     label02:
+        return;
+
+     label03:
+        $r2 = r0.<com.android.server.media.MediaSessionRecord: java.util.ArrayList mControllerCallbackHolders>;
+
+        $i0 = virtualinvoke $r2.<java.util.ArrayList: int size()>();
+
+        i1 = $i0 - 1;
+
+     label04:
+        if i1 < 0 goto label15;
+
+     label05:
+        $r3 = r0.<com.android.server.media.MediaSessionRecord: java.util.ArrayList mControllerCallbackHolders>;
+
+        $r4 = virtualinvoke $r3.<java.util.ArrayList: java.lang.Object get(int)>(i1);
+
+        r12 = (com.android.server.media.MediaSessionRecord$ISessionControllerCallbackHolder) $r4;
+
+     label06:
+        $r5 = staticinvoke <com.android.server.media.MediaSessionRecord$ISessionControllerCallbackHolder: android.media.session.ISessionControllerCallback access$400(com.android.server.media.MediaSessionRecord$ISessionControllerCallbackHolder)>(r12);
+
+        $r6 = r0.<com.android.server.media.MediaSessionRecord: android.media.session.PlaybackState mPlaybackState>;
+
+        interfaceinvoke $r5.<android.media.session.ISessionControllerCallback: void onPlaybackStateChanged(android.media.session.PlaybackState)>($r6);
+
+     label07:
+        goto label14;
+
+     label08:
+        $r7 := @caughtexception;
+
+     label09:
+        specialinvoke r0.<com.android.server.media.MediaSessionRecord: void logCallbackException(java.lang.String,com.android.server.media.MediaSessionRecord$ISessionControllerCallbackHolder,java.lang.Exception)>("unexpected exception in pushPlaybackStateUpdate", r12, $r7);
+
+     label10:
+        goto label14;
+
+     label11:
+        $r9 := @caughtexception;
+
+     label12:
+        $r10 = r0.<com.android.server.media.MediaSessionRecord: java.util.ArrayList mControllerCallbackHolders>;
+
+        virtualinvoke $r10.<java.util.ArrayList: java.lang.Object remove(int)>(i1);
+
+        specialinvoke r0.<com.android.server.media.MediaSessionRecord: void logCallbackException(java.lang.String,com.android.server.media.MediaSessionRecord$ISessionControllerCallbackHolder,java.lang.Exception)>("Removing dead callback in pushPlaybackStateUpdate", r12, $r9);
+
+     label13:
+        goto label07;
+
+     label14:
+        i1 = i1 + -1;
+
+        goto label04;
+
+     label15:
+        exitmonitor r1;
+
+     label16:
+        return;
+
+     label17:
+        $r8 := @caughtexception;
+
+     label18:
+        exitmonitor r1;
+
+     label19:
+        throw $r8;
+
+        catch java.lang.Throwable from label01 to label02 with label17;
+        catch java.lang.Throwable from label03 to label04 with label17;
+        catch java.lang.Throwable from label05 to label06 with label17;
+        catch android.os.DeadObjectException from label06 to label07 with label11;
+        catch android.os.RemoteException from label06 to label07 with label08;
+        catch java.lang.Throwable from label06 to label07 with label17;
+        catch java.lang.Throwable from label09 to label10 with label17;
+        catch java.lang.Throwable from label12 to label13 with label17;
+        catch java.lang.Throwable from label15 to label16 with label17;
+        catch java.lang.Throwable from label18 to label19 with label17;
+    }
+
+    private void pushQueueTitleUpdate()
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        java.lang.Object r1, $r4;
+        boolean $z0;
+        java.util.ArrayList $r2, $r3, $r10;
+        int $i0, i1;
+        android.media.session.ISessionControllerCallback $r5;
+        java.lang.CharSequence $r6;
+        android.os.RemoteException $r7;
+        java.lang.Throwable $r8;
+        android.os.DeadObjectException $r9;
+        com.android.server.media.MediaSessionRecord$ISessionControllerCallbackHolder r12;
+
+        r0 := @this: com.android.server.media.MediaSessionRecord;
+
+        r1 = r0.<com.android.server.media.MediaSessionRecord: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label01:
+        $z0 = r0.<com.android.server.media.MediaSessionRecord: boolean mDestroyed>;
+
+        if $z0 == 0 goto label03;
+
+        exitmonitor r1;
+
+     label02:
+        return;
+
+     label03:
+        $r2 = r0.<com.android.server.media.MediaSessionRecord: java.util.ArrayList mControllerCallbackHolders>;
+
+        $i0 = virtualinvoke $r2.<java.util.ArrayList: int size()>();
+
+        i1 = $i0 - 1;
+
+     label04:
+        if i1 < 0 goto label15;
+
+     label05:
+        $r3 = r0.<com.android.server.media.MediaSessionRecord: java.util.ArrayList mControllerCallbackHolders>;
+
+        $r4 = virtualinvoke $r3.<java.util.ArrayList: java.lang.Object get(int)>(i1);
+
+        r12 = (com.android.server.media.MediaSessionRecord$ISessionControllerCallbackHolder) $r4;
+
+     label06:
+        $r5 = staticinvoke <com.android.server.media.MediaSessionRecord$ISessionControllerCallbackHolder: android.media.session.ISessionControllerCallback access$400(com.android.server.media.MediaSessionRecord$ISessionControllerCallbackHolder)>(r12);
+
+        $r6 = r0.<com.android.server.media.MediaSessionRecord: java.lang.CharSequence mQueueTitle>;
+
+        interfaceinvoke $r5.<android.media.session.ISessionControllerCallback: void onQueueTitleChanged(java.lang.CharSequence)>($r6);
+
+     label07:
+        goto label14;
+
+     label08:
+        $r7 := @caughtexception;
+
+     label09:
+        specialinvoke r0.<com.android.server.media.MediaSessionRecord: void logCallbackException(java.lang.String,com.android.server.media.MediaSessionRecord$ISessionControllerCallbackHolder,java.lang.Exception)>("unexpected exception in pushQueueTitleUpdate", r12, $r7);
+
+     label10:
+        goto label14;
+
+     label11:
+        $r9 := @caughtexception;
+
+     label12:
+        $r10 = r0.<com.android.server.media.MediaSessionRecord: java.util.ArrayList mControllerCallbackHolders>;
+
+        virtualinvoke $r10.<java.util.ArrayList: java.lang.Object remove(int)>(i1);
+
+        specialinvoke r0.<com.android.server.media.MediaSessionRecord: void logCallbackException(java.lang.String,com.android.server.media.MediaSessionRecord$ISessionControllerCallbackHolder,java.lang.Exception)>("Removing dead callback in pushQueueTitleUpdate", r12, $r9);
+
+     label13:
+        goto label07;
+
+     label14:
+        i1 = i1 + -1;
+
+        goto label04;
+
+     label15:
+        exitmonitor r1;
+
+     label16:
+        return;
+
+     label17:
+        $r8 := @caughtexception;
+
+     label18:
+        exitmonitor r1;
+
+     label19:
+        throw $r8;
+
+        catch java.lang.Throwable from label01 to label02 with label17;
+        catch java.lang.Throwable from label03 to label04 with label17;
+        catch java.lang.Throwable from label05 to label06 with label17;
+        catch android.os.DeadObjectException from label06 to label07 with label11;
+        catch android.os.RemoteException from label06 to label07 with label08;
+        catch java.lang.Throwable from label06 to label07 with label17;
+        catch java.lang.Throwable from label09 to label10 with label17;
+        catch java.lang.Throwable from label12 to label13 with label17;
+        catch java.lang.Throwable from label15 to label16 with label17;
+        catch java.lang.Throwable from label18 to label19 with label17;
+    }
+
+    private void pushQueueUpdate()
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        java.lang.Object r1, $r6;
+        com.android.server.media.MediaSessionRecord$ISessionControllerCallbackHolder r2;
+        android.media.session.ISessionControllerCallback r3;
+        boolean $z0;
+        java.util.ArrayList $r4, $r5, $r11;
+        int $i0, i1;
+        java.util.List $r7, $r9;
+        android.content.pm.ParceledListSlice $r8, r15;
+        android.os.DeadObjectException $r10;
+        java.lang.Throwable $r13;
+        android.os.RemoteException $r14;
+
+        r0 := @this: com.android.server.media.MediaSessionRecord;
+
+        r1 = r0.<com.android.server.media.MediaSessionRecord: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label01:
+        $z0 = r0.<com.android.server.media.MediaSessionRecord: boolean mDestroyed>;
+
+        if $z0 == 0 goto label03;
+
+        exitmonitor r1;
+
+     label02:
+        return;
+
+     label03:
+        $r4 = r0.<com.android.server.media.MediaSessionRecord: java.util.ArrayList mControllerCallbackHolders>;
+
+        $i0 = virtualinvoke $r4.<java.util.ArrayList: int size()>();
+
+        i1 = $i0 - 1;
+
+     label04:
+        if i1 < 0 goto label18;
+
+     label05:
+        $r5 = r0.<com.android.server.media.MediaSessionRecord: java.util.ArrayList mControllerCallbackHolders>;
+
+        $r6 = virtualinvoke $r5.<java.util.ArrayList: java.lang.Object get(int)>(i1);
+
+        r2 = (com.android.server.media.MediaSessionRecord$ISessionControllerCallbackHolder) $r6;
+
+     label06:
+        r3 = staticinvoke <com.android.server.media.MediaSessionRecord$ISessionControllerCallbackHolder: android.media.session.ISessionControllerCallback access$400(com.android.server.media.MediaSessionRecord$ISessionControllerCallbackHolder)>(r2);
+
+        $r7 = r0.<com.android.server.media.MediaSessionRecord: java.util.List mQueue>;
+
+        if $r7 != null goto label08;
+
+     label07:
+        r15 = null;
+
+        goto label09;
+
+     label08:
+        $r8 = new android.content.pm.ParceledListSlice;
+
+        $r9 = r0.<com.android.server.media.MediaSessionRecord: java.util.List mQueue>;
+
+        specialinvoke $r8.<android.content.pm.ParceledListSlice: void <init>(java.util.List)>($r9);
+
+        r15 = $r8;
+
+     label09:
+        interfaceinvoke r3.<android.media.session.ISessionControllerCallback: void onQueueChanged(android.content.pm.ParceledListSlice)>(r15);
+
+     label10:
+        goto label17;
+
+     label11:
+        $r14 := @caughtexception;
+
+     label12:
+        specialinvoke r0.<com.android.server.media.MediaSessionRecord: void logCallbackException(java.lang.String,com.android.server.media.MediaSessionRecord$ISessionControllerCallbackHolder,java.lang.Exception)>("unexpected exception in pushQueueUpdate", r2, $r14);
+
+     label13:
+        goto label17;
+
+     label14:
+        $r10 := @caughtexception;
+
+     label15:
+        $r11 = r0.<com.android.server.media.MediaSessionRecord: java.util.ArrayList mControllerCallbackHolders>;
+
+        virtualinvoke $r11.<java.util.ArrayList: java.lang.Object remove(int)>(i1);
+
+        specialinvoke r0.<com.android.server.media.MediaSessionRecord: void logCallbackException(java.lang.String,com.android.server.media.MediaSessionRecord$ISessionControllerCallbackHolder,java.lang.Exception)>("Removing dead callback in pushQueueUpdate", r2, $r10);
+
+     label16:
+        goto label10;
+
+     label17:
+        i1 = i1 + -1;
+
+        goto label04;
+
+     label18:
+        exitmonitor r1;
+
+     label19:
+        return;
+
+     label20:
+        $r13 := @caughtexception;
+
+     label21:
+        exitmonitor r1;
+
+     label22:
+        throw $r13;
+
+        catch java.lang.Throwable from label01 to label02 with label20;
+        catch java.lang.Throwable from label03 to label04 with label20;
+        catch java.lang.Throwable from label05 to label06 with label20;
+        catch android.os.DeadObjectException from label06 to label07 with label14;
+        catch android.os.RemoteException from label06 to label07 with label11;
+        catch java.lang.Throwable from label06 to label07 with label20;
+        catch android.os.DeadObjectException from label08 to label09 with label14;
+        catch android.os.RemoteException from label08 to label09 with label11;
+        catch java.lang.Throwable from label08 to label09 with label20;
+        catch android.os.DeadObjectException from label09 to label10 with label14;
+        catch android.os.RemoteException from label09 to label10 with label11;
+        catch java.lang.Throwable from label09 to label10 with label20;
+        catch java.lang.Throwable from label12 to label13 with label20;
+        catch java.lang.Throwable from label15 to label16 with label20;
+        catch java.lang.Throwable from label18 to label19 with label20;
+        catch java.lang.Throwable from label21 to label22 with label20;
+    }
+
+    private void pushSessionDestroyed()
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        java.lang.Object r1, $r5;
+        boolean $z0;
+        java.util.ArrayList $r2, $r3, $r4, $r8;
+        int $i0, i1;
+        android.media.session.ISessionControllerCallback $r6;
+        android.os.DeadObjectException $r7;
+        java.lang.Throwable $r10;
+        android.os.RemoteException $r11;
+        com.android.server.media.MediaSessionRecord$ISessionControllerCallbackHolder r12;
+
+        r0 := @this: com.android.server.media.MediaSessionRecord;
+
+        r1 = r0.<com.android.server.media.MediaSessionRecord: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label01:
+        $z0 = r0.<com.android.server.media.MediaSessionRecord: boolean mDestroyed>;
+
+        if $z0 != 0 goto label03;
+
+        exitmonitor r1;
+
+     label02:
+        return;
+
+     label03:
+        $r2 = r0.<com.android.server.media.MediaSessionRecord: java.util.ArrayList mControllerCallbackHolders>;
+
+        $i0 = virtualinvoke $r2.<java.util.ArrayList: int size()>();
+
+        i1 = $i0 - 1;
+
+     label04:
+        if i1 < 0 goto label15;
+
+     label05:
+        $r4 = r0.<com.android.server.media.MediaSessionRecord: java.util.ArrayList mControllerCallbackHolders>;
+
+        $r5 = virtualinvoke $r4.<java.util.ArrayList: java.lang.Object get(int)>(i1);
+
+        r12 = (com.android.server.media.MediaSessionRecord$ISessionControllerCallbackHolder) $r5;
+
+     label06:
+        $r6 = staticinvoke <com.android.server.media.MediaSessionRecord$ISessionControllerCallbackHolder: android.media.session.ISessionControllerCallback access$400(com.android.server.media.MediaSessionRecord$ISessionControllerCallbackHolder)>(r12);
+
+        interfaceinvoke $r6.<android.media.session.ISessionControllerCallback: void onSessionDestroyed()>();
+
+     label07:
+        goto label14;
+
+     label08:
+        $r11 := @caughtexception;
+
+     label09:
+        specialinvoke r0.<com.android.server.media.MediaSessionRecord: void logCallbackException(java.lang.String,com.android.server.media.MediaSessionRecord$ISessionControllerCallbackHolder,java.lang.Exception)>("unexpected exception in pushSessionDestroyed", r12, $r11);
+
+     label10:
+        goto label14;
+
+     label11:
+        $r7 := @caughtexception;
+
+     label12:
+        $r8 = r0.<com.android.server.media.MediaSessionRecord: java.util.ArrayList mControllerCallbackHolders>;
+
+        virtualinvoke $r8.<java.util.ArrayList: java.lang.Object remove(int)>(i1);
+
+        specialinvoke r0.<com.android.server.media.MediaSessionRecord: void logCallbackException(java.lang.String,com.android.server.media.MediaSessionRecord$ISessionControllerCallbackHolder,java.lang.Exception)>("Removing dead callback in pushSessionDestroyed", r12, $r7);
+
+     label13:
+        goto label07;
+
+     label14:
+        i1 = i1 + -1;
+
+        goto label04;
+
+     label15:
+        $r3 = r0.<com.android.server.media.MediaSessionRecord: java.util.ArrayList mControllerCallbackHolders>;
+
+        virtualinvoke $r3.<java.util.ArrayList: void clear()>();
+
+        exitmonitor r1;
+
+     label16:
+        return;
+
+     label17:
+        $r10 := @caughtexception;
+
+     label18:
+        exitmonitor r1;
+
+     label19:
+        throw $r10;
+
+        catch java.lang.Throwable from label01 to label02 with label17;
+        catch java.lang.Throwable from label03 to label04 with label17;
+        catch java.lang.Throwable from label05 to label06 with label17;
+        catch android.os.DeadObjectException from label06 to label07 with label11;
+        catch android.os.RemoteException from label06 to label07 with label08;
+        catch java.lang.Throwable from label06 to label07 with label17;
+        catch java.lang.Throwable from label09 to label10 with label17;
+        catch java.lang.Throwable from label12 to label13 with label17;
+        catch java.lang.Throwable from label15 to label16 with label17;
+        catch java.lang.Throwable from label18 to label19 with label17;
+    }
+
+    private void pushVolumeUpdate()
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        java.lang.Object r1, $r5;
+        com.android.server.media.MediaSessionRecord$ISessionControllerCallbackHolder r2;
+        boolean $z0;
+        java.util.ArrayList $r3, $r4, $r10;
+        int $i0, i1;
+        android.media.session.ISessionControllerCallback $r6;
+        android.os.RemoteException $r7;
+        java.lang.Throwable $r8;
+        android.os.DeadObjectException $r9;
+        android.media.session.MediaController$PlaybackInfo r12;
+
+        r0 := @this: com.android.server.media.MediaSessionRecord;
+
+        r1 = r0.<com.android.server.media.MediaSessionRecord: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label01:
+        $z0 = r0.<com.android.server.media.MediaSessionRecord: boolean mDestroyed>;
+
+        if $z0 == 0 goto label03;
+
+        exitmonitor r1;
+
+     label02:
+        return;
+
+     label03:
+        r12 = specialinvoke r0.<com.android.server.media.MediaSessionRecord: android.media.session.MediaController$PlaybackInfo getVolumeAttributes()>();
+
+        $r3 = r0.<com.android.server.media.MediaSessionRecord: java.util.ArrayList mControllerCallbackHolders>;
+
+        $i0 = virtualinvoke $r3.<java.util.ArrayList: int size()>();
+
+        i1 = $i0 - 1;
+
+     label04:
+        if i1 < 0 goto label15;
+
+     label05:
+        $r4 = r0.<com.android.server.media.MediaSessionRecord: java.util.ArrayList mControllerCallbackHolders>;
+
+        $r5 = virtualinvoke $r4.<java.util.ArrayList: java.lang.Object get(int)>(i1);
+
+        r2 = (com.android.server.media.MediaSessionRecord$ISessionControllerCallbackHolder) $r5;
+
+     label06:
+        $r6 = staticinvoke <com.android.server.media.MediaSessionRecord$ISessionControllerCallbackHolder: android.media.session.ISessionControllerCallback access$400(com.android.server.media.MediaSessionRecord$ISessionControllerCallbackHolder)>(r2);
+
+        interfaceinvoke $r6.<android.media.session.ISessionControllerCallback: void onVolumeInfoChanged(android.media.session.MediaController$PlaybackInfo)>(r12);
+
+     label07:
+        goto label14;
+
+     label08:
+        $r7 := @caughtexception;
+
+     label09:
+        specialinvoke r0.<com.android.server.media.MediaSessionRecord: void logCallbackException(java.lang.String,com.android.server.media.MediaSessionRecord$ISessionControllerCallbackHolder,java.lang.Exception)>("unexpected exception in pushVolumeUpdate", r2, $r7);
+
+     label10:
+        goto label14;
+
+     label11:
+        $r9 := @caughtexception;
+
+     label12:
+        $r10 = r0.<com.android.server.media.MediaSessionRecord: java.util.ArrayList mControllerCallbackHolders>;
+
+        virtualinvoke $r10.<java.util.ArrayList: java.lang.Object remove(int)>(i1);
+
+        specialinvoke r0.<com.android.server.media.MediaSessionRecord: void logCallbackException(java.lang.String,com.android.server.media.MediaSessionRecord$ISessionControllerCallbackHolder,java.lang.Exception)>("Removing dead callback in pushVolumeUpdate", r2, $r9);
+
+     label13:
+        goto label07;
+
+     label14:
+        i1 = i1 + -1;
+
+        goto label04;
+
+     label15:
+        exitmonitor r1;
+
+     label16:
+        return;
+
+     label17:
+        $r8 := @caughtexception;
+
+     label18:
+        exitmonitor r1;
+
+     label19:
+        throw $r8;
+
+        catch java.lang.Throwable from label01 to label02 with label17;
+        catch java.lang.Throwable from label03 to label04 with label17;
+        catch java.lang.Throwable from label05 to label06 with label17;
+        catch android.os.DeadObjectException from label06 to label07 with label11;
+        catch android.os.RemoteException from label06 to label07 with label08;
+        catch java.lang.Throwable from label06 to label07 with label17;
+        catch java.lang.Throwable from label09 to label10 with label17;
+        catch java.lang.Throwable from label12 to label13 with label17;
+        catch java.lang.Throwable from label15 to label16 with label17;
+        catch java.lang.Throwable from label18 to label19 with label17;
+    }
+
+    private void setVolumeTo(java.lang.String, java.lang.String, int, int, int, int)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        java.lang.String r1, $r13, r17;
+        int i0, i1, $i2, $i3, $i4, $i5, $i6, $i7, $i8, $i9, $i10, $i11, i13, i14, i15, i16, i17, i18;
+        com.android.server.media.MediaSessionRecord$SessionCb $r2;
+        java.lang.Runnable $r3, $r5;
+        com.android.server.media.MediaSessionRecord$MessageHandler $r4, $r6, $r16;
+        com.android.server.media.MediaSessionService $r7;
+        boolean $z1;
+        java.lang.StringBuilder $r8;
+        android.media.AudioAttributes $r14;
+        com.android.server.media.MediaSessionRecord$1 $r15;
+
+        r0 := @this: com.android.server.media.MediaSessionRecord;
+
+        r17 := @parameter0: java.lang.String;
+
+        r1 := @parameter1: java.lang.String;
+
+        i13 := @parameter2: int;
+
+        i14 := @parameter3: int;
+
+        i15 := @parameter4: int;
+
+        i0 := @parameter5: int;
+
+        $i2 = r0.<com.android.server.media.MediaSessionRecord: int mVolumeType>;
+
+        if $i2 != 1 goto label1;
+
+        $r14 = r0.<com.android.server.media.MediaSessionRecord: android.media.AudioAttributes mAudioAttrs>;
+
+        i1 = staticinvoke <com.android.server.media.MediaSessionRecord: int getVolumeStream(android.media.AudioAttributes)>($r14);
+
+        $r16 = r0.<com.android.server.media.MediaSessionRecord: com.android.server.media.MediaSessionRecord$MessageHandler mHandler>;
+
+        $r15 = new com.android.server.media.MediaSessionRecord$1;
+
+        specialinvoke $r15.<com.android.server.media.MediaSessionRecord$1: void <init>(com.android.server.media.MediaSessionRecord,int,int,int,java.lang.String,int,int)>(r0, i1, i15, i0, r1, i14, i13);
+
+        virtualinvoke $r16.<com.android.server.media.MediaSessionRecord$MessageHandler: boolean post(java.lang.Runnable)>($r15);
+
+        goto label5;
+
+     label1:
+        $i3 = r0.<com.android.server.media.MediaSessionRecord: int mVolumeControlType>;
+
+        if $i3 == 2 goto label2;
+
+        return;
+
+     label2:
+        $i4 = r0.<com.android.server.media.MediaSessionRecord: int mMaxVolume>;
+
+        $i5 = staticinvoke <java.lang.Math: int min(int,int)>(i15, $i4);
+
+        i16 = staticinvoke <java.lang.Math: int max(int,int)>(0, $i5);
+
+        $r2 = r0.<com.android.server.media.MediaSessionRecord: com.android.server.media.MediaSessionRecord$SessionCb mSessionCb>;
+
+        virtualinvoke $r2.<com.android.server.media.MediaSessionRecord$SessionCb: void setVolumeTo(java.lang.String,int,int,int)>(r17, i13, i14, i16);
+
+        i17 = r0.<com.android.server.media.MediaSessionRecord: int mOptimisticVolume>;
+
+        i18 = i17;
+
+        if i17 >= 0 goto label3;
+
+        i18 = r0.<com.android.server.media.MediaSessionRecord: int mCurrentVolume>;
+
+     label3:
+        $i6 = r0.<com.android.server.media.MediaSessionRecord: int mMaxVolume>;
+
+        $i7 = staticinvoke <java.lang.Math: int min(int,int)>(i16, $i6);
+
+        $i8 = staticinvoke <java.lang.Math: int max(int,int)>(0, $i7);
+
+        r0.<com.android.server.media.MediaSessionRecord: int mOptimisticVolume> = $i8;
+
+        $r4 = r0.<com.android.server.media.MediaSessionRecord: com.android.server.media.MediaSessionRecord$MessageHandler mHandler>;
+
+        $r3 = r0.<com.android.server.media.MediaSessionRecord: java.lang.Runnable mClearOptimisticVolumeRunnable>;
+
+        virtualinvoke $r4.<com.android.server.media.MediaSessionRecord$MessageHandler: void removeCallbacks(java.lang.Runnable)>($r3);
+
+        $r6 = r0.<com.android.server.media.MediaSessionRecord: com.android.server.media.MediaSessionRecord$MessageHandler mHandler>;
+
+        $r5 = r0.<com.android.server.media.MediaSessionRecord: java.lang.Runnable mClearOptimisticVolumeRunnable>;
+
+        virtualinvoke $r6.<com.android.server.media.MediaSessionRecord$MessageHandler: boolean postDelayed(java.lang.Runnable,long)>($r5, 1000L);
+
+        $i9 = r0.<com.android.server.media.MediaSessionRecord: int mOptimisticVolume>;
+
+        if i18 == $i9 goto label4;
+
+        specialinvoke r0.<com.android.server.media.MediaSessionRecord: void pushVolumeUpdate()>();
+
+     label4:
+        $r7 = r0.<com.android.server.media.MediaSessionRecord: com.android.server.media.MediaSessionService mService>;
+
+        virtualinvoke $r7.<com.android.server.media.MediaSessionService: void notifyRemoteVolumeChanged(int,com.android.server.media.MediaSessionRecord)>(i0, r0);
+
+        $z1 = <com.android.server.media.MediaSessionRecord: boolean DEBUG>;
+
+        if $z1 == 0 goto label5;
+
+        $r8 = new java.lang.StringBuilder;
+
+        specialinvoke $r8.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Set optimistic volume to ");
+
+        $i10 = r0.<com.android.server.media.MediaSessionRecord: int mOptimisticVolume>;
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i10);
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" max is ");
+
+        $i11 = r0.<com.android.server.media.MediaSessionRecord: int mMaxVolume>;
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i11);
+
+        $r13 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("MediaSessionRecord", $r13);
+
+     label5:
+        return;
+    }
+
+    public void adjustVolume(java.lang.String, java.lang.String, int, int, boolean, int, int, boolean)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        boolean z0, z1, $z2, $z3, $z5, $z6;
+        int i0, i1, $i2, $i4, $i5, $i6, $i7, $i8, $i9, $i12, $i13, i14, i15, i16, $i17, i18, i19, i20;
+        com.android.server.media.MediaSessionRecord$SessionCb $r1;
+        java.lang.Runnable $r2, $r4;
+        com.android.server.media.MediaSessionRecord$MessageHandler $r3, $r5;
+        com.android.server.media.MediaSessionService $r6;
+        java.lang.StringBuilder $r7, $r13;
+        java.lang.String $r12, $r20, r22, r23;
+        android.media.AudioAttributes $r21;
+
+        r0 := @this: com.android.server.media.MediaSessionRecord;
+
+        r22 := @parameter0: java.lang.String;
+
+        r23 := @parameter1: java.lang.String;
+
+        i14 := @parameter2: int;
+
+        i15 := @parameter3: int;
+
+        z0 := @parameter4: boolean;
+
+        i0 := @parameter5: int;
+
+        i1 := @parameter6: int;
+
+        z1 := @parameter7: boolean;
+
+        $z2 = virtualinvoke r0.<com.android.server.media.MediaSessionRecord: boolean checkPlaybackActiveState(boolean)>(1);
+
+        if $z2 != 0 goto label02;
+
+        $z6 = virtualinvoke r0.<com.android.server.media.MediaSessionRecord: boolean isSystemPriority()>();
+
+        if $z6 == 0 goto label01;
+
+        goto label02;
+
+     label01:
+        i16 = i1;
+
+        goto label03;
+
+     label02:
+        i16 = i1 & -5;
+
+     label03:
+        $i17 = r0.<com.android.server.media.MediaSessionRecord: int mVolumeType>;
+
+        if $i17 != 1 goto label04;
+
+        $r21 = r0.<com.android.server.media.MediaSessionRecord: android.media.AudioAttributes mAudioAttrs>;
+
+        $i12 = staticinvoke <com.android.server.media.MediaSessionRecord: int getVolumeStream(android.media.AudioAttributes)>($r21);
+
+        $i13 = i1 & 4;
+
+        specialinvoke r0.<com.android.server.media.MediaSessionRecord: void postAdjustLocalVolume(int,int,int,java.lang.String,int,int,boolean,boolean,int)>($i12, i0, i16, r23, i14, i15, z0, z1, $i13);
+
+        goto label10;
+
+     label04:
+        $i2 = r0.<com.android.server.media.MediaSessionRecord: int mVolumeControlType>;
+
+        if $i2 != 0 goto label05;
+
+        return;
+
+     label05:
+        if i0 == 101 goto label11;
+
+        if i0 == -100 goto label11;
+
+        if i0 != 100 goto label06;
+
+        goto label11;
+
+     label06:
+        $z3 = <com.android.server.media.MediaSessionRecord: boolean DEBUG>;
+
+        if $z3 == 0 goto label07;
+
+        $r13 = new java.lang.StringBuilder;
+
+        specialinvoke $r13.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("adjusting volume, pkg=");
+
+        virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r22);
+
+        virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", asSystemService=");
+
+        virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>(z0);
+
+        virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", dir=");
+
+        virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r20 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("MediaSessionRecord", $r20);
+
+        goto label07;
+
+     label07:
+        $r1 = r0.<com.android.server.media.MediaSessionRecord: com.android.server.media.MediaSessionRecord$SessionCb mSessionCb>;
+
+        virtualinvoke $r1.<com.android.server.media.MediaSessionRecord$SessionCb: void adjustVolume(java.lang.String,int,int,boolean,int)>(r22, i14, i15, z0, i0);
+
+        i18 = r0.<com.android.server.media.MediaSessionRecord: int mOptimisticVolume>;
+
+        i19 = i18;
+
+        if i18 >= 0 goto label08;
+
+        i19 = r0.<com.android.server.media.MediaSessionRecord: int mCurrentVolume>;
+
+     label08:
+        i20 = i19 + i0;
+
+        r0.<com.android.server.media.MediaSessionRecord: int mOptimisticVolume> = i20;
+
+        $i4 = r0.<com.android.server.media.MediaSessionRecord: int mMaxVolume>;
+
+        $i5 = staticinvoke <java.lang.Math: int min(int,int)>(i20, $i4);
+
+        $i6 = staticinvoke <java.lang.Math: int max(int,int)>(0, $i5);
+
+        r0.<com.android.server.media.MediaSessionRecord: int mOptimisticVolume> = $i6;
+
+        $r3 = r0.<com.android.server.media.MediaSessionRecord: com.android.server.media.MediaSessionRecord$MessageHandler mHandler>;
+
+        $r2 = r0.<com.android.server.media.MediaSessionRecord: java.lang.Runnable mClearOptimisticVolumeRunnable>;
+
+        virtualinvoke $r3.<com.android.server.media.MediaSessionRecord$MessageHandler: void removeCallbacks(java.lang.Runnable)>($r2);
+
+        $r5 = r0.<com.android.server.media.MediaSessionRecord: com.android.server.media.MediaSessionRecord$MessageHandler mHandler>;
+
+        $r4 = r0.<com.android.server.media.MediaSessionRecord: java.lang.Runnable mClearOptimisticVolumeRunnable>;
+
+        virtualinvoke $r5.<com.android.server.media.MediaSessionRecord$MessageHandler: boolean postDelayed(java.lang.Runnable,long)>($r4, 1000L);
+
+        $i7 = r0.<com.android.server.media.MediaSessionRecord: int mOptimisticVolume>;
+
+        if i19 == $i7 goto label09;
+
+        specialinvoke r0.<com.android.server.media.MediaSessionRecord: void pushVolumeUpdate()>();
+
+     label09:
+        $r6 = r0.<com.android.server.media.MediaSessionRecord: com.android.server.media.MediaSessionService mService>;
+
+        virtualinvoke $r6.<com.android.server.media.MediaSessionService: void notifyRemoteVolumeChanged(int,com.android.server.media.MediaSessionRecord)>(i16, r0);
+
+        $z5 = <com.android.server.media.MediaSessionRecord: boolean DEBUG>;
+
+        if $z5 == 0 goto label10;
+
+        $r7 = new java.lang.StringBuilder;
+
+        specialinvoke $r7.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Adjusted optimistic volume to ");
+
+        $i8 = r0.<com.android.server.media.MediaSessionRecord: int mOptimisticVolume>;
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i8);
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" max is ");
+
+        $i9 = r0.<com.android.server.media.MediaSessionRecord: int mMaxVolume>;
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i9);
+
+        $r12 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("MediaSessionRecord", $r12);
+
+     label10:
+        return;
+
+     label11:
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("MediaSessionRecord", "Muting remote playback is not supported");
+
+        return;
+    }
+
+    public void binderDied()
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        com.android.server.media.MediaSessionService $r1;
+
+        r0 := @this: com.android.server.media.MediaSessionRecord;
+
+        $r1 = r0.<com.android.server.media.MediaSessionRecord: com.android.server.media.MediaSessionService mService>;
+
+        virtualinvoke $r1.<com.android.server.media.MediaSessionService: void onSessionDied(com.android.server.media.MediaSessionRecordImpl)>(r0);
+
+        return;
+    }
+
+    public boolean checkPlaybackActiveState(boolean)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        boolean z0, $z1, z2;
+        android.media.session.PlaybackState r1;
+        int $i0;
+
+        r0 := @this: com.android.server.media.MediaSessionRecord;
+
+        z0 := @parameter0: boolean;
+
+        r1 = r0.<com.android.server.media.MediaSessionRecord: android.media.session.PlaybackState mPlaybackState>;
+
+        z2 = 0;
+
+        if r1 != null goto label1;
+
+        return 0;
+
+     label1:
+        $i0 = virtualinvoke r1.<android.media.session.PlaybackState: int getState()>();
+
+        $z1 = staticinvoke <android.media.session.MediaSession: boolean isActiveState(int)>($i0);
+
+        if $z1 != z0 goto label2;
+
+        z2 = 1;
+
+     label2:
+        return z2;
+    }
+
+    public void close()
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        java.lang.Object r1;
+        boolean $z0;
+        com.android.server.media.MediaSessionRecord$SessionCb $r3;
+        android.media.session.ISessionCallback $r4;
+        android.os.IBinder $r5;
+        com.android.server.media.MediaSessionRecord$MessageHandler $r6;
+        java.lang.Throwable $r7;
+
+        r0 := @this: com.android.server.media.MediaSessionRecord;
+
+        r1 = r0.<com.android.server.media.MediaSessionRecord: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        $z0 = r0.<com.android.server.media.MediaSessionRecord: boolean mDestroyed>;
+
+        if $z0 == 0 goto label3;
+
+        exitmonitor r1;
+
+     label2:
+        return;
+
+     label3:
+        $r3 = r0.<com.android.server.media.MediaSessionRecord: com.android.server.media.MediaSessionRecord$SessionCb mSessionCb>;
+
+        $r4 = staticinvoke <com.android.server.media.MediaSessionRecord$SessionCb: android.media.session.ISessionCallback access$100(com.android.server.media.MediaSessionRecord$SessionCb)>($r3);
+
+        $r5 = interfaceinvoke $r4.<android.media.session.ISessionCallback: android.os.IBinder asBinder()>();
+
+        interfaceinvoke $r5.<android.os.IBinder: boolean unlinkToDeath(android.os.IBinder$DeathRecipient,int)>(r0, 0);
+
+        r0.<com.android.server.media.MediaSessionRecord: boolean mDestroyed> = 1;
+
+        r0.<com.android.server.media.MediaSessionRecord: android.media.session.PlaybackState mPlaybackState> = null;
+
+        $r6 = r0.<com.android.server.media.MediaSessionRecord: com.android.server.media.MediaSessionRecord$MessageHandler mHandler>;
+
+        virtualinvoke $r6.<com.android.server.media.MediaSessionRecord$MessageHandler: void post(int)>(9);
+
+        exitmonitor r1;
+
+     label4:
+        return;
+
+     label5:
+        $r7 := @caughtexception;
+
+     label6:
+        exitmonitor r1;
+
+     label7:
+        throw $r7;
+
+        catch java.lang.Throwable from label1 to label2 with label5;
+        catch java.lang.Throwable from label3 to label4 with label5;
+        catch java.lang.Throwable from label6 to label7 with label5;
+    }
+
+    public void dump(java.io.PrintWriter, java.lang.String)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        java.io.PrintWriter r1;
+        java.lang.StringBuilder $r3, $r10, $r13, $r22, $r28, $r34, $r40, $r45, $r50, $r55, $r61, $r66, $r72, $r83, $r89;
+        java.lang.String $r5, $r9, $r21, $r25, $r27, $r33, $r39, $r44, $r49, $r54, $r60, $r65, $r71, $r82, $r86, $r88, $r96, r97, r100, r110;
+        int $i0, $i1, $i2, $i4, $i5, $i6, $i7, $i8, $i9, i10;
+        android.app.PendingIntent $r31;
+        com.android.server.media.MediaButtonReceiverHolder $r37;
+        boolean $z0;
+        long $l3;
+        java.util.ArrayList $r58;
+        android.media.AudioAttributes $r69;
+        java.lang.CharSequence $r92;
+        android.media.session.PlaybackState r109;
+        java.util.List r115;
+
+        r0 := @this: com.android.server.media.MediaSessionRecord;
+
+        r1 := @parameter0: java.io.PrintWriter;
+
+        r97 := @parameter1: java.lang.String;
+
+        $r3 = new java.lang.StringBuilder;
+
+        specialinvoke $r3.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r97);
+
+        $r5 = r0.<com.android.server.media.MediaSessionRecord: java.lang.String mTag>;
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r5);
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" ");
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r0);
+
+        $r9 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r9);
+
+        $r10 = new java.lang.StringBuilder;
+
+        specialinvoke $r10.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r97);
+
+        virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  ");
+
+        r100 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $r13 = new java.lang.StringBuilder;
+
+        specialinvoke $r13.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r100);
+
+        virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("ownerPid=");
+
+        $i0 = r0.<com.android.server.media.MediaSessionRecord: int mOwnerPid>;
+
+        virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i0);
+
+        virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", ownerUid=");
+
+        $i1 = r0.<com.android.server.media.MediaSessionRecord: int mOwnerUid>;
+
+        virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i1);
+
+        virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", userId=");
+
+        $i2 = r0.<com.android.server.media.MediaSessionRecord: int mUserId>;
+
+        virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i2);
+
+        $r21 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r21);
+
+        $r22 = new java.lang.StringBuilder;
+
+        specialinvoke $r22.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r22.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r100);
+
+        virtualinvoke $r22.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("package=");
+
+        $r25 = r0.<com.android.server.media.MediaSessionRecord: java.lang.String mPackageName>;
+
+        virtualinvoke $r22.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r25);
+
+        $r27 = virtualinvoke $r22.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r27);
+
+        $r28 = new java.lang.StringBuilder;
+
+        specialinvoke $r28.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r28.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r100);
+
+        virtualinvoke $r28.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("launchIntent=");
+
+        $r31 = r0.<com.android.server.media.MediaSessionRecord: android.app.PendingIntent mLaunchIntent>;
+
+        virtualinvoke $r28.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r31);
+
+        $r33 = virtualinvoke $r28.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r33);
+
+        $r34 = new java.lang.StringBuilder;
+
+        specialinvoke $r34.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r34.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r100);
+
+        virtualinvoke $r34.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("mediaButtonReceiver=");
+
+        $r37 = r0.<com.android.server.media.MediaSessionRecord: com.android.server.media.MediaButtonReceiverHolder mMediaButtonReceiverHolder>;
+
+        virtualinvoke $r34.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r37);
+
+        $r39 = virtualinvoke $r34.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r39);
+
+        $r40 = new java.lang.StringBuilder;
+
+        specialinvoke $r40.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r40.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r100);
+
+        virtualinvoke $r40.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("active=");
+
+        $z0 = r0.<com.android.server.media.MediaSessionRecord: boolean mIsActive>;
+
+        virtualinvoke $r40.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>($z0);
+
+        $r44 = virtualinvoke $r40.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r44);
+
+        $r45 = new java.lang.StringBuilder;
+
+        specialinvoke $r45.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r45.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r100);
+
+        virtualinvoke $r45.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("flags=");
+
+        $l3 = r0.<com.android.server.media.MediaSessionRecord: long mFlags>;
+
+        virtualinvoke $r45.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l3);
+
+        $r49 = virtualinvoke $r45.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r49);
+
+        $r50 = new java.lang.StringBuilder;
+
+        specialinvoke $r50.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r50.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r100);
+
+        virtualinvoke $r50.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("rating type=");
+
+        $i4 = r0.<com.android.server.media.MediaSessionRecord: int mRatingType>;
+
+        virtualinvoke $r50.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i4);
+
+        $r54 = virtualinvoke $r50.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r54);
+
+        $r55 = new java.lang.StringBuilder;
+
+        specialinvoke $r55.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r55.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r100);
+
+        virtualinvoke $r55.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("controllers: ");
+
+        $r58 = r0.<com.android.server.media.MediaSessionRecord: java.util.ArrayList mControllerCallbackHolders>;
+
+        $i5 = virtualinvoke $r58.<java.util.ArrayList: int size()>();
+
+        virtualinvoke $r55.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i5);
+
+        $r60 = virtualinvoke $r55.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r60);
+
+        $r61 = new java.lang.StringBuilder;
+
+        specialinvoke $r61.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r61.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r100);
+
+        virtualinvoke $r61.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("state=");
+
+        r109 = r0.<com.android.server.media.MediaSessionRecord: android.media.session.PlaybackState mPlaybackState>;
+
+        if r109 != null goto label1;
+
+        r110 = null;
+
+        goto label2;
+
+     label1:
+        r110 = virtualinvoke r109.<android.media.session.PlaybackState: java.lang.String toString()>();
+
+     label2:
+        virtualinvoke $r61.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r110);
+
+        $r65 = virtualinvoke $r61.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r65);
+
+        $r66 = new java.lang.StringBuilder;
+
+        specialinvoke $r66.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r66.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r100);
+
+        virtualinvoke $r66.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("audioAttrs=");
+
+        $r69 = r0.<com.android.server.media.MediaSessionRecord: android.media.AudioAttributes mAudioAttrs>;
+
+        virtualinvoke $r66.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r69);
+
+        $r71 = virtualinvoke $r66.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r71);
+
+        $r72 = new java.lang.StringBuilder;
+
+        specialinvoke $r72.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r72.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r100);
+
+        virtualinvoke $r72.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("volumeType=");
+
+        $i6 = r0.<com.android.server.media.MediaSessionRecord: int mVolumeType>;
+
+        virtualinvoke $r72.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i6);
+
+        virtualinvoke $r72.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", controlType=");
+
+        $i7 = r0.<com.android.server.media.MediaSessionRecord: int mVolumeControlType>;
+
+        virtualinvoke $r72.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i7);
+
+        virtualinvoke $r72.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", max=");
+
+        $i8 = r0.<com.android.server.media.MediaSessionRecord: int mMaxVolume>;
+
+        virtualinvoke $r72.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i8);
+
+        virtualinvoke $r72.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", current=");
+
+        $i9 = r0.<com.android.server.media.MediaSessionRecord: int mCurrentVolume>;
+
+        virtualinvoke $r72.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i9);
+
+        $r82 = virtualinvoke $r72.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r82);
+
+        $r83 = new java.lang.StringBuilder;
+
+        specialinvoke $r83.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r83.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r100);
+
+        virtualinvoke $r83.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("metadata: ");
+
+        $r86 = r0.<com.android.server.media.MediaSessionRecord: java.lang.String mMetadataDescription>;
+
+        virtualinvoke $r83.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r86);
+
+        $r88 = virtualinvoke $r83.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r88);
+
+        $r89 = new java.lang.StringBuilder;
+
+        specialinvoke $r89.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r89.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r100);
+
+        virtualinvoke $r89.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("queueTitle=");
+
+        $r92 = r0.<com.android.server.media.MediaSessionRecord: java.lang.CharSequence mQueueTitle>;
+
+        virtualinvoke $r89.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r92);
+
+        virtualinvoke $r89.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", size=");
+
+        r115 = r0.<com.android.server.media.MediaSessionRecord: java.util.List mQueue>;
+
+        if r115 != null goto label3;
+
+        i10 = 0;
+
+        goto label4;
+
+     label3:
+        i10 = interfaceinvoke r115.<java.util.List: int size()>();
+
+     label4:
+        virtualinvoke $r89.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i10);
+
+        $r96 = virtualinvoke $r89.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r96);
+
+        return;
+    }
+
+    public com.android.server.media.MediaButtonReceiverHolder getMediaButtonReceiver()
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        com.android.server.media.MediaButtonReceiverHolder $r1;
+
+        r0 := @this: com.android.server.media.MediaSessionRecord;
+
+        $r1 = r0.<com.android.server.media.MediaSessionRecord: com.android.server.media.MediaButtonReceiverHolder mMediaButtonReceiverHolder>;
+
+        return $r1;
+    }
+
+    public java.lang.String getPackageName()
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        java.lang.String $r1;
+
+        r0 := @this: com.android.server.media.MediaSessionRecord;
+
+        $r1 = r0.<com.android.server.media.MediaSessionRecord: java.lang.String mPackageName>;
+
+        return $r1;
+    }
+
+    public android.media.session.ISession getSessionBinder()
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        com.android.server.media.MediaSessionRecord$SessionStub $r1;
+
+        r0 := @this: com.android.server.media.MediaSessionRecord;
+
+        $r1 = r0.<com.android.server.media.MediaSessionRecord: com.android.server.media.MediaSessionRecord$SessionStub mSession>;
+
+        return $r1;
+    }
+
+    public int getSessionPolicies()
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        java.lang.Object r1;
+        int i0;
+        java.lang.Throwable $r3;
+
+        r0 := @this: com.android.server.media.MediaSessionRecord;
+
+        r1 = r0.<com.android.server.media.MediaSessionRecord: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        i0 = r0.<com.android.server.media.MediaSessionRecord: int mPolicies>;
+
+        exitmonitor r1;
+
+     label2:
+        return i0;
+
+     label3:
+        $r3 := @caughtexception;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        throw $r3;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    public android.media.session.MediaSession$Token getSessionToken()
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        android.media.session.MediaSession$Token $r1;
+
+        r0 := @this: com.android.server.media.MediaSessionRecord;
+
+        $r1 = r0.<com.android.server.media.MediaSessionRecord: android.media.session.MediaSession$Token mSessionToken>;
+
+        return $r1;
+    }
+
+    public int getUid()
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        int $i0;
+
+        r0 := @this: com.android.server.media.MediaSessionRecord;
+
+        $i0 = r0.<com.android.server.media.MediaSessionRecord: int mOwnerUid>;
+
+        return $i0;
+    }
+
+    public int getUserId()
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        int $i0;
+
+        r0 := @this: com.android.server.media.MediaSessionRecord;
+
+        $i0 = r0.<com.android.server.media.MediaSessionRecord: int mUserId>;
+
+        return $i0;
+    }
+
+    public boolean isActive()
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        boolean $z0, $z1, z2;
+
+        r0 := @this: com.android.server.media.MediaSessionRecord;
+
+        $z0 = r0.<com.android.server.media.MediaSessionRecord: boolean mIsActive>;
+
+        if $z0 == 0 goto label1;
+
+        $z1 = r0.<com.android.server.media.MediaSessionRecord: boolean mDestroyed>;
+
+        if $z1 != 0 goto label1;
+
+        z2 = 1;
+
+        goto label2;
+
+     label1:
+        z2 = 0;
+
+     label2:
+        return z2;
+    }
+
+    public boolean isClosed()
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        java.lang.Object r1;
+        boolean z0;
+        java.lang.Throwable $r3;
+
+        r0 := @this: com.android.server.media.MediaSessionRecord;
+
+        r1 = r0.<com.android.server.media.MediaSessionRecord: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        z0 = r0.<com.android.server.media.MediaSessionRecord: boolean mDestroyed>;
+
+        exitmonitor r1;
+
+     label2:
+        return z0;
+
+     label3:
+        $r3 := @caughtexception;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        throw $r3;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    public boolean isPlaybackTypeLocal()
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        int i0;
+        boolean z0;
+
+        r0 := @this: com.android.server.media.MediaSessionRecord;
+
+        i0 = r0.<com.android.server.media.MediaSessionRecord: int mVolumeType>;
+
+        z0 = 1;
+
+        if i0 != 1 goto label1;
+
+        goto label2;
+
+     label1:
+        z0 = 0;
+
+     label2:
+        return z0;
+    }
+
+    public boolean isSystemPriority()
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        long $l0, $l1;
+        byte $b2;
+        boolean z0;
+
+        r0 := @this: com.android.server.media.MediaSessionRecord;
+
+        $l0 = r0.<com.android.server.media.MediaSessionRecord: long mFlags>;
+
+        $l1 = $l0 & 65536L;
+
+        $b2 = $l1 cmp 0L;
+
+        if $b2 == 0 goto label1;
+
+        z0 = 1;
+
+        goto label2;
+
+     label1:
+        z0 = 0;
+
+     label2:
+        return z0;
+    }
+
+    public boolean sendMediaButton(java.lang.String, int, int, boolean, android.view.KeyEvent, int, android.os.ResultReceiver)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        java.lang.String r1;
+        int i0, i1, i2;
+        boolean z0, $z1;
+        android.view.KeyEvent r2;
+        android.os.ResultReceiver r3;
+        com.android.server.media.MediaSessionRecord$SessionCb $r4;
+
+        r0 := @this: com.android.server.media.MediaSessionRecord;
+
+        r1 := @parameter0: java.lang.String;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        z0 := @parameter3: boolean;
+
+        r2 := @parameter4: android.view.KeyEvent;
+
+        i2 := @parameter5: int;
+
+        r3 := @parameter6: android.os.ResultReceiver;
+
+        $r4 = r0.<com.android.server.media.MediaSessionRecord: com.android.server.media.MediaSessionRecord$SessionCb mSessionCb>;
+
+        $z1 = virtualinvoke $r4.<com.android.server.media.MediaSessionRecord$SessionCb: boolean sendMediaButton(java.lang.String,int,int,boolean,android.view.KeyEvent,int,android.os.ResultReceiver)>(r1, i0, i1, z0, r2, i2, r3);
+
+        return $z1;
+    }
+
+    public void setSessionPolicies(int)
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        int i0;
+        java.lang.Object r1;
+        java.lang.Throwable $r3;
+
+        r0 := @this: com.android.server.media.MediaSessionRecord;
+
+        i0 := @parameter0: int;
+
+        r1 = r0.<com.android.server.media.MediaSessionRecord: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        r0.<com.android.server.media.MediaSessionRecord: int mPolicies> = i0;
+
+        exitmonitor r1;
+
+     label2:
+        return;
+
+     label3:
+        $r3 := @caughtexception;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        throw $r3;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    public java.lang.String toString()
+    {
+        com.android.server.media.MediaSessionRecord r0;
+        java.lang.StringBuilder $r2;
+        java.lang.String $r3, $r6, $r11;
+        int $i0;
+
+        r0 := @this: com.android.server.media.MediaSessionRecord;
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        $r3 = r0.<com.android.server.media.MediaSessionRecord: java.lang.String mPackageName>;
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r3);
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("/");
+
+        $r6 = r0.<com.android.server.media.MediaSessionRecord: java.lang.String mTag>;
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r6);
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" (userId=");
+
+        $i0 = r0.<com.android.server.media.MediaSessionRecord: int mUserId>;
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i0);
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(")");
+
+        $r11 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        return $r11;
+    }
+}

@@ -1,0 +1,1848 @@
+public class com.android.server.net.NetworkStatsFactory extends java.lang.Object
+{
+    private static final boolean SANITY_CHECK_NATIVE;
+    private static final java.lang.String TAG;
+    private static final boolean USE_NATIVE_PARSING;
+    private android.net.INetd mNetdService;
+    private android.net.NetworkStats mPersistSnapshot;
+    private final java.lang.Object mPersistentDataLock;
+    private final java.util.concurrent.ConcurrentHashMap mStackedIfaces;
+    private final java.io.File mStatsXtIfaceAll;
+    private final java.io.File mStatsXtIfaceFmt;
+    private final java.io.File mStatsXtUid;
+    private android.net.NetworkStats mTunAnd464xlatAdjustedStats;
+    private final boolean mUseBpfStats;
+    private volatile com.android.internal.net.VpnInfo[] mVpnInfos;
+
+    public void <init>()
+    {
+        com.android.server.net.NetworkStatsFactory r0;
+        java.io.File $r1, $r2;
+        boolean $z0;
+
+        r0 := @this: com.android.server.net.NetworkStatsFactory;
+
+        $r1 = new java.io.File;
+
+        specialinvoke $r1.<java.io.File: void <init>(java.lang.String)>("/proc/");
+
+        $r2 = new java.io.File;
+
+        specialinvoke $r2.<java.io.File: void <init>(java.lang.String)>("/sys/fs/bpf/map_netd_app_uid_stats_map");
+
+        $z0 = virtualinvoke $r2.<java.io.File: boolean exists()>();
+
+        specialinvoke r0.<com.android.server.net.NetworkStatsFactory: void <init>(java.io.File,boolean)>($r1, $z0);
+
+        return;
+    }
+
+    public void <init>(java.io.File, boolean)
+    {
+        com.android.server.net.NetworkStatsFactory r0;
+        boolean z0;
+        java.lang.Object $r1, r9;
+        com.android.internal.net.VpnInfo[] $r2;
+        java.util.concurrent.ConcurrentHashMap $r3;
+        java.io.File $r4, $r5, $r6, r8;
+        long $l0, $l1;
+        java.lang.Throwable $r7;
+        android.net.NetworkStats r10, r11;
+
+        r0 := @this: com.android.server.net.NetworkStatsFactory;
+
+        r8 := @parameter0: java.io.File;
+
+        z0 := @parameter1: boolean;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        $r1 = new java.lang.Object;
+
+        specialinvoke $r1.<java.lang.Object: void <init>()>();
+
+        r0.<com.android.server.net.NetworkStatsFactory: java.lang.Object mPersistentDataLock> = $r1;
+
+        $r2 = newarray (com.android.internal.net.VpnInfo)[0];
+
+        r0.<com.android.server.net.NetworkStatsFactory: com.android.internal.net.VpnInfo[] mVpnInfos> = $r2;
+
+        $r3 = new java.util.concurrent.ConcurrentHashMap;
+
+        specialinvoke $r3.<java.util.concurrent.ConcurrentHashMap: void <init>()>();
+
+        r0.<com.android.server.net.NetworkStatsFactory: java.util.concurrent.ConcurrentHashMap mStackedIfaces> = $r3;
+
+        $r4 = new java.io.File;
+
+        specialinvoke $r4.<java.io.File: void <init>(java.io.File,java.lang.String)>(r8, "net/xt_qtaguid/iface_stat_all");
+
+        r0.<com.android.server.net.NetworkStatsFactory: java.io.File mStatsXtIfaceAll> = $r4;
+
+        $r5 = new java.io.File;
+
+        specialinvoke $r5.<java.io.File: void <init>(java.io.File,java.lang.String)>(r8, "net/xt_qtaguid/iface_stat_fmt");
+
+        r0.<com.android.server.net.NetworkStatsFactory: java.io.File mStatsXtIfaceFmt> = $r5;
+
+        $r6 = new java.io.File;
+
+        specialinvoke $r6.<java.io.File: void <init>(java.io.File,java.lang.String)>(r8, "net/xt_qtaguid/stats");
+
+        r0.<com.android.server.net.NetworkStatsFactory: java.io.File mStatsXtUid> = $r6;
+
+        r0.<com.android.server.net.NetworkStatsFactory: boolean mUseBpfStats> = z0;
+
+        r9 = r0.<com.android.server.net.NetworkStatsFactory: java.lang.Object mPersistentDataLock>;
+
+        entermonitor r9;
+
+     label1:
+        r10 = new android.net.NetworkStats;
+
+        $l0 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        specialinvoke r10.<android.net.NetworkStats: void <init>(long,int)>($l0, -1);
+
+        r0.<com.android.server.net.NetworkStatsFactory: android.net.NetworkStats mPersistSnapshot> = r10;
+
+        r11 = new android.net.NetworkStats;
+
+        $l1 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        specialinvoke r11.<android.net.NetworkStats: void <init>(long,int)>($l1, -1);
+
+        r0.<com.android.server.net.NetworkStatsFactory: android.net.NetworkStats mTunAnd464xlatAdjustedStats> = r11;
+
+        exitmonitor r9;
+
+     label2:
+        return;
+
+     label3:
+        $r7 := @caughtexception;
+
+     label4:
+        exitmonitor r9;
+
+     label5:
+        throw $r7;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    private android.net.NetworkStats adjustForTunAnd464Xlat(android.net.NetworkStats, android.net.NetworkStats, com.android.internal.net.VpnInfo[])
+    {
+        com.android.server.net.NetworkStatsFactory r0;
+        android.net.NetworkStats r1, $r5, $r6, $r7, $r8, r11, r12;
+        com.android.internal.net.VpnInfo[] r2;
+        int i0, $i2, i3;
+        com.android.internal.net.VpnInfo r3;
+        java.util.concurrent.ConcurrentHashMap $r4;
+        long $l1;
+        java.lang.String[] $r9;
+        java.lang.String $r10;
+
+        r0 := @this: com.android.server.net.NetworkStatsFactory;
+
+        r1 := @parameter0: android.net.NetworkStats;
+
+        r11 := @parameter1: android.net.NetworkStats;
+
+        r2 := @parameter2: com.android.internal.net.VpnInfo[];
+
+        r12 = virtualinvoke r1.<android.net.NetworkStats: android.net.NetworkStats subtract(android.net.NetworkStats)>(r11);
+
+        $r4 = r0.<com.android.server.net.NetworkStatsFactory: java.util.concurrent.ConcurrentHashMap mStackedIfaces>;
+
+        virtualinvoke r12.<android.net.NetworkStats: void apply464xlatAdjustments(java.util.Map)>($r4);
+
+        i0 = lengthof r2;
+
+        i3 = 0;
+
+     label1:
+        if i3 >= i0 goto label2;
+
+        r3 = r2[i3];
+
+        $i2 = r3.<com.android.internal.net.VpnInfo: int ownerUid>;
+
+        $r10 = r3.<com.android.internal.net.VpnInfo: java.lang.String vpnIface>;
+
+        $r9 = r3.<com.android.internal.net.VpnInfo: java.lang.String[] underlyingIfaces>;
+
+        virtualinvoke r12.<android.net.NetworkStats: void migrateTun(int,java.lang.String,java.lang.String[])>($i2, $r10, $r9);
+
+        virtualinvoke r12.<android.net.NetworkStats: void filterDebugEntries()>();
+
+        i3 = i3 + 1;
+
+        goto label1;
+
+     label2:
+        $r5 = r0.<com.android.server.net.NetworkStatsFactory: android.net.NetworkStats mTunAnd464xlatAdjustedStats>;
+
+        virtualinvoke $r5.<android.net.NetworkStats: void combineAllValues(android.net.NetworkStats)>(r12);
+
+        $r6 = r0.<com.android.server.net.NetworkStatsFactory: android.net.NetworkStats mTunAnd464xlatAdjustedStats>;
+
+        $l1 = virtualinvoke r1.<android.net.NetworkStats: long getElapsedRealtime()>();
+
+        virtualinvoke $r6.<android.net.NetworkStats: void setElapsedRealtime(long)>($l1);
+
+        $r7 = r0.<com.android.server.net.NetworkStatsFactory: android.net.NetworkStats mTunAnd464xlatAdjustedStats>;
+
+        $r8 = virtualinvoke $r7.<android.net.NetworkStats: android.net.NetworkStats clone()>();
+
+        return $r8;
+    }
+
+    public static android.net.NetworkStats javaReadNetworkStatsDetail(java.io.File, int, java.lang.String[], int) throws java.io.IOException
+    {
+        int i0, i1, $i3, $i4, $i5, $i6, $i11, $i12, i13, i14, i15;
+        android.os.StrictMode$ThreadPolicy r0;
+        com.android.internal.util.ProcFileReader r3, r17, r18;
+        java.io.FileInputStream r4;
+        android.net.NetworkStats $r5;
+        long $l2, $l7, $l8, $l9, $l10;
+        android.net.NetworkStats$Entry $r6;
+        boolean $z0, $z1;
+        java.lang.String $r7, $r8, $r9, $r10, $r12;
+        java.lang.Throwable $r11, $r14;
+        java.net.ProtocolException $r13, r20;
+        java.io.File r15;
+        java.lang.String[] r16;
+        java.lang.StringBuilder r21, r24;
+
+        r15 := @parameter0: java.io.File;
+
+        i0 := @parameter1: int;
+
+        r16 := @parameter2: java.lang.String[];
+
+        i1 := @parameter3: int;
+
+        r0 = staticinvoke <android.os.StrictMode: android.os.StrictMode$ThreadPolicy allowThreadDiskReads()>();
+
+        $r5 = new android.net.NetworkStats;
+
+        $l2 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        specialinvoke $r5.<android.net.NetworkStats: void <init>(long,int)>($l2, 24);
+
+        $r6 = new android.net.NetworkStats$Entry;
+
+        specialinvoke $r6.<android.net.NetworkStats$Entry: void <init>()>();
+
+        i13 = 1;
+
+        i14 = 1;
+
+        r17 = null;
+
+        i15 = 1;
+
+        r18 = null;
+
+     label01:
+        r3 = new com.android.internal.util.ProcFileReader;
+
+     label02:
+        r17 = null;
+
+        i15 = 1;
+
+        r18 = null;
+
+     label03:
+        r4 = new java.io.FileInputStream;
+
+     label04:
+        r17 = null;
+
+        i15 = 1;
+
+        r18 = null;
+
+     label05:
+        specialinvoke r4.<java.io.FileInputStream: void <init>(java.io.File)>(r15);
+
+     label06:
+        r17 = null;
+
+        i15 = 1;
+
+        r18 = null;
+
+     label07:
+        specialinvoke r3.<com.android.internal.util.ProcFileReader: void <init>(java.io.InputStream)>(r4);
+
+     label08:
+        r17 = r3;
+
+        i15 = 1;
+
+        r18 = r3;
+
+     label09:
+        virtualinvoke r3.<com.android.internal.util.ProcFileReader: void finishLine()>();
+
+     label10:
+        r17 = r3;
+
+        i15 = i13;
+
+        r18 = r3;
+
+     label11:
+        $z0 = virtualinvoke r3.<com.android.internal.util.ProcFileReader: boolean hasMoreData()>();
+
+        if $z0 == 0 goto label59;
+
+     label12:
+        r17 = r3;
+
+        i15 = i13;
+
+        r18 = r3;
+
+     label13:
+        i13 = virtualinvoke r3.<com.android.internal.util.ProcFileReader: int nextInt()>();
+
+     label14:
+        $i3 = i14 + 1;
+
+        if i13 != $i3 goto label41;
+
+        i14 = i13;
+
+        r17 = r3;
+
+        i15 = i13;
+
+        r18 = r3;
+
+     label15:
+        $r8 = virtualinvoke r3.<com.android.internal.util.ProcFileReader: java.lang.String nextString()>();
+
+        $r6.<android.net.NetworkStats$Entry: java.lang.String iface> = $r8;
+
+     label16:
+        r17 = r3;
+
+        i15 = i13;
+
+        r18 = r3;
+
+     label17:
+        $r9 = virtualinvoke r3.<com.android.internal.util.ProcFileReader: java.lang.String nextString()>();
+
+        $i4 = staticinvoke <com.android.server.NetworkManagementSocketTagger: int kernelToTag(java.lang.String)>($r9);
+
+        $r6.<android.net.NetworkStats$Entry: int tag> = $i4;
+
+     label18:
+        r17 = r3;
+
+        i15 = i13;
+
+        r18 = r3;
+
+     label19:
+        $i5 = virtualinvoke r3.<com.android.internal.util.ProcFileReader: int nextInt()>();
+
+        $r6.<android.net.NetworkStats$Entry: int uid> = $i5;
+
+     label20:
+        r17 = r3;
+
+        i15 = i13;
+
+        r18 = r3;
+
+     label21:
+        $i6 = virtualinvoke r3.<com.android.internal.util.ProcFileReader: int nextInt()>();
+
+        $r6.<android.net.NetworkStats$Entry: int set> = $i6;
+
+     label22:
+        r17 = r3;
+
+        i15 = i13;
+
+        r18 = r3;
+
+     label23:
+        $l7 = virtualinvoke r3.<com.android.internal.util.ProcFileReader: long nextLong()>();
+
+        $r6.<android.net.NetworkStats$Entry: long rxBytes> = $l7;
+
+     label24:
+        r17 = r3;
+
+        i15 = i13;
+
+        r18 = r3;
+
+     label25:
+        $l8 = virtualinvoke r3.<com.android.internal.util.ProcFileReader: long nextLong()>();
+
+        $r6.<android.net.NetworkStats$Entry: long rxPackets> = $l8;
+
+     label26:
+        r17 = r3;
+
+        i15 = i13;
+
+        r18 = r3;
+
+     label27:
+        $l9 = virtualinvoke r3.<com.android.internal.util.ProcFileReader: long nextLong()>();
+
+        $r6.<android.net.NetworkStats$Entry: long txBytes> = $l9;
+
+     label28:
+        r17 = r3;
+
+        i15 = i13;
+
+        r18 = r3;
+
+     label29:
+        $l10 = virtualinvoke r3.<com.android.internal.util.ProcFileReader: long nextLong()>();
+
+        $r6.<android.net.NetworkStats$Entry: long txPackets> = $l10;
+
+     label30:
+        if r16 == null goto label32;
+
+        r17 = r3;
+
+        i15 = i13;
+
+        r18 = r3;
+
+     label31:
+        $r10 = $r6.<android.net.NetworkStats$Entry: java.lang.String iface>;
+
+        $z1 = staticinvoke <com.android.internal.util.ArrayUtils: boolean contains(java.lang.Object[],java.lang.Object)>(r16, $r10);
+
+        if $z1 == 0 goto label38;
+
+     label32:
+        if i0 == -1 goto label34;
+
+        r17 = r3;
+
+        i15 = i13;
+
+        r18 = r3;
+
+     label33:
+        $i12 = $r6.<android.net.NetworkStats$Entry: int uid>;
+
+        if i0 != $i12 goto label38;
+
+     label34:
+        if i1 == -1 goto label36;
+
+        r17 = r3;
+
+        i15 = i13;
+
+        r18 = r3;
+
+     label35:
+        $i11 = $r6.<android.net.NetworkStats$Entry: int tag>;
+
+        if i1 != $i11 goto label38;
+
+     label36:
+        r17 = r3;
+
+        i15 = i13;
+
+        r18 = r3;
+
+     label37:
+        virtualinvoke $r5.<android.net.NetworkStats: android.net.NetworkStats insertEntry(android.net.NetworkStats$Entry)>($r6);
+
+     label38:
+        r17 = r3;
+
+        i15 = i13;
+
+        r18 = r3;
+
+     label39:
+        virtualinvoke r3.<com.android.internal.util.ProcFileReader: void finishLine()>();
+
+     label40:
+        goto label10;
+
+     label41:
+        r17 = r3;
+
+        i15 = i13;
+
+        r18 = r3;
+
+     label42:
+        r20 = new java.net.ProtocolException;
+
+     label43:
+        r17 = r3;
+
+        i15 = i13;
+
+        r18 = r3;
+
+     label44:
+        r21 = new java.lang.StringBuilder;
+
+     label45:
+        r17 = r3;
+
+        i15 = i13;
+
+        r18 = r3;
+
+     label46:
+        specialinvoke r21.<java.lang.StringBuilder: void <init>()>();
+
+     label47:
+        r17 = r3;
+
+        i15 = i13;
+
+        r18 = r3;
+
+     label48:
+        virtualinvoke r21.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("inconsistent idx=");
+
+     label49:
+        r17 = r3;
+
+        i15 = i13;
+
+        r18 = r3;
+
+     label50:
+        virtualinvoke r21.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i13);
+
+     label51:
+        r17 = r3;
+
+        i15 = i13;
+
+        r18 = r3;
+
+     label52:
+        virtualinvoke r21.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" after lastIdx=");
+
+     label53:
+        r17 = r3;
+
+        i15 = i13;
+
+        r18 = r3;
+
+     label54:
+        virtualinvoke r21.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i14);
+
+     label55:
+        r17 = r3;
+
+        i15 = i13;
+
+        r18 = r3;
+
+     label56:
+        $r7 = virtualinvoke r21.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r20.<java.net.ProtocolException: void <init>(java.lang.String)>($r7);
+
+     label57:
+        r17 = r3;
+
+        i15 = i13;
+
+        r18 = r3;
+
+     label58:
+        throw r20;
+
+     label59:
+        staticinvoke <libcore.io.IoUtils: void closeQuietly(java.lang.AutoCloseable)>(r3);
+
+        staticinvoke <android.os.StrictMode: void setThreadPolicy(android.os.StrictMode$ThreadPolicy)>(r0);
+
+        return $r5;
+
+     label60:
+        $r14 := @caughtexception;
+
+        goto label71;
+
+     label61:
+        $r11 := @caughtexception;
+
+        r17 = r18;
+
+     label62:
+        r24 = new java.lang.StringBuilder;
+
+     label63:
+        r17 = r18;
+
+     label64:
+        specialinvoke r24.<java.lang.StringBuilder: void <init>()>();
+
+     label65:
+        r17 = r18;
+
+     label66:
+        virtualinvoke r24.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("problem parsing idx ");
+
+     label67:
+        r17 = r18;
+
+     label68:
+        virtualinvoke r24.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i15);
+
+     label69:
+        r17 = r18;
+
+     label70:
+        $r12 = virtualinvoke r24.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $r13 = staticinvoke <com.android.server.net.NetworkStatsFactory: java.net.ProtocolException protocolExceptionWithCause(java.lang.String,java.lang.Throwable)>($r12, $r11);
+
+        throw $r13;
+
+     label71:
+        staticinvoke <libcore.io.IoUtils: void closeQuietly(java.lang.AutoCloseable)>(r17);
+
+        staticinvoke <android.os.StrictMode: void setThreadPolicy(android.os.StrictMode$ThreadPolicy)>(r0);
+
+        throw $r14;
+
+        catch java.lang.NullPointerException from label01 to label02 with label61;
+        catch java.lang.NumberFormatException from label01 to label02 with label61;
+        catch java.lang.Throwable from label01 to label02 with label60;
+        catch java.lang.NullPointerException from label03 to label04 with label61;
+        catch java.lang.NumberFormatException from label03 to label04 with label61;
+        catch java.lang.Throwable from label03 to label04 with label60;
+        catch java.lang.NullPointerException from label05 to label06 with label61;
+        catch java.lang.NumberFormatException from label05 to label06 with label61;
+        catch java.lang.Throwable from label05 to label06 with label60;
+        catch java.lang.NullPointerException from label07 to label08 with label61;
+        catch java.lang.NumberFormatException from label07 to label08 with label61;
+        catch java.lang.Throwable from label07 to label08 with label60;
+        catch java.lang.NullPointerException from label09 to label10 with label61;
+        catch java.lang.NumberFormatException from label09 to label10 with label61;
+        catch java.lang.Throwable from label09 to label10 with label60;
+        catch java.lang.NullPointerException from label11 to label12 with label61;
+        catch java.lang.NumberFormatException from label11 to label12 with label61;
+        catch java.lang.Throwable from label11 to label12 with label60;
+        catch java.lang.NullPointerException from label13 to label14 with label61;
+        catch java.lang.NumberFormatException from label13 to label14 with label61;
+        catch java.lang.Throwable from label13 to label14 with label60;
+        catch java.lang.NullPointerException from label15 to label16 with label61;
+        catch java.lang.NumberFormatException from label15 to label16 with label61;
+        catch java.lang.Throwable from label15 to label16 with label60;
+        catch java.lang.NullPointerException from label17 to label18 with label61;
+        catch java.lang.NumberFormatException from label17 to label18 with label61;
+        catch java.lang.Throwable from label17 to label18 with label60;
+        catch java.lang.NullPointerException from label19 to label20 with label61;
+        catch java.lang.NumberFormatException from label19 to label20 with label61;
+        catch java.lang.Throwable from label19 to label20 with label60;
+        catch java.lang.NullPointerException from label21 to label22 with label61;
+        catch java.lang.NumberFormatException from label21 to label22 with label61;
+        catch java.lang.Throwable from label21 to label22 with label60;
+        catch java.lang.NullPointerException from label23 to label24 with label61;
+        catch java.lang.NumberFormatException from label23 to label24 with label61;
+        catch java.lang.Throwable from label23 to label24 with label60;
+        catch java.lang.NullPointerException from label25 to label26 with label61;
+        catch java.lang.NumberFormatException from label25 to label26 with label61;
+        catch java.lang.Throwable from label25 to label26 with label60;
+        catch java.lang.NullPointerException from label27 to label28 with label61;
+        catch java.lang.NumberFormatException from label27 to label28 with label61;
+        catch java.lang.Throwable from label27 to label28 with label60;
+        catch java.lang.NullPointerException from label29 to label30 with label61;
+        catch java.lang.NumberFormatException from label29 to label30 with label61;
+        catch java.lang.Throwable from label29 to label30 with label60;
+        catch java.lang.NullPointerException from label31 to label32 with label61;
+        catch java.lang.NumberFormatException from label31 to label32 with label61;
+        catch java.lang.Throwable from label31 to label32 with label60;
+        catch java.lang.NullPointerException from label33 to label34 with label61;
+        catch java.lang.NumberFormatException from label33 to label34 with label61;
+        catch java.lang.Throwable from label33 to label34 with label60;
+        catch java.lang.NullPointerException from label35 to label36 with label61;
+        catch java.lang.NumberFormatException from label35 to label36 with label61;
+        catch java.lang.Throwable from label35 to label36 with label60;
+        catch java.lang.NullPointerException from label37 to label38 with label61;
+        catch java.lang.NumberFormatException from label37 to label38 with label61;
+        catch java.lang.Throwable from label37 to label38 with label60;
+        catch java.lang.NullPointerException from label39 to label40 with label61;
+        catch java.lang.NumberFormatException from label39 to label40 with label61;
+        catch java.lang.Throwable from label39 to label40 with label60;
+        catch java.lang.NullPointerException from label42 to label43 with label61;
+        catch java.lang.NumberFormatException from label42 to label43 with label61;
+        catch java.lang.Throwable from label42 to label43 with label60;
+        catch java.lang.NullPointerException from label44 to label45 with label61;
+        catch java.lang.NumberFormatException from label44 to label45 with label61;
+        catch java.lang.Throwable from label44 to label45 with label60;
+        catch java.lang.NullPointerException from label46 to label47 with label61;
+        catch java.lang.NumberFormatException from label46 to label47 with label61;
+        catch java.lang.Throwable from label46 to label47 with label60;
+        catch java.lang.NullPointerException from label48 to label49 with label61;
+        catch java.lang.NumberFormatException from label48 to label49 with label61;
+        catch java.lang.Throwable from label48 to label49 with label60;
+        catch java.lang.NullPointerException from label50 to label51 with label61;
+        catch java.lang.NumberFormatException from label50 to label51 with label61;
+        catch java.lang.Throwable from label50 to label51 with label60;
+        catch java.lang.NullPointerException from label52 to label53 with label61;
+        catch java.lang.NumberFormatException from label52 to label53 with label61;
+        catch java.lang.Throwable from label52 to label53 with label60;
+        catch java.lang.NullPointerException from label54 to label55 with label61;
+        catch java.lang.NumberFormatException from label54 to label55 with label61;
+        catch java.lang.Throwable from label54 to label55 with label60;
+        catch java.lang.NullPointerException from label56 to label57 with label61;
+        catch java.lang.NumberFormatException from label56 to label57 with label61;
+        catch java.lang.Throwable from label56 to label57 with label60;
+        catch java.lang.NullPointerException from label58 to label59 with label61;
+        catch java.lang.NumberFormatException from label58 to label59 with label61;
+        catch java.lang.Throwable from label58 to label59 with label60;
+        catch java.lang.Throwable from label62 to label63 with label60;
+        catch java.lang.Throwable from label64 to label65 with label60;
+        catch java.lang.Throwable from label66 to label67 with label60;
+        catch java.lang.Throwable from label68 to label69 with label60;
+        catch java.lang.Throwable from label70 to label71 with label60;
+    }
+
+    public static native int nativeReadNetworkStatsDetail(android.net.NetworkStats, java.lang.String, int, java.lang.String[], int, boolean);
+
+    public static native int nativeReadNetworkStatsDev(android.net.NetworkStats);
+
+    private static java.net.ProtocolException protocolExceptionWithCause(java.lang.String, java.lang.Throwable)
+    {
+        java.lang.Throwable r0;
+        java.net.ProtocolException $r1;
+        java.lang.String r3;
+
+        r3 := @parameter0: java.lang.String;
+
+        r0 := @parameter1: java.lang.Throwable;
+
+        $r1 = new java.net.ProtocolException;
+
+        specialinvoke $r1.<java.net.ProtocolException: void <init>(java.lang.String)>(r3);
+
+        virtualinvoke $r1.<java.net.ProtocolException: java.lang.Throwable initCause(java.lang.Throwable)>(r0);
+
+        return $r1;
+    }
+
+    private void requestSwapActiveStatsMapLocked() throws android.os.RemoteException
+    {
+        com.android.server.net.NetworkStatsFactory r0;
+        android.net.INetd $r1, $r2, $r3;
+
+        r0 := @this: com.android.server.net.NetworkStatsFactory;
+
+        $r1 = r0.<com.android.server.net.NetworkStatsFactory: android.net.INetd mNetdService>;
+
+        if $r1 != null goto label1;
+
+        $r3 = staticinvoke <android.net.util.NetdService: android.net.INetd getInstance()>();
+
+        r0.<com.android.server.net.NetworkStatsFactory: android.net.INetd mNetdService> = $r3;
+
+     label1:
+        $r2 = r0.<com.android.server.net.NetworkStatsFactory: android.net.INetd mNetdService>;
+
+        interfaceinvoke $r2.<android.net.INetd: void trafficSwapActiveStatsMap()>();
+
+        return;
+    }
+
+    public void apply464xlatAdjustments(android.net.NetworkStats, android.net.NetworkStats)
+    {
+        com.android.server.net.NetworkStatsFactory r0;
+        android.net.NetworkStats r1, r2;
+        java.util.concurrent.ConcurrentHashMap $r3;
+
+        r0 := @this: com.android.server.net.NetworkStatsFactory;
+
+        r1 := @parameter0: android.net.NetworkStats;
+
+        r2 := @parameter1: android.net.NetworkStats;
+
+        $r3 = r0.<com.android.server.net.NetworkStatsFactory: java.util.concurrent.ConcurrentHashMap mStackedIfaces>;
+
+        staticinvoke <android.net.NetworkStats: void apply464xlatAdjustments(android.net.NetworkStats,android.net.NetworkStats,java.util.Map)>(r1, r2, $r3);
+
+        return;
+    }
+
+    public void assertEquals(android.net.NetworkStats, android.net.NetworkStats)
+    {
+        com.android.server.net.NetworkStatsFactory r0;
+        android.net.NetworkStats r1, r18;
+        int $i0, $i1, $i2, $i3, $i4, i5;
+        java.lang.StringBuilder $r2, $r9;
+        java.lang.AssertionError $r7, $r16;
+        java.lang.String $r8, $r17;
+        boolean $z0;
+        android.net.NetworkStats$Entry r19, r20;
+
+        r0 := @this: com.android.server.net.NetworkStatsFactory;
+
+        r18 := @parameter0: android.net.NetworkStats;
+
+        r1 := @parameter1: android.net.NetworkStats;
+
+        $i0 = virtualinvoke r18.<android.net.NetworkStats: int size()>();
+
+        $i1 = virtualinvoke r1.<android.net.NetworkStats: int size()>();
+
+        if $i0 != $i1 goto label4;
+
+        r19 = null;
+
+        r20 = null;
+
+        i5 = 0;
+
+     label1:
+        $i4 = virtualinvoke r18.<android.net.NetworkStats: int size()>();
+
+        if i5 >= $i4 goto label3;
+
+        r19 = virtualinvoke r18.<android.net.NetworkStats: android.net.NetworkStats$Entry getValues(int,android.net.NetworkStats$Entry)>(i5, r19);
+
+        r20 = virtualinvoke r1.<android.net.NetworkStats: android.net.NetworkStats$Entry getValues(int,android.net.NetworkStats$Entry)>(i5, r20);
+
+        $z0 = virtualinvoke r19.<android.net.NetworkStats$Entry: boolean equals(java.lang.Object)>(r20);
+
+        if $z0 == 0 goto label2;
+
+        i5 = i5 + 1;
+
+        goto label1;
+
+     label2:
+        $r9 = new java.lang.StringBuilder;
+
+        specialinvoke $r9.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Expected row ");
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i5);
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(": ");
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r19);
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", actual row ");
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r20);
+
+        $r16 = new java.lang.AssertionError;
+
+        $r17 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r16.<java.lang.AssertionError: void <init>(java.lang.Object)>($r17);
+
+        throw $r16;
+
+     label3:
+        return;
+
+     label4:
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Expected size ");
+
+        $i2 = virtualinvoke r18.<android.net.NetworkStats: int size()>();
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i2);
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", actual size ");
+
+        $i3 = virtualinvoke r1.<android.net.NetworkStats: int size()>();
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i3);
+
+        $r7 = new java.lang.AssertionError;
+
+        $r8 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r7.<java.lang.AssertionError: void <init>(java.lang.Object)>($r8);
+
+        throw $r7;
+    }
+
+    public java.lang.String[] augmentWithStackedInterfaces(java.lang.String[])
+    {
+        com.android.server.net.NetworkStatsFactory r0;
+        java.util.Iterator r2;
+        java.lang.String[] $r3, $r8, $r10, r18;
+        java.util.HashSet $r4;
+        java.util.List $r5;
+        java.util.concurrent.ConcurrentHashMap $r6;
+        java.util.Set $r7;
+        boolean $z0, $z1, $z2;
+        int $i0;
+        java.lang.Object[] $r9;
+        java.lang.Object $r11, $r12, $r13, $r14, $r16;
+        java.lang.String $r15, $r17;
+        java.util.Map$Entry r19;
+
+        r0 := @this: com.android.server.net.NetworkStatsFactory;
+
+        r18 := @parameter0: java.lang.String[];
+
+        $r3 = <android.net.NetworkStats: java.lang.String[] INTERFACES_ALL>;
+
+        if r18 != $r3 goto label1;
+
+        return null;
+
+     label1:
+        $r4 = new java.util.HashSet;
+
+        $r5 = staticinvoke <java.util.Arrays: java.util.List asList(java.lang.Object[])>(r18);
+
+        specialinvoke $r4.<java.util.HashSet: void <init>(java.util.Collection)>($r5);
+
+        $r6 = r0.<com.android.server.net.NetworkStatsFactory: java.util.concurrent.ConcurrentHashMap mStackedIfaces>;
+
+        $r7 = virtualinvoke $r6.<java.util.concurrent.ConcurrentHashMap: java.util.Set entrySet()>();
+
+        r2 = interfaceinvoke $r7.<java.util.Set: java.util.Iterator iterator()>();
+
+     label2:
+        $z0 = interfaceinvoke r2.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label5;
+
+        $r11 = interfaceinvoke r2.<java.util.Iterator: java.lang.Object next()>();
+
+        r19 = (java.util.Map$Entry) $r11;
+
+        $r12 = interfaceinvoke r19.<java.util.Map$Entry: java.lang.Object getKey()>();
+
+        $z1 = virtualinvoke $r4.<java.util.HashSet: boolean contains(java.lang.Object)>($r12);
+
+        if $z1 == 0 goto label3;
+
+        $r16 = interfaceinvoke r19.<java.util.Map$Entry: java.lang.Object getValue()>();
+
+        $r17 = (java.lang.String) $r16;
+
+        virtualinvoke $r4.<java.util.HashSet: boolean add(java.lang.Object)>($r17);
+
+        goto label4;
+
+     label3:
+        $r13 = interfaceinvoke r19.<java.util.Map$Entry: java.lang.Object getValue()>();
+
+        $z2 = virtualinvoke $r4.<java.util.HashSet: boolean contains(java.lang.Object)>($r13);
+
+        if $z2 == 0 goto label4;
+
+        $r14 = interfaceinvoke r19.<java.util.Map$Entry: java.lang.Object getKey()>();
+
+        $r15 = (java.lang.String) $r14;
+
+        virtualinvoke $r4.<java.util.HashSet: boolean add(java.lang.Object)>($r15);
+
+     label4:
+        goto label2;
+
+     label5:
+        $i0 = virtualinvoke $r4.<java.util.HashSet: int size()>();
+
+        $r8 = newarray (java.lang.String)[$i0];
+
+        $r9 = virtualinvoke $r4.<java.util.HashSet: java.lang.Object[] toArray(java.lang.Object[])>($r8);
+
+        $r10 = (java.lang.String[]) $r9;
+
+        return $r10;
+    }
+
+    public void noteStackedIface(java.lang.String, java.lang.String)
+    {
+        com.android.server.net.NetworkStatsFactory r0;
+        java.lang.String r1, r2;
+        java.util.concurrent.ConcurrentHashMap $r3;
+
+        r0 := @this: com.android.server.net.NetworkStatsFactory;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 := @parameter1: java.lang.String;
+
+        if r1 == null goto label1;
+
+        if r2 == null goto label1;
+
+        $r3 = r0.<com.android.server.net.NetworkStatsFactory: java.util.concurrent.ConcurrentHashMap mStackedIfaces>;
+
+        virtualinvoke $r3.<java.util.concurrent.ConcurrentHashMap: java.lang.Object put(java.lang.Object,java.lang.Object)>(r1, r2);
+
+     label1:
+        return;
+    }
+
+    public android.net.NetworkStats readBpfNetworkStatsDev() throws java.io.IOException
+    {
+        com.android.server.net.NetworkStatsFactory r0;
+        android.net.NetworkStats $r2;
+        long $l0;
+        int $i1;
+        java.io.IOException $r3;
+
+        r0 := @this: com.android.server.net.NetworkStatsFactory;
+
+        $r2 = new android.net.NetworkStats;
+
+        $l0 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        specialinvoke $r2.<android.net.NetworkStats: void <init>(long,int)>($l0, 6);
+
+        $i1 = staticinvoke <com.android.server.net.NetworkStatsFactory: int nativeReadNetworkStatsDev(android.net.NetworkStats)>($r2);
+
+        if $i1 != 0 goto label1;
+
+        return $r2;
+
+     label1:
+        $r3 = new java.io.IOException;
+
+        specialinvoke $r3.<java.io.IOException: void <init>(java.lang.String)>("Failed to parse bpf iface stats");
+
+        throw $r3;
+    }
+
+    public android.net.NetworkStats readNetworkStatsDetail() throws java.io.IOException
+    {
+        com.android.server.net.NetworkStatsFactory r0;
+        java.lang.String[] $r1;
+        android.net.NetworkStats $r2;
+
+        r0 := @this: com.android.server.net.NetworkStatsFactory;
+
+        $r1 = <android.net.NetworkStats: java.lang.String[] INTERFACES_ALL>;
+
+        $r2 = virtualinvoke r0.<com.android.server.net.NetworkStatsFactory: android.net.NetworkStats readNetworkStatsDetail(int,java.lang.String[],int)>(-1, $r1, -1);
+
+        return $r2;
+    }
+
+    public android.net.NetworkStats readNetworkStatsDetail(int, java.lang.String[], int) throws java.io.IOException
+    {
+        com.android.server.net.NetworkStatsFactory r0;
+        int i0, i1, $i3, $i4;
+        java.lang.Object r1;
+        com.android.internal.net.VpnInfo[] r2;
+        android.net.NetworkStats r3, $r4, $r8, $r12, $r13, r18, r22;
+        boolean z0, $z1, $z2;
+        long $l2, $l5;
+        java.io.File $r5, $r9;
+        java.lang.String $r6, $r10;
+        java.lang.String[] $r7, $r11, r17;
+        android.os.RemoteException $r14;
+        java.lang.Throwable $r15, $r16, r24;
+        java.io.IOException r19, r21, r23;
+
+        r0 := @this: com.android.server.net.NetworkStatsFactory;
+
+        i0 := @parameter0: int;
+
+        r17 := @parameter1: java.lang.String[];
+
+        i1 := @parameter2: int;
+
+        r1 = r0.<com.android.server.net.NetworkStatsFactory: java.lang.Object mPersistentDataLock>;
+
+        entermonitor r1;
+
+     label01:
+        r2 = r0.<com.android.server.net.NetworkStatsFactory: com.android.internal.net.VpnInfo[] mVpnInfos>;
+
+        $r4 = r0.<com.android.server.net.NetworkStatsFactory: android.net.NetworkStats mPersistSnapshot>;
+
+        r18 = virtualinvoke $r4.<android.net.NetworkStats: android.net.NetworkStats clone()>();
+
+        r3 = new android.net.NetworkStats;
+
+        $l2 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        specialinvoke r3.<android.net.NetworkStats: void <init>(long,int)>($l2, 0);
+
+        z0 = r0.<com.android.server.net.NetworkStatsFactory: boolean mUseBpfStats>;
+
+     label02:
+        if z0 == 0 goto label09;
+
+     label03:
+        specialinvoke r0.<com.android.server.net.NetworkStatsFactory: void requestSwapActiveStatsMapLocked()>();
+
+     label04:
+        $r9 = r0.<com.android.server.net.NetworkStatsFactory: java.io.File mStatsXtUid>;
+
+        $r10 = virtualinvoke $r9.<java.io.File: java.lang.String getAbsolutePath()>();
+
+        $r11 = <android.net.NetworkStats: java.lang.String[] INTERFACES_ALL>;
+
+        $z2 = r0.<com.android.server.net.NetworkStatsFactory: boolean mUseBpfStats>;
+
+        $i4 = staticinvoke <com.android.server.net.NetworkStatsFactory: int nativeReadNetworkStatsDetail(android.net.NetworkStats,java.lang.String,int,java.lang.String[],int,boolean)>(r3, $r10, -1, $r11, -1, $z2);
+
+        if $i4 != 0 goto label06;
+
+        $r12 = r0.<com.android.server.net.NetworkStatsFactory: android.net.NetworkStats mPersistSnapshot>;
+
+        $l5 = virtualinvoke r3.<android.net.NetworkStats: long getElapsedRealtime()>();
+
+        virtualinvoke $r12.<android.net.NetworkStats: void setElapsedRealtime(long)>($l5);
+
+        $r13 = r0.<com.android.server.net.NetworkStatsFactory: android.net.NetworkStats mPersistSnapshot>;
+
+        virtualinvoke $r13.<android.net.NetworkStats: void combineAllValues(android.net.NetworkStats)>(r3);
+
+     label05:
+        goto label10;
+
+     label06:
+        r19 = new java.io.IOException;
+
+        specialinvoke r19.<java.io.IOException: void <init>(java.lang.String)>("Failed to parse network stats");
+
+        throw r19;
+
+     label07:
+        $r14 := @caughtexception;
+
+     label08:
+        r21 = new java.io.IOException;
+
+        specialinvoke r21.<java.io.IOException: void <init>(java.lang.Throwable)>($r14);
+
+        throw r21;
+
+     label09:
+        $r5 = r0.<com.android.server.net.NetworkStatsFactory: java.io.File mStatsXtUid>;
+
+        $r6 = virtualinvoke $r5.<java.io.File: java.lang.String getAbsolutePath()>();
+
+        $r7 = <android.net.NetworkStats: java.lang.String[] INTERFACES_ALL>;
+
+        $z1 = r0.<com.android.server.net.NetworkStatsFactory: boolean mUseBpfStats>;
+
+        $i3 = staticinvoke <com.android.server.net.NetworkStatsFactory: int nativeReadNetworkStatsDetail(android.net.NetworkStats,java.lang.String,int,java.lang.String[],int,boolean)>(r3, $r6, -1, $r7, -1, $z1);
+
+        if $i3 != 0 goto label13;
+
+        r0.<com.android.server.net.NetworkStatsFactory: android.net.NetworkStats mPersistSnapshot> = r3;
+
+     label10:
+        $r8 = r0.<com.android.server.net.NetworkStatsFactory: android.net.NetworkStats mPersistSnapshot>;
+
+        r22 = specialinvoke r0.<com.android.server.net.NetworkStatsFactory: android.net.NetworkStats adjustForTunAnd464Xlat(android.net.NetworkStats,android.net.NetworkStats,com.android.internal.net.VpnInfo[])>($r8, r18, r2);
+
+     label11:
+        virtualinvoke r22.<android.net.NetworkStats: void filter(int,java.lang.String[],int)>(i0, r17, i1);
+
+        exitmonitor r1;
+
+     label12:
+        return r22;
+
+     label13:
+        r23 = new java.io.IOException;
+
+        specialinvoke r23.<java.io.IOException: void <init>(java.lang.String)>("Failed to parse network stats");
+
+        throw r23;
+
+     label14:
+        $r16 := @caughtexception;
+
+        r24 = $r16;
+
+     label15:
+        exitmonitor r1;
+
+     label16:
+        throw r24;
+
+     label17:
+        $r15 := @caughtexception;
+
+        r24 = $r15;
+
+        goto label15;
+
+        catch java.lang.Throwable from label01 to label02 with label14;
+        catch android.os.RemoteException from label03 to label04 with label07;
+        catch java.lang.Throwable from label03 to label04 with label14;
+        catch java.lang.Throwable from label04 to label05 with label14;
+        catch java.lang.Throwable from label06 to label07 with label14;
+        catch java.lang.Throwable from label08 to label09 with label14;
+        catch java.lang.Throwable from label09 to label10 with label14;
+        catch java.lang.Throwable from label10 to label11 with label14;
+        catch java.lang.Throwable from label11 to label12 with label17;
+        catch java.lang.Throwable from label13 to label14 with label17;
+        catch java.lang.Throwable from label15 to label16 with label17;
+    }
+
+    public android.net.NetworkStats readNetworkStatsSummaryDev() throws java.io.IOException
+    {
+        com.android.server.net.NetworkStatsFactory r0;
+        android.os.StrictMode$ThreadPolicy r1;
+        java.io.FileInputStream r4;
+        boolean $z0, $z1, z2;
+        android.net.NetworkStats $r5, $r9;
+        long $l0, $l2, $l3, $l4, $l5, $l6, $l7, $l8, $l9, $l10, $l11, $l12, $l13, $l14, $l15, $l16, $l17;
+        android.net.NetworkStats$Entry $r6;
+        java.io.File $r7;
+        java.lang.String $r8;
+        int $i1;
+        java.lang.Throwable $r10, $r11;
+        java.net.ProtocolException $r12;
+        com.android.internal.util.ProcFileReader r13, r14, r15;
+
+        r0 := @this: com.android.server.net.NetworkStatsFactory;
+
+        $z0 = r0.<com.android.server.net.NetworkStatsFactory: boolean mUseBpfStats>;
+
+        if $z0 == 0 goto label01;
+
+        $r9 = virtualinvoke r0.<com.android.server.net.NetworkStatsFactory: android.net.NetworkStats readBpfNetworkStatsDev()>();
+
+        return $r9;
+
+     label01:
+        r1 = staticinvoke <android.os.StrictMode: android.os.StrictMode$ThreadPolicy allowThreadDiskReads()>();
+
+        $r5 = new android.net.NetworkStats;
+
+        $l0 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        specialinvoke $r5.<android.net.NetworkStats: void <init>(long,int)>($l0, 6);
+
+        $r6 = new android.net.NetworkStats$Entry;
+
+        specialinvoke $r6.<android.net.NetworkStats$Entry: void <init>()>();
+
+        r13 = null;
+
+        r14 = null;
+
+     label02:
+        r15 = new com.android.internal.util.ProcFileReader;
+
+     label03:
+        r13 = null;
+
+        r14 = null;
+
+     label04:
+        r4 = new java.io.FileInputStream;
+
+     label05:
+        r13 = null;
+
+        r14 = null;
+
+     label06:
+        $r7 = r0.<com.android.server.net.NetworkStatsFactory: java.io.File mStatsXtIfaceAll>;
+
+        specialinvoke r4.<java.io.FileInputStream: void <init>(java.io.File)>($r7);
+
+     label07:
+        r13 = null;
+
+        r14 = null;
+
+     label08:
+        specialinvoke r15.<com.android.internal.util.ProcFileReader: void <init>(java.io.InputStream)>(r4);
+
+     label09:
+        r13 = r15;
+
+        r14 = r15;
+
+     label10:
+        $z1 = virtualinvoke r15.<com.android.internal.util.ProcFileReader: boolean hasMoreData()>();
+
+        if $z1 == 0 goto label43;
+
+     label11:
+        r13 = r15;
+
+        r14 = r15;
+
+     label12:
+        $r8 = virtualinvoke r15.<com.android.internal.util.ProcFileReader: java.lang.String nextString()>();
+
+        $r6.<android.net.NetworkStats$Entry: java.lang.String iface> = $r8;
+
+     label13:
+        r13 = r15;
+
+        r14 = r15;
+
+     label14:
+        $r6.<android.net.NetworkStats$Entry: int uid> = -1;
+
+     label15:
+        r13 = r15;
+
+        r14 = r15;
+
+     label16:
+        $r6.<android.net.NetworkStats$Entry: int set> = -1;
+
+     label17:
+        z2 = 0;
+
+        r13 = r15;
+
+        r14 = r15;
+
+     label18:
+        $r6.<android.net.NetworkStats$Entry: int tag> = 0;
+
+     label19:
+        r13 = r15;
+
+        r14 = r15;
+
+     label20:
+        $i1 = virtualinvoke r15.<com.android.internal.util.ProcFileReader: int nextInt()>();
+
+        if $i1 == 0 goto label22;
+
+     label21:
+        z2 = 1;
+
+     label22:
+        r13 = r15;
+
+        r14 = r15;
+
+     label23:
+        $l2 = virtualinvoke r15.<com.android.internal.util.ProcFileReader: long nextLong()>();
+
+        $r6.<android.net.NetworkStats$Entry: long rxBytes> = $l2;
+
+     label24:
+        r13 = r15;
+
+        r14 = r15;
+
+     label25:
+        $l3 = virtualinvoke r15.<com.android.internal.util.ProcFileReader: long nextLong()>();
+
+        $r6.<android.net.NetworkStats$Entry: long rxPackets> = $l3;
+
+     label26:
+        r13 = r15;
+
+        r14 = r15;
+
+     label27:
+        $l4 = virtualinvoke r15.<com.android.internal.util.ProcFileReader: long nextLong()>();
+
+        $r6.<android.net.NetworkStats$Entry: long txBytes> = $l4;
+
+     label28:
+        r13 = r15;
+
+        r14 = r15;
+
+     label29:
+        $l5 = virtualinvoke r15.<com.android.internal.util.ProcFileReader: long nextLong()>();
+
+        $r6.<android.net.NetworkStats$Entry: long txPackets> = $l5;
+
+     label30:
+        if z2 == 0 goto label38;
+
+        r13 = r15;
+
+        r14 = r15;
+
+     label31:
+        $l6 = $r6.<android.net.NetworkStats$Entry: long rxBytes>;
+
+        $l7 = virtualinvoke r15.<com.android.internal.util.ProcFileReader: long nextLong()>();
+
+        $l8 = $l6 + $l7;
+
+        $r6.<android.net.NetworkStats$Entry: long rxBytes> = $l8;
+
+     label32:
+        r13 = r15;
+
+        r14 = r15;
+
+     label33:
+        $l9 = $r6.<android.net.NetworkStats$Entry: long rxPackets>;
+
+        $l10 = virtualinvoke r15.<com.android.internal.util.ProcFileReader: long nextLong()>();
+
+        $l11 = $l9 + $l10;
+
+        $r6.<android.net.NetworkStats$Entry: long rxPackets> = $l11;
+
+     label34:
+        r13 = r15;
+
+        r14 = r15;
+
+     label35:
+        $l12 = $r6.<android.net.NetworkStats$Entry: long txBytes>;
+
+        $l13 = virtualinvoke r15.<com.android.internal.util.ProcFileReader: long nextLong()>();
+
+        $l14 = $l12 + $l13;
+
+        $r6.<android.net.NetworkStats$Entry: long txBytes> = $l14;
+
+     label36:
+        r13 = r15;
+
+        r14 = r15;
+
+     label37:
+        $l15 = $r6.<android.net.NetworkStats$Entry: long txPackets>;
+
+        $l16 = virtualinvoke r15.<com.android.internal.util.ProcFileReader: long nextLong()>();
+
+        $l17 = $l15 + $l16;
+
+        $r6.<android.net.NetworkStats$Entry: long txPackets> = $l17;
+
+     label38:
+        r13 = r15;
+
+        r14 = r15;
+
+     label39:
+        virtualinvoke $r5.<android.net.NetworkStats: android.net.NetworkStats insertEntry(android.net.NetworkStats$Entry)>($r6);
+
+     label40:
+        r13 = r15;
+
+        r14 = r15;
+
+     label41:
+        virtualinvoke r15.<com.android.internal.util.ProcFileReader: void finishLine()>();
+
+     label42:
+        goto label09;
+
+     label43:
+        staticinvoke <libcore.io.IoUtils: void closeQuietly(java.lang.AutoCloseable)>(r15);
+
+        staticinvoke <android.os.StrictMode: void setThreadPolicy(android.os.StrictMode$ThreadPolicy)>(r1);
+
+        return $r5;
+
+     label44:
+        $r10 := @caughtexception;
+
+        goto label47;
+
+     label45:
+        $r11 := @caughtexception;
+
+        r13 = r14;
+
+     label46:
+        $r12 = staticinvoke <com.android.server.net.NetworkStatsFactory: java.net.ProtocolException protocolExceptionWithCause(java.lang.String,java.lang.Throwable)>("problem parsing stats", $r11);
+
+        throw $r12;
+
+     label47:
+        staticinvoke <libcore.io.IoUtils: void closeQuietly(java.lang.AutoCloseable)>(r13);
+
+        staticinvoke <android.os.StrictMode: void setThreadPolicy(android.os.StrictMode$ThreadPolicy)>(r1);
+
+        throw $r10;
+
+        catch java.lang.NullPointerException from label02 to label03 with label45;
+        catch java.lang.NumberFormatException from label02 to label03 with label45;
+        catch java.lang.Throwable from label02 to label03 with label44;
+        catch java.lang.NullPointerException from label04 to label05 with label45;
+        catch java.lang.NumberFormatException from label04 to label05 with label45;
+        catch java.lang.Throwable from label04 to label05 with label44;
+        catch java.lang.NullPointerException from label06 to label07 with label45;
+        catch java.lang.NumberFormatException from label06 to label07 with label45;
+        catch java.lang.Throwable from label06 to label07 with label44;
+        catch java.lang.NullPointerException from label08 to label09 with label45;
+        catch java.lang.NumberFormatException from label08 to label09 with label45;
+        catch java.lang.Throwable from label08 to label09 with label44;
+        catch java.lang.NullPointerException from label10 to label11 with label45;
+        catch java.lang.NumberFormatException from label10 to label11 with label45;
+        catch java.lang.Throwable from label10 to label11 with label44;
+        catch java.lang.NullPointerException from label12 to label13 with label45;
+        catch java.lang.NumberFormatException from label12 to label13 with label45;
+        catch java.lang.Throwable from label12 to label13 with label44;
+        catch java.lang.NullPointerException from label14 to label15 with label45;
+        catch java.lang.NumberFormatException from label14 to label15 with label45;
+        catch java.lang.Throwable from label14 to label15 with label44;
+        catch java.lang.NullPointerException from label16 to label17 with label45;
+        catch java.lang.NumberFormatException from label16 to label17 with label45;
+        catch java.lang.Throwable from label16 to label17 with label44;
+        catch java.lang.NullPointerException from label18 to label19 with label45;
+        catch java.lang.NumberFormatException from label18 to label19 with label45;
+        catch java.lang.Throwable from label18 to label19 with label44;
+        catch java.lang.NullPointerException from label20 to label21 with label45;
+        catch java.lang.NumberFormatException from label20 to label21 with label45;
+        catch java.lang.Throwable from label20 to label21 with label44;
+        catch java.lang.NullPointerException from label23 to label24 with label45;
+        catch java.lang.NumberFormatException from label23 to label24 with label45;
+        catch java.lang.Throwable from label23 to label24 with label44;
+        catch java.lang.NullPointerException from label25 to label26 with label45;
+        catch java.lang.NumberFormatException from label25 to label26 with label45;
+        catch java.lang.Throwable from label25 to label26 with label44;
+        catch java.lang.NullPointerException from label27 to label28 with label45;
+        catch java.lang.NumberFormatException from label27 to label28 with label45;
+        catch java.lang.Throwable from label27 to label28 with label44;
+        catch java.lang.NullPointerException from label29 to label30 with label45;
+        catch java.lang.NumberFormatException from label29 to label30 with label45;
+        catch java.lang.Throwable from label29 to label30 with label44;
+        catch java.lang.NullPointerException from label31 to label32 with label45;
+        catch java.lang.NumberFormatException from label31 to label32 with label45;
+        catch java.lang.Throwable from label31 to label32 with label44;
+        catch java.lang.NullPointerException from label33 to label34 with label45;
+        catch java.lang.NumberFormatException from label33 to label34 with label45;
+        catch java.lang.Throwable from label33 to label34 with label44;
+        catch java.lang.NullPointerException from label35 to label36 with label45;
+        catch java.lang.NumberFormatException from label35 to label36 with label45;
+        catch java.lang.Throwable from label35 to label36 with label44;
+        catch java.lang.NullPointerException from label37 to label38 with label45;
+        catch java.lang.NumberFormatException from label37 to label38 with label45;
+        catch java.lang.Throwable from label37 to label38 with label44;
+        catch java.lang.NullPointerException from label39 to label40 with label45;
+        catch java.lang.NumberFormatException from label39 to label40 with label45;
+        catch java.lang.Throwable from label39 to label40 with label44;
+        catch java.lang.NullPointerException from label41 to label42 with label45;
+        catch java.lang.NumberFormatException from label41 to label42 with label45;
+        catch java.lang.Throwable from label41 to label42 with label44;
+        catch java.lang.Throwable from label46 to label47 with label44;
+    }
+
+    public android.net.NetworkStats readNetworkStatsSummaryXt() throws java.io.IOException
+    {
+        com.android.server.net.NetworkStatsFactory r0;
+        android.os.StrictMode$ThreadPolicy r1;
+        java.io.FileInputStream r4;
+        boolean $z0, $z1, $z2;
+        java.io.File $r5, $r8;
+        android.net.NetworkStats $r6, $r10;
+        long $l0, $l1, $l2, $l3, $l4;
+        android.net.NetworkStats$Entry $r7;
+        java.lang.String $r9;
+        java.lang.Throwable $r11, $r13;
+        java.net.ProtocolException $r12;
+        com.android.internal.util.ProcFileReader r14, r15, r16;
+
+        r0 := @this: com.android.server.net.NetworkStatsFactory;
+
+        $z0 = r0.<com.android.server.net.NetworkStatsFactory: boolean mUseBpfStats>;
+
+        if $z0 == 0 goto label01;
+
+        $r10 = virtualinvoke r0.<com.android.server.net.NetworkStatsFactory: android.net.NetworkStats readBpfNetworkStatsDev()>();
+
+        return $r10;
+
+     label01:
+        r1 = staticinvoke <android.os.StrictMode: android.os.StrictMode$ThreadPolicy allowThreadDiskReads()>();
+
+        $r5 = r0.<com.android.server.net.NetworkStatsFactory: java.io.File mStatsXtIfaceFmt>;
+
+        $z1 = virtualinvoke $r5.<java.io.File: boolean exists()>();
+
+        if $z1 != 0 goto label02;
+
+        return null;
+
+     label02:
+        $r6 = new android.net.NetworkStats;
+
+        $l0 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        specialinvoke $r6.<android.net.NetworkStats: void <init>(long,int)>($l0, 6);
+
+        $r7 = new android.net.NetworkStats$Entry;
+
+        specialinvoke $r7.<android.net.NetworkStats$Entry: void <init>()>();
+
+        r14 = null;
+
+        r15 = null;
+
+     label03:
+        r16 = new com.android.internal.util.ProcFileReader;
+
+     label04:
+        r14 = null;
+
+        r15 = null;
+
+     label05:
+        r4 = new java.io.FileInputStream;
+
+     label06:
+        r14 = null;
+
+        r15 = null;
+
+     label07:
+        $r8 = r0.<com.android.server.net.NetworkStatsFactory: java.io.File mStatsXtIfaceFmt>;
+
+        specialinvoke r4.<java.io.FileInputStream: void <init>(java.io.File)>($r8);
+
+     label08:
+        r14 = null;
+
+        r15 = null;
+
+     label09:
+        specialinvoke r16.<com.android.internal.util.ProcFileReader: void <init>(java.io.InputStream)>(r4);
+
+     label10:
+        r14 = r16;
+
+        r15 = r16;
+
+     label11:
+        virtualinvoke r16.<com.android.internal.util.ProcFileReader: void finishLine()>();
+
+     label12:
+        r14 = r16;
+
+        r15 = r16;
+
+     label13:
+        $z2 = virtualinvoke r16.<com.android.internal.util.ProcFileReader: boolean hasMoreData()>();
+
+        if $z2 == 0 goto label35;
+
+     label14:
+        r14 = r16;
+
+        r15 = r16;
+
+     label15:
+        $r9 = virtualinvoke r16.<com.android.internal.util.ProcFileReader: java.lang.String nextString()>();
+
+        $r7.<android.net.NetworkStats$Entry: java.lang.String iface> = $r9;
+
+     label16:
+        r14 = r16;
+
+        r15 = r16;
+
+     label17:
+        $r7.<android.net.NetworkStats$Entry: int uid> = -1;
+
+     label18:
+        r14 = r16;
+
+        r15 = r16;
+
+     label19:
+        $r7.<android.net.NetworkStats$Entry: int set> = -1;
+
+     label20:
+        r14 = r16;
+
+        r15 = r16;
+
+     label21:
+        $r7.<android.net.NetworkStats$Entry: int tag> = 0;
+
+     label22:
+        r14 = r16;
+
+        r15 = r16;
+
+     label23:
+        $l1 = virtualinvoke r16.<com.android.internal.util.ProcFileReader: long nextLong()>();
+
+        $r7.<android.net.NetworkStats$Entry: long rxBytes> = $l1;
+
+     label24:
+        r14 = r16;
+
+        r15 = r16;
+
+     label25:
+        $l2 = virtualinvoke r16.<com.android.internal.util.ProcFileReader: long nextLong()>();
+
+        $r7.<android.net.NetworkStats$Entry: long rxPackets> = $l2;
+
+     label26:
+        r14 = r16;
+
+        r15 = r16;
+
+     label27:
+        $l3 = virtualinvoke r16.<com.android.internal.util.ProcFileReader: long nextLong()>();
+
+        $r7.<android.net.NetworkStats$Entry: long txBytes> = $l3;
+
+     label28:
+        r14 = r16;
+
+        r15 = r16;
+
+     label29:
+        $l4 = virtualinvoke r16.<com.android.internal.util.ProcFileReader: long nextLong()>();
+
+        $r7.<android.net.NetworkStats$Entry: long txPackets> = $l4;
+
+     label30:
+        r14 = r16;
+
+        r15 = r16;
+
+     label31:
+        virtualinvoke $r6.<android.net.NetworkStats: android.net.NetworkStats insertEntry(android.net.NetworkStats$Entry)>($r7);
+
+     label32:
+        r14 = r16;
+
+        r15 = r16;
+
+     label33:
+        virtualinvoke r16.<com.android.internal.util.ProcFileReader: void finishLine()>();
+
+     label34:
+        goto label12;
+
+     label35:
+        staticinvoke <libcore.io.IoUtils: void closeQuietly(java.lang.AutoCloseable)>(r16);
+
+        staticinvoke <android.os.StrictMode: void setThreadPolicy(android.os.StrictMode$ThreadPolicy)>(r1);
+
+        return $r6;
+
+     label36:
+        $r13 := @caughtexception;
+
+        goto label39;
+
+     label37:
+        $r11 := @caughtexception;
+
+        r14 = r15;
+
+     label38:
+        $r12 = staticinvoke <com.android.server.net.NetworkStatsFactory: java.net.ProtocolException protocolExceptionWithCause(java.lang.String,java.lang.Throwable)>("problem parsing stats", $r11);
+
+        throw $r12;
+
+     label39:
+        staticinvoke <libcore.io.IoUtils: void closeQuietly(java.lang.AutoCloseable)>(r14);
+
+        staticinvoke <android.os.StrictMode: void setThreadPolicy(android.os.StrictMode$ThreadPolicy)>(r1);
+
+        throw $r13;
+
+        catch java.lang.NullPointerException from label03 to label04 with label37;
+        catch java.lang.NumberFormatException from label03 to label04 with label37;
+        catch java.lang.Throwable from label03 to label04 with label36;
+        catch java.lang.NullPointerException from label05 to label06 with label37;
+        catch java.lang.NumberFormatException from label05 to label06 with label37;
+        catch java.lang.Throwable from label05 to label06 with label36;
+        catch java.lang.NullPointerException from label07 to label08 with label37;
+        catch java.lang.NumberFormatException from label07 to label08 with label37;
+        catch java.lang.Throwable from label07 to label08 with label36;
+        catch java.lang.NullPointerException from label09 to label10 with label37;
+        catch java.lang.NumberFormatException from label09 to label10 with label37;
+        catch java.lang.Throwable from label09 to label10 with label36;
+        catch java.lang.NullPointerException from label11 to label12 with label37;
+        catch java.lang.NumberFormatException from label11 to label12 with label37;
+        catch java.lang.Throwable from label11 to label12 with label36;
+        catch java.lang.NullPointerException from label13 to label14 with label37;
+        catch java.lang.NumberFormatException from label13 to label14 with label37;
+        catch java.lang.Throwable from label13 to label14 with label36;
+        catch java.lang.NullPointerException from label15 to label16 with label37;
+        catch java.lang.NumberFormatException from label15 to label16 with label37;
+        catch java.lang.Throwable from label15 to label16 with label36;
+        catch java.lang.NullPointerException from label17 to label18 with label37;
+        catch java.lang.NumberFormatException from label17 to label18 with label37;
+        catch java.lang.Throwable from label17 to label18 with label36;
+        catch java.lang.NullPointerException from label19 to label20 with label37;
+        catch java.lang.NumberFormatException from label19 to label20 with label37;
+        catch java.lang.Throwable from label19 to label20 with label36;
+        catch java.lang.NullPointerException from label21 to label22 with label37;
+        catch java.lang.NumberFormatException from label21 to label22 with label37;
+        catch java.lang.Throwable from label21 to label22 with label36;
+        catch java.lang.NullPointerException from label23 to label24 with label37;
+        catch java.lang.NumberFormatException from label23 to label24 with label37;
+        catch java.lang.Throwable from label23 to label24 with label36;
+        catch java.lang.NullPointerException from label25 to label26 with label37;
+        catch java.lang.NumberFormatException from label25 to label26 with label37;
+        catch java.lang.Throwable from label25 to label26 with label36;
+        catch java.lang.NullPointerException from label27 to label28 with label37;
+        catch java.lang.NumberFormatException from label27 to label28 with label37;
+        catch java.lang.Throwable from label27 to label28 with label36;
+        catch java.lang.NullPointerException from label29 to label30 with label37;
+        catch java.lang.NumberFormatException from label29 to label30 with label37;
+        catch java.lang.Throwable from label29 to label30 with label36;
+        catch java.lang.NullPointerException from label31 to label32 with label37;
+        catch java.lang.NumberFormatException from label31 to label32 with label37;
+        catch java.lang.Throwable from label31 to label32 with label36;
+        catch java.lang.NullPointerException from label33 to label34 with label37;
+        catch java.lang.NumberFormatException from label33 to label34 with label37;
+        catch java.lang.Throwable from label33 to label34 with label36;
+        catch java.lang.Throwable from label38 to label39 with label36;
+    }
+
+    public void updateVpnInfos(com.android.internal.net.VpnInfo[])
+    {
+        com.android.server.net.NetworkStatsFactory r0;
+        com.android.internal.net.VpnInfo[] r1, $r3;
+        java.lang.Object $r2;
+
+        r0 := @this: com.android.server.net.NetworkStatsFactory;
+
+        r1 := @parameter0: com.android.internal.net.VpnInfo[];
+
+        $r2 = virtualinvoke r1.<java.lang.Object: java.lang.Object clone()>();
+
+        $r3 = (com.android.internal.net.VpnInfo[]) $r2;
+
+        r0.<com.android.server.net.NetworkStatsFactory: com.android.internal.net.VpnInfo[] mVpnInfos> = $r3;
+
+        return;
+    }
+
+    public static void <clinit>()
+    {
+        <com.android.server.net.NetworkStatsFactory: boolean USE_NATIVE_PARSING> = 1;
+
+        <com.android.server.net.NetworkStatsFactory: java.lang.String TAG> = "NetworkStatsFactory";
+
+        <com.android.server.net.NetworkStatsFactory: boolean SANITY_CHECK_NATIVE> = 0;
+
+        return;
+    }
+}

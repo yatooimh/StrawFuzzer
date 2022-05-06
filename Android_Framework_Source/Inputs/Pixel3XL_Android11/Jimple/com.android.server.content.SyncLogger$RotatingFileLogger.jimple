@@ -1,0 +1,680 @@
+class com.android.server.content.SyncLogger$RotatingFileLogger extends com.android.server.content.SyncLogger
+{
+    private static final boolean DO_LOGCAT;
+    private static final java.text.SimpleDateFormat sFilenameDateFormat;
+    private static final java.text.SimpleDateFormat sTimestampFormat;
+    private final java.util.Date mCachedDate;
+    private long mCurrentLogFileDayTimestamp;
+    private boolean mErrorShown;
+    private final com.android.server.content.SyncLogger$RotatingFileLogger$MyHandler mHandler;
+    private final long mKeepAgeMs;
+    private final java.lang.Object mLock;
+    private final java.io.File mLogPath;
+    private java.io.Writer mLogWriter;
+    private final java.lang.StringBuilder mStringBuilder;
+
+    static void <clinit>()
+    {
+        java.text.SimpleDateFormat $r0, $r1;
+        boolean $z0;
+
+        $r0 = new java.text.SimpleDateFormat;
+
+        specialinvoke $r0.<java.text.SimpleDateFormat: void <init>(java.lang.String)>("yyyy-MM-dd HH:mm:ss.SSS");
+
+        <com.android.server.content.SyncLogger$RotatingFileLogger: java.text.SimpleDateFormat sTimestampFormat> = $r0;
+
+        $r1 = new java.text.SimpleDateFormat;
+
+        specialinvoke $r1.<java.text.SimpleDateFormat: void <init>(java.lang.String)>("yyyy-MM-dd");
+
+        <com.android.server.content.SyncLogger$RotatingFileLogger: java.text.SimpleDateFormat sFilenameDateFormat> = $r1;
+
+        $z0 = staticinvoke <android.util.Log: boolean isLoggable(java.lang.String,int)>("SyncLogger", 3);
+
+        <com.android.server.content.SyncLogger$RotatingFileLogger: boolean DO_LOGCAT> = $z0;
+
+        return;
+    }
+
+    void <init>()
+    {
+        com.android.server.content.SyncLogger$RotatingFileLogger r0;
+        java.lang.Object $r1;
+        java.util.concurrent.TimeUnit $r2;
+        long $l0;
+        java.util.Date $r3;
+        java.lang.StringBuilder $r4;
+        java.io.File $r5, $r6;
+        com.android.server.content.SyncLogger$RotatingFileLogger$MyHandler $r7;
+        com.android.server.IoThread $r8;
+        android.os.Looper $r9;
+
+        r0 := @this: com.android.server.content.SyncLogger$RotatingFileLogger;
+
+        specialinvoke r0.<com.android.server.content.SyncLogger: void <init>()>();
+
+        $r1 = new java.lang.Object;
+
+        specialinvoke $r1.<java.lang.Object: void <init>()>();
+
+        r0.<com.android.server.content.SyncLogger$RotatingFileLogger: java.lang.Object mLock> = $r1;
+
+        $r2 = <java.util.concurrent.TimeUnit: java.util.concurrent.TimeUnit DAYS>;
+
+        $l0 = virtualinvoke $r2.<java.util.concurrent.TimeUnit: long toMillis(long)>(7L);
+
+        r0.<com.android.server.content.SyncLogger$RotatingFileLogger: long mKeepAgeMs> = $l0;
+
+        $r3 = new java.util.Date;
+
+        specialinvoke $r3.<java.util.Date: void <init>()>();
+
+        r0.<com.android.server.content.SyncLogger$RotatingFileLogger: java.util.Date mCachedDate> = $r3;
+
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        r0.<com.android.server.content.SyncLogger$RotatingFileLogger: java.lang.StringBuilder mStringBuilder> = $r4;
+
+        $r5 = new java.io.File;
+
+        $r6 = staticinvoke <android.os.Environment: java.io.File getDataSystemDirectory()>();
+
+        specialinvoke $r5.<java.io.File: void <init>(java.io.File,java.lang.String)>($r6, "syncmanager-log");
+
+        r0.<com.android.server.content.SyncLogger$RotatingFileLogger: java.io.File mLogPath> = $r5;
+
+        $r7 = new com.android.server.content.SyncLogger$RotatingFileLogger$MyHandler;
+
+        $r8 = staticinvoke <com.android.server.IoThread: com.android.server.IoThread get()>();
+
+        $r9 = virtualinvoke $r8.<com.android.server.IoThread: android.os.Looper getLooper()>();
+
+        specialinvoke $r7.<com.android.server.content.SyncLogger$RotatingFileLogger$MyHandler: void <init>(com.android.server.content.SyncLogger$RotatingFileLogger,android.os.Looper)>(r0, $r9);
+
+        r0.<com.android.server.content.SyncLogger$RotatingFileLogger: com.android.server.content.SyncLogger$RotatingFileLogger$MyHandler mHandler> = $r7;
+
+        return;
+    }
+
+    private void closeCurrentLogLocked()
+    {
+        com.android.server.content.SyncLogger$RotatingFileLogger r0;
+        java.io.Writer $r1;
+
+        r0 := @this: com.android.server.content.SyncLogger$RotatingFileLogger;
+
+        $r1 = r0.<com.android.server.content.SyncLogger$RotatingFileLogger: java.io.Writer mLogWriter>;
+
+        staticinvoke <libcore.io.IoUtils: void closeQuietly(java.lang.AutoCloseable)>($r1);
+
+        r0.<com.android.server.content.SyncLogger$RotatingFileLogger: java.io.Writer mLogWriter> = null;
+
+        return;
+    }
+
+    private void dumpFile(java.io.PrintWriter, java.io.File)
+    {
+        com.android.server.content.SyncLogger$RotatingFileLogger r0;
+        char[] r1;
+        java.io.FileReader r2;
+        int i0;
+        java.lang.StringBuilder $r3;
+        java.lang.String $r6;
+        java.lang.Throwable $r7, $r8, $r9;
+        java.io.PrintWriter r10;
+        java.io.File r11;
+        java.io.BufferedReader r13;
+
+        r0 := @this: com.android.server.content.SyncLogger$RotatingFileLogger;
+
+        r10 := @parameter0: java.io.PrintWriter;
+
+        r11 := @parameter1: java.io.File;
+
+        $r3 = new java.lang.StringBuilder;
+
+        specialinvoke $r3.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Dumping ");
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r11);
+
+        $r6 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("SyncLogger", $r6);
+
+        r1 = newarray (char)[32768];
+
+     label01:
+        r13 = new java.io.BufferedReader;
+
+        r2 = new java.io.FileReader;
+
+        specialinvoke r2.<java.io.FileReader: void <init>(java.io.File)>(r11);
+
+        specialinvoke r13.<java.io.BufferedReader: void <init>(java.io.Reader)>(r2);
+
+     label02:
+        i0 = virtualinvoke r13.<java.io.Reader: int read(char[])>(r1);
+
+     label03:
+        if i0 < 0 goto label06;
+
+        if i0 <= 0 goto label02;
+
+     label04:
+        virtualinvoke r10.<java.io.PrintWriter: void write(char[],int,int)>(r1, 0, i0);
+
+     label05:
+        goto label02;
+
+     label06:
+        virtualinvoke r13.<java.io.Reader: void close()>();
+
+     label07:
+        goto label15;
+
+     label08:
+        $r7 := @caughtexception;
+
+     label09:
+        virtualinvoke r13.<java.io.Reader: void close()>();
+
+     label10:
+        goto label13;
+
+     label11:
+        $r8 := @caughtexception;
+
+     label12:
+        virtualinvoke $r7.<java.lang.Throwable: void addSuppressed(java.lang.Throwable)>($r8);
+
+     label13:
+        throw $r7;
+
+     label14:
+        $r9 := @caughtexception;
+
+     label15:
+        return;
+
+        catch java.io.IOException from label01 to label02 with label14;
+        catch java.lang.Throwable from label02 to label03 with label08;
+        catch java.lang.Throwable from label04 to label05 with label08;
+        catch java.io.IOException from label06 to label07 with label14;
+        catch java.lang.Throwable from label09 to label10 with label11;
+        catch java.io.IOException from label12 to label13 with label14;
+        catch java.io.IOException from label13 to label14 with label14;
+    }
+
+    private void handleException(java.lang.String, java.lang.Exception)
+    {
+        com.android.server.content.SyncLogger$RotatingFileLogger r0;
+        java.lang.String r1;
+        java.lang.Exception r2;
+        boolean $z0;
+
+        r0 := @this: com.android.server.content.SyncLogger$RotatingFileLogger;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 := @parameter1: java.lang.Exception;
+
+        $z0 = r0.<com.android.server.content.SyncLogger$RotatingFileLogger: boolean mErrorShown>;
+
+        if $z0 != 0 goto label1;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("SyncLogger", r1, r2);
+
+        r0.<com.android.server.content.SyncLogger$RotatingFileLogger: boolean mErrorShown> = 1;
+
+     label1:
+        return;
+    }
+
+    private void openLogLocked(long)
+    {
+        com.android.server.content.SyncLogger$RotatingFileLogger r0;
+        long l0, l1, $l2;
+        java.io.Writer $r2;
+        java.util.Date $r3, $r6;
+        java.text.SimpleDateFormat $r7;
+        java.lang.String $r8, $r18, r20;
+        java.io.File $r12, $r13, r25;
+        byte $b3;
+        java.lang.Throwable $r14;
+        java.lang.StringBuilder r24, r27;
+        java.io.FileWriter r26;
+        java.lang.Exception r28;
+
+        r0 := @this: com.android.server.content.SyncLogger$RotatingFileLogger;
+
+        l0 := @parameter0: long;
+
+        l1 = l0 % 86400000L;
+
+        $r2 = r0.<com.android.server.content.SyncLogger$RotatingFileLogger: java.io.Writer mLogWriter>;
+
+        if $r2 == null goto label1;
+
+        $l2 = r0.<com.android.server.content.SyncLogger$RotatingFileLogger: long mCurrentLogFileDayTimestamp>;
+
+        $b3 = l1 cmp $l2;
+
+        if $b3 != 0 goto label1;
+
+        return;
+
+     label1:
+        specialinvoke r0.<com.android.server.content.SyncLogger$RotatingFileLogger: void closeCurrentLogLocked()>();
+
+        r0.<com.android.server.content.SyncLogger$RotatingFileLogger: long mCurrentLogFileDayTimestamp> = l1;
+
+        $r3 = r0.<com.android.server.content.SyncLogger$RotatingFileLogger: java.util.Date mCachedDate>;
+
+        virtualinvoke $r3.<java.util.Date: void setTime(long)>(l0);
+
+        r24 = new java.lang.StringBuilder;
+
+        specialinvoke r24.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r24.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("synclog-");
+
+        $r7 = <com.android.server.content.SyncLogger$RotatingFileLogger: java.text.SimpleDateFormat sFilenameDateFormat>;
+
+        $r6 = r0.<com.android.server.content.SyncLogger$RotatingFileLogger: java.util.Date mCachedDate>;
+
+        $r8 = virtualinvoke $r7.<java.text.SimpleDateFormat: java.lang.String format(java.util.Date)>($r6);
+
+        virtualinvoke r24.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r8);
+
+        virtualinvoke r24.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(".log");
+
+        r20 = virtualinvoke r24.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        r25 = new java.io.File;
+
+        $r12 = r0.<com.android.server.content.SyncLogger$RotatingFileLogger: java.io.File mLogPath>;
+
+        specialinvoke r25.<java.io.File: void <init>(java.io.File,java.lang.String)>($r12, r20);
+
+        $r13 = virtualinvoke r25.<java.io.File: java.io.File getParentFile()>();
+
+        virtualinvoke $r13.<java.io.File: boolean mkdirs()>();
+
+     label2:
+        r26 = new java.io.FileWriter;
+
+        specialinvoke r26.<java.io.FileWriter: void <init>(java.io.File,boolean)>(r25, 1);
+
+        r0.<com.android.server.content.SyncLogger$RotatingFileLogger: java.io.Writer mLogWriter> = r26;
+
+     label3:
+        goto label5;
+
+     label4:
+        $r14 := @caughtexception;
+
+        r27 = new java.lang.StringBuilder;
+
+        specialinvoke r27.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r27.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Failed to open log file: ");
+
+        virtualinvoke r27.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r25);
+
+        $r18 = virtualinvoke r27.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        r28 = (java.lang.Exception) $r14;
+
+        specialinvoke r0.<com.android.server.content.SyncLogger$RotatingFileLogger: void handleException(java.lang.String,java.lang.Exception)>($r18, r28);
+
+     label5:
+        return;
+
+        catch java.io.IOException from label2 to label3 with label4;
+    }
+
+    public void dumpAll(java.io.PrintWriter)
+    {
+        com.android.server.content.SyncLogger$RotatingFileLogger r0;
+        java.lang.Object r1;
+        java.lang.String[] r2;
+        int i0, $i1, i2;
+        java.lang.String r3;
+        java.io.File r4, $r5, $r6;
+        java.lang.Throwable $r7;
+        java.io.PrintWriter r8;
+
+        r0 := @this: com.android.server.content.SyncLogger$RotatingFileLogger;
+
+        r8 := @parameter0: java.io.PrintWriter;
+
+        r1 = r0.<com.android.server.content.SyncLogger$RotatingFileLogger: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label01:
+        $r5 = r0.<com.android.server.content.SyncLogger$RotatingFileLogger: java.io.File mLogPath>;
+
+        r2 = virtualinvoke $r5.<java.io.File: java.lang.String[] list()>();
+
+     label02:
+        if r2 == null goto label12;
+
+     label03:
+        $i1 = lengthof r2;
+
+        if $i1 != 0 goto label05;
+
+     label04:
+        goto label12;
+
+     label05:
+        staticinvoke <java.util.Arrays: void sort(java.lang.Object[])>(r2);
+
+        i0 = lengthof r2;
+
+     label06:
+        i2 = 0;
+
+     label07:
+        if i2 >= i0 goto label10;
+
+        r3 = r2[i2];
+
+     label08:
+        r4 = new java.io.File;
+
+        $r6 = r0.<com.android.server.content.SyncLogger$RotatingFileLogger: java.io.File mLogPath>;
+
+        specialinvoke r4.<java.io.File: void <init>(java.io.File,java.lang.String)>($r6, r3);
+
+        specialinvoke r0.<com.android.server.content.SyncLogger$RotatingFileLogger: void dumpFile(java.io.PrintWriter,java.io.File)>(r8, r4);
+
+     label09:
+        i2 = i2 + 1;
+
+        goto label07;
+
+     label10:
+        exitmonitor r1;
+
+     label11:
+        return;
+
+     label12:
+        exitmonitor r1;
+
+     label13:
+        return;
+
+     label14:
+        $r7 := @caughtexception;
+
+     label15:
+        exitmonitor r1;
+
+     label16:
+        throw $r7;
+
+        catch java.lang.Throwable from label01 to label02 with label14;
+        catch java.lang.Throwable from label03 to label04 with label14;
+        catch java.lang.Throwable from label05 to label06 with label14;
+        catch java.lang.Throwable from label08 to label09 with label14;
+        catch java.lang.Throwable from label10 to label11 with label14;
+        catch java.lang.Throwable from label12 to label13 with label14;
+        catch java.lang.Throwable from label15 to label16 with label14;
+    }
+
+    public boolean enabled()
+    {
+        com.android.server.content.SyncLogger$RotatingFileLogger r0;
+
+        r0 := @this: com.android.server.content.SyncLogger$RotatingFileLogger;
+
+        return 1;
+    }
+
+    public java.lang.String jobParametersToString(android.app.job.JobParameters)
+    {
+        com.android.server.content.SyncLogger$RotatingFileLogger r0;
+        android.app.job.JobParameters r1;
+        java.lang.String $r2;
+
+        r0 := @this: com.android.server.content.SyncLogger$RotatingFileLogger;
+
+        r1 := @parameter0: android.app.job.JobParameters;
+
+        $r2 = staticinvoke <com.android.server.content.SyncJobService: java.lang.String jobParametersToString(android.app.job.JobParameters)>(r1);
+
+        return $r2;
+    }
+
+    public transient void log(java.lang.Object[])
+    {
+        com.android.server.content.SyncLogger$RotatingFileLogger r0;
+        java.lang.Object[] r1;
+        long l0;
+        com.android.server.content.SyncLogger$RotatingFileLogger$MyHandler $r2;
+
+        r0 := @this: com.android.server.content.SyncLogger$RotatingFileLogger;
+
+        r1 := @parameter0: java.lang.Object[];
+
+        if r1 != null goto label1;
+
+        return;
+
+     label1:
+        l0 = staticinvoke <java.lang.System: long currentTimeMillis()>();
+
+        $r2 = r0.<com.android.server.content.SyncLogger$RotatingFileLogger: com.android.server.content.SyncLogger$RotatingFileLogger$MyHandler mHandler>;
+
+        virtualinvoke $r2.<com.android.server.content.SyncLogger$RotatingFileLogger$MyHandler: void log(long,java.lang.Object[])>(l0, r1);
+
+        return;
+    }
+
+    void logInner(long, java.lang.Object[])
+    {
+        com.android.server.content.SyncLogger$RotatingFileLogger r0;
+        long l0;
+        java.lang.Object r1, r30;
+        int i1, i2, $i3, i5;
+        java.io.Writer $r2, $r19, $r21;
+        java.util.Date $r3, $r4;
+        java.text.SimpleDateFormat $r5;
+        java.lang.StringBuilder $r6, $r9, $r11, $r13, $r15, $r16, $r18, $r22, $r24, r29;
+        java.lang.String $r7, $r23;
+        boolean $z0;
+        java.lang.Throwable $r26, $r27;
+        java.lang.Object[] r28;
+        java.lang.Exception r33;
+
+        r0 := @this: com.android.server.content.SyncLogger$RotatingFileLogger;
+
+        l0 := @parameter0: long;
+
+        r28 := @parameter1: java.lang.Object[];
+
+        r1 = r0.<com.android.server.content.SyncLogger$RotatingFileLogger: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label01:
+        specialinvoke r0.<com.android.server.content.SyncLogger$RotatingFileLogger: void openLogLocked(long)>(l0);
+
+        $r2 = r0.<com.android.server.content.SyncLogger$RotatingFileLogger: java.io.Writer mLogWriter>;
+
+        if $r2 != null goto label03;
+
+        exitmonitor r1;
+
+     label02:
+        return;
+
+     label03:
+        r29 = r0.<com.android.server.content.SyncLogger$RotatingFileLogger: java.lang.StringBuilder mStringBuilder>;
+
+     label04:
+        i5 = 0;
+
+     label05:
+        virtualinvoke r29.<java.lang.StringBuilder: void setLength(int)>(0);
+
+        $r3 = r0.<com.android.server.content.SyncLogger$RotatingFileLogger: java.util.Date mCachedDate>;
+
+        virtualinvoke $r3.<java.util.Date: void setTime(long)>(l0);
+
+        $r6 = r0.<com.android.server.content.SyncLogger$RotatingFileLogger: java.lang.StringBuilder mStringBuilder>;
+
+        $r5 = <com.android.server.content.SyncLogger$RotatingFileLogger: java.text.SimpleDateFormat sTimestampFormat>;
+
+        $r4 = r0.<com.android.server.content.SyncLogger$RotatingFileLogger: java.util.Date mCachedDate>;
+
+        $r7 = virtualinvoke $r5.<java.text.SimpleDateFormat: java.lang.String format(java.util.Date)>($r4);
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r7);
+
+        $r9 = r0.<com.android.server.content.SyncLogger$RotatingFileLogger: java.lang.StringBuilder mStringBuilder>;
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(char)>(32);
+
+        $r11 = r0.<com.android.server.content.SyncLogger$RotatingFileLogger: java.lang.StringBuilder mStringBuilder>;
+
+        $i3 = staticinvoke <android.os.Process: int myTid()>();
+
+        virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i3);
+
+        $r13 = r0.<com.android.server.content.SyncLogger$RotatingFileLogger: java.lang.StringBuilder mStringBuilder>;
+
+        virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(char)>(32);
+
+        $r15 = r0.<com.android.server.content.SyncLogger$RotatingFileLogger: java.lang.StringBuilder mStringBuilder>;
+
+        i1 = virtualinvoke $r15.<java.lang.StringBuilder: int length()>();
+
+        i2 = lengthof r28;
+
+     label06:
+        if i5 >= i2 goto label09;
+
+        r30 = r28[i5];
+
+     label07:
+        $r24 = r0.<com.android.server.content.SyncLogger$RotatingFileLogger: java.lang.StringBuilder mStringBuilder>;
+
+        virtualinvoke $r24.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r30);
+
+     label08:
+        i5 = i5 + 1;
+
+        goto label06;
+
+     label09:
+        $r16 = r0.<com.android.server.content.SyncLogger$RotatingFileLogger: java.lang.StringBuilder mStringBuilder>;
+
+        virtualinvoke $r16.<java.lang.StringBuilder: java.lang.StringBuilder append(char)>(10);
+
+     label10:
+        $r19 = r0.<com.android.server.content.SyncLogger$RotatingFileLogger: java.io.Writer mLogWriter>;
+
+        $r18 = r0.<com.android.server.content.SyncLogger$RotatingFileLogger: java.lang.StringBuilder mStringBuilder>;
+
+        virtualinvoke $r19.<java.io.Writer: java.io.Writer append(java.lang.CharSequence)>($r18);
+
+        $r21 = r0.<com.android.server.content.SyncLogger$RotatingFileLogger: java.io.Writer mLogWriter>;
+
+        virtualinvoke $r21.<java.io.Writer: void flush()>();
+
+        $z0 = <com.android.server.content.SyncLogger$RotatingFileLogger: boolean DO_LOGCAT>;
+
+        if $z0 == 0 goto label11;
+
+        $r22 = r0.<com.android.server.content.SyncLogger$RotatingFileLogger: java.lang.StringBuilder mStringBuilder>;
+
+        $r23 = virtualinvoke $r22.<java.lang.StringBuilder: java.lang.String substring(int)>(i1);
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("SyncLogger", $r23);
+
+     label11:
+        goto label14;
+
+     label12:
+        $r26 := @caughtexception;
+
+     label13:
+        r33 = (java.lang.Exception) $r26;
+
+        specialinvoke r0.<com.android.server.content.SyncLogger$RotatingFileLogger: void handleException(java.lang.String,java.lang.Exception)>("Failed to write log", r33);
+
+     label14:
+        exitmonitor r1;
+
+     label15:
+        return;
+
+     label16:
+        $r27 := @caughtexception;
+
+     label17:
+        exitmonitor r1;
+
+     label18:
+        throw $r27;
+
+        catch java.lang.Throwable from label01 to label02 with label16;
+        catch java.lang.Throwable from label03 to label04 with label16;
+        catch java.lang.Throwable from label05 to label06 with label16;
+        catch java.lang.Throwable from label07 to label08 with label16;
+        catch java.lang.Throwable from label09 to label10 with label16;
+        catch java.io.IOException from label10 to label11 with label12;
+        catch java.lang.Throwable from label10 to label11 with label16;
+        catch java.lang.Throwable from label13 to label14 with label16;
+        catch java.lang.Throwable from label14 to label15 with label16;
+        catch java.lang.Throwable from label17 to label18 with label16;
+    }
+
+    public void purgeOldLogs()
+    {
+        com.android.server.content.SyncLogger$RotatingFileLogger r0;
+        java.lang.Object r1;
+        long $l0;
+        java.io.File $r3;
+        java.lang.Throwable $r4;
+
+        r0 := @this: com.android.server.content.SyncLogger$RotatingFileLogger;
+
+        r1 = r0.<com.android.server.content.SyncLogger$RotatingFileLogger: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        $r3 = r0.<com.android.server.content.SyncLogger$RotatingFileLogger: java.io.File mLogPath>;
+
+        $l0 = r0.<com.android.server.content.SyncLogger$RotatingFileLogger: long mKeepAgeMs>;
+
+        staticinvoke <android.os.FileUtils: boolean deleteOlderFiles(java.io.File,int,long)>($r3, 1, $l0);
+
+        exitmonitor r1;
+
+     label2:
+        return;
+
+     label3:
+        $r4 := @caughtexception;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        throw $r4;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+}

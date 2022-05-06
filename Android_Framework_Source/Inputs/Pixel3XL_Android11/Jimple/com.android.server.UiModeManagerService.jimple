@@ -1,0 +1,3717 @@
+final class com.android.server.UiModeManagerService extends com.android.server.SystemService
+{
+    private static final boolean ENABLE_LAUNCH_DESK_DOCK_APP;
+    private static final boolean LOG;
+    private static final java.lang.String SYSTEM_PROPERTY_DEVICE_THEME;
+    private static final java.lang.String TAG;
+    private final java.time.LocalTime DEFAULT_CUSTOM_NIGHT_END_TIME;
+    private final java.time.LocalTime DEFAULT_CUSTOM_NIGHT_START_TIME;
+    private android.app.AlarmManager mAlarmManager;
+    private final android.content.BroadcastReceiver mBatteryReceiver;
+    private boolean mCar;
+    private int mCarModeEnableFlags;
+    private boolean mCarModeEnabled;
+    private boolean mCarModeKeepsScreenOn;
+    private java.util.Map mCarModePackagePriority;
+    private boolean mCharging;
+    private boolean mComputedNightMode;
+    private android.content.res.Configuration mConfiguration;
+    int mCurUiMode;
+    private java.time.LocalTime mCustomAutoNightModeEndMilliseconds;
+    private java.time.LocalTime mCustomAutoNightModeStartMilliseconds;
+    private final android.app.AlarmManager$OnAlarmListener mCustomTimeListener;
+    private final android.database.ContentObserver mDarkThemeObserver;
+    private int mDefaultUiModeType;
+    private boolean mDeskModeKeepsScreenOn;
+    private final android.content.BroadcastReceiver mDockModeReceiver;
+    private int mDockState;
+    private boolean mEnableCarDockLaunch;
+    private final android.os.Handler mHandler;
+    private boolean mHoldingConfiguration;
+    private int mLastBroadcastState;
+    private android.os.PowerManagerInternal mLocalPowerManager;
+    private final com.android.server.UiModeManagerService$LocalService mLocalService;
+    final java.lang.Object mLock;
+    private int mNightMode;
+    private boolean mNightModeLocked;
+    private android.app.NotificationManager mNotificationManager;
+    private final android.content.BroadcastReceiver mOnScreenOffHandler;
+    private final android.content.BroadcastReceiver mOnTimeChangedHandler;
+    private boolean mOverrideNightModeOff;
+    private boolean mOverrideNightModeOn;
+    private int mOverrideNightModeUser;
+    private android.os.PowerManager mPowerManager;
+    private boolean mPowerSave;
+    private final android.content.BroadcastReceiver mResultReceiver;
+    private final android.app.IUiModeManager$Stub mService;
+    private int mSetUiMode;
+    private final android.content.BroadcastReceiver mSettingsRestored;
+    private boolean mSetupWizardComplete;
+    private final android.database.ContentObserver mSetupWizardObserver;
+    private android.app.StatusBarManager mStatusBarManager;
+    boolean mSystemReady;
+    private boolean mTelevision;
+    private final com.android.server.twilight.TwilightListener mTwilightListener;
+    private com.android.server.twilight.TwilightManager mTwilightManager;
+    private boolean mUiModeLocked;
+    private boolean mVrHeadset;
+    private final android.service.vr.IVrStateCallbacks mVrStateCallbacks;
+    private boolean mWaitForScreenOff;
+    private android.os.PowerManager$WakeLock mWakeLock;
+    private boolean mWatch;
+    private com.android.server.wm.WindowManagerInternal mWindowManager;
+
+    static void <clinit>()
+    {
+        java.lang.Class $r0;
+        java.lang.String $r1;
+
+        <com.android.server.UiModeManagerService: java.lang.String SYSTEM_PROPERTY_DEVICE_THEME> = "persist.sys.theme";
+
+        <com.android.server.UiModeManagerService: boolean LOG> = 0;
+
+        <com.android.server.UiModeManagerService: boolean ENABLE_LAUNCH_DESK_DOCK_APP> = 1;
+
+        $r0 = class "Landroid/app/UiModeManager;";
+
+        $r1 = virtualinvoke $r0.<java.lang.Class: java.lang.String getSimpleName()>();
+
+        <com.android.server.UiModeManagerService: java.lang.String TAG> = $r1;
+
+        return;
+    }
+
+    public void <init>(android.content.Context)
+    {
+        com.android.server.UiModeManagerService r0;
+        java.lang.Object $r1;
+        java.time.LocalTime $r2, $r3, r24;
+        java.util.HashMap $r4;
+        android.content.res.Configuration $r5, $r22;
+        android.os.Handler $r6, $r17, $r19;
+        com.android.server.UiModeManagerService$LocalService $r7;
+        com.android.server.UiModeManagerService$1 $r8;
+        com.android.server.UiModeManagerService$2 $r9;
+        com.android.server.UiModeManagerService$3 $r10;
+        com.android.server.UiModeManagerService$4 $r11;
+        com.android.server.UiModeManagerService$5 $r12;
+        com.android.server.UiModeManagerService$6 $r13;
+        com.android.server._$$Lambda$UiModeManagerService$AwUHdh7CYhroUMaGm35a4uvZcnY $r14;
+        com.android.server.UiModeManagerService$7 $r15;
+        com.android.server.UiModeManagerService$8 $r16;
+        com.android.server.UiModeManagerService$9 $r18;
+        com.android.server.UiModeManagerService$10 $r20;
+        com.android.server.UiModeManagerService$11 $r21;
+        android.content.Context r23;
+
+        r0 := @this: com.android.server.UiModeManagerService;
+
+        r23 := @parameter0: android.content.Context;
+
+        specialinvoke r0.<com.android.server.SystemService: void <init>(android.content.Context)>(r23);
+
+        $r1 = new java.lang.Object;
+
+        specialinvoke $r1.<java.lang.Object: void <init>()>();
+
+        r0.<com.android.server.UiModeManagerService: java.lang.Object mLock> = $r1;
+
+        r0.<com.android.server.UiModeManagerService: int mDockState> = 0;
+
+        r0.<com.android.server.UiModeManagerService: int mLastBroadcastState> = 0;
+
+        r0.<com.android.server.UiModeManagerService: int mNightMode> = 1;
+
+        $r2 = staticinvoke <java.time.LocalTime: java.time.LocalTime of(int,int)>(22, 0);
+
+        r0.<com.android.server.UiModeManagerService: java.time.LocalTime DEFAULT_CUSTOM_NIGHT_START_TIME> = $r2;
+
+        r24 = staticinvoke <java.time.LocalTime: java.time.LocalTime of(int,int)>(6, 0);
+
+        r0.<com.android.server.UiModeManagerService: java.time.LocalTime DEFAULT_CUSTOM_NIGHT_END_TIME> = r24;
+
+        $r3 = r0.<com.android.server.UiModeManagerService: java.time.LocalTime DEFAULT_CUSTOM_NIGHT_START_TIME>;
+
+        r0.<com.android.server.UiModeManagerService: java.time.LocalTime mCustomAutoNightModeStartMilliseconds> = $r3;
+
+        r0.<com.android.server.UiModeManagerService: java.time.LocalTime mCustomAutoNightModeEndMilliseconds> = r24;
+
+        $r4 = new java.util.HashMap;
+
+        specialinvoke $r4.<java.util.HashMap: void <init>()>();
+
+        r0.<com.android.server.UiModeManagerService: java.util.Map mCarModePackagePriority> = $r4;
+
+        r0.<com.android.server.UiModeManagerService: boolean mCarModeEnabled> = 0;
+
+        r0.<com.android.server.UiModeManagerService: boolean mCharging> = 0;
+
+        r0.<com.android.server.UiModeManagerService: boolean mPowerSave> = 0;
+
+        r0.<com.android.server.UiModeManagerService: boolean mWaitForScreenOff> = 0;
+
+        r0.<com.android.server.UiModeManagerService: boolean mEnableCarDockLaunch> = 1;
+
+        r0.<com.android.server.UiModeManagerService: boolean mUiModeLocked> = 0;
+
+        r0.<com.android.server.UiModeManagerService: boolean mNightModeLocked> = 0;
+
+        r0.<com.android.server.UiModeManagerService: int mCurUiMode> = 0;
+
+        r0.<com.android.server.UiModeManagerService: int mSetUiMode> = 0;
+
+        r0.<com.android.server.UiModeManagerService: boolean mHoldingConfiguration> = 0;
+
+        $r5 = new android.content.res.Configuration;
+
+        specialinvoke $r5.<android.content.res.Configuration: void <init>()>();
+
+        r0.<com.android.server.UiModeManagerService: android.content.res.Configuration mConfiguration> = $r5;
+
+        $r6 = new android.os.Handler;
+
+        specialinvoke $r6.<android.os.Handler: void <init>()>();
+
+        r0.<com.android.server.UiModeManagerService: android.os.Handler mHandler> = $r6;
+
+        r0.<com.android.server.UiModeManagerService: int mOverrideNightModeUser> = 0;
+
+        $r7 = new com.android.server.UiModeManagerService$LocalService;
+
+        specialinvoke $r7.<com.android.server.UiModeManagerService$LocalService: void <init>(com.android.server.UiModeManagerService)>(r0);
+
+        r0.<com.android.server.UiModeManagerService: com.android.server.UiModeManagerService$LocalService mLocalService> = $r7;
+
+        $r8 = new com.android.server.UiModeManagerService$1;
+
+        specialinvoke $r8.<com.android.server.UiModeManagerService$1: void <init>(com.android.server.UiModeManagerService)>(r0);
+
+        r0.<com.android.server.UiModeManagerService: android.content.BroadcastReceiver mResultReceiver> = $r8;
+
+        $r9 = new com.android.server.UiModeManagerService$2;
+
+        specialinvoke $r9.<com.android.server.UiModeManagerService$2: void <init>(com.android.server.UiModeManagerService)>(r0);
+
+        r0.<com.android.server.UiModeManagerService: android.content.BroadcastReceiver mDockModeReceiver> = $r9;
+
+        $r10 = new com.android.server.UiModeManagerService$3;
+
+        specialinvoke $r10.<com.android.server.UiModeManagerService$3: void <init>(com.android.server.UiModeManagerService)>(r0);
+
+        r0.<com.android.server.UiModeManagerService: android.content.BroadcastReceiver mBatteryReceiver> = $r10;
+
+        $r11 = new com.android.server.UiModeManagerService$4;
+
+        specialinvoke $r11.<com.android.server.UiModeManagerService$4: void <init>(com.android.server.UiModeManagerService)>(r0);
+
+        r0.<com.android.server.UiModeManagerService: com.android.server.twilight.TwilightListener mTwilightListener> = $r11;
+
+        $r12 = new com.android.server.UiModeManagerService$5;
+
+        specialinvoke $r12.<com.android.server.UiModeManagerService$5: void <init>(com.android.server.UiModeManagerService)>(r0);
+
+        r0.<com.android.server.UiModeManagerService: android.content.BroadcastReceiver mOnScreenOffHandler> = $r12;
+
+        $r13 = new com.android.server.UiModeManagerService$6;
+
+        specialinvoke $r13.<com.android.server.UiModeManagerService$6: void <init>(com.android.server.UiModeManagerService)>(r0);
+
+        r0.<com.android.server.UiModeManagerService: android.content.BroadcastReceiver mOnTimeChangedHandler> = $r13;
+
+        $r14 = new com.android.server._$$Lambda$UiModeManagerService$AwUHdh7CYhroUMaGm35a4uvZcnY;
+
+        specialinvoke $r14.<com.android.server._$$Lambda$UiModeManagerService$AwUHdh7CYhroUMaGm35a4uvZcnY: void <init>(com.android.server.UiModeManagerService)>(r0);
+
+        r0.<com.android.server.UiModeManagerService: android.app.AlarmManager$OnAlarmListener mCustomTimeListener> = $r14;
+
+        $r15 = new com.android.server.UiModeManagerService$7;
+
+        specialinvoke $r15.<com.android.server.UiModeManagerService$7: void <init>(com.android.server.UiModeManagerService)>(r0);
+
+        r0.<com.android.server.UiModeManagerService: android.service.vr.IVrStateCallbacks mVrStateCallbacks> = $r15;
+
+        $r16 = new com.android.server.UiModeManagerService$8;
+
+        $r17 = r0.<com.android.server.UiModeManagerService: android.os.Handler mHandler>;
+
+        specialinvoke $r16.<com.android.server.UiModeManagerService$8: void <init>(com.android.server.UiModeManagerService,android.os.Handler)>(r0, $r17);
+
+        r0.<com.android.server.UiModeManagerService: android.database.ContentObserver mSetupWizardObserver> = $r16;
+
+        $r18 = new com.android.server.UiModeManagerService$9;
+
+        $r19 = r0.<com.android.server.UiModeManagerService: android.os.Handler mHandler>;
+
+        specialinvoke $r18.<com.android.server.UiModeManagerService$9: void <init>(com.android.server.UiModeManagerService,android.os.Handler)>(r0, $r19);
+
+        r0.<com.android.server.UiModeManagerService: android.database.ContentObserver mDarkThemeObserver> = $r18;
+
+        $r20 = new com.android.server.UiModeManagerService$10;
+
+        specialinvoke $r20.<com.android.server.UiModeManagerService$10: void <init>(com.android.server.UiModeManagerService)>(r0);
+
+        r0.<com.android.server.UiModeManagerService: android.content.BroadcastReceiver mSettingsRestored> = $r20;
+
+        $r21 = new com.android.server.UiModeManagerService$11;
+
+        specialinvoke $r21.<com.android.server.UiModeManagerService$11: void <init>(com.android.server.UiModeManagerService)>(r0);
+
+        r0.<com.android.server.UiModeManagerService: android.app.IUiModeManager$Stub mService> = $r21;
+
+        $r22 = r0.<com.android.server.UiModeManagerService: android.content.res.Configuration mConfiguration>;
+
+        virtualinvoke $r22.<android.content.res.Configuration: void setToDefaults()>();
+
+        return;
+    }
+
+    protected void <init>(android.content.Context, boolean, com.android.server.twilight.TwilightManager)
+    {
+        com.android.server.UiModeManagerService r0;
+        android.content.Context r1;
+        boolean z0;
+        com.android.server.twilight.TwilightManager r2;
+
+        r0 := @this: com.android.server.UiModeManagerService;
+
+        r1 := @parameter0: android.content.Context;
+
+        z0 := @parameter1: boolean;
+
+        r2 := @parameter2: com.android.server.twilight.TwilightManager;
+
+        specialinvoke r0.<com.android.server.UiModeManagerService: void <init>(android.content.Context)>(r1);
+
+        r0.<com.android.server.UiModeManagerService: boolean mSetupWizardComplete> = z0;
+
+        r0.<com.android.server.UiModeManagerService: com.android.server.twilight.TwilightManager mTwilightManager> = r2;
+
+        return;
+    }
+
+    static void access$000(com.android.server.UiModeManagerService, java.lang.String, int, int)
+    {
+        com.android.server.UiModeManagerService r0;
+        java.lang.String r1;
+        int i0, i1;
+
+        r0 := @parameter0: com.android.server.UiModeManagerService;
+
+        r1 := @parameter1: java.lang.String;
+
+        i0 := @parameter2: int;
+
+        i1 := @parameter3: int;
+
+        specialinvoke r0.<com.android.server.UiModeManagerService: void updateAfterBroadcastLocked(java.lang.String,int,int)>(r1, i0, i1);
+
+        return;
+    }
+
+    static void access$100(com.android.server.UiModeManagerService, int)
+    {
+        com.android.server.UiModeManagerService r0;
+        int i0;
+
+        r0 := @parameter0: com.android.server.UiModeManagerService;
+
+        i0 := @parameter1: int;
+
+        specialinvoke r0.<com.android.server.UiModeManagerService: void updateDockState(int)>(i0);
+
+        return;
+    }
+
+    static boolean access$1002(com.android.server.UiModeManagerService, boolean)
+    {
+        com.android.server.UiModeManagerService r0;
+        boolean z0;
+
+        r0 := @parameter0: com.android.server.UiModeManagerService;
+
+        z0 := @parameter1: boolean;
+
+        r0.<com.android.server.UiModeManagerService: boolean mSetupWizardComplete> = z0;
+
+        return z0;
+    }
+
+    static android.database.ContentObserver access$1100(com.android.server.UiModeManagerService)
+    {
+        com.android.server.UiModeManagerService r0;
+        android.database.ContentObserver $r1;
+
+        r0 := @parameter0: com.android.server.UiModeManagerService;
+
+        $r1 = r0.<com.android.server.UiModeManagerService: android.database.ContentObserver mSetupWizardObserver>;
+
+        return $r1;
+    }
+
+    static boolean access$1200(com.android.server.UiModeManagerService, android.content.Context, android.content.res.Resources, int)
+    {
+        com.android.server.UiModeManagerService r0;
+        android.content.Context r1;
+        android.content.res.Resources r2;
+        int i0;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.server.UiModeManagerService;
+
+        r1 := @parameter1: android.content.Context;
+
+        r2 := @parameter2: android.content.res.Resources;
+
+        i0 := @parameter3: int;
+
+        $z0 = specialinvoke r0.<com.android.server.UiModeManagerService: boolean updateNightModeFromSettingsLocked(android.content.Context,android.content.res.Resources,int)>(r1, r2, i0);
+
+        return $z0;
+    }
+
+    static void access$1300(com.android.server.UiModeManagerService)
+    {
+        com.android.server.UiModeManagerService r0;
+
+        r0 := @parameter0: com.android.server.UiModeManagerService;
+
+        specialinvoke r0.<com.android.server.UiModeManagerService: void updateSystemProperties()>();
+
+        return;
+    }
+
+    static void access$1500(com.android.server.UiModeManagerService)
+    {
+        com.android.server.UiModeManagerService r0;
+
+        r0 := @parameter0: com.android.server.UiModeManagerService;
+
+        specialinvoke r0.<com.android.server.UiModeManagerService: void updateConfigurationLocked()>();
+
+        return;
+    }
+
+    static java.lang.String access$1600()
+    {
+        java.lang.String $r0;
+
+        $r0 = <com.android.server.UiModeManagerService: java.lang.String TAG>;
+
+        return $r0;
+    }
+
+    static java.util.Map access$1700(com.android.server.UiModeManagerService)
+    {
+        com.android.server.UiModeManagerService r0;
+        java.util.Map $r1;
+
+        r0 := @parameter0: com.android.server.UiModeManagerService;
+
+        $r1 = r0.<com.android.server.UiModeManagerService: java.util.Map mCarModePackagePriority>;
+
+        return $r1;
+    }
+
+    static void access$1800(com.android.server.UiModeManagerService)
+    {
+        com.android.server.UiModeManagerService r0;
+
+        r0 := @parameter0: com.android.server.UiModeManagerService;
+
+        specialinvoke r0.<com.android.server.UiModeManagerService: void cancelCustomAlarm()>();
+
+        return;
+    }
+
+    static boolean access$1900(com.android.server.UiModeManagerService)
+    {
+        com.android.server.UiModeManagerService r0;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.server.UiModeManagerService;
+
+        $z0 = specialinvoke r0.<com.android.server.UiModeManagerService: boolean resetNightModeOverrideLocked()>();
+
+        return $z0;
+    }
+
+    static void access$2000(com.android.server.UiModeManagerService, int)
+    {
+        com.android.server.UiModeManagerService r0;
+        int i0;
+
+        r0 := @parameter0: com.android.server.UiModeManagerService;
+
+        i0 := @parameter1: int;
+
+        specialinvoke r0.<com.android.server.UiModeManagerService: void persistNightMode(int)>(i0);
+
+        return;
+    }
+
+    static boolean access$202(com.android.server.UiModeManagerService, boolean)
+    {
+        com.android.server.UiModeManagerService r0;
+        boolean z0;
+
+        r0 := @parameter0: com.android.server.UiModeManagerService;
+
+        z0 := @parameter1: boolean;
+
+        r0.<com.android.server.UiModeManagerService: boolean mCharging> = z0;
+
+        return z0;
+    }
+
+    static boolean access$2100(com.android.server.UiModeManagerService)
+    {
+        com.android.server.UiModeManagerService r0;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.server.UiModeManagerService;
+
+        $z0 = r0.<com.android.server.UiModeManagerService: boolean mUiModeLocked>;
+
+        return $z0;
+    }
+
+    static boolean access$2200(com.android.server.UiModeManagerService)
+    {
+        com.android.server.UiModeManagerService r0;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.server.UiModeManagerService;
+
+        $z0 = r0.<com.android.server.UiModeManagerService: boolean mNightModeLocked>;
+
+        return $z0;
+    }
+
+    static android.app.IUiModeManager$Stub access$2300(com.android.server.UiModeManagerService)
+    {
+        com.android.server.UiModeManagerService r0;
+        android.app.IUiModeManager$Stub $r1;
+
+        r0 := @parameter0: com.android.server.UiModeManagerService;
+
+        $r1 = r0.<com.android.server.UiModeManagerService: android.app.IUiModeManager$Stub mService>;
+
+        return $r1;
+    }
+
+    static boolean access$2402(com.android.server.UiModeManagerService, boolean)
+    {
+        com.android.server.UiModeManagerService r0;
+        boolean z0;
+
+        r0 := @parameter0: com.android.server.UiModeManagerService;
+
+        z0 := @parameter1: boolean;
+
+        r0.<com.android.server.UiModeManagerService: boolean mOverrideNightModeOff> = z0;
+
+        return z0;
+    }
+
+    static boolean access$2502(com.android.server.UiModeManagerService, boolean)
+    {
+        com.android.server.UiModeManagerService r0;
+        boolean z0;
+
+        r0 := @parameter0: com.android.server.UiModeManagerService;
+
+        z0 := @parameter1: boolean;
+
+        r0.<com.android.server.UiModeManagerService: boolean mOverrideNightModeOn> = z0;
+
+        return z0;
+    }
+
+    static int access$2602(com.android.server.UiModeManagerService, int)
+    {
+        com.android.server.UiModeManagerService r0;
+        int i0;
+
+        r0 := @parameter0: com.android.server.UiModeManagerService;
+
+        i0 := @parameter1: int;
+
+        r0.<com.android.server.UiModeManagerService: int mOverrideNightModeUser> = i0;
+
+        return i0;
+    }
+
+    static void access$2700(com.android.server.UiModeManagerService, int)
+    {
+        com.android.server.UiModeManagerService r0;
+        int i0;
+
+        r0 := @parameter0: com.android.server.UiModeManagerService;
+
+        i0 := @parameter1: int;
+
+        specialinvoke r0.<com.android.server.UiModeManagerService: void persistNightModeOverrides(int)>(i0);
+
+        return;
+    }
+
+    static void access$2800(com.android.server.UiModeManagerService)
+    {
+        com.android.server.UiModeManagerService r0;
+
+        r0 := @parameter0: com.android.server.UiModeManagerService;
+
+        specialinvoke r0.<com.android.server.UiModeManagerService: void applyConfigurationExternallyLocked()>();
+
+        return;
+    }
+
+    static java.time.LocalTime access$2900(com.android.server.UiModeManagerService)
+    {
+        com.android.server.UiModeManagerService r0;
+        java.time.LocalTime $r1;
+
+        r0 := @parameter0: com.android.server.UiModeManagerService;
+
+        $r1 = r0.<com.android.server.UiModeManagerService: java.time.LocalTime mCustomAutoNightModeStartMilliseconds>;
+
+        return $r1;
+    }
+
+    static java.time.LocalTime access$2902(com.android.server.UiModeManagerService, java.time.LocalTime)
+    {
+        com.android.server.UiModeManagerService r0;
+        java.time.LocalTime r1;
+
+        r0 := @parameter0: com.android.server.UiModeManagerService;
+
+        r1 := @parameter1: java.time.LocalTime;
+
+        r0.<com.android.server.UiModeManagerService: java.time.LocalTime mCustomAutoNightModeStartMilliseconds> = r1;
+
+        return r1;
+    }
+
+    static int access$300(com.android.server.UiModeManagerService)
+    {
+        com.android.server.UiModeManagerService r0;
+        int $i0;
+
+        r0 := @parameter0: com.android.server.UiModeManagerService;
+
+        $i0 = r0.<com.android.server.UiModeManagerService: int mNightMode>;
+
+        return $i0;
+    }
+
+    static void access$3000(com.android.server.UiModeManagerService, int)
+    {
+        com.android.server.UiModeManagerService r0;
+        int i0;
+
+        r0 := @parameter0: com.android.server.UiModeManagerService;
+
+        i0 := @parameter1: int;
+
+        specialinvoke r0.<com.android.server.UiModeManagerService: void onCustomTimeUpdated(int)>(i0);
+
+        return;
+    }
+
+    static int access$302(com.android.server.UiModeManagerService, int)
+    {
+        com.android.server.UiModeManagerService r0;
+        int i0;
+
+        r0 := @parameter0: com.android.server.UiModeManagerService;
+
+        i0 := @parameter1: int;
+
+        r0.<com.android.server.UiModeManagerService: int mNightMode> = i0;
+
+        return i0;
+    }
+
+    static java.time.LocalTime access$3100(com.android.server.UiModeManagerService)
+    {
+        com.android.server.UiModeManagerService r0;
+        java.time.LocalTime $r1;
+
+        r0 := @parameter0: com.android.server.UiModeManagerService;
+
+        $r1 = r0.<com.android.server.UiModeManagerService: java.time.LocalTime mCustomAutoNightModeEndMilliseconds>;
+
+        return $r1;
+    }
+
+    static java.time.LocalTime access$3102(com.android.server.UiModeManagerService, java.time.LocalTime)
+    {
+        com.android.server.UiModeManagerService r0;
+        java.time.LocalTime r1;
+
+        r0 := @parameter0: com.android.server.UiModeManagerService;
+
+        r1 := @parameter1: java.time.LocalTime;
+
+        r0.<com.android.server.UiModeManagerService: java.time.LocalTime mCustomAutoNightModeEndMilliseconds> = r1;
+
+        return r1;
+    }
+
+    static long access$3300(java.time.LocalTime)
+    {
+        java.time.LocalTime r0;
+        long $l0;
+
+        r0 := @parameter0: java.time.LocalTime;
+
+        $l0 = staticinvoke <com.android.server.UiModeManagerService: long toMilliSeconds(java.time.LocalTime)>(r0);
+
+        return $l0;
+    }
+
+    static java.time.LocalTime access$3400(long)
+    {
+        long l0;
+        java.time.LocalTime $r0;
+
+        l0 := @parameter0: long;
+
+        $r0 = staticinvoke <com.android.server.UiModeManagerService: java.time.LocalTime fromMilliseconds(long)>(l0);
+
+        return $r0;
+    }
+
+    static android.content.res.Configuration access$3500(com.android.server.UiModeManagerService)
+    {
+        com.android.server.UiModeManagerService r0;
+        android.content.res.Configuration $r1;
+
+        r0 := @parameter0: com.android.server.UiModeManagerService;
+
+        $r1 = r0.<com.android.server.UiModeManagerService: android.content.res.Configuration mConfiguration>;
+
+        return $r1;
+    }
+
+    static boolean access$400(com.android.server.UiModeManagerService)
+    {
+        com.android.server.UiModeManagerService r0;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.server.UiModeManagerService;
+
+        $z0 = specialinvoke r0.<com.android.server.UiModeManagerService: boolean shouldApplyAutomaticChangesImmediately()>();
+
+        return $z0;
+    }
+
+    static void access$500(com.android.server.UiModeManagerService)
+    {
+        com.android.server.UiModeManagerService r0;
+
+        r0 := @parameter0: com.android.server.UiModeManagerService;
+
+        specialinvoke r0.<com.android.server.UiModeManagerService: void registerScreenOffEventLocked()>();
+
+        return;
+    }
+
+    static void access$600(com.android.server.UiModeManagerService)
+    {
+        com.android.server.UiModeManagerService r0;
+
+        r0 := @parameter0: com.android.server.UiModeManagerService;
+
+        specialinvoke r0.<com.android.server.UiModeManagerService: void unregisterScreenOffEventLocked()>();
+
+        return;
+    }
+
+    static void access$700(com.android.server.UiModeManagerService)
+    {
+        com.android.server.UiModeManagerService r0;
+
+        r0 := @parameter0: com.android.server.UiModeManagerService;
+
+        specialinvoke r0.<com.android.server.UiModeManagerService: void updateCustomTimeLocked()>();
+
+        return;
+    }
+
+    static boolean access$802(com.android.server.UiModeManagerService, boolean)
+    {
+        com.android.server.UiModeManagerService r0;
+        boolean z0;
+
+        r0 := @parameter0: com.android.server.UiModeManagerService;
+
+        z0 := @parameter1: boolean;
+
+        r0.<com.android.server.UiModeManagerService: boolean mVrHeadset> = z0;
+
+        return z0;
+    }
+
+    static boolean access$900(com.android.server.UiModeManagerService)
+    {
+        com.android.server.UiModeManagerService r0;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.server.UiModeManagerService;
+
+        $z0 = specialinvoke r0.<com.android.server.UiModeManagerService: boolean setupWizardCompleteForCurrentUser()>();
+
+        return $z0;
+    }
+
+    private void adjustStatusBarCarModeLocked()
+    {
+        com.android.server.UiModeManagerService r0;
+        android.app.StatusBarManager $r1, $r23, r25;
+        boolean $z0, $z1;
+        android.os.UserHandle $r2, $r15, $r19;
+        android.content.Intent $r3;
+        android.app.Notification$Builder $r4, $r6, $r7, $r8, $r9, $r10, $r12, $r14, r29;
+        java.lang.String $r5, $r11, $r13;
+        int $i0, i1;
+        android.app.PendingIntent $r16;
+        android.app.NotificationManager $r17, $r21, $r26, r27;
+        android.app.Notification $r18;
+        java.lang.Object $r20, $r22;
+        android.content.Context r24;
+
+        r0 := @this: com.android.server.UiModeManagerService;
+
+        r24 = virtualinvoke r0.<com.android.server.UiModeManagerService: android.content.Context getContext()>();
+
+        $r1 = r0.<com.android.server.UiModeManagerService: android.app.StatusBarManager mStatusBarManager>;
+
+        if $r1 != null goto label1;
+
+        $r22 = virtualinvoke r24.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("statusbar");
+
+        $r23 = (android.app.StatusBarManager) $r22;
+
+        r0.<com.android.server.UiModeManagerService: android.app.StatusBarManager mStatusBarManager> = $r23;
+
+     label1:
+        r25 = r0.<com.android.server.UiModeManagerService: android.app.StatusBarManager mStatusBarManager>;
+
+        if r25 == null goto label4;
+
+        $z1 = r0.<com.android.server.UiModeManagerService: boolean mCarModeEnabled>;
+
+        if $z1 == 0 goto label2;
+
+        i1 = 524288;
+
+        goto label3;
+
+     label2:
+        i1 = 0;
+
+     label3:
+        virtualinvoke r25.<android.app.StatusBarManager: void disable(int)>(i1);
+
+     label4:
+        $r26 = r0.<com.android.server.UiModeManagerService: android.app.NotificationManager mNotificationManager>;
+
+        if $r26 != null goto label5;
+
+        $r20 = virtualinvoke r24.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("notification");
+
+        $r21 = (android.app.NotificationManager) $r20;
+
+        r0.<com.android.server.UiModeManagerService: android.app.NotificationManager mNotificationManager> = $r21;
+
+     label5:
+        r27 = r0.<com.android.server.UiModeManagerService: android.app.NotificationManager mNotificationManager>;
+
+        if r27 == null goto label7;
+
+        $z0 = r0.<com.android.server.UiModeManagerService: boolean mCarModeEnabled>;
+
+        if $z0 == 0 goto label6;
+
+        $r3 = new android.content.Intent;
+
+        specialinvoke $r3.<android.content.Intent: void <init>(android.content.Context,java.lang.Class)>(r24, class "Lcom/android/internal/app/DisableCarModeActivity;");
+
+        $r4 = new android.app.Notification$Builder;
+
+        $r5 = <com.android.internal.notification.SystemNotificationChannels: java.lang.String CAR_MODE>;
+
+        specialinvoke $r4.<android.app.Notification$Builder: void <init>(android.content.Context,java.lang.String)>(r24, $r5);
+
+        $r6 = virtualinvoke $r4.<android.app.Notification$Builder: android.app.Notification$Builder setSmallIcon(int)>(17303536);
+
+        $r7 = virtualinvoke $r6.<android.app.Notification$Builder: android.app.Notification$Builder setDefaults(int)>(4);
+
+        $r8 = virtualinvoke $r7.<android.app.Notification$Builder: android.app.Notification$Builder setOngoing(boolean)>(1);
+
+        $r9 = virtualinvoke $r8.<android.app.Notification$Builder: android.app.Notification$Builder setWhen(long)>(0L);
+
+        $i0 = virtualinvoke r24.<android.content.Context: int getColor(int)>(17170460);
+
+        $r10 = virtualinvoke $r9.<android.app.Notification$Builder: android.app.Notification$Builder setColor(int)>($i0);
+
+        $r11 = virtualinvoke r24.<android.content.Context: java.lang.String getString(int)>(17039794);
+
+        $r12 = virtualinvoke $r10.<android.app.Notification$Builder: android.app.Notification$Builder setContentTitle(java.lang.CharSequence)>($r11);
+
+        $r13 = virtualinvoke r24.<android.content.Context: java.lang.String getString(int)>(17039793);
+
+        $r14 = virtualinvoke $r12.<android.app.Notification$Builder: android.app.Notification$Builder setContentText(java.lang.CharSequence)>($r13);
+
+        $r15 = <android.os.UserHandle: android.os.UserHandle CURRENT>;
+
+        $r16 = staticinvoke <android.app.PendingIntent: android.app.PendingIntent getActivityAsUser(android.content.Context,int,android.content.Intent,int,android.os.Bundle,android.os.UserHandle)>(r24, 0, $r3, 0, null, $r15);
+
+        r29 = virtualinvoke $r14.<android.app.Notification$Builder: android.app.Notification$Builder setContentIntent(android.app.PendingIntent)>($r16);
+
+        $r17 = r0.<com.android.server.UiModeManagerService: android.app.NotificationManager mNotificationManager>;
+
+        $r18 = virtualinvoke r29.<android.app.Notification$Builder: android.app.Notification build()>();
+
+        $r19 = <android.os.UserHandle: android.os.UserHandle ALL>;
+
+        virtualinvoke $r17.<android.app.NotificationManager: void notifyAsUser(java.lang.String,int,android.app.Notification,android.os.UserHandle)>(null, 10, $r18, $r19);
+
+        goto label7;
+
+     label6:
+        $r2 = <android.os.UserHandle: android.os.UserHandle ALL>;
+
+        virtualinvoke r27.<android.app.NotificationManager: void cancelAsUser(java.lang.String,int,android.os.UserHandle)>(null, 10, $r2);
+
+     label7:
+        return;
+    }
+
+    private void applyConfigurationExternallyLocked()
+    {
+        com.android.server.UiModeManagerService r0;
+        android.content.res.Configuration $r1, $r2, $r5;
+        int $i0, $i1, $i2;
+        com.android.server.wm.WindowManagerInternal $r3;
+        android.app.IActivityTaskManager $r4;
+        android.os.RemoteException $r6;
+        java.lang.String $r7, $r9;
+        java.lang.Throwable $r8;
+
+        r0 := @this: com.android.server.UiModeManagerService;
+
+        $i1 = r0.<com.android.server.UiModeManagerService: int mSetUiMode>;
+
+        $r1 = r0.<com.android.server.UiModeManagerService: android.content.res.Configuration mConfiguration>;
+
+        $i0 = $r1.<android.content.res.Configuration: int uiMode>;
+
+        if $i1 == $i0 goto label5;
+
+        $r2 = r0.<com.android.server.UiModeManagerService: android.content.res.Configuration mConfiguration>;
+
+        $i2 = $r2.<android.content.res.Configuration: int uiMode>;
+
+        r0.<com.android.server.UiModeManagerService: int mSetUiMode> = $i2;
+
+        $r3 = r0.<com.android.server.UiModeManagerService: com.android.server.wm.WindowManagerInternal mWindowManager>;
+
+        virtualinvoke $r3.<com.android.server.wm.WindowManagerInternal: void clearSnapshotCache()>();
+
+     label1:
+        $r4 = staticinvoke <android.app.ActivityTaskManager: android.app.IActivityTaskManager getService()>();
+
+        $r5 = r0.<com.android.server.UiModeManagerService: android.content.res.Configuration mConfiguration>;
+
+        interfaceinvoke $r4.<android.app.IActivityTaskManager: boolean updateConfiguration(android.content.res.Configuration)>($r5);
+
+     label2:
+        goto label5;
+
+     label3:
+        $r8 := @caughtexception;
+
+        $r9 = <com.android.server.UiModeManagerService: java.lang.String TAG>;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>($r9, "Activity does not have the ", $r8);
+
+        goto label5;
+
+     label4:
+        $r6 := @caughtexception;
+
+        $r7 = <com.android.server.UiModeManagerService: java.lang.String TAG>;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String,java.lang.Throwable)>($r7, "Failure communicating with activity manager", $r6);
+
+     label5:
+        return;
+
+        catch android.os.RemoteException from label1 to label2 with label4;
+        catch java.lang.SecurityException from label1 to label2 with label3;
+    }
+
+    private static android.content.Intent buildHomeIntent(java.lang.String)
+    {
+        java.lang.String r0;
+        android.content.Intent $r2;
+
+        r0 := @parameter0: java.lang.String;
+
+        $r2 = new android.content.Intent;
+
+        specialinvoke $r2.<android.content.Intent: void <init>(java.lang.String)>("android.intent.action.MAIN");
+
+        virtualinvoke $r2.<android.content.Intent: android.content.Intent addCategory(java.lang.String)>(r0);
+
+        virtualinvoke $r2.<android.content.Intent: android.content.Intent setFlags(int)>(270532608);
+
+        return $r2;
+    }
+
+    private void cancelCustomAlarm()
+    {
+        com.android.server.UiModeManagerService r0;
+        android.app.AlarmManager$OnAlarmListener $r1;
+        android.app.AlarmManager $r2;
+
+        r0 := @this: com.android.server.UiModeManagerService;
+
+        $r2 = r0.<com.android.server.UiModeManagerService: android.app.AlarmManager mAlarmManager>;
+
+        $r1 = r0.<com.android.server.UiModeManagerService: android.app.AlarmManager$OnAlarmListener mCustomTimeListener>;
+
+        virtualinvoke $r2.<android.app.AlarmManager: void cancel(android.app.AlarmManager$OnAlarmListener)>($r1);
+
+        return;
+    }
+
+    private boolean computeCustomNightMode()
+    {
+        com.android.server.UiModeManagerService r0;
+        java.time.LocalTime $r1, $r2, $r3;
+        boolean $z0;
+
+        r0 := @this: com.android.server.UiModeManagerService;
+
+        $r1 = staticinvoke <java.time.LocalTime: java.time.LocalTime now()>();
+
+        $r3 = r0.<com.android.server.UiModeManagerService: java.time.LocalTime mCustomAutoNightModeStartMilliseconds>;
+
+        $r2 = r0.<com.android.server.UiModeManagerService: java.time.LocalTime mCustomAutoNightModeEndMilliseconds>;
+
+        $z0 = staticinvoke <android.util.TimeUtils: boolean isTimeBetween(java.time.LocalTime,java.time.LocalTime,java.time.LocalTime)>($r1, $r3, $r2);
+
+        return $z0;
+    }
+
+    private void disableCarMode(int, int, java.lang.String)
+    {
+        com.android.server.UiModeManagerService r0;
+        int i0, $i1, $i3, i4;
+        boolean z1, $z2, $z3, z4, z5, z6;
+        java.lang.String r1, $r10, $r22, $r26, r27;
+        java.util.Map $r2, $r11, $r15, $r17, $r23;
+        java.util.Set $r3, $r16;
+        java.lang.Integer $r4, $r12, $r20, $r24;
+        java.lang.StringBuilder $r5;
+        android.util.ArraySet $r14;
+        java.lang.Object $r18, $r19, $r21, $r25;
+        java.util.Iterator r30;
+        java.util.Map$Entry r31;
+
+        r0 := @this: com.android.server.UiModeManagerService;
+
+        i4 := @parameter0: int;
+
+        i0 := @parameter1: int;
+
+        r27 := @parameter2: java.lang.String;
+
+        $i1 = i4 & 2;
+
+        if $i1 == 0 goto label01;
+
+        z4 = 1;
+
+        goto label02;
+
+     label01:
+        z4 = 0;
+
+     label02:
+        $r2 = r0.<com.android.server.UiModeManagerService: java.util.Map mCarModePackagePriority>;
+
+        $r3 = interfaceinvoke $r2.<java.util.Map: java.util.Set keySet()>();
+
+        $r4 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i0);
+
+        z1 = interfaceinvoke $r3.<java.util.Set: boolean contains(java.lang.Object)>($r4);
+
+        if i0 != 0 goto label03;
+
+        z5 = 1;
+
+        goto label04;
+
+     label03:
+        z5 = 0;
+
+     label04:
+        if z5 != 0 goto label08;
+
+        if z1 == 0 goto label05;
+
+        $r23 = r0.<com.android.server.UiModeManagerService: java.util.Map mCarModePackagePriority>;
+
+        $r24 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i0);
+
+        $r25 = interfaceinvoke $r23.<java.util.Map: java.lang.Object get(java.lang.Object)>($r24);
+
+        $r26 = (java.lang.String) $r25;
+
+        $z3 = virtualinvoke $r26.<java.lang.String: boolean equals(java.lang.Object)>(r27);
+
+        if $z3 != 0 goto label06;
+
+     label05:
+        if z4 == 0 goto label07;
+
+     label06:
+        goto label08;
+
+     label07:
+        z6 = 0;
+
+        goto label09;
+
+     label08:
+        z6 = 1;
+
+     label09:
+        if z6 == 0 goto label13;
+
+        r1 = <com.android.server.UiModeManagerService: java.lang.String TAG>;
+
+        $r5 = new java.lang.StringBuilder;
+
+        specialinvoke $r5.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("disableCarMode: disabling, priority=");
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", packageName=");
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r27);
+
+        $r10 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>(r1, $r10);
+
+        if z4 == 0 goto label12;
+
+        $r14 = new android.util.ArraySet;
+
+        $r15 = r0.<com.android.server.UiModeManagerService: java.util.Map mCarModePackagePriority>;
+
+        $r16 = interfaceinvoke $r15.<java.util.Map: java.util.Set entrySet()>();
+
+        specialinvoke $r14.<android.util.ArraySet: void <init>(java.util.Collection)>($r16);
+
+        $r17 = r0.<com.android.server.UiModeManagerService: java.util.Map mCarModePackagePriority>;
+
+        interfaceinvoke $r17.<java.util.Map: void clear()>();
+
+        r30 = interfaceinvoke $r14.<java.util.Set: java.util.Iterator iterator()>();
+
+     label10:
+        $z2 = interfaceinvoke r30.<java.util.Iterator: boolean hasNext()>();
+
+        if $z2 == 0 goto label11;
+
+        $r18 = interfaceinvoke r30.<java.util.Iterator: java.lang.Object next()>();
+
+        r31 = (java.util.Map$Entry) $r18;
+
+        $r19 = interfaceinvoke r31.<java.util.Map$Entry: java.lang.Object getKey()>();
+
+        $r20 = (java.lang.Integer) $r19;
+
+        $i3 = virtualinvoke $r20.<java.lang.Integer: int intValue()>();
+
+        $r21 = interfaceinvoke r31.<java.util.Map$Entry: java.lang.Object getValue()>();
+
+        $r22 = (java.lang.String) $r21;
+
+        specialinvoke r0.<com.android.server.UiModeManagerService: void notifyCarModeDisabled(int,java.lang.String)>($i3, $r22);
+
+        goto label10;
+
+     label11:
+        goto label13;
+
+     label12:
+        $r11 = r0.<com.android.server.UiModeManagerService: java.util.Map mCarModePackagePriority>;
+
+        $r12 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i0);
+
+        interfaceinvoke $r11.<java.util.Map: java.lang.Object remove(java.lang.Object)>($r12);
+
+        specialinvoke r0.<com.android.server.UiModeManagerService: void notifyCarModeDisabled(int,java.lang.String)>(i0, r27);
+
+     label13:
+        return;
+    }
+
+    private void enableCarMode(int, java.lang.String)
+    {
+        com.android.server.UiModeManagerService r0;
+        int i0;
+        boolean z0, z1;
+        java.util.Map $r2, $r4, $r16;
+        java.lang.Integer $r3, $r17;
+        java.lang.StringBuilder $r5, $r10;
+        java.lang.String $r9, $r15, r19, r20, r21;
+
+        r0 := @this: com.android.server.UiModeManagerService;
+
+        i0 := @parameter0: int;
+
+        r19 := @parameter1: java.lang.String;
+
+        $r2 = r0.<com.android.server.UiModeManagerService: java.util.Map mCarModePackagePriority>;
+
+        $r3 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i0);
+
+        z0 = interfaceinvoke $r2.<java.util.Map: boolean containsKey(java.lang.Object)>($r3);
+
+        $r4 = r0.<com.android.server.UiModeManagerService: java.util.Map mCarModePackagePriority>;
+
+        z1 = interfaceinvoke $r4.<java.util.Map: boolean containsValue(java.lang.Object)>(r19);
+
+        if z0 != 0 goto label1;
+
+        if z1 != 0 goto label1;
+
+        r20 = <com.android.server.UiModeManagerService: java.lang.String TAG>;
+
+        $r10 = new java.lang.StringBuilder;
+
+        specialinvoke $r10.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("enableCarMode: enabled at priority=");
+
+        virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", packageName=");
+
+        virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r19);
+
+        $r15 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>(r20, $r15);
+
+        $r16 = r0.<com.android.server.UiModeManagerService: java.util.Map mCarModePackagePriority>;
+
+        $r17 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i0);
+
+        interfaceinvoke $r16.<java.util.Map: java.lang.Object put(java.lang.Object,java.lang.Object)>($r17, r19);
+
+        specialinvoke r0.<com.android.server.UiModeManagerService: void notifyCarModeEnabled(int,java.lang.String)>(i0, r19);
+
+        goto label2;
+
+     label1:
+        r21 = <com.android.server.UiModeManagerService: java.lang.String TAG>;
+
+        $r5 = new java.lang.StringBuilder;
+
+        specialinvoke $r5.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("enableCarMode: car mode at priority ");
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" already enabled.");
+
+        $r9 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>(r21, $r9);
+
+     label2:
+        return;
+    }
+
+    private static java.time.LocalTime fromMilliseconds(long)
+    {
+        long l0, $l1;
+        java.time.LocalTime $r0;
+
+        l0 := @parameter0: long;
+
+        $l1 = 1000L * l0;
+
+        $r0 = staticinvoke <java.time.LocalTime: java.time.LocalTime ofNanoOfDay(long)>($l1);
+
+        return $r0;
+    }
+
+    private int getComputedUiModeConfiguration(int)
+    {
+        com.android.server.UiModeManagerService r0;
+        int i0, $i1, $i2;
+        boolean $z0, $z1;
+        byte b3, b4;
+
+        r0 := @this: com.android.server.UiModeManagerService;
+
+        i0 := @parameter0: int;
+
+        $z0 = r0.<com.android.server.UiModeManagerService: boolean mComputedNightMode>;
+
+        if $z0 == 0 goto label1;
+
+        b3 = 32;
+
+        goto label2;
+
+     label1:
+        b3 = 16;
+
+     label2:
+        $z1 = r0.<com.android.server.UiModeManagerService: boolean mComputedNightMode>;
+
+        if $z1 == 0 goto label3;
+
+        b4 = -17;
+
+        goto label4;
+
+     label3:
+        b4 = -33;
+
+     label4:
+        $i1 = i0 | b3;
+
+        $i2 = $i1 & b4;
+
+        return $i2;
+    }
+
+    private java.time.LocalDateTime getDateTimeAfter(java.time.LocalTime, java.time.LocalDateTime)
+    {
+        com.android.server.UiModeManagerService r0;
+        java.time.LocalDateTime r1, r4;
+        java.time.LocalDate $r2;
+        boolean $z0;
+        java.time.LocalTime r3;
+
+        r0 := @this: com.android.server.UiModeManagerService;
+
+        r3 := @parameter0: java.time.LocalTime;
+
+        r1 := @parameter1: java.time.LocalDateTime;
+
+        $r2 = virtualinvoke r1.<java.time.LocalDateTime: java.time.LocalDate toLocalDate()>();
+
+        r4 = staticinvoke <java.time.LocalDateTime: java.time.LocalDateTime of(java.time.LocalDate,java.time.LocalTime)>($r2, r3);
+
+        $z0 = virtualinvoke r4.<java.time.LocalDateTime: boolean isBefore(java.time.chrono.ChronoLocalDateTime)>(r1);
+
+        if $z0 == 0 goto label1;
+
+        r4 = virtualinvoke r4.<java.time.LocalDateTime: java.time.LocalDateTime plusDays(long)>(1L);
+
+        goto label1;
+
+     label1:
+        return r4;
+    }
+
+    private void initPowerSave()
+    {
+        com.android.server.UiModeManagerService r0;
+        android.os.PowerManagerInternal $r1, $r4;
+        android.os.PowerSaveState $r2;
+        boolean $z0;
+        com.android.server._$$Lambda$UiModeManagerService$VLNn_GQ5Eu6ftBtzL1gH0sSXyCk $r3;
+
+        r0 := @this: com.android.server.UiModeManagerService;
+
+        $r1 = r0.<com.android.server.UiModeManagerService: android.os.PowerManagerInternal mLocalPowerManager>;
+
+        $r2 = virtualinvoke $r1.<android.os.PowerManagerInternal: android.os.PowerSaveState getLowPowerState(int)>(16);
+
+        $z0 = $r2.<android.os.PowerSaveState: boolean batterySaverEnabled>;
+
+        r0.<com.android.server.UiModeManagerService: boolean mPowerSave> = $z0;
+
+        $r4 = r0.<com.android.server.UiModeManagerService: android.os.PowerManagerInternal mLocalPowerManager>;
+
+        $r3 = new com.android.server._$$Lambda$UiModeManagerService$VLNn_GQ5Eu6ftBtzL1gH0sSXyCk;
+
+        specialinvoke $r3.<com.android.server._$$Lambda$UiModeManagerService$VLNn_GQ5Eu6ftBtzL1gH0sSXyCk: void <init>(com.android.server.UiModeManagerService)>(r0);
+
+        virtualinvoke $r4.<android.os.PowerManagerInternal: void registerLowPowerModeObserver(int,java.util.function.Consumer)>(16, $r3);
+
+        return;
+    }
+
+    private boolean isCarModeEnabled()
+    {
+        com.android.server.UiModeManagerService r0;
+        java.util.Map $r1;
+        int $i0;
+        boolean z0;
+
+        r0 := @this: com.android.server.UiModeManagerService;
+
+        $r1 = r0.<com.android.server.UiModeManagerService: java.util.Map mCarModePackagePriority>;
+
+        $i0 = interfaceinvoke $r1.<java.util.Map: int size()>();
+
+        if $i0 <= 0 goto label1;
+
+        z0 = 1;
+
+        goto label2;
+
+     label1:
+        z0 = 0;
+
+     label2:
+        return z0;
+    }
+
+    private static boolean isDeskDockState(int)
+    {
+        int i0;
+
+        i0 := @parameter0: int;
+
+        if i0 == 1 goto label1;
+
+        if i0 == 3 goto label1;
+
+        if i0 == 4 goto label1;
+
+        return 0;
+
+     label1:
+        return 1;
+    }
+
+    private void notifyCarModeDisabled(int, java.lang.String)
+    {
+        com.android.server.UiModeManagerService r0;
+        int i0;
+        java.lang.String r1;
+        android.content.Intent $r3;
+        android.content.Context $r6;
+        android.os.UserHandle $r7;
+
+        r0 := @this: com.android.server.UiModeManagerService;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: java.lang.String;
+
+        $r3 = new android.content.Intent;
+
+        specialinvoke $r3.<android.content.Intent: void <init>(java.lang.String)>("android.app.action.EXIT_CAR_MODE_PRIORITIZED");
+
+        virtualinvoke $r3.<android.content.Intent: android.content.Intent putExtra(java.lang.String,java.lang.String)>("android.app.extra.CALLING_PACKAGE", r1);
+
+        virtualinvoke $r3.<android.content.Intent: android.content.Intent putExtra(java.lang.String,int)>("android.app.extra.PRIORITY", i0);
+
+        $r6 = virtualinvoke r0.<com.android.server.UiModeManagerService: android.content.Context getContext()>();
+
+        $r7 = <android.os.UserHandle: android.os.UserHandle ALL>;
+
+        virtualinvoke $r6.<android.content.Context: void sendBroadcastAsUser(android.content.Intent,android.os.UserHandle,java.lang.String)>($r3, $r7, "android.permission.HANDLE_CAR_MODE_CHANGES");
+
+        return;
+    }
+
+    private void notifyCarModeEnabled(int, java.lang.String)
+    {
+        com.android.server.UiModeManagerService r0;
+        int i0;
+        java.lang.String r1;
+        android.content.Intent $r3;
+        android.content.Context $r6;
+        android.os.UserHandle $r7;
+
+        r0 := @this: com.android.server.UiModeManagerService;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: java.lang.String;
+
+        $r3 = new android.content.Intent;
+
+        specialinvoke $r3.<android.content.Intent: void <init>(java.lang.String)>("android.app.action.ENTER_CAR_MODE_PRIORITIZED");
+
+        virtualinvoke $r3.<android.content.Intent: android.content.Intent putExtra(java.lang.String,java.lang.String)>("android.app.extra.CALLING_PACKAGE", r1);
+
+        virtualinvoke $r3.<android.content.Intent: android.content.Intent putExtra(java.lang.String,int)>("android.app.extra.PRIORITY", i0);
+
+        $r6 = virtualinvoke r0.<com.android.server.UiModeManagerService: android.content.Context getContext()>();
+
+        $r7 = <android.os.UserHandle: android.os.UserHandle ALL>;
+
+        virtualinvoke $r6.<android.content.Context: void sendBroadcastAsUser(android.content.Intent,android.os.UserHandle,java.lang.String)>($r3, $r7, "android.permission.HANDLE_CAR_MODE_CHANGES");
+
+        return;
+    }
+
+    private void onCustomTimeUpdated(int)
+    {
+        com.android.server.UiModeManagerService r0;
+        int i0, $i1;
+        boolean $z0;
+
+        r0 := @this: com.android.server.UiModeManagerService;
+
+        i0 := @parameter0: int;
+
+        specialinvoke r0.<com.android.server.UiModeManagerService: void persistNightMode(int)>(i0);
+
+        $i1 = r0.<com.android.server.UiModeManagerService: int mNightMode>;
+
+        if $i1 == 3 goto label1;
+
+        return;
+
+     label1:
+        $z0 = specialinvoke r0.<com.android.server.UiModeManagerService: boolean shouldApplyAutomaticChangesImmediately()>();
+
+        if $z0 == 0 goto label2;
+
+        specialinvoke r0.<com.android.server.UiModeManagerService: void unregisterScreenOffEventLocked()>();
+
+        virtualinvoke r0.<com.android.server.UiModeManagerService: void updateLocked(int,int)>(0, 0);
+
+        goto label3;
+
+     label2:
+        specialinvoke r0.<com.android.server.UiModeManagerService: void registerScreenOffEventLocked()>();
+
+     label3:
+        return;
+    }
+
+    private void persistNightMode(int)
+    {
+        com.android.server.UiModeManagerService r0;
+        int i0, $i1;
+        boolean $z0;
+        android.content.Context $r1, $r3, $r6;
+        android.content.ContentResolver $r2, $r4, $r7;
+        java.time.LocalTime $r5, $r8;
+        long $l2, $l3, $l4, $l5;
+
+        r0 := @this: com.android.server.UiModeManagerService;
+
+        i0 := @parameter0: int;
+
+        $z0 = r0.<com.android.server.UiModeManagerService: boolean mCarModeEnabled>;
+
+        if $z0 == 0 goto label1;
+
+        return;
+
+     label1:
+        $r1 = virtualinvoke r0.<com.android.server.UiModeManagerService: android.content.Context getContext()>();
+
+        $r2 = virtualinvoke $r1.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        $i1 = r0.<com.android.server.UiModeManagerService: int mNightMode>;
+
+        staticinvoke <android.provider.Settings$Secure: boolean putIntForUser(android.content.ContentResolver,java.lang.String,int,int)>($r2, "ui_night_mode", $i1, i0);
+
+        $r3 = virtualinvoke r0.<com.android.server.UiModeManagerService: android.content.Context getContext()>();
+
+        $r4 = virtualinvoke $r3.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        $r5 = r0.<com.android.server.UiModeManagerService: java.time.LocalTime mCustomAutoNightModeStartMilliseconds>;
+
+        $l2 = virtualinvoke $r5.<java.time.LocalTime: long toNanoOfDay()>();
+
+        $l3 = $l2 / 1000L;
+
+        staticinvoke <android.provider.Settings$Secure: boolean putLongForUser(android.content.ContentResolver,java.lang.String,long,int)>($r4, "dark_theme_custom_start_time", $l3, i0);
+
+        $r6 = virtualinvoke r0.<com.android.server.UiModeManagerService: android.content.Context getContext()>();
+
+        $r7 = virtualinvoke $r6.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        $r8 = r0.<com.android.server.UiModeManagerService: java.time.LocalTime mCustomAutoNightModeEndMilliseconds>;
+
+        $l4 = virtualinvoke $r8.<java.time.LocalTime: long toNanoOfDay()>();
+
+        $l5 = $l4 / 1000L;
+
+        staticinvoke <android.provider.Settings$Secure: boolean putLongForUser(android.content.ContentResolver,java.lang.String,long,int)>($r7, "dark_theme_custom_end_time", $l5, i0);
+
+        return;
+    }
+
+    private void persistNightModeOverrides(int)
+    {
+        com.android.server.UiModeManagerService r0;
+        int i0, i1, i2;
+        boolean $z0, $z1, $z3;
+        android.content.Context $r1, $r3;
+        android.content.ContentResolver $r2, $r4;
+
+        r0 := @this: com.android.server.UiModeManagerService;
+
+        i0 := @parameter0: int;
+
+        $z0 = r0.<com.android.server.UiModeManagerService: boolean mCarModeEnabled>;
+
+        if $z0 == 0 goto label1;
+
+        return;
+
+     label1:
+        $r1 = virtualinvoke r0.<com.android.server.UiModeManagerService: android.content.Context getContext()>();
+
+        $r2 = virtualinvoke $r1.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        $z1 = r0.<com.android.server.UiModeManagerService: boolean mOverrideNightModeOn>;
+
+        i1 = (int) $z1;
+
+        staticinvoke <android.provider.Settings$Secure: boolean putIntForUser(android.content.ContentResolver,java.lang.String,int,int)>($r2, "ui_night_mode_override_on", i1, i0);
+
+        $r3 = virtualinvoke r0.<com.android.server.UiModeManagerService: android.content.Context getContext()>();
+
+        $r4 = virtualinvoke $r3.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        $z3 = r0.<com.android.server.UiModeManagerService: boolean mOverrideNightModeOff>;
+
+        i2 = (int) $z3;
+
+        staticinvoke <android.provider.Settings$Secure: boolean putIntForUser(android.content.ContentResolver,java.lang.String,int,int)>($r4, "ui_night_mode_override_off", i2, i0);
+
+        return;
+    }
+
+    private void registerScreenOffEventLocked()
+    {
+        com.android.server.UiModeManagerService r0;
+        boolean $z0;
+        android.content.IntentFilter $r2;
+        android.content.Context $r3;
+        android.content.BroadcastReceiver $r4;
+
+        r0 := @this: com.android.server.UiModeManagerService;
+
+        $z0 = r0.<com.android.server.UiModeManagerService: boolean mPowerSave>;
+
+        if $z0 == 0 goto label1;
+
+        return;
+
+     label1:
+        r0.<com.android.server.UiModeManagerService: boolean mWaitForScreenOff> = 1;
+
+        $r2 = new android.content.IntentFilter;
+
+        specialinvoke $r2.<android.content.IntentFilter: void <init>(java.lang.String)>("android.intent.action.SCREEN_OFF");
+
+        $r3 = virtualinvoke r0.<com.android.server.UiModeManagerService: android.content.Context getContext()>();
+
+        $r4 = r0.<com.android.server.UiModeManagerService: android.content.BroadcastReceiver mOnScreenOffHandler>;
+
+        virtualinvoke $r3.<android.content.Context: android.content.Intent registerReceiver(android.content.BroadcastReceiver,android.content.IntentFilter)>($r4, $r2);
+
+        return;
+    }
+
+    private void registerTimeChangeEvent()
+    {
+        com.android.server.UiModeManagerService r0;
+        android.content.IntentFilter $r2;
+        android.content.Context $r3;
+        android.content.BroadcastReceiver $r4;
+
+        r0 := @this: com.android.server.UiModeManagerService;
+
+        $r2 = new android.content.IntentFilter;
+
+        specialinvoke $r2.<android.content.IntentFilter: void <init>(java.lang.String)>("android.intent.action.TIME_SET");
+
+        virtualinvoke $r2.<android.content.IntentFilter: void addAction(java.lang.String)>("android.intent.action.TIMEZONE_CHANGED");
+
+        $r3 = virtualinvoke r0.<com.android.server.UiModeManagerService: android.content.Context getContext()>();
+
+        $r4 = r0.<com.android.server.UiModeManagerService: android.content.BroadcastReceiver mOnTimeChangedHandler>;
+
+        virtualinvoke $r3.<android.content.Context: android.content.Intent registerReceiver(android.content.BroadcastReceiver,android.content.IntentFilter)>($r4, $r2);
+
+        return;
+    }
+
+    private void registerVrStateListener()
+    {
+        com.android.server.UiModeManagerService r0;
+        java.lang.String r2, $r9;
+        android.os.IBinder $r3;
+        android.service.vr.IVrStateCallbacks $r4;
+        android.os.RemoteException $r5;
+        java.lang.StringBuilder $r6;
+        android.service.vr.IVrManager r10;
+
+        r0 := @this: com.android.server.UiModeManagerService;
+
+        $r3 = staticinvoke <android.os.ServiceManager: android.os.IBinder getService(java.lang.String)>("vrmanager");
+
+        r10 = staticinvoke <android.service.vr.IVrManager$Stub: android.service.vr.IVrManager asInterface(android.os.IBinder)>($r3);
+
+        if r10 == null goto label4;
+
+     label1:
+        $r4 = r0.<com.android.server.UiModeManagerService: android.service.vr.IVrStateCallbacks mVrStateCallbacks>;
+
+        interfaceinvoke r10.<android.service.vr.IVrManager: void registerListener(android.service.vr.IVrStateCallbacks)>($r4);
+
+     label2:
+        goto label4;
+
+     label3:
+        $r5 := @caughtexception;
+
+        r2 = <com.android.server.UiModeManagerService: java.lang.String TAG>;
+
+        $r6 = new java.lang.StringBuilder;
+
+        specialinvoke $r6.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Failed to register VR mode state listener: ");
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r5);
+
+        $r9 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>(r2, $r9);
+
+        goto label4;
+
+     label4:
+        return;
+
+        catch android.os.RemoteException from label1 to label2 with label3;
+    }
+
+    private boolean resetNightModeOverrideLocked()
+    {
+        com.android.server.UiModeManagerService r0;
+        boolean $z0, $z1;
+        int $i0;
+
+        r0 := @this: com.android.server.UiModeManagerService;
+
+        $z0 = r0.<com.android.server.UiModeManagerService: boolean mOverrideNightModeOff>;
+
+        if $z0 != 0 goto label2;
+
+        $z1 = r0.<com.android.server.UiModeManagerService: boolean mOverrideNightModeOn>;
+
+        if $z1 == 0 goto label1;
+
+        goto label2;
+
+     label1:
+        return 0;
+
+     label2:
+        r0.<com.android.server.UiModeManagerService: boolean mOverrideNightModeOff> = 0;
+
+        r0.<com.android.server.UiModeManagerService: boolean mOverrideNightModeOn> = 0;
+
+        $i0 = r0.<com.android.server.UiModeManagerService: int mOverrideNightModeUser>;
+
+        specialinvoke r0.<com.android.server.UiModeManagerService: void persistNightModeOverrides(int)>($i0);
+
+        r0.<com.android.server.UiModeManagerService: int mOverrideNightModeUser> = 0;
+
+        return 1;
+    }
+
+    private void scheduleNextCustomTimeListener()
+    {
+        com.android.server.UiModeManagerService r0;
+        long l0;
+        boolean $z0;
+        java.time.LocalTime $r1, $r8;
+        java.time.ZoneId $r2;
+        java.time.ZonedDateTime $r3;
+        java.time.Instant $r4;
+        android.app.AlarmManager$OnAlarmListener $r5;
+        java.lang.String $r6;
+        android.app.AlarmManager $r7;
+        java.time.LocalDateTime r9, r10;
+
+        r0 := @this: com.android.server.UiModeManagerService;
+
+        specialinvoke r0.<com.android.server.UiModeManagerService: void cancelCustomAlarm()>();
+
+        r9 = staticinvoke <java.time.LocalDateTime: java.time.LocalDateTime now()>();
+
+        $z0 = specialinvoke r0.<com.android.server.UiModeManagerService: boolean computeCustomNightMode()>();
+
+        if $z0 == 0 goto label1;
+
+        $r8 = r0.<com.android.server.UiModeManagerService: java.time.LocalTime mCustomAutoNightModeEndMilliseconds>;
+
+        r10 = specialinvoke r0.<com.android.server.UiModeManagerService: java.time.LocalDateTime getDateTimeAfter(java.time.LocalTime,java.time.LocalDateTime)>($r8, r9);
+
+        goto label2;
+
+     label1:
+        $r1 = r0.<com.android.server.UiModeManagerService: java.time.LocalTime mCustomAutoNightModeStartMilliseconds>;
+
+        r10 = specialinvoke r0.<com.android.server.UiModeManagerService: java.time.LocalDateTime getDateTimeAfter(java.time.LocalTime,java.time.LocalDateTime)>($r1, r9);
+
+     label2:
+        $r2 = staticinvoke <java.time.ZoneId: java.time.ZoneId systemDefault()>();
+
+        $r3 = virtualinvoke r10.<java.time.LocalDateTime: java.time.ZonedDateTime atZone(java.time.ZoneId)>($r2);
+
+        $r4 = virtualinvoke $r3.<java.time.ZonedDateTime: java.time.Instant toInstant()>();
+
+        l0 = virtualinvoke $r4.<java.time.Instant: long toEpochMilli()>();
+
+        $r7 = r0.<com.android.server.UiModeManagerService: android.app.AlarmManager mAlarmManager>;
+
+        $r6 = <com.android.server.UiModeManagerService: java.lang.String TAG>;
+
+        $r5 = r0.<com.android.server.UiModeManagerService: android.app.AlarmManager$OnAlarmListener mCustomTimeListener>;
+
+        virtualinvoke $r7.<android.app.AlarmManager: void setExact(int,long,java.lang.String,android.app.AlarmManager$OnAlarmListener,android.os.Handler)>(1, l0, $r6, $r5, null);
+
+        return;
+    }
+
+    private void sendConfigurationAndStartDreamOrDockAppLocked(java.lang.String)
+    {
+        com.android.server.UiModeManagerService r0;
+        java.lang.String r1, $r12, r19, r20, r21, r24, $r27;
+        android.content.Intent r2;
+        android.content.res.Configuration r3;
+        android.content.Context $r4, $r5, $r6, $r7;
+        boolean $z2, $z3, z4;
+        android.os.RemoteException $r13, $r16, $r17, r23;
+        android.app.IActivityTaskManager r18;
+        int i2;
+        java.lang.StringBuilder r22, $r25;
+
+        r0 := @this: com.android.server.UiModeManagerService;
+
+        r1 := @parameter0: java.lang.String;
+
+        r0.<com.android.server.UiModeManagerService: boolean mHoldingConfiguration> = 0;
+
+        specialinvoke r0.<com.android.server.UiModeManagerService: void updateConfigurationLocked()>();
+
+        z4 = 0;
+
+        if r1 == null goto label15;
+
+        r2 = staticinvoke <com.android.server.UiModeManagerService: android.content.Intent buildHomeIntent(java.lang.String)>(r1);
+
+        $r5 = virtualinvoke r0.<com.android.server.UiModeManagerService: android.content.Context getContext()>();
+
+        $z2 = staticinvoke <android.service.dreams.Sandman: boolean shouldStartDockApp(android.content.Context,android.content.Intent)>($r5, r2);
+
+        if $z2 == 0 goto label14;
+
+     label01:
+        r18 = staticinvoke <android.app.ActivityTaskManager: android.app.IActivityTaskManager getService()>();
+
+        $r6 = virtualinvoke r0.<com.android.server.UiModeManagerService: android.content.Context getContext()>();
+
+        r19 = virtualinvoke $r6.<android.content.Context: java.lang.String getBasePackageName()>();
+
+        $r7 = virtualinvoke r0.<com.android.server.UiModeManagerService: android.content.Context getContext()>();
+
+        r20 = virtualinvoke $r7.<android.content.Context: java.lang.String getAttributionTag()>();
+
+        r3 = r0.<com.android.server.UiModeManagerService: android.content.res.Configuration mConfiguration>;
+
+     label02:
+        i2 = interfaceinvoke r18.<android.app.IActivityTaskManager: int startActivityWithConfig(android.app.IApplicationThread,java.lang.String,java.lang.String,android.content.Intent,java.lang.String,android.os.IBinder,java.lang.String,int,int,android.content.res.Configuration,android.os.Bundle,int)>(null, r19, r20, r2, null, null, null, 0, 0, r3, null, -2);
+
+        $z3 = staticinvoke <android.app.ActivityManager: boolean isStartResultSuccessful(int)>(i2);
+
+        if $z3 == 0 goto label04;
+
+     label03:
+        z4 = 1;
+
+        goto label10;
+
+     label04:
+        if i2 == -91 goto label09;
+
+     label05:
+        r21 = <com.android.server.UiModeManagerService: java.lang.String TAG>;
+
+        r22 = new java.lang.StringBuilder;
+
+        specialinvoke r22.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r22.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Could not start dock app: ");
+
+     label06:
+        virtualinvoke r22.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r2);
+
+        virtualinvoke r22.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", startActivityWithConfig result ");
+
+        virtualinvoke r22.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i2);
+
+        $r12 = virtualinvoke r22.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>(r21, $r12);
+
+     label07:
+        z4 = 0;
+
+        goto label10;
+
+     label08:
+        $r13 := @caughtexception;
+
+        r23 = $r13;
+
+        goto label13;
+
+     label09:
+        z4 = 0;
+
+     label10:
+        goto label15;
+
+     label11:
+        $r16 := @caughtexception;
+
+        r23 = $r16;
+
+        goto label13;
+
+     label12:
+        $r17 := @caughtexception;
+
+        r23 = $r17;
+
+     label13:
+        r24 = <com.android.server.UiModeManagerService: java.lang.String TAG>;
+
+        $r25 = new java.lang.StringBuilder;
+
+        specialinvoke $r25.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r25.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Could not start dock app: ");
+
+        virtualinvoke $r25.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r2);
+
+        $r27 = virtualinvoke $r25.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>(r24, $r27, r23);
+
+        z4 = 0;
+
+        goto label15;
+
+     label14:
+        z4 = 0;
+
+     label15:
+        specialinvoke r0.<com.android.server.UiModeManagerService: void applyConfigurationExternallyLocked()>();
+
+        if r1 == null goto label16;
+
+        if z4 != 0 goto label16;
+
+        $r4 = virtualinvoke r0.<com.android.server.UiModeManagerService: android.content.Context getContext()>();
+
+        staticinvoke <android.service.dreams.Sandman: void startDreamWhenDockedIfAppropriate(android.content.Context)>($r4);
+
+     label16:
+        return;
+
+        catch android.os.RemoteException from label01 to label02 with label12;
+        catch android.os.RemoteException from label02 to label03 with label11;
+        catch android.os.RemoteException from label05 to label06 with label11;
+        catch android.os.RemoteException from label06 to label07 with label08;
+    }
+
+    private void sendForegroundBroadcastToAllUsers(java.lang.String)
+    {
+        com.android.server.UiModeManagerService r0;
+        java.lang.String r1;
+        android.content.Context $r2;
+        android.content.Intent $r3, $r4;
+        android.os.UserHandle $r5;
+
+        r0 := @this: com.android.server.UiModeManagerService;
+
+        r1 := @parameter0: java.lang.String;
+
+        $r2 = virtualinvoke r0.<com.android.server.UiModeManagerService: android.content.Context getContext()>();
+
+        $r3 = new android.content.Intent;
+
+        specialinvoke $r3.<android.content.Intent: void <init>(java.lang.String)>(r1);
+
+        $r4 = virtualinvoke $r3.<android.content.Intent: android.content.Intent addFlags(int)>(268435456);
+
+        $r5 = <android.os.UserHandle: android.os.UserHandle ALL>;
+
+        virtualinvoke $r2.<android.content.Context: void sendBroadcastAsUser(android.content.Intent,android.os.UserHandle)>($r4, $r5);
+
+        return;
+    }
+
+    private boolean setupWizardCompleteForCurrentUser()
+    {
+        com.android.server.UiModeManagerService r0;
+        android.content.ContentResolver r1;
+        int i0, $i1;
+        android.content.Context $r2;
+        boolean z0;
+
+        r0 := @this: com.android.server.UiModeManagerService;
+
+        $r2 = virtualinvoke r0.<com.android.server.UiModeManagerService: android.content.Context getContext()>();
+
+        r1 = virtualinvoke $r2.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        i0 = staticinvoke <android.os.UserHandle: int getCallingUserId()>();
+
+        z0 = 0;
+
+        $i1 = staticinvoke <android.provider.Settings$Secure: int getIntForUser(android.content.ContentResolver,java.lang.String,int,int)>(r1, "user_setup_complete", 0, i0);
+
+        if $i1 != 1 goto label1;
+
+        z0 = 1;
+
+     label1:
+        return z0;
+    }
+
+    private boolean shouldApplyAutomaticChangesImmediately()
+    {
+        com.android.server.UiModeManagerService r0;
+        boolean $z0, $z1, z2;
+        android.os.PowerManager $r1;
+
+        r0 := @this: com.android.server.UiModeManagerService;
+
+        $z0 = r0.<com.android.server.UiModeManagerService: boolean mCar>;
+
+        if $z0 != 0 goto label2;
+
+        $r1 = r0.<com.android.server.UiModeManagerService: android.os.PowerManager mPowerManager>;
+
+        $z1 = virtualinvoke $r1.<android.os.PowerManager: boolean isInteractive()>();
+
+        if $z1 != 0 goto label1;
+
+        goto label2;
+
+     label1:
+        z2 = 0;
+
+        goto label3;
+
+     label2:
+        z2 = 1;
+
+     label3:
+        return z2;
+    }
+
+    private static long toMilliSeconds(java.time.LocalTime)
+    {
+        java.time.LocalTime r0;
+        long $l0, $l1;
+
+        r0 := @parameter0: java.time.LocalTime;
+
+        $l0 = virtualinvoke r0.<java.time.LocalTime: long toNanoOfDay()>();
+
+        $l1 = $l0 / 1000L;
+
+        return $l1;
+    }
+
+    private void unregisterScreenOffEventLocked()
+    {
+        com.android.server.UiModeManagerService r0;
+        android.content.Context $r2;
+        android.content.BroadcastReceiver $r3;
+        java.lang.Throwable $r4;
+
+        r0 := @this: com.android.server.UiModeManagerService;
+
+        r0.<com.android.server.UiModeManagerService: boolean mWaitForScreenOff> = 0;
+
+     label1:
+        $r2 = virtualinvoke r0.<com.android.server.UiModeManagerService: android.content.Context getContext()>();
+
+        $r3 = r0.<com.android.server.UiModeManagerService: android.content.BroadcastReceiver mOnScreenOffHandler>;
+
+        virtualinvoke $r2.<android.content.Context: void unregisterReceiver(android.content.BroadcastReceiver)>($r3);
+
+     label2:
+        goto label4;
+
+     label3:
+        $r4 := @caughtexception;
+
+     label4:
+        return;
+
+        catch java.lang.IllegalArgumentException from label1 to label2 with label3;
+    }
+
+    private void unregisterTimeChangeEvent()
+    {
+        com.android.server.UiModeManagerService r0;
+        android.content.Context $r2;
+        android.content.BroadcastReceiver $r3;
+        java.lang.Throwable $r4;
+
+        r0 := @this: com.android.server.UiModeManagerService;
+
+     label1:
+        $r2 = virtualinvoke r0.<com.android.server.UiModeManagerService: android.content.Context getContext()>();
+
+        $r3 = r0.<com.android.server.UiModeManagerService: android.content.BroadcastReceiver mOnTimeChangedHandler>;
+
+        virtualinvoke $r2.<android.content.Context: void unregisterReceiver(android.content.BroadcastReceiver)>($r3);
+
+     label2:
+        goto label4;
+
+     label3:
+        $r4 := @caughtexception;
+
+     label4:
+        return;
+
+        catch java.lang.IllegalArgumentException from label1 to label2 with label3;
+    }
+
+    private void updateAfterBroadcastLocked(java.lang.String, int, int)
+    {
+        com.android.server.UiModeManagerService r0;
+        int i0, i1, $i2, $i3, $i4;
+        java.lang.String $r1, $r2, r3, r4;
+        boolean $z0, $z1, $z2;
+
+        r0 := @this: com.android.server.UiModeManagerService;
+
+        r3 := @parameter0: java.lang.String;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        $r1 = <android.app.UiModeManager: java.lang.String ACTION_ENTER_CAR_MODE>;
+
+        $z0 = virtualinvoke $r1.<java.lang.String: boolean equals(java.lang.Object)>(r3);
+
+        if $z0 == 0 goto label1;
+
+        r4 = null;
+
+        $z2 = r0.<com.android.server.UiModeManagerService: boolean mEnableCarDockLaunch>;
+
+        if $z2 == 0 goto label3;
+
+        r4 = null;
+
+        $i4 = i0 & 1;
+
+        if $i4 == 0 goto label3;
+
+        r4 = "android.intent.category.CAR_DOCK";
+
+        goto label3;
+
+     label1:
+        $r2 = <android.app.UiModeManager: java.lang.String ACTION_ENTER_DESK_MODE>;
+
+        $z1 = virtualinvoke $r2.<java.lang.String: boolean equals(java.lang.Object)>(r3);
+
+        if $z1 == 0 goto label2;
+
+        r4 = null;
+
+        $i3 = i0 & 1;
+
+        if $i3 == 0 goto label3;
+
+        r4 = "android.intent.category.DESK_DOCK";
+
+        goto label3;
+
+     label2:
+        r4 = null;
+
+        $i2 = i1 & 1;
+
+        if $i2 == 0 goto label3;
+
+        r4 = "android.intent.category.HOME";
+
+     label3:
+        specialinvoke r0.<com.android.server.UiModeManagerService: void sendConfigurationAndStartDreamOrDockAppLocked(java.lang.String)>(r4);
+
+        return;
+    }
+
+    private void updateComputedNightModeLocked(boolean)
+    {
+        com.android.server.UiModeManagerService r0;
+        boolean z0, $z1, $z2, $z4;
+        int i0;
+
+        r0 := @this: com.android.server.UiModeManagerService;
+
+        z0 := @parameter0: boolean;
+
+        r0.<com.android.server.UiModeManagerService: boolean mComputedNightMode> = z0;
+
+        i0 = r0.<com.android.server.UiModeManagerService: int mNightMode>;
+
+        if i0 == 2 goto label4;
+
+        if i0 != 1 goto label1;
+
+        goto label4;
+
+     label1:
+        $z1 = r0.<com.android.server.UiModeManagerService: boolean mOverrideNightModeOn>;
+
+        if $z1 == 0 goto label2;
+
+        if z0 != 0 goto label2;
+
+        r0.<com.android.server.UiModeManagerService: boolean mComputedNightMode> = 1;
+
+        return;
+
+     label2:
+        $z2 = r0.<com.android.server.UiModeManagerService: boolean mOverrideNightModeOff>;
+
+        if $z2 == 0 goto label3;
+
+        $z4 = r0.<com.android.server.UiModeManagerService: boolean mComputedNightMode>;
+
+        if $z4 == 0 goto label3;
+
+        r0.<com.android.server.UiModeManagerService: boolean mComputedNightMode> = 0;
+
+        return;
+
+     label3:
+        specialinvoke r0.<com.android.server.UiModeManagerService: boolean resetNightModeOverrideLocked()>();
+
+        return;
+
+     label4:
+        return;
+    }
+
+    private void updateConfigurationLocked()
+    {
+        com.android.server.UiModeManagerService r0;
+        int i0, $i1, $i2, $i3, i4, $i5, $i6, i7;
+        boolean $z0, $z1, $z2, $z3, $z4, $z5, $z6, $z7, $z8, $z9, $z10, z11, z12, $z13;
+        android.content.res.Configuration $r1;
+        com.android.server.twilight.TwilightListener $r2, $r4;
+        android.os.Handler $r3;
+        com.android.server.twilight.TwilightManager $r5, r6, r8;
+        com.android.server.twilight.TwilightState r7;
+
+        r0 := @this: com.android.server.UiModeManagerService;
+
+        i4 = r0.<com.android.server.UiModeManagerService: int mDefaultUiModeType>;
+
+        $z0 = r0.<com.android.server.UiModeManagerService: boolean mUiModeLocked>;
+
+        if $z0 == 0 goto label01;
+
+        goto label06;
+
+     label01:
+        $z1 = r0.<com.android.server.UiModeManagerService: boolean mTelevision>;
+
+        if $z1 == 0 goto label02;
+
+        i4 = 4;
+
+        goto label06;
+
+     label02:
+        $z2 = r0.<com.android.server.UiModeManagerService: boolean mWatch>;
+
+        if $z2 == 0 goto label03;
+
+        i4 = 6;
+
+        goto label06;
+
+     label03:
+        $z3 = r0.<com.android.server.UiModeManagerService: boolean mCarModeEnabled>;
+
+        if $z3 == 0 goto label04;
+
+        i4 = 3;
+
+        goto label06;
+
+     label04:
+        $i1 = r0.<com.android.server.UiModeManagerService: int mDockState>;
+
+        $z4 = staticinvoke <com.android.server.UiModeManagerService: boolean isDeskDockState(int)>($i1);
+
+        if $z4 == 0 goto label05;
+
+        i4 = 2;
+
+        goto label06;
+
+     label05:
+        $z5 = r0.<com.android.server.UiModeManagerService: boolean mVrHeadset>;
+
+        if $z5 == 0 goto label06;
+
+        i4 = 7;
+
+     label06:
+        i0 = r0.<com.android.server.UiModeManagerService: int mNightMode>;
+
+        z11 = 1;
+
+        if i0 == 2 goto label07;
+
+        if i0 != 1 goto label10;
+
+     label07:
+        $i2 = r0.<com.android.server.UiModeManagerService: int mNightMode>;
+
+        if $i2 != 2 goto label08;
+
+        goto label09;
+
+     label08:
+        z11 = 0;
+
+     label09:
+        specialinvoke r0.<com.android.server.UiModeManagerService: void updateComputedNightModeLocked(boolean)>(z11);
+
+     label10:
+        $i5 = r0.<com.android.server.UiModeManagerService: int mNightMode>;
+
+        if $i5 != 0 goto label13;
+
+        z12 = r0.<com.android.server.UiModeManagerService: boolean mComputedNightMode>;
+
+        r6 = r0.<com.android.server.UiModeManagerService: com.android.server.twilight.TwilightManager mTwilightManager>;
+
+        if r6 == null goto label12;
+
+        $r4 = r0.<com.android.server.UiModeManagerService: com.android.server.twilight.TwilightListener mTwilightListener>;
+
+        $r3 = r0.<com.android.server.UiModeManagerService: android.os.Handler mHandler>;
+
+        interfaceinvoke r6.<com.android.server.twilight.TwilightManager: void registerListener(com.android.server.twilight.TwilightListener,android.os.Handler)>($r4, $r3);
+
+        $r5 = r0.<com.android.server.UiModeManagerService: com.android.server.twilight.TwilightManager mTwilightManager>;
+
+        r7 = interfaceinvoke $r5.<com.android.server.twilight.TwilightManager: com.android.server.twilight.TwilightState getLastTwilightState()>();
+
+        if r7 != null goto label11;
+
+        z12 = r0.<com.android.server.UiModeManagerService: boolean mComputedNightMode>;
+
+        goto label12;
+
+     label11:
+        z12 = virtualinvoke r7.<com.android.server.twilight.TwilightState: boolean isNight()>();
+
+     label12:
+        specialinvoke r0.<com.android.server.UiModeManagerService: void updateComputedNightModeLocked(boolean)>(z12);
+
+        goto label14;
+
+     label13:
+        r8 = r0.<com.android.server.UiModeManagerService: com.android.server.twilight.TwilightManager mTwilightManager>;
+
+        if r8 == null goto label14;
+
+        $r2 = r0.<com.android.server.UiModeManagerService: com.android.server.twilight.TwilightListener mTwilightListener>;
+
+        interfaceinvoke r8.<com.android.server.twilight.TwilightManager: void unregisterListener(com.android.server.twilight.TwilightListener)>($r2);
+
+     label14:
+        $i6 = r0.<com.android.server.UiModeManagerService: int mNightMode>;
+
+        if $i6 != 3 goto label15;
+
+        specialinvoke r0.<com.android.server.UiModeManagerService: void registerTimeChangeEvent()>();
+
+        $z10 = specialinvoke r0.<com.android.server.UiModeManagerService: boolean computeCustomNightMode()>();
+
+        specialinvoke r0.<com.android.server.UiModeManagerService: void updateComputedNightModeLocked(boolean)>($z10);
+
+        specialinvoke r0.<com.android.server.UiModeManagerService: void scheduleNextCustomTimeListener()>();
+
+        goto label16;
+
+     label15:
+        specialinvoke r0.<com.android.server.UiModeManagerService: void unregisterTimeChangeEvent()>();
+
+     label16:
+        $z6 = r0.<com.android.server.UiModeManagerService: boolean mPowerSave>;
+
+        if $z6 == 0 goto label17;
+
+        $z9 = r0.<com.android.server.UiModeManagerService: boolean mCarModeEnabled>;
+
+        if $z9 != 0 goto label17;
+
+        $i3 = i4 & -17;
+
+        i7 = $i3 | 32;
+
+        goto label18;
+
+     label17:
+        i7 = specialinvoke r0.<com.android.server.UiModeManagerService: int getComputedUiModeConfiguration(int)>(i4);
+
+     label18:
+        r0.<com.android.server.UiModeManagerService: int mCurUiMode> = i7;
+
+        $z13 = r0.<com.android.server.UiModeManagerService: boolean mHoldingConfiguration>;
+
+        if $z13 != 0 goto label20;
+
+        $z7 = r0.<com.android.server.UiModeManagerService: boolean mWaitForScreenOff>;
+
+        if $z7 == 0 goto label19;
+
+        $z8 = r0.<com.android.server.UiModeManagerService: boolean mPowerSave>;
+
+        if $z8 == 0 goto label20;
+
+     label19:
+        $r1 = r0.<com.android.server.UiModeManagerService: android.content.res.Configuration mConfiguration>;
+
+        $r1.<android.content.res.Configuration: int uiMode> = i7;
+
+     label20:
+        return;
+    }
+
+    private void updateCustomTimeLocked()
+    {
+        com.android.server.UiModeManagerService r0;
+        int $i0;
+        boolean $z0;
+
+        r0 := @this: com.android.server.UiModeManagerService;
+
+        $i0 = r0.<com.android.server.UiModeManagerService: int mNightMode>;
+
+        if $i0 == 3 goto label1;
+
+        return;
+
+     label1:
+        $z0 = specialinvoke r0.<com.android.server.UiModeManagerService: boolean shouldApplyAutomaticChangesImmediately()>();
+
+        if $z0 == 0 goto label2;
+
+        virtualinvoke r0.<com.android.server.UiModeManagerService: void updateLocked(int,int)>(0, 0);
+
+        goto label3;
+
+     label2:
+        specialinvoke r0.<com.android.server.UiModeManagerService: void registerScreenOffEventLocked()>();
+
+     label3:
+        specialinvoke r0.<com.android.server.UiModeManagerService: void scheduleNextCustomTimeListener()>();
+
+        return;
+    }
+
+    private void updateDockState(int)
+    {
+        com.android.server.UiModeManagerService r0;
+        int i0, $i1;
+        java.lang.Object r1;
+        boolean $z0, z1;
+        java.lang.Throwable $r3;
+
+        r0 := @this: com.android.server.UiModeManagerService;
+
+        i0 := @parameter0: int;
+
+        r1 = r0.<com.android.server.UiModeManagerService: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        $i1 = r0.<com.android.server.UiModeManagerService: int mDockState>;
+
+        if i0 == $i1 goto label5;
+
+        r0.<com.android.server.UiModeManagerService: int mDockState> = i0;
+
+     label2:
+        if i0 != 2 goto label3;
+
+        z1 = 1;
+
+        goto label4;
+
+     label3:
+        z1 = 0;
+
+     label4:
+        virtualinvoke r0.<com.android.server.UiModeManagerService: void setCarModeLocked(boolean,int,int,java.lang.String)>(z1, 0, 0, "");
+
+        $z0 = r0.<com.android.server.UiModeManagerService: boolean mSystemReady>;
+
+        if $z0 == 0 goto label5;
+
+        virtualinvoke r0.<com.android.server.UiModeManagerService: void updateLocked(int,int)>(1, 0);
+
+     label5:
+        exitmonitor r1;
+
+     label6:
+        return;
+
+     label7:
+        $r3 := @caughtexception;
+
+     label8:
+        exitmonitor r1;
+
+     label9:
+        throw $r3;
+
+        catch java.lang.Throwable from label1 to label2 with label7;
+        catch java.lang.Throwable from label4 to label5 with label7;
+        catch java.lang.Throwable from label5 to label6 with label7;
+        catch java.lang.Throwable from label8 to label9 with label7;
+    }
+
+    private boolean updateNightModeFromSettingsLocked(android.content.Context, android.content.res.Resources, int)
+    {
+        com.android.server.UiModeManagerService r0;
+        android.content.Context r1;
+        android.content.res.Resources r2;
+        int i0, i1, $i2, $i3, $i4, $i5, $i14;
+        android.content.ContentResolver $r3, $r4, $r5, $r6, $r9;
+        java.time.LocalTime $r7, $r8, $r10, $r11;
+        long $l6, $l7, $l8, $l9, $l10, $l11, $l12, $l13;
+        boolean z1, z2, z3, z4;
+
+        r0 := @this: com.android.server.UiModeManagerService;
+
+        r1 := @parameter0: android.content.Context;
+
+        r2 := @parameter1: android.content.res.Resources;
+
+        i0 := @parameter2: int;
+
+        i1 = r0.<com.android.server.UiModeManagerService: int mNightMode>;
+
+        z1 = r0.<com.android.server.UiModeManagerService: boolean mSetupWizardComplete>;
+
+        if z1 == 0 goto label5;
+
+        $r3 = virtualinvoke r1.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        $i2 = r0.<com.android.server.UiModeManagerService: int mNightMode>;
+
+        $i3 = staticinvoke <android.provider.Settings$Secure: int getIntForUser(android.content.ContentResolver,java.lang.String,int,int)>($r3, "ui_night_mode", $i2, i0);
+
+        r0.<com.android.server.UiModeManagerService: int mNightMode> = $i3;
+
+        $r4 = virtualinvoke r1.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        $i4 = staticinvoke <android.provider.Settings$Secure: int getIntForUser(android.content.ContentResolver,java.lang.String,int,int)>($r4, "ui_night_mode_override_on", 0, i0);
+
+        if $i4 == 0 goto label1;
+
+        z2 = 1;
+
+        goto label2;
+
+     label1:
+        z2 = 0;
+
+     label2:
+        r0.<com.android.server.UiModeManagerService: boolean mOverrideNightModeOn> = z2;
+
+        $r5 = virtualinvoke r1.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        $i5 = staticinvoke <android.provider.Settings$Secure: int getIntForUser(android.content.ContentResolver,java.lang.String,int,int)>($r5, "ui_night_mode_override_off", 0, i0);
+
+        if $i5 == 0 goto label3;
+
+        z3 = 1;
+
+        goto label4;
+
+     label3:
+        z3 = 0;
+
+     label4:
+        r0.<com.android.server.UiModeManagerService: boolean mOverrideNightModeOff> = z3;
+
+        $r6 = virtualinvoke r1.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        $r7 = r0.<com.android.server.UiModeManagerService: java.time.LocalTime DEFAULT_CUSTOM_NIGHT_START_TIME>;
+
+        $l6 = virtualinvoke $r7.<java.time.LocalTime: long toNanoOfDay()>();
+
+        $l7 = $l6 / 1000L;
+
+        $l8 = staticinvoke <android.provider.Settings$Secure: long getLongForUser(android.content.ContentResolver,java.lang.String,long,int)>($r6, "dark_theme_custom_start_time", $l7, i0);
+
+        $l9 = $l8 * 1000L;
+
+        $r8 = staticinvoke <java.time.LocalTime: java.time.LocalTime ofNanoOfDay(long)>($l9);
+
+        r0.<com.android.server.UiModeManagerService: java.time.LocalTime mCustomAutoNightModeStartMilliseconds> = $r8;
+
+        $r9 = virtualinvoke r1.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        $r10 = r0.<com.android.server.UiModeManagerService: java.time.LocalTime DEFAULT_CUSTOM_NIGHT_END_TIME>;
+
+        $l10 = virtualinvoke $r10.<java.time.LocalTime: long toNanoOfDay()>();
+
+        $l11 = $l10 / 1000L;
+
+        $l12 = staticinvoke <android.provider.Settings$Secure: long getLongForUser(android.content.ContentResolver,java.lang.String,long,int)>($r9, "dark_theme_custom_end_time", $l11, i0);
+
+        $l13 = $l12 * 1000L;
+
+        $r11 = staticinvoke <java.time.LocalTime: java.time.LocalTime ofNanoOfDay(long)>($l13);
+
+        r0.<com.android.server.UiModeManagerService: java.time.LocalTime mCustomAutoNightModeEndMilliseconds> = $r11;
+
+     label5:
+        $i14 = r0.<com.android.server.UiModeManagerService: int mNightMode>;
+
+        if i1 == $i14 goto label6;
+
+        z4 = 1;
+
+        goto label7;
+
+     label6:
+        z4 = 0;
+
+     label7:
+        return z4;
+    }
+
+    private void updateSystemProperties()
+    {
+        com.android.server.UiModeManagerService r0;
+        int i0, $i1, i2;
+        android.content.Context $r1;
+        android.content.ContentResolver $r2;
+        java.lang.String $r3;
+
+        r0 := @this: com.android.server.UiModeManagerService;
+
+        $r1 = virtualinvoke r0.<com.android.server.UiModeManagerService: android.content.Context getContext()>();
+
+        $r2 = virtualinvoke $r1.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        $i1 = r0.<com.android.server.UiModeManagerService: int mNightMode>;
+
+        i0 = staticinvoke <android.provider.Settings$Secure: int getIntForUser(android.content.ContentResolver,java.lang.String,int,int)>($r2, "ui_night_mode", $i1, 0);
+
+        if i0 == 0 goto label1;
+
+        i2 = i0;
+
+        if i0 != 3 goto label2;
+
+     label1:
+        i2 = 2;
+
+     label2:
+        $r3 = staticinvoke <java.lang.Integer: java.lang.String toString(int)>(i2);
+
+        staticinvoke <android.os.SystemProperties: void set(java.lang.String,java.lang.String)>("persist.sys.theme", $r3);
+
+        return;
+    }
+
+    private void verifySetupWizardCompleted()
+    {
+        com.android.server.UiModeManagerService r0;
+        android.content.Context r1;
+        int i0;
+        boolean $z0;
+        android.content.ContentResolver $r2;
+        android.net.Uri $r3;
+        android.database.ContentObserver $r4;
+
+        r0 := @this: com.android.server.UiModeManagerService;
+
+        r1 = virtualinvoke r0.<com.android.server.UiModeManagerService: android.content.Context getContext()>();
+
+        i0 = staticinvoke <android.os.UserHandle: int getCallingUserId()>();
+
+        $z0 = specialinvoke r0.<com.android.server.UiModeManagerService: boolean setupWizardCompleteForCurrentUser()>();
+
+        if $z0 != 0 goto label1;
+
+        r0.<com.android.server.UiModeManagerService: boolean mSetupWizardComplete> = 0;
+
+        $r2 = virtualinvoke r1.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        $r3 = staticinvoke <android.provider.Settings$Secure: android.net.Uri getUriFor(java.lang.String)>("user_setup_complete");
+
+        $r4 = r0.<com.android.server.UiModeManagerService: android.database.ContentObserver mSetupWizardObserver>;
+
+        virtualinvoke $r2.<android.content.ContentResolver: void registerContentObserver(android.net.Uri,boolean,android.database.ContentObserver,int)>($r3, 0, $r4, i0);
+
+        goto label2;
+
+     label1:
+        r0.<com.android.server.UiModeManagerService: boolean mSetupWizardComplete> = 1;
+
+     label2:
+        return;
+    }
+
+    void dumpImpl(java.io.PrintWriter)
+    {
+        com.android.server.UiModeManagerService r0;
+        java.lang.Object r1, $r14, $r15, $r16;
+        java.util.Iterator r2;
+        java.util.Map$Entry r3;
+        int $i0, $i1, $i2, $i3, $i4, $i5, $i6;
+        java.lang.String $r4, $r9, $r10, $r17;
+        boolean $z0, $z1, $z2, $z3, $z4, $z5, $z6, $z7, $z8, $z9, $z10;
+        java.util.Map $r5;
+        java.util.Set $r6;
+        java.time.LocalTime $r7, $r8;
+        com.android.server.twilight.TwilightManager $r11, $r12;
+        com.android.server.twilight.TwilightState $r13;
+        java.lang.Throwable $r18;
+        java.io.PrintWriter r19;
+
+        r0 := @this: com.android.server.UiModeManagerService;
+
+        r19 := @parameter0: java.io.PrintWriter;
+
+        r1 = r0.<com.android.server.UiModeManagerService: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        virtualinvoke r19.<java.io.PrintWriter: void println(java.lang.String)>("Current UI Mode Service state:");
+
+        virtualinvoke r19.<java.io.PrintWriter: void print(java.lang.String)>("  mDockState=");
+
+        $i0 = r0.<com.android.server.UiModeManagerService: int mDockState>;
+
+        virtualinvoke r19.<java.io.PrintWriter: void print(int)>($i0);
+
+        virtualinvoke r19.<java.io.PrintWriter: void print(java.lang.String)>(" mLastBroadcastState=");
+
+        $i1 = r0.<com.android.server.UiModeManagerService: int mLastBroadcastState>;
+
+        virtualinvoke r19.<java.io.PrintWriter: void println(int)>($i1);
+
+        virtualinvoke r19.<java.io.PrintWriter: void print(java.lang.String)>("  mNightMode=");
+
+        $i2 = r0.<com.android.server.UiModeManagerService: int mNightMode>;
+
+        virtualinvoke r19.<java.io.PrintWriter: void print(int)>($i2);
+
+        virtualinvoke r19.<java.io.PrintWriter: void print(java.lang.String)>(" (");
+
+        $i3 = r0.<com.android.server.UiModeManagerService: int mNightMode>;
+
+        $r4 = staticinvoke <com.android.server.UiModeManagerService$Shell: java.lang.String access$3200(int)>($i3);
+
+        virtualinvoke r19.<java.io.PrintWriter: void print(java.lang.String)>($r4);
+
+        virtualinvoke r19.<java.io.PrintWriter: void print(java.lang.String)>(") ");
+
+        virtualinvoke r19.<java.io.PrintWriter: void print(java.lang.String)>(" mOverrideOn/Off=");
+
+        $z0 = r0.<com.android.server.UiModeManagerService: boolean mOverrideNightModeOn>;
+
+        virtualinvoke r19.<java.io.PrintWriter: void print(boolean)>($z0);
+
+        virtualinvoke r19.<java.io.PrintWriter: void print(java.lang.String)>("/");
+
+        $z1 = r0.<com.android.server.UiModeManagerService: boolean mOverrideNightModeOff>;
+
+        virtualinvoke r19.<java.io.PrintWriter: void print(boolean)>($z1);
+
+        virtualinvoke r19.<java.io.PrintWriter: void print(java.lang.String)>(" mNightModeLocked=");
+
+        $z2 = r0.<com.android.server.UiModeManagerService: boolean mNightModeLocked>;
+
+        virtualinvoke r19.<java.io.PrintWriter: void println(boolean)>($z2);
+
+        virtualinvoke r19.<java.io.PrintWriter: void print(java.lang.String)>("  mCarModeEnabled=");
+
+        $z3 = r0.<com.android.server.UiModeManagerService: boolean mCarModeEnabled>;
+
+        virtualinvoke r19.<java.io.PrintWriter: void print(boolean)>($z3);
+
+        virtualinvoke r19.<java.io.PrintWriter: void print(java.lang.String)>(" (carModeApps=");
+
+        $r5 = r0.<com.android.server.UiModeManagerService: java.util.Map mCarModePackagePriority>;
+
+        $r6 = interfaceinvoke $r5.<java.util.Map: java.util.Set entrySet()>();
+
+        r2 = interfaceinvoke $r6.<java.util.Set: java.util.Iterator iterator()>();
+
+     label2:
+        $z4 = interfaceinvoke r2.<java.util.Iterator: boolean hasNext()>();
+
+        if $z4 == 0 goto label4;
+
+        $r14 = interfaceinvoke r2.<java.util.Iterator: java.lang.Object next()>();
+
+        r3 = (java.util.Map$Entry) $r14;
+
+        $r15 = interfaceinvoke r3.<java.util.Map$Entry: java.lang.Object getKey()>();
+
+        virtualinvoke r19.<java.io.PrintWriter: void print(java.lang.Object)>($r15);
+
+        virtualinvoke r19.<java.io.PrintWriter: void print(java.lang.String)>(":");
+
+        $r16 = interfaceinvoke r3.<java.util.Map$Entry: java.lang.Object getValue()>();
+
+        $r17 = (java.lang.String) $r16;
+
+        virtualinvoke r19.<java.io.PrintWriter: void print(java.lang.String)>($r17);
+
+        virtualinvoke r19.<java.io.PrintWriter: void print(java.lang.String)>(" ");
+
+     label3:
+        goto label2;
+
+     label4:
+        virtualinvoke r19.<java.io.PrintWriter: void println(java.lang.String)>("");
+
+        virtualinvoke r19.<java.io.PrintWriter: void print(java.lang.String)>(" waitScreenOff=");
+
+        $z5 = r0.<com.android.server.UiModeManagerService: boolean mWaitForScreenOff>;
+
+        virtualinvoke r19.<java.io.PrintWriter: void print(boolean)>($z5);
+
+        virtualinvoke r19.<java.io.PrintWriter: void print(java.lang.String)>(" mComputedNightMode=");
+
+        $z6 = r0.<com.android.server.UiModeManagerService: boolean mComputedNightMode>;
+
+        virtualinvoke r19.<java.io.PrintWriter: void print(boolean)>($z6);
+
+        virtualinvoke r19.<java.io.PrintWriter: void print(java.lang.String)>(" customStart=");
+
+        $r7 = r0.<com.android.server.UiModeManagerService: java.time.LocalTime mCustomAutoNightModeStartMilliseconds>;
+
+        virtualinvoke r19.<java.io.PrintWriter: void print(java.lang.Object)>($r7);
+
+        virtualinvoke r19.<java.io.PrintWriter: void print(java.lang.String)>(" customEnd");
+
+        $r8 = r0.<com.android.server.UiModeManagerService: java.time.LocalTime mCustomAutoNightModeEndMilliseconds>;
+
+        virtualinvoke r19.<java.io.PrintWriter: void print(java.lang.Object)>($r8);
+
+        virtualinvoke r19.<java.io.PrintWriter: void print(java.lang.String)>(" mCarModeEnableFlags=");
+
+        $i4 = r0.<com.android.server.UiModeManagerService: int mCarModeEnableFlags>;
+
+        virtualinvoke r19.<java.io.PrintWriter: void print(int)>($i4);
+
+        virtualinvoke r19.<java.io.PrintWriter: void print(java.lang.String)>(" mEnableCarDockLaunch=");
+
+        $z7 = r0.<com.android.server.UiModeManagerService: boolean mEnableCarDockLaunch>;
+
+        virtualinvoke r19.<java.io.PrintWriter: void println(boolean)>($z7);
+
+        virtualinvoke r19.<java.io.PrintWriter: void print(java.lang.String)>("  mCurUiMode=0x");
+
+        $i5 = r0.<com.android.server.UiModeManagerService: int mCurUiMode>;
+
+        $r9 = staticinvoke <java.lang.Integer: java.lang.String toHexString(int)>($i5);
+
+        virtualinvoke r19.<java.io.PrintWriter: void print(java.lang.String)>($r9);
+
+        virtualinvoke r19.<java.io.PrintWriter: void print(java.lang.String)>(" mUiModeLocked=");
+
+        $z8 = r0.<com.android.server.UiModeManagerService: boolean mUiModeLocked>;
+
+        virtualinvoke r19.<java.io.PrintWriter: void print(boolean)>($z8);
+
+        virtualinvoke r19.<java.io.PrintWriter: void print(java.lang.String)>(" mSetUiMode=0x");
+
+        $i6 = r0.<com.android.server.UiModeManagerService: int mSetUiMode>;
+
+        $r10 = staticinvoke <java.lang.Integer: java.lang.String toHexString(int)>($i6);
+
+        virtualinvoke r19.<java.io.PrintWriter: void println(java.lang.String)>($r10);
+
+        virtualinvoke r19.<java.io.PrintWriter: void print(java.lang.String)>("  mHoldingConfiguration=");
+
+        $z9 = r0.<com.android.server.UiModeManagerService: boolean mHoldingConfiguration>;
+
+        virtualinvoke r19.<java.io.PrintWriter: void print(boolean)>($z9);
+
+        virtualinvoke r19.<java.io.PrintWriter: void print(java.lang.String)>(" mSystemReady=");
+
+        $z10 = r0.<com.android.server.UiModeManagerService: boolean mSystemReady>;
+
+        virtualinvoke r19.<java.io.PrintWriter: void println(boolean)>($z10);
+
+        $r11 = r0.<com.android.server.UiModeManagerService: com.android.server.twilight.TwilightManager mTwilightManager>;
+
+        if $r11 == null goto label5;
+
+        virtualinvoke r19.<java.io.PrintWriter: void print(java.lang.String)>("  mTwilightService.getLastTwilightState()=");
+
+        $r12 = r0.<com.android.server.UiModeManagerService: com.android.server.twilight.TwilightManager mTwilightManager>;
+
+        $r13 = interfaceinvoke $r12.<com.android.server.twilight.TwilightManager: com.android.server.twilight.TwilightState getLastTwilightState()>();
+
+        virtualinvoke r19.<java.io.PrintWriter: void println(java.lang.Object)>($r13);
+
+     label5:
+        exitmonitor r1;
+
+     label6:
+        return;
+
+     label7:
+        $r18 := @caughtexception;
+
+     label8:
+        exitmonitor r1;
+
+     label9:
+        throw $r18;
+
+        catch java.lang.Throwable from label1 to label2 with label7;
+        catch java.lang.Throwable from label2 to label3 with label7;
+        catch java.lang.Throwable from label4 to label5 with label7;
+        catch java.lang.Throwable from label5 to label6 with label7;
+        catch java.lang.Throwable from label8 to label9 with label7;
+    }
+
+    protected android.content.res.Configuration getConfiguration()
+    {
+        com.android.server.UiModeManagerService r0;
+        android.content.res.Configuration $r1;
+
+        r0 := @this: com.android.server.UiModeManagerService;
+
+        $r1 = r0.<com.android.server.UiModeManagerService: android.content.res.Configuration mConfiguration>;
+
+        return $r1;
+    }
+
+    protected android.app.IUiModeManager getService()
+    {
+        com.android.server.UiModeManagerService r0;
+        android.app.IUiModeManager$Stub $r1;
+
+        r0 := @this: com.android.server.UiModeManagerService;
+
+        $r1 = r0.<com.android.server.UiModeManagerService: android.app.IUiModeManager$Stub mService>;
+
+        return $r1;
+    }
+
+    public void lambda$initPowerSave$2$UiModeManagerService(android.os.PowerSaveState)
+    {
+        com.android.server.UiModeManagerService r0;
+        java.lang.Object r1;
+        boolean $z0, $z1, $z2, $z3;
+        java.lang.Throwable $r2;
+        android.os.PowerSaveState r3;
+
+        r0 := @this: com.android.server.UiModeManagerService;
+
+        r3 := @parameter0: android.os.PowerSaveState;
+
+        r1 = r0.<com.android.server.UiModeManagerService: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        $z1 = r0.<com.android.server.UiModeManagerService: boolean mPowerSave>;
+
+        $z0 = r3.<android.os.PowerSaveState: boolean batterySaverEnabled>;
+
+        if $z1 != $z0 goto label3;
+
+        exitmonitor r1;
+
+     label2:
+        return;
+
+     label3:
+        $z2 = r3.<android.os.PowerSaveState: boolean batterySaverEnabled>;
+
+        r0.<com.android.server.UiModeManagerService: boolean mPowerSave> = $z2;
+
+        $z3 = r0.<com.android.server.UiModeManagerService: boolean mSystemReady>;
+
+        if $z3 == 0 goto label4;
+
+        virtualinvoke r0.<com.android.server.UiModeManagerService: void updateLocked(int,int)>(0, 0);
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        return;
+
+     label6:
+        $r2 := @caughtexception;
+
+     label7:
+        exitmonitor r1;
+
+     label8:
+        throw $r2;
+
+        catch java.lang.Throwable from label1 to label2 with label6;
+        catch java.lang.Throwable from label3 to label4 with label6;
+        catch java.lang.Throwable from label4 to label5 with label6;
+        catch java.lang.Throwable from label7 to label8 with label6;
+    }
+
+    public void lambda$new$0$UiModeManagerService()
+    {
+        com.android.server.UiModeManagerService r0;
+        java.lang.Object r1;
+        java.lang.Throwable $r3;
+
+        r0 := @this: com.android.server.UiModeManagerService;
+
+        r1 = r0.<com.android.server.UiModeManagerService: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        specialinvoke r0.<com.android.server.UiModeManagerService: void updateCustomTimeLocked()>();
+
+        exitmonitor r1;
+
+     label2:
+        return;
+
+     label3:
+        $r3 := @caughtexception;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        throw $r3;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    public void lambda$onStart$1$UiModeManagerService(android.content.Context, android.content.res.Resources)
+    {
+        com.android.server.UiModeManagerService r0;
+        android.content.res.Resources r1;
+        java.lang.Object r2, $r4;
+        com.android.server.twilight.TwilightManager r3;
+        int $i0;
+        java.lang.Throwable $r5;
+        android.content.Context r6;
+
+        r0 := @this: com.android.server.UiModeManagerService;
+
+        r6 := @parameter0: android.content.Context;
+
+        r1 := @parameter1: android.content.res.Resources;
+
+        r2 = r0.<com.android.server.UiModeManagerService: java.lang.Object mLock>;
+
+        entermonitor r2;
+
+     label1:
+        $r4 = virtualinvoke r0.<com.android.server.UiModeManagerService: java.lang.Object getLocalService(java.lang.Class)>(class "Lcom/android/server/twilight/TwilightManager;");
+
+        r3 = (com.android.server.twilight.TwilightManager) $r4;
+
+     label2:
+        if r3 == null goto label4;
+
+     label3:
+        r0.<com.android.server.UiModeManagerService: com.android.server.twilight.TwilightManager mTwilightManager> = r3;
+
+     label4:
+        $i0 = staticinvoke <android.os.UserHandle: int getCallingUserId()>();
+
+        specialinvoke r0.<com.android.server.UiModeManagerService: boolean updateNightModeFromSettingsLocked(android.content.Context,android.content.res.Resources,int)>(r6, r1, $i0);
+
+        specialinvoke r0.<com.android.server.UiModeManagerService: void updateSystemProperties()>();
+
+        exitmonitor r2;
+
+     label5:
+        return;
+
+     label6:
+        $r5 := @caughtexception;
+
+     label7:
+        exitmonitor r2;
+
+     label8:
+        throw $r5;
+
+        catch java.lang.Throwable from label1 to label2 with label6;
+        catch java.lang.Throwable from label3 to label4 with label6;
+        catch java.lang.Throwable from label4 to label5 with label6;
+        catch java.lang.Throwable from label7 to label8 with label6;
+    }
+
+    public void onBootPhase(int)
+    {
+        com.android.server.UiModeManagerService r0;
+        int i0, $i1;
+        java.lang.Object r1, $r3, $r6, $r9, $r11, $r12;
+        android.content.IntentFilter r2, r28, r29, r30;
+        java.lang.String $r4;
+        android.os.PowerManager$WakeLock $r5;
+        com.android.server.wm.WindowManagerInternal $r7;
+        android.content.Context $r8, r24;
+        android.app.AlarmManager $r10;
+        android.os.PowerManagerInternal $r13;
+        android.content.ContentResolver $r14;
+        android.net.Uri $r15;
+        android.database.ContentObserver $r16;
+        android.content.BroadcastReceiver $r18, r27, r31;
+        android.os.Handler $r21;
+        java.lang.Throwable $r23;
+        boolean z0;
+        android.os.PowerManager r25;
+        com.android.server.twilight.TwilightManager r26;
+        com.android.server.UiModeManagerService$UserSwitchedReceiver r32;
+
+        r0 := @this: com.android.server.UiModeManagerService;
+
+        i0 := @parameter0: int;
+
+        if i0 != 500 goto label14;
+
+        r1 = r0.<com.android.server.UiModeManagerService: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label01:
+        r24 = virtualinvoke r0.<com.android.server.UiModeManagerService: android.content.Context getContext()>();
+
+     label02:
+        z0 = 1;
+
+     label03:
+        r0.<com.android.server.UiModeManagerService: boolean mSystemReady> = 1;
+
+        $r3 = virtualinvoke r24.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("power");
+
+        r25 = (android.os.PowerManager) $r3;
+
+        r0.<com.android.server.UiModeManagerService: android.os.PowerManager mPowerManager> = r25;
+
+        $r4 = <com.android.server.UiModeManagerService: java.lang.String TAG>;
+
+        $r5 = virtualinvoke r25.<android.os.PowerManager: android.os.PowerManager$WakeLock newWakeLock(int,java.lang.String)>(26, $r4);
+
+        r0.<com.android.server.UiModeManagerService: android.os.PowerManager$WakeLock mWakeLock> = $r5;
+
+        $r6 = staticinvoke <com.android.server.LocalServices: java.lang.Object getService(java.lang.Class)>(class "Lcom/android/server/wm/WindowManagerInternal;");
+
+        $r7 = (com.android.server.wm.WindowManagerInternal) $r6;
+
+        r0.<com.android.server.UiModeManagerService: com.android.server.wm.WindowManagerInternal mWindowManager> = $r7;
+
+        $r8 = virtualinvoke r0.<com.android.server.UiModeManagerService: android.content.Context getContext()>();
+
+        $r9 = virtualinvoke $r8.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("alarm");
+
+        $r10 = (android.app.AlarmManager) $r9;
+
+        r0.<com.android.server.UiModeManagerService: android.app.AlarmManager mAlarmManager> = $r10;
+
+        $r11 = virtualinvoke r0.<com.android.server.UiModeManagerService: java.lang.Object getLocalService(java.lang.Class)>(class "Lcom/android/server/twilight/TwilightManager;");
+
+        r26 = (com.android.server.twilight.TwilightManager) $r11;
+
+     label04:
+        if r26 == null goto label06;
+
+     label05:
+        r0.<com.android.server.UiModeManagerService: com.android.server.twilight.TwilightManager mTwilightManager> = r26;
+
+     label06:
+        $r12 = staticinvoke <com.android.server.LocalServices: java.lang.Object getService(java.lang.Class)>(class "Landroid/os/PowerManagerInternal;");
+
+        $r13 = (android.os.PowerManagerInternal) $r12;
+
+        r0.<com.android.server.UiModeManagerService: android.os.PowerManagerInternal mLocalPowerManager> = $r13;
+
+        specialinvoke r0.<com.android.server.UiModeManagerService: void initPowerSave()>();
+
+        $i1 = r0.<com.android.server.UiModeManagerService: int mDockState>;
+
+        if $i1 != 2 goto label08;
+
+     label07:
+        goto label09;
+
+     label08:
+        z0 = 0;
+
+     label09:
+        r0.<com.android.server.UiModeManagerService: boolean mCarModeEnabled> = z0;
+
+        specialinvoke r0.<com.android.server.UiModeManagerService: void registerVrStateListener()>();
+
+        $r14 = virtualinvoke r24.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        $r15 = staticinvoke <android.provider.Settings$Secure: android.net.Uri getUriFor(java.lang.String)>("ui_night_mode");
+
+        $r16 = r0.<com.android.server.UiModeManagerService: android.database.ContentObserver mDarkThemeObserver>;
+
+        virtualinvoke $r14.<android.content.ContentResolver: void registerContentObserver(android.net.Uri,boolean,android.database.ContentObserver,int)>($r15, 0, $r16, 0);
+
+        r27 = r0.<com.android.server.UiModeManagerService: android.content.BroadcastReceiver mDockModeReceiver>;
+
+        r28 = new android.content.IntentFilter;
+
+        specialinvoke r28.<android.content.IntentFilter: void <init>(java.lang.String)>("android.intent.action.DOCK_EVENT");
+
+        virtualinvoke r24.<android.content.Context: android.content.Intent registerReceiver(android.content.BroadcastReceiver,android.content.IntentFilter)>(r27, r28);
+
+        r29 = new android.content.IntentFilter;
+
+        specialinvoke r29.<android.content.IntentFilter: void <init>(java.lang.String)>("android.intent.action.BATTERY_CHANGED");
+
+        $r18 = r0.<com.android.server.UiModeManagerService: android.content.BroadcastReceiver mBatteryReceiver>;
+
+        virtualinvoke r24.<android.content.Context: android.content.Intent registerReceiver(android.content.BroadcastReceiver,android.content.IntentFilter)>($r18, r29);
+
+        r30 = new android.content.IntentFilter;
+
+        specialinvoke r30.<android.content.IntentFilter: void <init>()>();
+
+        virtualinvoke r30.<android.content.IntentFilter: void addAction(java.lang.String)>("android.intent.action.USER_SWITCHED");
+
+        r31 = r0.<com.android.server.UiModeManagerService: android.content.BroadcastReceiver mSettingsRestored>;
+
+        r2 = new android.content.IntentFilter;
+
+        specialinvoke r2.<android.content.IntentFilter: void <init>(java.lang.String)>("android.os.action.SETTING_RESTORED");
+
+        virtualinvoke r24.<android.content.Context: android.content.Intent registerReceiver(android.content.BroadcastReceiver,android.content.IntentFilter)>(r31, r2);
+
+        r32 = new com.android.server.UiModeManagerService$UserSwitchedReceiver;
+
+        specialinvoke r32.<com.android.server.UiModeManagerService$UserSwitchedReceiver: void <init>(com.android.server.UiModeManagerService,com.android.server.UiModeManagerService$1)>(r0, null);
+
+        $r21 = r0.<com.android.server.UiModeManagerService: android.os.Handler mHandler>;
+
+        virtualinvoke r24.<android.content.Context: android.content.Intent registerReceiver(android.content.BroadcastReceiver,android.content.IntentFilter,java.lang.String,android.os.Handler)>(r32, r30, null, $r21);
+
+        specialinvoke r0.<com.android.server.UiModeManagerService: void updateConfigurationLocked()>();
+
+        specialinvoke r0.<com.android.server.UiModeManagerService: void applyConfigurationExternallyLocked()>();
+
+        exitmonitor r1;
+
+     label10:
+        goto label14;
+
+     label11:
+        $r23 := @caughtexception;
+
+     label12:
+        exitmonitor r1;
+
+     label13:
+        throw $r23;
+
+     label14:
+        return;
+
+        catch java.lang.Throwable from label01 to label02 with label11;
+        catch java.lang.Throwable from label03 to label04 with label11;
+        catch java.lang.Throwable from label05 to label06 with label11;
+        catch java.lang.Throwable from label06 to label07 with label11;
+        catch java.lang.Throwable from label09 to label10 with label11;
+        catch java.lang.Throwable from label12 to label13 with label11;
+    }
+
+    public void onStart()
+    {
+        com.android.server.UiModeManagerService r0;
+        int i0, $i1, $i2, $i3;
+        android.content.pm.PackageManager r1;
+        boolean $z1, $z2, $z3, $z4, $z5, z6, z7, z8, $z9, $z10;
+        android.content.Context r5;
+        android.content.res.Resources r6;
+        com.android.server._$$Lambda$UiModeManagerService$LsJLdIbeoHmgOz46O_Ez9nmVZ2w $r7;
+        java.lang.StringBuilder $r9;
+        java.lang.String $r11, $r12;
+        android.app.IUiModeManager$Stub $r13;
+        com.android.server.UiModeManagerService$LocalService $r14;
+
+        r0 := @this: com.android.server.UiModeManagerService;
+
+        r5 = virtualinvoke r0.<com.android.server.UiModeManagerService: android.content.Context getContext()>();
+
+        specialinvoke r0.<com.android.server.UiModeManagerService: void verifySetupWizardCompleted()>();
+
+        r6 = virtualinvoke r5.<android.content.Context: android.content.res.Resources getResources()>();
+
+        $i1 = virtualinvoke r6.<android.content.res.Resources: int getInteger(int)>(17694777);
+
+        r0.<com.android.server.UiModeManagerService: int mNightMode> = $i1;
+
+        $i2 = virtualinvoke r6.<android.content.res.Resources: int getInteger(int)>(17694786);
+
+        r0.<com.android.server.UiModeManagerService: int mDefaultUiModeType> = $i2;
+
+        i0 = virtualinvoke r6.<android.content.res.Resources: int getInteger(int)>(17694762);
+
+        if i0 != 1 goto label1;
+
+        z6 = 1;
+
+        goto label2;
+
+     label1:
+        z6 = 0;
+
+     label2:
+        r0.<com.android.server.UiModeManagerService: boolean mCarModeKeepsScreenOn> = z6;
+
+        $i3 = virtualinvoke r6.<android.content.res.Resources: int getInteger(int)>(17694788);
+
+        if $i3 != 1 goto label3;
+
+        z7 = 1;
+
+        goto label4;
+
+     label3:
+        z7 = 0;
+
+     label4:
+        r0.<com.android.server.UiModeManagerService: boolean mDeskModeKeepsScreenOn> = z7;
+
+        $z1 = virtualinvoke r6.<android.content.res.Resources: boolean getBoolean(int)>(17891438);
+
+        r0.<com.android.server.UiModeManagerService: boolean mEnableCarDockLaunch> = $z1;
+
+        $z2 = virtualinvoke r6.<android.content.res.Resources: boolean getBoolean(int)>(17891483);
+
+        r0.<com.android.server.UiModeManagerService: boolean mUiModeLocked> = $z2;
+
+        $z3 = virtualinvoke r6.<android.content.res.Resources: boolean getBoolean(int)>(17891482);
+
+        r0.<com.android.server.UiModeManagerService: boolean mNightModeLocked> = $z3;
+
+        r1 = virtualinvoke r5.<android.content.Context: android.content.pm.PackageManager getPackageManager()>();
+
+        $z4 = virtualinvoke r1.<android.content.pm.PackageManager: boolean hasSystemFeature(java.lang.String)>("android.hardware.type.television");
+
+        if $z4 != 0 goto label5;
+
+        z8 = 0;
+
+        $z5 = virtualinvoke r1.<android.content.pm.PackageManager: boolean hasSystemFeature(java.lang.String)>("android.software.leanback");
+
+        if $z5 == 0 goto label6;
+
+     label5:
+        z8 = 1;
+
+     label6:
+        r0.<com.android.server.UiModeManagerService: boolean mTelevision> = z8;
+
+        $z9 = virtualinvoke r1.<android.content.pm.PackageManager: boolean hasSystemFeature(java.lang.String)>("android.hardware.type.automotive");
+
+        r0.<com.android.server.UiModeManagerService: boolean mCar> = $z9;
+
+        $z10 = virtualinvoke r1.<android.content.pm.PackageManager: boolean hasSystemFeature(java.lang.String)>("android.hardware.type.watch");
+
+        r0.<com.android.server.UiModeManagerService: boolean mWatch> = $z10;
+
+        $r7 = new com.android.server._$$Lambda$UiModeManagerService$LsJLdIbeoHmgOz46O_Ez9nmVZ2w;
+
+        specialinvoke $r7.<com.android.server._$$Lambda$UiModeManagerService$LsJLdIbeoHmgOz46O_Ez9nmVZ2w: void <init>(com.android.server.UiModeManagerService,android.content.Context,android.content.res.Resources)>(r0, r5, r6);
+
+        $r9 = new java.lang.StringBuilder;
+
+        specialinvoke $r9.<java.lang.StringBuilder: void <init>()>();
+
+        $r11 = <com.android.server.UiModeManagerService: java.lang.String TAG>;
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r11);
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(".onStart");
+
+        $r12 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.server.SystemServerInitThreadPool: java.util.concurrent.Future submit(java.lang.Runnable,java.lang.String)>($r7, $r12);
+
+        $r13 = r0.<com.android.server.UiModeManagerService: android.app.IUiModeManager$Stub mService>;
+
+        virtualinvoke r0.<com.android.server.UiModeManagerService: void publishBinderService(java.lang.String,android.os.IBinder)>("uimode", $r13);
+
+        $r14 = r0.<com.android.server.UiModeManagerService: com.android.server.UiModeManagerService$LocalService mLocalService>;
+
+        virtualinvoke r0.<com.android.server.UiModeManagerService: void publishLocalService(java.lang.Class,java.lang.Object)>(class "Lcom/android/server/UiModeManagerInternal;", $r14);
+
+        return;
+    }
+
+    public void onSwitchUser(int)
+    {
+        com.android.server.UiModeManagerService r0;
+        int i0;
+        android.content.Context $r1;
+        android.content.ContentResolver $r2;
+        android.database.ContentObserver $r3;
+
+        r0 := @this: com.android.server.UiModeManagerService;
+
+        i0 := @parameter0: int;
+
+        specialinvoke r0.<com.android.server.SystemService: void onSwitchUser(int)>(i0);
+
+        $r1 = virtualinvoke r0.<com.android.server.UiModeManagerService: android.content.Context getContext()>();
+
+        $r2 = virtualinvoke $r1.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        $r3 = r0.<com.android.server.UiModeManagerService: android.database.ContentObserver mSetupWizardObserver>;
+
+        virtualinvoke $r2.<android.content.ContentResolver: void unregisterContentObserver(android.database.ContentObserver)>($r3);
+
+        specialinvoke r0.<com.android.server.UiModeManagerService: void verifySetupWizardCompleted()>();
+
+        return;
+    }
+
+    void setCarModeLocked(boolean, int, int, java.lang.String)
+    {
+        com.android.server.UiModeManagerService r0;
+        int i0, i1, $i2;
+        boolean $z0, z2, z3;
+        android.content.res.Resources $r1;
+        java.lang.String r2;
+        android.content.Context r3;
+
+        r0 := @this: com.android.server.UiModeManagerService;
+
+        z2 := @parameter0: boolean;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        r2 := @parameter3: java.lang.String;
+
+        if z2 == 0 goto label1;
+
+        specialinvoke r0.<com.android.server.UiModeManagerService: void enableCarMode(int,java.lang.String)>(i1, r2);
+
+        goto label2;
+
+     label1:
+        specialinvoke r0.<com.android.server.UiModeManagerService: void disableCarMode(int,int,java.lang.String)>(i0, i1, r2);
+
+     label2:
+        z3 = specialinvoke r0.<com.android.server.UiModeManagerService: boolean isCarModeEnabled()>();
+
+        $z0 = r0.<com.android.server.UiModeManagerService: boolean mCarModeEnabled>;
+
+        if $z0 == z3 goto label3;
+
+        r0.<com.android.server.UiModeManagerService: boolean mCarModeEnabled> = z3;
+
+        if z3 != 0 goto label3;
+
+        r3 = virtualinvoke r0.<com.android.server.UiModeManagerService: android.content.Context getContext()>();
+
+        $r1 = virtualinvoke r3.<android.content.Context: android.content.res.Resources getResources()>();
+
+        $i2 = staticinvoke <android.os.UserHandle: int getCallingUserId()>();
+
+        specialinvoke r0.<com.android.server.UiModeManagerService: boolean updateNightModeFromSettingsLocked(android.content.Context,android.content.res.Resources,int)>(r3, $r1, $i2);
+
+     label3:
+        r0.<com.android.server.UiModeManagerService: int mCarModeEnableFlags> = i0;
+
+        return;
+    }
+
+    void updateLocked(int, int)
+    {
+        com.android.server.UiModeManagerService r0;
+        int i0, i1, i2, $i3, $i4, $i5, $i6, $i7, $i8, $i9, $i10, $i11, $i12, $i13;
+        boolean $z0, $z1, $z2, $z3, $z4, $z5, $z6, $z7, $z8, z9, z10, $z11, $z12;
+        android.os.PowerManager$WakeLock $r1, $r2, $r11;
+        android.content.Intent $r3;
+        android.content.Context $r4;
+        android.content.BroadcastReceiver $r5;
+        android.os.UserHandle $r6;
+        java.lang.String r7, r8, r10;
+
+        r0 := @this: com.android.server.UiModeManagerService;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        r7 = null;
+
+        r8 = null;
+
+        i2 = r0.<com.android.server.UiModeManagerService: int mLastBroadcastState>;
+
+        if i2 != 2 goto label01;
+
+        specialinvoke r0.<com.android.server.UiModeManagerService: void adjustStatusBarCarModeLocked()>();
+
+        r8 = <android.app.UiModeManager: java.lang.String ACTION_EXIT_CAR_MODE>;
+
+        goto label02;
+
+     label01:
+        $z0 = staticinvoke <com.android.server.UiModeManagerService: boolean isDeskDockState(int)>(i2);
+
+        if $z0 == 0 goto label02;
+
+        r8 = <android.app.UiModeManager: java.lang.String ACTION_EXIT_DESK_MODE>;
+
+     label02:
+        z9 = r0.<com.android.server.UiModeManagerService: boolean mCarModeEnabled>;
+
+        if z9 == 0 goto label04;
+
+        $i12 = r0.<com.android.server.UiModeManagerService: int mLastBroadcastState>;
+
+        if $i12 == 2 goto label07;
+
+        specialinvoke r0.<com.android.server.UiModeManagerService: void adjustStatusBarCarModeLocked()>();
+
+        if r8 == null goto label03;
+
+        specialinvoke r0.<com.android.server.UiModeManagerService: void sendForegroundBroadcastToAllUsers(java.lang.String)>(r8);
+
+     label03:
+        r0.<com.android.server.UiModeManagerService: int mLastBroadcastState> = 2;
+
+        r7 = <android.app.UiModeManager: java.lang.String ACTION_ENTER_CAR_MODE>;
+
+        goto label07;
+
+     label04:
+        $i3 = r0.<com.android.server.UiModeManagerService: int mDockState>;
+
+        $z1 = staticinvoke <com.android.server.UiModeManagerService: boolean isDeskDockState(int)>($i3);
+
+        if $z1 == 0 goto label06;
+
+        $i10 = r0.<com.android.server.UiModeManagerService: int mLastBroadcastState>;
+
+        $z8 = staticinvoke <com.android.server.UiModeManagerService: boolean isDeskDockState(int)>($i10);
+
+        if $z8 != 0 goto label07;
+
+        if r8 == null goto label05;
+
+        specialinvoke r0.<com.android.server.UiModeManagerService: void sendForegroundBroadcastToAllUsers(java.lang.String)>(r8);
+
+     label05:
+        $i11 = r0.<com.android.server.UiModeManagerService: int mDockState>;
+
+        r0.<com.android.server.UiModeManagerService: int mLastBroadcastState> = $i11;
+
+        r7 = <android.app.UiModeManager: java.lang.String ACTION_ENTER_DESK_MODE>;
+
+        goto label07;
+
+     label06:
+        r0.<com.android.server.UiModeManagerService: int mLastBroadcastState> = 0;
+
+        r7 = r8;
+
+     label07:
+        if r7 == null goto label08;
+
+        $r3 = new android.content.Intent;
+
+        specialinvoke $r3.<android.content.Intent: void <init>(java.lang.String)>(r7);
+
+        virtualinvoke $r3.<android.content.Intent: android.content.Intent putExtra(java.lang.String,int)>("enableFlags", i0);
+
+        virtualinvoke $r3.<android.content.Intent: android.content.Intent putExtra(java.lang.String,int)>("disableFlags", i1);
+
+        virtualinvoke $r3.<android.content.Intent: android.content.Intent addFlags(int)>(268435456);
+
+        $r4 = virtualinvoke r0.<com.android.server.UiModeManagerService: android.content.Context getContext()>();
+
+        $r6 = <android.os.UserHandle: android.os.UserHandle CURRENT>;
+
+        $r5 = r0.<com.android.server.UiModeManagerService: android.content.BroadcastReceiver mResultReceiver>;
+
+        virtualinvoke $r4.<android.content.Context: void sendOrderedBroadcastAsUser(android.content.Intent,android.os.UserHandle,java.lang.String,android.content.BroadcastReceiver,android.os.Handler,int,java.lang.String,android.os.Bundle)>($r3, $r6, null, $r5, null, -1, null, null);
+
+        r0.<com.android.server.UiModeManagerService: boolean mHoldingConfiguration> = 1;
+
+        specialinvoke r0.<com.android.server.UiModeManagerService: void updateConfigurationLocked()>();
+
+        goto label12;
+
+     label08:
+        $z2 = r0.<com.android.server.UiModeManagerService: boolean mCarModeEnabled>;
+
+        if $z2 == 0 goto label09;
+
+        r10 = null;
+
+        $z7 = r0.<com.android.server.UiModeManagerService: boolean mEnableCarDockLaunch>;
+
+        if $z7 == 0 goto label11;
+
+        r10 = null;
+
+        $i9 = i0 & 1;
+
+        if $i9 == 0 goto label11;
+
+        r10 = "android.intent.category.CAR_DOCK";
+
+        goto label11;
+
+     label09:
+        $i4 = r0.<com.android.server.UiModeManagerService: int mDockState>;
+
+        $z3 = staticinvoke <com.android.server.UiModeManagerService: boolean isDeskDockState(int)>($i4);
+
+        if $z3 == 0 goto label10;
+
+        r10 = null;
+
+        $i8 = i0 & 1;
+
+        if $i8 == 0 goto label11;
+
+        r10 = "android.intent.category.DESK_DOCK";
+
+        goto label11;
+
+     label10:
+        r10 = null;
+
+        $i5 = i1 & 1;
+
+        if $i5 == 0 goto label11;
+
+        r10 = "android.intent.category.HOME";
+
+     label11:
+        specialinvoke r0.<com.android.server.UiModeManagerService: void sendConfigurationAndStartDreamOrDockAppLocked(java.lang.String)>(r10);
+
+     label12:
+        z10 = 0;
+
+        $z11 = r0.<com.android.server.UiModeManagerService: boolean mCharging>;
+
+        if $z11 == 0 goto label15;
+
+        $z4 = r0.<com.android.server.UiModeManagerService: boolean mCarModeEnabled>;
+
+        if $z4 == 0 goto label13;
+
+        $z6 = r0.<com.android.server.UiModeManagerService: boolean mCarModeKeepsScreenOn>;
+
+        if $z6 == 0 goto label13;
+
+        $i6 = r0.<com.android.server.UiModeManagerService: int mCarModeEnableFlags>;
+
+        $i7 = $i6 & 2;
+
+        if $i7 == 0 goto label14;
+
+     label13:
+        z10 = 0;
+
+        $i13 = r0.<com.android.server.UiModeManagerService: int mCurUiMode>;
+
+        if $i13 != 2 goto label15;
+
+        z10 = 0;
+
+        $z5 = r0.<com.android.server.UiModeManagerService: boolean mDeskModeKeepsScreenOn>;
+
+        if $z5 == 0 goto label15;
+
+     label14:
+        z10 = 1;
+
+     label15:
+        $r11 = r0.<com.android.server.UiModeManagerService: android.os.PowerManager$WakeLock mWakeLock>;
+
+        $z12 = virtualinvoke $r11.<android.os.PowerManager$WakeLock: boolean isHeld()>();
+
+        if z10 == $z12 goto label17;
+
+        if z10 == 0 goto label16;
+
+        $r2 = r0.<com.android.server.UiModeManagerService: android.os.PowerManager$WakeLock mWakeLock>;
+
+        virtualinvoke $r2.<android.os.PowerManager$WakeLock: void acquire()>();
+
+        goto label17;
+
+     label16:
+        $r1 = r0.<com.android.server.UiModeManagerService: android.os.PowerManager$WakeLock mWakeLock>;
+
+        virtualinvoke $r1.<android.os.PowerManager$WakeLock: void release()>();
+
+     label17:
+        return;
+    }
+}

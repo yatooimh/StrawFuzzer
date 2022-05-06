@@ -1,0 +1,691 @@
+class com.android.server.location.ContextHubTransactionManager extends java.lang.Object
+{
+    private static final int MAX_PENDING_REQUESTS;
+    private static final java.lang.String TAG;
+    private final com.android.server.location.ContextHubClientManager mClientManager;
+    private final android.hardware.contexthub.V1_0.IContexthub mContextHubProxy;
+    private final com.android.server.location.NanoAppStateManager mNanoAppStateManager;
+    private final java.util.concurrent.atomic.AtomicInteger mNextAvailableId;
+    private final java.util.concurrent.ScheduledThreadPoolExecutor mTimeoutExecutor;
+    private java.util.concurrent.ScheduledFuture mTimeoutFuture;
+    private final java.util.ArrayDeque mTransactionQueue;
+
+    void <init>(android.hardware.contexthub.V1_0.IContexthub, com.android.server.location.ContextHubClientManager, com.android.server.location.NanoAppStateManager)
+    {
+        com.android.server.location.ContextHubTransactionManager r0;
+        android.hardware.contexthub.V1_0.IContexthub r1;
+        com.android.server.location.ContextHubClientManager r2;
+        com.android.server.location.NanoAppStateManager r3;
+        java.util.ArrayDeque $r4;
+        java.util.concurrent.atomic.AtomicInteger $r5;
+        java.util.concurrent.ScheduledThreadPoolExecutor $r6;
+
+        r0 := @this: com.android.server.location.ContextHubTransactionManager;
+
+        r1 := @parameter0: android.hardware.contexthub.V1_0.IContexthub;
+
+        r2 := @parameter1: com.android.server.location.ContextHubClientManager;
+
+        r3 := @parameter2: com.android.server.location.NanoAppStateManager;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        $r4 = new java.util.ArrayDeque;
+
+        specialinvoke $r4.<java.util.ArrayDeque: void <init>()>();
+
+        r0.<com.android.server.location.ContextHubTransactionManager: java.util.ArrayDeque mTransactionQueue> = $r4;
+
+        $r5 = new java.util.concurrent.atomic.AtomicInteger;
+
+        specialinvoke $r5.<java.util.concurrent.atomic.AtomicInteger: void <init>()>();
+
+        r0.<com.android.server.location.ContextHubTransactionManager: java.util.concurrent.atomic.AtomicInteger mNextAvailableId> = $r5;
+
+        $r6 = new java.util.concurrent.ScheduledThreadPoolExecutor;
+
+        specialinvoke $r6.<java.util.concurrent.ScheduledThreadPoolExecutor: void <init>(int)>(1);
+
+        r0.<com.android.server.location.ContextHubTransactionManager: java.util.concurrent.ScheduledThreadPoolExecutor mTimeoutExecutor> = $r6;
+
+        r0.<com.android.server.location.ContextHubTransactionManager: java.util.concurrent.ScheduledFuture mTimeoutFuture> = null;
+
+        r0.<com.android.server.location.ContextHubTransactionManager: android.hardware.contexthub.V1_0.IContexthub mContextHubProxy> = r1;
+
+        r0.<com.android.server.location.ContextHubTransactionManager: com.android.server.location.ContextHubClientManager mClientManager> = r2;
+
+        r0.<com.android.server.location.ContextHubTransactionManager: com.android.server.location.NanoAppStateManager mNanoAppStateManager> = r3;
+
+        return;
+    }
+
+    static android.hardware.contexthub.V1_0.IContexthub access$000(com.android.server.location.ContextHubTransactionManager)
+    {
+        com.android.server.location.ContextHubTransactionManager r0;
+        android.hardware.contexthub.V1_0.IContexthub $r1;
+
+        r0 := @parameter0: com.android.server.location.ContextHubTransactionManager;
+
+        $r1 = r0.<com.android.server.location.ContextHubTransactionManager: android.hardware.contexthub.V1_0.IContexthub mContextHubProxy>;
+
+        return $r1;
+    }
+
+    static com.android.server.location.NanoAppStateManager access$100(com.android.server.location.ContextHubTransactionManager)
+    {
+        com.android.server.location.ContextHubTransactionManager r0;
+        com.android.server.location.NanoAppStateManager $r1;
+
+        r0 := @parameter0: com.android.server.location.ContextHubTransactionManager;
+
+        $r1 = r0.<com.android.server.location.ContextHubTransactionManager: com.android.server.location.NanoAppStateManager mNanoAppStateManager>;
+
+        return $r1;
+    }
+
+    static com.android.server.location.ContextHubClientManager access$200(com.android.server.location.ContextHubTransactionManager)
+    {
+        com.android.server.location.ContextHubTransactionManager r0;
+        com.android.server.location.ContextHubClientManager $r1;
+
+        r0 := @parameter0: com.android.server.location.ContextHubTransactionManager;
+
+        $r1 = r0.<com.android.server.location.ContextHubTransactionManager: com.android.server.location.ContextHubClientManager mClientManager>;
+
+        return $r1;
+    }
+
+    private void removeTransactionAndStartNext()
+    {
+        com.android.server.location.ContextHubTransactionManager r0;
+        java.util.concurrent.ScheduledFuture $r1;
+        java.util.ArrayDeque $r2, $r5;
+        java.lang.Object $r3;
+        com.android.server.location.ContextHubServiceTransaction $r4;
+        boolean $z1;
+
+        r0 := @this: com.android.server.location.ContextHubTransactionManager;
+
+        $r1 = r0.<com.android.server.location.ContextHubTransactionManager: java.util.concurrent.ScheduledFuture mTimeoutFuture>;
+
+        interfaceinvoke $r1.<java.util.concurrent.ScheduledFuture: boolean cancel(boolean)>(0);
+
+        $r2 = r0.<com.android.server.location.ContextHubTransactionManager: java.util.ArrayDeque mTransactionQueue>;
+
+        $r3 = virtualinvoke $r2.<java.util.ArrayDeque: java.lang.Object remove()>();
+
+        $r4 = (com.android.server.location.ContextHubServiceTransaction) $r3;
+
+        virtualinvoke $r4.<com.android.server.location.ContextHubServiceTransaction: void setComplete()>();
+
+        $r5 = r0.<com.android.server.location.ContextHubTransactionManager: java.util.ArrayDeque mTransactionQueue>;
+
+        $z1 = virtualinvoke $r5.<java.util.ArrayDeque: boolean isEmpty()>();
+
+        if $z1 != 0 goto label1;
+
+        specialinvoke r0.<com.android.server.location.ContextHubTransactionManager: void startNextTransaction()>();
+
+     label1:
+        return;
+    }
+
+    private void startNextTransaction()
+    {
+        com.android.server.location.ContextHubTransactionManager r0;
+        com.android.server.location.ContextHubServiceTransaction r1;
+        long l0;
+        java.util.ArrayDeque $r3, $r4, $r6;
+        boolean $z0;
+        java.lang.Object $r5;
+        int $i1, i2;
+        com.android.server.location._$$Lambda$ContextHubTransactionManager$sHbjr4TaLEATkCX_yhD2L7ebuxE $r8;
+        java.util.concurrent.TimeUnit $r9, $r10;
+        java.util.concurrent.ScheduledThreadPoolExecutor $r11;
+        java.util.concurrent.ScheduledFuture $r12;
+
+        r0 := @this: com.android.server.location.ContextHubTransactionManager;
+
+        i2 = 1;
+
+     label1:
+        if i2 == 0 goto label4;
+
+        $r3 = r0.<com.android.server.location.ContextHubTransactionManager: java.util.ArrayDeque mTransactionQueue>;
+
+        $z0 = virtualinvoke $r3.<java.util.ArrayDeque: boolean isEmpty()>();
+
+        if $z0 != 0 goto label4;
+
+        $r4 = r0.<com.android.server.location.ContextHubTransactionManager: java.util.ArrayDeque mTransactionQueue>;
+
+        $r5 = virtualinvoke $r4.<java.util.ArrayDeque: java.lang.Object peek()>();
+
+        r1 = (com.android.server.location.ContextHubServiceTransaction) $r5;
+
+        i2 = virtualinvoke r1.<com.android.server.location.ContextHubServiceTransaction: int onTransact()>();
+
+        if i2 != 0 goto label2;
+
+        $r8 = new com.android.server.location._$$Lambda$ContextHubTransactionManager$sHbjr4TaLEATkCX_yhD2L7ebuxE;
+
+        specialinvoke $r8.<com.android.server.location._$$Lambda$ContextHubTransactionManager$sHbjr4TaLEATkCX_yhD2L7ebuxE: void <init>(com.android.server.location.ContextHubTransactionManager,com.android.server.location.ContextHubServiceTransaction)>(r0, r1);
+
+        $r9 = <java.util.concurrent.TimeUnit: java.util.concurrent.TimeUnit SECONDS>;
+
+        l0 = virtualinvoke r1.<com.android.server.location.ContextHubServiceTransaction: long getTimeout(java.util.concurrent.TimeUnit)>($r9);
+
+        $r11 = r0.<com.android.server.location.ContextHubTransactionManager: java.util.concurrent.ScheduledThreadPoolExecutor mTimeoutExecutor>;
+
+        $r10 = <java.util.concurrent.TimeUnit: java.util.concurrent.TimeUnit SECONDS>;
+
+        $r12 = virtualinvoke $r11.<java.util.concurrent.ScheduledThreadPoolExecutor: java.util.concurrent.ScheduledFuture schedule(java.lang.Runnable,long,java.util.concurrent.TimeUnit)>($r8, l0, $r10);
+
+        r0.<com.android.server.location.ContextHubTransactionManager: java.util.concurrent.ScheduledFuture mTimeoutFuture> = $r12;
+
+        goto label3;
+
+     label2:
+        $i1 = staticinvoke <com.android.server.location.ContextHubServiceUtil: int toTransactionResult(int)>(i2);
+
+        virtualinvoke r1.<com.android.server.location.ContextHubServiceTransaction: void onTransactionComplete(int)>($i1);
+
+        $r6 = r0.<com.android.server.location.ContextHubTransactionManager: java.util.ArrayDeque mTransactionQueue>;
+
+        virtualinvoke $r6.<java.util.ArrayDeque: java.lang.Object remove()>();
+
+     label3:
+        goto label1;
+
+     label4:
+        return;
+    }
+
+    void addTransaction(com.android.server.location.ContextHubServiceTransaction) throws java.lang.IllegalStateException
+    {
+        com.android.server.location.ContextHubTransactionManager r0;
+        java.util.ArrayDeque $r1, $r2, $r3;
+        int $i0, $i1;
+        java.lang.Throwable $r4;
+        com.android.server.location.ContextHubServiceTransaction r5;
+        java.lang.IllegalStateException r6;
+
+        r0 := @this: com.android.server.location.ContextHubTransactionManager;
+
+        r5 := @parameter0: com.android.server.location.ContextHubServiceTransaction;
+
+        entermonitor r0;
+
+     label1:
+        $r1 = r0.<com.android.server.location.ContextHubTransactionManager: java.util.ArrayDeque mTransactionQueue>;
+
+        $i0 = virtualinvoke $r1.<java.util.ArrayDeque: int size()>();
+
+        if $i0 == 10000 goto label3;
+
+        $r2 = r0.<com.android.server.location.ContextHubTransactionManager: java.util.ArrayDeque mTransactionQueue>;
+
+        virtualinvoke $r2.<java.util.ArrayDeque: boolean add(java.lang.Object)>(r5);
+
+        $r3 = r0.<com.android.server.location.ContextHubTransactionManager: java.util.ArrayDeque mTransactionQueue>;
+
+        $i1 = virtualinvoke $r3.<java.util.ArrayDeque: int size()>();
+
+        if $i1 != 1 goto label2;
+
+        specialinvoke r0.<com.android.server.location.ContextHubTransactionManager: void startNextTransaction()>();
+
+     label2:
+        exitmonitor r0;
+
+        return;
+
+     label3:
+        r6 = new java.lang.IllegalStateException;
+
+        specialinvoke r6.<java.lang.IllegalStateException: void <init>(java.lang.String)>("Transaction queue is full (capacity = 10000)");
+
+        throw r6;
+
+     label4:
+        $r4 := @caughtexception;
+
+        exitmonitor r0;
+
+        throw $r4;
+
+        catch java.lang.Throwable from label1 to label2 with label4;
+        catch java.lang.Throwable from label3 to label4 with label4;
+    }
+
+    com.android.server.location.ContextHubServiceTransaction createDisableTransaction(int, long, android.hardware.location.IContextHubTransactionCallback)
+    {
+        com.android.server.location.ContextHubTransactionManager r0;
+        int i0, $i2;
+        long l1;
+        android.hardware.location.IContextHubTransactionCallback r1;
+        com.android.server.location.ContextHubTransactionManager$4 $r2;
+        java.util.concurrent.atomic.AtomicInteger $r3;
+
+        r0 := @this: com.android.server.location.ContextHubTransactionManager;
+
+        i0 := @parameter0: int;
+
+        l1 := @parameter1: long;
+
+        r1 := @parameter2: android.hardware.location.IContextHubTransactionCallback;
+
+        $r2 = new com.android.server.location.ContextHubTransactionManager$4;
+
+        $r3 = r0.<com.android.server.location.ContextHubTransactionManager: java.util.concurrent.atomic.AtomicInteger mNextAvailableId>;
+
+        $i2 = virtualinvoke $r3.<java.util.concurrent.atomic.AtomicInteger: int getAndIncrement()>();
+
+        specialinvoke $r2.<com.android.server.location.ContextHubTransactionManager$4: void <init>(com.android.server.location.ContextHubTransactionManager,int,int,int,long,android.hardware.location.IContextHubTransactionCallback)>(r0, $i2, 3, i0, l1, r1);
+
+        return $r2;
+    }
+
+    com.android.server.location.ContextHubServiceTransaction createEnableTransaction(int, long, android.hardware.location.IContextHubTransactionCallback)
+    {
+        com.android.server.location.ContextHubTransactionManager r0;
+        int i0, $i2;
+        long l1;
+        android.hardware.location.IContextHubTransactionCallback r1;
+        com.android.server.location.ContextHubTransactionManager$3 $r2;
+        java.util.concurrent.atomic.AtomicInteger $r3;
+
+        r0 := @this: com.android.server.location.ContextHubTransactionManager;
+
+        i0 := @parameter0: int;
+
+        l1 := @parameter1: long;
+
+        r1 := @parameter2: android.hardware.location.IContextHubTransactionCallback;
+
+        $r2 = new com.android.server.location.ContextHubTransactionManager$3;
+
+        $r3 = r0.<com.android.server.location.ContextHubTransactionManager: java.util.concurrent.atomic.AtomicInteger mNextAvailableId>;
+
+        $i2 = virtualinvoke $r3.<java.util.concurrent.atomic.AtomicInteger: int getAndIncrement()>();
+
+        specialinvoke $r2.<com.android.server.location.ContextHubTransactionManager$3: void <init>(com.android.server.location.ContextHubTransactionManager,int,int,int,long,android.hardware.location.IContextHubTransactionCallback)>(r0, $i2, 2, i0, l1, r1);
+
+        return $r2;
+    }
+
+    com.android.server.location.ContextHubServiceTransaction createLoadTransaction(int, android.hardware.location.NanoAppBinary, android.hardware.location.IContextHubTransactionCallback)
+    {
+        com.android.server.location.ContextHubTransactionManager r0;
+        int i0, $i1;
+        android.hardware.location.NanoAppBinary r1;
+        android.hardware.location.IContextHubTransactionCallback r2;
+        com.android.server.location.ContextHubTransactionManager$1 $r3;
+        java.util.concurrent.atomic.AtomicInteger $r4;
+
+        r0 := @this: com.android.server.location.ContextHubTransactionManager;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: android.hardware.location.NanoAppBinary;
+
+        r2 := @parameter2: android.hardware.location.IContextHubTransactionCallback;
+
+        $r3 = new com.android.server.location.ContextHubTransactionManager$1;
+
+        $r4 = r0.<com.android.server.location.ContextHubTransactionManager: java.util.concurrent.atomic.AtomicInteger mNextAvailableId>;
+
+        $i1 = virtualinvoke $r4.<java.util.concurrent.atomic.AtomicInteger: int getAndIncrement()>();
+
+        specialinvoke $r3.<com.android.server.location.ContextHubTransactionManager$1: void <init>(com.android.server.location.ContextHubTransactionManager,int,int,android.hardware.location.NanoAppBinary,int,android.hardware.location.IContextHubTransactionCallback)>(r0, $i1, 0, r1, i0, r2);
+
+        return $r3;
+    }
+
+    com.android.server.location.ContextHubServiceTransaction createQueryTransaction(int, android.hardware.location.IContextHubTransactionCallback)
+    {
+        com.android.server.location.ContextHubTransactionManager r0;
+        int i0, $i1;
+        android.hardware.location.IContextHubTransactionCallback r1;
+        com.android.server.location.ContextHubTransactionManager$5 $r2;
+        java.util.concurrent.atomic.AtomicInteger $r3;
+
+        r0 := @this: com.android.server.location.ContextHubTransactionManager;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: android.hardware.location.IContextHubTransactionCallback;
+
+        $r2 = new com.android.server.location.ContextHubTransactionManager$5;
+
+        $r3 = r0.<com.android.server.location.ContextHubTransactionManager: java.util.concurrent.atomic.AtomicInteger mNextAvailableId>;
+
+        $i1 = virtualinvoke $r3.<java.util.concurrent.atomic.AtomicInteger: int getAndIncrement()>();
+
+        specialinvoke $r2.<com.android.server.location.ContextHubTransactionManager$5: void <init>(com.android.server.location.ContextHubTransactionManager,int,int,int,android.hardware.location.IContextHubTransactionCallback)>(r0, $i1, 4, i0, r1);
+
+        return $r2;
+    }
+
+    com.android.server.location.ContextHubServiceTransaction createUnloadTransaction(int, long, android.hardware.location.IContextHubTransactionCallback)
+    {
+        com.android.server.location.ContextHubTransactionManager r0;
+        int i0, $i2;
+        long l1;
+        android.hardware.location.IContextHubTransactionCallback r1;
+        com.android.server.location.ContextHubTransactionManager$2 $r2;
+        java.util.concurrent.atomic.AtomicInteger $r3;
+
+        r0 := @this: com.android.server.location.ContextHubTransactionManager;
+
+        i0 := @parameter0: int;
+
+        l1 := @parameter1: long;
+
+        r1 := @parameter2: android.hardware.location.IContextHubTransactionCallback;
+
+        $r2 = new com.android.server.location.ContextHubTransactionManager$2;
+
+        $r3 = r0.<com.android.server.location.ContextHubTransactionManager: java.util.concurrent.atomic.AtomicInteger mNextAvailableId>;
+
+        $i2 = virtualinvoke $r3.<java.util.concurrent.atomic.AtomicInteger: int getAndIncrement()>();
+
+        specialinvoke $r2.<com.android.server.location.ContextHubTransactionManager$2: void <init>(com.android.server.location.ContextHubTransactionManager,int,int,int,long,android.hardware.location.IContextHubTransactionCallback)>(r0, $i2, 1, i0, l1, r1);
+
+        return $r2;
+    }
+
+    public void lambda$startNextTransaction$0$ContextHubTransactionManager(com.android.server.location.ContextHubServiceTransaction)
+    {
+        com.android.server.location.ContextHubTransactionManager r0;
+        java.lang.StringBuilder r1;
+        boolean $z0;
+        java.lang.String $r4;
+        java.lang.Throwable $r5;
+        com.android.server.location.ContextHubServiceTransaction r6;
+
+        r0 := @this: com.android.server.location.ContextHubTransactionManager;
+
+        r6 := @parameter0: com.android.server.location.ContextHubServiceTransaction;
+
+        entermonitor r0;
+
+     label1:
+        $z0 = virtualinvoke r6.<com.android.server.location.ContextHubServiceTransaction: boolean isComplete()>();
+
+        if $z0 != 0 goto label2;
+
+        r1 = new java.lang.StringBuilder;
+
+        specialinvoke r1.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r6);
+
+        virtualinvoke r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" timed out");
+
+        $r4 = virtualinvoke r1.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("ContextHubTransactionManager", $r4);
+
+        virtualinvoke r6.<com.android.server.location.ContextHubServiceTransaction: void onTransactionComplete(int)>(6);
+
+        specialinvoke r0.<com.android.server.location.ContextHubTransactionManager: void removeTransactionAndStartNext()>();
+
+     label2:
+        exitmonitor r0;
+
+     label3:
+        return;
+
+     label4:
+        $r5 := @caughtexception;
+
+     label5:
+        exitmonitor r0;
+
+     label6:
+        throw $r5;
+
+        catch java.lang.Throwable from label1 to label2 with label4;
+        catch java.lang.Throwable from label2 to label3 with label4;
+        catch java.lang.Throwable from label5 to label6 with label4;
+    }
+
+    void onHubReset()
+    {
+        com.android.server.location.ContextHubTransactionManager r0;
+        java.util.ArrayDeque $r1;
+        java.lang.Object $r2;
+        java.lang.Throwable $r3;
+        com.android.server.location.ContextHubServiceTransaction r4;
+
+        r0 := @this: com.android.server.location.ContextHubTransactionManager;
+
+        entermonitor r0;
+
+     label1:
+        $r1 = r0.<com.android.server.location.ContextHubTransactionManager: java.util.ArrayDeque mTransactionQueue>;
+
+        $r2 = virtualinvoke $r1.<java.util.ArrayDeque: java.lang.Object peek()>();
+
+        r4 = (com.android.server.location.ContextHubServiceTransaction) $r2;
+
+     label2:
+        if r4 != null goto label3;
+
+        exitmonitor r0;
+
+        return;
+
+     label3:
+        specialinvoke r0.<com.android.server.location.ContextHubTransactionManager: void removeTransactionAndStartNext()>();
+
+     label4:
+        exitmonitor r0;
+
+        return;
+
+     label5:
+        $r3 := @caughtexception;
+
+        exitmonitor r0;
+
+        throw $r3;
+
+        catch java.lang.Throwable from label1 to label2 with label5;
+        catch java.lang.Throwable from label3 to label4 with label5;
+    }
+
+    void onQueryResponse(java.util.List)
+    {
+        com.android.server.location.ContextHubTransactionManager r0;
+        com.android.server.location.ContextHubServiceTransaction r1;
+        java.util.ArrayDeque $r2;
+        java.lang.Object $r3;
+        int $i0;
+        java.lang.String $r7;
+        java.lang.Throwable $r8;
+        java.util.List r9;
+        java.lang.StringBuilder r10;
+
+        r0 := @this: com.android.server.location.ContextHubTransactionManager;
+
+        r9 := @parameter0: java.util.List;
+
+        entermonitor r0;
+
+     label1:
+        $r2 = r0.<com.android.server.location.ContextHubTransactionManager: java.util.ArrayDeque mTransactionQueue>;
+
+        $r3 = virtualinvoke $r2.<java.util.ArrayDeque: java.lang.Object peek()>();
+
+        r1 = (com.android.server.location.ContextHubServiceTransaction) $r3;
+
+     label2:
+        if r1 != null goto label5;
+
+     label3:
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("ContextHubTransactionManager", "Received unexpected query response (no transaction pending)");
+
+     label4:
+        exitmonitor r0;
+
+        return;
+
+     label5:
+        $i0 = virtualinvoke r1.<com.android.server.location.ContextHubServiceTransaction: int getTransactionType()>();
+
+        if $i0 == 4 goto label7;
+
+        r10 = new java.lang.StringBuilder;
+
+        specialinvoke r10.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Received unexpected query response (expected ");
+
+        virtualinvoke r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r1);
+
+        virtualinvoke r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(")");
+
+        $r7 = virtualinvoke r10.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("ContextHubTransactionManager", $r7);
+
+     label6:
+        exitmonitor r0;
+
+        return;
+
+     label7:
+        virtualinvoke r1.<com.android.server.location.ContextHubServiceTransaction: void onQueryResponse(int,java.util.List)>(0, r9);
+
+        specialinvoke r0.<com.android.server.location.ContextHubTransactionManager: void removeTransactionAndStartNext()>();
+
+     label8:
+        exitmonitor r0;
+
+        return;
+
+     label9:
+        $r8 := @caughtexception;
+
+        exitmonitor r0;
+
+        throw $r8;
+
+        catch java.lang.Throwable from label1 to label2 with label9;
+        catch java.lang.Throwable from label3 to label4 with label9;
+        catch java.lang.Throwable from label5 to label6 with label9;
+        catch java.lang.Throwable from label7 to label8 with label9;
+    }
+
+    void onTransactionResponse(int, int)
+    {
+        com.android.server.location.ContextHubTransactionManager r0;
+        int i0, $i1, $i2, i5;
+        java.lang.StringBuilder r1;
+        java.util.ArrayDeque $r2;
+        java.lang.Object $r3;
+        java.lang.String $r9;
+        java.lang.Throwable $r10;
+        com.android.server.location.ContextHubServiceTransaction r11;
+        byte b6;
+
+        r0 := @this: com.android.server.location.ContextHubTransactionManager;
+
+        i5 := @parameter0: int;
+
+        i0 := @parameter1: int;
+
+        entermonitor r0;
+
+     label01:
+        $r2 = r0.<com.android.server.location.ContextHubTransactionManager: java.util.ArrayDeque mTransactionQueue>;
+
+        $r3 = virtualinvoke $r2.<java.util.ArrayDeque: java.lang.Object peek()>();
+
+        r11 = (com.android.server.location.ContextHubServiceTransaction) $r3;
+
+     label02:
+        if r11 != null goto label05;
+
+     label03:
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("ContextHubTransactionManager", "Received unexpected transaction response (no transaction pending)");
+
+     label04:
+        exitmonitor r0;
+
+        return;
+
+     label05:
+        $i1 = virtualinvoke r11.<com.android.server.location.ContextHubServiceTransaction: int getTransactionId()>();
+
+        if $i1 == i5 goto label07;
+
+        r1 = new java.lang.StringBuilder;
+
+        specialinvoke r1.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Received unexpected transaction response (expected ID = ");
+
+        $i2 = virtualinvoke r11.<com.android.server.location.ContextHubServiceTransaction: int getTransactionId()>();
+
+        virtualinvoke r1.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i2);
+
+        virtualinvoke r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", received ID = ");
+
+        virtualinvoke r1.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i5);
+
+        virtualinvoke r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(")");
+
+        $r9 = virtualinvoke r1.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("ContextHubTransactionManager", $r9);
+
+     label06:
+        exitmonitor r0;
+
+        return;
+
+     label07:
+        if i0 != 0 goto label08;
+
+        b6 = 0;
+
+        goto label09;
+
+     label08:
+        b6 = 5;
+
+     label09:
+        virtualinvoke r11.<com.android.server.location.ContextHubServiceTransaction: void onTransactionComplete(int)>(b6);
+
+        specialinvoke r0.<com.android.server.location.ContextHubTransactionManager: void removeTransactionAndStartNext()>();
+
+     label10:
+        exitmonitor r0;
+
+        return;
+
+     label11:
+        $r10 := @caughtexception;
+
+        exitmonitor r0;
+
+        throw $r10;
+
+        catch java.lang.Throwable from label01 to label02 with label11;
+        catch java.lang.Throwable from label03 to label04 with label11;
+        catch java.lang.Throwable from label05 to label06 with label11;
+        catch java.lang.Throwable from label09 to label10 with label11;
+    }
+
+    public static void <clinit>()
+    {
+        <com.android.server.location.ContextHubTransactionManager: java.lang.String TAG> = "ContextHubTransactionManager";
+
+        <com.android.server.location.ContextHubTransactionManager: int MAX_PENDING_REQUESTS> = 10000;
+
+        return;
+    }
+}

@@ -1,0 +1,1408 @@
+class com.android.server.ExplicitHealthCheckController extends java.lang.Object
+{
+    private static final java.lang.String TAG;
+    private android.content.ServiceConnection mConnection;
+    private final android.content.Context mContext;
+    private boolean mEnabled;
+    private final java.lang.Object mLock;
+    private java.lang.Runnable mNotifySyncRunnable;
+    private java.util.function.Consumer mPassedConsumer;
+    private android.service.watchdog.IExplicitHealthCheckService mRemoteService;
+    private java.util.function.Consumer mSupportedConsumer;
+
+    void <init>(android.content.Context)
+    {
+        com.android.server.ExplicitHealthCheckController r0;
+        android.content.Context r1;
+        java.lang.Object $r2;
+
+        r0 := @this: com.android.server.ExplicitHealthCheckController;
+
+        r1 := @parameter0: android.content.Context;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        $r2 = new java.lang.Object;
+
+        specialinvoke $r2.<java.lang.Object: void <init>()>();
+
+        r0.<com.android.server.ExplicitHealthCheckController: java.lang.Object mLock> = $r2;
+
+        r0.<com.android.server.ExplicitHealthCheckController: android.content.Context mContext> = r1;
+
+        return;
+    }
+
+    static void access$000(com.android.server.ExplicitHealthCheckController, android.os.IBinder)
+    {
+        com.android.server.ExplicitHealthCheckController r0;
+        android.os.IBinder r1;
+
+        r0 := @parameter0: com.android.server.ExplicitHealthCheckController;
+
+        r1 := @parameter1: android.os.IBinder;
+
+        specialinvoke r0.<com.android.server.ExplicitHealthCheckController: void initState(android.os.IBinder)>(r1);
+
+        return;
+    }
+
+    static java.lang.Object access$100(com.android.server.ExplicitHealthCheckController)
+    {
+        com.android.server.ExplicitHealthCheckController r0;
+        java.lang.Object $r1;
+
+        r0 := @parameter0: com.android.server.ExplicitHealthCheckController;
+
+        $r1 = r0.<com.android.server.ExplicitHealthCheckController: java.lang.Object mLock>;
+
+        return $r1;
+    }
+
+    static android.service.watchdog.IExplicitHealthCheckService access$202(com.android.server.ExplicitHealthCheckController, android.service.watchdog.IExplicitHealthCheckService)
+    {
+        com.android.server.ExplicitHealthCheckController r0;
+        android.service.watchdog.IExplicitHealthCheckService r1;
+
+        r0 := @parameter0: com.android.server.ExplicitHealthCheckController;
+
+        r1 := @parameter1: android.service.watchdog.IExplicitHealthCheckService;
+
+        r0.<com.android.server.ExplicitHealthCheckController: android.service.watchdog.IExplicitHealthCheckService mRemoteService> = r1;
+
+        return r1;
+    }
+
+    static void access$300(com.android.server.ExplicitHealthCheckController)
+    {
+        com.android.server.ExplicitHealthCheckController r0;
+
+        r0 := @parameter0: com.android.server.ExplicitHealthCheckController;
+
+        specialinvoke r0.<com.android.server.ExplicitHealthCheckController: void unbindService()>();
+
+        return;
+    }
+
+    static void access$400(com.android.server.ExplicitHealthCheckController)
+    {
+        com.android.server.ExplicitHealthCheckController r0;
+
+        r0 := @parameter0: com.android.server.ExplicitHealthCheckController;
+
+        specialinvoke r0.<com.android.server.ExplicitHealthCheckController: void bindService()>();
+
+        return;
+    }
+
+    private void actOnDifference(java.util.Collection, java.util.Collection, java.util.function.Consumer)
+    {
+        com.android.server.ExplicitHealthCheckController r0;
+        java.util.Collection r1, r5;
+        java.util.function.Consumer r2;
+        java.util.Iterator r3;
+        boolean $z0, $z1;
+        java.lang.Object $r4;
+        java.lang.String r6;
+
+        r0 := @this: com.android.server.ExplicitHealthCheckController;
+
+        r5 := @parameter0: java.util.Collection;
+
+        r1 := @parameter1: java.util.Collection;
+
+        r2 := @parameter2: java.util.function.Consumer;
+
+        r3 = interfaceinvoke r5.<java.util.Collection: java.util.Iterator iterator()>();
+
+     label1:
+        $z0 = interfaceinvoke r3.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label3;
+
+        $r4 = interfaceinvoke r3.<java.util.Iterator: java.lang.Object next()>();
+
+        r6 = (java.lang.String) $r4;
+
+        $z1 = interfaceinvoke r1.<java.util.Collection: boolean contains(java.lang.Object)>(r6);
+
+        if $z1 != 0 goto label2;
+
+        interfaceinvoke r2.<java.util.function.Consumer: void accept(java.lang.Object)>(r6);
+
+     label2:
+        goto label1;
+
+     label3:
+        return;
+    }
+
+    private void bindService()
+    {
+        com.android.server.ExplicitHealthCheckController r0;
+        java.lang.Object r1;
+        boolean $z0, $z2;
+        android.service.watchdog.IExplicitHealthCheckService $r2, $r4;
+        android.content.ServiceConnection $r3;
+        android.content.Context $r6;
+        android.os.UserHandle $r7;
+        java.lang.Throwable $r8;
+        android.content.ComponentName r9;
+        android.content.Intent r10;
+        com.android.server.ExplicitHealthCheckController$1 r11;
+
+        r0 := @this: com.android.server.ExplicitHealthCheckController;
+
+        r1 = r0.<com.android.server.ExplicitHealthCheckController: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label01:
+        $z0 = r0.<com.android.server.ExplicitHealthCheckController: boolean mEnabled>;
+
+        if $z0 == 0 goto label10;
+
+        $r3 = r0.<com.android.server.ExplicitHealthCheckController: android.content.ServiceConnection mConnection>;
+
+        if $r3 != null goto label10;
+
+        $r4 = r0.<com.android.server.ExplicitHealthCheckController: android.service.watchdog.IExplicitHealthCheckService mRemoteService>;
+
+        if $r4 == null goto label03;
+
+     label02:
+        goto label10;
+
+     label03:
+        r9 = specialinvoke r0.<com.android.server.ExplicitHealthCheckController: android.content.ComponentName getServiceComponentNameLocked()>();
+
+     label04:
+        if r9 != null goto label07;
+
+     label05:
+        staticinvoke <android.util.Slog: int wtf(java.lang.String,java.lang.String)>("ExplicitHealthCheckController", "Explicit health check service not found");
+
+        exitmonitor r1;
+
+     label06:
+        return;
+
+     label07:
+        r10 = new android.content.Intent;
+
+        specialinvoke r10.<android.content.Intent: void <init>()>();
+
+        virtualinvoke r10.<android.content.Intent: android.content.Intent setComponent(android.content.ComponentName)>(r9);
+
+        r11 = new com.android.server.ExplicitHealthCheckController$1;
+
+        specialinvoke r11.<com.android.server.ExplicitHealthCheckController$1: void <init>(com.android.server.ExplicitHealthCheckController)>(r0);
+
+        r0.<com.android.server.ExplicitHealthCheckController: android.content.ServiceConnection mConnection> = r11;
+
+        $r6 = r0.<com.android.server.ExplicitHealthCheckController: android.content.Context mContext>;
+
+        $r7 = staticinvoke <android.os.UserHandle: android.os.UserHandle of(int)>(0);
+
+        virtualinvoke $r6.<android.content.Context: boolean bindServiceAsUser(android.content.Intent,android.content.ServiceConnection,int,android.os.UserHandle)>(r10, r11, 1, $r7);
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("ExplicitHealthCheckController", "Explicit health check service is bound");
+
+     label08:
+        exitmonitor r1;
+
+     label09:
+        return;
+
+     label10:
+        $z2 = r0.<com.android.server.ExplicitHealthCheckController: boolean mEnabled>;
+
+        if $z2 != 0 goto label12;
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("ExplicitHealthCheckController", "Not binding to service, service disabled");
+
+     label11:
+        goto label15;
+
+     label12:
+        $r2 = r0.<com.android.server.ExplicitHealthCheckController: android.service.watchdog.IExplicitHealthCheckService mRemoteService>;
+
+        if $r2 == null goto label14;
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("ExplicitHealthCheckController", "Not binding to service, service already connected");
+
+     label13:
+        goto label15;
+
+     label14:
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("ExplicitHealthCheckController", "Not binding to service, service already connecting");
+
+     label15:
+        exitmonitor r1;
+
+     label16:
+        return;
+
+     label17:
+        $r8 := @caughtexception;
+
+     label18:
+        exitmonitor r1;
+
+     label19:
+        throw $r8;
+
+        catch java.lang.Throwable from label01 to label02 with label17;
+        catch java.lang.Throwable from label03 to label04 with label17;
+        catch java.lang.Throwable from label05 to label06 with label17;
+        catch java.lang.Throwable from label07 to label08 with label17;
+        catch java.lang.Throwable from label08 to label09 with label17;
+        catch java.lang.Throwable from label10 to label11 with label17;
+        catch java.lang.Throwable from label12 to label13 with label17;
+        catch java.lang.Throwable from label14 to label15 with label17;
+        catch java.lang.Throwable from label15 to label16 with label17;
+        catch java.lang.Throwable from label18 to label19 with label17;
+    }
+
+    private void cancel(java.lang.String)
+    {
+        com.android.server.ExplicitHealthCheckController r0;
+        java.lang.Object r1;
+        java.lang.StringBuilder r2, r16, r17;
+        java.lang.String $r5, $r8, $r14, r15;
+        boolean $z0;
+        android.service.watchdog.IExplicitHealthCheckService $r9;
+        java.lang.Throwable $r10;
+        android.os.RemoteException $r11;
+
+        r0 := @this: com.android.server.ExplicitHealthCheckController;
+
+        r15 := @parameter0: java.lang.String;
+
+        r1 = r0.<com.android.server.ExplicitHealthCheckController: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label01:
+        r16 = new java.lang.StringBuilder;
+
+        specialinvoke r16.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r16.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("cancel health check for ");
+
+        virtualinvoke r16.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r15);
+
+        $r5 = virtualinvoke r16.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $z0 = specialinvoke r0.<com.android.server.ExplicitHealthCheckController: boolean prepareServiceLocked(java.lang.String)>($r5);
+
+        if $z0 != 0 goto label03;
+
+        exitmonitor r1;
+
+     label02:
+        return;
+
+     label03:
+        r17 = new java.lang.StringBuilder;
+
+        specialinvoke r17.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r17.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Cancelling health check for package ");
+
+        virtualinvoke r17.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r15);
+
+        $r8 = virtualinvoke r17.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("ExplicitHealthCheckController", $r8);
+
+     label04:
+        $r9 = r0.<com.android.server.ExplicitHealthCheckController: android.service.watchdog.IExplicitHealthCheckService mRemoteService>;
+
+        interfaceinvoke $r9.<android.service.watchdog.IExplicitHealthCheckService: void cancel(java.lang.String)>(r15);
+
+     label05:
+        goto label08;
+
+     label06:
+        $r11 := @caughtexception;
+
+     label07:
+        r2 = new java.lang.StringBuilder;
+
+        specialinvoke r2.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Failed to cancel health check for package ");
+
+        virtualinvoke r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r15);
+
+        $r14 = virtualinvoke r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String,java.lang.Throwable)>("ExplicitHealthCheckController", $r14, $r11);
+
+     label08:
+        exitmonitor r1;
+
+     label09:
+        return;
+
+     label10:
+        $r10 := @caughtexception;
+
+     label11:
+        exitmonitor r1;
+
+     label12:
+        throw $r10;
+
+        catch java.lang.Throwable from label01 to label02 with label10;
+        catch java.lang.Throwable from label03 to label04 with label10;
+        catch android.os.RemoteException from label04 to label05 with label06;
+        catch java.lang.Throwable from label04 to label05 with label10;
+        catch java.lang.Throwable from label07 to label08 with label10;
+        catch java.lang.Throwable from label08 to label09 with label10;
+        catch java.lang.Throwable from label11 to label12 with label10;
+    }
+
+    private void getRequestedPackages(java.util.function.Consumer)
+    {
+        com.android.server.ExplicitHealthCheckController r0;
+        java.lang.Object r1;
+        android.service.watchdog.IExplicitHealthCheckService r2;
+        android.os.RemoteCallback r3;
+        com.android.server._$$Lambda$ExplicitHealthCheckController$MJhpX_SveTcXQEYQTQa3k6RpjzU r4;
+        boolean $z0;
+        java.lang.Throwable $r5;
+        android.os.RemoteException $r6;
+        java.util.function.Consumer r7;
+
+        r0 := @this: com.android.server.ExplicitHealthCheckController;
+
+        r7 := @parameter0: java.util.function.Consumer;
+
+        r1 = r0.<com.android.server.ExplicitHealthCheckController: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label01:
+        $z0 = specialinvoke r0.<com.android.server.ExplicitHealthCheckController: boolean prepareServiceLocked(java.lang.String)>("get health check requested packages");
+
+        if $z0 != 0 goto label03;
+
+        exitmonitor r1;
+
+     label02:
+        return;
+
+     label03:
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("ExplicitHealthCheckController", "Getting health check requested packages");
+
+     label04:
+        r2 = r0.<com.android.server.ExplicitHealthCheckController: android.service.watchdog.IExplicitHealthCheckService mRemoteService>;
+
+        r3 = new android.os.RemoteCallback;
+
+        r4 = new com.android.server._$$Lambda$ExplicitHealthCheckController$MJhpX_SveTcXQEYQTQa3k6RpjzU;
+
+        specialinvoke r4.<com.android.server._$$Lambda$ExplicitHealthCheckController$MJhpX_SveTcXQEYQTQa3k6RpjzU: void <init>(java.util.function.Consumer)>(r7);
+
+        specialinvoke r3.<android.os.RemoteCallback: void <init>(android.os.RemoteCallback$OnResultListener)>(r4);
+
+        interfaceinvoke r2.<android.service.watchdog.IExplicitHealthCheckService: void getRequestedPackages(android.os.RemoteCallback)>(r3);
+
+     label05:
+        goto label08;
+
+     label06:
+        $r6 := @caughtexception;
+
+     label07:
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String,java.lang.Throwable)>("ExplicitHealthCheckController", "Failed to get health check requested packages", $r6);
+
+     label08:
+        exitmonitor r1;
+
+     label09:
+        return;
+
+     label10:
+        $r5 := @caughtexception;
+
+     label11:
+        exitmonitor r1;
+
+     label12:
+        throw $r5;
+
+        catch java.lang.Throwable from label01 to label02 with label10;
+        catch java.lang.Throwable from label03 to label04 with label10;
+        catch android.os.RemoteException from label04 to label05 with label06;
+        catch java.lang.Throwable from label04 to label05 with label10;
+        catch java.lang.Throwable from label07 to label08 with label10;
+        catch java.lang.Throwable from label08 to label09 with label10;
+        catch java.lang.Throwable from label11 to label12 with label10;
+    }
+
+    private android.content.ComponentName getServiceComponentNameLocked()
+    {
+        com.android.server.ExplicitHealthCheckController r0;
+        android.content.ComponentName $r2;
+        java.lang.String $r3, $r4, $r5, $r6, $r8, $r12;
+        boolean $z0;
+        java.lang.StringBuilder $r7;
+        android.content.pm.ServiceInfo r13;
+
+        r0 := @this: com.android.server.ExplicitHealthCheckController;
+
+        r13 = specialinvoke r0.<com.android.server.ExplicitHealthCheckController: android.content.pm.ServiceInfo getServiceInfoLocked()>();
+
+        if r13 != null goto label1;
+
+        return null;
+
+     label1:
+        $r2 = new android.content.ComponentName;
+
+        $r4 = r13.<android.content.pm.ServiceInfo: java.lang.String packageName>;
+
+        $r3 = r13.<android.content.pm.ServiceInfo: java.lang.String name>;
+
+        specialinvoke $r2.<android.content.ComponentName: void <init>(java.lang.String,java.lang.String)>($r4, $r3);
+
+        $r6 = "android.permission.BIND_EXPLICIT_HEALTH_CHECK_SERVICE";
+
+        $r5 = r13.<android.content.pm.ServiceInfo: java.lang.String permission>;
+
+        $z0 = virtualinvoke $r6.<java.lang.String: boolean equals(java.lang.Object)>($r5);
+
+        if $z0 != 0 goto label2;
+
+        $r7 = new java.lang.StringBuilder;
+
+        specialinvoke $r7.<java.lang.StringBuilder: void <init>()>();
+
+        $r8 = virtualinvoke $r2.<android.content.ComponentName: java.lang.String flattenToShortString()>();
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r8);
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" does not require permission ");
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("android.permission.BIND_EXPLICIT_HEALTH_CHECK_SERVICE");
+
+        $r12 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("ExplicitHealthCheckController", $r12);
+
+        return null;
+
+     label2:
+        return $r2;
+    }
+
+    private android.content.pm.ServiceInfo getServiceInfoLocked()
+    {
+        com.android.server.ExplicitHealthCheckController r0;
+        android.content.Context $r2, $r6;
+        android.content.pm.PackageManager $r3, $r7;
+        android.content.Intent $r4;
+        android.content.pm.ServiceInfo $r8, $r9;
+        java.lang.String r10;
+        android.content.pm.ResolveInfo r11;
+
+        r0 := @this: com.android.server.ExplicitHealthCheckController;
+
+        $r2 = r0.<com.android.server.ExplicitHealthCheckController: android.content.Context mContext>;
+
+        $r3 = virtualinvoke $r2.<android.content.Context: android.content.pm.PackageManager getPackageManager()>();
+
+        r10 = virtualinvoke $r3.<android.content.pm.PackageManager: java.lang.String getServicesSystemSharedLibraryPackageName()>();
+
+        if r10 != null goto label1;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("ExplicitHealthCheckController", "no external services package!");
+
+        return null;
+
+     label1:
+        $r4 = new android.content.Intent;
+
+        specialinvoke $r4.<android.content.Intent: void <init>(java.lang.String)>("android.service.watchdog.ExplicitHealthCheckService");
+
+        virtualinvoke $r4.<android.content.Intent: android.content.Intent setPackage(java.lang.String)>(r10);
+
+        $r6 = r0.<com.android.server.ExplicitHealthCheckController: android.content.Context mContext>;
+
+        $r7 = virtualinvoke $r6.<android.content.Context: android.content.pm.PackageManager getPackageManager()>();
+
+        r11 = virtualinvoke $r7.<android.content.pm.PackageManager: android.content.pm.ResolveInfo resolveService(android.content.Intent,int)>($r4, 132);
+
+        if r11 == null goto label3;
+
+        $r8 = r11.<android.content.pm.ResolveInfo: android.content.pm.ServiceInfo serviceInfo>;
+
+        if $r8 != null goto label2;
+
+        goto label3;
+
+     label2:
+        $r9 = r11.<android.content.pm.ResolveInfo: android.content.pm.ServiceInfo serviceInfo>;
+
+        return $r9;
+
+     label3:
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("ExplicitHealthCheckController", "No valid components found.");
+
+        return null;
+    }
+
+    private void getSupportedPackages(java.util.function.Consumer)
+    {
+        com.android.server.ExplicitHealthCheckController r0;
+        java.lang.Object r1;
+        android.service.watchdog.IExplicitHealthCheckService r2;
+        android.os.RemoteCallback r3;
+        com.android.server._$$Lambda$ExplicitHealthCheckController$_PgTaUvckhKQczm_86P6Mowec48 r4;
+        boolean $z0;
+        java.lang.Throwable $r5;
+        android.os.RemoteException $r6;
+        java.util.function.Consumer r7;
+
+        r0 := @this: com.android.server.ExplicitHealthCheckController;
+
+        r7 := @parameter0: java.util.function.Consumer;
+
+        r1 = r0.<com.android.server.ExplicitHealthCheckController: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label01:
+        $z0 = specialinvoke r0.<com.android.server.ExplicitHealthCheckController: boolean prepareServiceLocked(java.lang.String)>("get health check supported packages");
+
+        if $z0 != 0 goto label03;
+
+        exitmonitor r1;
+
+     label02:
+        return;
+
+     label03:
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("ExplicitHealthCheckController", "Getting health check supported packages");
+
+     label04:
+        r2 = r0.<com.android.server.ExplicitHealthCheckController: android.service.watchdog.IExplicitHealthCheckService mRemoteService>;
+
+        r3 = new android.os.RemoteCallback;
+
+        r4 = new com.android.server._$$Lambda$ExplicitHealthCheckController$_PgTaUvckhKQczm_86P6Mowec48;
+
+        specialinvoke r4.<com.android.server._$$Lambda$ExplicitHealthCheckController$_PgTaUvckhKQczm_86P6Mowec48: void <init>(java.util.function.Consumer)>(r7);
+
+        specialinvoke r3.<android.os.RemoteCallback: void <init>(android.os.RemoteCallback$OnResultListener)>(r4);
+
+        interfaceinvoke r2.<android.service.watchdog.IExplicitHealthCheckService: void getSupportedPackages(android.os.RemoteCallback)>(r3);
+
+     label05:
+        goto label08;
+
+     label06:
+        $r6 := @caughtexception;
+
+     label07:
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String,java.lang.Throwable)>("ExplicitHealthCheckController", "Failed to get health check supported packages", $r6);
+
+     label08:
+        exitmonitor r1;
+
+     label09:
+        return;
+
+     label10:
+        $r5 := @caughtexception;
+
+     label11:
+        exitmonitor r1;
+
+     label12:
+        throw $r5;
+
+        catch java.lang.Throwable from label01 to label02 with label10;
+        catch java.lang.Throwable from label03 to label04 with label10;
+        catch android.os.RemoteException from label04 to label05 with label06;
+        catch java.lang.Throwable from label04 to label05 with label10;
+        catch java.lang.Throwable from label07 to label08 with label10;
+        catch java.lang.Throwable from label08 to label09 with label10;
+        catch java.lang.Throwable from label11 to label12 with label10;
+    }
+
+    private void initState(android.os.IBinder)
+    {
+        com.android.server.ExplicitHealthCheckController r0;
+        java.lang.Object r1;
+        android.os.RemoteCallback r2;
+        com.android.server._$$Lambda$ExplicitHealthCheckController$6YGiVtgCnlJ0hMIeX5TzlFUaNrY r3;
+        boolean $z0;
+        java.lang.Runnable $r4;
+        java.lang.Throwable $r5;
+        android.os.RemoteException $r6;
+        android.os.IBinder r7;
+        android.service.watchdog.IExplicitHealthCheckService r8;
+
+        r0 := @this: com.android.server.ExplicitHealthCheckController;
+
+        r7 := @parameter0: android.os.IBinder;
+
+        r1 = r0.<com.android.server.ExplicitHealthCheckController: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label01:
+        $z0 = r0.<com.android.server.ExplicitHealthCheckController: boolean mEnabled>;
+
+        if $z0 != 0 goto label03;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("ExplicitHealthCheckController", "Attempting to connect disabled service?? Unbinding...");
+
+        specialinvoke r0.<com.android.server.ExplicitHealthCheckController: void unbindService()>();
+
+        exitmonitor r1;
+
+     label02:
+        return;
+
+     label03:
+        r8 = staticinvoke <android.service.watchdog.IExplicitHealthCheckService$Stub: android.service.watchdog.IExplicitHealthCheckService asInterface(android.os.IBinder)>(r7);
+
+        r0.<com.android.server.ExplicitHealthCheckController: android.service.watchdog.IExplicitHealthCheckService mRemoteService> = r8;
+
+     label04:
+        r2 = new android.os.RemoteCallback;
+
+        r3 = new com.android.server._$$Lambda$ExplicitHealthCheckController$6YGiVtgCnlJ0hMIeX5TzlFUaNrY;
+
+        specialinvoke r3.<com.android.server._$$Lambda$ExplicitHealthCheckController$6YGiVtgCnlJ0hMIeX5TzlFUaNrY: void <init>(com.android.server.ExplicitHealthCheckController)>(r0);
+
+        specialinvoke r2.<android.os.RemoteCallback: void <init>(android.os.RemoteCallback$OnResultListener)>(r3);
+
+        interfaceinvoke r8.<android.service.watchdog.IExplicitHealthCheckService: void setCallback(android.os.RemoteCallback)>(r2);
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("ExplicitHealthCheckController", "Service initialized, syncing requests");
+
+     label05:
+        goto label08;
+
+     label06:
+        $r6 := @caughtexception;
+
+     label07:
+        staticinvoke <android.util.Slog: int wtf(java.lang.String,java.lang.String)>("ExplicitHealthCheckController", "Could not setCallback on explicit health check service");
+
+     label08:
+        exitmonitor r1;
+
+     label09:
+        $r4 = r0.<com.android.server.ExplicitHealthCheckController: java.lang.Runnable mNotifySyncRunnable>;
+
+        interfaceinvoke $r4.<java.lang.Runnable: void run()>();
+
+        return;
+
+     label10:
+        $r5 := @caughtexception;
+
+     label11:
+        exitmonitor r1;
+
+     label12:
+        throw $r5;
+
+        catch java.lang.Throwable from label01 to label02 with label10;
+        catch java.lang.Throwable from label03 to label04 with label10;
+        catch android.os.RemoteException from label04 to label05 with label06;
+        catch java.lang.Throwable from label04 to label05 with label10;
+        catch java.lang.Throwable from label07 to label08 with label10;
+        catch java.lang.Throwable from label08 to label09 with label10;
+        catch java.lang.Throwable from label11 to label12 with label10;
+    }
+
+    static void lambda$getRequestedPackages$5(java.util.function.Consumer, android.os.Bundle)
+    {
+        java.util.function.Consumer r0;
+        java.lang.StringBuilder $r2;
+        java.lang.String $r5;
+        android.os.Bundle r6;
+        java.util.ArrayList r7;
+
+        r0 := @parameter0: java.util.function.Consumer;
+
+        r6 := @parameter1: android.os.Bundle;
+
+        r7 = virtualinvoke r6.<android.os.Bundle: java.util.ArrayList getStringArrayList(java.lang.String)>("android.service.watchdog.extra.requested_packages");
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Explicit health check requested packages ");
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r7);
+
+        $r5 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("ExplicitHealthCheckController", $r5);
+
+        interfaceinvoke r0.<java.util.function.Consumer: void accept(java.lang.Object)>(r7);
+
+        return;
+    }
+
+    static void lambda$getSupportedPackages$4(java.util.function.Consumer, android.os.Bundle)
+    {
+        java.util.function.Consumer r0;
+        java.util.ArrayList r1;
+        java.lang.StringBuilder $r2;
+        java.lang.String $r5;
+        android.os.Bundle r6;
+
+        r0 := @parameter0: java.util.function.Consumer;
+
+        r6 := @parameter1: android.os.Bundle;
+
+        r1 = virtualinvoke r6.<android.os.Bundle: java.util.ArrayList getParcelableArrayList(java.lang.String)>("android.service.watchdog.extra.supported_packages");
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Explicit health check supported packages ");
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r1);
+
+        $r5 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("ExplicitHealthCheckController", $r5);
+
+        interfaceinvoke r0.<java.util.function.Consumer: void accept(java.lang.Object)>(r1);
+
+        return;
+    }
+
+    private boolean prepareServiceLocked(java.lang.String)
+    {
+        com.android.server.ExplicitHealthCheckController r0;
+        android.service.watchdog.IExplicitHealthCheckService $r2;
+        java.lang.StringBuilder $r3;
+        boolean $z0, $z1, $z2;
+        java.lang.String $r7, r8, r9;
+
+        r0 := @this: com.android.server.ExplicitHealthCheckController;
+
+        r8 := @parameter0: java.lang.String;
+
+        $r2 = r0.<com.android.server.ExplicitHealthCheckController: android.service.watchdog.IExplicitHealthCheckService mRemoteService>;
+
+        if $r2 == null goto label1;
+
+        $z2 = r0.<com.android.server.ExplicitHealthCheckController: boolean mEnabled>;
+
+        if $z2 == 0 goto label1;
+
+        return 1;
+
+     label1:
+        $r3 = new java.lang.StringBuilder;
+
+        specialinvoke $r3.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Service not ready to ");
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r8);
+
+        $z0 = r0.<com.android.server.ExplicitHealthCheckController: boolean mEnabled>;
+
+        if $z0 == 0 goto label2;
+
+        r9 = ". Binding...";
+
+        goto label3;
+
+     label2:
+        r9 = ". Disabled";
+
+     label3:
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r9);
+
+        $r7 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("ExplicitHealthCheckController", $r7);
+
+        $z1 = r0.<com.android.server.ExplicitHealthCheckController: boolean mEnabled>;
+
+        if $z1 == 0 goto label4;
+
+        specialinvoke r0.<com.android.server.ExplicitHealthCheckController: void bindService()>();
+
+     label4:
+        return 0;
+    }
+
+    private void request(java.lang.String)
+    {
+        com.android.server.ExplicitHealthCheckController r0;
+        java.lang.Object r1;
+        java.lang.StringBuilder r2, r16, r17;
+        java.lang.String $r5, $r8, $r13, r15;
+        boolean $z0;
+        android.service.watchdog.IExplicitHealthCheckService $r9;
+        android.os.RemoteException $r10;
+        java.lang.Throwable $r14;
+
+        r0 := @this: com.android.server.ExplicitHealthCheckController;
+
+        r15 := @parameter0: java.lang.String;
+
+        r1 = r0.<com.android.server.ExplicitHealthCheckController: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label01:
+        r16 = new java.lang.StringBuilder;
+
+        specialinvoke r16.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r16.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("request health check for ");
+
+        virtualinvoke r16.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r15);
+
+        $r5 = virtualinvoke r16.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $z0 = specialinvoke r0.<com.android.server.ExplicitHealthCheckController: boolean prepareServiceLocked(java.lang.String)>($r5);
+
+        if $z0 != 0 goto label03;
+
+        exitmonitor r1;
+
+     label02:
+        return;
+
+     label03:
+        r17 = new java.lang.StringBuilder;
+
+        specialinvoke r17.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r17.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Requesting health check for package ");
+
+        virtualinvoke r17.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r15);
+
+        $r8 = virtualinvoke r17.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("ExplicitHealthCheckController", $r8);
+
+     label04:
+        $r9 = r0.<com.android.server.ExplicitHealthCheckController: android.service.watchdog.IExplicitHealthCheckService mRemoteService>;
+
+        interfaceinvoke $r9.<android.service.watchdog.IExplicitHealthCheckService: void request(java.lang.String)>(r15);
+
+     label05:
+        goto label08;
+
+     label06:
+        $r10 := @caughtexception;
+
+     label07:
+        r2 = new java.lang.StringBuilder;
+
+        specialinvoke r2.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Failed to request health check for package ");
+
+        virtualinvoke r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r15);
+
+        $r13 = virtualinvoke r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String,java.lang.Throwable)>("ExplicitHealthCheckController", $r13, $r10);
+
+     label08:
+        exitmonitor r1;
+
+     label09:
+        return;
+
+     label10:
+        $r14 := @caughtexception;
+
+     label11:
+        exitmonitor r1;
+
+     label12:
+        throw $r14;
+
+        catch java.lang.Throwable from label01 to label02 with label10;
+        catch java.lang.Throwable from label03 to label04 with label10;
+        catch android.os.RemoteException from label04 to label05 with label06;
+        catch java.lang.Throwable from label04 to label05 with label10;
+        catch java.lang.Throwable from label07 to label08 with label10;
+        catch java.lang.Throwable from label08 to label09 with label10;
+        catch java.lang.Throwable from label11 to label12 with label10;
+    }
+
+    private void unbindService()
+    {
+        com.android.server.ExplicitHealthCheckController r0;
+        java.lang.Object r1;
+        android.service.watchdog.IExplicitHealthCheckService $r3;
+        android.content.ServiceConnection $r4;
+        android.content.Context $r5;
+        java.lang.Throwable $r6;
+
+        r0 := @this: com.android.server.ExplicitHealthCheckController;
+
+        r1 = r0.<com.android.server.ExplicitHealthCheckController: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        $r3 = r0.<com.android.server.ExplicitHealthCheckController: android.service.watchdog.IExplicitHealthCheckService mRemoteService>;
+
+        if $r3 == null goto label2;
+
+        $r5 = r0.<com.android.server.ExplicitHealthCheckController: android.content.Context mContext>;
+
+        $r4 = r0.<com.android.server.ExplicitHealthCheckController: android.content.ServiceConnection mConnection>;
+
+        virtualinvoke $r5.<android.content.Context: void unbindService(android.content.ServiceConnection)>($r4);
+
+        r0.<com.android.server.ExplicitHealthCheckController: android.service.watchdog.IExplicitHealthCheckService mRemoteService> = null;
+
+        r0.<com.android.server.ExplicitHealthCheckController: android.content.ServiceConnection mConnection> = null;
+
+     label2:
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("ExplicitHealthCheckController", "Explicit health check service is unbound");
+
+        exitmonitor r1;
+
+     label3:
+        return;
+
+     label4:
+        $r6 := @caughtexception;
+
+     label5:
+        exitmonitor r1;
+
+     label6:
+        throw $r6;
+
+        catch java.lang.Throwable from label1 to label2 with label4;
+        catch java.lang.Throwable from label2 to label3 with label4;
+        catch java.lang.Throwable from label5 to label6 with label4;
+    }
+
+    public void lambda$initState$6$ExplicitHealthCheckController(android.os.Bundle)
+    {
+        com.android.server.ExplicitHealthCheckController r0;
+        boolean $z0;
+        java.lang.StringBuilder $r1;
+        java.lang.String $r5, r7;
+        android.os.Bundle r6;
+        java.util.function.Consumer r8;
+
+        r0 := @this: com.android.server.ExplicitHealthCheckController;
+
+        r6 := @parameter0: android.os.Bundle;
+
+        r7 = virtualinvoke r6.<android.os.Bundle: java.lang.String getString(java.lang.String)>("android.service.watchdog.extra.health_check_passed_package");
+
+        $z0 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>(r7);
+
+        if $z0 != 0 goto label2;
+
+        r8 = r0.<com.android.server.ExplicitHealthCheckController: java.util.function.Consumer mPassedConsumer>;
+
+        if r8 != null goto label1;
+
+        $r1 = new java.lang.StringBuilder;
+
+        specialinvoke $r1.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Health check passed for package ");
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r7);
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("but no consumer registered.");
+
+        $r5 = virtualinvoke $r1.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int wtf(java.lang.String,java.lang.String)>("ExplicitHealthCheckController", $r5);
+
+        goto label3;
+
+     label1:
+        interfaceinvoke r8.<java.util.function.Consumer: void accept(java.lang.Object)>(r7);
+
+        goto label3;
+
+     label2:
+        staticinvoke <android.util.Slog: int wtf(java.lang.String,java.lang.String)>("ExplicitHealthCheckController", "Empty package passed explicit health check?");
+
+     label3:
+        return;
+    }
+
+    public void lambda$syncRequests$0$ExplicitHealthCheckController(java.lang.String)
+    {
+        com.android.server.ExplicitHealthCheckController r0;
+        java.lang.String r1;
+
+        r0 := @this: com.android.server.ExplicitHealthCheckController;
+
+        r1 := @parameter0: java.lang.String;
+
+        specialinvoke r0.<com.android.server.ExplicitHealthCheckController: void cancel(java.lang.String)>(r1);
+
+        return;
+    }
+
+    public void lambda$syncRequests$1$ExplicitHealthCheckController(java.lang.String)
+    {
+        com.android.server.ExplicitHealthCheckController r0;
+        java.lang.String r1;
+
+        r0 := @this: com.android.server.ExplicitHealthCheckController;
+
+        r1 := @parameter0: java.lang.String;
+
+        specialinvoke r0.<com.android.server.ExplicitHealthCheckController: void request(java.lang.String)>(r1);
+
+        return;
+    }
+
+    public void lambda$syncRequests$2$ExplicitHealthCheckController(java.util.List, java.util.Set, java.util.List)
+    {
+        com.android.server.ExplicitHealthCheckController r0;
+        java.util.Set r1;
+        java.util.List r2, r9;
+        java.lang.Object r3, $r5;
+        android.util.ArraySet r4;
+        boolean $z0, $z2;
+        android.service.watchdog.ExplicitHealthCheckService$PackageConfig $r6;
+        java.lang.String $r7;
+        java.lang.Throwable $r8;
+        java.util.Iterator r10;
+        com.android.server._$$Lambda$ExplicitHealthCheckController$fE2pZ6ZhwFEJPuOl0ochqPnSmyI r11;
+        com.android.server._$$Lambda$ExplicitHealthCheckController$ucIBQc_IW2iYt6j4dngAncLT6nQ r12;
+
+        r0 := @this: com.android.server.ExplicitHealthCheckController;
+
+        r9 := @parameter0: java.util.List;
+
+        r1 := @parameter1: java.util.Set;
+
+        r2 := @parameter2: java.util.List;
+
+        r3 = r0.<com.android.server.ExplicitHealthCheckController: java.lang.Object mLock>;
+
+        entermonitor r3;
+
+     label01:
+        r4 = new android.util.ArraySet;
+
+        specialinvoke r4.<android.util.ArraySet: void <init>()>();
+
+        r10 = interfaceinvoke r9.<java.util.List: java.util.Iterator iterator()>();
+
+     label02:
+        $z0 = interfaceinvoke r10.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label04;
+
+        $r5 = interfaceinvoke r10.<java.util.Iterator: java.lang.Object next()>();
+
+        $r6 = (android.service.watchdog.ExplicitHealthCheckService$PackageConfig) $r5;
+
+        $r7 = virtualinvoke $r6.<android.service.watchdog.ExplicitHealthCheckService$PackageConfig: java.lang.String getPackageName()>();
+
+        interfaceinvoke r4.<java.util.Set: boolean add(java.lang.Object)>($r7);
+
+     label03:
+        goto label02;
+
+     label04:
+        interfaceinvoke r1.<java.util.Set: boolean retainAll(java.util.Collection)>(r4);
+
+        r11 = new com.android.server._$$Lambda$ExplicitHealthCheckController$fE2pZ6ZhwFEJPuOl0ochqPnSmyI;
+
+        specialinvoke r11.<com.android.server._$$Lambda$ExplicitHealthCheckController$fE2pZ6ZhwFEJPuOl0ochqPnSmyI: void <init>(com.android.server.ExplicitHealthCheckController)>(r0);
+
+        specialinvoke r0.<com.android.server.ExplicitHealthCheckController: void actOnDifference(java.util.Collection,java.util.Collection,java.util.function.Consumer)>(r2, r1, r11);
+
+        r12 = new com.android.server._$$Lambda$ExplicitHealthCheckController$ucIBQc_IW2iYt6j4dngAncLT6nQ;
+
+        specialinvoke r12.<com.android.server._$$Lambda$ExplicitHealthCheckController$ucIBQc_IW2iYt6j4dngAncLT6nQ: void <init>(com.android.server.ExplicitHealthCheckController)>(r0);
+
+        specialinvoke r0.<com.android.server.ExplicitHealthCheckController: void actOnDifference(java.util.Collection,java.util.Collection,java.util.function.Consumer)>(r1, r2, r12);
+
+        $z2 = interfaceinvoke r1.<java.util.Set: boolean isEmpty()>();
+
+        if $z2 == 0 goto label06;
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("ExplicitHealthCheckController", "No more health check requests, unbinding...");
+
+        specialinvoke r0.<com.android.server.ExplicitHealthCheckController: void unbindService()>();
+
+        exitmonitor r3;
+
+     label05:
+        return;
+
+     label06:
+        exitmonitor r3;
+
+     label07:
+        return;
+
+     label08:
+        $r8 := @caughtexception;
+
+     label09:
+        exitmonitor r3;
+
+     label10:
+        throw $r8;
+
+        catch java.lang.Throwable from label01 to label02 with label08;
+        catch java.lang.Throwable from label02 to label03 with label08;
+        catch java.lang.Throwable from label04 to label05 with label08;
+        catch java.lang.Throwable from label06 to label07 with label08;
+        catch java.lang.Throwable from label09 to label10 with label08;
+    }
+
+    public void lambda$syncRequests$3$ExplicitHealthCheckController(java.util.Set, java.util.List)
+    {
+        com.android.server.ExplicitHealthCheckController r0;
+        java.util.Set r1;
+        java.util.List r2;
+        java.util.function.Consumer $r3;
+        com.android.server._$$Lambda$ExplicitHealthCheckController$NCzfilqDrFIbp6BuyCJrDsdAk5I $r4;
+
+        r0 := @this: com.android.server.ExplicitHealthCheckController;
+
+        r1 := @parameter0: java.util.Set;
+
+        r2 := @parameter1: java.util.List;
+
+        $r3 = r0.<com.android.server.ExplicitHealthCheckController: java.util.function.Consumer mSupportedConsumer>;
+
+        interfaceinvoke $r3.<java.util.function.Consumer: void accept(java.lang.Object)>(r2);
+
+        $r4 = new com.android.server._$$Lambda$ExplicitHealthCheckController$NCzfilqDrFIbp6BuyCJrDsdAk5I;
+
+        specialinvoke $r4.<com.android.server._$$Lambda$ExplicitHealthCheckController$NCzfilqDrFIbp6BuyCJrDsdAk5I: void <init>(com.android.server.ExplicitHealthCheckController,java.util.List,java.util.Set)>(r0, r2, r1);
+
+        specialinvoke r0.<com.android.server.ExplicitHealthCheckController: void getRequestedPackages(java.util.function.Consumer)>($r4);
+
+        return;
+    }
+
+    public void setCallbacks(java.util.function.Consumer, java.util.function.Consumer, java.lang.Runnable)
+    {
+        com.android.server.ExplicitHealthCheckController r0;
+        java.util.function.Consumer r1, $r4, $r8, r11, $r12, $r13;
+        java.lang.Runnable r2, $r9, $r14;
+        java.lang.Object r3;
+        java.lang.Throwable $r10;
+
+        r0 := @this: com.android.server.ExplicitHealthCheckController;
+
+        r11 := @parameter0: java.util.function.Consumer;
+
+        r1 := @parameter1: java.util.function.Consumer;
+
+        r2 := @parameter2: java.lang.Runnable;
+
+        r3 = r0.<com.android.server.ExplicitHealthCheckController: java.lang.Object mLock>;
+
+        entermonitor r3;
+
+     label1:
+        $r4 = r0.<com.android.server.ExplicitHealthCheckController: java.util.function.Consumer mPassedConsumer>;
+
+        if $r4 != null goto label2;
+
+        $r8 = r0.<com.android.server.ExplicitHealthCheckController: java.util.function.Consumer mSupportedConsumer>;
+
+        if $r8 != null goto label2;
+
+        $r9 = r0.<com.android.server.ExplicitHealthCheckController: java.lang.Runnable mNotifySyncRunnable>;
+
+        if $r9 == null goto label3;
+
+     label2:
+        staticinvoke <android.util.Slog: int wtf(java.lang.String,java.lang.String)>("ExplicitHealthCheckController", "Resetting health check controller callbacks");
+
+     label3:
+        staticinvoke <java.util.Objects: java.lang.Object requireNonNull(java.lang.Object)>(r11);
+
+        $r12 = (java.util.function.Consumer) r11;
+
+        r0.<com.android.server.ExplicitHealthCheckController: java.util.function.Consumer mPassedConsumer> = $r12;
+
+        staticinvoke <java.util.Objects: java.lang.Object requireNonNull(java.lang.Object)>(r1);
+
+        $r13 = (java.util.function.Consumer) r1;
+
+        r0.<com.android.server.ExplicitHealthCheckController: java.util.function.Consumer mSupportedConsumer> = $r13;
+
+        staticinvoke <java.util.Objects: java.lang.Object requireNonNull(java.lang.Object)>(r2);
+
+        $r14 = (java.lang.Runnable) r2;
+
+        r0.<com.android.server.ExplicitHealthCheckController: java.lang.Runnable mNotifySyncRunnable> = $r14;
+
+        exitmonitor r3;
+
+     label4:
+        return;
+
+     label5:
+        $r10 := @caughtexception;
+
+     label6:
+        exitmonitor r3;
+
+     label7:
+        throw $r10;
+
+        catch java.lang.Throwable from label1 to label2 with label5;
+        catch java.lang.Throwable from label2 to label3 with label5;
+        catch java.lang.Throwable from label3 to label4 with label5;
+        catch java.lang.Throwable from label6 to label7 with label5;
+    }
+
+    public void setEnabled(boolean)
+    {
+        com.android.server.ExplicitHealthCheckController r0;
+        boolean z0;
+        java.lang.Object r1;
+        java.lang.StringBuilder r2;
+        java.lang.String $r5, r7;
+        java.lang.Throwable $r6;
+
+        r0 := @this: com.android.server.ExplicitHealthCheckController;
+
+        z0 := @parameter0: boolean;
+
+        r1 = r0.<com.android.server.ExplicitHealthCheckController: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        r2 = new java.lang.StringBuilder;
+
+        specialinvoke r2.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Explicit health checks ");
+
+     label2:
+        if z0 == 0 goto label3;
+
+        r7 = "enabled.";
+
+        goto label4;
+
+     label3:
+        r7 = "disabled.";
+
+     label4:
+        virtualinvoke r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r7);
+
+        $r5 = virtualinvoke r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("ExplicitHealthCheckController", $r5);
+
+        r0.<com.android.server.ExplicitHealthCheckController: boolean mEnabled> = z0;
+
+        exitmonitor r1;
+
+     label5:
+        return;
+
+     label6:
+        $r6 := @caughtexception;
+
+     label7:
+        exitmonitor r1;
+
+     label8:
+        throw $r6;
+
+        catch java.lang.Throwable from label1 to label2 with label6;
+        catch java.lang.Throwable from label4 to label5 with label6;
+        catch java.lang.Throwable from label7 to label8 with label6;
+    }
+
+    public void syncRequests(java.util.Set)
+    {
+        com.android.server.ExplicitHealthCheckController r0;
+        java.lang.Object r1;
+        boolean z0;
+        com.android.server._$$Lambda$ExplicitHealthCheckController$x4g41SYVR_nHQxV_RQY6VIfh1zs $r2;
+        java.util.function.Consumer $r3;
+        java.util.List $r4;
+        java.lang.Throwable $r5;
+        java.util.Set r6;
+
+        r0 := @this: com.android.server.ExplicitHealthCheckController;
+
+        r6 := @parameter0: java.util.Set;
+
+        r1 = r0.<com.android.server.ExplicitHealthCheckController: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        z0 = r0.<com.android.server.ExplicitHealthCheckController: boolean mEnabled>;
+
+        exitmonitor r1;
+
+     label2:
+        if z0 != 0 goto label3;
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("ExplicitHealthCheckController", "Health checks disabled, no supported packages");
+
+        $r3 = r0.<com.android.server.ExplicitHealthCheckController: java.util.function.Consumer mSupportedConsumer>;
+
+        $r4 = staticinvoke <java.util.Collections: java.util.List emptyList()>();
+
+        interfaceinvoke $r3.<java.util.function.Consumer: void accept(java.lang.Object)>($r4);
+
+        return;
+
+     label3:
+        $r2 = new com.android.server._$$Lambda$ExplicitHealthCheckController$x4g41SYVR_nHQxV_RQY6VIfh1zs;
+
+        specialinvoke $r2.<com.android.server._$$Lambda$ExplicitHealthCheckController$x4g41SYVR_nHQxV_RQY6VIfh1zs: void <init>(com.android.server.ExplicitHealthCheckController,java.util.Set)>(r0, r6);
+
+        specialinvoke r0.<com.android.server.ExplicitHealthCheckController: void getSupportedPackages(java.util.function.Consumer)>($r2);
+
+        return;
+
+     label4:
+        $r5 := @caughtexception;
+
+     label5:
+        exitmonitor r1;
+
+     label6:
+        throw $r5;
+
+        catch java.lang.Throwable from label1 to label2 with label4;
+        catch java.lang.Throwable from label5 to label6 with label4;
+    }
+
+    public static void <clinit>()
+    {
+        <com.android.server.ExplicitHealthCheckController: java.lang.String TAG> = "ExplicitHealthCheckController";
+
+        return;
+    }
+}

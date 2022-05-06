@@ -1,0 +1,1338 @@
+class com.android.server.broadcastradio.hal2.TunerSession extends android.hardware.radio.ITuner$Stub
+{
+    private static final java.lang.String TAG;
+    private static final java.lang.String kAudioDeviceName;
+    final android.hardware.radio.ITunerCallback mCallback;
+    private android.hardware.radio.RadioManager$BandConfig mDummyConfig;
+    private final android.hardware.broadcastradio.V2_0.ITunerSession mHwSession;
+    private boolean mIsClosed;
+    private boolean mIsMuted;
+    private final java.lang.Object mLock;
+    private final com.android.server.broadcastradio.hal2.RadioModule mModule;
+    private com.android.server.broadcastradio.hal2.ProgramInfoCache mProgramInfoCache;
+
+    void <init>(com.android.server.broadcastradio.hal2.RadioModule, android.hardware.broadcastradio.V2_0.ITunerSession, android.hardware.radio.ITunerCallback)
+    {
+        com.android.server.broadcastradio.hal2.TunerSession r0;
+        com.android.server.broadcastradio.hal2.RadioModule r1, $r6;
+        android.hardware.broadcastradio.V2_0.ITunerSession r2, $r8;
+        android.hardware.radio.ITunerCallback r3, $r10;
+        java.lang.Object $r4;
+
+        r0 := @this: com.android.server.broadcastradio.hal2.TunerSession;
+
+        r1 := @parameter0: com.android.server.broadcastradio.hal2.RadioModule;
+
+        r2 := @parameter1: android.hardware.broadcastradio.V2_0.ITunerSession;
+
+        r3 := @parameter2: android.hardware.radio.ITunerCallback;
+
+        specialinvoke r0.<android.hardware.radio.ITuner$Stub: void <init>()>();
+
+        $r4 = new java.lang.Object;
+
+        specialinvoke $r4.<java.lang.Object: void <init>()>();
+
+        r0.<com.android.server.broadcastradio.hal2.TunerSession: java.lang.Object mLock> = $r4;
+
+        r0.<com.android.server.broadcastradio.hal2.TunerSession: boolean mIsClosed> = 0;
+
+        r0.<com.android.server.broadcastradio.hal2.TunerSession: boolean mIsMuted> = 0;
+
+        r0.<com.android.server.broadcastradio.hal2.TunerSession: com.android.server.broadcastradio.hal2.ProgramInfoCache mProgramInfoCache> = null;
+
+        r0.<com.android.server.broadcastradio.hal2.TunerSession: android.hardware.radio.RadioManager$BandConfig mDummyConfig> = null;
+
+        staticinvoke <java.util.Objects: java.lang.Object requireNonNull(java.lang.Object)>(r1);
+
+        $r6 = (com.android.server.broadcastradio.hal2.RadioModule) r1;
+
+        r0.<com.android.server.broadcastradio.hal2.TunerSession: com.android.server.broadcastradio.hal2.RadioModule mModule> = $r6;
+
+        staticinvoke <java.util.Objects: java.lang.Object requireNonNull(java.lang.Object)>(r2);
+
+        $r8 = (android.hardware.broadcastradio.V2_0.ITunerSession) r2;
+
+        r0.<com.android.server.broadcastradio.hal2.TunerSession: android.hardware.broadcastradio.V2_0.ITunerSession mHwSession> = $r8;
+
+        staticinvoke <java.util.Objects: java.lang.Object requireNonNull(java.lang.Object)>(r3);
+
+        $r10 = (android.hardware.radio.ITunerCallback) r3;
+
+        r0.<com.android.server.broadcastradio.hal2.TunerSession: android.hardware.radio.ITunerCallback mCallback> = $r10;
+
+        return;
+    }
+
+    private void checkNotClosedLocked()
+    {
+        com.android.server.broadcastradio.hal2.TunerSession r0;
+        boolean $z0;
+        java.lang.IllegalStateException $r1;
+
+        r0 := @this: com.android.server.broadcastradio.hal2.TunerSession;
+
+        $z0 = r0.<com.android.server.broadcastradio.hal2.TunerSession: boolean mIsClosed>;
+
+        if $z0 != 0 goto label1;
+
+        return;
+
+     label1:
+        $r1 = new java.lang.IllegalStateException;
+
+        specialinvoke $r1.<java.lang.IllegalStateException: void <init>(java.lang.String)>("Tuner is closed, no further operations are allowed");
+
+        throw $r1;
+    }
+
+    private void dispatchClientUpdateChunks(java.util.List)
+    {
+        com.android.server.broadcastradio.hal2.TunerSession r0;
+        boolean $z0;
+        java.lang.Object $r1;
+        android.hardware.radio.ITunerCallback $r2;
+        android.os.RemoteException $r3;
+        java.util.List r4;
+        java.util.Iterator r5;
+        android.hardware.radio.ProgramList$Chunk r6;
+
+        r0 := @this: com.android.server.broadcastradio.hal2.TunerSession;
+
+        r4 := @parameter0: java.util.List;
+
+        if r4 != null goto label1;
+
+        return;
+
+     label1:
+        r5 = interfaceinvoke r4.<java.util.List: java.util.Iterator iterator()>();
+
+     label2:
+        $z0 = interfaceinvoke r5.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label7;
+
+        $r1 = interfaceinvoke r5.<java.util.Iterator: java.lang.Object next()>();
+
+        r6 = (android.hardware.radio.ProgramList$Chunk) $r1;
+
+     label3:
+        $r2 = r0.<com.android.server.broadcastradio.hal2.TunerSession: android.hardware.radio.ITunerCallback mCallback>;
+
+        interfaceinvoke $r2.<android.hardware.radio.ITunerCallback: void onProgramListUpdated(android.hardware.radio.ProgramList$Chunk)>(r6);
+
+     label4:
+        goto label6;
+
+     label5:
+        $r3 := @caughtexception;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String,java.lang.Throwable)>("BcRadio2Srv.session", "mCallback.onProgramListUpdated() failed: ", $r3);
+
+     label6:
+        goto label2;
+
+     label7:
+        return;
+
+        catch android.os.RemoteException from label3 to label4 with label5;
+    }
+
+    static void lambda$isConfigFlagSet$2(android.util.MutableInt, android.util.MutableBoolean, int, boolean)
+    {
+        android.util.MutableInt r0;
+        android.util.MutableBoolean r1;
+        int i0;
+        boolean z0;
+
+        r0 := @parameter0: android.util.MutableInt;
+
+        r1 := @parameter1: android.util.MutableBoolean;
+
+        i0 := @parameter2: int;
+
+        z0 := @parameter3: boolean;
+
+        r0.<android.util.MutableInt: int value> = i0;
+
+        r1.<android.util.MutableBoolean: boolean value> = z0;
+
+        return;
+    }
+
+    static void lambda$setConfiguration$0(android.hardware.radio.RadioManager$BandConfig, android.hardware.radio.ITunerCallback) throws android.os.RemoteException
+    {
+        android.hardware.radio.RadioManager$BandConfig r0;
+        android.hardware.radio.ITunerCallback r1;
+
+        r0 := @parameter0: android.hardware.radio.RadioManager$BandConfig;
+
+        r1 := @parameter1: android.hardware.radio.ITunerCallback;
+
+        interfaceinvoke r1.<android.hardware.radio.ITunerCallback: void onConfigurationChanged(android.hardware.radio.RadioManager$BandConfig)>(r0);
+
+        return;
+    }
+
+    static void lambda$startBackgroundScan$1(android.hardware.radio.ITunerCallback) throws android.os.RemoteException
+    {
+        android.hardware.radio.ITunerCallback r0;
+
+        r0 := @parameter0: android.hardware.radio.ITunerCallback;
+
+        interfaceinvoke r0.<android.hardware.radio.ITunerCallback: void onBackgroundScanComplete()>();
+
+        return;
+    }
+
+    public void cancel()
+    {
+        com.android.server.broadcastradio.hal2.TunerSession r0;
+        java.lang.Object r1;
+        com.android.server.broadcastradio.hal2._$$Lambda$YOfksBuizvGCCXXC3xdyOet2Yr8 r2;
+        java.lang.Throwable $r4;
+        android.hardware.broadcastradio.V2_0.ITunerSession r5;
+
+        r0 := @this: com.android.server.broadcastradio.hal2.TunerSession;
+
+        r1 = r0.<com.android.server.broadcastradio.hal2.TunerSession: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        specialinvoke r0.<com.android.server.broadcastradio.hal2.TunerSession: void checkNotClosedLocked()>();
+
+        r5 = r0.<com.android.server.broadcastradio.hal2.TunerSession: android.hardware.broadcastradio.V2_0.ITunerSession mHwSession>;
+
+        staticinvoke <java.util.Objects: java.lang.Object requireNonNull(java.lang.Object)>(r5);
+
+        r2 = new com.android.server.broadcastradio.hal2._$$Lambda$YOfksBuizvGCCXXC3xdyOet2Yr8;
+
+        specialinvoke r2.<com.android.server.broadcastradio.hal2._$$Lambda$YOfksBuizvGCCXXC3xdyOet2Yr8: void <init>(android.hardware.broadcastradio.V2_0.ITunerSession)>(r5);
+
+        staticinvoke <com.android.server.broadcastradio.hal2.Utils: void maybeRethrow(com.android.server.broadcastradio.hal2.Utils$VoidFuncThrowingRemoteException)>(r2);
+
+        exitmonitor r1;
+
+     label2:
+        return;
+
+     label3:
+        $r4 := @caughtexception;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        throw $r4;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    public void cancelAnnouncement()
+    {
+        com.android.server.broadcastradio.hal2.TunerSession r0;
+
+        r0 := @this: com.android.server.broadcastradio.hal2.TunerSession;
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("BcRadio2Srv.session", "Announcements control doesn\'t involve cancelling at the HAL level in 2.x");
+
+        return;
+    }
+
+    public void close()
+    {
+        com.android.server.broadcastradio.hal2.TunerSession r0;
+
+        r0 := @this: com.android.server.broadcastradio.hal2.TunerSession;
+
+        virtualinvoke r0.<com.android.server.broadcastradio.hal2.TunerSession: void close(java.lang.Integer)>(null);
+
+        return;
+    }
+
+    public void close(java.lang.Integer)
+    {
+        com.android.server.broadcastradio.hal2.TunerSession r0;
+        java.lang.Object r1;
+        boolean $z0;
+        android.hardware.radio.ITunerCallback $r2;
+        int $i0;
+        android.os.RemoteException $r3;
+        java.lang.Throwable $r4;
+        java.lang.Integer r5;
+        com.android.server.broadcastradio.hal2.RadioModule $r7;
+
+        r0 := @this: com.android.server.broadcastradio.hal2.TunerSession;
+
+        r5 := @parameter0: java.lang.Integer;
+
+        r1 = r0.<com.android.server.broadcastradio.hal2.TunerSession: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label01:
+        $z0 = r0.<com.android.server.broadcastradio.hal2.TunerSession: boolean mIsClosed>;
+
+        if $z0 == 0 goto label03;
+
+        exitmonitor r1;
+
+     label02:
+        return;
+
+     label03:
+        if r5 == null goto label08;
+
+     label04:
+        $r2 = r0.<com.android.server.broadcastradio.hal2.TunerSession: android.hardware.radio.ITunerCallback mCallback>;
+
+        $i0 = virtualinvoke r5.<java.lang.Integer: int intValue()>();
+
+        interfaceinvoke $r2.<android.hardware.radio.ITunerCallback: void onError(int)>($i0);
+
+     label05:
+        goto label08;
+
+     label06:
+        $r3 := @caughtexception;
+
+     label07:
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String,java.lang.Throwable)>("BcRadio2Srv.session", "mCallback.onError() failed: ", $r3);
+
+     label08:
+        r0.<com.android.server.broadcastradio.hal2.TunerSession: boolean mIsClosed> = 1;
+
+        $r7 = r0.<com.android.server.broadcastradio.hal2.TunerSession: com.android.server.broadcastradio.hal2.RadioModule mModule>;
+
+        virtualinvoke $r7.<com.android.server.broadcastradio.hal2.RadioModule: void onTunerSessionClosed(com.android.server.broadcastradio.hal2.TunerSession)>(r0);
+
+        exitmonitor r1;
+
+     label09:
+        return;
+
+     label10:
+        $r4 := @caughtexception;
+
+     label11:
+        exitmonitor r1;
+
+     label12:
+        throw $r4;
+
+        catch java.lang.Throwable from label01 to label02 with label10;
+        catch android.os.RemoteException from label04 to label05 with label06;
+        catch java.lang.Throwable from label04 to label05 with label10;
+        catch java.lang.Throwable from label07 to label08 with label10;
+        catch java.lang.Throwable from label08 to label09 with label10;
+        catch java.lang.Throwable from label11 to label12 with label10;
+    }
+
+    public android.hardware.radio.RadioManager$BandConfig getConfiguration()
+    {
+        com.android.server.broadcastradio.hal2.TunerSession r0;
+        java.lang.Object r1;
+        java.lang.Throwable $r2;
+        android.hardware.radio.RadioManager$BandConfig r3;
+
+        r0 := @this: com.android.server.broadcastradio.hal2.TunerSession;
+
+        r1 = r0.<com.android.server.broadcastradio.hal2.TunerSession: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        specialinvoke r0.<com.android.server.broadcastradio.hal2.TunerSession: void checkNotClosedLocked()>();
+
+        r3 = r0.<com.android.server.broadcastradio.hal2.TunerSession: android.hardware.radio.RadioManager$BandConfig mDummyConfig>;
+
+        exitmonitor r1;
+
+     label2:
+        return r3;
+
+     label3:
+        $r2 := @caughtexception;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        throw $r2;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    public android.graphics.Bitmap getImage(int)
+    {
+        com.android.server.broadcastradio.hal2.TunerSession r0;
+        int i0;
+        com.android.server.broadcastradio.hal2.RadioModule $r1;
+        android.graphics.Bitmap $r2;
+
+        r0 := @this: com.android.server.broadcastradio.hal2.TunerSession;
+
+        i0 := @parameter0: int;
+
+        $r1 = r0.<com.android.server.broadcastradio.hal2.TunerSession: com.android.server.broadcastradio.hal2.RadioModule mModule>;
+
+        $r2 = virtualinvoke $r1.<com.android.server.broadcastradio.hal2.RadioModule: android.graphics.Bitmap getImage(int)>(i0);
+
+        return $r2;
+    }
+
+    public java.util.Map getParameters(java.util.List)
+    {
+        com.android.server.broadcastradio.hal2.TunerSession r0;
+        java.lang.Object r1, $r3;
+        com.android.server.broadcastradio.hal2._$$Lambda$TunerSession$UmZx38YMX_OHk94g5WH0WyZPNu0 r2;
+        java.util.List $r4, r6;
+        java.lang.Throwable $r5;
+        java.util.Map r7;
+
+        r0 := @this: com.android.server.broadcastradio.hal2.TunerSession;
+
+        r6 := @parameter0: java.util.List;
+
+        r1 = r0.<com.android.server.broadcastradio.hal2.TunerSession: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        specialinvoke r0.<com.android.server.broadcastradio.hal2.TunerSession: void checkNotClosedLocked()>();
+
+        r2 = new com.android.server.broadcastradio.hal2._$$Lambda$TunerSession$UmZx38YMX_OHk94g5WH0WyZPNu0;
+
+        specialinvoke r2.<com.android.server.broadcastradio.hal2._$$Lambda$TunerSession$UmZx38YMX_OHk94g5WH0WyZPNu0: void <init>(com.android.server.broadcastradio.hal2.TunerSession,java.util.List)>(r0, r6);
+
+        $r3 = staticinvoke <com.android.server.broadcastradio.hal2.Utils: java.lang.Object maybeRethrow(com.android.server.broadcastradio.hal2.Utils$FuncThrowingRemoteException)>(r2);
+
+        $r4 = (java.util.List) $r3;
+
+        r7 = staticinvoke <com.android.server.broadcastradio.hal2.Convert: java.util.Map vendorInfoFromHal(java.util.List)>($r4);
+
+        exitmonitor r1;
+
+     label2:
+        return r7;
+
+     label3:
+        $r5 := @caughtexception;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        throw $r5;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    android.hardware.radio.ProgramList$Filter getProgramListFilter()
+    {
+        com.android.server.broadcastradio.hal2.TunerSession r0;
+        java.lang.Object r1;
+        com.android.server.broadcastradio.hal2.ProgramInfoCache $r2, $r3;
+        java.lang.Throwable $r4;
+        android.hardware.radio.ProgramList$Filter r5;
+
+        r0 := @this: com.android.server.broadcastradio.hal2.TunerSession;
+
+        r1 = r0.<com.android.server.broadcastradio.hal2.TunerSession: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        $r2 = r0.<com.android.server.broadcastradio.hal2.TunerSession: com.android.server.broadcastradio.hal2.ProgramInfoCache mProgramInfoCache>;
+
+        if $r2 != null goto label3;
+
+     label2:
+        r5 = null;
+
+        goto label4;
+
+     label3:
+        $r3 = r0.<com.android.server.broadcastradio.hal2.TunerSession: com.android.server.broadcastradio.hal2.ProgramInfoCache mProgramInfoCache>;
+
+        r5 = virtualinvoke $r3.<com.android.server.broadcastradio.hal2.ProgramInfoCache: android.hardware.radio.ProgramList$Filter getFilter()>();
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        return r5;
+
+     label6:
+        $r4 := @caughtexception;
+
+     label7:
+        exitmonitor r1;
+
+     label8:
+        throw $r4;
+
+        catch java.lang.Throwable from label1 to label2 with label6;
+        catch java.lang.Throwable from label3 to label4 with label6;
+        catch java.lang.Throwable from label4 to label5 with label6;
+        catch java.lang.Throwable from label7 to label8 with label6;
+    }
+
+    public boolean isClosed()
+    {
+        com.android.server.broadcastradio.hal2.TunerSession r0;
+        boolean $z0;
+
+        r0 := @this: com.android.server.broadcastradio.hal2.TunerSession;
+
+        $z0 = r0.<com.android.server.broadcastradio.hal2.TunerSession: boolean mIsClosed>;
+
+        return $z0;
+    }
+
+    public boolean isConfigFlagSet(int)
+    {
+        com.android.server.broadcastradio.hal2.TunerSession r0;
+        int i0, $i2;
+        com.android.server.broadcastradio.hal2._$$Lambda$TunerSession$ypybq6SvfCU67BzHDgrQ7oDdspw r1;
+        boolean z0;
+        java.lang.StringBuilder $r2, r20;
+        java.lang.String $r4, $r6, $r9, $r11;
+        android.os.RemoteException $r7;
+        java.lang.Throwable $r12;
+        java.lang.Object r14;
+        android.util.MutableInt r15;
+        android.util.MutableBoolean r16;
+        android.hardware.broadcastradio.V2_0.ITunerSession r17;
+        java.lang.RuntimeException r19;
+
+        r0 := @this: com.android.server.broadcastradio.hal2.TunerSession;
+
+        i0 := @parameter0: int;
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("isConfigFlagSet ");
+
+        $r4 = staticinvoke <android.hardware.broadcastradio.V2_0.ConfigFlag: java.lang.String toString(int)>(i0);
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r4);
+
+        $r6 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int v(java.lang.String,java.lang.String)>("BcRadio2Srv.session", $r6);
+
+        r14 = r0.<com.android.server.broadcastradio.hal2.TunerSession: java.lang.Object mLock>;
+
+        entermonitor r14;
+
+     label1:
+        specialinvoke r0.<com.android.server.broadcastradio.hal2.TunerSession: void checkNotClosedLocked()>();
+
+        r15 = new android.util.MutableInt;
+
+        specialinvoke r15.<android.util.MutableInt: void <init>(int)>(1);
+
+        r16 = new android.util.MutableBoolean;
+
+        specialinvoke r16.<android.util.MutableBoolean: void <init>(boolean)>(0);
+
+     label2:
+        r17 = r0.<com.android.server.broadcastradio.hal2.TunerSession: android.hardware.broadcastradio.V2_0.ITunerSession mHwSession>;
+
+        r1 = new com.android.server.broadcastradio.hal2._$$Lambda$TunerSession$ypybq6SvfCU67BzHDgrQ7oDdspw;
+
+        specialinvoke r1.<com.android.server.broadcastradio.hal2._$$Lambda$TunerSession$ypybq6SvfCU67BzHDgrQ7oDdspw: void <init>(android.util.MutableInt,android.util.MutableBoolean)>(r15, r16);
+
+        interfaceinvoke r17.<android.hardware.broadcastradio.V2_0.ITunerSession: void isConfigFlagSet(int,android.hardware.broadcastradio.V2_0.ITunerSession$isConfigFlagSetCallback)>(i0, r1);
+
+     label3:
+        $i2 = r15.<android.util.MutableInt: int value>;
+
+        staticinvoke <com.android.server.broadcastradio.hal2.Convert: void throwOnError(java.lang.String,int)>("isConfigFlagSet", $i2);
+
+        z0 = r16.<android.util.MutableBoolean: boolean value>;
+
+        exitmonitor r14;
+
+     label4:
+        return z0;
+
+     label5:
+        $r7 := @caughtexception;
+
+     label6:
+        r19 = new java.lang.RuntimeException;
+
+        r20 = new java.lang.StringBuilder;
+
+        specialinvoke r20.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r20.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Failed to check flag ");
+
+        $r9 = staticinvoke <android.hardware.broadcastradio.V2_0.ConfigFlag: java.lang.String toString(int)>(i0);
+
+        virtualinvoke r20.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r9);
+
+        $r11 = virtualinvoke r20.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r19.<java.lang.RuntimeException: void <init>(java.lang.String,java.lang.Throwable)>($r11, $r7);
+
+        throw r19;
+
+     label7:
+        $r12 := @caughtexception;
+
+     label8:
+        exitmonitor r14;
+
+     label9:
+        throw $r12;
+
+        catch java.lang.Throwable from label1 to label2 with label7;
+        catch android.os.RemoteException from label2 to label3 with label5;
+        catch java.lang.Throwable from label2 to label3 with label7;
+        catch java.lang.Throwable from label3 to label4 with label7;
+        catch java.lang.Throwable from label6 to label7 with label7;
+        catch java.lang.Throwable from label8 to label9 with label7;
+    }
+
+    public boolean isConfigFlagSupported(int)
+    {
+        com.android.server.broadcastradio.hal2.TunerSession r0;
+        int i0;
+        java.lang.Throwable $r1, $r2;
+
+        r0 := @this: com.android.server.broadcastradio.hal2.TunerSession;
+
+        i0 := @parameter0: int;
+
+     label1:
+        virtualinvoke r0.<com.android.server.broadcastradio.hal2.TunerSession: boolean isConfigFlagSet(int)>(i0);
+
+     label2:
+        return 1;
+
+     label3:
+        $r1 := @caughtexception;
+
+        return 0;
+
+     label4:
+        $r2 := @caughtexception;
+
+        return 1;
+
+        catch java.lang.IllegalStateException from label1 to label2 with label4;
+        catch java.lang.UnsupportedOperationException from label1 to label2 with label3;
+    }
+
+    public boolean isMuted()
+    {
+        com.android.server.broadcastradio.hal2.TunerSession r0;
+        java.lang.Object r1;
+        boolean z0;
+        java.lang.Throwable $r3;
+
+        r0 := @this: com.android.server.broadcastradio.hal2.TunerSession;
+
+        r1 = r0.<com.android.server.broadcastradio.hal2.TunerSession: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        specialinvoke r0.<com.android.server.broadcastradio.hal2.TunerSession: void checkNotClosedLocked()>();
+
+        z0 = r0.<com.android.server.broadcastradio.hal2.TunerSession: boolean mIsMuted>;
+
+        exitmonitor r1;
+
+     label2:
+        return z0;
+
+     label3:
+        $r3 := @caughtexception;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        throw $r3;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    public java.util.ArrayList lambda$getParameters$4$TunerSession(java.util.List) throws android.os.RemoteException
+    {
+        com.android.server.broadcastradio.hal2.TunerSession r0;
+        java.util.List r1;
+        android.hardware.broadcastradio.V2_0.ITunerSession $r2;
+        java.util.ArrayList $r3, $r4;
+
+        r0 := @this: com.android.server.broadcastradio.hal2.TunerSession;
+
+        r1 := @parameter0: java.util.List;
+
+        $r2 = r0.<com.android.server.broadcastradio.hal2.TunerSession: android.hardware.broadcastradio.V2_0.ITunerSession mHwSession>;
+
+        $r3 = staticinvoke <com.android.server.broadcastradio.hal2.Convert: java.util.ArrayList listToArrayList(java.util.List)>(r1);
+
+        $r4 = interfaceinvoke $r2.<android.hardware.broadcastradio.V2_0.ITunerSession: java.util.ArrayList getParameters(java.util.ArrayList)>($r3);
+
+        return $r4;
+    }
+
+    public java.util.ArrayList lambda$setParameters$3$TunerSession(java.util.Map) throws android.os.RemoteException
+    {
+        com.android.server.broadcastradio.hal2.TunerSession r0;
+        java.util.Map r1;
+        android.hardware.broadcastradio.V2_0.ITunerSession $r2;
+        java.util.ArrayList $r3, $r4;
+
+        r0 := @this: com.android.server.broadcastradio.hal2.TunerSession;
+
+        r1 := @parameter0: java.util.Map;
+
+        $r2 = r0.<com.android.server.broadcastradio.hal2.TunerSession: android.hardware.broadcastradio.V2_0.ITunerSession mHwSession>;
+
+        $r3 = staticinvoke <com.android.server.broadcastradio.hal2.Convert: java.util.ArrayList vendorInfoToHal(java.util.Map)>(r1);
+
+        $r4 = interfaceinvoke $r2.<android.hardware.broadcastradio.V2_0.ITunerSession: java.util.ArrayList setParameters(java.util.ArrayList)>($r3);
+
+        return $r4;
+    }
+
+    void onMergedProgramListUpdateFromHal(android.hardware.radio.ProgramList$Chunk)
+    {
+        com.android.server.broadcastradio.hal2.TunerSession r0;
+        java.lang.Object r1;
+        com.android.server.broadcastradio.hal2.ProgramInfoCache $r2, $r3;
+        java.lang.Throwable $r4;
+        android.hardware.radio.ProgramList$Chunk r5;
+        java.util.List r6;
+
+        r0 := @this: com.android.server.broadcastradio.hal2.TunerSession;
+
+        r5 := @parameter0: android.hardware.radio.ProgramList$Chunk;
+
+        r1 = r0.<com.android.server.broadcastradio.hal2.TunerSession: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        $r2 = r0.<com.android.server.broadcastradio.hal2.TunerSession: com.android.server.broadcastradio.hal2.ProgramInfoCache mProgramInfoCache>;
+
+        if $r2 != null goto label3;
+
+        exitmonitor r1;
+
+     label2:
+        return;
+
+     label3:
+        $r3 = r0.<com.android.server.broadcastradio.hal2.TunerSession: com.android.server.broadcastradio.hal2.ProgramInfoCache mProgramInfoCache>;
+
+        r6 = virtualinvoke $r3.<com.android.server.broadcastradio.hal2.ProgramInfoCache: java.util.List filterAndApplyChunk(android.hardware.radio.ProgramList$Chunk)>(r5);
+
+        exitmonitor r1;
+
+     label4:
+        specialinvoke r0.<com.android.server.broadcastradio.hal2.TunerSession: void dispatchClientUpdateChunks(java.util.List)>(r6);
+
+        return;
+
+     label5:
+        $r4 := @caughtexception;
+
+     label6:
+        exitmonitor r1;
+
+     label7:
+        throw $r4;
+
+        catch java.lang.Throwable from label1 to label2 with label5;
+        catch java.lang.Throwable from label3 to label4 with label5;
+        catch java.lang.Throwable from label6 to label7 with label5;
+    }
+
+    public void scan(boolean, boolean) throws android.os.RemoteException
+    {
+        com.android.server.broadcastradio.hal2.TunerSession r0;
+        boolean z0, z1, z2;
+        java.lang.Object r1;
+        int $i0;
+        java.lang.Throwable $r2;
+        android.hardware.broadcastradio.V2_0.ITunerSession r3;
+
+        r0 := @this: com.android.server.broadcastradio.hal2.TunerSession;
+
+        z1 := @parameter0: boolean;
+
+        z0 := @parameter1: boolean;
+
+        r1 = r0.<com.android.server.broadcastradio.hal2.TunerSession: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        specialinvoke r0.<com.android.server.broadcastradio.hal2.TunerSession: void checkNotClosedLocked()>();
+
+        r3 = r0.<com.android.server.broadcastradio.hal2.TunerSession: android.hardware.broadcastradio.V2_0.ITunerSession mHwSession>;
+
+     label2:
+        if z1 != 0 goto label3;
+
+        z2 = 1;
+
+        goto label4;
+
+     label3:
+        z2 = 0;
+
+     label4:
+        $i0 = interfaceinvoke r3.<android.hardware.broadcastradio.V2_0.ITunerSession: int scan(boolean,boolean)>(z2, z0);
+
+        staticinvoke <com.android.server.broadcastradio.hal2.Convert: void throwOnError(java.lang.String,int)>("step", $i0);
+
+        exitmonitor r1;
+
+     label5:
+        return;
+
+     label6:
+        $r2 := @caughtexception;
+
+     label7:
+        exitmonitor r1;
+
+     label8:
+        throw $r2;
+
+        catch java.lang.Throwable from label1 to label2 with label6;
+        catch java.lang.Throwable from label4 to label5 with label6;
+        catch java.lang.Throwable from label7 to label8 with label6;
+    }
+
+    public void setConfigFlag(int, boolean) throws android.os.RemoteException
+    {
+        com.android.server.broadcastradio.hal2.TunerSession r0;
+        int i0, $i2;
+        boolean z0;
+        java.lang.StringBuilder $r2;
+        java.lang.String $r4, $r8;
+        android.hardware.broadcastradio.V2_0.ITunerSession $r9;
+        java.lang.Throwable $r10;
+        java.lang.Object r12;
+
+        r0 := @this: com.android.server.broadcastradio.hal2.TunerSession;
+
+        i0 := @parameter0: int;
+
+        z0 := @parameter1: boolean;
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("setConfigFlag ");
+
+        $r4 = staticinvoke <android.hardware.broadcastradio.V2_0.ConfigFlag: java.lang.String toString(int)>(i0);
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r4);
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" = ");
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>(z0);
+
+        $r8 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int v(java.lang.String,java.lang.String)>("BcRadio2Srv.session", $r8);
+
+        r12 = r0.<com.android.server.broadcastradio.hal2.TunerSession: java.lang.Object mLock>;
+
+        entermonitor r12;
+
+     label1:
+        specialinvoke r0.<com.android.server.broadcastradio.hal2.TunerSession: void checkNotClosedLocked()>();
+
+        $r9 = r0.<com.android.server.broadcastradio.hal2.TunerSession: android.hardware.broadcastradio.V2_0.ITunerSession mHwSession>;
+
+        $i2 = interfaceinvoke $r9.<android.hardware.broadcastradio.V2_0.ITunerSession: int setConfigFlag(int,boolean)>(i0, z0);
+
+        staticinvoke <com.android.server.broadcastradio.hal2.Convert: void throwOnError(java.lang.String,int)>("setConfigFlag", $i2);
+
+        exitmonitor r12;
+
+     label2:
+        return;
+
+     label3:
+        $r10 := @caughtexception;
+
+     label4:
+        exitmonitor r12;
+
+     label5:
+        throw $r10;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    public void setConfiguration(android.hardware.radio.RadioManager$BandConfig)
+    {
+        com.android.server.broadcastradio.hal2.TunerSession r0;
+        java.lang.Object r1;
+        com.android.server.broadcastradio.hal2.RadioModule r2;
+        com.android.server.broadcastradio.hal2._$$Lambda$TunerSession$Q1jB_2_HaoKI_bs_SvZQ_1kfSsk r3;
+        android.hardware.radio.RadioManager$BandConfig $r5, r7;
+        java.lang.Throwable $r6;
+
+        r0 := @this: com.android.server.broadcastradio.hal2.TunerSession;
+
+        r7 := @parameter0: android.hardware.radio.RadioManager$BandConfig;
+
+        r1 = r0.<com.android.server.broadcastradio.hal2.TunerSession: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        specialinvoke r0.<com.android.server.broadcastradio.hal2.TunerSession: void checkNotClosedLocked()>();
+
+        staticinvoke <java.util.Objects: java.lang.Object requireNonNull(java.lang.Object)>(r7);
+
+        $r5 = (android.hardware.radio.RadioManager$BandConfig) r7;
+
+        r0.<com.android.server.broadcastradio.hal2.TunerSession: android.hardware.radio.RadioManager$BandConfig mDummyConfig> = $r5;
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("BcRadio2Srv.session", "Ignoring setConfiguration - not applicable for broadcastradio HAL 2.x");
+
+        r2 = r0.<com.android.server.broadcastradio.hal2.TunerSession: com.android.server.broadcastradio.hal2.RadioModule mModule>;
+
+        r3 = new com.android.server.broadcastradio.hal2._$$Lambda$TunerSession$Q1jB_2_HaoKI_bs_SvZQ_1kfSsk;
+
+        specialinvoke r3.<com.android.server.broadcastradio.hal2._$$Lambda$TunerSession$Q1jB_2_HaoKI_bs_SvZQ_1kfSsk: void <init>(android.hardware.radio.RadioManager$BandConfig)>(r7);
+
+        virtualinvoke r2.<com.android.server.broadcastradio.hal2.RadioModule: void fanoutAidlCallback(com.android.server.broadcastradio.hal2.RadioModule$AidlCallbackRunnable)>(r3);
+
+        exitmonitor r1;
+
+     label2:
+        return;
+
+     label3:
+        $r6 := @caughtexception;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        throw $r6;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    public void setMuted(boolean)
+    {
+        com.android.server.broadcastradio.hal2.TunerSession r0;
+        boolean z0, $z1;
+        java.lang.Object r1;
+        java.lang.Throwable $r3;
+
+        r0 := @this: com.android.server.broadcastradio.hal2.TunerSession;
+
+        z0 := @parameter0: boolean;
+
+        r1 = r0.<com.android.server.broadcastradio.hal2.TunerSession: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        specialinvoke r0.<com.android.server.broadcastradio.hal2.TunerSession: void checkNotClosedLocked()>();
+
+        $z1 = r0.<com.android.server.broadcastradio.hal2.TunerSession: boolean mIsMuted>;
+
+        if $z1 != z0 goto label3;
+
+        exitmonitor r1;
+
+     label2:
+        return;
+
+     label3:
+        r0.<com.android.server.broadcastradio.hal2.TunerSession: boolean mIsMuted> = z0;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("BcRadio2Srv.session", "Mute via RadioService is not implemented - please handle it via app");
+
+        exitmonitor r1;
+
+     label4:
+        return;
+
+     label5:
+        $r3 := @caughtexception;
+
+     label6:
+        exitmonitor r1;
+
+     label7:
+        throw $r3;
+
+        catch java.lang.Throwable from label1 to label2 with label5;
+        catch java.lang.Throwable from label3 to label4 with label5;
+        catch java.lang.Throwable from label6 to label7 with label5;
+    }
+
+    public java.util.Map setParameters(java.util.Map)
+    {
+        com.android.server.broadcastradio.hal2.TunerSession r0;
+        java.lang.Object r1, $r3;
+        com.android.server.broadcastradio.hal2._$$Lambda$TunerSession$hsnpNw6T_T5c0D5uUev9VuiIUUg r2;
+        java.util.List $r4;
+        java.lang.Throwable $r5;
+        java.util.Map r6, r7;
+
+        r0 := @this: com.android.server.broadcastradio.hal2.TunerSession;
+
+        r6 := @parameter0: java.util.Map;
+
+        r1 = r0.<com.android.server.broadcastradio.hal2.TunerSession: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        specialinvoke r0.<com.android.server.broadcastradio.hal2.TunerSession: void checkNotClosedLocked()>();
+
+        r2 = new com.android.server.broadcastradio.hal2._$$Lambda$TunerSession$hsnpNw6T_T5c0D5uUev9VuiIUUg;
+
+        specialinvoke r2.<com.android.server.broadcastradio.hal2._$$Lambda$TunerSession$hsnpNw6T_T5c0D5uUev9VuiIUUg: void <init>(com.android.server.broadcastradio.hal2.TunerSession,java.util.Map)>(r0, r6);
+
+        $r3 = staticinvoke <com.android.server.broadcastradio.hal2.Utils: java.lang.Object maybeRethrow(com.android.server.broadcastradio.hal2.Utils$FuncThrowingRemoteException)>(r2);
+
+        $r4 = (java.util.List) $r3;
+
+        r7 = staticinvoke <com.android.server.broadcastradio.hal2.Convert: java.util.Map vendorInfoFromHal(java.util.List)>($r4);
+
+        exitmonitor r1;
+
+     label2:
+        return r7;
+
+     label3:
+        $r5 := @caughtexception;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        throw $r5;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    public boolean startBackgroundScan()
+    {
+        com.android.server.broadcastradio.hal2.TunerSession r0;
+        com.android.server.broadcastradio.hal2.'-$$Lambda$TunerSession$RN6YGky4fEzp_y9hG2yxYfo0XPs' $r1;
+        com.android.server.broadcastradio.hal2.RadioModule $r2;
+        com.android.server.broadcastradio.hal2.RadioModule$AidlCallbackRunnable r3;
+
+        r0 := @this: com.android.server.broadcastradio.hal2.TunerSession;
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("BcRadio2Srv.session", "Explicit background scan trigger is not supported with HAL 2.x");
+
+        $r2 = r0.<com.android.server.broadcastradio.hal2.TunerSession: com.android.server.broadcastradio.hal2.RadioModule mModule>;
+
+        $r1 = <com.android.server.broadcastradio.hal2._$$Lambda$TunerSession$RN6YGky4fEzp_y9hG2yxYfo0XPs: com.android.server.broadcastradio.hal2.'-$$Lambda$TunerSession$RN6YGky4fEzp_y9hG2yxYfo0XPs' INSTANCE>;
+
+        r3 = (com.android.server.broadcastradio.hal2.RadioModule$AidlCallbackRunnable) $r1;
+
+        virtualinvoke $r2.<com.android.server.broadcastradio.hal2.RadioModule: void fanoutAidlCallback(com.android.server.broadcastradio.hal2.RadioModule$AidlCallbackRunnable)>(r3);
+
+        return 1;
+    }
+
+    public void startProgramListUpdates(android.hardware.radio.ProgramList$Filter) throws android.os.RemoteException
+    {
+        com.android.server.broadcastradio.hal2.TunerSession r0;
+        com.android.server.broadcastradio.hal2.ProgramInfoCache r1;
+        com.android.server.broadcastradio.hal2.RadioModule $r2;
+        android.hardware.radio.ProgramList$Filter $r3, r7, r8;
+        java.util.HashSet $r4, $r5;
+        java.lang.Throwable $r6;
+        java.lang.Object r9;
+
+        r0 := @this: com.android.server.broadcastradio.hal2.TunerSession;
+
+        r7 := @parameter0: android.hardware.radio.ProgramList$Filter;
+
+        r8 = r7;
+
+        if r7 != null goto label1;
+
+        $r3 = new android.hardware.radio.ProgramList$Filter;
+
+        $r4 = new java.util.HashSet;
+
+        specialinvoke $r4.<java.util.HashSet: void <init>()>();
+
+        $r5 = new java.util.HashSet;
+
+        specialinvoke $r5.<java.util.HashSet: void <init>()>();
+
+        specialinvoke $r3.<android.hardware.radio.ProgramList$Filter: void <init>(java.util.Set,java.util.Set,boolean,boolean)>($r4, $r5, 1, 0);
+
+        r8 = $r3;
+
+     label1:
+        r9 = r0.<com.android.server.broadcastradio.hal2.TunerSession: java.lang.Object mLock>;
+
+        entermonitor r9;
+
+     label2:
+        specialinvoke r0.<com.android.server.broadcastradio.hal2.TunerSession: void checkNotClosedLocked()>();
+
+        r1 = new com.android.server.broadcastradio.hal2.ProgramInfoCache;
+
+        specialinvoke r1.<com.android.server.broadcastradio.hal2.ProgramInfoCache: void <init>(android.hardware.radio.ProgramList$Filter)>(r8);
+
+        r0.<com.android.server.broadcastradio.hal2.TunerSession: com.android.server.broadcastradio.hal2.ProgramInfoCache mProgramInfoCache> = r1;
+
+        exitmonitor r9;
+
+     label3:
+        $r2 = r0.<com.android.server.broadcastradio.hal2.TunerSession: com.android.server.broadcastradio.hal2.RadioModule mModule>;
+
+        virtualinvoke $r2.<com.android.server.broadcastradio.hal2.RadioModule: void onTunerSessionProgramListFilterChanged(com.android.server.broadcastradio.hal2.TunerSession)>(r0);
+
+        return;
+
+     label4:
+        $r6 := @caughtexception;
+
+     label5:
+        exitmonitor r9;
+
+     label6:
+        throw $r6;
+
+        catch java.lang.Throwable from label2 to label3 with label4;
+        catch java.lang.Throwable from label5 to label6 with label4;
+    }
+
+    public void step(boolean, boolean) throws android.os.RemoteException
+    {
+        com.android.server.broadcastradio.hal2.TunerSession r0;
+        boolean z0, z1, z2;
+        java.lang.Object r1;
+        int $i0;
+        java.lang.Throwable $r2;
+        android.hardware.broadcastradio.V2_0.ITunerSession r3;
+
+        r0 := @this: com.android.server.broadcastradio.hal2.TunerSession;
+
+        z1 := @parameter0: boolean;
+
+        z0 := @parameter1: boolean;
+
+        r1 = r0.<com.android.server.broadcastradio.hal2.TunerSession: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        specialinvoke r0.<com.android.server.broadcastradio.hal2.TunerSession: void checkNotClosedLocked()>();
+
+        r3 = r0.<com.android.server.broadcastradio.hal2.TunerSession: android.hardware.broadcastradio.V2_0.ITunerSession mHwSession>;
+
+     label2:
+        if z1 != 0 goto label3;
+
+        z2 = 1;
+
+        goto label4;
+
+     label3:
+        z2 = 0;
+
+     label4:
+        $i0 = interfaceinvoke r3.<android.hardware.broadcastradio.V2_0.ITunerSession: int step(boolean)>(z2);
+
+        staticinvoke <com.android.server.broadcastradio.hal2.Convert: void throwOnError(java.lang.String,int)>("step", $i0);
+
+        exitmonitor r1;
+
+     label5:
+        return;
+
+     label6:
+        $r2 := @caughtexception;
+
+     label7:
+        exitmonitor r1;
+
+     label8:
+        throw $r2;
+
+        catch java.lang.Throwable from label1 to label2 with label6;
+        catch java.lang.Throwable from label4 to label5 with label6;
+        catch java.lang.Throwable from label7 to label8 with label6;
+    }
+
+    public void stopProgramListUpdates() throws android.os.RemoteException
+    {
+        com.android.server.broadcastradio.hal2.TunerSession r0;
+        java.lang.Object r1;
+        com.android.server.broadcastradio.hal2.RadioModule $r3;
+        java.lang.Throwable $r4;
+
+        r0 := @this: com.android.server.broadcastradio.hal2.TunerSession;
+
+        r1 = r0.<com.android.server.broadcastradio.hal2.TunerSession: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        specialinvoke r0.<com.android.server.broadcastradio.hal2.TunerSession: void checkNotClosedLocked()>();
+
+        r0.<com.android.server.broadcastradio.hal2.TunerSession: com.android.server.broadcastradio.hal2.ProgramInfoCache mProgramInfoCache> = null;
+
+        exitmonitor r1;
+
+     label2:
+        $r3 = r0.<com.android.server.broadcastradio.hal2.TunerSession: com.android.server.broadcastradio.hal2.RadioModule mModule>;
+
+        virtualinvoke $r3.<com.android.server.broadcastradio.hal2.RadioModule: void onTunerSessionProgramListFilterChanged(com.android.server.broadcastradio.hal2.TunerSession)>(r0);
+
+        return;
+
+     label3:
+        $r4 := @caughtexception;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        throw $r4;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    public void tune(android.hardware.radio.ProgramSelector) throws android.os.RemoteException
+    {
+        com.android.server.broadcastradio.hal2.TunerSession r0;
+        java.lang.Object r1;
+        android.hardware.broadcastradio.V2_0.ITunerSession $r2;
+        android.hardware.broadcastradio.V2_0.ProgramSelector $r3;
+        int $i0;
+        java.lang.Throwable $r4;
+        android.hardware.radio.ProgramSelector r5;
+
+        r0 := @this: com.android.server.broadcastradio.hal2.TunerSession;
+
+        r5 := @parameter0: android.hardware.radio.ProgramSelector;
+
+        r1 = r0.<com.android.server.broadcastradio.hal2.TunerSession: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        specialinvoke r0.<com.android.server.broadcastradio.hal2.TunerSession: void checkNotClosedLocked()>();
+
+        $r2 = r0.<com.android.server.broadcastradio.hal2.TunerSession: android.hardware.broadcastradio.V2_0.ITunerSession mHwSession>;
+
+        $r3 = staticinvoke <com.android.server.broadcastradio.hal2.Convert: android.hardware.broadcastradio.V2_0.ProgramSelector programSelectorToHal(android.hardware.radio.ProgramSelector)>(r5);
+
+        $i0 = interfaceinvoke $r2.<android.hardware.broadcastradio.V2_0.ITunerSession: int tune(android.hardware.broadcastradio.V2_0.ProgramSelector)>($r3);
+
+        staticinvoke <com.android.server.broadcastradio.hal2.Convert: void throwOnError(java.lang.String,int)>("tune", $i0);
+
+        exitmonitor r1;
+
+     label2:
+        return;
+
+     label3:
+        $r4 := @caughtexception;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        throw $r4;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    void updateProgramInfoFromHalCache(com.android.server.broadcastradio.hal2.ProgramInfoCache)
+    {
+        com.android.server.broadcastradio.hal2.TunerSession r0;
+        java.lang.Object r1;
+        com.android.server.broadcastradio.hal2.ProgramInfoCache $r2, $r3, r5;
+        java.lang.Throwable $r4;
+        java.util.List r6;
+
+        r0 := @this: com.android.server.broadcastradio.hal2.TunerSession;
+
+        r5 := @parameter0: com.android.server.broadcastradio.hal2.ProgramInfoCache;
+
+        r1 = r0.<com.android.server.broadcastradio.hal2.TunerSession: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        $r2 = r0.<com.android.server.broadcastradio.hal2.TunerSession: com.android.server.broadcastradio.hal2.ProgramInfoCache mProgramInfoCache>;
+
+        if $r2 != null goto label3;
+
+        exitmonitor r1;
+
+     label2:
+        return;
+
+     label3:
+        $r3 = r0.<com.android.server.broadcastradio.hal2.TunerSession: com.android.server.broadcastradio.hal2.ProgramInfoCache mProgramInfoCache>;
+
+        r6 = virtualinvoke $r3.<com.android.server.broadcastradio.hal2.ProgramInfoCache: java.util.List filterAndUpdateFrom(com.android.server.broadcastradio.hal2.ProgramInfoCache,boolean)>(r5, 1);
+
+        exitmonitor r1;
+
+     label4:
+        specialinvoke r0.<com.android.server.broadcastradio.hal2.TunerSession: void dispatchClientUpdateChunks(java.util.List)>(r6);
+
+        return;
+
+     label5:
+        $r4 := @caughtexception;
+
+     label6:
+        exitmonitor r1;
+
+     label7:
+        throw $r4;
+
+        catch java.lang.Throwable from label1 to label2 with label5;
+        catch java.lang.Throwable from label3 to label4 with label5;
+        catch java.lang.Throwable from label6 to label7 with label5;
+    }
+
+    public static void <clinit>()
+    {
+        <com.android.server.broadcastradio.hal2.TunerSession: java.lang.String kAudioDeviceName> = "Radio tuner source";
+
+        <com.android.server.broadcastradio.hal2.TunerSession: java.lang.String TAG> = "BcRadio2Srv.session";
+
+        return;
+    }
+}

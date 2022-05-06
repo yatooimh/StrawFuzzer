@@ -1,0 +1,1223 @@
+public class com.android.internal.app.IntentForwarderActivity extends android.app.Activity
+{
+    private static final java.util.Set ALLOWED_TEXT_MESSAGE_SCHEMES;
+    public static java.lang.String FORWARD_INTENT_TO_MANAGED_PROFILE;
+    public static java.lang.String FORWARD_INTENT_TO_PARENT;
+    private static final android.content.ComponentName RESOLVER_COMPONENT_NAME;
+    public static java.lang.String TAG;
+    private static final java.lang.String TEL_SCHEME;
+    protected java.util.concurrent.ExecutorService mExecutorService;
+    private com.android.internal.app.IntentForwarderActivity$Injector mInjector;
+    private com.android.internal.logging.MetricsLogger mMetricsLogger;
+
+    static void <clinit>()
+    {
+        java.util.HashSet $r0;
+        java.lang.String[] $r1;
+        java.util.List $r2;
+        android.content.ComponentName $r3;
+        java.lang.Class $r4;
+        java.lang.String $r5;
+
+        <com.android.internal.app.IntentForwarderActivity: java.lang.String TEL_SCHEME> = "tel";
+
+        <com.android.internal.app.IntentForwarderActivity: java.lang.String TAG> = "IntentForwarderActivity";
+
+        <com.android.internal.app.IntentForwarderActivity: java.lang.String FORWARD_INTENT_TO_PARENT> = "com.android.internal.app.ForwardIntentToParent";
+
+        <com.android.internal.app.IntentForwarderActivity: java.lang.String FORWARD_INTENT_TO_MANAGED_PROFILE> = "com.android.internal.app.ForwardIntentToManagedProfile";
+
+        $r0 = new java.util.HashSet;
+
+        $r1 = newarray (java.lang.String)[4];
+
+        $r1[0] = "sms";
+
+        $r1[1] = "smsto";
+
+        $r1[2] = "mms";
+
+        $r1[3] = "mmsto";
+
+        $r2 = staticinvoke <java.util.Arrays: java.util.List asList(java.lang.Object[])>($r1);
+
+        specialinvoke $r0.<java.util.HashSet: void <init>(java.util.Collection)>($r2);
+
+        <com.android.internal.app.IntentForwarderActivity: java.util.Set ALLOWED_TEXT_MESSAGE_SCHEMES> = $r0;
+
+        $r3 = new android.content.ComponentName;
+
+        $r4 = class "Lcom/android/internal/app/ResolverActivity;";
+
+        $r5 = virtualinvoke $r4.<java.lang.Class: java.lang.String getName()>();
+
+        specialinvoke $r3.<android.content.ComponentName: void <init>(java.lang.String,java.lang.String)>("android", $r5);
+
+        <com.android.internal.app.IntentForwarderActivity: android.content.ComponentName RESOLVER_COMPONENT_NAME> = $r3;
+
+        return;
+    }
+
+    public void <init>()
+    {
+        com.android.internal.app.IntentForwarderActivity r0;
+
+        r0 := @this: com.android.internal.app.IntentForwarderActivity;
+
+        specialinvoke r0.<android.app.Activity: void <init>()>();
+
+        return;
+    }
+
+    static android.content.Intent canForward(android.content.Intent, int, int, android.content.pm.IPackageManager, android.content.ContentResolver)
+    {
+        int i0, i1;
+        android.content.pm.IPackageManager r0;
+        boolean z0, $z1;
+        android.content.Intent $r2, $r6, r9, r11;
+        java.lang.String $r4, $r5, $r8, r12;
+        android.os.RemoteException $r7;
+        android.content.ContentResolver r10;
+
+        r9 := @parameter0: android.content.Intent;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        r0 := @parameter3: android.content.pm.IPackageManager;
+
+        r10 := @parameter4: android.content.ContentResolver;
+
+        $r2 = new android.content.Intent;
+
+        specialinvoke $r2.<android.content.Intent: void <init>(android.content.Intent)>(r9);
+
+        virtualinvoke $r2.<android.content.Intent: android.content.Intent addFlags(int)>(50331648);
+
+        staticinvoke <com.android.internal.app.IntentForwarderActivity: void sanitizeIntent(android.content.Intent)>($r2);
+
+        r11 = $r2;
+
+        $r4 = "android.intent.action.CHOOSER";
+
+        $r5 = virtualinvoke $r2.<android.content.Intent: java.lang.String getAction()>();
+
+        $z1 = virtualinvoke $r4.<java.lang.String: boolean equals(java.lang.Object)>($r5);
+
+        if $z1 == 0 goto label1;
+
+        return null;
+
+     label1:
+        $r6 = virtualinvoke $r2.<android.content.Intent: android.content.Intent getSelector()>();
+
+        if $r6 == null goto label2;
+
+        r11 = virtualinvoke $r2.<android.content.Intent: android.content.Intent getSelector()>();
+
+     label2:
+        r12 = virtualinvoke r11.<android.content.Intent: java.lang.String resolveTypeIfNeeded(android.content.ContentResolver)>(r10);
+
+        staticinvoke <com.android.internal.app.IntentForwarderActivity: void sanitizeIntent(android.content.Intent)>(r11);
+
+     label3:
+        z0 = interfaceinvoke r0.<android.content.pm.IPackageManager: boolean canForwardTo(android.content.Intent,java.lang.String,int,int)>(r11, r12, i0, i1);
+
+     label4:
+        if z0 == 0 goto label5;
+
+        return $r2;
+
+     label5:
+        goto label7;
+
+     label6:
+        $r7 := @caughtexception;
+
+        $r8 = <com.android.internal.app.IntentForwarderActivity: java.lang.String TAG>;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>($r8, "PackageManagerService is dead?");
+
+     label7:
+        return null;
+
+        catch android.os.RemoteException from label3 to label4 with label6;
+    }
+
+    private int findSelectedProfile(java.lang.String)
+    {
+        com.android.internal.app.IntentForwarderActivity r0;
+        java.lang.String r1, $r2, $r3;
+        boolean $z0, $z1;
+
+        r0 := @this: com.android.internal.app.IntentForwarderActivity;
+
+        r1 := @parameter0: java.lang.String;
+
+        $r2 = <com.android.internal.app.IntentForwarderActivity: java.lang.String FORWARD_INTENT_TO_PARENT>;
+
+        $z0 = virtualinvoke r1.<java.lang.String: boolean equals(java.lang.Object)>($r2);
+
+        if $z0 == 0 goto label1;
+
+        return 0;
+
+     label1:
+        $r3 = <com.android.internal.app.IntentForwarderActivity: java.lang.String FORWARD_INTENT_TO_MANAGED_PROFILE>;
+
+        $z1 = virtualinvoke r1.<java.lang.String: boolean equals(java.lang.Object)>($r3);
+
+        if $z1 == 0 goto label2;
+
+        return 1;
+
+     label2:
+        return -1;
+    }
+
+    private int getManagedProfile()
+    {
+        com.android.internal.app.IntentForwarderActivity r0;
+        com.android.internal.app.IntentForwarderActivity$Injector $r1;
+        android.os.UserManager $r2;
+        int $i0, $i2;
+        java.util.List $r3;
+        boolean $z0, $z1;
+        java.lang.StringBuilder $r4;
+        java.lang.String $r5, $r8, r12;
+        java.lang.Object $r9;
+        java.util.Iterator r10;
+        android.content.pm.UserInfo r11;
+
+        r0 := @this: com.android.internal.app.IntentForwarderActivity;
+
+        $r1 = r0.<com.android.internal.app.IntentForwarderActivity: com.android.internal.app.IntentForwarderActivity$Injector mInjector>;
+
+        $r2 = interfaceinvoke $r1.<com.android.internal.app.IntentForwarderActivity$Injector: android.os.UserManager getUserManager()>();
+
+        $i0 = staticinvoke <android.os.UserHandle: int myUserId()>();
+
+        $r3 = virtualinvoke $r2.<android.os.UserManager: java.util.List getProfiles(int)>($i0);
+
+        r10 = interfaceinvoke $r3.<java.util.List: java.util.Iterator iterator()>();
+
+     label1:
+        $z0 = interfaceinvoke r10.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label3;
+
+        $r9 = interfaceinvoke r10.<java.util.Iterator: java.lang.Object next()>();
+
+        r11 = (android.content.pm.UserInfo) $r9;
+
+        $z1 = virtualinvoke r11.<android.content.pm.UserInfo: boolean isManagedProfile()>();
+
+        if $z1 == 0 goto label2;
+
+        $i2 = r11.<android.content.pm.UserInfo: int id>;
+
+        return $i2;
+
+     label2:
+        goto label1;
+
+     label3:
+        r12 = <com.android.internal.app.IntentForwarderActivity: java.lang.String TAG>;
+
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        $r5 = <com.android.internal.app.IntentForwarderActivity: java.lang.String FORWARD_INTENT_TO_MANAGED_PROFILE>;
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r5);
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" has been called, but there is no managed profile");
+
+        $r8 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int wtf(java.lang.String,java.lang.String)>(r12, $r8);
+
+        return -10000;
+    }
+
+    private int getProfileParent()
+    {
+        com.android.internal.app.IntentForwarderActivity r0;
+        com.android.internal.app.IntentForwarderActivity$Injector $r2;
+        android.os.UserManager $r3;
+        int $i0, $i1;
+        java.lang.StringBuilder $r4;
+        java.lang.String $r5, $r8, r10;
+        android.content.pm.UserInfo r9;
+
+        r0 := @this: com.android.internal.app.IntentForwarderActivity;
+
+        $r2 = r0.<com.android.internal.app.IntentForwarderActivity: com.android.internal.app.IntentForwarderActivity$Injector mInjector>;
+
+        $r3 = interfaceinvoke $r2.<com.android.internal.app.IntentForwarderActivity$Injector: android.os.UserManager getUserManager()>();
+
+        $i0 = staticinvoke <android.os.UserHandle: int myUserId()>();
+
+        r9 = virtualinvoke $r3.<android.os.UserManager: android.content.pm.UserInfo getProfileParent(int)>($i0);
+
+        if r9 != null goto label1;
+
+        r10 = <com.android.internal.app.IntentForwarderActivity: java.lang.String TAG>;
+
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        $r5 = <com.android.internal.app.IntentForwarderActivity: java.lang.String FORWARD_INTENT_TO_PARENT>;
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r5);
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" has been called, but there is no parent");
+
+        $r8 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int wtf(java.lang.String,java.lang.String)>(r10, $r8);
+
+        return -10000;
+
+     label1:
+        $i1 = r9.<android.content.pm.UserInfo: int id>;
+
+        return $i1;
+    }
+
+    private boolean isDeviceProvisioned()
+    {
+        com.android.internal.app.IntentForwarderActivity r0;
+        android.content.ContentResolver r1;
+        int $i0;
+        boolean z0;
+
+        r0 := @this: com.android.internal.app.IntentForwarderActivity;
+
+        r1 = virtualinvoke r0.<com.android.internal.app.IntentForwarderActivity: android.content.ContentResolver getContentResolver()>();
+
+        z0 = 0;
+
+        $i0 = staticinvoke <android.provider.Settings$Global: int getInt(android.content.ContentResolver,java.lang.String,int)>(r1, "device_provisioned", 0);
+
+        if $i0 == 0 goto label1;
+
+        z0 = 1;
+
+     label1:
+        return z0;
+    }
+
+    private boolean isDialerIntent(android.content.Intent)
+    {
+        com.android.internal.app.IntentForwarderActivity r0;
+        android.content.Intent r1;
+        java.lang.String $r2, $r3, $r4, $r5, $r6, $r7, $r8, $r9, $r10, $r11;
+        boolean $z0, $z1, $z2, $z3, $z4, $z5, z6;
+
+        r0 := @this: com.android.internal.app.IntentForwarderActivity;
+
+        r1 := @parameter0: android.content.Intent;
+
+        $r2 = "android.intent.action.DIAL";
+
+        $r3 = virtualinvoke r1.<android.content.Intent: java.lang.String getAction()>();
+
+        $z0 = virtualinvoke $r2.<java.lang.String: boolean equals(java.lang.Object)>($r3);
+
+        if $z0 != 0 goto label2;
+
+        $r4 = "android.intent.action.CALL";
+
+        $r5 = virtualinvoke r1.<android.content.Intent: java.lang.String getAction()>();
+
+        $z1 = virtualinvoke $r4.<java.lang.String: boolean equals(java.lang.Object)>($r5);
+
+        if $z1 != 0 goto label2;
+
+        $r6 = "android.intent.action.CALL_PRIVILEGED";
+
+        $r7 = virtualinvoke r1.<android.content.Intent: java.lang.String getAction()>();
+
+        $z2 = virtualinvoke $r6.<java.lang.String: boolean equals(java.lang.Object)>($r7);
+
+        if $z2 != 0 goto label2;
+
+        $r8 = "android.intent.action.CALL_EMERGENCY";
+
+        $r9 = virtualinvoke r1.<android.content.Intent: java.lang.String getAction()>();
+
+        $z3 = virtualinvoke $r8.<java.lang.String: boolean equals(java.lang.Object)>($r9);
+
+        if $z3 != 0 goto label2;
+
+        $z4 = specialinvoke r0.<com.android.internal.app.IntentForwarderActivity: boolean isViewActionIntent(android.content.Intent)>(r1);
+
+        if $z4 == 0 goto label1;
+
+        $r10 = "tel";
+
+        $r11 = virtualinvoke r1.<android.content.Intent: java.lang.String getScheme()>();
+
+        $z5 = virtualinvoke $r10.<java.lang.String: boolean equals(java.lang.Object)>($r11);
+
+        if $z5 == 0 goto label1;
+
+        goto label2;
+
+     label1:
+        z6 = 0;
+
+        goto label3;
+
+     label2:
+        z6 = 1;
+
+     label3:
+        return z6;
+    }
+
+    private boolean isIntentForwarderResolveInfo(android.content.pm.ResolveInfo)
+    {
+        com.android.internal.app.IntentForwarderActivity r0;
+        java.lang.String $r1, $r2, $r3, $r4, $r5, $r6;
+        boolean $z0, $z1, $z2, z3;
+        android.content.pm.ResolveInfo r7;
+        android.content.pm.ActivityInfo r8;
+
+        r0 := @this: com.android.internal.app.IntentForwarderActivity;
+
+        r7 := @parameter0: android.content.pm.ResolveInfo;
+
+        z3 = 0;
+
+        if r7 != null goto label1;
+
+        return 0;
+
+     label1:
+        r8 = r7.<android.content.pm.ResolveInfo: android.content.pm.ActivityInfo activityInfo>;
+
+        if r8 != null goto label2;
+
+        return 0;
+
+     label2:
+        $r2 = "android";
+
+        $r1 = r8.<android.content.pm.ActivityInfo: java.lang.String packageName>;
+
+        $z0 = virtualinvoke $r2.<java.lang.String: boolean equals(java.lang.Object)>($r1);
+
+        if $z0 != 0 goto label3;
+
+        return 0;
+
+     label3:
+        $r4 = r8.<android.content.pm.ActivityInfo: java.lang.String name>;
+
+        $r3 = <com.android.internal.app.IntentForwarderActivity: java.lang.String FORWARD_INTENT_TO_PARENT>;
+
+        $z1 = virtualinvoke $r4.<java.lang.String: boolean equals(java.lang.Object)>($r3);
+
+        if $z1 != 0 goto label4;
+
+        $r6 = r8.<android.content.pm.ActivityInfo: java.lang.String name>;
+
+        $r5 = <com.android.internal.app.IntentForwarderActivity: java.lang.String FORWARD_INTENT_TO_MANAGED_PROFILE>;
+
+        $z2 = virtualinvoke $r6.<java.lang.String: boolean equals(java.lang.Object)>($r5);
+
+        if $z2 == 0 goto label5;
+
+     label4:
+        z3 = 1;
+
+     label5:
+        return z3;
+    }
+
+    private boolean isResolverActivityResolveInfo(android.content.pm.ResolveInfo)
+    {
+        com.android.internal.app.IntentForwarderActivity r0;
+        android.content.pm.ResolveInfo r1;
+        android.content.pm.ActivityInfo $r2, $r3;
+        android.content.ComponentName $r4, $r5;
+        boolean $z0, z1;
+
+        r0 := @this: com.android.internal.app.IntentForwarderActivity;
+
+        r1 := @parameter0: android.content.pm.ResolveInfo;
+
+        if r1 == null goto label1;
+
+        $r2 = r1.<android.content.pm.ResolveInfo: android.content.pm.ActivityInfo activityInfo>;
+
+        if $r2 == null goto label1;
+
+        $r4 = <com.android.internal.app.IntentForwarderActivity: android.content.ComponentName RESOLVER_COMPONENT_NAME>;
+
+        $r3 = r1.<android.content.pm.ResolveInfo: android.content.pm.ActivityInfo activityInfo>;
+
+        $r5 = virtualinvoke $r3.<android.content.pm.ActivityInfo: android.content.ComponentName getComponentName()>();
+
+        $z0 = virtualinvoke $r4.<android.content.ComponentName: boolean equals(java.lang.Object)>($r5);
+
+        if $z0 == 0 goto label1;
+
+        z1 = 1;
+
+        goto label2;
+
+     label1:
+        z1 = 0;
+
+     label2:
+        return z1;
+    }
+
+    private boolean isTargetResolverOrChooserActivity(android.content.pm.ActivityInfo)
+    {
+        com.android.internal.app.IntentForwarderActivity r0;
+        android.content.pm.ActivityInfo r1;
+        boolean z0, $z1, $z2, z3;
+        java.lang.String $r2, $r3, $r5, $r6, $r8, $r9;
+        java.lang.Class $r4, $r7;
+
+        r0 := @this: com.android.internal.app.IntentForwarderActivity;
+
+        r1 := @parameter0: android.content.pm.ActivityInfo;
+
+        $r3 = "android";
+
+        $r2 = r1.<android.content.pm.ActivityInfo: java.lang.String packageName>;
+
+        z0 = virtualinvoke $r3.<java.lang.String: boolean equals(java.lang.Object)>($r2);
+
+        z3 = 0;
+
+        if z0 != 0 goto label1;
+
+        return 0;
+
+     label1:
+        $r4 = class "Lcom/android/internal/app/ResolverActivity;";
+
+        $r5 = virtualinvoke $r4.<java.lang.Class: java.lang.String getName()>();
+
+        $r6 = r1.<android.content.pm.ActivityInfo: java.lang.String name>;
+
+        $z1 = virtualinvoke $r5.<java.lang.String: boolean equals(java.lang.Object)>($r6);
+
+        if $z1 != 0 goto label2;
+
+        $r7 = class "Lcom/android/internal/app/ChooserActivity;";
+
+        $r8 = virtualinvoke $r7.<java.lang.Class: java.lang.String getName()>();
+
+        $r9 = r1.<android.content.pm.ActivityInfo: java.lang.String name>;
+
+        $z2 = virtualinvoke $r8.<java.lang.String: boolean equals(java.lang.Object)>($r9);
+
+        if $z2 == 0 goto label3;
+
+     label2:
+        z3 = 1;
+
+     label3:
+        return z3;
+    }
+
+    private boolean isTextMessageIntent(android.content.Intent)
+    {
+        com.android.internal.app.IntentForwarderActivity r0;
+        android.content.Intent r1;
+        java.lang.String $r2, $r3, $r5;
+        boolean $z0, $z1, $z2, z3;
+        java.util.Set $r4;
+
+        r0 := @this: com.android.internal.app.IntentForwarderActivity;
+
+        r1 := @parameter0: android.content.Intent;
+
+        $r2 = "android.intent.action.SENDTO";
+
+        $r3 = virtualinvoke r1.<android.content.Intent: java.lang.String getAction()>();
+
+        $z0 = virtualinvoke $r2.<java.lang.String: boolean equals(java.lang.Object)>($r3);
+
+        if $z0 != 0 goto label1;
+
+        $z2 = specialinvoke r0.<com.android.internal.app.IntentForwarderActivity: boolean isViewActionIntent(android.content.Intent)>(r1);
+
+        if $z2 == 0 goto label2;
+
+     label1:
+        $r4 = <com.android.internal.app.IntentForwarderActivity: java.util.Set ALLOWED_TEXT_MESSAGE_SCHEMES>;
+
+        $r5 = virtualinvoke r1.<android.content.Intent: java.lang.String getScheme()>();
+
+        $z1 = interfaceinvoke $r4.<java.util.Set: boolean contains(java.lang.Object)>($r5);
+
+        if $z1 == 0 goto label2;
+
+        z3 = 1;
+
+        goto label3;
+
+     label2:
+        z3 = 0;
+
+     label3:
+        return z3;
+    }
+
+    private boolean isViewActionIntent(android.content.Intent)
+    {
+        com.android.internal.app.IntentForwarderActivity r0;
+        android.content.Intent r1;
+        java.lang.String $r2, $r3;
+        boolean $z0, $z1, z2;
+
+        r0 := @this: com.android.internal.app.IntentForwarderActivity;
+
+        r1 := @parameter0: android.content.Intent;
+
+        $r2 = "android.intent.action.VIEW";
+
+        $r3 = virtualinvoke r1.<android.content.Intent: java.lang.String getAction()>();
+
+        $z0 = virtualinvoke $r2.<java.lang.String: boolean equals(java.lang.Object)>($r3);
+
+        if $z0 == 0 goto label1;
+
+        $z1 = virtualinvoke r1.<android.content.Intent: boolean hasCategory(java.lang.String)>("android.intent.category.BROWSABLE");
+
+        if $z1 == 0 goto label1;
+
+        z2 = 1;
+
+        goto label2;
+
+     label1:
+        z2 = 0;
+
+     label2:
+        return z2;
+    }
+
+    private void launchChooserActivityWithCorrectTab(android.content.Intent, java.lang.String)
+    {
+        com.android.internal.app.IntentForwarderActivity r0;
+        android.content.Intent r1, r6;
+        int i0, $i1;
+        android.os.Parcelable $r3;
+        java.lang.String $r4, r5;
+
+        r0 := @this: com.android.internal.app.IntentForwarderActivity;
+
+        r1 := @parameter0: android.content.Intent;
+
+        r5 := @parameter1: java.lang.String;
+
+        i0 = specialinvoke r0.<com.android.internal.app.IntentForwarderActivity: int findSelectedProfile(java.lang.String)>(r5);
+
+        staticinvoke <com.android.internal.app.IntentForwarderActivity: void sanitizeIntent(android.content.Intent)>(r1);
+
+        virtualinvoke r1.<android.content.Intent: android.content.Intent putExtra(java.lang.String,int)>("com.android.internal.app.ResolverActivity.EXTRA_SELECTED_PROFILE", i0);
+
+        $r3 = virtualinvoke r1.<android.content.Intent: android.os.Parcelable getParcelableExtra(java.lang.String)>("android.intent.extra.INTENT");
+
+        r6 = (android.content.Intent) $r3;
+
+        if r6 != null goto label1;
+
+        $r4 = <com.android.internal.app.IntentForwarderActivity: java.lang.String TAG>;
+
+        staticinvoke <android.util.Slog: int wtf(java.lang.String,java.lang.String)>($r4, "Cannot start a chooser intent with no extra android.intent.extra.INTENT");
+
+        return;
+
+     label1:
+        staticinvoke <com.android.internal.app.IntentForwarderActivity: void sanitizeIntent(android.content.Intent)>(r6);
+
+        $i1 = virtualinvoke r0.<com.android.internal.app.IntentForwarderActivity: int getUserId()>();
+
+        virtualinvoke r0.<com.android.internal.app.IntentForwarderActivity: void startActivityAsCaller(android.content.Intent,android.os.Bundle,android.os.IBinder,boolean,int)>(r1, null, null, 0, $i1);
+
+        virtualinvoke r0.<com.android.internal.app.IntentForwarderActivity: void finish()>();
+
+        return;
+    }
+
+    private void launchResolverActivityWithCorrectTab(android.content.Intent, java.lang.String, android.content.Intent, int, int)
+    {
+        com.android.internal.app.IntentForwarderActivity r0;
+        android.content.Intent r1, r3;
+        java.lang.String r2;
+        int i0, i1, i2;
+        com.android.internal.app.IntentForwarderActivity$Injector $r4;
+        java.util.concurrent.CompletableFuture $r5;
+        java.lang.Object $r6;
+        android.content.pm.ResolveInfo $r7;
+        boolean $z0;
+        android.os.UserHandle $r9;
+
+        r0 := @this: com.android.internal.app.IntentForwarderActivity;
+
+        r1 := @parameter0: android.content.Intent;
+
+        r2 := @parameter1: java.lang.String;
+
+        r3 := @parameter2: android.content.Intent;
+
+        i0 := @parameter3: int;
+
+        i2 := @parameter4: int;
+
+        $r4 = r0.<com.android.internal.app.IntentForwarderActivity: com.android.internal.app.IntentForwarderActivity$Injector mInjector>;
+
+        $r5 = interfaceinvoke $r4.<com.android.internal.app.IntentForwarderActivity$Injector: java.util.concurrent.CompletableFuture resolveActivityAsUser(android.content.Intent,int,int)>(r3, 65536, i0);
+
+        $r6 = virtualinvoke $r5.<java.util.concurrent.CompletableFuture: java.lang.Object join()>();
+
+        $r7 = (android.content.pm.ResolveInfo) $r6;
+
+        $z0 = specialinvoke r0.<com.android.internal.app.IntentForwarderActivity: boolean isIntentForwarderResolveInfo(android.content.pm.ResolveInfo)>($r7);
+
+        if $z0 == 0 goto label1;
+
+        goto label2;
+
+     label1:
+        i2 = i0;
+
+     label2:
+        i1 = specialinvoke r0.<com.android.internal.app.IntentForwarderActivity: int findSelectedProfile(java.lang.String)>(r2);
+
+        staticinvoke <com.android.internal.app.IntentForwarderActivity: void sanitizeIntent(android.content.Intent)>(r1);
+
+        virtualinvoke r1.<android.content.Intent: android.content.Intent putExtra(java.lang.String,int)>("com.android.internal.app.ResolverActivity.EXTRA_SELECTED_PROFILE", i1);
+
+        $r9 = staticinvoke <android.os.UserHandle: android.os.UserHandle of(int)>(i0);
+
+        virtualinvoke r1.<android.content.Intent: android.content.Intent putExtra(java.lang.String,android.os.Parcelable)>("com.android.internal.app.ResolverActivity.EXTRA_CALLING_USER", $r9);
+
+        virtualinvoke r0.<com.android.internal.app.IntentForwarderActivity: void startActivityAsCaller(android.content.Intent,android.os.Bundle,android.os.IBinder,boolean,int)>(r1, null, null, 0, i2);
+
+        virtualinvoke r0.<com.android.internal.app.IntentForwarderActivity: void finish()>();
+
+        return;
+    }
+
+    private void maybeShowDisclosure(android.content.Intent, android.content.pm.ResolveInfo, int)
+    {
+        com.android.internal.app.IntentForwarderActivity r0;
+        android.content.Intent r1;
+        android.content.pm.ResolveInfo r2;
+        int i0;
+        boolean $z0;
+        com.android.internal.app.IntentForwarderActivity$Injector $r3;
+
+        r0 := @this: com.android.internal.app.IntentForwarderActivity;
+
+        r1 := @parameter0: android.content.Intent;
+
+        r2 := @parameter1: android.content.pm.ResolveInfo;
+
+        i0 := @parameter2: int;
+
+        $z0 = specialinvoke r0.<com.android.internal.app.IntentForwarderActivity: boolean shouldShowDisclosure(android.content.pm.ResolveInfo,android.content.Intent)>(r2, r1);
+
+        if $z0 == 0 goto label1;
+
+        $r3 = r0.<com.android.internal.app.IntentForwarderActivity: com.android.internal.app.IntentForwarderActivity$Injector mInjector>;
+
+        interfaceinvoke $r3.<com.android.internal.app.IntentForwarderActivity$Injector: void showToast(int,int)>(i0, 1);
+
+     label1:
+        return;
+    }
+
+    private static void sanitizeIntent(android.content.Intent)
+    {
+        android.content.Intent r0;
+
+        r0 := @parameter0: android.content.Intent;
+
+        virtualinvoke r0.<android.content.Intent: android.content.Intent setPackage(java.lang.String)>(null);
+
+        virtualinvoke r0.<android.content.Intent: android.content.Intent setComponent(android.content.ComponentName)>(null);
+
+        return;
+    }
+
+    private boolean shouldShowDisclosure(android.content.pm.ResolveInfo, android.content.Intent)
+    {
+        com.android.internal.app.IntentForwarderActivity r0;
+        android.content.pm.ResolveInfo r1;
+        android.content.Intent r2;
+        boolean $z0, $z1, $z2, $z3, $z4, $z5;
+        android.content.pm.ActivityInfo $r3, $r4, $r6;
+        android.content.pm.ApplicationInfo $r5;
+
+        r0 := @this: com.android.internal.app.IntentForwarderActivity;
+
+        r1 := @parameter0: android.content.pm.ResolveInfo;
+
+        r2 := @parameter1: android.content.Intent;
+
+        $z0 = specialinvoke r0.<com.android.internal.app.IntentForwarderActivity: boolean isDeviceProvisioned()>();
+
+        if $z0 != 0 goto label1;
+
+        return 0;
+
+     label1:
+        if r1 == null goto label5;
+
+        $r3 = r1.<android.content.pm.ResolveInfo: android.content.pm.ActivityInfo activityInfo>;
+
+        if $r3 != null goto label2;
+
+        goto label5;
+
+     label2:
+        $r4 = r1.<android.content.pm.ResolveInfo: android.content.pm.ActivityInfo activityInfo>;
+
+        $r5 = $r4.<android.content.pm.ActivityInfo: android.content.pm.ApplicationInfo applicationInfo>;
+
+        $z1 = virtualinvoke $r5.<android.content.pm.ApplicationInfo: boolean isSystemApp()>();
+
+        if $z1 == 0 goto label4;
+
+        $z4 = specialinvoke r0.<com.android.internal.app.IntentForwarderActivity: boolean isDialerIntent(android.content.Intent)>(r2);
+
+        if $z4 != 0 goto label3;
+
+        $z5 = specialinvoke r0.<com.android.internal.app.IntentForwarderActivity: boolean isTextMessageIntent(android.content.Intent)>(r2);
+
+        if $z5 == 0 goto label4;
+
+     label3:
+        return 0;
+
+     label4:
+        $r6 = r1.<android.content.pm.ResolveInfo: android.content.pm.ActivityInfo activityInfo>;
+
+        $z2 = specialinvoke r0.<com.android.internal.app.IntentForwarderActivity: boolean isTargetResolverOrChooserActivity(android.content.pm.ActivityInfo)>($r6);
+
+        $z3 = 1 ^ $z2;
+
+        return $z3;
+
+     label5:
+        return 1;
+    }
+
+    private void startActivityAsCaller(android.content.Intent, int)
+    {
+        com.android.internal.app.IntentForwarderActivity r0;
+        int i0, i2, i3;
+        java.lang.String r2, $r14, $r16, r19, r20;
+        java.lang.RuntimeException $r3;
+        android.app.IActivityTaskManager $r4, $r6;
+        android.os.IBinder $r5, $r7;
+        java.lang.StringBuilder $r8;
+        android.os.RemoteException $r17;
+        android.content.Intent r18;
+
+        r0 := @this: com.android.internal.app.IntentForwarderActivity;
+
+        r18 := @parameter0: android.content.Intent;
+
+        i2 := @parameter1: int;
+
+     label01:
+        virtualinvoke r0.<com.android.internal.app.IntentForwarderActivity: void startActivityAsCaller(android.content.Intent,android.os.Bundle,android.os.IBinder,boolean,int)>(r18, null, null, 0, i2);
+
+     label02:
+        goto label10;
+
+     label03:
+        $r3 := @caughtexception;
+
+        i3 = -1;
+
+        r19 = "?";
+
+     label04:
+        $r4 = staticinvoke <android.app.ActivityTaskManager: android.app.IActivityTaskManager getService()>();
+
+        $r5 = virtualinvoke r0.<com.android.internal.app.IntentForwarderActivity: android.os.IBinder getActivityToken()>();
+
+        i0 = interfaceinvoke $r4.<android.app.IActivityTaskManager: int getLaunchedFromUid(android.os.IBinder)>($r5);
+
+     label05:
+        i3 = i0;
+
+     label06:
+        $r6 = staticinvoke <android.app.ActivityTaskManager: android.app.IActivityTaskManager getService()>();
+
+        $r7 = virtualinvoke r0.<com.android.internal.app.IntentForwarderActivity: android.os.IBinder getActivityToken()>();
+
+        r20 = interfaceinvoke $r6.<android.app.IActivityTaskManager: java.lang.String getLaunchedFromPackage(android.os.IBinder)>($r7);
+
+     label07:
+        r19 = r20;
+
+        i3 = i0;
+
+        goto label09;
+
+     label08:
+        $r17 := @caughtexception;
+
+     label09:
+        r2 = <com.android.internal.app.IntentForwarderActivity: java.lang.String TAG>;
+
+        $r8 = new java.lang.StringBuilder;
+
+        specialinvoke $r8.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Unable to launch as UID ");
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i3);
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" package ");
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r19);
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", while running in ");
+
+        $r14 = staticinvoke <android.app.ActivityThread: java.lang.String currentProcessName()>();
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r14);
+
+        $r16 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int wtf(java.lang.String,java.lang.String,java.lang.Throwable)>(r2, $r16, $r3);
+
+     label10:
+        return;
+
+        catch java.lang.RuntimeException from label01 to label02 with label03;
+        catch android.os.RemoteException from label04 to label05 with label08;
+        catch android.os.RemoteException from label06 to label07 with label08;
+    }
+
+    protected com.android.internal.app.IntentForwarderActivity$Injector createInjector()
+    {
+        com.android.internal.app.IntentForwarderActivity r0;
+        com.android.internal.app.IntentForwarderActivity$InjectorImpl $r1;
+
+        r0 := @this: com.android.internal.app.IntentForwarderActivity;
+
+        $r1 = new com.android.internal.app.IntentForwarderActivity$InjectorImpl;
+
+        specialinvoke $r1.<com.android.internal.app.IntentForwarderActivity$InjectorImpl: void <init>(com.android.internal.app.IntentForwarderActivity,com.android.internal.app.IntentForwarderActivity$1)>(r0, null);
+
+        return $r1;
+    }
+
+    protected com.android.internal.logging.MetricsLogger getMetricsLogger()
+    {
+        com.android.internal.app.IntentForwarderActivity r0;
+        com.android.internal.logging.MetricsLogger $r1, $r2, $r3;
+
+        r0 := @this: com.android.internal.app.IntentForwarderActivity;
+
+        $r1 = r0.<com.android.internal.app.IntentForwarderActivity: com.android.internal.logging.MetricsLogger mMetricsLogger>;
+
+        if $r1 != null goto label1;
+
+        $r3 = new com.android.internal.logging.MetricsLogger;
+
+        specialinvoke $r3.<com.android.internal.logging.MetricsLogger: void <init>()>();
+
+        r0.<com.android.internal.app.IntentForwarderActivity: com.android.internal.logging.MetricsLogger mMetricsLogger> = $r3;
+
+     label1:
+        $r2 = r0.<com.android.internal.app.IntentForwarderActivity: com.android.internal.logging.MetricsLogger mMetricsLogger>;
+
+        return $r2;
+    }
+
+    public android.content.pm.ResolveInfo lambda$onCreate$0$IntentForwarderActivity(android.content.Intent, java.lang.String, android.content.Intent, int, int, android.content.pm.ResolveInfo)
+    {
+        com.android.internal.app.IntentForwarderActivity r0;
+        android.content.Intent r1, r3;
+        java.lang.String r2;
+        int i0, i1;
+        android.content.pm.ResolveInfo r4;
+        boolean $z0;
+
+        r0 := @this: com.android.internal.app.IntentForwarderActivity;
+
+        r1 := @parameter0: android.content.Intent;
+
+        r2 := @parameter1: java.lang.String;
+
+        r3 := @parameter2: android.content.Intent;
+
+        i0 := @parameter3: int;
+
+        i1 := @parameter4: int;
+
+        r4 := @parameter5: android.content.pm.ResolveInfo;
+
+        $z0 = specialinvoke r0.<com.android.internal.app.IntentForwarderActivity: boolean isResolverActivityResolveInfo(android.content.pm.ResolveInfo)>(r4);
+
+        if $z0 == 0 goto label1;
+
+        specialinvoke r0.<com.android.internal.app.IntentForwarderActivity: void launchResolverActivityWithCorrectTab(android.content.Intent,java.lang.String,android.content.Intent,int,int)>(r1, r2, r3, i0, i1);
+
+        return r4;
+
+     label1:
+        specialinvoke r0.<com.android.internal.app.IntentForwarderActivity: void startActivityAsCaller(android.content.Intent,int)>(r3, i1);
+
+        return r4;
+    }
+
+    public void lambda$onCreate$1$IntentForwarderActivity(android.content.Intent, int, android.content.pm.ResolveInfo)
+    {
+        com.android.internal.app.IntentForwarderActivity r0;
+        android.content.Intent r1;
+        int i0;
+        android.content.pm.ResolveInfo r2;
+
+        r0 := @this: com.android.internal.app.IntentForwarderActivity;
+
+        r1 := @parameter0: android.content.Intent;
+
+        i0 := @parameter1: int;
+
+        r2 := @parameter2: android.content.pm.ResolveInfo;
+
+        specialinvoke r0.<com.android.internal.app.IntentForwarderActivity: void maybeShowDisclosure(android.content.Intent,android.content.pm.ResolveInfo,int)>(r1, r2, i0);
+
+        virtualinvoke r0.<com.android.internal.app.IntentForwarderActivity: void finish()>();
+
+        return;
+    }
+
+    protected void onCreate(android.os.Bundle)
+    {
+        com.android.internal.app.IntentForwarderActivity r0;
+        int i0, $i2, i4, i5;
+        com.android.internal.app.IntentForwarderActivity$Injector $r2, $r15, $r18;
+        java.util.concurrent.ExecutorService $r3, $r21;
+        android.content.ComponentName $r4;
+        java.lang.String $r5, $r6, $r9, $r12, $r13, $r14, $r34, r43, r44, r46;
+        boolean $z0, $z1, $z2;
+        java.lang.StringBuilder $r7, $r27;
+        java.lang.Class $r8;
+        android.content.pm.IPackageManager $r16;
+        android.content.ContentResolver $r17;
+        java.util.concurrent.CompletableFuture $r19, $r22;
+        com.android.internal.app._$$Lambda$IntentForwarderActivity$qydOPmABrxKUPHVYcot2pr1dEhM $r20;
+        com.android.internal.app._$$Lambda$IntentForwarderActivity$gWwZSR9fZYCIbpii7m4vcjL74HU $r23;
+        android.content.Context $r24;
+        java.util.concurrent.Executor $r25;
+        com.android.internal.logging.MetricsLogger $r35, $r38;
+        android.metrics.LogMaker $r36, $r37, $r39, $r40;
+        android.os.Bundle r41;
+        android.content.Intent r42, r45;
+
+        r0 := @this: com.android.internal.app.IntentForwarderActivity;
+
+        r41 := @parameter0: android.os.Bundle;
+
+        specialinvoke r0.<android.app.Activity: void onCreate(android.os.Bundle)>(r41);
+
+        $r2 = virtualinvoke r0.<com.android.internal.app.IntentForwarderActivity: com.android.internal.app.IntentForwarderActivity$Injector createInjector()>();
+
+        r0.<com.android.internal.app.IntentForwarderActivity: com.android.internal.app.IntentForwarderActivity$Injector mInjector> = $r2;
+
+        $r3 = staticinvoke <java.util.concurrent.Executors: java.util.concurrent.ExecutorService newSingleThreadExecutor()>();
+
+        r0.<com.android.internal.app.IntentForwarderActivity: java.util.concurrent.ExecutorService mExecutorService> = $r3;
+
+        r42 = virtualinvoke r0.<com.android.internal.app.IntentForwarderActivity: android.content.Intent getIntent()>();
+
+        $r4 = virtualinvoke r42.<android.content.Intent: android.content.ComponentName getComponent()>();
+
+        r43 = virtualinvoke $r4.<android.content.ComponentName: java.lang.String getClassName()>();
+
+        $r5 = <com.android.internal.app.IntentForwarderActivity: java.lang.String FORWARD_INTENT_TO_PARENT>;
+
+        $z0 = virtualinvoke r43.<java.lang.String: boolean equals(java.lang.Object)>($r5);
+
+        if $z0 == 0 goto label1;
+
+        i4 = specialinvoke r0.<com.android.internal.app.IntentForwarderActivity: int getProfileParent()>();
+
+        $r38 = virtualinvoke r0.<com.android.internal.app.IntentForwarderActivity: com.android.internal.logging.MetricsLogger getMetricsLogger()>();
+
+        $r39 = new android.metrics.LogMaker;
+
+        specialinvoke $r39.<android.metrics.LogMaker: void <init>(int)>(1661);
+
+        $r40 = virtualinvoke $r39.<android.metrics.LogMaker: android.metrics.LogMaker setSubtype(int)>(1);
+
+        virtualinvoke $r38.<com.android.internal.logging.MetricsLogger: void write(android.metrics.LogMaker)>($r40);
+
+        i5 = 17040234;
+
+        goto label3;
+
+     label1:
+        $r6 = <com.android.internal.app.IntentForwarderActivity: java.lang.String FORWARD_INTENT_TO_MANAGED_PROFILE>;
+
+        $z1 = virtualinvoke r43.<java.lang.String: boolean equals(java.lang.Object)>($r6);
+
+        if $z1 == 0 goto label2;
+
+        i4 = specialinvoke r0.<com.android.internal.app.IntentForwarderActivity: int getManagedProfile()>();
+
+        $r35 = virtualinvoke r0.<com.android.internal.app.IntentForwarderActivity: com.android.internal.logging.MetricsLogger getMetricsLogger()>();
+
+        $r36 = new android.metrics.LogMaker;
+
+        specialinvoke $r36.<android.metrics.LogMaker: void <init>(int)>(1661);
+
+        $r37 = virtualinvoke $r36.<android.metrics.LogMaker: android.metrics.LogMaker setSubtype(int)>(2);
+
+        virtualinvoke $r35.<com.android.internal.logging.MetricsLogger: void write(android.metrics.LogMaker)>($r37);
+
+        i5 = 17040235;
+
+        goto label3;
+
+     label2:
+        r44 = <com.android.internal.app.IntentForwarderActivity: java.lang.String TAG>;
+
+        $r7 = new java.lang.StringBuilder;
+
+        specialinvoke $r7.<java.lang.StringBuilder: void <init>()>();
+
+        $r8 = class "Lcom/android/internal/app/IntentForwarderActivity;";
+
+        $r9 = virtualinvoke $r8.<java.lang.Class: java.lang.String getName()>();
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r9);
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" cannot be called directly");
+
+        $r12 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int wtf(java.lang.String,java.lang.String)>(r44, $r12);
+
+        i5 = -1;
+
+        i4 = -10000;
+
+     label3:
+        if i4 != -10000 goto label4;
+
+        virtualinvoke r0.<com.android.internal.app.IntentForwarderActivity: void finish()>();
+
+        return;
+
+     label4:
+        $r13 = "android.intent.action.CHOOSER";
+
+        $r14 = virtualinvoke r42.<android.content.Intent: java.lang.String getAction()>();
+
+        $z2 = virtualinvoke $r13.<java.lang.String: boolean equals(java.lang.Object)>($r14);
+
+        if $z2 == 0 goto label5;
+
+        specialinvoke r0.<com.android.internal.app.IntentForwarderActivity: void launchChooserActivityWithCorrectTab(android.content.Intent,java.lang.String)>(r42, r43);
+
+        return;
+
+     label5:
+        i0 = virtualinvoke r0.<com.android.internal.app.IntentForwarderActivity: int getUserId()>();
+
+        $i2 = virtualinvoke r0.<com.android.internal.app.IntentForwarderActivity: int getUserId()>();
+
+        $r15 = r0.<com.android.internal.app.IntentForwarderActivity: com.android.internal.app.IntentForwarderActivity$Injector mInjector>;
+
+        $r16 = interfaceinvoke $r15.<com.android.internal.app.IntentForwarderActivity$Injector: android.content.pm.IPackageManager getIPackageManager()>();
+
+        $r17 = virtualinvoke r0.<com.android.internal.app.IntentForwarderActivity: android.content.ContentResolver getContentResolver()>();
+
+        r45 = staticinvoke <com.android.internal.app.IntentForwarderActivity: android.content.Intent canForward(android.content.Intent,int,int,android.content.pm.IPackageManager,android.content.ContentResolver)>(r42, $i2, i4, $r16, $r17);
+
+        if r45 != null goto label6;
+
+        r46 = <com.android.internal.app.IntentForwarderActivity: java.lang.String TAG>;
+
+        $r27 = new java.lang.StringBuilder;
+
+        specialinvoke $r27.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r27.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("the intent: ");
+
+        virtualinvoke $r27.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r42);
+
+        virtualinvoke $r27.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" cannot be forwarded from user ");
+
+        virtualinvoke $r27.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        virtualinvoke $r27.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" to user ");
+
+        virtualinvoke $r27.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i4);
+
+        $r34 = virtualinvoke $r27.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int wtf(java.lang.String,java.lang.String)>(r46, $r34);
+
+        virtualinvoke r0.<com.android.internal.app.IntentForwarderActivity: void finish()>();
+
+        return;
+
+     label6:
+        virtualinvoke r45.<android.content.Intent: void prepareToLeaveUser(int)>(i0);
+
+        $r18 = r0.<com.android.internal.app.IntentForwarderActivity: com.android.internal.app.IntentForwarderActivity$Injector mInjector>;
+
+        $r19 = interfaceinvoke $r18.<com.android.internal.app.IntentForwarderActivity$Injector: java.util.concurrent.CompletableFuture resolveActivityAsUser(android.content.Intent,int,int)>(r45, 65536, i4);
+
+        $r20 = new com.android.internal.app._$$Lambda$IntentForwarderActivity$qydOPmABrxKUPHVYcot2pr1dEhM;
+
+        specialinvoke $r20.<com.android.internal.app._$$Lambda$IntentForwarderActivity$qydOPmABrxKUPHVYcot2pr1dEhM: void <init>(com.android.internal.app.IntentForwarderActivity,android.content.Intent,java.lang.String,android.content.Intent,int,int)>(r0, r42, r43, r45, i0, i4);
+
+        $r21 = r0.<com.android.internal.app.IntentForwarderActivity: java.util.concurrent.ExecutorService mExecutorService>;
+
+        $r22 = virtualinvoke $r19.<java.util.concurrent.CompletableFuture: java.util.concurrent.CompletableFuture thenApplyAsync(java.util.function.Function,java.util.concurrent.Executor)>($r20, $r21);
+
+        $r23 = new com.android.internal.app._$$Lambda$IntentForwarderActivity$gWwZSR9fZYCIbpii7m4vcjL74HU;
+
+        specialinvoke $r23.<com.android.internal.app._$$Lambda$IntentForwarderActivity$gWwZSR9fZYCIbpii7m4vcjL74HU: void <init>(com.android.internal.app.IntentForwarderActivity,android.content.Intent,int)>(r0, r42, i5);
+
+        $r24 = virtualinvoke r0.<com.android.internal.app.IntentForwarderActivity: android.content.Context getApplicationContext()>();
+
+        $r25 = virtualinvoke $r24.<android.content.Context: java.util.concurrent.Executor getMainExecutor()>();
+
+        virtualinvoke $r22.<java.util.concurrent.CompletableFuture: java.util.concurrent.CompletableFuture thenAcceptAsync(java.util.function.Consumer,java.util.concurrent.Executor)>($r23, $r25);
+
+        return;
+    }
+
+    protected void onDestroy()
+    {
+        com.android.internal.app.IntentForwarderActivity r0;
+        java.util.concurrent.ExecutorService $r1;
+
+        r0 := @this: com.android.internal.app.IntentForwarderActivity;
+
+        specialinvoke r0.<android.app.Activity: void onDestroy()>();
+
+        $r1 = r0.<com.android.internal.app.IntentForwarderActivity: java.util.concurrent.ExecutorService mExecutorService>;
+
+        interfaceinvoke $r1.<java.util.concurrent.ExecutorService: void shutdown()>();
+
+        return;
+    }
+}

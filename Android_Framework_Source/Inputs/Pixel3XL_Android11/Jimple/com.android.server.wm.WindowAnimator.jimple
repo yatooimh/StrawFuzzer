@@ -1,0 +1,894 @@
+public class com.android.server.wm.WindowAnimator extends java.lang.Object
+{
+    private static final java.lang.String TAG;
+    private final java.util.ArrayList mAfterPrepareSurfacesRunnables;
+    final android.view.Choreographer$FrameCallback mAnimationFrameCallback;
+    private boolean mAnimationFrameCallbackScheduled;
+    int mBulkUpdateParams;
+    private android.view.Choreographer mChoreographer;
+    final android.content.Context mContext;
+    long mCurrentTime;
+    android.util.SparseArray mDisplayContentsAnimators;
+    private boolean mInExecuteAfterPrepareSurfacesRunnables;
+    private boolean mInitialized;
+    private boolean mLastRootAnimating;
+    java.lang.Object mLastWindowFreezeSource;
+    boolean mNotifyWhenNoAnimation;
+    final com.android.server.policy.WindowManagerPolicy mPolicy;
+    private boolean mRemoveReplacedWindows;
+    private boolean mRunningExpensiveAnimations;
+    final com.android.server.wm.WindowManagerService mService;
+    private final android.view.SurfaceControl$Transaction mTransaction;
+
+    void <init>(com.android.server.wm.WindowManagerService)
+    {
+        com.android.server.wm.WindowAnimator r0;
+        com.android.server.wm.WindowManagerService r1;
+        android.util.SparseArray $r2;
+        java.util.ArrayList $r3;
+        android.content.Context $r4;
+        com.android.server.policy.WindowManagerPolicy $r5;
+        java.util.function.Supplier $r6;
+        java.lang.Object $r7;
+        android.view.SurfaceControl$Transaction $r8;
+        com.android.server.wm._$$Lambda$WindowAnimator$U3Fu5_RzEyNo8Jt6zTb2ozdXiqM $r9;
+        android.os.Handler $r10;
+        com.android.server.wm._$$Lambda$WindowAnimator$ddXU8gK8rmDqri0OZVMNa3Y4GHk $r11;
+
+        r0 := @this: com.android.server.wm.WindowAnimator;
+
+        r1 := @parameter0: com.android.server.wm.WindowManagerService;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        r0.<com.android.server.wm.WindowAnimator: int mBulkUpdateParams> = 0;
+
+        $r2 = new android.util.SparseArray;
+
+        specialinvoke $r2.<android.util.SparseArray: void <init>(int)>(2);
+
+        r0.<com.android.server.wm.WindowAnimator: android.util.SparseArray mDisplayContentsAnimators> = $r2;
+
+        r0.<com.android.server.wm.WindowAnimator: boolean mInitialized> = 0;
+
+        r0.<com.android.server.wm.WindowAnimator: boolean mRemoveReplacedWindows> = 0;
+
+        r0.<com.android.server.wm.WindowAnimator: boolean mNotifyWhenNoAnimation> = 0;
+
+        $r3 = new java.util.ArrayList;
+
+        specialinvoke $r3.<java.util.ArrayList: void <init>()>();
+
+        r0.<com.android.server.wm.WindowAnimator: java.util.ArrayList mAfterPrepareSurfacesRunnables> = $r3;
+
+        r0.<com.android.server.wm.WindowAnimator: com.android.server.wm.WindowManagerService mService> = r1;
+
+        $r4 = r1.<com.android.server.wm.WindowManagerService: android.content.Context mContext>;
+
+        r0.<com.android.server.wm.WindowAnimator: android.content.Context mContext> = $r4;
+
+        $r5 = r1.<com.android.server.wm.WindowManagerService: com.android.server.policy.WindowManagerPolicy mPolicy>;
+
+        r0.<com.android.server.wm.WindowAnimator: com.android.server.policy.WindowManagerPolicy mPolicy> = $r5;
+
+        $r6 = r1.<com.android.server.wm.WindowManagerService: java.util.function.Supplier mTransactionFactory>;
+
+        $r7 = interfaceinvoke $r6.<java.util.function.Supplier: java.lang.Object get()>();
+
+        $r8 = (android.view.SurfaceControl$Transaction) $r7;
+
+        r0.<com.android.server.wm.WindowAnimator: android.view.SurfaceControl$Transaction mTransaction> = $r8;
+
+        $r10 = r1.<com.android.server.wm.WindowManagerService: android.os.Handler mAnimationHandler>;
+
+        $r9 = new com.android.server.wm._$$Lambda$WindowAnimator$U3Fu5_RzEyNo8Jt6zTb2ozdXiqM;
+
+        specialinvoke $r9.<com.android.server.wm._$$Lambda$WindowAnimator$U3Fu5_RzEyNo8Jt6zTb2ozdXiqM: void <init>(com.android.server.wm.WindowAnimator)>(r0);
+
+        virtualinvoke $r10.<android.os.Handler: boolean runWithScissors(java.lang.Runnable,long)>($r9, 0L);
+
+        $r11 = new com.android.server.wm._$$Lambda$WindowAnimator$ddXU8gK8rmDqri0OZVMNa3Y4GHk;
+
+        specialinvoke $r11.<com.android.server.wm._$$Lambda$WindowAnimator$ddXU8gK8rmDqri0OZVMNa3Y4GHk: void <init>(com.android.server.wm.WindowAnimator)>(r0);
+
+        r0.<com.android.server.wm.WindowAnimator: android.view.Choreographer$FrameCallback mAnimationFrameCallback> = $r11;
+
+        return;
+    }
+
+    private void animate(long)
+    {
+        com.android.server.wm.WindowAnimator r0;
+        long l0, $l2;
+        int i1, $i3, i5, i6, i7, i8;
+        com.android.server.wm.DisplayContent r1, $r33;
+        boolean $z0, $z1, $z2, $z3, $z4, $z5, $z6, $z7, z8, z9, z10, z11, $z12;
+        com.android.server.wm.WindowManagerService $r2, $r3, $r5, $r7, $r9, $r11, $r12, $r16, $r20, $r24, $r26, $r28, $r31, $r36, $r43, $r45, $r48;
+        android.util.SparseArray $r4, $r30, $r35;
+        com.android.server.wm.Watermark $r6, $r29;
+        com.android.server.wm.RootWindowContainer $r8, $r13, $r27, $r32, $r37, $r44, $r46;
+        com.android.server.wm.WindowSurfacePlacer $r10, $r25;
+        java.lang.Object[] $r14, $r38;
+        com.android.server.wm.ProtoLogGroup $r15, $r39;
+        com.android.server.wm.TaskSnapshotController $r17, $r21;
+        android.view.SurfaceControl$Transaction $r18, $r22, $r34, $r47;
+        java.lang.RuntimeException $r40;
+        com.android.server.wm.AccessibilityController r41;
+
+        r0 := @this: com.android.server.wm.WindowAnimator;
+
+        l0 := @parameter0: long;
+
+        $z0 = r0.<com.android.server.wm.WindowAnimator: boolean mInitialized>;
+
+        if $z0 != 0 goto label01;
+
+        return;
+
+     label01:
+        virtualinvoke r0.<com.android.server.wm.WindowAnimator: void scheduleAnimation()>();
+
+        $l2 = l0 / 1000000L;
+
+        r0.<com.android.server.wm.WindowAnimator: long mCurrentTime> = $l2;
+
+        r0.<com.android.server.wm.WindowAnimator: int mBulkUpdateParams> = 4;
+
+        $z1 = <com.android.server.protolog.ProtoLog$Cache: boolean WM_SHOW_TRANSACTIONS_enabled>;
+
+        if $z1 == 0 goto label02;
+
+        $r39 = <com.android.server.wm.ProtoLogGroup: com.android.server.wm.ProtoLogGroup WM_SHOW_TRANSACTIONS>;
+
+        $r38 = (java.lang.Object[]) null;
+
+        staticinvoke <com.android.server.protolog.ProtoLogImpl: void i(com.android.server.protolog.common.IProtoLogGroup,int,int,java.lang.String,java.lang.Object[])>($r39, 1984782949, 0, null, $r38);
+
+     label02:
+        $r2 = r0.<com.android.server.wm.WindowAnimator: com.android.server.wm.WindowManagerService mService>;
+
+        virtualinvoke $r2.<com.android.server.wm.WindowManagerService: void openSurfaceTransaction()>();
+
+     label03:
+        $r3 = r0.<com.android.server.wm.WindowAnimator: com.android.server.wm.WindowManagerService mService>;
+
+        r41 = $r3.<com.android.server.wm.WindowManagerService: com.android.server.wm.AccessibilityController mAccessibilityController>;
+
+        $r4 = r0.<com.android.server.wm.WindowAnimator: android.util.SparseArray mDisplayContentsAnimators>;
+
+        i1 = virtualinvoke $r4.<android.util.SparseArray: int size()>();
+
+     label04:
+        i5 = 0;
+
+     label05:
+        if i5 >= i1 goto label08;
+
+     label06:
+        $r35 = r0.<com.android.server.wm.WindowAnimator: android.util.SparseArray mDisplayContentsAnimators>;
+
+        i6 = virtualinvoke $r35.<android.util.SparseArray: int keyAt(int)>(i5);
+
+        $r36 = r0.<com.android.server.wm.WindowAnimator: com.android.server.wm.WindowManagerService mService>;
+
+        $r37 = $r36.<com.android.server.wm.WindowManagerService: com.android.server.wm.RootWindowContainer mRoot>;
+
+        r1 = virtualinvoke $r37.<com.android.server.wm.RootWindowContainer: com.android.server.wm.DisplayContent getDisplayContent(int)>(i6);
+
+        virtualinvoke r1.<com.android.server.wm.DisplayContent: void updateWindowsForAnimator()>();
+
+        virtualinvoke r1.<com.android.server.wm.DisplayContent: void prepareSurfaces()>();
+
+     label07:
+        i5 = i5 + 1;
+
+        goto label05;
+
+     label08:
+        i7 = 0;
+
+     label09:
+        if i7 >= i1 goto label14;
+
+     label10:
+        $r30 = r0.<com.android.server.wm.WindowAnimator: android.util.SparseArray mDisplayContentsAnimators>;
+
+        i8 = virtualinvoke $r30.<android.util.SparseArray: int keyAt(int)>(i7);
+
+        $r31 = r0.<com.android.server.wm.WindowAnimator: com.android.server.wm.WindowManagerService mService>;
+
+        $r32 = $r31.<com.android.server.wm.WindowManagerService: com.android.server.wm.RootWindowContainer mRoot>;
+
+        $r33 = virtualinvoke $r32.<com.android.server.wm.RootWindowContainer: com.android.server.wm.DisplayContent getDisplayContent(int)>(i8);
+
+        virtualinvoke $r33.<com.android.server.wm.DisplayContent: void checkAppWindowsReadyToShow()>();
+
+     label11:
+        if r41 == null goto label13;
+
+     label12:
+        $r34 = r0.<com.android.server.wm.WindowAnimator: android.view.SurfaceControl$Transaction mTransaction>;
+
+        virtualinvoke r41.<com.android.server.wm.AccessibilityController: void drawMagnifiedRegionBorderIfNeededLocked(int,android.view.SurfaceControl$Transaction)>(i8, $r34);
+
+     label13:
+        i7 = i7 + 1;
+
+        goto label09;
+
+     label14:
+        specialinvoke r0.<com.android.server.wm.WindowAnimator: void cancelAnimation()>();
+
+        $r5 = r0.<com.android.server.wm.WindowAnimator: com.android.server.wm.WindowManagerService mService>;
+
+        $r6 = $r5.<com.android.server.wm.WindowManagerService: com.android.server.wm.Watermark mWatermark>;
+
+        if $r6 == null goto label15;
+
+        $r28 = r0.<com.android.server.wm.WindowAnimator: com.android.server.wm.WindowManagerService mService>;
+
+        $r29 = $r28.<com.android.server.wm.WindowManagerService: com.android.server.wm.Watermark mWatermark>;
+
+        virtualinvoke $r29.<com.android.server.wm.Watermark: void drawIfNeeded()>();
+
+     label15:
+        goto label17;
+
+     label16:
+        $r40 := @caughtexception;
+
+        staticinvoke <android.util.Slog: int wtf(java.lang.String,java.lang.String,java.lang.Throwable)>("WindowManager", "Unhandled exception in Window Manager", $r40);
+
+     label17:
+        $r7 = r0.<com.android.server.wm.WindowAnimator: com.android.server.wm.WindowManagerService mService>;
+
+        $r8 = $r7.<com.android.server.wm.WindowManagerService: com.android.server.wm.RootWindowContainer mRoot>;
+
+        z8 = virtualinvoke $r8.<com.android.server.wm.RootWindowContainer: boolean hasPendingLayoutChanges(com.android.server.wm.WindowAnimator)>(r0);
+
+        $i3 = r0.<com.android.server.wm.WindowAnimator: int mBulkUpdateParams>;
+
+        if $i3 == 0 goto label18;
+
+        $r26 = r0.<com.android.server.wm.WindowAnimator: com.android.server.wm.WindowManagerService mService>;
+
+        $r27 = $r26.<com.android.server.wm.WindowManagerService: com.android.server.wm.RootWindowContainer mRoot>;
+
+        $z7 = virtualinvoke $r27.<com.android.server.wm.RootWindowContainer: boolean copyAnimToLayoutParams()>();
+
+        if $z7 == 0 goto label18;
+
+        z9 = 1;
+
+        goto label19;
+
+     label18:
+        z9 = 0;
+
+     label19:
+        if z8 != 0 goto label20;
+
+        if z9 == 0 goto label21;
+
+     label20:
+        $r9 = r0.<com.android.server.wm.WindowAnimator: com.android.server.wm.WindowManagerService mService>;
+
+        $r10 = $r9.<com.android.server.wm.WindowManagerService: com.android.server.wm.WindowSurfacePlacer mWindowPlacerLocked>;
+
+        virtualinvoke $r10.<com.android.server.wm.WindowSurfacePlacer: void requestTraversal()>();
+
+     label21:
+        $r43 = r0.<com.android.server.wm.WindowAnimator: com.android.server.wm.WindowManagerService mService>;
+
+        $r44 = $r43.<com.android.server.wm.WindowManagerService: com.android.server.wm.RootWindowContainer mRoot>;
+
+        z10 = virtualinvoke $r44.<com.android.server.wm.RootWindowContainer: boolean isAnimating(int,int)>(5, -1);
+
+        if z10 == 0 goto label22;
+
+        $z6 = r0.<com.android.server.wm.WindowAnimator: boolean mLastRootAnimating>;
+
+        if $z6 != 0 goto label22;
+
+        staticinvoke <android.os.Trace: void asyncTraceBegin(long,java.lang.String,int)>(32L, "animating", 0);
+
+     label22:
+        if z10 != 0 goto label23;
+
+        $z5 = r0.<com.android.server.wm.WindowAnimator: boolean mLastRootAnimating>;
+
+        if $z5 == 0 goto label23;
+
+        $r24 = r0.<com.android.server.wm.WindowAnimator: com.android.server.wm.WindowManagerService mService>;
+
+        $r25 = $r24.<com.android.server.wm.WindowManagerService: com.android.server.wm.WindowSurfacePlacer mWindowPlacerLocked>;
+
+        virtualinvoke $r25.<com.android.server.wm.WindowSurfacePlacer: void requestTraversal()>();
+
+        staticinvoke <android.os.Trace: void asyncTraceEnd(long,java.lang.String,int)>(32L, "animating", 0);
+
+     label23:
+        r0.<com.android.server.wm.WindowAnimator: boolean mLastRootAnimating> = z10;
+
+        $r45 = r0.<com.android.server.wm.WindowAnimator: com.android.server.wm.WindowManagerService mService>;
+
+        $r46 = $r45.<com.android.server.wm.WindowManagerService: com.android.server.wm.RootWindowContainer mRoot>;
+
+        z11 = virtualinvoke $r46.<com.android.server.wm.RootWindowContainer: boolean isAnimating(int,int)>(5, 11);
+
+        if z11 == 0 goto label24;
+
+        $z4 = r0.<com.android.server.wm.WindowAnimator: boolean mRunningExpensiveAnimations>;
+
+        if $z4 != 0 goto label24;
+
+        $r20 = r0.<com.android.server.wm.WindowAnimator: com.android.server.wm.WindowManagerService mService>;
+
+        $r21 = $r20.<com.android.server.wm.WindowManagerService: com.android.server.wm.TaskSnapshotController mTaskSnapshotController>;
+
+        virtualinvoke $r21.<com.android.server.wm.TaskSnapshotController: void setPersisterPaused(boolean)>(1);
+
+        $r22 = r0.<com.android.server.wm.WindowAnimator: android.view.SurfaceControl$Transaction mTransaction>;
+
+        virtualinvoke $r22.<android.view.SurfaceControl$Transaction: android.view.SurfaceControl$Transaction setEarlyWakeupStart()>();
+
+        goto label25;
+
+     label24:
+        if z11 != 0 goto label25;
+
+        $z3 = r0.<com.android.server.wm.WindowAnimator: boolean mRunningExpensiveAnimations>;
+
+        if $z3 == 0 goto label25;
+
+        $r16 = r0.<com.android.server.wm.WindowAnimator: com.android.server.wm.WindowManagerService mService>;
+
+        $r17 = $r16.<com.android.server.wm.WindowManagerService: com.android.server.wm.TaskSnapshotController mTaskSnapshotController>;
+
+        virtualinvoke $r17.<com.android.server.wm.TaskSnapshotController: void setPersisterPaused(boolean)>(0);
+
+        $r18 = r0.<com.android.server.wm.WindowAnimator: android.view.SurfaceControl$Transaction mTransaction>;
+
+        virtualinvoke $r18.<android.view.SurfaceControl$Transaction: android.view.SurfaceControl$Transaction setEarlyWakeupEnd()>();
+
+     label25:
+        r0.<com.android.server.wm.WindowAnimator: boolean mRunningExpensiveAnimations> = z11;
+
+        $r47 = r0.<com.android.server.wm.WindowAnimator: android.view.SurfaceControl$Transaction mTransaction>;
+
+        staticinvoke <android.view.SurfaceControl: void mergeToGlobalTransaction(android.view.SurfaceControl$Transaction)>($r47);
+
+        $r48 = r0.<com.android.server.wm.WindowAnimator: com.android.server.wm.WindowManagerService mService>;
+
+        virtualinvoke $r48.<com.android.server.wm.WindowManagerService: void closeSurfaceTransaction(java.lang.String)>("WindowAnimator");
+
+        $z12 = <com.android.server.protolog.ProtoLog$Cache: boolean WM_SHOW_TRANSACTIONS_enabled>;
+
+        if $z12 == 0 goto label26;
+
+        $r15 = <com.android.server.wm.ProtoLogGroup: com.android.server.wm.ProtoLogGroup WM_SHOW_TRANSACTIONS>;
+
+        $r14 = (java.lang.Object[]) null;
+
+        staticinvoke <com.android.server.protolog.ProtoLogImpl: void i(com.android.server.protolog.common.IProtoLogGroup,int,int,java.lang.String,java.lang.Object[])>($r15, -545190927, 0, null, $r14);
+
+     label26:
+        $z2 = r0.<com.android.server.wm.WindowAnimator: boolean mRemoveReplacedWindows>;
+
+        if $z2 == 0 goto label27;
+
+        $r12 = r0.<com.android.server.wm.WindowAnimator: com.android.server.wm.WindowManagerService mService>;
+
+        $r13 = $r12.<com.android.server.wm.WindowManagerService: com.android.server.wm.RootWindowContainer mRoot>;
+
+        virtualinvoke $r13.<com.android.server.wm.RootWindowContainer: void removeReplacedWindows()>();
+
+        r0.<com.android.server.wm.WindowAnimator: boolean mRemoveReplacedWindows> = 0;
+
+     label27:
+        $r11 = r0.<com.android.server.wm.WindowAnimator: com.android.server.wm.WindowManagerService mService>;
+
+        virtualinvoke $r11.<com.android.server.wm.WindowManagerService: void destroyPreservedSurfaceLocked()>();
+
+        virtualinvoke r0.<com.android.server.wm.WindowAnimator: void executeAfterPrepareSurfacesRunnables()>();
+
+        return;
+
+        catch java.lang.RuntimeException from label03 to label04 with label16;
+        catch java.lang.RuntimeException from label06 to label07 with label16;
+        catch java.lang.RuntimeException from label10 to label11 with label16;
+        catch java.lang.RuntimeException from label12 to label13 with label16;
+        catch java.lang.RuntimeException from label14 to label15 with label16;
+    }
+
+    private static java.lang.String bulkUpdateParamsToString(int)
+    {
+        int i0, $i1, $i2;
+        java.lang.StringBuilder $r1;
+        java.lang.String $r2;
+
+        i0 := @parameter0: int;
+
+        $r1 = new java.lang.StringBuilder;
+
+        specialinvoke $r1.<java.lang.StringBuilder: void <init>(int)>(128);
+
+        $i1 = i0 & 1;
+
+        if $i1 == 0 goto label1;
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" UPDATE_ROTATION");
+
+     label1:
+        $i2 = i0 & 4;
+
+        if $i2 == 0 goto label2;
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" ORIENTATION_CHANGE_COMPLETE");
+
+     label2:
+        $r2 = virtualinvoke $r1.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        return $r2;
+    }
+
+    private void cancelAnimation()
+    {
+        com.android.server.wm.WindowAnimator r0;
+        boolean $z0;
+        android.view.Choreographer$FrameCallback $r1;
+        android.view.Choreographer $r2;
+
+        r0 := @this: com.android.server.wm.WindowAnimator;
+
+        $z0 = r0.<com.android.server.wm.WindowAnimator: boolean mAnimationFrameCallbackScheduled>;
+
+        if $z0 == 0 goto label1;
+
+        r0.<com.android.server.wm.WindowAnimator: boolean mAnimationFrameCallbackScheduled> = 0;
+
+        $r2 = r0.<com.android.server.wm.WindowAnimator: android.view.Choreographer mChoreographer>;
+
+        $r1 = r0.<com.android.server.wm.WindowAnimator: android.view.Choreographer$FrameCallback mAnimationFrameCallback>;
+
+        virtualinvoke $r2.<android.view.Choreographer: void removeFrameCallback(android.view.Choreographer$FrameCallback)>($r1);
+
+     label1:
+        return;
+    }
+
+    private com.android.server.wm.WindowAnimator$DisplayContentsAnimator getDisplayContentsAnimatorLocked(int)
+    {
+        com.android.server.wm.WindowAnimator r0;
+        int i0;
+        com.android.server.wm.WindowAnimator$DisplayContentsAnimator r1, $r7, r9;
+        android.util.SparseArray $r2, $r8;
+        java.lang.Object $r3;
+        com.android.server.wm.WindowManagerService $r4;
+        com.android.server.wm.RootWindowContainer $r5;
+        com.android.server.wm.DisplayContent $r6;
+
+        r0 := @this: com.android.server.wm.WindowAnimator;
+
+        i0 := @parameter0: int;
+
+        if i0 >= 0 goto label1;
+
+        return null;
+
+     label1:
+        $r2 = r0.<com.android.server.wm.WindowAnimator: android.util.SparseArray mDisplayContentsAnimators>;
+
+        $r3 = virtualinvoke $r2.<android.util.SparseArray: java.lang.Object get(int)>(i0);
+
+        r1 = (com.android.server.wm.WindowAnimator$DisplayContentsAnimator) $r3;
+
+        r9 = r1;
+
+        if r1 != null goto label2;
+
+        r9 = r1;
+
+        $r4 = r0.<com.android.server.wm.WindowAnimator: com.android.server.wm.WindowManagerService mService>;
+
+        $r5 = $r4.<com.android.server.wm.WindowManagerService: com.android.server.wm.RootWindowContainer mRoot>;
+
+        $r6 = virtualinvoke $r5.<com.android.server.wm.RootWindowContainer: com.android.server.wm.DisplayContent getDisplayContent(int)>(i0);
+
+        if $r6 == null goto label2;
+
+        $r7 = new com.android.server.wm.WindowAnimator$DisplayContentsAnimator;
+
+        specialinvoke $r7.<com.android.server.wm.WindowAnimator$DisplayContentsAnimator: void <init>(com.android.server.wm.WindowAnimator,com.android.server.wm.WindowAnimator$1)>(r0, null);
+
+        r9 = $r7;
+
+        $r8 = r0.<com.android.server.wm.WindowAnimator: android.util.SparseArray mDisplayContentsAnimators>;
+
+        virtualinvoke $r8.<android.util.SparseArray: void put(int,java.lang.Object)>(i0, $r7);
+
+     label2:
+        return r9;
+    }
+
+    void addAfterPrepareSurfacesRunnable(java.lang.Runnable)
+    {
+        com.android.server.wm.WindowAnimator r0;
+        java.lang.Runnable r1;
+        boolean $z0;
+        java.util.ArrayList $r2;
+
+        r0 := @this: com.android.server.wm.WindowAnimator;
+
+        r1 := @parameter0: java.lang.Runnable;
+
+        $z0 = r0.<com.android.server.wm.WindowAnimator: boolean mInExecuteAfterPrepareSurfacesRunnables>;
+
+        if $z0 == 0 goto label1;
+
+        interfaceinvoke r1.<java.lang.Runnable: void run()>();
+
+        return;
+
+     label1:
+        $r2 = r0.<com.android.server.wm.WindowAnimator: java.util.ArrayList mAfterPrepareSurfacesRunnables>;
+
+        virtualinvoke $r2.<java.util.ArrayList: boolean add(java.lang.Object)>(r1);
+
+        virtualinvoke r0.<com.android.server.wm.WindowAnimator: void scheduleAnimation()>();
+
+        return;
+    }
+
+    void addDisplayLocked(int)
+    {
+        com.android.server.wm.WindowAnimator r0;
+        int i0;
+
+        r0 := @this: com.android.server.wm.WindowAnimator;
+
+        i0 := @parameter0: int;
+
+        specialinvoke r0.<com.android.server.wm.WindowAnimator: com.android.server.wm.WindowAnimator$DisplayContentsAnimator getDisplayContentsAnimatorLocked(int)>(i0);
+
+        return;
+    }
+
+    public void dumpLocked(java.io.PrintWriter, java.lang.String, boolean)
+    {
+        com.android.server.wm.WindowAnimator r0;
+        java.io.PrintWriter r1;
+        java.lang.String r2, $r7, $r8, $r9, r16;
+        boolean z0;
+        java.lang.StringBuilder $r3;
+        android.util.SparseArray $r6, $r10, $r12;
+        int $i0, $i1, $i2, $i3, $i5, $i6, i7;
+        long $l4;
+        com.android.server.wm.WindowManagerService $r11;
+        com.android.server.wm.RootWindowContainer $r13;
+        com.android.server.wm.DisplayContent $r14;
+
+        r0 := @this: com.android.server.wm.WindowAnimator;
+
+        r1 := @parameter0: java.io.PrintWriter;
+
+        r2 := @parameter1: java.lang.String;
+
+        z0 := @parameter2: boolean;
+
+        $r3 = new java.lang.StringBuilder;
+
+        specialinvoke $r3.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  ");
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r2);
+
+        r16 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        i7 = 0;
+
+     label1:
+        $r6 = r0.<com.android.server.wm.WindowAnimator: android.util.SparseArray mDisplayContentsAnimators>;
+
+        $i0 = virtualinvoke $r6.<android.util.SparseArray: int size()>();
+
+        if i7 >= $i0 goto label2;
+
+        virtualinvoke r1.<java.io.PrintWriter: void print(java.lang.String)>(r2);
+
+        virtualinvoke r1.<java.io.PrintWriter: void print(java.lang.String)>("DisplayContentsAnimator #");
+
+        $r10 = r0.<com.android.server.wm.WindowAnimator: android.util.SparseArray mDisplayContentsAnimators>;
+
+        $i5 = virtualinvoke $r10.<android.util.SparseArray: int keyAt(int)>(i7);
+
+        virtualinvoke r1.<java.io.PrintWriter: void print(int)>($i5);
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>(":");
+
+        $r11 = r0.<com.android.server.wm.WindowAnimator: com.android.server.wm.WindowManagerService mService>;
+
+        $r13 = $r11.<com.android.server.wm.WindowManagerService: com.android.server.wm.RootWindowContainer mRoot>;
+
+        $r12 = r0.<com.android.server.wm.WindowAnimator: android.util.SparseArray mDisplayContentsAnimators>;
+
+        $i6 = virtualinvoke $r12.<android.util.SparseArray: int keyAt(int)>(i7);
+
+        $r14 = virtualinvoke $r13.<com.android.server.wm.RootWindowContainer: com.android.server.wm.DisplayContent getDisplayContent(int)>($i6);
+
+        virtualinvoke $r14.<com.android.server.wm.DisplayContent: void dumpWindowAnimators(java.io.PrintWriter,java.lang.String)>(r1, r16);
+
+        virtualinvoke r1.<java.io.PrintWriter: void println()>();
+
+        i7 = i7 + 1;
+
+        goto label1;
+
+     label2:
+        virtualinvoke r1.<java.io.PrintWriter: void println()>();
+
+        if z0 == 0 goto label3;
+
+        virtualinvoke r1.<java.io.PrintWriter: void print(java.lang.String)>(r2);
+
+        virtualinvoke r1.<java.io.PrintWriter: void print(java.lang.String)>("mCurrentTime=");
+
+        $l4 = r0.<com.android.server.wm.WindowAnimator: long mCurrentTime>;
+
+        $r9 = staticinvoke <android.util.TimeUtils: java.lang.String formatUptime(long)>($l4);
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r9);
+
+     label3:
+        $i1 = r0.<com.android.server.wm.WindowAnimator: int mBulkUpdateParams>;
+
+        if $i1 == 0 goto label4;
+
+        virtualinvoke r1.<java.io.PrintWriter: void print(java.lang.String)>(r2);
+
+        virtualinvoke r1.<java.io.PrintWriter: void print(java.lang.String)>("mBulkUpdateParams=0x");
+
+        $i2 = r0.<com.android.server.wm.WindowAnimator: int mBulkUpdateParams>;
+
+        $r7 = staticinvoke <java.lang.Integer: java.lang.String toHexString(int)>($i2);
+
+        virtualinvoke r1.<java.io.PrintWriter: void print(java.lang.String)>($r7);
+
+        $i3 = r0.<com.android.server.wm.WindowAnimator: int mBulkUpdateParams>;
+
+        $r8 = staticinvoke <com.android.server.wm.WindowAnimator: java.lang.String bulkUpdateParamsToString(int)>($i3);
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r8);
+
+     label4:
+        return;
+    }
+
+    void executeAfterPrepareSurfacesRunnables()
+    {
+        com.android.server.wm.WindowAnimator r0;
+        int i0, i1;
+        boolean $z0;
+        java.util.ArrayList $r1, $r2, $r3;
+        java.lang.Object $r4;
+        java.lang.Runnable $r5;
+
+        r0 := @this: com.android.server.wm.WindowAnimator;
+
+        $z0 = r0.<com.android.server.wm.WindowAnimator: boolean mInExecuteAfterPrepareSurfacesRunnables>;
+
+        if $z0 == 0 goto label1;
+
+        return;
+
+     label1:
+        r0.<com.android.server.wm.WindowAnimator: boolean mInExecuteAfterPrepareSurfacesRunnables> = 1;
+
+        $r1 = r0.<com.android.server.wm.WindowAnimator: java.util.ArrayList mAfterPrepareSurfacesRunnables>;
+
+        i0 = virtualinvoke $r1.<java.util.ArrayList: int size()>();
+
+        i1 = 0;
+
+     label2:
+        if i1 >= i0 goto label3;
+
+        $r3 = r0.<com.android.server.wm.WindowAnimator: java.util.ArrayList mAfterPrepareSurfacesRunnables>;
+
+        $r4 = virtualinvoke $r3.<java.util.ArrayList: java.lang.Object get(int)>(i1);
+
+        $r5 = (java.lang.Runnable) $r4;
+
+        interfaceinvoke $r5.<java.lang.Runnable: void run()>();
+
+        i1 = i1 + 1;
+
+        goto label2;
+
+     label3:
+        $r2 = r0.<com.android.server.wm.WindowAnimator: java.util.ArrayList mAfterPrepareSurfacesRunnables>;
+
+        virtualinvoke $r2.<java.util.ArrayList: void clear()>();
+
+        r0.<com.android.server.wm.WindowAnimator: boolean mInExecuteAfterPrepareSurfacesRunnables> = 0;
+
+        return;
+    }
+
+    android.view.Choreographer getChoreographer()
+    {
+        com.android.server.wm.WindowAnimator r0;
+        android.view.Choreographer $r1;
+
+        r0 := @this: com.android.server.wm.WindowAnimator;
+
+        $r1 = r0.<com.android.server.wm.WindowAnimator: android.view.Choreographer mChoreographer>;
+
+        return $r1;
+    }
+
+    boolean isAnimationScheduled()
+    {
+        com.android.server.wm.WindowAnimator r0;
+        boolean $z0;
+
+        r0 := @this: com.android.server.wm.WindowAnimator;
+
+        $z0 = r0.<com.android.server.wm.WindowAnimator: boolean mAnimationFrameCallbackScheduled>;
+
+        return $z0;
+    }
+
+    public void lambda$new$0$WindowAnimator()
+    {
+        com.android.server.wm.WindowAnimator r0;
+        android.view.Choreographer $r1;
+
+        r0 := @this: com.android.server.wm.WindowAnimator;
+
+        $r1 = staticinvoke <android.view.Choreographer: android.view.Choreographer getSfInstance()>();
+
+        r0.<com.android.server.wm.WindowAnimator: android.view.Choreographer mChoreographer> = $r1;
+
+        return;
+    }
+
+    public void lambda$new$1$WindowAnimator(long)
+    {
+        com.android.server.wm.WindowAnimator r0;
+        long l0;
+        com.android.server.wm.WindowManagerGlobalLock r1, $r5;
+        com.android.server.wm.WindowManagerService $r3, $r4;
+        boolean $z0, $z1;
+        java.lang.Throwable $r6;
+
+        r0 := @this: com.android.server.wm.WindowAnimator;
+
+        l0 := @parameter0: long;
+
+        $r3 = r0.<com.android.server.wm.WindowAnimator: com.android.server.wm.WindowManagerService mService>;
+
+        r1 = $r3.<com.android.server.wm.WindowManagerService: com.android.server.wm.WindowManagerGlobalLock mGlobalLock>;
+
+        entermonitor r1;
+
+     label1:
+        staticinvoke <com.android.server.wm.WindowManagerService: void boostPriorityForLockedSection()>();
+
+        r0.<com.android.server.wm.WindowAnimator: boolean mAnimationFrameCallbackScheduled> = 0;
+
+        specialinvoke r0.<com.android.server.wm.WindowAnimator: void animate(long)>(l0);
+
+        $z0 = r0.<com.android.server.wm.WindowAnimator: boolean mNotifyWhenNoAnimation>;
+
+        if $z0 == 0 goto label2;
+
+        $z1 = r0.<com.android.server.wm.WindowAnimator: boolean mLastRootAnimating>;
+
+        if $z1 != 0 goto label2;
+
+        $r4 = r0.<com.android.server.wm.WindowAnimator: com.android.server.wm.WindowManagerService mService>;
+
+        $r5 = $r4.<com.android.server.wm.WindowManagerService: com.android.server.wm.WindowManagerGlobalLock mGlobalLock>;
+
+        virtualinvoke $r5.<java.lang.Object: void notifyAll()>();
+
+     label2:
+        exitmonitor r1;
+
+     label3:
+        staticinvoke <com.android.server.wm.WindowManagerService: void resetPriorityAfterLockedSection()>();
+
+        return;
+
+     label4:
+        $r6 := @caughtexception;
+
+     label5:
+        exitmonitor r1;
+
+     label6:
+        staticinvoke <com.android.server.wm.WindowManagerService: void resetPriorityAfterLockedSection()>();
+
+        throw $r6;
+
+        catch java.lang.Throwable from label1 to label2 with label4;
+        catch java.lang.Throwable from label2 to label3 with label4;
+        catch java.lang.Throwable from label5 to label6 with label4;
+    }
+
+    void ready()
+    {
+        com.android.server.wm.WindowAnimator r0;
+
+        r0 := @this: com.android.server.wm.WindowAnimator;
+
+        r0.<com.android.server.wm.WindowAnimator: boolean mInitialized> = 1;
+
+        return;
+    }
+
+    void removeDisplayLocked(int)
+    {
+        com.android.server.wm.WindowAnimator r0;
+        int i0;
+        android.util.SparseArray $r1;
+
+        r0 := @this: com.android.server.wm.WindowAnimator;
+
+        i0 := @parameter0: int;
+
+        $r1 = r0.<com.android.server.wm.WindowAnimator: android.util.SparseArray mDisplayContentsAnimators>;
+
+        virtualinvoke $r1.<android.util.SparseArray: void delete(int)>(i0);
+
+        return;
+    }
+
+    void requestRemovalOfReplacedWindows(com.android.server.wm.WindowState)
+    {
+        com.android.server.wm.WindowAnimator r0;
+        com.android.server.wm.WindowState r1;
+
+        r0 := @this: com.android.server.wm.WindowAnimator;
+
+        r1 := @parameter0: com.android.server.wm.WindowState;
+
+        r0.<com.android.server.wm.WindowAnimator: boolean mRemoveReplacedWindows> = 1;
+
+        return;
+    }
+
+    void scheduleAnimation()
+    {
+        com.android.server.wm.WindowAnimator r0;
+        boolean $z0;
+        android.view.Choreographer$FrameCallback $r1;
+        android.view.Choreographer $r2;
+
+        r0 := @this: com.android.server.wm.WindowAnimator;
+
+        $z0 = r0.<com.android.server.wm.WindowAnimator: boolean mAnimationFrameCallbackScheduled>;
+
+        if $z0 != 0 goto label1;
+
+        r0.<com.android.server.wm.WindowAnimator: boolean mAnimationFrameCallbackScheduled> = 1;
+
+        $r2 = r0.<com.android.server.wm.WindowAnimator: android.view.Choreographer mChoreographer>;
+
+        $r1 = r0.<com.android.server.wm.WindowAnimator: android.view.Choreographer$FrameCallback mAnimationFrameCallback>;
+
+        virtualinvoke $r2.<android.view.Choreographer: void postFrameCallback(android.view.Choreographer$FrameCallback)>($r1);
+
+     label1:
+        return;
+    }
+
+    public static void <clinit>()
+    {
+        <com.android.server.wm.WindowAnimator: java.lang.String TAG> = "WindowManager";
+
+        return;
+    }
+}

@@ -1,0 +1,4071 @@
+public final class com.android.server.BatteryService extends com.android.server.SystemService
+{
+    private static final long BATTERY_LEVEL_CHANGE_THROTTLE_MS;
+    private static final int BATTERY_PLUGGED_NONE;
+    private static final int BATTERY_SCALE;
+    private static final boolean DEBUG;
+    private static final java.lang.String[] DUMPSYS_ARGS;
+    private static final java.lang.String DUMPSYS_DATA_PATH;
+    private static final long HEALTH_HAL_WAIT_MS;
+    private static final int MAX_BATTERY_LEVELS_QUEUE_SIZE;
+    static final int OPTION_FORCE_UPDATE;
+    private static final java.lang.String TAG;
+    private android.app.ActivityManagerInternal mActivityManagerInternal;
+    private boolean mBatteryLevelCritical;
+    private boolean mBatteryLevelLow;
+    private java.util.ArrayDeque mBatteryLevelsEventQueue;
+    private com.android.server.BatteryService$BatteryPropertiesRegistrar mBatteryPropertiesRegistrar;
+    private final com.android.internal.app.IBatteryStats mBatteryStats;
+    com.android.server.BatteryService$BinderService mBinderService;
+    private int mChargeStartLevel;
+    private long mChargeStartTime;
+    private final android.content.Context mContext;
+    private int mCriticalBatteryLevel;
+    private int mDischargeStartLevel;
+    private long mDischargeStartTime;
+    private final android.os.Handler mHandler;
+    private com.android.server.BatteryService$HealthHalCallback mHealthHalCallback;
+    private android.hardware.health.V1_0.HealthInfo mHealthInfo;
+    private android.hardware.health.V2_1.HealthInfo mHealthInfo2p1;
+    private com.android.server.BatteryService$HealthServiceWrapper mHealthServiceWrapper;
+    private int mInvalidCharger;
+    private int mLastBatteryHealth;
+    private int mLastBatteryLevel;
+    private long mLastBatteryLevelChangedSentMs;
+    private boolean mLastBatteryLevelCritical;
+    private boolean mLastBatteryPresent;
+    private int mLastBatteryStatus;
+    private int mLastBatteryTemperature;
+    private int mLastBatteryVoltage;
+    private int mLastChargeCounter;
+    private final android.hardware.health.V1_0.HealthInfo mLastHealthInfo;
+    private int mLastInvalidCharger;
+    private int mLastMaxChargingCurrent;
+    private int mLastMaxChargingVoltage;
+    private int mLastPlugType;
+    private com.android.server.BatteryService$Led mLed;
+    private final java.lang.Object mLock;
+    private int mLowBatteryCloseWarningLevel;
+    private int mLowBatteryWarningLevel;
+    private com.android.internal.logging.MetricsLogger mMetricsLogger;
+    private int mPlugType;
+    private boolean mSentLowBatteryBroadcast;
+    private int mSequence;
+    private int mShutdownBatteryTemperature;
+    private boolean mUpdatesStopped;
+
+    static void <clinit>()
+    {
+        java.lang.Class $r0;
+        java.lang.String $r1;
+        java.lang.String[] $r2;
+
+        <com.android.server.BatteryService: int OPTION_FORCE_UPDATE> = 1;
+
+        <com.android.server.BatteryService: int MAX_BATTERY_LEVELS_QUEUE_SIZE> = 100;
+
+        <com.android.server.BatteryService: long HEALTH_HAL_WAIT_MS> = 1000L;
+
+        <com.android.server.BatteryService: java.lang.String DUMPSYS_DATA_PATH> = "/data/system/";
+
+        <com.android.server.BatteryService: boolean DEBUG> = 0;
+
+        <com.android.server.BatteryService: int BATTERY_SCALE> = 100;
+
+        <com.android.server.BatteryService: int BATTERY_PLUGGED_NONE> = 0;
+
+        <com.android.server.BatteryService: long BATTERY_LEVEL_CHANGE_THROTTLE_MS> = 60000L;
+
+        $r0 = class "Lcom/android/server/BatteryService;";
+
+        $r1 = virtualinvoke $r0.<java.lang.Class: java.lang.String getSimpleName()>();
+
+        <com.android.server.BatteryService: java.lang.String TAG> = $r1;
+
+        $r2 = newarray (java.lang.String)[2];
+
+        $r2[0] = "--checkin";
+
+        $r2[1] = "--unplugged";
+
+        <com.android.server.BatteryService: java.lang.String[] DUMPSYS_ARGS> = $r2;
+
+        return;
+    }
+
+    public void <init>(android.content.Context)
+    {
+        com.android.server.BatteryService r0;
+        android.content.Context r1, $r11, $r13, $r15, $r17;
+        int i0, $i1, $i2, $i3, $i4;
+        java.lang.Object $r2, $r6, $r9;
+        android.hardware.health.V1_0.HealthInfo $r3;
+        android.os.Handler $r4;
+        com.android.server.BatteryService$Led $r5;
+        com.android.server.lights.LightsManager $r7;
+        com.android.internal.app.IBatteryStats $r8;
+        android.app.ActivityManagerInternal $r10;
+        android.content.res.Resources $r12, $r14, $r16, $r18;
+        java.util.ArrayDeque $r19;
+        com.android.internal.logging.MetricsLogger $r20;
+        java.io.File $r21;
+        boolean $z0;
+        com.android.server.BatteryService$1 $r22;
+
+        r0 := @this: com.android.server.BatteryService;
+
+        r1 := @parameter0: android.content.Context;
+
+        specialinvoke r0.<com.android.server.SystemService: void <init>(android.content.Context)>(r1);
+
+        $r2 = new java.lang.Object;
+
+        specialinvoke $r2.<java.lang.Object: void <init>()>();
+
+        r0.<com.android.server.BatteryService: java.lang.Object mLock> = $r2;
+
+        $r3 = new android.hardware.health.V1_0.HealthInfo;
+
+        specialinvoke $r3.<android.hardware.health.V1_0.HealthInfo: void <init>()>();
+
+        r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mLastHealthInfo> = $r3;
+
+        r0.<com.android.server.BatteryService: int mSequence> = 1;
+
+        r0.<com.android.server.BatteryService: int mLastPlugType> = -1;
+
+        r0.<com.android.server.BatteryService: boolean mSentLowBatteryBroadcast> = 0;
+
+        r0.<com.android.server.BatteryService: android.content.Context mContext> = r1;
+
+        $r4 = new android.os.Handler;
+
+        specialinvoke $r4.<android.os.Handler: void <init>(boolean)>(1);
+
+        r0.<com.android.server.BatteryService: android.os.Handler mHandler> = $r4;
+
+        $r5 = new com.android.server.BatteryService$Led;
+
+        $r6 = virtualinvoke r0.<com.android.server.BatteryService: java.lang.Object getLocalService(java.lang.Class)>(class "Lcom/android/server/lights/LightsManager;");
+
+        $r7 = (com.android.server.lights.LightsManager) $r6;
+
+        specialinvoke $r5.<com.android.server.BatteryService$Led: void <init>(com.android.server.BatteryService,android.content.Context,com.android.server.lights.LightsManager)>(r0, r1, $r7);
+
+        r0.<com.android.server.BatteryService: com.android.server.BatteryService$Led mLed> = $r5;
+
+        $r8 = staticinvoke <com.android.server.am.BatteryStatsService: com.android.internal.app.IBatteryStats getService()>();
+
+        r0.<com.android.server.BatteryService: com.android.internal.app.IBatteryStats mBatteryStats> = $r8;
+
+        $r9 = staticinvoke <com.android.server.LocalServices: java.lang.Object getService(java.lang.Class)>(class "Landroid/app/ActivityManagerInternal;");
+
+        $r10 = (android.app.ActivityManagerInternal) $r9;
+
+        r0.<com.android.server.BatteryService: android.app.ActivityManagerInternal mActivityManagerInternal> = $r10;
+
+        $r11 = r0.<com.android.server.BatteryService: android.content.Context mContext>;
+
+        $r12 = virtualinvoke $r11.<android.content.Context: android.content.res.Resources getResources()>();
+
+        $i1 = virtualinvoke $r12.<android.content.res.Resources: int getInteger(int)>(17694765);
+
+        r0.<com.android.server.BatteryService: int mCriticalBatteryLevel> = $i1;
+
+        $r13 = r0.<com.android.server.BatteryService: android.content.Context mContext>;
+
+        $r14 = virtualinvoke $r13.<android.content.Context: android.content.res.Resources getResources()>();
+
+        i0 = virtualinvoke $r14.<android.content.res.Resources: int getInteger(int)>(17694830);
+
+        r0.<com.android.server.BatteryService: int mLowBatteryWarningLevel> = i0;
+
+        $r15 = r0.<com.android.server.BatteryService: android.content.Context mContext>;
+
+        $r16 = virtualinvoke $r15.<android.content.Context: android.content.res.Resources getResources()>();
+
+        $i2 = virtualinvoke $r16.<android.content.res.Resources: int getInteger(int)>(17694829);
+
+        $i3 = i0 + $i2;
+
+        r0.<com.android.server.BatteryService: int mLowBatteryCloseWarningLevel> = $i3;
+
+        $r17 = r0.<com.android.server.BatteryService: android.content.Context mContext>;
+
+        $r18 = virtualinvoke $r17.<android.content.Context: android.content.res.Resources getResources()>();
+
+        $i4 = virtualinvoke $r18.<android.content.res.Resources: int getInteger(int)>(17694903);
+
+        r0.<com.android.server.BatteryService: int mShutdownBatteryTemperature> = $i4;
+
+        $r19 = new java.util.ArrayDeque;
+
+        specialinvoke $r19.<java.util.ArrayDeque: void <init>()>();
+
+        r0.<com.android.server.BatteryService: java.util.ArrayDeque mBatteryLevelsEventQueue> = $r19;
+
+        $r20 = new com.android.internal.logging.MetricsLogger;
+
+        specialinvoke $r20.<com.android.internal.logging.MetricsLogger: void <init>()>();
+
+        r0.<com.android.server.BatteryService: com.android.internal.logging.MetricsLogger mMetricsLogger> = $r20;
+
+        $r21 = new java.io.File;
+
+        specialinvoke $r21.<java.io.File: void <init>(java.lang.String)>("/sys/devices/virtual/switch/invalid_charger/state");
+
+        $z0 = virtualinvoke $r21.<java.io.File: boolean exists()>();
+
+        if $z0 == 0 goto label1;
+
+        $r22 = new com.android.server.BatteryService$1;
+
+        specialinvoke $r22.<com.android.server.BatteryService$1: void <init>(com.android.server.BatteryService)>(r0);
+
+        virtualinvoke $r22.<android.os.UEventObserver: void startObserving(java.lang.String)>("DEVPATH=/devices/virtual/switch/invalid_charger");
+
+     label1:
+        return;
+    }
+
+    static java.lang.Object access$000(com.android.server.BatteryService)
+    {
+        com.android.server.BatteryService r0;
+        java.lang.Object $r1;
+
+        r0 := @parameter0: com.android.server.BatteryService;
+
+        $r1 = r0.<com.android.server.BatteryService: java.lang.Object mLock>;
+
+        return $r1;
+    }
+
+    static int access$100(com.android.server.BatteryService)
+    {
+        com.android.server.BatteryService r0;
+        int $i0;
+
+        r0 := @parameter0: com.android.server.BatteryService;
+
+        $i0 = r0.<com.android.server.BatteryService: int mInvalidCharger>;
+
+        return $i0;
+    }
+
+    static int access$1000(com.android.server.BatteryService)
+    {
+        com.android.server.BatteryService r0;
+        int $i0;
+
+        r0 := @parameter0: com.android.server.BatteryService;
+
+        $i0 = r0.<com.android.server.BatteryService: int mLowBatteryWarningLevel>;
+
+        return $i0;
+    }
+
+    static int access$102(com.android.server.BatteryService, int)
+    {
+        com.android.server.BatteryService r0;
+        int i0;
+
+        r0 := @parameter0: com.android.server.BatteryService;
+
+        i0 := @parameter1: int;
+
+        r0.<com.android.server.BatteryService: int mInvalidCharger> = i0;
+
+        return i0;
+    }
+
+    static void access$1100(com.android.server.BatteryService, android.hardware.health.V2_1.HealthInfo)
+    {
+        com.android.server.BatteryService r0;
+        android.hardware.health.V2_1.HealthInfo r1;
+
+        r0 := @parameter0: com.android.server.BatteryService;
+
+        r1 := @parameter1: android.hardware.health.V2_1.HealthInfo;
+
+        specialinvoke r0.<com.android.server.BatteryService: void update(android.hardware.health.V2_1.HealthInfo)>(r1);
+
+        return;
+    }
+
+    static void access$1200(java.lang.String)
+    {
+        java.lang.String r0;
+
+        r0 := @parameter0: java.lang.String;
+
+        staticinvoke <com.android.server.BatteryService: void traceBegin(java.lang.String)>(r0);
+
+        return;
+    }
+
+    static java.lang.String access$1300()
+    {
+        java.lang.String $r0;
+
+        $r0 = <com.android.server.BatteryService: java.lang.String TAG>;
+
+        return $r0;
+    }
+
+    static void access$1400()
+    {
+        staticinvoke <com.android.server.BatteryService: void traceEnd()>();
+
+        return;
+    }
+
+    static void access$1500(com.android.server.BatteryService, java.io.FileDescriptor)
+    {
+        com.android.server.BatteryService r0;
+        java.io.FileDescriptor r1;
+
+        r0 := @parameter0: com.android.server.BatteryService;
+
+        r1 := @parameter1: java.io.FileDescriptor;
+
+        specialinvoke r0.<com.android.server.BatteryService: void dumpProto(java.io.FileDescriptor)>(r1);
+
+        return;
+    }
+
+    static void access$1600(com.android.server.BatteryService, java.io.FileDescriptor, java.io.PrintWriter, java.lang.String[])
+    {
+        com.android.server.BatteryService r0;
+        java.io.FileDescriptor r1;
+        java.io.PrintWriter r2;
+        java.lang.String[] r3;
+
+        r0 := @parameter0: com.android.server.BatteryService;
+
+        r1 := @parameter1: java.io.FileDescriptor;
+
+        r2 := @parameter2: java.io.PrintWriter;
+
+        r3 := @parameter3: java.lang.String[];
+
+        specialinvoke r0.<com.android.server.BatteryService: void dumpInternal(java.io.FileDescriptor,java.io.PrintWriter,java.lang.String[])>(r1, r2, r3);
+
+        return;
+    }
+
+    static com.android.server.BatteryService$HealthServiceWrapper access$1700(com.android.server.BatteryService)
+    {
+        com.android.server.BatteryService r0;
+        com.android.server.BatteryService$HealthServiceWrapper $r1;
+
+        r0 := @parameter0: com.android.server.BatteryService;
+
+        $r1 = r0.<com.android.server.BatteryService: com.android.server.BatteryService$HealthServiceWrapper mHealthServiceWrapper>;
+
+        return $r1;
+    }
+
+    static boolean access$1800(com.android.server.BatteryService, int)
+    {
+        com.android.server.BatteryService r0;
+        int i0;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.server.BatteryService;
+
+        i0 := @parameter1: int;
+
+        $z0 = specialinvoke r0.<com.android.server.BatteryService: boolean isPoweredLocked(int)>(i0);
+
+        return $z0;
+    }
+
+    static int access$1900(com.android.server.BatteryService)
+    {
+        com.android.server.BatteryService r0;
+        int $i0;
+
+        r0 := @parameter0: com.android.server.BatteryService;
+
+        $i0 = r0.<com.android.server.BatteryService: int mPlugType>;
+
+        return $i0;
+    }
+
+    static boolean access$2000(com.android.server.BatteryService)
+    {
+        com.android.server.BatteryService r0;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.server.BatteryService;
+
+        $z0 = r0.<com.android.server.BatteryService: boolean mBatteryLevelLow>;
+
+        return $z0;
+    }
+
+    static void access$500(com.android.server.BatteryService)
+    {
+        com.android.server.BatteryService r0;
+
+        r0 := @parameter0: com.android.server.BatteryService;
+
+        specialinvoke r0.<com.android.server.BatteryService: void updateBatteryWarningLevelLocked()>();
+
+        return;
+    }
+
+    static android.app.ActivityManagerInternal access$700(com.android.server.BatteryService)
+    {
+        com.android.server.BatteryService r0;
+        android.app.ActivityManagerInternal $r1;
+
+        r0 := @parameter0: com.android.server.BatteryService;
+
+        $r1 = r0.<com.android.server.BatteryService: android.app.ActivityManagerInternal mActivityManagerInternal>;
+
+        return $r1;
+    }
+
+    static android.content.Context access$800(com.android.server.BatteryService)
+    {
+        com.android.server.BatteryService r0;
+        android.content.Context $r1;
+
+        r0 := @parameter0: com.android.server.BatteryService;
+
+        $r1 = r0.<com.android.server.BatteryService: android.content.Context mContext>;
+
+        return $r1;
+    }
+
+    static android.hardware.health.V1_0.HealthInfo access$900(com.android.server.BatteryService)
+    {
+        com.android.server.BatteryService r0;
+        android.hardware.health.V1_0.HealthInfo $r1;
+
+        r0 := @parameter0: com.android.server.BatteryService;
+
+        $r1 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        return $r1;
+    }
+
+    private static void copy(android.hardware.health.V1_0.HealthInfo, android.hardware.health.V1_0.HealthInfo)
+    {
+        android.hardware.health.V1_0.HealthInfo r0, r1;
+        boolean $z0, $z1, $z2, $z3;
+        int $i0, $i1, $i2, $i3, $i4, $i5, $i6, $i7, $i8, $i9, $i10;
+        java.lang.String $r2;
+
+        r0 := @parameter0: android.hardware.health.V1_0.HealthInfo;
+
+        r1 := @parameter1: android.hardware.health.V1_0.HealthInfo;
+
+        $z0 = r1.<android.hardware.health.V1_0.HealthInfo: boolean chargerAcOnline>;
+
+        r0.<android.hardware.health.V1_0.HealthInfo: boolean chargerAcOnline> = $z0;
+
+        $z1 = r1.<android.hardware.health.V1_0.HealthInfo: boolean chargerUsbOnline>;
+
+        r0.<android.hardware.health.V1_0.HealthInfo: boolean chargerUsbOnline> = $z1;
+
+        $z2 = r1.<android.hardware.health.V1_0.HealthInfo: boolean chargerWirelessOnline>;
+
+        r0.<android.hardware.health.V1_0.HealthInfo: boolean chargerWirelessOnline> = $z2;
+
+        $i0 = r1.<android.hardware.health.V1_0.HealthInfo: int maxChargingCurrent>;
+
+        r0.<android.hardware.health.V1_0.HealthInfo: int maxChargingCurrent> = $i0;
+
+        $i1 = r1.<android.hardware.health.V1_0.HealthInfo: int maxChargingVoltage>;
+
+        r0.<android.hardware.health.V1_0.HealthInfo: int maxChargingVoltage> = $i1;
+
+        $i2 = r1.<android.hardware.health.V1_0.HealthInfo: int batteryStatus>;
+
+        r0.<android.hardware.health.V1_0.HealthInfo: int batteryStatus> = $i2;
+
+        $i3 = r1.<android.hardware.health.V1_0.HealthInfo: int batteryHealth>;
+
+        r0.<android.hardware.health.V1_0.HealthInfo: int batteryHealth> = $i3;
+
+        $z3 = r1.<android.hardware.health.V1_0.HealthInfo: boolean batteryPresent>;
+
+        r0.<android.hardware.health.V1_0.HealthInfo: boolean batteryPresent> = $z3;
+
+        $i4 = r1.<android.hardware.health.V1_0.HealthInfo: int batteryLevel>;
+
+        r0.<android.hardware.health.V1_0.HealthInfo: int batteryLevel> = $i4;
+
+        $i5 = r1.<android.hardware.health.V1_0.HealthInfo: int batteryVoltage>;
+
+        r0.<android.hardware.health.V1_0.HealthInfo: int batteryVoltage> = $i5;
+
+        $i6 = r1.<android.hardware.health.V1_0.HealthInfo: int batteryTemperature>;
+
+        r0.<android.hardware.health.V1_0.HealthInfo: int batteryTemperature> = $i6;
+
+        $i7 = r1.<android.hardware.health.V1_0.HealthInfo: int batteryCurrent>;
+
+        r0.<android.hardware.health.V1_0.HealthInfo: int batteryCurrent> = $i7;
+
+        $i8 = r1.<android.hardware.health.V1_0.HealthInfo: int batteryCycleCount>;
+
+        r0.<android.hardware.health.V1_0.HealthInfo: int batteryCycleCount> = $i8;
+
+        $i9 = r1.<android.hardware.health.V1_0.HealthInfo: int batteryFullCharge>;
+
+        r0.<android.hardware.health.V1_0.HealthInfo: int batteryFullCharge> = $i9;
+
+        $i10 = r1.<android.hardware.health.V1_0.HealthInfo: int batteryChargeCounter>;
+
+        r0.<android.hardware.health.V1_0.HealthInfo: int batteryChargeCounter> = $i10;
+
+        $r2 = r1.<android.hardware.health.V1_0.HealthInfo: java.lang.String batteryTechnology>;
+
+        r0.<android.hardware.health.V1_0.HealthInfo: java.lang.String batteryTechnology> = $r2;
+
+        return;
+    }
+
+    static void dumpHelp(java.io.PrintWriter)
+    {
+        java.io.PrintWriter r0;
+
+        r0 := @parameter0: java.io.PrintWriter;
+
+        virtualinvoke r0.<java.io.PrintWriter: void println(java.lang.String)>("Battery service (battery) commands:");
+
+        virtualinvoke r0.<java.io.PrintWriter: void println(java.lang.String)>("  help");
+
+        virtualinvoke r0.<java.io.PrintWriter: void println(java.lang.String)>("    Print this help text.");
+
+        virtualinvoke r0.<java.io.PrintWriter: void println(java.lang.String)>("  set [-f] [ac|usb|wireless|status|level|temp|present|invalid] <value>");
+
+        virtualinvoke r0.<java.io.PrintWriter: void println(java.lang.String)>("    Force a battery property value, freezing battery state.");
+
+        virtualinvoke r0.<java.io.PrintWriter: void println(java.lang.String)>("    -f: force a battery change broadcast be sent, prints new sequence.");
+
+        virtualinvoke r0.<java.io.PrintWriter: void println(java.lang.String)>("  unplug [-f]");
+
+        virtualinvoke r0.<java.io.PrintWriter: void println(java.lang.String)>("    Force battery unplugged, freezing battery state.");
+
+        virtualinvoke r0.<java.io.PrintWriter: void println(java.lang.String)>("    -f: force a battery change broadcast be sent, prints new sequence.");
+
+        virtualinvoke r0.<java.io.PrintWriter: void println(java.lang.String)>("  reset [-f]");
+
+        virtualinvoke r0.<java.io.PrintWriter: void println(java.lang.String)>("    Unfreeze battery state, returning to current hardware values.");
+
+        virtualinvoke r0.<java.io.PrintWriter: void println(java.lang.String)>("    -f: force a battery change broadcast be sent, prints new sequence.");
+
+        return;
+    }
+
+    private void dumpInternal(java.io.FileDescriptor, java.io.PrintWriter, java.lang.String[])
+    {
+        com.android.server.BatteryService r0;
+        java.lang.String[] r1;
+        java.lang.Object r2;
+        com.android.server.BatteryService$Shell r3;
+        android.os.ResultReceiver r4;
+        android.hardware.health.V1_0.HealthInfo $r6, $r10, $r14, $r18, $r22, $r26, $r30, $r34, $r38, $r42, $r46, $r50, $r54;
+        boolean $z0, $z1, $z2, $z3, $z4, $z5;
+        java.lang.String $r8, $r12, $r16, $r20, $r24, $r28, $r32, $r36, $r40, $r44, $r48, $r52, $r55, $r57, $r58, $r59;
+        int $i0, $i1, $i2, $i3, $i4, $i5, $i6, $i7, $i8;
+        java.lang.Throwable $r60;
+        java.io.FileDescriptor r61;
+        java.io.PrintWriter r62;
+        com.android.server.BatteryService$BinderService r63;
+        java.lang.StringBuilder r64, r65, r66, r67, r68, r69, r70, r71, r72, r73, r74, r75, r76;
+
+        r0 := @this: com.android.server.BatteryService;
+
+        r61 := @parameter0: java.io.FileDescriptor;
+
+        r62 := @parameter1: java.io.PrintWriter;
+
+        r1 := @parameter2: java.lang.String[];
+
+        r2 = r0.<com.android.server.BatteryService: java.lang.Object mLock>;
+
+        entermonitor r2;
+
+        if r1 == null goto label05;
+
+     label01:
+        $i8 = lengthof r1;
+
+        if $i8 == 0 goto label05;
+
+        $r59 = "-a";
+
+        $r58 = r1[0];
+
+        $z4 = virtualinvoke $r59.<java.lang.String: boolean equals(java.lang.Object)>($r58);
+
+        if $z4 == 0 goto label03;
+
+     label02:
+        goto label05;
+
+     label03:
+        r3 = new com.android.server.BatteryService$Shell;
+
+        specialinvoke r3.<com.android.server.BatteryService$Shell: void <init>(com.android.server.BatteryService)>(r0);
+
+        r63 = r0.<com.android.server.BatteryService: com.android.server.BatteryService$BinderService mBinderService>;
+
+        r4 = new android.os.ResultReceiver;
+
+        specialinvoke r4.<android.os.ResultReceiver: void <init>(android.os.Handler)>(null);
+
+        virtualinvoke r3.<com.android.server.BatteryService$Shell: int exec(android.os.Binder,java.io.FileDescriptor,java.io.FileDescriptor,java.io.FileDescriptor,java.lang.String[],android.os.ShellCallback,android.os.ResultReceiver)>(r63, null, r61, null, r1, null, r4);
+
+     label04:
+        goto label07;
+
+     label05:
+        virtualinvoke r62.<java.io.PrintWriter: void println(java.lang.String)>("Current Battery Service state:");
+
+        $z5 = r0.<com.android.server.BatteryService: boolean mUpdatesStopped>;
+
+        if $z5 == 0 goto label06;
+
+        virtualinvoke r62.<java.io.PrintWriter: void println(java.lang.String)>("  (UPDATES STOPPED -- use \'reset\' to restart)");
+
+     label06:
+        r64 = new java.lang.StringBuilder;
+
+        specialinvoke r64.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r64.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  AC powered: ");
+
+        $r6 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $z0 = $r6.<android.hardware.health.V1_0.HealthInfo: boolean chargerAcOnline>;
+
+        virtualinvoke r64.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>($z0);
+
+        $r8 = virtualinvoke r64.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r62.<java.io.PrintWriter: void println(java.lang.String)>($r8);
+
+        r65 = new java.lang.StringBuilder;
+
+        specialinvoke r65.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r65.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  USB powered: ");
+
+        $r10 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $z1 = $r10.<android.hardware.health.V1_0.HealthInfo: boolean chargerUsbOnline>;
+
+        virtualinvoke r65.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>($z1);
+
+        $r12 = virtualinvoke r65.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r62.<java.io.PrintWriter: void println(java.lang.String)>($r12);
+
+        r66 = new java.lang.StringBuilder;
+
+        specialinvoke r66.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r66.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  Wireless powered: ");
+
+        $r14 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $z2 = $r14.<android.hardware.health.V1_0.HealthInfo: boolean chargerWirelessOnline>;
+
+        virtualinvoke r66.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>($z2);
+
+        $r16 = virtualinvoke r66.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r62.<java.io.PrintWriter: void println(java.lang.String)>($r16);
+
+        r67 = new java.lang.StringBuilder;
+
+        specialinvoke r67.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r67.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  Max charging current: ");
+
+        $r18 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i0 = $r18.<android.hardware.health.V1_0.HealthInfo: int maxChargingCurrent>;
+
+        virtualinvoke r67.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i0);
+
+        $r20 = virtualinvoke r67.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r62.<java.io.PrintWriter: void println(java.lang.String)>($r20);
+
+        r68 = new java.lang.StringBuilder;
+
+        specialinvoke r68.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r68.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  Max charging voltage: ");
+
+        $r22 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i1 = $r22.<android.hardware.health.V1_0.HealthInfo: int maxChargingVoltage>;
+
+        virtualinvoke r68.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i1);
+
+        $r24 = virtualinvoke r68.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r62.<java.io.PrintWriter: void println(java.lang.String)>($r24);
+
+        r69 = new java.lang.StringBuilder;
+
+        specialinvoke r69.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r69.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  Charge counter: ");
+
+        $r26 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i2 = $r26.<android.hardware.health.V1_0.HealthInfo: int batteryChargeCounter>;
+
+        virtualinvoke r69.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i2);
+
+        $r28 = virtualinvoke r69.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r62.<java.io.PrintWriter: void println(java.lang.String)>($r28);
+
+        r70 = new java.lang.StringBuilder;
+
+        specialinvoke r70.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r70.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  status: ");
+
+        $r30 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i3 = $r30.<android.hardware.health.V1_0.HealthInfo: int batteryStatus>;
+
+        virtualinvoke r70.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i3);
+
+        $r32 = virtualinvoke r70.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r62.<java.io.PrintWriter: void println(java.lang.String)>($r32);
+
+        r71 = new java.lang.StringBuilder;
+
+        specialinvoke r71.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r71.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  health: ");
+
+        $r34 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i4 = $r34.<android.hardware.health.V1_0.HealthInfo: int batteryHealth>;
+
+        virtualinvoke r71.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i4);
+
+        $r36 = virtualinvoke r71.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r62.<java.io.PrintWriter: void println(java.lang.String)>($r36);
+
+        r72 = new java.lang.StringBuilder;
+
+        specialinvoke r72.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r72.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  present: ");
+
+        $r38 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $z3 = $r38.<android.hardware.health.V1_0.HealthInfo: boolean batteryPresent>;
+
+        virtualinvoke r72.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>($z3);
+
+        $r40 = virtualinvoke r72.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r62.<java.io.PrintWriter: void println(java.lang.String)>($r40);
+
+        r73 = new java.lang.StringBuilder;
+
+        specialinvoke r73.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r73.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  level: ");
+
+        $r42 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i5 = $r42.<android.hardware.health.V1_0.HealthInfo: int batteryLevel>;
+
+        virtualinvoke r73.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i5);
+
+        $r44 = virtualinvoke r73.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r62.<java.io.PrintWriter: void println(java.lang.String)>($r44);
+
+        virtualinvoke r62.<java.io.PrintWriter: void println(java.lang.String)>("  scale: 100");
+
+        r74 = new java.lang.StringBuilder;
+
+        specialinvoke r74.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r74.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  voltage: ");
+
+        $r46 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i6 = $r46.<android.hardware.health.V1_0.HealthInfo: int batteryVoltage>;
+
+        virtualinvoke r74.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i6);
+
+        $r48 = virtualinvoke r74.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r62.<java.io.PrintWriter: void println(java.lang.String)>($r48);
+
+        r75 = new java.lang.StringBuilder;
+
+        specialinvoke r75.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r75.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  temperature: ");
+
+        $r50 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i7 = $r50.<android.hardware.health.V1_0.HealthInfo: int batteryTemperature>;
+
+        virtualinvoke r75.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i7);
+
+        $r52 = virtualinvoke r75.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r62.<java.io.PrintWriter: void println(java.lang.String)>($r52);
+
+        r76 = new java.lang.StringBuilder;
+
+        specialinvoke r76.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r76.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  technology: ");
+
+        $r54 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $r55 = $r54.<android.hardware.health.V1_0.HealthInfo: java.lang.String batteryTechnology>;
+
+        virtualinvoke r76.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r55);
+
+        $r57 = virtualinvoke r76.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r62.<java.io.PrintWriter: void println(java.lang.String)>($r57);
+
+     label07:
+        exitmonitor r2;
+
+     label08:
+        return;
+
+     label09:
+        $r60 := @caughtexception;
+
+     label10:
+        exitmonitor r2;
+
+     label11:
+        throw $r60;
+
+        catch java.lang.Throwable from label01 to label02 with label09;
+        catch java.lang.Throwable from label03 to label04 with label09;
+        catch java.lang.Throwable from label05 to label06 with label09;
+        catch java.lang.Throwable from label06 to label07 with label09;
+        catch java.lang.Throwable from label07 to label08 with label09;
+        catch java.lang.Throwable from label10 to label11 with label09;
+    }
+
+    private void dumpProto(java.io.FileDescriptor)
+    {
+        com.android.server.BatteryService r0;
+        android.util.proto.ProtoOutputStream $r1;
+        boolean $z0, $z1, $z2, $z3, $z4;
+        android.hardware.health.V1_0.HealthInfo $r2, $r3, $r4, $r9, $r10, $r11, $r12, $r13, $r14, $r15, $r16, $r17, $r18;
+        java.lang.Throwable $r5;
+        java.io.FileDescriptor r6;
+        java.lang.Object r8;
+        byte b0;
+        int $i1, $i2, $i3, $i4, $i5, $i6, $i7, $i8;
+        java.lang.String $r19;
+
+        r0 := @this: com.android.server.BatteryService;
+
+        r6 := @parameter0: java.io.FileDescriptor;
+
+        $r1 = new android.util.proto.ProtoOutputStream;
+
+        specialinvoke $r1.<android.util.proto.ProtoOutputStream: void <init>(java.io.FileDescriptor)>(r6);
+
+        r8 = r0.<com.android.server.BatteryService: java.lang.Object mLock>;
+
+        entermonitor r8;
+
+     label01:
+        $z0 = r0.<com.android.server.BatteryService: boolean mUpdatesStopped>;
+
+        virtualinvoke $r1.<android.util.proto.ProtoOutputStream: void write(long,boolean)>(1133871366145L, $z0);
+
+     label02:
+        b0 = 0;
+
+     label03:
+        $r2 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $z1 = $r2.<android.hardware.health.V1_0.HealthInfo: boolean chargerAcOnline>;
+
+        if $z1 == 0 goto label05;
+
+     label04:
+        b0 = 1;
+
+        goto label09;
+
+     label05:
+        $r3 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $z2 = $r3.<android.hardware.health.V1_0.HealthInfo: boolean chargerUsbOnline>;
+
+        if $z2 == 0 goto label07;
+
+     label06:
+        b0 = 2;
+
+        goto label09;
+
+     label07:
+        $r4 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $z3 = $r4.<android.hardware.health.V1_0.HealthInfo: boolean chargerWirelessOnline>;
+
+        if $z3 == 0 goto label09;
+
+     label08:
+        b0 = 4;
+
+     label09:
+        virtualinvoke $r1.<android.util.proto.ProtoOutputStream: void write(long,int)>(1159641169922L, b0);
+
+        $r9 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i1 = $r9.<android.hardware.health.V1_0.HealthInfo: int maxChargingCurrent>;
+
+        virtualinvoke $r1.<android.util.proto.ProtoOutputStream: void write(long,int)>(1120986464259L, $i1);
+
+        $r10 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i2 = $r10.<android.hardware.health.V1_0.HealthInfo: int maxChargingVoltage>;
+
+        virtualinvoke $r1.<android.util.proto.ProtoOutputStream: void write(long,int)>(1120986464260L, $i2);
+
+        $r11 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i3 = $r11.<android.hardware.health.V1_0.HealthInfo: int batteryChargeCounter>;
+
+        virtualinvoke $r1.<android.util.proto.ProtoOutputStream: void write(long,int)>(1120986464261L, $i3);
+
+        $r12 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i4 = $r12.<android.hardware.health.V1_0.HealthInfo: int batteryStatus>;
+
+        virtualinvoke $r1.<android.util.proto.ProtoOutputStream: void write(long,int)>(1159641169926L, $i4);
+
+        $r13 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i5 = $r13.<android.hardware.health.V1_0.HealthInfo: int batteryHealth>;
+
+        virtualinvoke $r1.<android.util.proto.ProtoOutputStream: void write(long,int)>(1159641169927L, $i5);
+
+        $r14 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $z4 = $r14.<android.hardware.health.V1_0.HealthInfo: boolean batteryPresent>;
+
+        virtualinvoke $r1.<android.util.proto.ProtoOutputStream: void write(long,boolean)>(1133871366152L, $z4);
+
+        $r15 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i6 = $r15.<android.hardware.health.V1_0.HealthInfo: int batteryLevel>;
+
+        virtualinvoke $r1.<android.util.proto.ProtoOutputStream: void write(long,int)>(1120986464265L, $i6);
+
+        virtualinvoke $r1.<android.util.proto.ProtoOutputStream: void write(long,int)>(1120986464266L, 100);
+
+        $r16 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i7 = $r16.<android.hardware.health.V1_0.HealthInfo: int batteryVoltage>;
+
+        virtualinvoke $r1.<android.util.proto.ProtoOutputStream: void write(long,int)>(1120986464267L, $i7);
+
+        $r17 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i8 = $r17.<android.hardware.health.V1_0.HealthInfo: int batteryTemperature>;
+
+        virtualinvoke $r1.<android.util.proto.ProtoOutputStream: void write(long,int)>(1120986464268L, $i8);
+
+        $r18 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $r19 = $r18.<android.hardware.health.V1_0.HealthInfo: java.lang.String batteryTechnology>;
+
+        virtualinvoke $r1.<android.util.proto.ProtoOutputStream: void write(long,java.lang.String)>(1138166333453L, $r19);
+
+        exitmonitor r8;
+
+     label10:
+        virtualinvoke $r1.<android.util.proto.ProtoOutputStream: void flush()>();
+
+        return;
+
+     label11:
+        $r5 := @caughtexception;
+
+     label12:
+        exitmonitor r8;
+
+     label13:
+        throw $r5;
+
+        catch java.lang.Throwable from label01 to label02 with label11;
+        catch java.lang.Throwable from label03 to label04 with label11;
+        catch java.lang.Throwable from label05 to label06 with label11;
+        catch java.lang.Throwable from label07 to label08 with label11;
+        catch java.lang.Throwable from label09 to label10 with label11;
+        catch java.lang.Throwable from label12 to label13 with label11;
+    }
+
+    private int getIconLocked(int)
+    {
+        com.android.server.BatteryService r0;
+        int i0, $i1, $i2, $i3, $i4, $i5;
+        android.hardware.health.V1_0.HealthInfo $r1, $r2, $r3, $r4, $r5;
+        boolean $z0;
+
+        r0 := @this: com.android.server.BatteryService;
+
+        i0 := @parameter0: int;
+
+        $r1 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i1 = $r1.<android.hardware.health.V1_0.HealthInfo: int batteryStatus>;
+
+        if $i1 != 2 goto label1;
+
+        return 17303562;
+
+     label1:
+        $r2 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i2 = $r2.<android.hardware.health.V1_0.HealthInfo: int batteryStatus>;
+
+        if $i2 != 3 goto label2;
+
+        return 17303548;
+
+     label2:
+        $r3 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i3 = $r3.<android.hardware.health.V1_0.HealthInfo: int batteryStatus>;
+
+        if $i3 == 4 goto label4;
+
+        $r5 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i5 = $r5.<android.hardware.health.V1_0.HealthInfo: int batteryStatus>;
+
+        if $i5 != 5 goto label3;
+
+        goto label4;
+
+     label3:
+        return 17303576;
+
+     label4:
+        $z0 = specialinvoke r0.<com.android.server.BatteryService: boolean isPoweredLocked(int)>(7);
+
+        if $z0 == 0 goto label5;
+
+        $r4 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i4 = $r4.<android.hardware.health.V1_0.HealthInfo: int batteryLevel>;
+
+        if $i4 < 100 goto label5;
+
+        return 17303562;
+
+     label5:
+        return 17303548;
+    }
+
+    private boolean isPoweredLocked(int)
+    {
+        com.android.server.BatteryService r0;
+        int i0, $i1, $i2, $i3, $i4;
+        android.hardware.health.V1_0.HealthInfo $r1, $r2, $r3, $r4;
+        boolean $z0, $z1, $z2;
+
+        r0 := @this: com.android.server.BatteryService;
+
+        i0 := @parameter0: int;
+
+        $r1 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i1 = $r1.<android.hardware.health.V1_0.HealthInfo: int batteryStatus>;
+
+        if $i1 != 1 goto label1;
+
+        return 1;
+
+     label1:
+        $i2 = i0 & 1;
+
+        if $i2 == 0 goto label2;
+
+        $r4 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $z2 = $r4.<android.hardware.health.V1_0.HealthInfo: boolean chargerAcOnline>;
+
+        if $z2 == 0 goto label2;
+
+        return 1;
+
+     label2:
+        $i3 = i0 & 2;
+
+        if $i3 == 0 goto label3;
+
+        $r3 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $z1 = $r3.<android.hardware.health.V1_0.HealthInfo: boolean chargerUsbOnline>;
+
+        if $z1 == 0 goto label3;
+
+        return 1;
+
+     label3:
+        $i4 = i0 & 4;
+
+        if $i4 == 0 goto label4;
+
+        $r2 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $z0 = $r2.<android.hardware.health.V1_0.HealthInfo: boolean chargerWirelessOnline>;
+
+        if $z0 == 0 goto label4;
+
+        return 1;
+
+     label4:
+        return 0;
+    }
+
+    public static void lambda$D1kwd7L7yyqN5niz3KWkTepVmUk(com.android.server.BatteryService)
+    {
+        com.android.server.BatteryService r0;
+
+        r0 := @parameter0: com.android.server.BatteryService;
+
+        specialinvoke r0.<com.android.server.BatteryService: void sendEnqueuedBatteryLevelChangedEvents()>();
+
+        return;
+    }
+
+    static void lambda$sendBatteryChangedIntentLocked$0(android.content.Intent)
+    {
+        android.content.Intent r0;
+
+        r0 := @parameter0: android.content.Intent;
+
+        staticinvoke <android.app.ActivityManager: void broadcastStickyIntent(android.content.Intent,int)>(r0, -1);
+
+        return;
+    }
+
+    private void logBatteryStatsLocked()
+    {
+        com.android.server.BatteryService r0;
+        android.os.IBinder r1;
+        android.os.DropBoxManager r2;
+        android.content.Context $r3;
+        java.lang.Object $r4;
+        boolean $z0, $z1, $z2, $z3, $z4;
+        java.io.FileDescriptor $r5;
+        java.lang.String[] $r6;
+        java.lang.StringBuilder $r7, $r12, $r17, $r21, r37;
+        java.lang.Throwable $r8, $r10, $r13, $r18, $r20, $r24;
+        java.lang.String $r9, $r11, $r14, $r16, $r19, $r22, $r23, $r25, r36, r38, $r39, $r40, r44;
+        android.os.RemoteException $r15;
+        java.io.File r26, r28, r30, r32;
+        java.io.FileOutputStream r27, r29, r31, r34;
+
+        r0 := @this: com.android.server.BatteryService;
+
+        r1 = staticinvoke <android.os.ServiceManager: android.os.IBinder getService(java.lang.String)>("batterystats");
+
+        if r1 != null goto label01;
+
+        return;
+
+     label01:
+        $r3 = r0.<com.android.server.BatteryService: android.content.Context mContext>;
+
+        $r4 = virtualinvoke $r3.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("dropbox");
+
+        r2 = (android.os.DropBoxManager) $r4;
+
+        if r2 == null goto label43;
+
+        $z0 = virtualinvoke r2.<android.os.DropBoxManager: boolean isTagEnabled(java.lang.String)>("BATTERY_DISCHARGE_INFO");
+
+        if $z0 != 0 goto label02;
+
+        goto label43;
+
+     label02:
+        r26 = null;
+
+        r27 = null;
+
+        r28 = null;
+
+        r29 = null;
+
+        r30 = null;
+
+        r31 = null;
+
+     label03:
+        r32 = new java.io.File;
+
+     label04:
+        r26 = null;
+
+        r27 = null;
+
+        r28 = null;
+
+        r29 = null;
+
+        r30 = null;
+
+        r31 = null;
+
+     label05:
+        specialinvoke r32.<java.io.File: void <init>(java.lang.String)>("/data/system/batterystats.dump");
+
+     label06:
+        r26 = r32;
+
+        r27 = null;
+
+        r28 = r32;
+
+        r29 = null;
+
+        r30 = r32;
+
+        r31 = null;
+
+     label07:
+        r34 = new java.io.FileOutputStream;
+
+     label08:
+        r26 = r32;
+
+        r27 = null;
+
+        r28 = r32;
+
+        r29 = null;
+
+        r30 = r32;
+
+        r31 = null;
+
+     label09:
+        specialinvoke r34.<java.io.FileOutputStream: void <init>(java.io.File)>(r32);
+
+     label10:
+        r26 = r32;
+
+        r27 = r34;
+
+        r28 = r32;
+
+        r29 = r34;
+
+        r30 = r32;
+
+        r31 = r34;
+
+     label11:
+        $r5 = virtualinvoke r34.<java.io.FileOutputStream: java.io.FileDescriptor getFD()>();
+
+        $r6 = <com.android.server.BatteryService: java.lang.String[] DUMPSYS_ARGS>;
+
+        interfaceinvoke r1.<android.os.IBinder: void dump(java.io.FileDescriptor,java.lang.String[])>($r5, $r6);
+
+     label12:
+        r26 = r32;
+
+        r27 = r34;
+
+        r28 = r32;
+
+        r29 = r34;
+
+        r30 = r32;
+
+        r31 = r34;
+
+     label13:
+        staticinvoke <android.os.FileUtils: boolean sync(java.io.FileOutputStream)>(r34);
+
+     label14:
+        r26 = r32;
+
+        r27 = r34;
+
+        r28 = r32;
+
+        r29 = r34;
+
+        r30 = r32;
+
+        r31 = r34;
+
+     label15:
+        virtualinvoke r2.<android.os.DropBoxManager: void addFile(java.lang.String,java.io.File,int)>("BATTERY_DISCHARGE_INFO", r32, 2);
+
+     label16:
+        virtualinvoke r34.<java.io.FileOutputStream: void close()>();
+
+     label17:
+        goto label19;
+
+     label18:
+        $r8 := @caughtexception;
+
+        $r9 = <com.android.server.BatteryService: java.lang.String TAG>;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>($r9, "failed to close dumpsys output stream");
+
+     label19:
+        $z1 = virtualinvoke r32.<java.io.File: boolean delete()>();
+
+        if $z1 != 0 goto label36;
+
+        r36 = <com.android.server.BatteryService: java.lang.String TAG>;
+
+        $r7 = new java.lang.StringBuilder;
+
+        specialinvoke $r7.<java.lang.StringBuilder: void <init>()>();
+
+        r37 = $r7;
+
+        r30 = r32;
+
+        r38 = r36;
+
+     label20:
+        virtualinvoke r37.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("failed to delete temporary dumpsys file: ");
+
+        $r39 = virtualinvoke r30.<java.io.File: java.lang.String getAbsolutePath()>();
+
+        virtualinvoke r37.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r39);
+
+        $r40 = virtualinvoke r37.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>(r38, $r40);
+
+        goto label36;
+
+     label21:
+        $r20 := @caughtexception;
+
+        goto label37;
+
+     label22:
+        $r13 := @caughtexception;
+
+        r26 = r28;
+
+        r27 = r29;
+
+     label23:
+        $r14 = <com.android.server.BatteryService: java.lang.String TAG>;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>($r14, "failed to write dumpsys file", $r13);
+
+     label24:
+        if r29 == null goto label28;
+
+     label25:
+        virtualinvoke r29.<java.io.FileOutputStream: void close()>();
+
+     label26:
+        goto label28;
+
+     label27:
+        $r10 := @caughtexception;
+
+        $r11 = <com.android.server.BatteryService: java.lang.String TAG>;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>($r11, "failed to close dumpsys output stream");
+
+     label28:
+        if r28 == null goto label36;
+
+        $z2 = virtualinvoke r28.<java.io.File: boolean delete()>();
+
+        if $z2 != 0 goto label36;
+
+        r38 = <com.android.server.BatteryService: java.lang.String TAG>;
+
+        $r12 = new java.lang.StringBuilder;
+
+        specialinvoke $r12.<java.lang.StringBuilder: void <init>()>();
+
+        r37 = $r12;
+
+        r30 = r28;
+
+        goto label20;
+
+     label29:
+        $r15 := @caughtexception;
+
+        r26 = r30;
+
+        r27 = r31;
+
+     label30:
+        $r16 = <com.android.server.BatteryService: java.lang.String TAG>;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>($r16, "failed to dump battery service", $r15);
+
+     label31:
+        if r31 == null goto label35;
+
+     label32:
+        virtualinvoke r31.<java.io.FileOutputStream: void close()>();
+
+     label33:
+        goto label35;
+
+     label34:
+        $r18 := @caughtexception;
+
+        $r19 = <com.android.server.BatteryService: java.lang.String TAG>;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>($r19, "failed to close dumpsys output stream");
+
+     label35:
+        if r30 == null goto label36;
+
+        $z3 = virtualinvoke r30.<java.io.File: boolean delete()>();
+
+        if $z3 != 0 goto label36;
+
+        r38 = <com.android.server.BatteryService: java.lang.String TAG>;
+
+        $r17 = new java.lang.StringBuilder;
+
+        specialinvoke $r17.<java.lang.StringBuilder: void <init>()>();
+
+        r37 = $r17;
+
+        goto label20;
+
+     label36:
+        return;
+
+     label37:
+        if r27 == null goto label41;
+
+     label38:
+        virtualinvoke r27.<java.io.FileOutputStream: void close()>();
+
+     label39:
+        goto label41;
+
+     label40:
+        $r24 := @caughtexception;
+
+        $r25 = <com.android.server.BatteryService: java.lang.String TAG>;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>($r25, "failed to close dumpsys output stream");
+
+     label41:
+        if r26 == null goto label42;
+
+        $z4 = virtualinvoke r26.<java.io.File: boolean delete()>();
+
+        if $z4 != 0 goto label42;
+
+        r44 = <com.android.server.BatteryService: java.lang.String TAG>;
+
+        $r21 = new java.lang.StringBuilder;
+
+        specialinvoke $r21.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r21.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("failed to delete temporary dumpsys file: ");
+
+        $r22 = virtualinvoke r26.<java.io.File: java.lang.String getAbsolutePath()>();
+
+        virtualinvoke $r21.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r22);
+
+        $r23 = virtualinvoke $r21.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>(r44, $r23);
+
+     label42:
+        throw $r20;
+
+     label43:
+        return;
+
+        catch android.os.RemoteException from label03 to label04 with label29;
+        catch java.io.IOException from label03 to label04 with label22;
+        catch java.lang.Throwable from label03 to label04 with label21;
+        catch android.os.RemoteException from label05 to label06 with label29;
+        catch java.io.IOException from label05 to label06 with label22;
+        catch java.lang.Throwable from label05 to label06 with label21;
+        catch android.os.RemoteException from label07 to label08 with label29;
+        catch java.io.IOException from label07 to label08 with label22;
+        catch java.lang.Throwable from label07 to label08 with label21;
+        catch android.os.RemoteException from label09 to label10 with label29;
+        catch java.io.IOException from label09 to label10 with label22;
+        catch java.lang.Throwable from label09 to label10 with label21;
+        catch android.os.RemoteException from label11 to label12 with label29;
+        catch java.io.IOException from label11 to label12 with label22;
+        catch java.lang.Throwable from label11 to label12 with label21;
+        catch android.os.RemoteException from label13 to label14 with label29;
+        catch java.io.IOException from label13 to label14 with label22;
+        catch java.lang.Throwable from label13 to label14 with label21;
+        catch android.os.RemoteException from label15 to label16 with label29;
+        catch java.io.IOException from label15 to label16 with label22;
+        catch java.lang.Throwable from label15 to label16 with label21;
+        catch java.io.IOException from label16 to label17 with label18;
+        catch java.lang.Throwable from label23 to label24 with label21;
+        catch java.io.IOException from label25 to label26 with label27;
+        catch java.lang.Throwable from label30 to label31 with label21;
+        catch java.io.IOException from label32 to label33 with label34;
+        catch java.io.IOException from label38 to label39 with label40;
+    }
+
+    private void logOutlierLocked(long)
+    {
+        com.android.server.BatteryService r0;
+        long l0, l1;
+        java.lang.String r1, r2, $r11, r13;
+        int i2, $i4, $i5, $i6;
+        android.content.Context $r3;
+        byte $b3;
+        android.hardware.health.V1_0.HealthInfo $r4;
+        java.lang.Throwable $r5;
+        java.lang.StringBuilder $r6;
+        android.content.ContentResolver r12;
+
+        r0 := @this: com.android.server.BatteryService;
+
+        l0 := @parameter0: long;
+
+        $r3 = r0.<com.android.server.BatteryService: android.content.Context mContext>;
+
+        r12 = virtualinvoke $r3.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        r1 = staticinvoke <android.provider.Settings$Global: java.lang.String getString(android.content.ContentResolver,java.lang.String)>(r12, "battery_discharge_threshold");
+
+        r13 = staticinvoke <android.provider.Settings$Global: java.lang.String getString(android.content.ContentResolver,java.lang.String)>(r12, "battery_discharge_duration_threshold");
+
+        if r1 == null goto label6;
+
+        if r13 == null goto label6;
+
+     label1:
+        l1 = staticinvoke <java.lang.Long: long parseLong(java.lang.String)>(r13);
+
+        i2 = staticinvoke <java.lang.Integer: int parseInt(java.lang.String)>(r1);
+
+     label2:
+        $b3 = l0 cmp l1;
+
+        if $b3 > 0 goto label4;
+
+     label3:
+        $i5 = r0.<com.android.server.BatteryService: int mDischargeStartLevel>;
+
+        $r4 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i4 = $r4.<android.hardware.health.V1_0.HealthInfo: int batteryLevel>;
+
+        $i6 = $i5 - $i4;
+
+        if $i6 < i2 goto label4;
+
+        specialinvoke r0.<com.android.server.BatteryService: void logBatteryStatsLocked()>();
+
+     label4:
+        goto label6;
+
+     label5:
+        $r5 := @caughtexception;
+
+        r2 = <com.android.server.BatteryService: java.lang.String TAG>;
+
+        $r6 = new java.lang.StringBuilder;
+
+        specialinvoke $r6.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Invalid DischargeThresholds GService string: ");
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r13);
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" or ");
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r11 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>(r2, $r11);
+
+     label6:
+        return;
+
+        catch java.lang.NumberFormatException from label1 to label2 with label5;
+        catch java.lang.NumberFormatException from label3 to label4 with label5;
+    }
+
+    private void processValuesFromShellLocked(java.io.PrintWriter, int)
+    {
+        com.android.server.BatteryService r0;
+        java.io.PrintWriter r1;
+        int i0, $i1, $i2, $i3;
+        boolean z0;
+
+        r0 := @this: com.android.server.BatteryService;
+
+        r1 := @parameter0: java.io.PrintWriter;
+
+        i0 := @parameter1: int;
+
+        $i1 = i0 & 1;
+
+        if $i1 == 0 goto label1;
+
+        z0 = 1;
+
+        goto label2;
+
+     label1:
+        z0 = 0;
+
+     label2:
+        specialinvoke r0.<com.android.server.BatteryService: void processValuesLocked(boolean)>(z0);
+
+        $i2 = i0 & 1;
+
+        if $i2 == 0 goto label3;
+
+        $i3 = r0.<com.android.server.BatteryService: int mSequence>;
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(int)>($i3);
+
+     label3:
+        return;
+    }
+
+    private void processValuesLocked(boolean)
+    {
+        com.android.server.BatteryService r0;
+        boolean z0, $z2, $z3, $z4, $z5, $z10, $z11, $z12, $z13, $z14, z16, $z17, z18, $z19, z20, $z21, $z22, $z23, $z24;
+        int i0, i1, $i2, $i4, $i5, $i6, $i7, $i9, $i10, $i11, $i12, $i13, $i14, $i15, $i16, $i17, $i18, $i19, $i20, $i21, $i22, $i23, $i24, $i25, $i26, $i27, $i28, $i30, $i31, $i32, $i33, $i35, $i38, $i39, $i40, $i41, $i43, $i44, $i47, $i48, $i51, $i52, $i54, $i55, $i56, $i57, $i58, $i59, $i60, $i61, $i62, $i63, $i64, $i65, $i66, $i67, $i68, $i69, $i70, $i71, $i72, $i73, $i74, $i75, $i77, $i78, $i79, $i80, $i81, $i82, $i83, $i84, $i90, $i91, $i92, $i93, $i94, $i95, $i96, $i100, $i101, $i102, $i103, $i104, $i105, $i106, $i107, $i108, $i109, $i110, $i111, $i112, $i113, $i114, i115;
+        android.hardware.health.V1_0.HealthInfo $r1, $r2, $r3, $r4, $r5, $r26, $r27, $r28, $r30, $r32, $r34, $r36, $r37, $r38, $r47, $r51, $r56, $r60, $r64, $r66, $r67, $r68, $r69, $r70, $r71, $r72, $r73, $r74, $r75, $r77, $r79, $r80, $r81, $r82, $r83, $r84, $r85, $r90, $r92, $r94, $r96, $r99, $r101, $r106, $r108, $r109, $r110, $r111, $r112, $r113, $r114, $r115, $r116;
+        byte $b8, $b36, $b37, $b46;
+        android.content.Intent $r6, $r11, $r16, $r21;
+        com.android.server.BatteryService$10 $r9;
+        android.os.Handler $r10, $r15, $r20, $r25;
+        com.android.server.BatteryService$9 $r14;
+        com.android.server.BatteryService$8 $r19;
+        com.android.server.BatteryService$7 $r24;
+        java.lang.Object[] $r29, $r61, $r91;
+        java.lang.Integer $r31, $r33, $r35, $r41, $r45, $r48, $r54, $r57, $r63, $r65, $r93, $r95, $r97, $r98;
+        long $l34, $l42, $l45, $l49, $l50, $l85, l86, l87, l88, l89, l97, l98, l99;
+        android.metrics.LogMaker $r39, $r52;
+        java.lang.Long $r43, $r62;
+        com.android.internal.logging.MetricsLogger $r50, $r59;
+        android.os.RemoteException $r76;
+        com.android.internal.app.IBatteryStats $r78;
+        android.hardware.health.V2_1.HealthInfo $r86;
+        java.lang.String $r100;
+        com.android.server.BatteryService$Led $r107;
+
+        r0 := @this: com.android.server.BatteryService;
+
+        z0 := @parameter0: boolean;
+
+        $r1 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i2 = $r1.<android.hardware.health.V1_0.HealthInfo: int batteryStatus>;
+
+        if $i2 == 1 goto label01;
+
+        $r75 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i75 = $r75.<android.hardware.health.V1_0.HealthInfo: int batteryLevel>;
+
+        $i74 = r0.<com.android.server.BatteryService: int mCriticalBatteryLevel>;
+
+        if $i75 > $i74 goto label01;
+
+        z16 = 1;
+
+        goto label02;
+
+     label01:
+        z16 = 0;
+
+     label02:
+        r0.<com.android.server.BatteryService: boolean mBatteryLevelCritical> = z16;
+
+        $r77 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $z17 = $r77.<android.hardware.health.V1_0.HealthInfo: boolean chargerAcOnline>;
+
+        if $z17 == 0 goto label03;
+
+        r0.<com.android.server.BatteryService: int mPlugType> = 1;
+
+        goto label06;
+
+     label03:
+        $r2 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $z2 = $r2.<android.hardware.health.V1_0.HealthInfo: boolean chargerUsbOnline>;
+
+        if $z2 == 0 goto label04;
+
+        r0.<com.android.server.BatteryService: int mPlugType> = 2;
+
+        goto label06;
+
+     label04:
+        $r3 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $z3 = $r3.<android.hardware.health.V1_0.HealthInfo: boolean chargerWirelessOnline>;
+
+        if $z3 == 0 goto label05;
+
+        r0.<com.android.server.BatteryService: int mPlugType> = 4;
+
+        goto label06;
+
+     label05:
+        r0.<com.android.server.BatteryService: int mPlugType> = 0;
+
+     label06:
+        $r78 = r0.<com.android.server.BatteryService: com.android.internal.app.IBatteryStats mBatteryStats>;
+
+        $r79 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i77 = $r79.<android.hardware.health.V1_0.HealthInfo: int batteryStatus>;
+
+        $r80 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i78 = $r80.<android.hardware.health.V1_0.HealthInfo: int batteryHealth>;
+
+        $i79 = r0.<com.android.server.BatteryService: int mPlugType>;
+
+        $r81 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i80 = $r81.<android.hardware.health.V1_0.HealthInfo: int batteryLevel>;
+
+        $r82 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i81 = $r82.<android.hardware.health.V1_0.HealthInfo: int batteryTemperature>;
+
+        $r83 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i82 = $r83.<android.hardware.health.V1_0.HealthInfo: int batteryVoltage>;
+
+        $r84 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i83 = $r84.<android.hardware.health.V1_0.HealthInfo: int batteryChargeCounter>;
+
+        $r85 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i84 = $r85.<android.hardware.health.V1_0.HealthInfo: int batteryFullCharge>;
+
+        $r86 = r0.<com.android.server.BatteryService: android.hardware.health.V2_1.HealthInfo mHealthInfo2p1>;
+
+        $l85 = $r86.<android.hardware.health.V2_1.HealthInfo: long batteryChargeTimeToFullNowSeconds>;
+
+        interfaceinvoke $r78.<com.android.internal.app.IBatteryStats: void setBatteryState(int,int,int,int,int,int,int,int,long)>($i77, $i78, $i79, $i80, $i81, $i82, $i83, $i84, $l85);
+
+     label07:
+        goto label09;
+
+     label08:
+        $r76 := @caughtexception;
+
+     label09:
+        specialinvoke r0.<com.android.server.BatteryService: void shutdownIfNoPowerLocked()>();
+
+        specialinvoke r0.<com.android.server.BatteryService: void shutdownIfOverTempLocked()>();
+
+        if z0 != 0 goto label10;
+
+        $r66 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i55 = $r66.<android.hardware.health.V1_0.HealthInfo: int batteryStatus>;
+
+        $i54 = r0.<com.android.server.BatteryService: int mLastBatteryStatus>;
+
+        if $i55 != $i54 goto label10;
+
+        $r67 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i57 = $r67.<android.hardware.health.V1_0.HealthInfo: int batteryHealth>;
+
+        $i56 = r0.<com.android.server.BatteryService: int mLastBatteryHealth>;
+
+        if $i57 != $i56 goto label10;
+
+        $r68 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $z14 = $r68.<android.hardware.health.V1_0.HealthInfo: boolean batteryPresent>;
+
+        $z13 = r0.<com.android.server.BatteryService: boolean mLastBatteryPresent>;
+
+        if $z14 != $z13 goto label10;
+
+        $r69 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i59 = $r69.<android.hardware.health.V1_0.HealthInfo: int batteryLevel>;
+
+        $i58 = r0.<com.android.server.BatteryService: int mLastBatteryLevel>;
+
+        if $i59 != $i58 goto label10;
+
+        $i61 = r0.<com.android.server.BatteryService: int mPlugType>;
+
+        $i60 = r0.<com.android.server.BatteryService: int mLastPlugType>;
+
+        if $i61 != $i60 goto label10;
+
+        $r70 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i63 = $r70.<android.hardware.health.V1_0.HealthInfo: int batteryVoltage>;
+
+        $i62 = r0.<com.android.server.BatteryService: int mLastBatteryVoltage>;
+
+        if $i63 != $i62 goto label10;
+
+        $r71 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i65 = $r71.<android.hardware.health.V1_0.HealthInfo: int batteryTemperature>;
+
+        $i64 = r0.<com.android.server.BatteryService: int mLastBatteryTemperature>;
+
+        if $i65 != $i64 goto label10;
+
+        $r72 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i67 = $r72.<android.hardware.health.V1_0.HealthInfo: int maxChargingCurrent>;
+
+        $i66 = r0.<com.android.server.BatteryService: int mLastMaxChargingCurrent>;
+
+        if $i67 != $i66 goto label10;
+
+        $r73 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i69 = $r73.<android.hardware.health.V1_0.HealthInfo: int maxChargingVoltage>;
+
+        $i68 = r0.<com.android.server.BatteryService: int mLastMaxChargingVoltage>;
+
+        if $i69 != $i68 goto label10;
+
+        $r74 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i71 = $r74.<android.hardware.health.V1_0.HealthInfo: int batteryChargeCounter>;
+
+        $i70 = r0.<com.android.server.BatteryService: int mLastChargeCounter>;
+
+        if $i71 != $i70 goto label10;
+
+        $i73 = r0.<com.android.server.BatteryService: int mInvalidCharger>;
+
+        $i72 = r0.<com.android.server.BatteryService: int mLastInvalidCharger>;
+
+        if $i73 == $i72 goto label30;
+
+     label10:
+        i0 = r0.<com.android.server.BatteryService: int mPlugType>;
+
+        i1 = r0.<com.android.server.BatteryService: int mLastPlugType>;
+
+        z18 = 0;
+
+        l86 = 0L;
+
+        if i0 == i1 goto label14;
+
+        if i1 != 0 goto label12;
+
+        $r51 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i41 = $r51.<android.hardware.health.V1_0.HealthInfo: int batteryLevel>;
+
+        r0.<com.android.server.BatteryService: int mChargeStartLevel> = $i41;
+
+        $l42 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        r0.<com.android.server.BatteryService: long mChargeStartTime> = $l42;
+
+        $r52 = new android.metrics.LogMaker;
+
+        specialinvoke $r52.<android.metrics.LogMaker: void <init>(int)>(1417);
+
+        virtualinvoke $r52.<android.metrics.LogMaker: android.metrics.LogMaker setType(int)>(4);
+
+        $i43 = r0.<com.android.server.BatteryService: int mPlugType>;
+
+        $r54 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i43);
+
+        virtualinvoke $r52.<android.metrics.LogMaker: android.metrics.LogMaker addTaggedData(int,java.lang.Object)>(1421, $r54);
+
+        $r56 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i44 = $r56.<android.hardware.health.V1_0.HealthInfo: int batteryLevel>;
+
+        $r57 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i44);
+
+        virtualinvoke $r52.<android.metrics.LogMaker: android.metrics.LogMaker addTaggedData(int,java.lang.Object)>(1418, $r57);
+
+        $r59 = r0.<com.android.server.BatteryService: com.android.internal.logging.MetricsLogger mMetricsLogger>;
+
+        virtualinvoke $r59.<com.android.internal.logging.MetricsLogger: void write(android.metrics.LogMaker)>($r52);
+
+        z18 = 0;
+
+        l86 = 0L;
+
+        $l45 = r0.<com.android.server.BatteryService: long mDischargeStartTime>;
+
+        $b46 = $l45 cmp 0L;
+
+        if $b46 == 0 goto label11;
+
+        z18 = 0;
+
+        l86 = 0L;
+
+        $i48 = r0.<com.android.server.BatteryService: int mDischargeStartLevel>;
+
+        $r60 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i47 = $r60.<android.hardware.health.V1_0.HealthInfo: int batteryLevel>;
+
+        if $i48 == $i47 goto label11;
+
+        $l49 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        $l50 = r0.<com.android.server.BatteryService: long mDischargeStartTime>;
+
+        l86 = $l49 - $l50;
+
+        z18 = 1;
+
+        $r61 = newarray (java.lang.Object)[3];
+
+        $r62 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>(l86);
+
+        $r61[0] = $r62;
+
+        $i51 = r0.<com.android.server.BatteryService: int mDischargeStartLevel>;
+
+        $r63 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i51);
+
+        $r61[1] = $r63;
+
+        $r64 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i52 = $r64.<android.hardware.health.V1_0.HealthInfo: int batteryLevel>;
+
+        $r65 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i52);
+
+        $r61[2] = $r65;
+
+        staticinvoke <android.util.EventLog: int writeEvent(int,java.lang.Object[])>(2730, $r61);
+
+        r0.<com.android.server.BatteryService: long mDischargeStartTime> = 0L;
+
+     label11:
+        goto label14;
+
+     label12:
+        z18 = 0;
+
+        l86 = 0L;
+
+        if i0 != 0 goto label11;
+
+        $l34 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        r0.<com.android.server.BatteryService: long mDischargeStartTime> = $l34;
+
+        $r38 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i35 = $r38.<android.hardware.health.V1_0.HealthInfo: int batteryLevel>;
+
+        r0.<com.android.server.BatteryService: int mDischargeStartLevel> = $i35;
+
+        l87 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        l88 = r0.<com.android.server.BatteryService: long mChargeStartTime>;
+
+        l89 = l87 - l88;
+
+        $b36 = l88 cmp 0L;
+
+        if $b36 == 0 goto label13;
+
+        $b37 = l89 cmp 0L;
+
+        if $b37 == 0 goto label13;
+
+        $r39 = new android.metrics.LogMaker;
+
+        specialinvoke $r39.<android.metrics.LogMaker: void <init>(int)>(1417);
+
+        virtualinvoke $r39.<android.metrics.LogMaker: android.metrics.LogMaker setType(int)>(5);
+
+        $i38 = r0.<com.android.server.BatteryService: int mLastPlugType>;
+
+        $r41 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i38);
+
+        virtualinvoke $r39.<android.metrics.LogMaker: android.metrics.LogMaker addTaggedData(int,java.lang.Object)>(1421, $r41);
+
+        $r43 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>(l89);
+
+        virtualinvoke $r39.<android.metrics.LogMaker: android.metrics.LogMaker addTaggedData(int,java.lang.Object)>(1420, $r43);
+
+        $i39 = r0.<com.android.server.BatteryService: int mChargeStartLevel>;
+
+        $r45 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i39);
+
+        virtualinvoke $r39.<android.metrics.LogMaker: android.metrics.LogMaker addTaggedData(int,java.lang.Object)>(1418, $r45);
+
+        $r47 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i40 = $r47.<android.hardware.health.V1_0.HealthInfo: int batteryLevel>;
+
+        $r48 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i40);
+
+        virtualinvoke $r39.<android.metrics.LogMaker: android.metrics.LogMaker addTaggedData(int,java.lang.Object)>(1419, $r48);
+
+        $r50 = r0.<com.android.server.BatteryService: com.android.internal.logging.MetricsLogger mMetricsLogger>;
+
+        virtualinvoke $r50.<com.android.internal.logging.MetricsLogger: void write(android.metrics.LogMaker)>($r39);
+
+     label13:
+        r0.<com.android.server.BatteryService: long mChargeStartTime> = 0L;
+
+        l86 = 0L;
+
+        z18 = 0;
+
+     label14:
+        $r90 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i90 = $r90.<android.hardware.health.V1_0.HealthInfo: int batteryStatus>;
+
+        $i91 = r0.<com.android.server.BatteryService: int mLastBatteryStatus>;
+
+        if $i90 != $i91 goto label15;
+
+        $r36 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i31 = $r36.<android.hardware.health.V1_0.HealthInfo: int batteryHealth>;
+
+        $i30 = r0.<com.android.server.BatteryService: int mLastBatteryHealth>;
+
+        if $i31 != $i30 goto label15;
+
+        $r37 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $z12 = $r37.<android.hardware.health.V1_0.HealthInfo: boolean batteryPresent>;
+
+        $z11 = r0.<com.android.server.BatteryService: boolean mLastBatteryPresent>;
+
+        if $z12 != $z11 goto label15;
+
+        $i33 = r0.<com.android.server.BatteryService: int mPlugType>;
+
+        $i32 = r0.<com.android.server.BatteryService: int mLastPlugType>;
+
+        if $i33 == $i32 goto label16;
+
+     label15:
+        $r91 = newarray (java.lang.Object)[5];
+
+        $r92 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i92 = $r92.<android.hardware.health.V1_0.HealthInfo: int batteryStatus>;
+
+        $r93 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i92);
+
+        $r91[0] = $r93;
+
+        $r94 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i93 = $r94.<android.hardware.health.V1_0.HealthInfo: int batteryHealth>;
+
+        $r95 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i93);
+
+        $r91[1] = $r95;
+
+        $r96 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $z19 = $r96.<android.hardware.health.V1_0.HealthInfo: boolean batteryPresent>;
+
+        i115 = (int) $z19;
+
+        $r97 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i115);
+
+        $r91[2] = $r97;
+
+        $i94 = r0.<com.android.server.BatteryService: int mPlugType>;
+
+        $r98 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i94);
+
+        $r91[3] = $r98;
+
+        $r99 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $r100 = $r99.<android.hardware.health.V1_0.HealthInfo: java.lang.String batteryTechnology>;
+
+        $r91[4] = $r100;
+
+        staticinvoke <android.util.EventLog: int writeEvent(int,java.lang.Object[])>(2723, $r91);
+
+     label16:
+        $r101 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i95 = $r101.<android.hardware.health.V1_0.HealthInfo: int batteryLevel>;
+
+        $i96 = r0.<com.android.server.BatteryService: int mLastBatteryLevel>;
+
+        if $i95 == $i96 goto label17;
+
+        $r29 = newarray (java.lang.Object)[3];
+
+        $r30 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i26 = $r30.<android.hardware.health.V1_0.HealthInfo: int batteryLevel>;
+
+        $r31 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i26);
+
+        $r29[0] = $r31;
+
+        $r32 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i27 = $r32.<android.hardware.health.V1_0.HealthInfo: int batteryVoltage>;
+
+        $r33 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i27);
+
+        $r29[1] = $r33;
+
+        $r34 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i28 = $r34.<android.hardware.health.V1_0.HealthInfo: int batteryTemperature>;
+
+        $r35 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i28);
+
+        $r29[2] = $r35;
+
+        staticinvoke <android.util.EventLog: int writeEvent(int,java.lang.Object[])>(2722, $r29);
+
+     label17:
+        z20 = z18;
+
+        l97 = l86;
+
+        $z4 = r0.<com.android.server.BatteryService: boolean mBatteryLevelCritical>;
+
+        if $z4 == 0 goto label18;
+
+        z20 = z18;
+
+        l97 = l86;
+
+        $z10 = r0.<com.android.server.BatteryService: boolean mLastBatteryLevelCritical>;
+
+        if $z10 != 0 goto label18;
+
+        z20 = z18;
+
+        l97 = l86;
+
+        $i25 = r0.<com.android.server.BatteryService: int mPlugType>;
+
+        if $i25 != 0 goto label18;
+
+        l98 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        l99 = r0.<com.android.server.BatteryService: long mDischargeStartTime>;
+
+        z20 = 1;
+
+        l97 = l98 - l99;
+
+     label18:
+        $z21 = r0.<com.android.server.BatteryService: boolean mBatteryLevelLow>;
+
+        if $z21 != 0 goto label19;
+
+        $i21 = r0.<com.android.server.BatteryService: int mPlugType>;
+
+        if $i21 != 0 goto label22;
+
+        $r27 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i22 = $r27.<android.hardware.health.V1_0.HealthInfo: int batteryStatus>;
+
+        if $i22 == 1 goto label22;
+
+        $r28 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i24 = $r28.<android.hardware.health.V1_0.HealthInfo: int batteryLevel>;
+
+        $i23 = r0.<com.android.server.BatteryService: int mLowBatteryWarningLevel>;
+
+        if $i24 > $i23 goto label22;
+
+        r0.<com.android.server.BatteryService: boolean mBatteryLevelLow> = 1;
+
+        goto label22;
+
+     label19:
+        $i4 = r0.<com.android.server.BatteryService: int mPlugType>;
+
+        if $i4 == 0 goto label20;
+
+        r0.<com.android.server.BatteryService: boolean mBatteryLevelLow> = 0;
+
+        goto label22;
+
+     label20:
+        $r4 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i6 = $r4.<android.hardware.health.V1_0.HealthInfo: int batteryLevel>;
+
+        $i5 = r0.<com.android.server.BatteryService: int mLowBatteryCloseWarningLevel>;
+
+        if $i6 < $i5 goto label21;
+
+        r0.<com.android.server.BatteryService: boolean mBatteryLevelLow> = 0;
+
+        goto label22;
+
+     label21:
+        if z0 == 0 goto label22;
+
+        $r26 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i20 = $r26.<android.hardware.health.V1_0.HealthInfo: int batteryLevel>;
+
+        $i19 = r0.<com.android.server.BatteryService: int mLowBatteryWarningLevel>;
+
+        if $i20 < $i19 goto label22;
+
+        r0.<com.android.server.BatteryService: boolean mBatteryLevelLow> = 0;
+
+     label22:
+        $i100 = r0.<com.android.server.BatteryService: int mSequence>;
+
+        $i101 = $i100 + 1;
+
+        r0.<com.android.server.BatteryService: int mSequence> = $i101;
+
+        $i102 = r0.<com.android.server.BatteryService: int mPlugType>;
+
+        if $i102 == 0 goto label23;
+
+        $i17 = r0.<com.android.server.BatteryService: int mLastPlugType>;
+
+        if $i17 != 0 goto label23;
+
+        $r21 = new android.content.Intent;
+
+        specialinvoke $r21.<android.content.Intent: void <init>(java.lang.String)>("android.intent.action.ACTION_POWER_CONNECTED");
+
+        virtualinvoke $r21.<android.content.Intent: android.content.Intent setFlags(int)>(67108864);
+
+        $i18 = r0.<com.android.server.BatteryService: int mSequence>;
+
+        virtualinvoke $r21.<android.content.Intent: android.content.Intent putExtra(java.lang.String,int)>("seq", $i18);
+
+        $r25 = r0.<com.android.server.BatteryService: android.os.Handler mHandler>;
+
+        $r24 = new com.android.server.BatteryService$7;
+
+        specialinvoke $r24.<com.android.server.BatteryService$7: void <init>(com.android.server.BatteryService,android.content.Intent)>(r0, $r21);
+
+        virtualinvoke $r25.<android.os.Handler: boolean post(java.lang.Runnable)>($r24);
+
+        goto label24;
+
+     label23:
+        $i7 = r0.<com.android.server.BatteryService: int mPlugType>;
+
+        if $i7 != 0 goto label24;
+
+        $i15 = r0.<com.android.server.BatteryService: int mLastPlugType>;
+
+        if $i15 == 0 goto label24;
+
+        $r16 = new android.content.Intent;
+
+        specialinvoke $r16.<android.content.Intent: void <init>(java.lang.String)>("android.intent.action.ACTION_POWER_DISCONNECTED");
+
+        virtualinvoke $r16.<android.content.Intent: android.content.Intent setFlags(int)>(67108864);
+
+        $i16 = r0.<com.android.server.BatteryService: int mSequence>;
+
+        virtualinvoke $r16.<android.content.Intent: android.content.Intent putExtra(java.lang.String,int)>("seq", $i16);
+
+        $r20 = r0.<com.android.server.BatteryService: android.os.Handler mHandler>;
+
+        $r19 = new com.android.server.BatteryService$8;
+
+        specialinvoke $r19.<com.android.server.BatteryService$8: void <init>(com.android.server.BatteryService,android.content.Intent)>(r0, $r16);
+
+        virtualinvoke $r20.<android.os.Handler: boolean post(java.lang.Runnable)>($r19);
+
+     label24:
+        $z22 = specialinvoke r0.<com.android.server.BatteryService: boolean shouldSendBatteryLowLocked()>();
+
+        if $z22 == 0 goto label25;
+
+        r0.<com.android.server.BatteryService: boolean mSentLowBatteryBroadcast> = 1;
+
+        $r11 = new android.content.Intent;
+
+        specialinvoke $r11.<android.content.Intent: void <init>(java.lang.String)>("android.intent.action.BATTERY_LOW");
+
+        virtualinvoke $r11.<android.content.Intent: android.content.Intent setFlags(int)>(67108864);
+
+        $i14 = r0.<com.android.server.BatteryService: int mSequence>;
+
+        virtualinvoke $r11.<android.content.Intent: android.content.Intent putExtra(java.lang.String,int)>("seq", $i14);
+
+        $r15 = r0.<com.android.server.BatteryService: android.os.Handler mHandler>;
+
+        $r14 = new com.android.server.BatteryService$9;
+
+        specialinvoke $r14.<com.android.server.BatteryService$9: void <init>(com.android.server.BatteryService,android.content.Intent)>(r0, $r11);
+
+        virtualinvoke $r15.<android.os.Handler: boolean post(java.lang.Runnable)>($r14);
+
+        goto label26;
+
+     label25:
+        $z5 = r0.<com.android.server.BatteryService: boolean mSentLowBatteryBroadcast>;
+
+        if $z5 == 0 goto label26;
+
+        $r5 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i12 = $r5.<android.hardware.health.V1_0.HealthInfo: int batteryLevel>;
+
+        $i11 = r0.<com.android.server.BatteryService: int mLowBatteryCloseWarningLevel>;
+
+        if $i12 < $i11 goto label26;
+
+        r0.<com.android.server.BatteryService: boolean mSentLowBatteryBroadcast> = 0;
+
+        $r6 = new android.content.Intent;
+
+        specialinvoke $r6.<android.content.Intent: void <init>(java.lang.String)>("android.intent.action.BATTERY_OKAY");
+
+        virtualinvoke $r6.<android.content.Intent: android.content.Intent setFlags(int)>(67108864);
+
+        $i13 = r0.<com.android.server.BatteryService: int mSequence>;
+
+        virtualinvoke $r6.<android.content.Intent: android.content.Intent putExtra(java.lang.String,int)>("seq", $i13);
+
+        $r10 = r0.<com.android.server.BatteryService: android.os.Handler mHandler>;
+
+        $r9 = new com.android.server.BatteryService$10;
+
+        specialinvoke $r9.<com.android.server.BatteryService$10: void <init>(com.android.server.BatteryService,android.content.Intent)>(r0, $r6);
+
+        virtualinvoke $r10.<android.os.Handler: boolean post(java.lang.Runnable)>($r9);
+
+        goto label26;
+
+     label26:
+        specialinvoke r0.<com.android.server.BatteryService: void sendBatteryChangedIntentLocked()>();
+
+        $i103 = r0.<com.android.server.BatteryService: int mLastBatteryLevel>;
+
+        $r106 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i104 = $r106.<android.hardware.health.V1_0.HealthInfo: int batteryLevel>;
+
+        if $i103 != $i104 goto label27;
+
+        $i10 = r0.<com.android.server.BatteryService: int mLastPlugType>;
+
+        $i9 = r0.<com.android.server.BatteryService: int mPlugType>;
+
+        if $i10 == $i9 goto label28;
+
+     label27:
+        specialinvoke r0.<com.android.server.BatteryService: void sendBatteryLevelChangedIntentLocked()>();
+
+     label28:
+        $r107 = r0.<com.android.server.BatteryService: com.android.server.BatteryService$Led mLed>;
+
+        virtualinvoke $r107.<com.android.server.BatteryService$Led: void updateLightsLocked()>();
+
+        if z20 == 0 goto label29;
+
+        $b8 = l97 cmp 0L;
+
+        if $b8 == 0 goto label29;
+
+        specialinvoke r0.<com.android.server.BatteryService: void logOutlierLocked(long)>(l97);
+
+     label29:
+        $r108 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i105 = $r108.<android.hardware.health.V1_0.HealthInfo: int batteryStatus>;
+
+        r0.<com.android.server.BatteryService: int mLastBatteryStatus> = $i105;
+
+        $r109 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i106 = $r109.<android.hardware.health.V1_0.HealthInfo: int batteryHealth>;
+
+        r0.<com.android.server.BatteryService: int mLastBatteryHealth> = $i106;
+
+        $r110 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $z23 = $r110.<android.hardware.health.V1_0.HealthInfo: boolean batteryPresent>;
+
+        r0.<com.android.server.BatteryService: boolean mLastBatteryPresent> = $z23;
+
+        $r111 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i107 = $r111.<android.hardware.health.V1_0.HealthInfo: int batteryLevel>;
+
+        r0.<com.android.server.BatteryService: int mLastBatteryLevel> = $i107;
+
+        $i108 = r0.<com.android.server.BatteryService: int mPlugType>;
+
+        r0.<com.android.server.BatteryService: int mLastPlugType> = $i108;
+
+        $r112 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i109 = $r112.<android.hardware.health.V1_0.HealthInfo: int batteryVoltage>;
+
+        r0.<com.android.server.BatteryService: int mLastBatteryVoltage> = $i109;
+
+        $r113 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i110 = $r113.<android.hardware.health.V1_0.HealthInfo: int batteryTemperature>;
+
+        r0.<com.android.server.BatteryService: int mLastBatteryTemperature> = $i110;
+
+        $r114 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i111 = $r114.<android.hardware.health.V1_0.HealthInfo: int maxChargingCurrent>;
+
+        r0.<com.android.server.BatteryService: int mLastMaxChargingCurrent> = $i111;
+
+        $r115 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i112 = $r115.<android.hardware.health.V1_0.HealthInfo: int maxChargingVoltage>;
+
+        r0.<com.android.server.BatteryService: int mLastMaxChargingVoltage> = $i112;
+
+        $r116 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i113 = $r116.<android.hardware.health.V1_0.HealthInfo: int batteryChargeCounter>;
+
+        r0.<com.android.server.BatteryService: int mLastChargeCounter> = $i113;
+
+        $z24 = r0.<com.android.server.BatteryService: boolean mBatteryLevelCritical>;
+
+        r0.<com.android.server.BatteryService: boolean mLastBatteryLevelCritical> = $z24;
+
+        $i114 = r0.<com.android.server.BatteryService: int mInvalidCharger>;
+
+        r0.<com.android.server.BatteryService: int mLastInvalidCharger> = $i114;
+
+     label30:
+        return;
+
+        catch android.os.RemoteException from label06 to label07 with label08;
+    }
+
+    private void registerHealthCallback()
+    {
+        com.android.server.BatteryService r0;
+        com.android.server.BatteryService$3 r1;
+        long l0, $l1, $l2, $l4, $l5;
+        com.android.server.BatteryService$HealthServiceWrapper $r2, r26;
+        com.android.server.BatteryService$HealthHalCallback $r3;
+        java.lang.StringBuilder $r4, r31;
+        java.lang.String $r8, $r14, $r18, $r21, $r23, r30, r33;
+        java.lang.Object $r15, r28;
+        java.lang.Throwable $r16, $r20, $r22, $r24;
+        android.os.RemoteException $r17;
+        java.lang.RuntimeException $r19;
+        com.android.server.BatteryService$4 r27;
+        android.hardware.health.V1_0.HealthInfo $r29;
+
+        r0 := @this: com.android.server.BatteryService;
+
+        staticinvoke <com.android.server.BatteryService: void traceBegin(java.lang.String)>("HealthInitWrapper");
+
+        $r2 = new com.android.server.BatteryService$HealthServiceWrapper;
+
+        specialinvoke $r2.<com.android.server.BatteryService$HealthServiceWrapper: void <init>()>();
+
+        r0.<com.android.server.BatteryService: com.android.server.BatteryService$HealthServiceWrapper mHealthServiceWrapper> = $r2;
+
+        $r3 = new com.android.server.BatteryService$HealthHalCallback;
+
+        specialinvoke $r3.<com.android.server.BatteryService$HealthHalCallback: void <init>(com.android.server.BatteryService,com.android.server.BatteryService$1)>(r0, null);
+
+        r0.<com.android.server.BatteryService: com.android.server.BatteryService$HealthHalCallback mHealthHalCallback> = $r3;
+
+     label01:
+        r26 = r0.<com.android.server.BatteryService: com.android.server.BatteryService$HealthServiceWrapper mHealthServiceWrapper>;
+
+        r1 = new com.android.server.BatteryService$3;
+
+        specialinvoke r1.<com.android.server.BatteryService$3: void <init>(com.android.server.BatteryService)>(r0);
+
+        r27 = new com.android.server.BatteryService$4;
+
+        specialinvoke r27.<com.android.server.BatteryService$4: void <init>(com.android.server.BatteryService)>(r0);
+
+        virtualinvoke r26.<com.android.server.BatteryService$HealthServiceWrapper: void init(com.android.server.BatteryService$HealthServiceWrapper$Callback,com.android.server.BatteryService$HealthServiceWrapper$IServiceManagerSupplier,com.android.server.BatteryService$HealthServiceWrapper$IHealthSupplier)>($r3, r1, r27);
+
+     label02:
+        staticinvoke <com.android.server.BatteryService: void traceEnd()>();
+
+        staticinvoke <com.android.server.BatteryService: void traceBegin(java.lang.String)>("HealthInitWaitUpdate");
+
+        l0 = staticinvoke <android.os.SystemClock: long uptimeMillis()>();
+
+        r28 = r0.<com.android.server.BatteryService: java.lang.Object mLock>;
+
+        entermonitor r28;
+
+     label03:
+        $r29 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        if $r29 != null goto label09;
+
+        r30 = <com.android.server.BatteryService: java.lang.String TAG>;
+
+        r31 = new java.lang.StringBuilder;
+
+        specialinvoke r31.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r31.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("health: Waited ");
+
+        $l4 = staticinvoke <android.os.SystemClock: long uptimeMillis()>();
+
+        $l5 = $l4 - l0;
+
+        virtualinvoke r31.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l5);
+
+        virtualinvoke r31.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("ms for callbacks. Waiting another ");
+
+        virtualinvoke r31.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>(1000L);
+
+        virtualinvoke r31.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" ms...");
+
+        $r14 = virtualinvoke r31.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>(r30, $r14);
+
+     label04:
+        $r15 = r0.<com.android.server.BatteryService: java.lang.Object mLock>;
+
+        virtualinvoke $r15.<java.lang.Object: void wait(long)>(1000L);
+
+     label05:
+        goto label03;
+
+     label06:
+        $r20 := @caughtexception;
+
+     label07:
+        $r21 = <com.android.server.BatteryService: java.lang.String TAG>;
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>($r21, "health: InterruptedException when waiting for update.  Continuing...");
+
+     label08:
+        goto label03;
+
+     label09:
+        exitmonitor r28;
+
+     label10:
+        r33 = <com.android.server.BatteryService: java.lang.String TAG>;
+
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("health: Waited ");
+
+        $l1 = staticinvoke <android.os.SystemClock: long uptimeMillis()>();
+
+        $l2 = $l1 - l0;
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l2);
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("ms and received the update.");
+
+        $r8 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>(r33, $r8);
+
+        staticinvoke <com.android.server.BatteryService: void traceEnd()>();
+
+        return;
+
+     label11:
+        $r16 := @caughtexception;
+
+     label12:
+        exitmonitor r28;
+
+     label13:
+        throw $r16;
+
+     label14:
+        $r24 := @caughtexception;
+
+        goto label20;
+
+     label15:
+        $r22 := @caughtexception;
+
+     label16:
+        $r23 = <com.android.server.BatteryService: java.lang.String TAG>;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>($r23, "health: cannot register callback. (no supported health HAL service)");
+
+     label17:
+        throw $r22;
+
+     label18:
+        $r17 := @caughtexception;
+
+     label19:
+        $r18 = <com.android.server.BatteryService: java.lang.String TAG>;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>($r18, "health: cannot register callback. (RemoteException)");
+
+        $r19 = virtualinvoke $r17.<android.os.RemoteException: java.lang.RuntimeException rethrowFromSystemServer()>();
+
+        throw $r19;
+
+     label20:
+        staticinvoke <com.android.server.BatteryService: void traceEnd()>();
+
+        throw $r24;
+
+        catch android.os.RemoteException from label01 to label02 with label18;
+        catch java.util.NoSuchElementException from label01 to label02 with label15;
+        catch java.lang.Throwable from label01 to label02 with label14;
+        catch java.lang.Throwable from label03 to label04 with label11;
+        catch java.lang.InterruptedException from label04 to label05 with label06;
+        catch java.lang.Throwable from label04 to label05 with label11;
+        catch java.lang.Throwable from label07 to label08 with label11;
+        catch java.lang.Throwable from label09 to label10 with label11;
+        catch java.lang.Throwable from label12 to label13 with label11;
+        catch java.lang.Throwable from label16 to label17 with label14;
+        catch java.lang.Throwable from label17 to label18 with label14;
+        catch java.lang.Throwable from label19 to label20 with label14;
+    }
+
+    private void sendBatteryChangedIntentLocked()
+    {
+        com.android.server.BatteryService r0;
+        int i0, $i1, $i2, $i3, $i4, $i5, $i6, $i7, $i8, $i9, $i10, $i11, $i12;
+        android.content.Intent $r2;
+        android.hardware.health.V1_0.HealthInfo $r4, $r6, $r8, $r10, $r12, $r18, $r20, $r22, $r26, $r28, $r30;
+        boolean $z0, $z1;
+        java.lang.String $r23;
+        com.android.server._$$Lambda$BatteryService$2x73lvpB0jctMSVP4qb9sHAqRPw $r32;
+        android.os.Handler $r33;
+
+        r0 := @this: com.android.server.BatteryService;
+
+        $r2 = new android.content.Intent;
+
+        specialinvoke $r2.<android.content.Intent: void <init>(java.lang.String)>("android.intent.action.BATTERY_CHANGED");
+
+        virtualinvoke $r2.<android.content.Intent: android.content.Intent addFlags(int)>(1610612736);
+
+        $r4 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i1 = $r4.<android.hardware.health.V1_0.HealthInfo: int batteryLevel>;
+
+        i0 = specialinvoke r0.<com.android.server.BatteryService: int getIconLocked(int)>($i1);
+
+        $i2 = r0.<com.android.server.BatteryService: int mSequence>;
+
+        virtualinvoke $r2.<android.content.Intent: android.content.Intent putExtra(java.lang.String,int)>("seq", $i2);
+
+        $r6 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i3 = $r6.<android.hardware.health.V1_0.HealthInfo: int batteryStatus>;
+
+        virtualinvoke $r2.<android.content.Intent: android.content.Intent putExtra(java.lang.String,int)>("status", $i3);
+
+        $r8 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i4 = $r8.<android.hardware.health.V1_0.HealthInfo: int batteryHealth>;
+
+        virtualinvoke $r2.<android.content.Intent: android.content.Intent putExtra(java.lang.String,int)>("health", $i4);
+
+        $r10 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $z0 = $r10.<android.hardware.health.V1_0.HealthInfo: boolean batteryPresent>;
+
+        virtualinvoke $r2.<android.content.Intent: android.content.Intent putExtra(java.lang.String,boolean)>("present", $z0);
+
+        $r12 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i5 = $r12.<android.hardware.health.V1_0.HealthInfo: int batteryLevel>;
+
+        virtualinvoke $r2.<android.content.Intent: android.content.Intent putExtra(java.lang.String,int)>("level", $i5);
+
+        $z1 = r0.<com.android.server.BatteryService: boolean mSentLowBatteryBroadcast>;
+
+        virtualinvoke $r2.<android.content.Intent: android.content.Intent putExtra(java.lang.String,boolean)>("battery_low", $z1);
+
+        virtualinvoke $r2.<android.content.Intent: android.content.Intent putExtra(java.lang.String,int)>("scale", 100);
+
+        virtualinvoke $r2.<android.content.Intent: android.content.Intent putExtra(java.lang.String,int)>("icon-small", i0);
+
+        $i6 = r0.<com.android.server.BatteryService: int mPlugType>;
+
+        virtualinvoke $r2.<android.content.Intent: android.content.Intent putExtra(java.lang.String,int)>("plugged", $i6);
+
+        $r18 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i7 = $r18.<android.hardware.health.V1_0.HealthInfo: int batteryVoltage>;
+
+        virtualinvoke $r2.<android.content.Intent: android.content.Intent putExtra(java.lang.String,int)>("voltage", $i7);
+
+        $r20 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i8 = $r20.<android.hardware.health.V1_0.HealthInfo: int batteryTemperature>;
+
+        virtualinvoke $r2.<android.content.Intent: android.content.Intent putExtra(java.lang.String,int)>("temperature", $i8);
+
+        $r22 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $r23 = $r22.<android.hardware.health.V1_0.HealthInfo: java.lang.String batteryTechnology>;
+
+        virtualinvoke $r2.<android.content.Intent: android.content.Intent putExtra(java.lang.String,java.lang.String)>("technology", $r23);
+
+        $i9 = r0.<com.android.server.BatteryService: int mInvalidCharger>;
+
+        virtualinvoke $r2.<android.content.Intent: android.content.Intent putExtra(java.lang.String,int)>("invalid_charger", $i9);
+
+        $r26 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i10 = $r26.<android.hardware.health.V1_0.HealthInfo: int maxChargingCurrent>;
+
+        virtualinvoke $r2.<android.content.Intent: android.content.Intent putExtra(java.lang.String,int)>("max_charging_current", $i10);
+
+        $r28 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i11 = $r28.<android.hardware.health.V1_0.HealthInfo: int maxChargingVoltage>;
+
+        virtualinvoke $r2.<android.content.Intent: android.content.Intent putExtra(java.lang.String,int)>("max_charging_voltage", $i11);
+
+        $r30 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i12 = $r30.<android.hardware.health.V1_0.HealthInfo: int batteryChargeCounter>;
+
+        virtualinvoke $r2.<android.content.Intent: android.content.Intent putExtra(java.lang.String,int)>("charge_counter", $i12);
+
+        $r33 = r0.<com.android.server.BatteryService: android.os.Handler mHandler>;
+
+        $r32 = new com.android.server._$$Lambda$BatteryService$2x73lvpB0jctMSVP4qb9sHAqRPw;
+
+        specialinvoke $r32.<com.android.server._$$Lambda$BatteryService$2x73lvpB0jctMSVP4qb9sHAqRPw: void <init>(android.content.Intent)>($r2);
+
+        virtualinvoke $r33.<android.os.Handler: boolean post(java.lang.Runnable)>($r32);
+
+        return;
+    }
+
+    private void sendBatteryLevelChangedIntentLocked()
+    {
+        com.android.server.BatteryService r0;
+        boolean z0, $z1, $z2;
+        long l0, $l10, $l12, l13, l14;
+        android.os.Bundle $r2;
+        int $i1, $i2, $i3, $i4, $i5, $i6, $i7, $i8, $i9;
+        android.hardware.health.V1_0.HealthInfo $r3, $r4, $r5, $r6, $r7, $r8, $r9;
+        java.util.ArrayDeque $r10, $r11, $r12, $r15;
+        byte $b11;
+        com.android.server._$$Lambda$BatteryService$D1kwd7L7yyqN5niz3KWkTepVmUk $r13;
+        android.os.Handler $r14;
+
+        r0 := @this: com.android.server.BatteryService;
+
+        $r2 = new android.os.Bundle;
+
+        specialinvoke $r2.<android.os.Bundle: void <init>()>();
+
+        l13 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        $i1 = r0.<com.android.server.BatteryService: int mSequence>;
+
+        virtualinvoke $r2.<android.os.Bundle: void putInt(java.lang.String,int)>("seq", $i1);
+
+        $r3 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i2 = $r3.<android.hardware.health.V1_0.HealthInfo: int batteryStatus>;
+
+        virtualinvoke $r2.<android.os.Bundle: void putInt(java.lang.String,int)>("status", $i2);
+
+        $r4 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i3 = $r4.<android.hardware.health.V1_0.HealthInfo: int batteryHealth>;
+
+        virtualinvoke $r2.<android.os.Bundle: void putInt(java.lang.String,int)>("health", $i3);
+
+        $r5 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $z1 = $r5.<android.hardware.health.V1_0.HealthInfo: boolean batteryPresent>;
+
+        virtualinvoke $r2.<android.os.Bundle: void putBoolean(java.lang.String,boolean)>("present", $z1);
+
+        $r6 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i4 = $r6.<android.hardware.health.V1_0.HealthInfo: int batteryLevel>;
+
+        virtualinvoke $r2.<android.os.Bundle: void putInt(java.lang.String,int)>("level", $i4);
+
+        $z2 = r0.<com.android.server.BatteryService: boolean mSentLowBatteryBroadcast>;
+
+        virtualinvoke $r2.<android.os.Bundle: void putBoolean(java.lang.String,boolean)>("battery_low", $z2);
+
+        virtualinvoke $r2.<android.os.Bundle: void putInt(java.lang.String,int)>("scale", 100);
+
+        $i5 = r0.<com.android.server.BatteryService: int mPlugType>;
+
+        virtualinvoke $r2.<android.os.Bundle: void putInt(java.lang.String,int)>("plugged", $i5);
+
+        $r7 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i6 = $r7.<android.hardware.health.V1_0.HealthInfo: int batteryVoltage>;
+
+        virtualinvoke $r2.<android.os.Bundle: void putInt(java.lang.String,int)>("voltage", $i6);
+
+        $r8 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i7 = $r8.<android.hardware.health.V1_0.HealthInfo: int batteryTemperature>;
+
+        virtualinvoke $r2.<android.os.Bundle: void putInt(java.lang.String,int)>("temperature", $i7);
+
+        $r9 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i8 = $r9.<android.hardware.health.V1_0.HealthInfo: int batteryChargeCounter>;
+
+        virtualinvoke $r2.<android.os.Bundle: void putInt(java.lang.String,int)>("charge_counter", $i8);
+
+        virtualinvoke $r2.<android.os.Bundle: void putLong(java.lang.String,long)>("android.os.extra.EVENT_TIMESTAMP", l13);
+
+        $r10 = r0.<com.android.server.BatteryService: java.util.ArrayDeque mBatteryLevelsEventQueue>;
+
+        z0 = virtualinvoke $r10.<java.util.ArrayDeque: boolean isEmpty()>();
+
+        $r11 = r0.<com.android.server.BatteryService: java.util.ArrayDeque mBatteryLevelsEventQueue>;
+
+        virtualinvoke $r11.<java.util.ArrayDeque: boolean add(java.lang.Object)>($r2);
+
+        $r12 = r0.<com.android.server.BatteryService: java.util.ArrayDeque mBatteryLevelsEventQueue>;
+
+        $i9 = virtualinvoke $r12.<java.util.ArrayDeque: int size()>();
+
+        if $i9 <= 100 goto label1;
+
+        $r15 = r0.<com.android.server.BatteryService: java.util.ArrayDeque mBatteryLevelsEventQueue>;
+
+        virtualinvoke $r15.<java.util.ArrayDeque: java.lang.Object removeFirst()>();
+
+     label1:
+        if z0 == 0 goto label4;
+
+        l0 = r0.<com.android.server.BatteryService: long mLastBatteryLevelChangedSentMs>;
+
+        $l10 = l13 - l0;
+
+        $b11 = $l10 cmp 60000L;
+
+        if $b11 <= 0 goto label2;
+
+        l14 = 0L;
+
+        goto label3;
+
+     label2:
+        $l12 = l0 + 60000L;
+
+        l14 = $l12 - l13;
+
+     label3:
+        $r14 = r0.<com.android.server.BatteryService: android.os.Handler mHandler>;
+
+        $r13 = new com.android.server._$$Lambda$BatteryService$D1kwd7L7yyqN5niz3KWkTepVmUk;
+
+        specialinvoke $r13.<com.android.server._$$Lambda$BatteryService$D1kwd7L7yyqN5niz3KWkTepVmUk: void <init>(com.android.server.BatteryService)>(r0);
+
+        virtualinvoke $r14.<android.os.Handler: boolean postDelayed(java.lang.Runnable,long)>($r13, l14);
+
+     label4:
+        return;
+    }
+
+    private void sendEnqueuedBatteryLevelChangedEvents()
+    {
+        com.android.server.BatteryService r0;
+        java.util.ArrayDeque $r1, $r2;
+        android.content.Intent $r3;
+        android.os.UserHandle $r6;
+        android.content.Context $r7;
+        long $l0;
+        java.lang.Throwable $r8;
+        java.lang.Object r9;
+        java.util.ArrayList r10;
+
+        r0 := @this: com.android.server.BatteryService;
+
+        r9 = r0.<com.android.server.BatteryService: java.lang.Object mLock>;
+
+        entermonitor r9;
+
+     label1:
+        r10 = new java.util.ArrayList;
+
+        $r1 = r0.<com.android.server.BatteryService: java.util.ArrayDeque mBatteryLevelsEventQueue>;
+
+        specialinvoke r10.<java.util.ArrayList: void <init>(java.util.Collection)>($r1);
+
+        $r2 = r0.<com.android.server.BatteryService: java.util.ArrayDeque mBatteryLevelsEventQueue>;
+
+        virtualinvoke $r2.<java.util.ArrayDeque: void clear()>();
+
+        exitmonitor r9;
+
+     label2:
+        $r3 = new android.content.Intent;
+
+        specialinvoke $r3.<android.content.Intent: void <init>(java.lang.String)>("android.intent.action.BATTERY_LEVEL_CHANGED");
+
+        virtualinvoke $r3.<android.content.Intent: android.content.Intent addFlags(int)>(16777216);
+
+        virtualinvoke $r3.<android.content.Intent: android.content.Intent putParcelableArrayListExtra(java.lang.String,java.util.ArrayList)>("android.os.extra.EVENTS", r10);
+
+        $r7 = r0.<com.android.server.BatteryService: android.content.Context mContext>;
+
+        $r6 = <android.os.UserHandle: android.os.UserHandle ALL>;
+
+        virtualinvoke $r7.<android.content.Context: void sendBroadcastAsUser(android.content.Intent,android.os.UserHandle,java.lang.String)>($r3, $r6, "android.permission.BATTERY_STATS");
+
+        $l0 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        r0.<com.android.server.BatteryService: long mLastBatteryLevelChangedSentMs> = $l0;
+
+        return;
+
+     label3:
+        $r8 := @caughtexception;
+
+     label4:
+        exitmonitor r9;
+
+     label5:
+        throw $r8;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    private boolean shouldSendBatteryLowLocked()
+    {
+        com.android.server.BatteryService r0;
+        int i0, $i1, $i2, $i3, i4, i5;
+        android.hardware.health.V1_0.HealthInfo $r1, $r2;
+        boolean z1, z2, z3;
+
+        r0 := @this: com.android.server.BatteryService;
+
+        i4 = r0.<com.android.server.BatteryService: int mPlugType>;
+
+        if i4 == 0 goto label1;
+
+        z1 = 1;
+
+        goto label2;
+
+     label1:
+        z1 = 0;
+
+     label2:
+        $i1 = r0.<com.android.server.BatteryService: int mLastPlugType>;
+
+        if $i1 == 0 goto label3;
+
+        z2 = 1;
+
+        goto label4;
+
+     label3:
+        z2 = 0;
+
+     label4:
+        z3 = 0;
+
+        if z1 != 0 goto label6;
+
+        z3 = 0;
+
+        $r1 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i2 = $r1.<android.hardware.health.V1_0.HealthInfo: int batteryStatus>;
+
+        if $i2 == 1 goto label6;
+
+        $r2 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        i0 = $r2.<android.hardware.health.V1_0.HealthInfo: int batteryLevel>;
+
+        i5 = r0.<com.android.server.BatteryService: int mLowBatteryWarningLevel>;
+
+        z3 = 0;
+
+        if i0 > i5 goto label6;
+
+        if z2 != 0 goto label5;
+
+        z3 = 0;
+
+        $i3 = r0.<com.android.server.BatteryService: int mLastBatteryLevel>;
+
+        if $i3 <= i5 goto label6;
+
+     label5:
+        z3 = 1;
+
+     label6:
+        return z3;
+    }
+
+    private boolean shouldShutdownLocked()
+    {
+        com.android.server.BatteryService r0;
+        int i0, $i1, $i2, $i3;
+        android.hardware.health.V2_1.HealthInfo $r1, $r5;
+        android.hardware.health.V1_0.HealthInfo $r2, $r3, $r4;
+        boolean $z1, z2, z3;
+
+        r0 := @this: com.android.server.BatteryService;
+
+        $r1 = r0.<com.android.server.BatteryService: android.hardware.health.V2_1.HealthInfo mHealthInfo2p1>;
+
+        i0 = $r1.<android.hardware.health.V2_1.HealthInfo: int batteryCapacityLevel>;
+
+        z2 = 1;
+
+        if i0 == -1 goto label3;
+
+        $r5 = r0.<com.android.server.BatteryService: android.hardware.health.V2_1.HealthInfo mHealthInfo2p1>;
+
+        $i3 = $r5.<android.hardware.health.V2_1.HealthInfo: int batteryCapacityLevel>;
+
+        if $i3 != 1 goto label1;
+
+        goto label2;
+
+     label1:
+        z2 = 0;
+
+     label2:
+        return z2;
+
+     label3:
+        $r2 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i1 = $r2.<android.hardware.health.V1_0.HealthInfo: int batteryLevel>;
+
+        if $i1 <= 0 goto label4;
+
+        return 0;
+
+     label4:
+        $r3 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $z1 = $r3.<android.hardware.health.V1_0.HealthInfo: boolean batteryPresent>;
+
+        if $z1 != 0 goto label5;
+
+        return 0;
+
+     label5:
+        $r4 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i2 = $r4.<android.hardware.health.V1_0.HealthInfo: int batteryStatus>;
+
+        if $i2 == 2 goto label6;
+
+        z3 = 1;
+
+        goto label7;
+
+     label6:
+        z3 = 0;
+
+     label7:
+        return z3;
+    }
+
+    private void shutdownIfNoPowerLocked()
+    {
+        com.android.server.BatteryService r0;
+        boolean $z0;
+        com.android.server.BatteryService$5 $r1;
+        android.os.Handler $r2;
+
+        r0 := @this: com.android.server.BatteryService;
+
+        $z0 = specialinvoke r0.<com.android.server.BatteryService: boolean shouldShutdownLocked()>();
+
+        if $z0 == 0 goto label1;
+
+        $r2 = r0.<com.android.server.BatteryService: android.os.Handler mHandler>;
+
+        $r1 = new com.android.server.BatteryService$5;
+
+        specialinvoke $r1.<com.android.server.BatteryService$5: void <init>(com.android.server.BatteryService)>(r0);
+
+        virtualinvoke $r2.<android.os.Handler: boolean post(java.lang.Runnable)>($r1);
+
+     label1:
+        return;
+    }
+
+    private void shutdownIfOverTempLocked()
+    {
+        com.android.server.BatteryService r0;
+        android.hardware.health.V1_0.HealthInfo $r1;
+        int $i0, $i1;
+        com.android.server.BatteryService$6 $r2;
+        android.os.Handler $r3;
+
+        r0 := @this: com.android.server.BatteryService;
+
+        $r1 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i1 = $r1.<android.hardware.health.V1_0.HealthInfo: int batteryTemperature>;
+
+        $i0 = r0.<com.android.server.BatteryService: int mShutdownBatteryTemperature>;
+
+        if $i1 <= $i0 goto label1;
+
+        $r3 = r0.<com.android.server.BatteryService: android.os.Handler mHandler>;
+
+        $r2 = new com.android.server.BatteryService$6;
+
+        specialinvoke $r2.<com.android.server.BatteryService$6: void <init>(com.android.server.BatteryService)>(r0);
+
+        virtualinvoke $r3.<android.os.Handler: boolean post(java.lang.Runnable)>($r2);
+
+     label1:
+        return;
+    }
+
+    private static void traceBegin(java.lang.String)
+    {
+        java.lang.String r0;
+
+        r0 := @parameter0: java.lang.String;
+
+        staticinvoke <android.os.Trace: void traceBegin(long,java.lang.String)>(524288L, r0);
+
+        return;
+    }
+
+    private static void traceEnd()
+    {
+        staticinvoke <android.os.Trace: void traceEnd(long)>(524288L);
+
+        return;
+    }
+
+    private void update(android.hardware.health.V2_1.HealthInfo)
+    {
+        com.android.server.BatteryService r0;
+        java.lang.Object r1, $r11;
+        android.hardware.health.V2_0.HealthInfo $r2, $r4, $r6, $r9;
+        android.hardware.health.V1_0.HealthInfo $r3, $r5, $r7, $r8, $r10;
+        int $i0, $i1;
+        boolean $z0;
+        java.lang.Throwable $r12;
+        android.hardware.health.V2_1.HealthInfo r13;
+
+        r0 := @this: com.android.server.BatteryService;
+
+        r13 := @parameter0: android.hardware.health.V2_1.HealthInfo;
+
+        staticinvoke <com.android.server.BatteryService: void traceBegin(java.lang.String)>("HealthInfoUpdate");
+
+        $r2 = r13.<android.hardware.health.V2_1.HealthInfo: android.hardware.health.V2_0.HealthInfo legacy>;
+
+        $r3 = $r2.<android.hardware.health.V2_0.HealthInfo: android.hardware.health.V1_0.HealthInfo legacy>;
+
+        $i0 = $r3.<android.hardware.health.V1_0.HealthInfo: int batteryChargeCounter>;
+
+        staticinvoke <android.os.Trace: void traceCounter(long,java.lang.String,int)>(131072L, "BatteryChargeCounter", $i0);
+
+        $r4 = r13.<android.hardware.health.V2_1.HealthInfo: android.hardware.health.V2_0.HealthInfo legacy>;
+
+        $r5 = $r4.<android.hardware.health.V2_0.HealthInfo: android.hardware.health.V1_0.HealthInfo legacy>;
+
+        $i1 = $r5.<android.hardware.health.V1_0.HealthInfo: int batteryCurrent>;
+
+        staticinvoke <android.os.Trace: void traceCounter(long,java.lang.String,int)>(131072L, "BatteryCurrent", $i1);
+
+        r1 = r0.<com.android.server.BatteryService: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        $z0 = r0.<com.android.server.BatteryService: boolean mUpdatesStopped>;
+
+        if $z0 != 0 goto label3;
+
+        $r9 = r13.<android.hardware.health.V2_1.HealthInfo: android.hardware.health.V2_0.HealthInfo legacy>;
+
+        $r10 = $r9.<android.hardware.health.V2_0.HealthInfo: android.hardware.health.V1_0.HealthInfo legacy>;
+
+        r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo> = $r10;
+
+        r0.<com.android.server.BatteryService: android.hardware.health.V2_1.HealthInfo mHealthInfo2p1> = r13;
+
+        specialinvoke r0.<com.android.server.BatteryService: void processValuesLocked(boolean)>(0);
+
+        $r11 = r0.<com.android.server.BatteryService: java.lang.Object mLock>;
+
+        virtualinvoke $r11.<java.lang.Object: void notifyAll()>();
+
+     label2:
+        goto label4;
+
+     label3:
+        $r8 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mLastHealthInfo>;
+
+        $r6 = r13.<android.hardware.health.V2_1.HealthInfo: android.hardware.health.V2_0.HealthInfo legacy>;
+
+        $r7 = $r6.<android.hardware.health.V2_0.HealthInfo: android.hardware.health.V1_0.HealthInfo legacy>;
+
+        staticinvoke <com.android.server.BatteryService: void copy(android.hardware.health.V1_0.HealthInfo,android.hardware.health.V1_0.HealthInfo)>($r8, $r7);
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        staticinvoke <com.android.server.BatteryService: void traceEnd()>();
+
+        return;
+
+     label6:
+        $r12 := @caughtexception;
+
+     label7:
+        exitmonitor r1;
+
+     label8:
+        throw $r12;
+
+        catch java.lang.Throwable from label1 to label2 with label6;
+        catch java.lang.Throwable from label3 to label4 with label6;
+        catch java.lang.Throwable from label4 to label5 with label6;
+        catch java.lang.Throwable from label7 to label8 with label6;
+    }
+
+    private void updateBatteryWarningLevelLocked()
+    {
+        com.android.server.BatteryService r0;
+        android.content.ContentResolver r1;
+        android.content.Context $r2, $r3, $r5;
+        android.content.res.Resources $r4, $r6;
+        int $i0, $i1, $i2, i3, i4, i5, i6;
+
+        r0 := @this: com.android.server.BatteryService;
+
+        $r2 = r0.<com.android.server.BatteryService: android.content.Context mContext>;
+
+        r1 = virtualinvoke $r2.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        $r3 = r0.<com.android.server.BatteryService: android.content.Context mContext>;
+
+        $r4 = virtualinvoke $r3.<android.content.Context: android.content.res.Resources getResources()>();
+
+        i3 = virtualinvoke $r4.<android.content.res.Resources: int getInteger(int)>(17694830);
+
+        i4 = staticinvoke <android.provider.Settings$Global: int getInt(android.content.ContentResolver,java.lang.String,int)>(r1, "low_power_trigger_level", i3);
+
+        r0.<com.android.server.BatteryService: int mLowBatteryWarningLevel> = i4;
+
+        if i4 != 0 goto label1;
+
+        r0.<com.android.server.BatteryService: int mLowBatteryWarningLevel> = i3;
+
+     label1:
+        i5 = r0.<com.android.server.BatteryService: int mLowBatteryWarningLevel>;
+
+        i6 = r0.<com.android.server.BatteryService: int mCriticalBatteryLevel>;
+
+        if i5 >= i6 goto label2;
+
+        r0.<com.android.server.BatteryService: int mLowBatteryWarningLevel> = i6;
+
+     label2:
+        $i0 = r0.<com.android.server.BatteryService: int mLowBatteryWarningLevel>;
+
+        $r5 = r0.<com.android.server.BatteryService: android.content.Context mContext>;
+
+        $r6 = virtualinvoke $r5.<android.content.Context: android.content.res.Resources getResources()>();
+
+        $i1 = virtualinvoke $r6.<android.content.res.Resources: int getInteger(int)>(17694829);
+
+        $i2 = $i0 + $i1;
+
+        r0.<com.android.server.BatteryService: int mLowBatteryCloseWarningLevel> = $i2;
+
+        specialinvoke r0.<com.android.server.BatteryService: void processValuesLocked(boolean)>(1);
+
+        return;
+    }
+
+    public void onBootPhase(int)
+    {
+        com.android.server.BatteryService r0;
+        int i0;
+        java.lang.Object r1;
+        android.os.Handler $r2;
+        android.content.Context $r3;
+        android.content.ContentResolver $r4;
+        android.net.Uri $r5;
+        java.lang.Throwable $r6;
+        com.android.server.BatteryService$2 r7;
+
+        r0 := @this: com.android.server.BatteryService;
+
+        i0 := @parameter0: int;
+
+        if i0 != 550 goto label6;
+
+        r1 = r0.<com.android.server.BatteryService: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        r7 = new com.android.server.BatteryService$2;
+
+        $r2 = r0.<com.android.server.BatteryService: android.os.Handler mHandler>;
+
+        specialinvoke r7.<com.android.server.BatteryService$2: void <init>(com.android.server.BatteryService,android.os.Handler)>(r0, $r2);
+
+        $r3 = r0.<com.android.server.BatteryService: android.content.Context mContext>;
+
+        $r4 = virtualinvoke $r3.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        $r5 = staticinvoke <android.provider.Settings$Global: android.net.Uri getUriFor(java.lang.String)>("low_power_trigger_level");
+
+        virtualinvoke $r4.<android.content.ContentResolver: void registerContentObserver(android.net.Uri,boolean,android.database.ContentObserver,int)>($r5, 0, r7, -1);
+
+        specialinvoke r0.<com.android.server.BatteryService: void updateBatteryWarningLevelLocked()>();
+
+        exitmonitor r1;
+
+     label2:
+        goto label6;
+
+     label3:
+        $r6 := @caughtexception;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        throw $r6;
+
+     label6:
+        return;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    int onShellCommand(com.android.server.BatteryService$Shell, java.lang.String)
+    {
+        com.android.server.BatteryService r0;
+        java.io.PrintWriter r1;
+        int i1, $i2, $i3, $i4, $i5, $i6, $i7, $i8, $i9, $i10, $i11, $i12, $i13, i14, i16, i20;
+        java.lang.StringBuilder r2, $r25;
+        boolean $z1, $z2, $z3, $z4, $z5, $z6, $z7, $z8, $z9, $z10, $z11, $z12, $z13, $z14, $z15, z16, z17, z18, z19, z20;
+        android.content.Context $r3, $r9, $r19;
+        android.hardware.health.V1_0.HealthInfo $r4, $r5, $r6, $r7, $r8, $r10, $r11, $r12, $r13, $r17, $r18, $r20, $r21, r35, r36, r37, r38;
+        java.lang.String $r16, $r28, r31, r33, r34;
+        java.lang.Throwable $r22, $r23, $r24, $r29;
+        com.android.server.BatteryService$Shell r30;
+        byte b15, b18;
+        long l17, l19, l21;
+
+        r0 := @this: com.android.server.BatteryService;
+
+        r30 := @parameter0: com.android.server.BatteryService$Shell;
+
+        r31 := @parameter1: java.lang.String;
+
+        if r31 != null goto label01;
+
+        $i13 = virtualinvoke r30.<com.android.server.BatteryService$Shell: int handleDefaultCommands(java.lang.String)>(r31);
+
+        return $i13;
+
+     label01:
+        r1 = virtualinvoke r30.<com.android.server.BatteryService$Shell: java.io.PrintWriter getOutPrintWriter()>();
+
+        i14 = virtualinvoke r31.<java.lang.String: int hashCode()>();
+
+        if i14 == -840325209 goto label05;
+
+        if i14 == 113762 goto label04;
+
+        if i14 == 108404047 goto label03;
+
+     label02:
+        goto label06;
+
+     label03:
+        $z15 = virtualinvoke r31.<java.lang.String: boolean equals(java.lang.Object)>("reset");
+
+        if $z15 == 0 goto label02;
+
+        b15 = 2;
+
+        goto label07;
+
+     label04:
+        $z14 = virtualinvoke r31.<java.lang.String: boolean equals(java.lang.Object)>("set");
+
+        if $z14 == 0 goto label02;
+
+        b15 = 1;
+
+        goto label07;
+
+     label05:
+        $z1 = virtualinvoke r31.<java.lang.String: boolean equals(java.lang.Object)>("unplug");
+
+        if $z1 == 0 goto label02;
+
+        b15 = 0;
+
+        goto label07;
+
+     label06:
+        b15 = -1;
+
+     label07:
+        if b15 == 0 goto label81;
+
+        if b15 == 1 goto label12;
+
+        if b15 == 2 goto label08;
+
+        $i12 = virtualinvoke r30.<com.android.server.BatteryService$Shell: int handleDefaultCommands(java.lang.String)>(r31);
+
+        return $i12;
+
+     label08:
+        i16 = virtualinvoke r0.<com.android.server.BatteryService: int parseOptions(com.android.server.BatteryService$Shell)>(r30);
+
+        $r19 = virtualinvoke r0.<com.android.server.BatteryService: android.content.Context getContext()>();
+
+        virtualinvoke $r19.<android.content.Context: void enforceCallingOrSelfPermission(java.lang.String,java.lang.String)>("android.permission.DEVICE_POWER", null);
+
+        l17 = staticinvoke <android.os.Binder: long clearCallingIdentity()>();
+
+     label09:
+        $z13 = r0.<com.android.server.BatteryService: boolean mUpdatesStopped>;
+
+        if $z13 == 0 goto label10;
+
+        r0.<com.android.server.BatteryService: boolean mUpdatesStopped> = 0;
+
+        $r21 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $r20 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mLastHealthInfo>;
+
+        staticinvoke <com.android.server.BatteryService: void copy(android.hardware.health.V1_0.HealthInfo,android.hardware.health.V1_0.HealthInfo)>($r21, $r20);
+
+        specialinvoke r0.<com.android.server.BatteryService: void processValuesFromShellLocked(java.io.PrintWriter,int)>(r1, i16);
+
+     label10:
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l17);
+
+        goto label85;
+
+     label11:
+        $r23 := @caughtexception;
+
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l17);
+
+        throw $r23;
+
+     label12:
+        i1 = virtualinvoke r0.<com.android.server.BatteryService: int parseOptions(com.android.server.BatteryService$Shell)>(r30);
+
+        $r9 = virtualinvoke r0.<com.android.server.BatteryService: android.content.Context getContext()>();
+
+        virtualinvoke $r9.<android.content.Context: void enforceCallingOrSelfPermission(java.lang.String,java.lang.String)>("android.permission.DEVICE_POWER", null);
+
+        r33 = virtualinvoke r30.<com.android.server.BatteryService$Shell: java.lang.String getNextArg()>();
+
+        if r33 != null goto label13;
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>("No property specified");
+
+        return -1;
+
+     label13:
+        r34 = virtualinvoke r30.<com.android.server.BatteryService$Shell: java.lang.String getNextArg()>();
+
+        if r34 != null goto label14;
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>("No value specified");
+
+        return -1;
+
+     label14:
+        $z3 = r0.<com.android.server.BatteryService: boolean mUpdatesStopped>;
+
+        if $z3 != 0 goto label15;
+
+        $r18 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mLastHealthInfo>;
+
+        $r17 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        staticinvoke <com.android.server.BatteryService: void copy(android.hardware.health.V1_0.HealthInfo,android.hardware.health.V1_0.HealthInfo)>($r18, $r17);
+
+     label15:
+        $i2 = virtualinvoke r33.<java.lang.String: int hashCode()>();
+
+        lookupswitch($i2)
+        {
+            case -1000044642: goto label33;
+            case -892481550: goto label31;
+            case -318277445: goto label29;
+            case 3106: goto label27;
+            case 116100: goto label25;
+            case 3556308: goto label23;
+            case 102865796: goto label21;
+            case 957830652: goto label19;
+            case 1959784951: goto label17;
+            default: goto label16;
+        };
+
+     label16:
+        goto label35;
+
+     label17:
+        $z4 = virtualinvoke r33.<java.lang.String: boolean equals(java.lang.Object)>("invalid");
+
+        if $z4 == 0 goto label16;
+
+     label18:
+        b18 = 8;
+
+        goto label36;
+
+     label19:
+        $z5 = virtualinvoke r33.<java.lang.String: boolean equals(java.lang.Object)>("counter");
+
+        if $z5 == 0 goto label16;
+
+     label20:
+        b18 = 6;
+
+        goto label36;
+
+     label21:
+        $z6 = virtualinvoke r33.<java.lang.String: boolean equals(java.lang.Object)>("level");
+
+        if $z6 == 0 goto label16;
+
+     label22:
+        b18 = 5;
+
+        goto label36;
+
+     label23:
+        $z7 = virtualinvoke r33.<java.lang.String: boolean equals(java.lang.Object)>("temp");
+
+        if $z7 == 0 goto label16;
+
+     label24:
+        b18 = 7;
+
+        goto label36;
+
+     label25:
+        $z8 = virtualinvoke r33.<java.lang.String: boolean equals(java.lang.Object)>("usb");
+
+        if $z8 == 0 goto label16;
+
+     label26:
+        b18 = 2;
+
+        goto label36;
+
+     label27:
+        $z9 = virtualinvoke r33.<java.lang.String: boolean equals(java.lang.Object)>("ac");
+
+        if $z9 == 0 goto label16;
+
+     label28:
+        b18 = 1;
+
+        goto label36;
+
+     label29:
+        $z10 = virtualinvoke r33.<java.lang.String: boolean equals(java.lang.Object)>("present");
+
+        if $z10 == 0 goto label16;
+
+     label30:
+        b18 = 0;
+
+        goto label36;
+
+     label31:
+        $z11 = virtualinvoke r33.<java.lang.String: boolean equals(java.lang.Object)>("status");
+
+        if $z11 == 0 goto label16;
+
+     label32:
+        b18 = 4;
+
+        goto label36;
+
+     label33:
+        $z12 = virtualinvoke r33.<java.lang.String: boolean equals(java.lang.Object)>("wireless");
+
+        if $z12 == 0 goto label16;
+
+     label34:
+        b18 = 3;
+
+        goto label36;
+
+     label35:
+        b18 = -1;
+
+     label36:
+        tableswitch(b18)
+        {
+            case 0: goto label64;
+            case 1: goto label59;
+            case 2: goto label54;
+            case 3: goto label49;
+            case 4: goto label47;
+            case 5: goto label45;
+            case 6: goto label43;
+            case 7: goto label41;
+            case 8: goto label39;
+            default: goto label37;
+        };
+
+     label37:
+        r2 = new java.lang.StringBuilder;
+
+     label38:
+        goto label69;
+
+     label39:
+        $i3 = staticinvoke <java.lang.Integer: int parseInt(java.lang.String)>(r34);
+
+        r0.<com.android.server.BatteryService: int mInvalidCharger> = $i3;
+
+     label40:
+        z16 = 1;
+
+        goto label71;
+
+     label41:
+        $r10 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i4 = staticinvoke <java.lang.Integer: int parseInt(java.lang.String)>(r34);
+
+        $r10.<android.hardware.health.V1_0.HealthInfo: int batteryTemperature> = $i4;
+
+     label42:
+        z16 = 1;
+
+        goto label71;
+
+     label43:
+        $r11 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i5 = staticinvoke <java.lang.Integer: int parseInt(java.lang.String)>(r34);
+
+        $r11.<android.hardware.health.V1_0.HealthInfo: int batteryChargeCounter> = $i5;
+
+     label44:
+        z16 = 1;
+
+        goto label71;
+
+     label45:
+        $r12 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i6 = staticinvoke <java.lang.Integer: int parseInt(java.lang.String)>(r34);
+
+        $r12.<android.hardware.health.V1_0.HealthInfo: int batteryLevel> = $i6;
+
+     label46:
+        z16 = 1;
+
+        goto label71;
+
+     label47:
+        $r13 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i7 = staticinvoke <java.lang.Integer: int parseInt(java.lang.String)>(r34);
+
+        $r13.<android.hardware.health.V1_0.HealthInfo: int batteryStatus> = $i7;
+
+     label48:
+        z16 = 1;
+
+        goto label71;
+
+     label49:
+        r35 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i8 = staticinvoke <java.lang.Integer: int parseInt(java.lang.String)>(r34);
+
+        if $i8 == 0 goto label51;
+
+     label50:
+        z17 = 1;
+
+        goto label52;
+
+     label51:
+        z17 = 0;
+
+     label52:
+        r35.<android.hardware.health.V1_0.HealthInfo: boolean chargerWirelessOnline> = z17;
+
+     label53:
+        z16 = 1;
+
+        goto label71;
+
+     label54:
+        r36 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i9 = staticinvoke <java.lang.Integer: int parseInt(java.lang.String)>(r34);
+
+        if $i9 == 0 goto label56;
+
+     label55:
+        z18 = 1;
+
+        goto label57;
+
+     label56:
+        z18 = 0;
+
+     label57:
+        r36.<android.hardware.health.V1_0.HealthInfo: boolean chargerUsbOnline> = z18;
+
+     label58:
+        z16 = 1;
+
+        goto label71;
+
+     label59:
+        r37 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i10 = staticinvoke <java.lang.Integer: int parseInt(java.lang.String)>(r34);
+
+        if $i10 == 0 goto label61;
+
+     label60:
+        z19 = 1;
+
+        goto label62;
+
+     label61:
+        z19 = 0;
+
+     label62:
+        r37.<android.hardware.health.V1_0.HealthInfo: boolean chargerAcOnline> = z19;
+
+     label63:
+        z16 = 1;
+
+        goto label71;
+
+     label64:
+        r38 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $i11 = staticinvoke <java.lang.Integer: int parseInt(java.lang.String)>(r34);
+
+        if $i11 == 0 goto label66;
+
+     label65:
+        z20 = 1;
+
+        goto label67;
+
+     label66:
+        z20 = 0;
+
+     label67:
+        r38.<android.hardware.health.V1_0.HealthInfo: boolean batteryPresent> = z20;
+
+     label68:
+        z16 = 1;
+
+        goto label71;
+
+     label69:
+        specialinvoke r2.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Unknown set option: ");
+
+        virtualinvoke r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r33);
+
+        $r16 = virtualinvoke r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r16);
+
+     label70:
+        z16 = 0;
+
+     label71:
+        if z16 == 0 goto label79;
+
+     label72:
+        l19 = staticinvoke <android.os.Binder: long clearCallingIdentity()>();
+
+     label73:
+        r0.<com.android.server.BatteryService: boolean mUpdatesStopped> = 1;
+
+        specialinvoke r0.<com.android.server.BatteryService: void processValuesFromShellLocked(java.io.PrintWriter,int)>(r1, i1);
+
+     label74:
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l19);
+
+     label75:
+        goto label79;
+
+     label76:
+        $r29 := @caughtexception;
+
+     label77:
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l19);
+
+     label78:
+        throw $r29;
+
+     label79:
+        goto label85;
+
+     label80:
+        $r24 := @caughtexception;
+
+        $r25 = new java.lang.StringBuilder;
+
+        specialinvoke $r25.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r25.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Bad value: ");
+
+        virtualinvoke $r25.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r34);
+
+        $r28 = virtualinvoke $r25.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r28);
+
+        return -1;
+
+     label81:
+        i20 = virtualinvoke r0.<com.android.server.BatteryService: int parseOptions(com.android.server.BatteryService$Shell)>(r30);
+
+        $r3 = virtualinvoke r0.<com.android.server.BatteryService: android.content.Context getContext()>();
+
+        virtualinvoke $r3.<android.content.Context: void enforceCallingOrSelfPermission(java.lang.String,java.lang.String)>("android.permission.DEVICE_POWER", null);
+
+        $z2 = r0.<com.android.server.BatteryService: boolean mUpdatesStopped>;
+
+        if $z2 != 0 goto label82;
+
+        $r8 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mLastHealthInfo>;
+
+        $r7 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        staticinvoke <com.android.server.BatteryService: void copy(android.hardware.health.V1_0.HealthInfo,android.hardware.health.V1_0.HealthInfo)>($r8, $r7);
+
+     label82:
+        $r4 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $r4.<android.hardware.health.V1_0.HealthInfo: boolean chargerAcOnline> = 0;
+
+        $r5 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $r5.<android.hardware.health.V1_0.HealthInfo: boolean chargerUsbOnline> = 0;
+
+        $r6 = r0.<com.android.server.BatteryService: android.hardware.health.V1_0.HealthInfo mHealthInfo>;
+
+        $r6.<android.hardware.health.V1_0.HealthInfo: boolean chargerWirelessOnline> = 0;
+
+        l21 = staticinvoke <android.os.Binder: long clearCallingIdentity()>();
+
+     label83:
+        r0.<com.android.server.BatteryService: boolean mUpdatesStopped> = 1;
+
+        specialinvoke r0.<com.android.server.BatteryService: void processValuesFromShellLocked(java.io.PrintWriter,int)>(r1, i20);
+
+     label84:
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l21);
+
+     label85:
+        return 0;
+
+     label86:
+        $r22 := @caughtexception;
+
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l21);
+
+        throw $r22;
+
+        catch java.lang.Throwable from label09 to label10 with label11;
+        catch java.lang.NumberFormatException from label14 to label15 with label80;
+        catch java.lang.NumberFormatException from label15 to label16 with label80;
+        catch java.lang.NumberFormatException from label17 to label18 with label80;
+        catch java.lang.NumberFormatException from label19 to label20 with label80;
+        catch java.lang.NumberFormatException from label21 to label22 with label80;
+        catch java.lang.NumberFormatException from label23 to label24 with label80;
+        catch java.lang.NumberFormatException from label25 to label26 with label80;
+        catch java.lang.NumberFormatException from label27 to label28 with label80;
+        catch java.lang.NumberFormatException from label29 to label30 with label80;
+        catch java.lang.NumberFormatException from label31 to label32 with label80;
+        catch java.lang.NumberFormatException from label33 to label34 with label80;
+        catch java.lang.NumberFormatException from label37 to label38 with label80;
+        catch java.lang.NumberFormatException from label39 to label40 with label80;
+        catch java.lang.NumberFormatException from label41 to label42 with label80;
+        catch java.lang.NumberFormatException from label43 to label44 with label80;
+        catch java.lang.NumberFormatException from label45 to label46 with label80;
+        catch java.lang.NumberFormatException from label47 to label48 with label80;
+        catch java.lang.NumberFormatException from label49 to label50 with label80;
+        catch java.lang.NumberFormatException from label52 to label53 with label80;
+        catch java.lang.NumberFormatException from label54 to label55 with label80;
+        catch java.lang.NumberFormatException from label57 to label58 with label80;
+        catch java.lang.NumberFormatException from label59 to label60 with label80;
+        catch java.lang.NumberFormatException from label62 to label63 with label80;
+        catch java.lang.NumberFormatException from label64 to label65 with label80;
+        catch java.lang.NumberFormatException from label67 to label68 with label80;
+        catch java.lang.NumberFormatException from label69 to label70 with label80;
+        catch java.lang.NumberFormatException from label72 to label73 with label80;
+        catch java.lang.Throwable from label73 to label74 with label76;
+        catch java.lang.NumberFormatException from label74 to label75 with label80;
+        catch java.lang.NumberFormatException from label77 to label78 with label80;
+        catch java.lang.NumberFormatException from label78 to label79 with label80;
+        catch java.lang.Throwable from label83 to label84 with label86;
+    }
+
+    public void onStart()
+    {
+        com.android.server.BatteryService r0;
+        com.android.server.BatteryService$BinderService $r1;
+        com.android.server.BatteryService$BatteryPropertiesRegistrar $r2;
+        com.android.server.BatteryService$LocalService $r3;
+
+        r0 := @this: com.android.server.BatteryService;
+
+        specialinvoke r0.<com.android.server.BatteryService: void registerHealthCallback()>();
+
+        $r1 = new com.android.server.BatteryService$BinderService;
+
+        specialinvoke $r1.<com.android.server.BatteryService$BinderService: void <init>(com.android.server.BatteryService,com.android.server.BatteryService$1)>(r0, null);
+
+        r0.<com.android.server.BatteryService: com.android.server.BatteryService$BinderService mBinderService> = $r1;
+
+        virtualinvoke r0.<com.android.server.BatteryService: void publishBinderService(java.lang.String,android.os.IBinder)>("battery", $r1);
+
+        $r2 = new com.android.server.BatteryService$BatteryPropertiesRegistrar;
+
+        specialinvoke $r2.<com.android.server.BatteryService$BatteryPropertiesRegistrar: void <init>(com.android.server.BatteryService,com.android.server.BatteryService$1)>(r0, null);
+
+        r0.<com.android.server.BatteryService: com.android.server.BatteryService$BatteryPropertiesRegistrar mBatteryPropertiesRegistrar> = $r2;
+
+        virtualinvoke r0.<com.android.server.BatteryService: void publishBinderService(java.lang.String,android.os.IBinder)>("batteryproperties", $r2);
+
+        $r3 = new com.android.server.BatteryService$LocalService;
+
+        specialinvoke $r3.<com.android.server.BatteryService$LocalService: void <init>(com.android.server.BatteryService,com.android.server.BatteryService$1)>(r0, null);
+
+        virtualinvoke r0.<com.android.server.BatteryService: void publishLocalService(java.lang.Class,java.lang.Object)>(class "Landroid/os/BatteryManagerInternal;", $r3);
+
+        return;
+    }
+
+    int parseOptions(com.android.server.BatteryService$Shell)
+    {
+        com.android.server.BatteryService r0;
+        com.android.server.BatteryService$Shell r1;
+        java.lang.String r2, $r3;
+        boolean $z0;
+        byte b0;
+
+        r0 := @this: com.android.server.BatteryService;
+
+        r1 := @parameter0: com.android.server.BatteryService$Shell;
+
+        b0 = 0;
+
+     label1:
+        r2 = virtualinvoke r1.<com.android.server.BatteryService$Shell: java.lang.String getNextOption()>();
+
+        if r2 == null goto label2;
+
+        $r3 = "-f";
+
+        $z0 = virtualinvoke $r3.<java.lang.String: boolean equals(java.lang.Object)>(r2);
+
+        if $z0 == 0 goto label1;
+
+        b0 = b0 | 1;
+
+        goto label1;
+
+     label2:
+        return b0;
+    }
+}

@@ -1,0 +1,2026 @@
+public final class com.android.server.dreams.DreamManagerService extends com.android.server.SystemService
+{
+    private static final boolean DEBUG;
+    private static final java.lang.String TAG;
+    private final android.content.ComponentName mAmbientDisplayComponent;
+    private final com.android.server.wm.ActivityTaskManagerInternal mAtmInternal;
+    private final android.content.Context mContext;
+    private final com.android.server.dreams.DreamController mController;
+    private final com.android.server.dreams.DreamController$Listener mControllerListener;
+    private boolean mCurrentDreamCanDoze;
+    private int mCurrentDreamDozeScreenBrightness;
+    private int mCurrentDreamDozeScreenState;
+    private boolean mCurrentDreamIsDozing;
+    private boolean mCurrentDreamIsTest;
+    private boolean mCurrentDreamIsWaking;
+    private android.content.ComponentName mCurrentDreamName;
+    private android.os.Binder mCurrentDreamToken;
+    private int mCurrentDreamUserId;
+    private android.hardware.display.AmbientDisplayConfiguration mDozeConfig;
+    private final android.database.ContentObserver mDozeEnabledObserver;
+    private final android.os.PowerManager$WakeLock mDozeWakeLock;
+    private boolean mForceAmbientDisplayEnabled;
+    private final com.android.server.dreams.DreamManagerService$DreamHandler mHandler;
+    private final java.lang.Object mLock;
+    private final android.os.PowerManager mPowerManager;
+    private final android.os.PowerManagerInternal mPowerManagerInternal;
+    private final java.lang.Runnable mSystemPropertiesChanged;
+    private final com.android.internal.logging.UiEventLogger mUiEventLogger;
+
+    public void <init>(android.content.Context)
+    {
+        com.android.server.dreams.DreamManagerService r0;
+        android.content.Context r1, $r21, $r24;
+        java.lang.Object $r3, $r12, $r14, $r16;
+        com.android.server.dreams.DreamManagerService$4 $r4;
+        com.android.server.dreams.DreamManagerService$5 $r5;
+        com.android.server.dreams.DreamManagerService$6 $r6;
+        com.android.server.dreams.DreamManagerService$DreamHandler $r7;
+        com.android.server.FgThread $r8;
+        android.os.Looper $r9;
+        com.android.server.dreams.DreamController $r10;
+        com.android.server.dreams.DreamController$Listener $r11;
+        android.os.PowerManager $r13, $r18;
+        android.os.PowerManagerInternal $r15;
+        com.android.server.wm.ActivityTaskManagerInternal $r17;
+        android.os.PowerManager$WakeLock $r19;
+        android.hardware.display.AmbientDisplayConfiguration $r20, $r23;
+        com.android.internal.logging.UiEventLoggerImpl $r22;
+        java.lang.String $r25;
+        android.content.ComponentName $r26;
+
+        r0 := @this: com.android.server.dreams.DreamManagerService;
+
+        r1 := @parameter0: android.content.Context;
+
+        specialinvoke r0.<com.android.server.SystemService: void <init>(android.content.Context)>(r1);
+
+        $r3 = new java.lang.Object;
+
+        specialinvoke $r3.<java.lang.Object: void <init>()>();
+
+        r0.<com.android.server.dreams.DreamManagerService: java.lang.Object mLock> = $r3;
+
+        r0.<com.android.server.dreams.DreamManagerService: int mCurrentDreamDozeScreenState> = 0;
+
+        r0.<com.android.server.dreams.DreamManagerService: int mCurrentDreamDozeScreenBrightness> = -1;
+
+        $r4 = new com.android.server.dreams.DreamManagerService$4;
+
+        specialinvoke $r4.<com.android.server.dreams.DreamManagerService$4: void <init>(com.android.server.dreams.DreamManagerService)>(r0);
+
+        r0.<com.android.server.dreams.DreamManagerService: com.android.server.dreams.DreamController$Listener mControllerListener> = $r4;
+
+        $r5 = new com.android.server.dreams.DreamManagerService$5;
+
+        specialinvoke $r5.<com.android.server.dreams.DreamManagerService$5: void <init>(com.android.server.dreams.DreamManagerService,android.os.Handler)>(r0, null);
+
+        r0.<com.android.server.dreams.DreamManagerService: android.database.ContentObserver mDozeEnabledObserver> = $r5;
+
+        $r6 = new com.android.server.dreams.DreamManagerService$6;
+
+        specialinvoke $r6.<com.android.server.dreams.DreamManagerService$6: void <init>(com.android.server.dreams.DreamManagerService)>(r0);
+
+        r0.<com.android.server.dreams.DreamManagerService: java.lang.Runnable mSystemPropertiesChanged> = $r6;
+
+        r0.<com.android.server.dreams.DreamManagerService: android.content.Context mContext> = r1;
+
+        $r7 = new com.android.server.dreams.DreamManagerService$DreamHandler;
+
+        $r8 = staticinvoke <com.android.server.FgThread: com.android.server.FgThread get()>();
+
+        $r9 = virtualinvoke $r8.<com.android.server.FgThread: android.os.Looper getLooper()>();
+
+        specialinvoke $r7.<com.android.server.dreams.DreamManagerService$DreamHandler: void <init>(com.android.server.dreams.DreamManagerService,android.os.Looper)>(r0, $r9);
+
+        r0.<com.android.server.dreams.DreamManagerService: com.android.server.dreams.DreamManagerService$DreamHandler mHandler> = $r7;
+
+        $r10 = new com.android.server.dreams.DreamController;
+
+        $r11 = r0.<com.android.server.dreams.DreamManagerService: com.android.server.dreams.DreamController$Listener mControllerListener>;
+
+        specialinvoke $r10.<com.android.server.dreams.DreamController: void <init>(android.content.Context,android.os.Handler,com.android.server.dreams.DreamController$Listener)>(r1, $r7, $r11);
+
+        r0.<com.android.server.dreams.DreamManagerService: com.android.server.dreams.DreamController mController> = $r10;
+
+        $r12 = virtualinvoke r1.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("power");
+
+        $r13 = (android.os.PowerManager) $r12;
+
+        r0.<com.android.server.dreams.DreamManagerService: android.os.PowerManager mPowerManager> = $r13;
+
+        $r14 = virtualinvoke r0.<com.android.server.dreams.DreamManagerService: java.lang.Object getLocalService(java.lang.Class)>(class "Landroid/os/PowerManagerInternal;");
+
+        $r15 = (android.os.PowerManagerInternal) $r14;
+
+        r0.<com.android.server.dreams.DreamManagerService: android.os.PowerManagerInternal mPowerManagerInternal> = $r15;
+
+        $r16 = virtualinvoke r0.<com.android.server.dreams.DreamManagerService: java.lang.Object getLocalService(java.lang.Class)>(class "Lcom/android/server/wm/ActivityTaskManagerInternal;");
+
+        $r17 = (com.android.server.wm.ActivityTaskManagerInternal) $r16;
+
+        r0.<com.android.server.dreams.DreamManagerService: com.android.server.wm.ActivityTaskManagerInternal mAtmInternal> = $r17;
+
+        $r18 = r0.<com.android.server.dreams.DreamManagerService: android.os.PowerManager mPowerManager>;
+
+        $r19 = virtualinvoke $r18.<android.os.PowerManager: android.os.PowerManager$WakeLock newWakeLock(int,java.lang.String)>(64, "DreamManagerService");
+
+        r0.<com.android.server.dreams.DreamManagerService: android.os.PowerManager$WakeLock mDozeWakeLock> = $r19;
+
+        $r20 = new android.hardware.display.AmbientDisplayConfiguration;
+
+        $r21 = r0.<com.android.server.dreams.DreamManagerService: android.content.Context mContext>;
+
+        specialinvoke $r20.<android.hardware.display.AmbientDisplayConfiguration: void <init>(android.content.Context)>($r21);
+
+        r0.<com.android.server.dreams.DreamManagerService: android.hardware.display.AmbientDisplayConfiguration mDozeConfig> = $r20;
+
+        $r22 = new com.android.internal.logging.UiEventLoggerImpl;
+
+        specialinvoke $r22.<com.android.internal.logging.UiEventLoggerImpl: void <init>()>();
+
+        r0.<com.android.server.dreams.DreamManagerService: com.android.internal.logging.UiEventLogger mUiEventLogger> = $r22;
+
+        $r23 = new android.hardware.display.AmbientDisplayConfiguration;
+
+        $r24 = r0.<com.android.server.dreams.DreamManagerService: android.content.Context mContext>;
+
+        specialinvoke $r23.<android.hardware.display.AmbientDisplayConfiguration: void <init>(android.content.Context)>($r24);
+
+        $r25 = virtualinvoke $r23.<android.hardware.display.AmbientDisplayConfiguration: java.lang.String ambientDisplayComponent()>();
+
+        $r26 = staticinvoke <android.content.ComponentName: android.content.ComponentName unflattenFromString(java.lang.String)>($r25);
+
+        r0.<com.android.server.dreams.DreamManagerService: android.content.ComponentName mAmbientDisplayComponent> = $r26;
+
+        return;
+    }
+
+    static void access$1000(com.android.server.dreams.DreamManagerService, java.lang.String)
+    {
+        com.android.server.dreams.DreamManagerService r0;
+        java.lang.String r1;
+
+        r0 := @parameter0: com.android.server.dreams.DreamManagerService;
+
+        r1 := @parameter1: java.lang.String;
+
+        specialinvoke r0.<com.android.server.dreams.DreamManagerService: void checkPermission(java.lang.String)>(r1);
+
+        return;
+    }
+
+    static android.content.ComponentName[] access$1100(com.android.server.dreams.DreamManagerService, int)
+    {
+        com.android.server.dreams.DreamManagerService r0;
+        int i0;
+        android.content.ComponentName[] $r1;
+
+        r0 := @parameter0: com.android.server.dreams.DreamManagerService;
+
+        i0 := @parameter1: int;
+
+        $r1 = specialinvoke r0.<com.android.server.dreams.DreamManagerService: android.content.ComponentName[] getDreamComponentsForUser(int)>(i0);
+
+        return $r1;
+    }
+
+    static void access$1200(com.android.server.dreams.DreamManagerService, int, android.content.ComponentName[])
+    {
+        com.android.server.dreams.DreamManagerService r0;
+        int i0;
+        android.content.ComponentName[] r1;
+
+        r0 := @parameter0: com.android.server.dreams.DreamManagerService;
+
+        i0 := @parameter1: int;
+
+        r1 := @parameter2: android.content.ComponentName[];
+
+        specialinvoke r0.<com.android.server.dreams.DreamManagerService: void setDreamComponentsForUser(int,android.content.ComponentName[])>(i0, r1);
+
+        return;
+    }
+
+    static android.content.ComponentName access$1300(com.android.server.dreams.DreamManagerService, int)
+    {
+        com.android.server.dreams.DreamManagerService r0;
+        int i0;
+        android.content.ComponentName $r1;
+
+        r0 := @parameter0: com.android.server.dreams.DreamManagerService;
+
+        i0 := @parameter1: int;
+
+        $r1 = specialinvoke r0.<com.android.server.dreams.DreamManagerService: android.content.ComponentName getDefaultDreamComponentForUser(int)>(i0);
+
+        return $r1;
+    }
+
+    static boolean access$1400(com.android.server.dreams.DreamManagerService)
+    {
+        com.android.server.dreams.DreamManagerService r0;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.server.dreams.DreamManagerService;
+
+        $z0 = specialinvoke r0.<com.android.server.dreams.DreamManagerService: boolean isDreamingInternal()>();
+
+        return $z0;
+    }
+
+    static void access$1500(com.android.server.dreams.DreamManagerService)
+    {
+        com.android.server.dreams.DreamManagerService r0;
+
+        r0 := @parameter0: com.android.server.dreams.DreamManagerService;
+
+        specialinvoke r0.<com.android.server.dreams.DreamManagerService: void requestDreamInternal()>();
+
+        return;
+    }
+
+    static void access$1600(com.android.server.dreams.DreamManagerService, android.content.ComponentName, int)
+    {
+        com.android.server.dreams.DreamManagerService r0;
+        android.content.ComponentName r1;
+        int i0;
+
+        r0 := @parameter0: com.android.server.dreams.DreamManagerService;
+
+        r1 := @parameter1: android.content.ComponentName;
+
+        i0 := @parameter2: int;
+
+        specialinvoke r0.<com.android.server.dreams.DreamManagerService: void testDreamInternal(android.content.ComponentName,int)>(r1, i0);
+
+        return;
+    }
+
+    static void access$1700(com.android.server.dreams.DreamManagerService)
+    {
+        com.android.server.dreams.DreamManagerService r0;
+
+        r0 := @parameter0: com.android.server.dreams.DreamManagerService;
+
+        specialinvoke r0.<com.android.server.dreams.DreamManagerService: void requestAwakenInternal()>();
+
+        return;
+    }
+
+    static void access$1800(com.android.server.dreams.DreamManagerService, android.os.IBinder, boolean)
+    {
+        com.android.server.dreams.DreamManagerService r0;
+        android.os.IBinder r1;
+        boolean z0;
+
+        r0 := @parameter0: com.android.server.dreams.DreamManagerService;
+
+        r1 := @parameter1: android.os.IBinder;
+
+        z0 := @parameter2: boolean;
+
+        specialinvoke r0.<com.android.server.dreams.DreamManagerService: void finishSelfInternal(android.os.IBinder,boolean)>(r1, z0);
+
+        return;
+    }
+
+    static void access$1900(com.android.server.dreams.DreamManagerService, android.os.IBinder, int, int)
+    {
+        com.android.server.dreams.DreamManagerService r0;
+        android.os.IBinder r1;
+        int i0, i1;
+
+        r0 := @parameter0: com.android.server.dreams.DreamManagerService;
+
+        r1 := @parameter1: android.os.IBinder;
+
+        i0 := @parameter2: int;
+
+        i1 := @parameter3: int;
+
+        specialinvoke r0.<com.android.server.dreams.DreamManagerService: void startDozingInternal(android.os.IBinder,int,int)>(r1, i0, i1);
+
+        return;
+    }
+
+    static void access$200(com.android.server.dreams.DreamManagerService)
+    {
+        com.android.server.dreams.DreamManagerService r0;
+
+        r0 := @parameter0: com.android.server.dreams.DreamManagerService;
+
+        specialinvoke r0.<com.android.server.dreams.DreamManagerService: void writePulseGestureEnabled()>();
+
+        return;
+    }
+
+    static void access$2000(com.android.server.dreams.DreamManagerService, android.os.IBinder)
+    {
+        com.android.server.dreams.DreamManagerService r0;
+        android.os.IBinder r1;
+
+        r0 := @parameter0: com.android.server.dreams.DreamManagerService;
+
+        r1 := @parameter1: android.os.IBinder;
+
+        specialinvoke r0.<com.android.server.dreams.DreamManagerService: void stopDozingInternal(android.os.IBinder)>(r1);
+
+        return;
+    }
+
+    static void access$2100(com.android.server.dreams.DreamManagerService, boolean)
+    {
+        com.android.server.dreams.DreamManagerService r0;
+        boolean z0;
+
+        r0 := @parameter0: com.android.server.dreams.DreamManagerService;
+
+        z0 := @parameter1: boolean;
+
+        specialinvoke r0.<com.android.server.dreams.DreamManagerService: void forceAmbientDisplayEnabledInternal(boolean)>(z0);
+
+        return;
+    }
+
+    static void access$2200(com.android.server.dreams.DreamManagerService, boolean)
+    {
+        com.android.server.dreams.DreamManagerService r0;
+        boolean z0;
+
+        r0 := @parameter0: com.android.server.dreams.DreamManagerService;
+
+        z0 := @parameter1: boolean;
+
+        specialinvoke r0.<com.android.server.dreams.DreamManagerService: void startDreamInternal(boolean)>(z0);
+
+        return;
+    }
+
+    static void access$2300(com.android.server.dreams.DreamManagerService, boolean, java.lang.String)
+    {
+        com.android.server.dreams.DreamManagerService r0;
+        boolean z0;
+        java.lang.String r1;
+
+        r0 := @parameter0: com.android.server.dreams.DreamManagerService;
+
+        z0 := @parameter1: boolean;
+
+        r1 := @parameter2: java.lang.String;
+
+        specialinvoke r0.<com.android.server.dreams.DreamManagerService: void stopDreamInternal(boolean,java.lang.String)>(z0, r1);
+
+        return;
+    }
+
+    static android.content.ComponentName access$2400(com.android.server.dreams.DreamManagerService, boolean)
+    {
+        com.android.server.dreams.DreamManagerService r0;
+        boolean z0;
+        android.content.ComponentName $r1;
+
+        r0 := @parameter0: com.android.server.dreams.DreamManagerService;
+
+        z0 := @parameter1: boolean;
+
+        $r1 = specialinvoke r0.<com.android.server.dreams.DreamManagerService: android.content.ComponentName getActiveDreamComponentInternal(boolean)>(z0);
+
+        return $r1;
+    }
+
+    static android.content.ComponentName access$2500(com.android.server.dreams.DreamManagerService)
+    {
+        com.android.server.dreams.DreamManagerService r0;
+        android.content.ComponentName $r1;
+
+        r0 := @parameter0: com.android.server.dreams.DreamManagerService;
+
+        $r1 = r0.<com.android.server.dreams.DreamManagerService: android.content.ComponentName mCurrentDreamName>;
+
+        return $r1;
+    }
+
+    static boolean access$2600(com.android.server.dreams.DreamManagerService)
+    {
+        com.android.server.dreams.DreamManagerService r0;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.server.dreams.DreamManagerService;
+
+        $z0 = r0.<com.android.server.dreams.DreamManagerService: boolean mCurrentDreamCanDoze>;
+
+        return $z0;
+    }
+
+    static android.content.ComponentName access$2700(com.android.server.dreams.DreamManagerService)
+    {
+        com.android.server.dreams.DreamManagerService r0;
+        android.content.ComponentName $r1;
+
+        r0 := @parameter0: com.android.server.dreams.DreamManagerService;
+
+        $r1 = specialinvoke r0.<com.android.server.dreams.DreamManagerService: android.content.ComponentName getDozeComponent()>();
+
+        return $r1;
+    }
+
+    static android.os.PowerManager access$2800(com.android.server.dreams.DreamManagerService)
+    {
+        com.android.server.dreams.DreamManagerService r0;
+        android.os.PowerManager $r1;
+
+        r0 := @parameter0: com.android.server.dreams.DreamManagerService;
+
+        $r1 = r0.<com.android.server.dreams.DreamManagerService: android.os.PowerManager mPowerManager>;
+
+        return $r1;
+    }
+
+    static java.lang.Object access$300(com.android.server.dreams.DreamManagerService)
+    {
+        com.android.server.dreams.DreamManagerService r0;
+        java.lang.Object $r1;
+
+        r0 := @parameter0: com.android.server.dreams.DreamManagerService;
+
+        $r1 = r0.<com.android.server.dreams.DreamManagerService: java.lang.Object mLock>;
+
+        return $r1;
+    }
+
+    static void access$400(com.android.server.dreams.DreamManagerService, boolean, java.lang.String)
+    {
+        com.android.server.dreams.DreamManagerService r0;
+        boolean z0;
+        java.lang.String r1;
+
+        r0 := @parameter0: com.android.server.dreams.DreamManagerService;
+
+        z0 := @parameter1: boolean;
+
+        r1 := @parameter2: java.lang.String;
+
+        specialinvoke r0.<com.android.server.dreams.DreamManagerService: void stopDreamLocked(boolean,java.lang.String)>(z0, r1);
+
+        return;
+    }
+
+    static com.android.server.dreams.DreamController access$500(com.android.server.dreams.DreamManagerService)
+    {
+        com.android.server.dreams.DreamManagerService r0;
+        com.android.server.dreams.DreamController $r1;
+
+        r0 := @parameter0: com.android.server.dreams.DreamManagerService;
+
+        $r1 = r0.<com.android.server.dreams.DreamManagerService: com.android.server.dreams.DreamController mController>;
+
+        return $r1;
+    }
+
+    static android.os.Binder access$600(com.android.server.dreams.DreamManagerService)
+    {
+        com.android.server.dreams.DreamManagerService r0;
+        android.os.Binder $r1;
+
+        r0 := @parameter0: com.android.server.dreams.DreamManagerService;
+
+        $r1 = r0.<com.android.server.dreams.DreamManagerService: android.os.Binder mCurrentDreamToken>;
+
+        return $r1;
+    }
+
+    static void access$700(com.android.server.dreams.DreamManagerService)
+    {
+        com.android.server.dreams.DreamManagerService r0;
+
+        r0 := @parameter0: com.android.server.dreams.DreamManagerService;
+
+        specialinvoke r0.<com.android.server.dreams.DreamManagerService: void cleanupDreamLocked()>();
+
+        return;
+    }
+
+    static android.content.Context access$800(com.android.server.dreams.DreamManagerService)
+    {
+        com.android.server.dreams.DreamManagerService r0;
+        android.content.Context $r1;
+
+        r0 := @parameter0: com.android.server.dreams.DreamManagerService;
+
+        $r1 = r0.<com.android.server.dreams.DreamManagerService: android.content.Context mContext>;
+
+        return $r1;
+    }
+
+    static void access$900(com.android.server.dreams.DreamManagerService, java.io.PrintWriter)
+    {
+        com.android.server.dreams.DreamManagerService r0;
+        java.io.PrintWriter r1;
+
+        r0 := @parameter0: com.android.server.dreams.DreamManagerService;
+
+        r1 := @parameter1: java.io.PrintWriter;
+
+        specialinvoke r0.<com.android.server.dreams.DreamManagerService: void dumpInternal(java.io.PrintWriter)>(r1);
+
+        return;
+    }
+
+    private void checkPermission(java.lang.String)
+    {
+        com.android.server.dreams.DreamManagerService r0;
+        java.lang.String r1, $r10;
+        android.content.Context $r3;
+        int $i0, $i1;
+        java.lang.StringBuilder $r4;
+        java.lang.SecurityException $r9;
+
+        r0 := @this: com.android.server.dreams.DreamManagerService;
+
+        r1 := @parameter0: java.lang.String;
+
+        $r3 = r0.<com.android.server.dreams.DreamManagerService: android.content.Context mContext>;
+
+        $i0 = virtualinvoke $r3.<android.content.Context: int checkCallingOrSelfPermission(java.lang.String)>(r1);
+
+        if $i0 != 0 goto label1;
+
+        return;
+
+     label1:
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Access denied to process: ");
+
+        $i1 = staticinvoke <android.os.Binder: int getCallingPid()>();
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i1);
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", must have permission ");
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r9 = new java.lang.SecurityException;
+
+        $r10 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r9.<java.lang.SecurityException: void <init>(java.lang.String)>($r10);
+
+        throw $r9;
+    }
+
+    private android.content.ComponentName chooseDreamForUser(boolean, int)
+    {
+        com.android.server.dreams.DreamManagerService r0;
+        boolean z0, $z1;
+        int i0, $i1;
+        android.content.ComponentName[] r1;
+        android.content.ComponentName r2, r3, r4;
+
+        r0 := @this: com.android.server.dreams.DreamManagerService;
+
+        z0 := @parameter0: boolean;
+
+        i0 := @parameter1: int;
+
+        r2 = null;
+
+        if z0 == 0 goto label2;
+
+        r3 = specialinvoke r0.<com.android.server.dreams.DreamManagerService: android.content.ComponentName getDozeComponent(int)>(i0);
+
+        $z1 = specialinvoke r0.<com.android.server.dreams.DreamManagerService: boolean validateDream(android.content.ComponentName)>(r3);
+
+        if $z1 == 0 goto label1;
+
+        r2 = r3;
+
+     label1:
+        return r2;
+
+     label2:
+        r1 = specialinvoke r0.<com.android.server.dreams.DreamManagerService: android.content.ComponentName[] getDreamComponentsForUser(int)>(i0);
+
+        r4 = null;
+
+        if r1 == null goto label3;
+
+        r4 = null;
+
+        $i1 = lengthof r1;
+
+        if $i1 == 0 goto label3;
+
+        r4 = r1[0];
+
+     label3:
+        return r4;
+    }
+
+    private void cleanupDreamLocked()
+    {
+        com.android.server.dreams.DreamManagerService r0;
+        android.content.ComponentName $r1, $r2;
+        boolean $z0, $z1;
+        com.android.server.wm.ActivityTaskManagerInternal $r3;
+        android.os.PowerManager$WakeLock $r4;
+        com.android.server.dreams.DreamManagerService$DreamManagerEvent $r5;
+        com.android.internal.logging.UiEventLogger $r6;
+
+        r0 := @this: com.android.server.dreams.DreamManagerService;
+
+        $r2 = r0.<com.android.server.dreams.DreamManagerService: android.content.ComponentName mCurrentDreamName>;
+
+        $r1 = r0.<com.android.server.dreams.DreamManagerService: android.content.ComponentName mAmbientDisplayComponent>;
+
+        $z0 = virtualinvoke $r2.<android.content.ComponentName: boolean equals(java.lang.Object)>($r1);
+
+        if $z0 != 0 goto label1;
+
+        $r6 = r0.<com.android.server.dreams.DreamManagerService: com.android.internal.logging.UiEventLogger mUiEventLogger>;
+
+        $r5 = <com.android.server.dreams.DreamManagerService$DreamManagerEvent: com.android.server.dreams.DreamManagerService$DreamManagerEvent DREAM_STOP>;
+
+        interfaceinvoke $r6.<com.android.internal.logging.UiEventLogger: void log(com.android.internal.logging.UiEventLogger$UiEventEnum)>($r5);
+
+     label1:
+        r0.<com.android.server.dreams.DreamManagerService: android.os.Binder mCurrentDreamToken> = null;
+
+        r0.<com.android.server.dreams.DreamManagerService: android.content.ComponentName mCurrentDreamName> = null;
+
+        r0.<com.android.server.dreams.DreamManagerService: boolean mCurrentDreamIsTest> = 0;
+
+        r0.<com.android.server.dreams.DreamManagerService: boolean mCurrentDreamCanDoze> = 0;
+
+        r0.<com.android.server.dreams.DreamManagerService: int mCurrentDreamUserId> = 0;
+
+        r0.<com.android.server.dreams.DreamManagerService: boolean mCurrentDreamIsWaking> = 0;
+
+        $z1 = r0.<com.android.server.dreams.DreamManagerService: boolean mCurrentDreamIsDozing>;
+
+        if $z1 == 0 goto label2;
+
+        r0.<com.android.server.dreams.DreamManagerService: boolean mCurrentDreamIsDozing> = 0;
+
+        $r4 = r0.<com.android.server.dreams.DreamManagerService: android.os.PowerManager$WakeLock mDozeWakeLock>;
+
+        virtualinvoke $r4.<android.os.PowerManager$WakeLock: void release()>();
+
+     label2:
+        r0.<com.android.server.dreams.DreamManagerService: int mCurrentDreamDozeScreenState> = 0;
+
+        r0.<com.android.server.dreams.DreamManagerService: int mCurrentDreamDozeScreenBrightness> = -1;
+
+        $r3 = r0.<com.android.server.dreams.DreamManagerService: com.android.server.wm.ActivityTaskManagerInternal mAtmInternal>;
+
+        virtualinvoke $r3.<com.android.server.wm.ActivityTaskManagerInternal: void notifyDreamStateChanged(boolean)>(0);
+
+        return;
+    }
+
+    private static android.content.ComponentName[] componentsFromString(java.lang.String)
+    {
+        android.content.ComponentName[] r0;
+        int $i0, $i1, i2;
+        java.lang.String $r1, r3;
+        android.content.ComponentName $r2;
+        java.lang.String[] r4;
+
+        r3 := @parameter0: java.lang.String;
+
+        if r3 != null goto label1;
+
+        return null;
+
+     label1:
+        r4 = virtualinvoke r3.<java.lang.String: java.lang.String[] split(java.lang.String)>(",");
+
+        $i0 = lengthof r4;
+
+        r0 = newarray (android.content.ComponentName)[$i0];
+
+        i2 = 0;
+
+     label2:
+        $i1 = lengthof r4;
+
+        if i2 >= $i1 goto label3;
+
+        $r1 = r4[i2];
+
+        $r2 = staticinvoke <android.content.ComponentName: android.content.ComponentName unflattenFromString(java.lang.String)>($r1);
+
+        r0[i2] = $r2;
+
+        i2 = i2 + 1;
+
+        goto label2;
+
+     label3:
+        return r0;
+    }
+
+    private static java.lang.String componentsToString(android.content.ComponentName[])
+    {
+        android.content.ComponentName[] r0;
+        int i0, $i1, i2;
+        android.content.ComponentName r2;
+        java.lang.StringBuilder $r3;
+        java.lang.String $r4, $r5;
+
+        r0 := @parameter0: android.content.ComponentName[];
+
+        $r3 = new java.lang.StringBuilder;
+
+        specialinvoke $r3.<java.lang.StringBuilder: void <init>()>();
+
+        if r0 == null goto label3;
+
+        i0 = lengthof r0;
+
+        i2 = 0;
+
+     label1:
+        if i2 >= i0 goto label3;
+
+        r2 = r0[i2];
+
+        $i1 = virtualinvoke $r3.<java.lang.StringBuilder: int length()>();
+
+        if $i1 <= 0 goto label2;
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(char)>(44);
+
+     label2:
+        $r5 = virtualinvoke r2.<android.content.ComponentName: java.lang.String flattenToString()>();
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r5);
+
+        i2 = i2 + 1;
+
+        goto label1;
+
+     label3:
+        $r4 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        return $r4;
+    }
+
+    private void dumpInternal(java.io.PrintWriter)
+    {
+        com.android.server.dreams.DreamManagerService r0;
+        java.io.PrintWriter r1;
+        java.lang.StringBuilder $r2, $r7, $r12, $r16, $r20, $r24, $r28, $r32, $r36, $r41, $r45;
+        android.os.Binder $r4;
+        java.lang.String $r6, $r11, $r15, $r19, $r23, $r27, $r31, $r35, $r38, $r40, $r44, $r49;
+        android.content.ComponentName $r9, $r47;
+        int $i0, $i1, $i2;
+        boolean $z0, $z1, $z2, $z3, $z4;
+        com.android.server.dreams.DreamManagerService$2 $r50;
+        com.android.server.dreams.DreamManagerService$DreamHandler $r51;
+
+        r0 := @this: com.android.server.dreams.DreamManagerService;
+
+        r1 := @parameter0: java.io.PrintWriter;
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>("DREAM MANAGER (dumpsys dreams)");
+
+        virtualinvoke r1.<java.io.PrintWriter: void println()>();
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("mCurrentDreamToken=");
+
+        $r4 = r0.<com.android.server.dreams.DreamManagerService: android.os.Binder mCurrentDreamToken>;
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r4);
+
+        $r6 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r6);
+
+        $r7 = new java.lang.StringBuilder;
+
+        specialinvoke $r7.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("mCurrentDreamName=");
+
+        $r9 = r0.<com.android.server.dreams.DreamManagerService: android.content.ComponentName mCurrentDreamName>;
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r9);
+
+        $r11 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r11);
+
+        $r12 = new java.lang.StringBuilder;
+
+        specialinvoke $r12.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("mCurrentDreamUserId=");
+
+        $i0 = r0.<com.android.server.dreams.DreamManagerService: int mCurrentDreamUserId>;
+
+        virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i0);
+
+        $r15 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r15);
+
+        $r16 = new java.lang.StringBuilder;
+
+        specialinvoke $r16.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r16.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("mCurrentDreamIsTest=");
+
+        $z0 = r0.<com.android.server.dreams.DreamManagerService: boolean mCurrentDreamIsTest>;
+
+        virtualinvoke $r16.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>($z0);
+
+        $r19 = virtualinvoke $r16.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r19);
+
+        $r20 = new java.lang.StringBuilder;
+
+        specialinvoke $r20.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r20.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("mCurrentDreamCanDoze=");
+
+        $z1 = r0.<com.android.server.dreams.DreamManagerService: boolean mCurrentDreamCanDoze>;
+
+        virtualinvoke $r20.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>($z1);
+
+        $r23 = virtualinvoke $r20.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r23);
+
+        $r24 = new java.lang.StringBuilder;
+
+        specialinvoke $r24.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r24.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("mCurrentDreamIsDozing=");
+
+        $z2 = r0.<com.android.server.dreams.DreamManagerService: boolean mCurrentDreamIsDozing>;
+
+        virtualinvoke $r24.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>($z2);
+
+        $r27 = virtualinvoke $r24.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r27);
+
+        $r28 = new java.lang.StringBuilder;
+
+        specialinvoke $r28.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r28.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("mCurrentDreamIsWaking=");
+
+        $z3 = r0.<com.android.server.dreams.DreamManagerService: boolean mCurrentDreamIsWaking>;
+
+        virtualinvoke $r28.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>($z3);
+
+        $r31 = virtualinvoke $r28.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r31);
+
+        $r32 = new java.lang.StringBuilder;
+
+        specialinvoke $r32.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r32.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("mForceAmbientDisplayEnabled=");
+
+        $z4 = r0.<com.android.server.dreams.DreamManagerService: boolean mForceAmbientDisplayEnabled>;
+
+        virtualinvoke $r32.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>($z4);
+
+        $r35 = virtualinvoke $r32.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r35);
+
+        $r36 = new java.lang.StringBuilder;
+
+        specialinvoke $r36.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r36.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("mCurrentDreamDozeScreenState=");
+
+        $i1 = r0.<com.android.server.dreams.DreamManagerService: int mCurrentDreamDozeScreenState>;
+
+        $r38 = staticinvoke <android.view.Display: java.lang.String stateToString(int)>($i1);
+
+        virtualinvoke $r36.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r38);
+
+        $r40 = virtualinvoke $r36.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r40);
+
+        $r41 = new java.lang.StringBuilder;
+
+        specialinvoke $r41.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r41.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("mCurrentDreamDozeScreenBrightness=");
+
+        $i2 = r0.<com.android.server.dreams.DreamManagerService: int mCurrentDreamDozeScreenBrightness>;
+
+        virtualinvoke $r41.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i2);
+
+        $r44 = virtualinvoke $r41.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r44);
+
+        $r45 = new java.lang.StringBuilder;
+
+        specialinvoke $r45.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r45.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("getDozeComponent()=");
+
+        $r47 = specialinvoke r0.<com.android.server.dreams.DreamManagerService: android.content.ComponentName getDozeComponent()>();
+
+        virtualinvoke $r45.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r47);
+
+        $r49 = virtualinvoke $r45.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r49);
+
+        virtualinvoke r1.<java.io.PrintWriter: void println()>();
+
+        $r51 = r0.<com.android.server.dreams.DreamManagerService: com.android.server.dreams.DreamManagerService$DreamHandler mHandler>;
+
+        $r50 = new com.android.server.dreams.DreamManagerService$2;
+
+        specialinvoke $r50.<com.android.server.dreams.DreamManagerService$2: void <init>(com.android.server.dreams.DreamManagerService)>(r0);
+
+        staticinvoke <com.android.internal.util.DumpUtils: void dumpAsync(android.os.Handler,com.android.internal.util.DumpUtils$Dump,java.io.PrintWriter,java.lang.String,long)>($r51, $r50, r1, "", 200L);
+
+        return;
+    }
+
+    private void finishSelfInternal(android.os.IBinder, boolean)
+    {
+        com.android.server.dreams.DreamManagerService r0;
+        boolean z0;
+        java.lang.Object r1;
+        android.os.Binder $r2;
+        java.lang.Throwable $r3;
+        android.os.IBinder r4;
+
+        r0 := @this: com.android.server.dreams.DreamManagerService;
+
+        r4 := @parameter0: android.os.IBinder;
+
+        z0 := @parameter1: boolean;
+
+        r1 = r0.<com.android.server.dreams.DreamManagerService: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        $r2 = r0.<com.android.server.dreams.DreamManagerService: android.os.Binder mCurrentDreamToken>;
+
+        if $r2 != r4 goto label2;
+
+        specialinvoke r0.<com.android.server.dreams.DreamManagerService: void stopDreamLocked(boolean,java.lang.String)>(z0, "finished self");
+
+     label2:
+        exitmonitor r1;
+
+     label3:
+        return;
+
+     label4:
+        $r3 := @caughtexception;
+
+     label5:
+        exitmonitor r1;
+
+     label6:
+        throw $r3;
+
+        catch java.lang.Throwable from label1 to label2 with label4;
+        catch java.lang.Throwable from label2 to label3 with label4;
+        catch java.lang.Throwable from label5 to label6 with label4;
+    }
+
+    private void forceAmbientDisplayEnabledInternal(boolean)
+    {
+        com.android.server.dreams.DreamManagerService r0;
+        boolean z0;
+        java.lang.Object r1;
+        java.lang.Throwable $r3;
+
+        r0 := @this: com.android.server.dreams.DreamManagerService;
+
+        z0 := @parameter0: boolean;
+
+        r1 = r0.<com.android.server.dreams.DreamManagerService: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        r0.<com.android.server.dreams.DreamManagerService: boolean mForceAmbientDisplayEnabled> = z0;
+
+        exitmonitor r1;
+
+     label2:
+        return;
+
+     label3:
+        $r3 := @caughtexception;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        throw $r3;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    private android.content.ComponentName getActiveDreamComponentInternal(boolean)
+    {
+        com.android.server.dreams.DreamManagerService r0;
+        boolean z0;
+        int $i0;
+        android.content.ComponentName $r1;
+
+        r0 := @this: com.android.server.dreams.DreamManagerService;
+
+        z0 := @parameter0: boolean;
+
+        $i0 = staticinvoke <android.app.ActivityManager: int getCurrentUser()>();
+
+        $r1 = specialinvoke r0.<com.android.server.dreams.DreamManagerService: android.content.ComponentName chooseDreamForUser(boolean,int)>(z0, $i0);
+
+        return $r1;
+    }
+
+    private android.content.ComponentName getDefaultDreamComponentForUser(int)
+    {
+        com.android.server.dreams.DreamManagerService r0;
+        int i0;
+        android.content.Context $r1;
+        android.content.ContentResolver $r2;
+        java.lang.String r3;
+        android.content.ComponentName r4;
+
+        r0 := @this: com.android.server.dreams.DreamManagerService;
+
+        i0 := @parameter0: int;
+
+        $r1 = r0.<com.android.server.dreams.DreamManagerService: android.content.Context mContext>;
+
+        $r2 = virtualinvoke $r1.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        r3 = staticinvoke <android.provider.Settings$Secure: java.lang.String getStringForUser(android.content.ContentResolver,java.lang.String,int)>($r2, "screensaver_default_component", i0);
+
+        if r3 != null goto label1;
+
+        r4 = null;
+
+        goto label2;
+
+     label1:
+        r4 = staticinvoke <android.content.ComponentName: android.content.ComponentName unflattenFromString(java.lang.String)>(r3);
+
+     label2:
+        return r4;
+    }
+
+    private android.content.ComponentName getDozeComponent()
+    {
+        com.android.server.dreams.DreamManagerService r0;
+        int $i0;
+        android.content.ComponentName $r1;
+
+        r0 := @this: com.android.server.dreams.DreamManagerService;
+
+        $i0 = staticinvoke <android.app.ActivityManager: int getCurrentUser()>();
+
+        $r1 = specialinvoke r0.<com.android.server.dreams.DreamManagerService: android.content.ComponentName getDozeComponent(int)>($i0);
+
+        return $r1;
+    }
+
+    private android.content.ComponentName getDozeComponent(int)
+    {
+        com.android.server.dreams.DreamManagerService r0;
+        int i0;
+        boolean $z0, $z1;
+        android.hardware.display.AmbientDisplayConfiguration $r1, $r4;
+        java.lang.String $r2;
+        android.content.ComponentName $r3;
+
+        r0 := @this: com.android.server.dreams.DreamManagerService;
+
+        i0 := @parameter0: int;
+
+        $z0 = r0.<com.android.server.dreams.DreamManagerService: boolean mForceAmbientDisplayEnabled>;
+
+        if $z0 != 0 goto label2;
+
+        $r4 = r0.<com.android.server.dreams.DreamManagerService: android.hardware.display.AmbientDisplayConfiguration mDozeConfig>;
+
+        $z1 = virtualinvoke $r4.<android.hardware.display.AmbientDisplayConfiguration: boolean enabled(int)>(i0);
+
+        if $z1 == 0 goto label1;
+
+        goto label2;
+
+     label1:
+        return null;
+
+     label2:
+        $r1 = r0.<com.android.server.dreams.DreamManagerService: android.hardware.display.AmbientDisplayConfiguration mDozeConfig>;
+
+        $r2 = virtualinvoke $r1.<android.hardware.display.AmbientDisplayConfiguration: java.lang.String ambientDisplayComponent()>();
+
+        $r3 = staticinvoke <android.content.ComponentName: android.content.ComponentName unflattenFromString(java.lang.String)>($r2);
+
+        return $r3;
+    }
+
+    private android.content.ComponentName[] getDreamComponentsForUser(int)
+    {
+        com.android.server.dreams.DreamManagerService r0;
+        int i0, i1, i3, $i4;
+        android.content.Context $r2;
+        android.content.ContentResolver $r3;
+        java.lang.String $r4, $r9;
+        java.util.ArrayList $r5;
+        boolean $z0, $z2;
+        java.lang.StringBuilder $r6;
+        android.content.ComponentName[] r10, $r14, $r16;
+        android.content.ComponentName r11, r12;
+        java.lang.Object[] $r15;
+
+        r0 := @this: com.android.server.dreams.DreamManagerService;
+
+        i0 := @parameter0: int;
+
+        $r2 = r0.<com.android.server.dreams.DreamManagerService: android.content.Context mContext>;
+
+        $r3 = virtualinvoke $r2.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        $r4 = staticinvoke <android.provider.Settings$Secure: java.lang.String getStringForUser(android.content.ContentResolver,java.lang.String,int)>($r3, "screensaver_components", i0);
+
+        r10 = staticinvoke <com.android.server.dreams.DreamManagerService: android.content.ComponentName[] componentsFromString(java.lang.String)>($r4);
+
+        $r5 = new java.util.ArrayList;
+
+        specialinvoke $r5.<java.util.ArrayList: void <init>()>();
+
+        if r10 == null goto label3;
+
+        i1 = lengthof r10;
+
+        i3 = 0;
+
+     label1:
+        if i3 >= i1 goto label3;
+
+        r11 = r10[i3];
+
+        $z2 = specialinvoke r0.<com.android.server.dreams.DreamManagerService: boolean validateDream(android.content.ComponentName)>(r11);
+
+        if $z2 == 0 goto label2;
+
+        interfaceinvoke $r5.<java.util.List: boolean add(java.lang.Object)>(r11);
+
+     label2:
+        i3 = i3 + 1;
+
+        goto label1;
+
+     label3:
+        $z0 = interfaceinvoke $r5.<java.util.List: boolean isEmpty()>();
+
+        if $z0 == 0 goto label4;
+
+        r12 = specialinvoke r0.<com.android.server.dreams.DreamManagerService: android.content.ComponentName getDefaultDreamComponentForUser(int)>(i0);
+
+        if r12 == null goto label4;
+
+        $r6 = new java.lang.StringBuilder;
+
+        specialinvoke $r6.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Falling back to default dream ");
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r12);
+
+        $r9 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("DreamManagerService", $r9);
+
+        interfaceinvoke $r5.<java.util.List: boolean add(java.lang.Object)>(r12);
+
+     label4:
+        $i4 = interfaceinvoke $r5.<java.util.List: int size()>();
+
+        $r14 = newarray (android.content.ComponentName)[$i4];
+
+        $r15 = interfaceinvoke $r5.<java.util.List: java.lang.Object[] toArray(java.lang.Object[])>($r14);
+
+        $r16 = (android.content.ComponentName[]) $r15;
+
+        return $r16;
+    }
+
+    private android.content.pm.ServiceInfo getServiceInfo(android.content.ComponentName)
+    {
+        com.android.server.dreams.DreamManagerService r0;
+        android.content.Context $r1;
+        android.content.pm.PackageManager $r2;
+        android.content.pm.PackageManager$NameNotFoundException $r3;
+        android.content.ComponentName r4;
+        android.content.pm.ServiceInfo r5;
+
+        r0 := @this: com.android.server.dreams.DreamManagerService;
+
+        r4 := @parameter0: android.content.ComponentName;
+
+        if r4 == null goto label4;
+
+     label1:
+        $r1 = r0.<com.android.server.dreams.DreamManagerService: android.content.Context mContext>;
+
+        $r2 = virtualinvoke $r1.<android.content.Context: android.content.pm.PackageManager getPackageManager()>();
+
+        r5 = virtualinvoke $r2.<android.content.pm.PackageManager: android.content.pm.ServiceInfo getServiceInfo(android.content.ComponentName,int)>(r4, 268435456);
+
+     label2:
+        goto label5;
+
+     label3:
+        $r3 := @caughtexception;
+
+        return null;
+
+     label4:
+        r5 = null;
+
+     label5:
+        return r5;
+
+        catch android.content.pm.PackageManager$NameNotFoundException from label1 to label2 with label3;
+    }
+
+    private boolean isDreamingInternal()
+    {
+        com.android.server.dreams.DreamManagerService r0;
+        java.lang.Object r1;
+        android.os.Binder $r3;
+        boolean $z0, $z1, z2;
+        java.lang.Throwable $r4;
+
+        r0 := @this: com.android.server.dreams.DreamManagerService;
+
+        r1 = r0.<com.android.server.dreams.DreamManagerService: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        $r3 = r0.<com.android.server.dreams.DreamManagerService: android.os.Binder mCurrentDreamToken>;
+
+        if $r3 == null goto label3;
+
+        $z0 = r0.<com.android.server.dreams.DreamManagerService: boolean mCurrentDreamIsTest>;
+
+        if $z0 != 0 goto label3;
+
+        $z1 = r0.<com.android.server.dreams.DreamManagerService: boolean mCurrentDreamIsWaking>;
+
+        if $z1 != 0 goto label3;
+
+     label2:
+        z2 = 1;
+
+        goto label4;
+
+     label3:
+        z2 = 0;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        return z2;
+
+     label6:
+        $r4 := @caughtexception;
+
+     label7:
+        exitmonitor r1;
+
+     label8:
+        throw $r4;
+
+        catch java.lang.Throwable from label1 to label2 with label6;
+        catch java.lang.Throwable from label4 to label5 with label6;
+        catch java.lang.Throwable from label7 to label8 with label6;
+    }
+
+    private void requestAwakenInternal()
+    {
+        com.android.server.dreams.DreamManagerService r0;
+        long l0;
+        android.os.PowerManager $r1;
+
+        r0 := @this: com.android.server.dreams.DreamManagerService;
+
+        l0 = staticinvoke <android.os.SystemClock: long uptimeMillis()>();
+
+        $r1 = r0.<com.android.server.dreams.DreamManagerService: android.os.PowerManager mPowerManager>;
+
+        virtualinvoke $r1.<android.os.PowerManager: void userActivity(long,boolean)>(l0, 0);
+
+        specialinvoke r0.<com.android.server.dreams.DreamManagerService: void stopDreamInternal(boolean,java.lang.String)>(0, "request awaken");
+
+        return;
+    }
+
+    private void requestDreamInternal()
+    {
+        com.android.server.dreams.DreamManagerService r0;
+        long l0;
+        android.os.PowerManager $r1, $r2;
+
+        r0 := @this: com.android.server.dreams.DreamManagerService;
+
+        l0 = staticinvoke <android.os.SystemClock: long uptimeMillis()>();
+
+        $r1 = r0.<com.android.server.dreams.DreamManagerService: android.os.PowerManager mPowerManager>;
+
+        virtualinvoke $r1.<android.os.PowerManager: void userActivity(long,boolean)>(l0, 1);
+
+        $r2 = r0.<com.android.server.dreams.DreamManagerService: android.os.PowerManager mPowerManager>;
+
+        virtualinvoke $r2.<android.os.PowerManager: void nap(long)>(l0);
+
+        return;
+    }
+
+    private void setDreamComponentsForUser(int, android.content.ComponentName[])
+    {
+        com.android.server.dreams.DreamManagerService r0;
+        int i0;
+        android.content.ComponentName[] r1;
+        android.content.Context $r2;
+        android.content.ContentResolver $r3;
+        java.lang.String $r4;
+
+        r0 := @this: com.android.server.dreams.DreamManagerService;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: android.content.ComponentName[];
+
+        $r2 = r0.<com.android.server.dreams.DreamManagerService: android.content.Context mContext>;
+
+        $r3 = virtualinvoke $r2.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        $r4 = staticinvoke <com.android.server.dreams.DreamManagerService: java.lang.String componentsToString(android.content.ComponentName[])>(r1);
+
+        staticinvoke <android.provider.Settings$Secure: boolean putStringForUser(android.content.ContentResolver,java.lang.String,java.lang.String,int)>($r3, "screensaver_components", $r4, i0);
+
+        return;
+    }
+
+    private void startDozingInternal(android.os.IBinder, int, int)
+    {
+        com.android.server.dreams.DreamManagerService r0;
+        int i0, i1;
+        java.lang.Object r1;
+        android.os.Binder $r2;
+        boolean $z0, $z1;
+        android.os.PowerManagerInternal $r3;
+        android.os.PowerManager$WakeLock $r4;
+        java.lang.Throwable $r5;
+        android.os.IBinder r6;
+
+        r0 := @this: com.android.server.dreams.DreamManagerService;
+
+        r6 := @parameter0: android.os.IBinder;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        r1 = r0.<com.android.server.dreams.DreamManagerService: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        $r2 = r0.<com.android.server.dreams.DreamManagerService: android.os.Binder mCurrentDreamToken>;
+
+        if $r2 != r6 goto label2;
+
+        $z0 = r0.<com.android.server.dreams.DreamManagerService: boolean mCurrentDreamCanDoze>;
+
+        if $z0 == 0 goto label2;
+
+        r0.<com.android.server.dreams.DreamManagerService: int mCurrentDreamDozeScreenState> = i0;
+
+        r0.<com.android.server.dreams.DreamManagerService: int mCurrentDreamDozeScreenBrightness> = i1;
+
+        $r3 = r0.<com.android.server.dreams.DreamManagerService: android.os.PowerManagerInternal mPowerManagerInternal>;
+
+        virtualinvoke $r3.<android.os.PowerManagerInternal: void setDozeOverrideFromDreamManager(int,int)>(i0, i1);
+
+        $z1 = r0.<com.android.server.dreams.DreamManagerService: boolean mCurrentDreamIsDozing>;
+
+        if $z1 != 0 goto label2;
+
+        r0.<com.android.server.dreams.DreamManagerService: boolean mCurrentDreamIsDozing> = 1;
+
+        $r4 = r0.<com.android.server.dreams.DreamManagerService: android.os.PowerManager$WakeLock mDozeWakeLock>;
+
+        virtualinvoke $r4.<android.os.PowerManager$WakeLock: void acquire()>();
+
+     label2:
+        exitmonitor r1;
+
+     label3:
+        return;
+
+     label4:
+        $r5 := @caughtexception;
+
+     label5:
+        exitmonitor r1;
+
+     label6:
+        throw $r5;
+
+        catch java.lang.Throwable from label1 to label2 with label4;
+        catch java.lang.Throwable from label2 to label3 with label4;
+        catch java.lang.Throwable from label5 to label6 with label4;
+    }
+
+    private void startDreamInternal(boolean)
+    {
+        com.android.server.dreams.DreamManagerService r0;
+        boolean z0;
+        int i0;
+        java.lang.Object r1;
+        java.lang.Throwable $r2;
+        android.content.ComponentName r3;
+
+        r0 := @this: com.android.server.dreams.DreamManagerService;
+
+        z0 := @parameter0: boolean;
+
+        i0 = staticinvoke <android.app.ActivityManager: int getCurrentUser()>();
+
+        r3 = specialinvoke r0.<com.android.server.dreams.DreamManagerService: android.content.ComponentName chooseDreamForUser(boolean,int)>(z0, i0);
+
+        if r3 == null goto label6;
+
+        r1 = r0.<com.android.server.dreams.DreamManagerService: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        specialinvoke r0.<com.android.server.dreams.DreamManagerService: void startDreamLocked(android.content.ComponentName,boolean,boolean,int)>(r3, 0, z0, i0);
+
+        exitmonitor r1;
+
+     label2:
+        goto label6;
+
+     label3:
+        $r2 := @caughtexception;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        throw $r2;
+
+     label6:
+        return;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    private void startDreamLocked(android.content.ComponentName, boolean, boolean, int)
+    {
+        com.android.server.dreams.DreamManagerService r0;
+        android.content.ComponentName r1, $r4;
+        boolean z0, z1, $z2, $z4, $z5;
+        int i0, $i2;
+        android.os.PowerManager$WakeLock r3;
+        android.os.Binder $r5;
+        android.os.PowerManager $r6;
+        com.android.server.dreams.DreamManagerService$DreamHandler $r7;
+        com.android.server.dreams._$$Lambda$DreamManagerService$f7cEVKQvPKMm_Ir9dq0e6PSOkX8 $r8;
+        java.lang.Runnable $r9;
+
+        r0 := @this: com.android.server.dreams.DreamManagerService;
+
+        r1 := @parameter0: android.content.ComponentName;
+
+        z0 := @parameter1: boolean;
+
+        z1 := @parameter2: boolean;
+
+        i0 := @parameter3: int;
+
+        $r4 = r0.<com.android.server.dreams.DreamManagerService: android.content.ComponentName mCurrentDreamName>;
+
+        $z2 = staticinvoke <java.util.Objects: boolean equals(java.lang.Object,java.lang.Object)>($r4, r1);
+
+        if $z2 == 0 goto label1;
+
+        $z4 = r0.<com.android.server.dreams.DreamManagerService: boolean mCurrentDreamIsTest>;
+
+        if $z4 != z0 goto label1;
+
+        $z5 = r0.<com.android.server.dreams.DreamManagerService: boolean mCurrentDreamCanDoze>;
+
+        if $z5 != z1 goto label1;
+
+        $i2 = r0.<com.android.server.dreams.DreamManagerService: int mCurrentDreamUserId>;
+
+        if $i2 != i0 goto label1;
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("DreamManagerService", "Already in target dream.");
+
+        return;
+
+     label1:
+        specialinvoke r0.<com.android.server.dreams.DreamManagerService: void stopDreamLocked(boolean,java.lang.String)>(1, "starting new dream");
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("DreamManagerService", "Entering dreamland.");
+
+        $r5 = new android.os.Binder;
+
+        specialinvoke $r5.<android.os.Binder: void <init>()>();
+
+        r0.<com.android.server.dreams.DreamManagerService: android.os.Binder mCurrentDreamToken> = $r5;
+
+        r0.<com.android.server.dreams.DreamManagerService: android.content.ComponentName mCurrentDreamName> = r1;
+
+        r0.<com.android.server.dreams.DreamManagerService: boolean mCurrentDreamIsTest> = z0;
+
+        r0.<com.android.server.dreams.DreamManagerService: boolean mCurrentDreamCanDoze> = z1;
+
+        r0.<com.android.server.dreams.DreamManagerService: int mCurrentDreamUserId> = i0;
+
+        $r6 = r0.<com.android.server.dreams.DreamManagerService: android.os.PowerManager mPowerManager>;
+
+        r3 = virtualinvoke $r6.<android.os.PowerManager: android.os.PowerManager$WakeLock newWakeLock(int,java.lang.String)>(1, "startDream");
+
+        $r7 = r0.<com.android.server.dreams.DreamManagerService: com.android.server.dreams.DreamManagerService$DreamHandler mHandler>;
+
+        $r8 = new com.android.server.dreams._$$Lambda$DreamManagerService$f7cEVKQvPKMm_Ir9dq0e6PSOkX8;
+
+        specialinvoke $r8.<com.android.server.dreams._$$Lambda$DreamManagerService$f7cEVKQvPKMm_Ir9dq0e6PSOkX8: void <init>(com.android.server.dreams.DreamManagerService,android.os.Binder,android.content.ComponentName,boolean,boolean,int,android.os.PowerManager$WakeLock)>(r0, $r5, r1, z0, z1, i0, r3);
+
+        $r9 = virtualinvoke r3.<android.os.PowerManager$WakeLock: java.lang.Runnable wrap(java.lang.Runnable)>($r8);
+
+        virtualinvoke $r7.<com.android.server.dreams.DreamManagerService$DreamHandler: boolean post(java.lang.Runnable)>($r9);
+
+        return;
+    }
+
+    private void stopDozingInternal(android.os.IBinder)
+    {
+        com.android.server.dreams.DreamManagerService r0;
+        java.lang.Object r1;
+        android.os.Binder $r2;
+        boolean $z0;
+        android.os.PowerManager$WakeLock $r3;
+        android.os.PowerManagerInternal $r4;
+        java.lang.Throwable $r5;
+        android.os.IBinder r6;
+
+        r0 := @this: com.android.server.dreams.DreamManagerService;
+
+        r6 := @parameter0: android.os.IBinder;
+
+        r1 = r0.<com.android.server.dreams.DreamManagerService: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        $r2 = r0.<com.android.server.dreams.DreamManagerService: android.os.Binder mCurrentDreamToken>;
+
+        if $r2 != r6 goto label2;
+
+        $z0 = r0.<com.android.server.dreams.DreamManagerService: boolean mCurrentDreamIsDozing>;
+
+        if $z0 == 0 goto label2;
+
+        r0.<com.android.server.dreams.DreamManagerService: boolean mCurrentDreamIsDozing> = 0;
+
+        $r3 = r0.<com.android.server.dreams.DreamManagerService: android.os.PowerManager$WakeLock mDozeWakeLock>;
+
+        virtualinvoke $r3.<android.os.PowerManager$WakeLock: void release()>();
+
+        $r4 = r0.<com.android.server.dreams.DreamManagerService: android.os.PowerManagerInternal mPowerManagerInternal>;
+
+        virtualinvoke $r4.<android.os.PowerManagerInternal: void setDozeOverrideFromDreamManager(int,int)>(0, -1);
+
+     label2:
+        exitmonitor r1;
+
+     label3:
+        return;
+
+     label4:
+        $r5 := @caughtexception;
+
+     label5:
+        exitmonitor r1;
+
+     label6:
+        throw $r5;
+
+        catch java.lang.Throwable from label1 to label2 with label4;
+        catch java.lang.Throwable from label2 to label3 with label4;
+        catch java.lang.Throwable from label5 to label6 with label4;
+    }
+
+    private void stopDreamInternal(boolean, java.lang.String)
+    {
+        com.android.server.dreams.DreamManagerService r0;
+        boolean z0;
+        java.lang.Object r1;
+        java.lang.Throwable $r2;
+        java.lang.String r3;
+
+        r0 := @this: com.android.server.dreams.DreamManagerService;
+
+        z0 := @parameter0: boolean;
+
+        r3 := @parameter1: java.lang.String;
+
+        r1 = r0.<com.android.server.dreams.DreamManagerService: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        specialinvoke r0.<com.android.server.dreams.DreamManagerService: void stopDreamLocked(boolean,java.lang.String)>(z0, r3);
+
+        exitmonitor r1;
+
+     label2:
+        return;
+
+     label3:
+        $r2 := @caughtexception;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        throw $r2;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    private void stopDreamLocked(boolean, java.lang.String)
+    {
+        com.android.server.dreams.DreamManagerService r0;
+        boolean z0, $z1;
+        java.lang.String r1;
+        android.os.Binder $r2;
+        com.android.server.dreams.DreamManagerService$3 $r3;
+        com.android.server.dreams.DreamManagerService$DreamHandler $r4;
+
+        r0 := @this: com.android.server.dreams.DreamManagerService;
+
+        z0 := @parameter0: boolean;
+
+        r1 := @parameter1: java.lang.String;
+
+        $r2 = r0.<com.android.server.dreams.DreamManagerService: android.os.Binder mCurrentDreamToken>;
+
+        if $r2 == null goto label4;
+
+        if z0 == 0 goto label1;
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("DreamManagerService", "Leaving dreamland.");
+
+        specialinvoke r0.<com.android.server.dreams.DreamManagerService: void cleanupDreamLocked()>();
+
+        goto label3;
+
+     label1:
+        $z1 = r0.<com.android.server.dreams.DreamManagerService: boolean mCurrentDreamIsWaking>;
+
+        if $z1 == 0 goto label2;
+
+        return;
+
+     label2:
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("DreamManagerService", "Gently waking up from dream.");
+
+        r0.<com.android.server.dreams.DreamManagerService: boolean mCurrentDreamIsWaking> = 1;
+
+     label3:
+        $r4 = r0.<com.android.server.dreams.DreamManagerService: com.android.server.dreams.DreamManagerService$DreamHandler mHandler>;
+
+        $r3 = new com.android.server.dreams.DreamManagerService$3;
+
+        specialinvoke $r3.<com.android.server.dreams.DreamManagerService$3: void <init>(com.android.server.dreams.DreamManagerService,boolean,java.lang.String)>(r0, z0, r1);
+
+        virtualinvoke $r4.<com.android.server.dreams.DreamManagerService$DreamHandler: boolean post(java.lang.Runnable)>($r3);
+
+     label4:
+        return;
+    }
+
+    private void testDreamInternal(android.content.ComponentName, int)
+    {
+        com.android.server.dreams.DreamManagerService r0;
+        int i0;
+        java.lang.Object r1;
+        java.lang.Throwable $r2;
+        android.content.ComponentName r3;
+
+        r0 := @this: com.android.server.dreams.DreamManagerService;
+
+        r3 := @parameter0: android.content.ComponentName;
+
+        i0 := @parameter1: int;
+
+        r1 = r0.<com.android.server.dreams.DreamManagerService: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        specialinvoke r0.<com.android.server.dreams.DreamManagerService: void startDreamLocked(android.content.ComponentName,boolean,boolean,int)>(r3, 1, 0, i0);
+
+        exitmonitor r1;
+
+     label2:
+        return;
+
+     label3:
+        $r2 := @caughtexception;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        throw $r2;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    private boolean validateDream(android.content.ComponentName)
+    {
+        com.android.server.dreams.DreamManagerService r0;
+        android.content.ComponentName r1;
+        android.content.pm.ApplicationInfo $r2;
+        int $i0;
+        java.lang.String $r3, $r4, $r11, $r16;
+        boolean $z0;
+        java.lang.StringBuilder $r5, $r12;
+        android.content.pm.ServiceInfo r17;
+
+        r0 := @this: com.android.server.dreams.DreamManagerService;
+
+        r1 := @parameter0: android.content.ComponentName;
+
+        if r1 != null goto label1;
+
+        return 0;
+
+     label1:
+        r17 = specialinvoke r0.<com.android.server.dreams.DreamManagerService: android.content.pm.ServiceInfo getServiceInfo(android.content.ComponentName)>(r1);
+
+        if r17 != null goto label2;
+
+        $r12 = new java.lang.StringBuilder;
+
+        specialinvoke $r12.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Dream ");
+
+        virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r1);
+
+        virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" does not exist");
+
+        $r16 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("DreamManagerService", $r16);
+
+        return 0;
+
+     label2:
+        $r2 = r17.<android.content.pm.ServiceInfo: android.content.pm.ApplicationInfo applicationInfo>;
+
+        $i0 = $r2.<android.content.pm.ApplicationInfo: int targetSdkVersion>;
+
+        if $i0 < 21 goto label3;
+
+        $r4 = "android.permission.BIND_DREAM_SERVICE";
+
+        $r3 = r17.<android.content.pm.ServiceInfo: java.lang.String permission>;
+
+        $z0 = virtualinvoke $r4.<java.lang.String: boolean equals(java.lang.Object)>($r3);
+
+        if $z0 != 0 goto label3;
+
+        $r5 = new java.lang.StringBuilder;
+
+        specialinvoke $r5.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Dream ");
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r1);
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" is not available because its manifest is missing the ");
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("android.permission.BIND_DREAM_SERVICE");
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" permission on the dream service declaration.");
+
+        $r11 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("DreamManagerService", $r11);
+
+        return 0;
+
+     label3:
+        return 1;
+    }
+
+    private void writePulseGestureEnabled()
+    {
+        com.android.server.dreams.DreamManagerService r0;
+        boolean z0;
+        android.content.ComponentName $r1;
+        java.lang.Object $r2;
+        android.hardware.input.InputManagerInternal $r3;
+
+        r0 := @this: com.android.server.dreams.DreamManagerService;
+
+        $r1 = specialinvoke r0.<com.android.server.dreams.DreamManagerService: android.content.ComponentName getDozeComponent()>();
+
+        z0 = specialinvoke r0.<com.android.server.dreams.DreamManagerService: boolean validateDream(android.content.ComponentName)>($r1);
+
+        $r2 = staticinvoke <com.android.server.LocalServices: java.lang.Object getService(java.lang.Class)>(class "Landroid/hardware/input/InputManagerInternal;");
+
+        $r3 = (android.hardware.input.InputManagerInternal) $r2;
+
+        virtualinvoke $r3.<android.hardware.input.InputManagerInternal: void setPulseGestureEnabled(boolean)>(z0);
+
+        return;
+    }
+
+    public void lambda$startDreamLocked$0$DreamManagerService(android.os.Binder, android.content.ComponentName, boolean, boolean, int, android.os.PowerManager$WakeLock)
+    {
+        com.android.server.dreams.DreamManagerService r0;
+        android.os.Binder r1;
+        android.content.ComponentName r2, $r5, $r6;
+        boolean z0, z1, $z2;
+        int i0;
+        android.os.PowerManager$WakeLock r3;
+        com.android.server.wm.ActivityTaskManagerInternal $r4;
+        com.android.server.dreams.DreamController $r7;
+        com.android.server.dreams.DreamManagerService$DreamManagerEvent $r8;
+        com.android.internal.logging.UiEventLogger $r9;
+
+        r0 := @this: com.android.server.dreams.DreamManagerService;
+
+        r1 := @parameter0: android.os.Binder;
+
+        r2 := @parameter1: android.content.ComponentName;
+
+        z0 := @parameter2: boolean;
+
+        z1 := @parameter3: boolean;
+
+        i0 := @parameter4: int;
+
+        r3 := @parameter5: android.os.PowerManager$WakeLock;
+
+        $r4 = r0.<com.android.server.dreams.DreamManagerService: com.android.server.wm.ActivityTaskManagerInternal mAtmInternal>;
+
+        virtualinvoke $r4.<com.android.server.wm.ActivityTaskManagerInternal: void notifyDreamStateChanged(boolean)>(1);
+
+        $r6 = r0.<com.android.server.dreams.DreamManagerService: android.content.ComponentName mCurrentDreamName>;
+
+        $r5 = r0.<com.android.server.dreams.DreamManagerService: android.content.ComponentName mAmbientDisplayComponent>;
+
+        $z2 = virtualinvoke $r6.<android.content.ComponentName: boolean equals(java.lang.Object)>($r5);
+
+        if $z2 != 0 goto label1;
+
+        $r9 = r0.<com.android.server.dreams.DreamManagerService: com.android.internal.logging.UiEventLogger mUiEventLogger>;
+
+        $r8 = <com.android.server.dreams.DreamManagerService$DreamManagerEvent: com.android.server.dreams.DreamManagerService$DreamManagerEvent DREAM_START>;
+
+        interfaceinvoke $r9.<com.android.internal.logging.UiEventLogger: void log(com.android.internal.logging.UiEventLogger$UiEventEnum)>($r8);
+
+     label1:
+        $r7 = r0.<com.android.server.dreams.DreamManagerService: com.android.server.dreams.DreamController mController>;
+
+        virtualinvoke $r7.<com.android.server.dreams.DreamController: void startDream(android.os.Binder,android.content.ComponentName,boolean,boolean,int,android.os.PowerManager$WakeLock)>(r1, r2, z0, z1, i0, r3);
+
+        return;
+    }
+
+    public void onBootPhase(int)
+    {
+        com.android.server.dreams.DreamManagerService r0;
+        int i0;
+        boolean $z0;
+        com.android.server.dreams.DreamManagerService$1 $r1;
+        android.content.Context $r2, $r6;
+        android.content.IntentFilter $r3;
+        com.android.server.dreams.DreamManagerService$DreamHandler $r4;
+        android.content.ContentResolver $r7;
+        android.net.Uri $r8;
+        android.database.ContentObserver $r9;
+        java.lang.Runnable $r10;
+
+        r0 := @this: com.android.server.dreams.DreamManagerService;
+
+        i0 := @parameter0: int;
+
+        if i0 != 600 goto label2;
+
+        $z0 = <android.os.Build: boolean IS_DEBUGGABLE>;
+
+        if $z0 == 0 goto label1;
+
+        $r10 = r0.<com.android.server.dreams.DreamManagerService: java.lang.Runnable mSystemPropertiesChanged>;
+
+        staticinvoke <android.os.SystemProperties: void addChangeCallback(java.lang.Runnable)>($r10);
+
+     label1:
+        $r2 = r0.<com.android.server.dreams.DreamManagerService: android.content.Context mContext>;
+
+        $r1 = new com.android.server.dreams.DreamManagerService$1;
+
+        specialinvoke $r1.<com.android.server.dreams.DreamManagerService$1: void <init>(com.android.server.dreams.DreamManagerService)>(r0);
+
+        $r3 = new android.content.IntentFilter;
+
+        specialinvoke $r3.<android.content.IntentFilter: void <init>(java.lang.String)>("android.intent.action.USER_SWITCHED");
+
+        $r4 = r0.<com.android.server.dreams.DreamManagerService: com.android.server.dreams.DreamManagerService$DreamHandler mHandler>;
+
+        virtualinvoke $r2.<android.content.Context: android.content.Intent registerReceiver(android.content.BroadcastReceiver,android.content.IntentFilter,java.lang.String,android.os.Handler)>($r1, $r3, null, $r4);
+
+        $r6 = r0.<com.android.server.dreams.DreamManagerService: android.content.Context mContext>;
+
+        $r7 = virtualinvoke $r6.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        $r8 = staticinvoke <android.provider.Settings$Secure: android.net.Uri getUriFor(java.lang.String)>("doze_pulse_on_double_tap");
+
+        $r9 = r0.<com.android.server.dreams.DreamManagerService: android.database.ContentObserver mDozeEnabledObserver>;
+
+        virtualinvoke $r7.<android.content.ContentResolver: void registerContentObserver(android.net.Uri,boolean,android.database.ContentObserver,int)>($r8, 0, $r9, -1);
+
+        specialinvoke r0.<com.android.server.dreams.DreamManagerService: void writePulseGestureEnabled()>();
+
+     label2:
+        return;
+    }
+
+    public void onStart()
+    {
+        com.android.server.dreams.DreamManagerService r0;
+        com.android.server.dreams.DreamManagerService$BinderService $r1;
+        com.android.server.dreams.DreamManagerService$LocalService $r2;
+
+        r0 := @this: com.android.server.dreams.DreamManagerService;
+
+        $r1 = new com.android.server.dreams.DreamManagerService$BinderService;
+
+        specialinvoke $r1.<com.android.server.dreams.DreamManagerService$BinderService: void <init>(com.android.server.dreams.DreamManagerService,com.android.server.dreams.DreamManagerService$1)>(r0, null);
+
+        virtualinvoke r0.<com.android.server.dreams.DreamManagerService: void publishBinderService(java.lang.String,android.os.IBinder)>("dreams", $r1);
+
+        $r2 = new com.android.server.dreams.DreamManagerService$LocalService;
+
+        specialinvoke $r2.<com.android.server.dreams.DreamManagerService$LocalService: void <init>(com.android.server.dreams.DreamManagerService,com.android.server.dreams.DreamManagerService$1)>(r0, null);
+
+        virtualinvoke r0.<com.android.server.dreams.DreamManagerService: void publishLocalService(java.lang.Class,java.lang.Object)>(class "Landroid/service/dreams/DreamManagerInternal;", $r2);
+
+        return;
+    }
+
+    public static void <clinit>()
+    {
+        <com.android.server.dreams.DreamManagerService: java.lang.String TAG> = "DreamManagerService";
+
+        <com.android.server.dreams.DreamManagerService: boolean DEBUG> = 0;
+
+        return;
+    }
+}

@@ -1,0 +1,1415 @@
+public class android.telephony.mbms.MbmsDownloadReceiver extends android.content.BroadcastReceiver
+{
+    public static final java.lang.String DOWNLOAD_TOKEN_SUFFIX;
+    private static final java.lang.String EMBMS_INTENT_PERMISSION;
+    private static final java.lang.String LOG_TAG;
+    private static final int MAX_TEMP_FILE_RETRIES;
+    public static final java.lang.String MBMS_FILE_PROVIDER_META_DATA_KEY;
+    public static final int RESULT_APP_NOTIFICATION_ERROR;
+    public static final int RESULT_BAD_TEMP_FILE_ROOT;
+    public static final int RESULT_DOWNLOAD_FINALIZATION_ERROR;
+    public static final int RESULT_INVALID_ACTION;
+    public static final int RESULT_MALFORMED_INTENT;
+    public static final int RESULT_OK;
+    public static final int RESULT_TEMP_FILE_GENERATION_ERROR;
+    private static final java.lang.String TEMP_FILE_STAGING_LOCATION;
+    private static final java.lang.String TEMP_FILE_SUFFIX;
+    private java.lang.String mFileProviderAuthorityCache;
+    private java.lang.String mMiddlewarePackageNameCache;
+
+    public void <init>()
+    {
+        android.telephony.mbms.MbmsDownloadReceiver r0;
+
+        r0 := @this: android.telephony.mbms.MbmsDownloadReceiver;
+
+        specialinvoke r0.<android.content.BroadcastReceiver: void <init>()>();
+
+        r0.<android.telephony.mbms.MbmsDownloadReceiver: java.lang.String mFileProviderAuthorityCache> = null;
+
+        r0.<android.telephony.mbms.MbmsDownloadReceiver: java.lang.String mMiddlewarePackageNameCache> = null;
+
+        return;
+    }
+
+    private void cleanupPostMove(android.content.Context, android.content.Intent)
+    {
+        android.telephony.mbms.MbmsDownloadReceiver r0;
+        android.content.Context r1;
+        android.telephony.mbms.DownloadRequest r2;
+        android.os.Parcelable $r4;
+        boolean $z0, $z1, $z2;
+        java.lang.Object $r5;
+        java.lang.String $r6, $r8, $r11, $r13;
+        java.io.File $r7;
+        java.lang.StringBuilder $r9;
+        android.content.Intent r14;
+        java.util.ArrayList r15;
+        java.util.Iterator r16;
+        android.net.Uri r17;
+
+        r0 := @this: android.telephony.mbms.MbmsDownloadReceiver;
+
+        r1 := @parameter0: android.content.Context;
+
+        r14 := @parameter1: android.content.Intent;
+
+        $r4 = virtualinvoke r14.<android.content.Intent: android.os.Parcelable getParcelableExtra(java.lang.String)>("android.telephony.extra.MBMS_DOWNLOAD_REQUEST");
+
+        r2 = (android.telephony.mbms.DownloadRequest) $r4;
+
+        if r2 != null goto label1;
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("MbmsDownloadReceiver", "Intent does not include a DownloadRequest. Ignoring.");
+
+        return;
+
+     label1:
+        r15 = virtualinvoke r14.<android.content.Intent: java.util.ArrayList getParcelableArrayListExtra(java.lang.String)>("android.telephony.mbms.extra.TEMP_LIST");
+
+        if r15 != null goto label2;
+
+        return;
+
+     label2:
+        r16 = interfaceinvoke r15.<java.util.List: java.util.Iterator iterator()>();
+
+     label3:
+        $z0 = interfaceinvoke r16.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label5;
+
+        $r5 = interfaceinvoke r16.<java.util.Iterator: java.lang.Object next()>();
+
+        r17 = (android.net.Uri) $r5;
+
+        $r6 = virtualinvoke r2.<android.telephony.mbms.DownloadRequest: java.lang.String getFileServiceId()>();
+
+        $z1 = staticinvoke <android.telephony.mbms.MbmsDownloadReceiver: boolean verifyTempFilePath(android.content.Context,java.lang.String,android.net.Uri)>(r1, $r6, r17);
+
+        if $z1 == 0 goto label4;
+
+        $r7 = new java.io.File;
+
+        $r8 = virtualinvoke r17.<android.net.Uri: java.lang.String getSchemeSpecificPart()>();
+
+        specialinvoke $r7.<java.io.File: void <init>(java.lang.String)>($r8);
+
+        $z2 = virtualinvoke $r7.<java.io.File: boolean delete()>();
+
+        if $z2 != 0 goto label4;
+
+        $r9 = new java.lang.StringBuilder;
+
+        specialinvoke $r9.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Failed to delete temp file at ");
+
+        $r11 = virtualinvoke $r7.<java.io.File: java.lang.String getPath()>();
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r11);
+
+        $r13 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("MbmsDownloadReceiver", $r13);
+
+     label4:
+        goto label3;
+
+     label5:
+        return;
+    }
+
+    private void cleanupTempFiles(android.content.Context, android.content.Intent)
+    {
+        android.telephony.mbms.MbmsDownloadReceiver r0;
+        android.content.Intent r1;
+        int i0, i1;
+        java.lang.String $r2;
+        android.telephony.mbms.MbmsDownloadReceiver$1 $r3;
+        java.util.ArrayList $r4;
+        java.io.File $r5, r7;
+        android.content.Context r6;
+        java.io.File[] r8;
+
+        r0 := @this: android.telephony.mbms.MbmsDownloadReceiver;
+
+        r6 := @parameter0: android.content.Context;
+
+        r1 := @parameter1: android.content.Intent;
+
+        $r2 = virtualinvoke r1.<android.content.Intent: java.lang.String getStringExtra(java.lang.String)>("android.telephony.mbms.extra.SERVICE_ID");
+
+        r7 = staticinvoke <android.telephony.mbms.MbmsUtils: java.io.File getEmbmsTempFileDirForService(android.content.Context,java.lang.String)>(r6, $r2);
+
+        $r3 = new android.telephony.mbms.MbmsDownloadReceiver$1;
+
+        $r4 = virtualinvoke r1.<android.content.Intent: java.util.ArrayList getParcelableArrayListExtra(java.lang.String)>("android.telephony.mbms.extra.TEMP_FILES_IN_USE");
+
+        specialinvoke $r3.<android.telephony.mbms.MbmsDownloadReceiver$1: void <init>(android.telephony.mbms.MbmsDownloadReceiver,java.util.List)>(r0, $r4);
+
+        r8 = virtualinvoke r7.<java.io.File: java.io.File[] listFiles(java.io.FileFilter)>($r3);
+
+        i0 = lengthof r8;
+
+        i1 = 0;
+
+     label1:
+        if i1 >= i0 goto label2;
+
+        $r5 = r8[i1];
+
+        virtualinvoke $r5.<java.io.File: boolean delete()>();
+
+        i1 = i1 + 1;
+
+        goto label1;
+
+     label2:
+        return;
+    }
+
+    private java.util.ArrayList generateFreshTempFiles(android.content.Context, java.lang.String, int)
+    {
+        android.telephony.mbms.MbmsDownloadReceiver r0;
+        android.content.Context r1;
+        int i0, i2;
+        java.io.File r2, r9;
+        boolean $z0;
+        java.util.ArrayList $r4;
+        java.lang.String $r5, $r6, r8;
+        android.telephony.mbms.UriPathPair $r7;
+        android.net.Uri r10, r11;
+
+        r0 := @this: android.telephony.mbms.MbmsDownloadReceiver;
+
+        r1 := @parameter0: android.content.Context;
+
+        r8 := @parameter1: java.lang.String;
+
+        i0 := @parameter2: int;
+
+        r2 = staticinvoke <android.telephony.mbms.MbmsUtils: java.io.File getEmbmsTempFileDirForService(android.content.Context,java.lang.String)>(r1, r8);
+
+        $z0 = virtualinvoke r2.<java.io.File: boolean exists()>();
+
+        if $z0 != 0 goto label1;
+
+        virtualinvoke r2.<java.io.File: boolean mkdirs()>();
+
+     label1:
+        $r4 = new java.util.ArrayList;
+
+        specialinvoke $r4.<java.util.ArrayList: void <init>(int)>(i0);
+
+        i2 = 0;
+
+     label2:
+        if i2 >= i0 goto label5;
+
+        r9 = staticinvoke <android.telephony.mbms.MbmsDownloadReceiver: java.io.File generateSingleTempFile(java.io.File)>(r2);
+
+        if r9 != null goto label3;
+
+        virtualinvoke r0.<android.telephony.mbms.MbmsDownloadReceiver: void setResultCode(int)>(5);
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("MbmsDownloadReceiver", "Failed to generate a temp file. Moving on.");
+
+        goto label4;
+
+     label3:
+        r10 = staticinvoke <android.net.Uri: android.net.Uri fromFile(java.io.File)>(r9);
+
+        $r5 = specialinvoke r0.<android.telephony.mbms.MbmsDownloadReceiver: java.lang.String getFileProviderAuthorityCached(android.content.Context)>(r1);
+
+        r11 = staticinvoke <android.telephony.mbms.MbmsTempFileProvider: android.net.Uri getUriForFile(android.content.Context,java.lang.String,java.io.File)>(r1, $r5, r9);
+
+        $r6 = specialinvoke r0.<android.telephony.mbms.MbmsDownloadReceiver: java.lang.String getMiddlewarePackageCached(android.content.Context)>(r1);
+
+        virtualinvoke r1.<android.content.Context: void grantUriPermission(java.lang.String,android.net.Uri,int)>($r6, r11, 3);
+
+        $r7 = new android.telephony.mbms.UriPathPair;
+
+        specialinvoke $r7.<android.telephony.mbms.UriPathPair: void <init>(android.net.Uri,android.net.Uri)>(r10, r11);
+
+        virtualinvoke $r4.<java.util.ArrayList: boolean add(java.lang.Object)>($r7);
+
+     label4:
+        i2 = i2 + 1;
+
+        goto label2;
+
+     label5:
+        return $r4;
+    }
+
+    private static java.io.File generateSingleTempFile(java.io.File)
+    {
+        java.io.File r0, $r5, r10;
+        java.lang.StringBuilder $r1;
+        java.util.UUID $r2;
+        java.lang.String $r6;
+        boolean $z0;
+        java.lang.Throwable $r7;
+        int i0;
+
+        r0 := @parameter0: java.io.File;
+
+        i0 = 0;
+
+     label1:
+        if i0 >= 5 goto label6;
+
+        i0 = i0 + 1;
+
+        $r1 = new java.lang.StringBuilder;
+
+        specialinvoke $r1.<java.lang.StringBuilder: void <init>()>();
+
+        $r2 = staticinvoke <java.util.UUID: java.util.UUID randomUUID()>();
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r2);
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(".embms.temp");
+
+        $r5 = new java.io.File;
+
+        $r6 = virtualinvoke $r1.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r5.<java.io.File: void <init>(java.io.File,java.lang.String)>(r0, $r6);
+
+     label2:
+        $z0 = virtualinvoke $r5.<java.io.File: boolean createNewFile()>();
+
+        if $z0 == 0 goto label4;
+
+        r10 = virtualinvoke $r5.<java.io.File: java.io.File getCanonicalFile()>();
+
+     label3:
+        return r10;
+
+     label4:
+        goto label1;
+
+     label5:
+        $r7 := @caughtexception;
+
+        goto label1;
+
+     label6:
+        return null;
+
+        catch java.io.IOException from label2 to label3 with label5;
+    }
+
+    private void generateTempFiles(android.content.Context, android.content.Intent)
+    {
+        android.telephony.mbms.MbmsDownloadReceiver r0;
+        int i0, $i2;
+        java.util.ArrayList r1, r7, r8;
+        android.os.Bundle $r2, $r3;
+        android.content.Context r4;
+        android.content.Intent r5;
+        java.lang.String r6;
+
+        r0 := @this: android.telephony.mbms.MbmsDownloadReceiver;
+
+        r4 := @parameter0: android.content.Context;
+
+        r5 := @parameter1: android.content.Intent;
+
+        r6 = virtualinvoke r5.<android.content.Intent: java.lang.String getStringExtra(java.lang.String)>("android.telephony.mbms.extra.SERVICE_ID");
+
+        if r6 != null goto label1;
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("MbmsDownloadReceiver", "Temp file request did not include the associated service id. Ignoring.");
+
+        virtualinvoke r0.<android.telephony.mbms.MbmsDownloadReceiver: void setResultCode(int)>(2);
+
+        return;
+
+     label1:
+        i0 = virtualinvoke r5.<android.content.Intent: int getIntExtra(java.lang.String,int)>("android.telephony.mbms.extra.FD_COUNT", 0);
+
+        r1 = virtualinvoke r5.<android.content.Intent: java.util.ArrayList getParcelableArrayListExtra(java.lang.String)>("android.telephony.mbms.extra.PAUSED_LIST");
+
+        if i0 != 0 goto label3;
+
+        if r1 == null goto label2;
+
+        $i2 = interfaceinvoke r1.<java.util.List: int size()>();
+
+        if $i2 != 0 goto label3;
+
+     label2:
+        staticinvoke <android.util.Log: int i(java.lang.String,java.lang.String)>("MbmsDownloadReceiver", "No temp files actually requested. Ending.");
+
+        virtualinvoke r0.<android.telephony.mbms.MbmsDownloadReceiver: void setResultCode(int)>(0);
+
+        $r3 = <android.os.Bundle: android.os.Bundle EMPTY>;
+
+        virtualinvoke r0.<android.telephony.mbms.MbmsDownloadReceiver: void setResultExtras(android.os.Bundle)>($r3);
+
+        return;
+
+     label3:
+        r7 = specialinvoke r0.<android.telephony.mbms.MbmsDownloadReceiver: java.util.ArrayList generateFreshTempFiles(android.content.Context,java.lang.String,int)>(r4, r6, i0);
+
+        r8 = specialinvoke r0.<android.telephony.mbms.MbmsDownloadReceiver: java.util.ArrayList generateUrisForPausedFiles(android.content.Context,java.lang.String,java.util.List)>(r4, r6, r1);
+
+        $r2 = new android.os.Bundle;
+
+        specialinvoke $r2.<android.os.Bundle: void <init>()>();
+
+        virtualinvoke $r2.<android.os.Bundle: void putParcelableArrayList(java.lang.String,java.util.ArrayList)>("android.telephony.mbms.extra.FREE_URI_LIST", r7);
+
+        virtualinvoke $r2.<android.os.Bundle: void putParcelableArrayList(java.lang.String,java.util.ArrayList)>("android.telephony.mbms.extra.PAUSED_URI_LIST", r8);
+
+        virtualinvoke r0.<android.telephony.mbms.MbmsDownloadReceiver: void setResultCode(int)>(0);
+
+        virtualinvoke r0.<android.telephony.mbms.MbmsDownloadReceiver: void setResultExtras(android.os.Bundle)>($r2);
+
+        return;
+    }
+
+    private java.util.ArrayList generateUrisForPausedFiles(android.content.Context, java.lang.String, java.util.List)
+    {
+        android.telephony.mbms.MbmsDownloadReceiver r0;
+        android.content.Context r1;
+        java.lang.String r2, $r8, $r9, $r10, $r16, $r21;
+        android.net.Uri r4, r28;
+        java.util.ArrayList $r5, $r22;
+        int $i0;
+        java.lang.Object $r6;
+        boolean $z0, $z1, $z3;
+        java.io.File $r7;
+        android.telephony.mbms.UriPathPair $r11;
+        java.lang.StringBuilder $r12, $r17;
+        java.util.List r23;
+        java.util.Iterator r24;
+
+        r0 := @this: android.telephony.mbms.MbmsDownloadReceiver;
+
+        r1 := @parameter0: android.content.Context;
+
+        r2 := @parameter1: java.lang.String;
+
+        r23 := @parameter2: java.util.List;
+
+        if r23 != null goto label1;
+
+        $r22 = new java.util.ArrayList;
+
+        specialinvoke $r22.<java.util.ArrayList: void <init>(int)>(0);
+
+        return $r22;
+
+     label1:
+        $r5 = new java.util.ArrayList;
+
+        $i0 = interfaceinvoke r23.<java.util.List: int size()>();
+
+        specialinvoke $r5.<java.util.ArrayList: void <init>(int)>($i0);
+
+        r24 = interfaceinvoke r23.<java.util.List: java.util.Iterator iterator()>();
+
+     label2:
+        $z3 = interfaceinvoke r24.<java.util.Iterator: boolean hasNext()>();
+
+        if $z3 == 0 goto label5;
+
+        $r6 = interfaceinvoke r24.<java.util.Iterator: java.lang.Object next()>();
+
+        r4 = (android.net.Uri) $r6;
+
+        $z0 = staticinvoke <android.telephony.mbms.MbmsDownloadReceiver: boolean verifyTempFilePath(android.content.Context,java.lang.String,android.net.Uri)>(r1, r2, r4);
+
+        if $z0 != 0 goto label3;
+
+        $r17 = new java.lang.StringBuilder;
+
+        specialinvoke $r17.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r17.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Supplied file ");
+
+        virtualinvoke $r17.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r4);
+
+        virtualinvoke $r17.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" is not a valid temp file to resume");
+
+        $r21 = virtualinvoke $r17.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("MbmsDownloadReceiver", $r21);
+
+        virtualinvoke r0.<android.telephony.mbms.MbmsDownloadReceiver: void setResultCode(int)>(5);
+
+        goto label2;
+
+     label3:
+        $r7 = new java.io.File;
+
+        $r8 = virtualinvoke r4.<android.net.Uri: java.lang.String getSchemeSpecificPart()>();
+
+        specialinvoke $r7.<java.io.File: void <init>(java.lang.String)>($r8);
+
+        $z1 = virtualinvoke $r7.<java.io.File: boolean exists()>();
+
+        if $z1 != 0 goto label4;
+
+        $r12 = new java.lang.StringBuilder;
+
+        specialinvoke $r12.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Supplied file ");
+
+        virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r4);
+
+        virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" does not exist.");
+
+        $r16 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("MbmsDownloadReceiver", $r16);
+
+        virtualinvoke r0.<android.telephony.mbms.MbmsDownloadReceiver: void setResultCode(int)>(5);
+
+        goto label2;
+
+     label4:
+        $r9 = specialinvoke r0.<android.telephony.mbms.MbmsDownloadReceiver: java.lang.String getFileProviderAuthorityCached(android.content.Context)>(r1);
+
+        r28 = staticinvoke <android.telephony.mbms.MbmsTempFileProvider: android.net.Uri getUriForFile(android.content.Context,java.lang.String,java.io.File)>(r1, $r9, $r7);
+
+        $r10 = specialinvoke r0.<android.telephony.mbms.MbmsDownloadReceiver: java.lang.String getMiddlewarePackageCached(android.content.Context)>(r1);
+
+        virtualinvoke r1.<android.content.Context: void grantUriPermission(java.lang.String,android.net.Uri,int)>($r10, r28, 3);
+
+        $r11 = new android.telephony.mbms.UriPathPair;
+
+        specialinvoke $r11.<android.telephony.mbms.UriPathPair: void <init>(android.net.Uri,android.net.Uri)>(r4, r28);
+
+        virtualinvoke $r5.<java.util.ArrayList: boolean add(java.lang.Object)>($r11);
+
+        goto label2;
+
+     label5:
+        return $r5;
+    }
+
+    private static java.lang.String getFileProviderAuthority(android.content.Context)
+    {
+        android.content.pm.PackageManager $r0;
+        java.lang.String $r1, $r9, $r12, r15;
+        android.os.Bundle $r2, $r4;
+        java.lang.RuntimeException $r3, $r5, $r11;
+        android.content.pm.PackageManager$NameNotFoundException $r6;
+        java.lang.StringBuilder $r7;
+        android.content.Context r13;
+        android.content.pm.ApplicationInfo r14;
+
+        r13 := @parameter0: android.content.Context;
+
+     label1:
+        $r0 = virtualinvoke r13.<android.content.Context: android.content.pm.PackageManager getPackageManager()>();
+
+        $r1 = virtualinvoke r13.<android.content.Context: java.lang.String getPackageName()>();
+
+        r14 = virtualinvoke $r0.<android.content.pm.PackageManager: android.content.pm.ApplicationInfo getApplicationInfo(java.lang.String,int)>($r1, 128);
+
+     label2:
+        $r2 = r14.<android.content.pm.ApplicationInfo: android.os.Bundle metaData>;
+
+        if $r2 == null goto label4;
+
+        $r4 = r14.<android.content.pm.ApplicationInfo: android.os.Bundle metaData>;
+
+        r15 = virtualinvoke $r4.<android.os.Bundle: java.lang.String getString(java.lang.String)>("mbms-file-provider-authority");
+
+        if r15 == null goto label3;
+
+        return r15;
+
+     label3:
+        $r5 = new java.lang.RuntimeException;
+
+        specialinvoke $r5.<java.lang.RuntimeException: void <init>(java.lang.String)>("App must declare the file provider authority as metadata in the manifest.");
+
+        throw $r5;
+
+     label4:
+        $r3 = new java.lang.RuntimeException;
+
+        specialinvoke $r3.<java.lang.RuntimeException: void <init>(java.lang.String)>("App must declare the file provider authority as metadata in the manifest.");
+
+        throw $r3;
+
+     label5:
+        $r6 := @caughtexception;
+
+        $r7 = new java.lang.StringBuilder;
+
+        specialinvoke $r7.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Package manager couldn\'t find ");
+
+        $r9 = virtualinvoke r13.<android.content.Context: java.lang.String getPackageName()>();
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r9);
+
+        $r11 = new java.lang.RuntimeException;
+
+        $r12 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r11.<java.lang.RuntimeException: void <init>(java.lang.String)>($r12);
+
+        throw $r11;
+
+        catch android.content.pm.PackageManager$NameNotFoundException from label1 to label2 with label5;
+    }
+
+    private java.lang.String getFileProviderAuthorityCached(android.content.Context)
+    {
+        android.telephony.mbms.MbmsDownloadReceiver r0;
+        java.lang.String r1, r3;
+        android.content.Context r2;
+
+        r0 := @this: android.telephony.mbms.MbmsDownloadReceiver;
+
+        r2 := @parameter0: android.content.Context;
+
+        r1 = r0.<android.telephony.mbms.MbmsDownloadReceiver: java.lang.String mFileProviderAuthorityCache>;
+
+        if r1 == null goto label1;
+
+        return r1;
+
+     label1:
+        r3 = staticinvoke <android.telephony.mbms.MbmsDownloadReceiver: java.lang.String getFileProviderAuthority(android.content.Context)>(r2);
+
+        r0.<android.telephony.mbms.MbmsDownloadReceiver: java.lang.String mFileProviderAuthorityCache> = r3;
+
+        return r3;
+    }
+
+    public static java.lang.String getFileRelativePath(java.lang.String, java.lang.String)
+    {
+        boolean $z0, $z1, $z2;
+        int $i0, $i1, $i2, $i3, $i4, $i6;
+        java.lang.String $r0, $r6, r7, r8, r9, r11, r12;
+        java.lang.StringBuilder $r1;
+
+        r7 := @parameter0: java.lang.String;
+
+        r8 := @parameter1: java.lang.String;
+
+        r9 = r7;
+
+        $z0 = virtualinvoke r7.<java.lang.String: boolean endsWith(java.lang.String)>("*");
+
+        if $z0 == 0 goto label1;
+
+        $i6 = virtualinvoke r7.<java.lang.String: int lastIndexOf(int)>(47);
+
+        r9 = virtualinvoke r7.<java.lang.String: java.lang.String substring(int,int)>(0, $i6);
+
+     label1:
+        $z1 = virtualinvoke r8.<java.lang.String: boolean startsWith(java.lang.String)>(r9);
+
+        if $z1 != 0 goto label2;
+
+        $r1 = new java.lang.StringBuilder;
+
+        specialinvoke $r1.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("File location specified in FileInfo does not match the source URI. source: ");
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r9);
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" fileinfo path: ");
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r8);
+
+        $r6 = virtualinvoke $r1.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>("MbmsDownloadReceiver", $r6);
+
+        return null;
+
+     label2:
+        $i0 = virtualinvoke r8.<java.lang.String: int length()>();
+
+        $i1 = virtualinvoke r9.<java.lang.String: int length()>();
+
+        if $i0 != $i1 goto label3;
+
+        $i3 = virtualinvoke r9.<java.lang.String: int lastIndexOf(int)>(47);
+
+        $i4 = $i3 + 1;
+
+        $r0 = virtualinvoke r9.<java.lang.String: java.lang.String substring(int)>($i4);
+
+        return $r0;
+
+     label3:
+        $i2 = virtualinvoke r9.<java.lang.String: int length()>();
+
+        r11 = virtualinvoke r8.<java.lang.String: java.lang.String substring(int)>($i2);
+
+        r12 = r11;
+
+        $z2 = virtualinvoke r11.<java.lang.String: boolean startsWith(java.lang.String)>("/");
+
+        if $z2 == 0 goto label4;
+
+        r12 = virtualinvoke r11.<java.lang.String: java.lang.String substring(int)>(1);
+
+     label4:
+        return r12;
+    }
+
+    private java.lang.String getMiddlewarePackageCached(android.content.Context)
+    {
+        android.telephony.mbms.MbmsDownloadReceiver r0;
+        android.content.Context r1;
+        java.lang.String $r2, $r3, $r5;
+        android.content.pm.ServiceInfo $r4;
+
+        r0 := @this: android.telephony.mbms.MbmsDownloadReceiver;
+
+        r1 := @parameter0: android.content.Context;
+
+        $r2 = r0.<android.telephony.mbms.MbmsDownloadReceiver: java.lang.String mMiddlewarePackageNameCache>;
+
+        if $r2 != null goto label1;
+
+        $r4 = staticinvoke <android.telephony.mbms.MbmsUtils: android.content.pm.ServiceInfo getMiddlewareServiceInfo(android.content.Context,java.lang.String)>(r1, "android.telephony.action.EmbmsDownload");
+
+        $r5 = $r4.<android.content.pm.ServiceInfo: java.lang.String packageName>;
+
+        r0.<android.telephony.mbms.MbmsDownloadReceiver: java.lang.String mMiddlewarePackageNameCache> = $r5;
+
+     label1:
+        $r3 = r0.<android.telephony.mbms.MbmsDownloadReceiver: java.lang.String mMiddlewarePackageNameCache>;
+
+        return $r3;
+    }
+
+    private void moveDownloadedFile(android.content.Context, android.content.Intent)
+    {
+        android.telephony.mbms.MbmsDownloadReceiver r0;
+        android.telephony.mbms.DownloadRequest r1;
+        android.content.Intent r2, r27;
+        int i0;
+        java.nio.file.Path r3;
+        android.os.Parcelable $r4, $r7, $r9;
+        java.lang.String $r8, $r12, $r15, $r17, $r18, $r24;
+        boolean $z0;
+        java.nio.file.FileSystem $r10;
+        android.net.Uri $r11, $r14, $r16, r28, r31;
+        java.lang.String[] $r13;
+        java.lang.StringBuilder $r21;
+        java.lang.Throwable $r25;
+        android.content.Context r26;
+        android.telephony.mbms.FileInfo r30;
+
+        r0 := @this: android.telephony.mbms.MbmsDownloadReceiver;
+
+        r26 := @parameter0: android.content.Context;
+
+        r27 := @parameter1: android.content.Intent;
+
+        $r4 = virtualinvoke r27.<android.content.Intent: android.os.Parcelable getParcelableExtra(java.lang.String)>("android.telephony.extra.MBMS_DOWNLOAD_REQUEST");
+
+        r1 = (android.telephony.mbms.DownloadRequest) $r4;
+
+        r2 = virtualinvoke r1.<android.telephony.mbms.DownloadRequest: android.content.Intent getIntentForApp()>();
+
+        if r2 != null goto label1;
+
+        staticinvoke <android.util.Log: int i(java.lang.String,java.lang.String)>("MbmsDownloadReceiver", "Malformed app notification intent");
+
+        virtualinvoke r0.<android.telephony.mbms.MbmsDownloadReceiver: void setResultCode(int)>(6);
+
+        return;
+
+     label1:
+        i0 = virtualinvoke r27.<android.content.Intent: int getIntExtra(java.lang.String,int)>("android.telephony.extra.MBMS_DOWNLOAD_RESULT", 2);
+
+        virtualinvoke r2.<android.content.Intent: android.content.Intent putExtra(java.lang.String,int)>("android.telephony.extra.MBMS_DOWNLOAD_RESULT", i0);
+
+        virtualinvoke r2.<android.content.Intent: android.content.Intent putExtra(java.lang.String,android.os.Parcelable)>("android.telephony.extra.MBMS_DOWNLOAD_REQUEST", r1);
+
+        if i0 == 1 goto label2;
+
+        staticinvoke <android.util.Log: int i(java.lang.String,java.lang.String)>("MbmsDownloadReceiver", "Download request indicated a failed download. Aborting.");
+
+        virtualinvoke r26.<android.content.Context: void sendBroadcast(android.content.Intent)>(r2);
+
+        virtualinvoke r0.<android.telephony.mbms.MbmsDownloadReceiver: void setResultCode(int)>(0);
+
+        return;
+
+     label2:
+        $r7 = virtualinvoke r27.<android.content.Intent: android.os.Parcelable getParcelableExtra(java.lang.String)>("android.telephony.mbms.extra.FINAL_URI");
+
+        r28 = (android.net.Uri) $r7;
+
+        $r8 = virtualinvoke r1.<android.telephony.mbms.DownloadRequest: java.lang.String getFileServiceId()>();
+
+        $z0 = staticinvoke <android.telephony.mbms.MbmsDownloadReceiver: boolean verifyTempFilePath(android.content.Context,java.lang.String,android.net.Uri)>(r26, $r8, r28);
+
+        if $z0 != 0 goto label3;
+
+        $r21 = new java.lang.StringBuilder;
+
+        specialinvoke $r21.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r21.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Download result specified an invalid temp file ");
+
+        virtualinvoke $r21.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r28);
+
+        $r24 = virtualinvoke $r21.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("MbmsDownloadReceiver", $r24);
+
+        virtualinvoke r0.<android.telephony.mbms.MbmsDownloadReceiver: void setResultCode(int)>(4);
+
+        return;
+
+     label3:
+        $r9 = virtualinvoke r27.<android.content.Intent: android.os.Parcelable getParcelableExtra(java.lang.String)>("android.telephony.extra.MBMS_FILE_INFO");
+
+        r30 = (android.telephony.mbms.FileInfo) $r9;
+
+        $r10 = staticinvoke <java.nio.file.FileSystems: java.nio.file.FileSystem getDefault()>();
+
+        $r11 = virtualinvoke r1.<android.telephony.mbms.DownloadRequest: android.net.Uri getDestinationUri()>();
+
+        $r12 = virtualinvoke $r11.<android.net.Uri: java.lang.String getPath()>();
+
+        $r13 = newarray (java.lang.String)[0];
+
+        r3 = virtualinvoke $r10.<java.nio.file.FileSystem: java.nio.file.Path getPath(java.lang.String,java.lang.String[])>($r12, $r13);
+
+     label4:
+        $r14 = virtualinvoke r1.<android.telephony.mbms.DownloadRequest: android.net.Uri getSourceUri()>();
+
+        $r15 = virtualinvoke $r14.<android.net.Uri: java.lang.String getPath()>();
+
+        $r16 = virtualinvoke r30.<android.telephony.mbms.FileInfo: android.net.Uri getUri()>();
+
+        $r17 = virtualinvoke $r16.<android.net.Uri: java.lang.String getPath()>();
+
+        $r18 = staticinvoke <android.telephony.mbms.MbmsDownloadReceiver: java.lang.String getFileRelativePath(java.lang.String,java.lang.String)>($r15, $r17);
+
+        r31 = staticinvoke <android.telephony.mbms.MbmsDownloadReceiver: android.net.Uri moveToFinalLocation(android.net.Uri,java.nio.file.Path,java.lang.String)>(r28, r3, $r18);
+
+     label5:
+        virtualinvoke r2.<android.content.Intent: android.content.Intent putExtra(java.lang.String,android.os.Parcelable)>("android.telephony.extra.MBMS_COMPLETED_FILE_URI", r31);
+
+        virtualinvoke r2.<android.content.Intent: android.content.Intent putExtra(java.lang.String,android.os.Parcelable)>("android.telephony.extra.MBMS_FILE_INFO", r30);
+
+        virtualinvoke r26.<android.content.Context: void sendBroadcast(android.content.Intent)>(r2);
+
+        virtualinvoke r0.<android.telephony.mbms.MbmsDownloadReceiver: void setResultCode(int)>(0);
+
+        return;
+
+     label6:
+        $r25 := @caughtexception;
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("MbmsDownloadReceiver", "Failed to move temp file to final destination");
+
+        virtualinvoke r0.<android.telephony.mbms.MbmsDownloadReceiver: void setResultCode(int)>(4);
+
+        return;
+
+        catch java.io.IOException from label4 to label5 with label6;
+    }
+
+    private static android.net.Uri moveToFinalLocation(android.net.Uri, java.nio.file.Path, java.lang.String) throws java.io.IOException
+    {
+        java.lang.String r0, $r1, $r2, $r4, $r21;
+        boolean $z0, $z1;
+        java.nio.file.FileSystem $r3;
+        java.lang.String[] $r5;
+        java.nio.file.Path $r6, $r11, $r14, r23, r25, r26;
+        java.nio.file.LinkOption[] $r7;
+        java.lang.Object[] $r8;
+        java.nio.file.StandardCopyOption $r9, $r10;
+        java.io.File $r12;
+        android.net.Uri $r13, r22;
+        java.nio.file.attribute.FileAttribute[] $r15;
+        java.lang.StringBuilder r27;
+        java.nio.file.CopyOption[] r28;
+
+        r22 := @parameter0: android.net.Uri;
+
+        r23 := @parameter1: java.nio.file.Path;
+
+        r0 := @parameter2: java.lang.String;
+
+        $r1 = "file";
+
+        $r2 = virtualinvoke r22.<android.net.Uri: java.lang.String getScheme()>();
+
+        $z0 = virtualinvoke $r1.<java.lang.String: boolean equals(java.lang.Object)>($r2);
+
+        if $z0 != 0 goto label1;
+
+        r27 = new java.lang.StringBuilder;
+
+        specialinvoke r27.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r27.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Downloaded file location uri ");
+
+        virtualinvoke r27.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r22);
+
+        virtualinvoke r27.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" does not have a file scheme");
+
+        $r21 = virtualinvoke r27.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("MbmsDownloadReceiver", $r21);
+
+        return null;
+
+     label1:
+        $r3 = staticinvoke <java.nio.file.FileSystems: java.nio.file.FileSystem getDefault()>();
+
+        $r4 = virtualinvoke r22.<android.net.Uri: java.lang.String getPath()>();
+
+        $r5 = newarray (java.lang.String)[0];
+
+        r25 = virtualinvoke $r3.<java.nio.file.FileSystem: java.nio.file.Path getPath(java.lang.String,java.lang.String[])>($r4, $r5);
+
+        r26 = interfaceinvoke r23.<java.nio.file.Path: java.nio.file.Path resolve(java.lang.String)>(r0);
+
+        $r6 = interfaceinvoke r26.<java.nio.file.Path: java.nio.file.Path getParent()>();
+
+        $r7 = newarray (java.nio.file.LinkOption)[0];
+
+        $z1 = staticinvoke <java.nio.file.Files: boolean isDirectory(java.nio.file.Path,java.nio.file.LinkOption[])>($r6, $r7);
+
+        if $z1 != 0 goto label2;
+
+        $r14 = interfaceinvoke r26.<java.nio.file.Path: java.nio.file.Path getParent()>();
+
+        $r15 = newarray (java.nio.file.attribute.FileAttribute)[0];
+
+        staticinvoke <java.nio.file.Files: java.nio.file.Path createDirectories(java.nio.file.Path,java.nio.file.attribute.FileAttribute[])>($r14, $r15);
+
+     label2:
+        $r8 = newarray (java.nio.file.CopyOption)[2];
+
+        $r9 = <java.nio.file.StandardCopyOption: java.nio.file.StandardCopyOption REPLACE_EXISTING>;
+
+        $r8[0] = $r9;
+
+        $r10 = <java.nio.file.StandardCopyOption: java.nio.file.StandardCopyOption ATOMIC_MOVE>;
+
+        $r8[1] = $r10;
+
+        r28 = (java.nio.file.CopyOption[]) $r8;
+
+        $r11 = staticinvoke <java.nio.file.Files: java.nio.file.Path move(java.nio.file.Path,java.nio.file.Path,java.nio.file.CopyOption[])>(r25, r26, r28);
+
+        $r12 = interfaceinvoke $r11.<java.nio.file.Path: java.io.File toFile()>();
+
+        $r13 = staticinvoke <android.net.Uri: android.net.Uri fromFile(java.io.File)>($r12);
+
+        return $r13;
+    }
+
+    private boolean verifyIntentContents(android.content.Context, android.content.Intent)
+    {
+        android.telephony.mbms.MbmsDownloadReceiver r0;
+        java.lang.String $r1, $r2, $r3, $r4, $r5, $r6, $r9, $r13, $r18, r23;
+        boolean $z0, $z1, $z2, $z3, $z4, $z5, $z6, $z7, $z8, $z9, $z10, $z11, $z12, $z13;
+        int $i5;
+        android.os.Parcelable $r7;
+        java.lang.StringBuilder $r8, $r15;
+        java.io.File $r12, $r14;
+        android.content.Context r19;
+        android.content.Intent r20;
+        android.telephony.mbms.DownloadRequest r21;
+
+        r0 := @this: android.telephony.mbms.MbmsDownloadReceiver;
+
+        r19 := @parameter0: android.content.Context;
+
+        r20 := @parameter1: android.content.Intent;
+
+        $r1 = "android.telephony.mbms.action.DOWNLOAD_RESULT_INTERNAL";
+
+        $r2 = virtualinvoke r20.<android.content.Intent: java.lang.String getAction()>();
+
+        $z0 = virtualinvoke $r1.<java.lang.String: boolean equals(java.lang.Object)>($r2);
+
+        if $z0 == 0 goto label08;
+
+        $z8 = virtualinvoke r20.<android.content.Intent: boolean hasExtra(java.lang.String)>("android.telephony.extra.MBMS_DOWNLOAD_RESULT");
+
+        if $z8 != 0 goto label01;
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("MbmsDownloadReceiver", "Download result did not include a result code. Ignoring.");
+
+        return 0;
+
+     label01:
+        $z9 = virtualinvoke r20.<android.content.Intent: boolean hasExtra(java.lang.String)>("android.telephony.extra.MBMS_DOWNLOAD_REQUEST");
+
+        if $z9 != 0 goto label02;
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("MbmsDownloadReceiver", "Download result did not include the associated request. Ignoring.");
+
+        return 0;
+
+     label02:
+        $i5 = virtualinvoke r20.<android.content.Intent: int getIntExtra(java.lang.String,int)>("android.telephony.extra.MBMS_DOWNLOAD_RESULT", 2);
+
+        if 1 == $i5 goto label03;
+
+        return 1;
+
+     label03:
+        $z10 = virtualinvoke r20.<android.content.Intent: boolean hasExtra(java.lang.String)>("android.telephony.mbms.extra.TEMP_FILE_ROOT");
+
+        if $z10 != 0 goto label04;
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("MbmsDownloadReceiver", "Download result did not include the temp file root. Ignoring.");
+
+        return 0;
+
+     label04:
+        $z11 = virtualinvoke r20.<android.content.Intent: boolean hasExtra(java.lang.String)>("android.telephony.extra.MBMS_FILE_INFO");
+
+        if $z11 != 0 goto label05;
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("MbmsDownloadReceiver", "Download result did not include the associated file info. Ignoring.");
+
+        return 0;
+
+     label05:
+        $z12 = virtualinvoke r20.<android.content.Intent: boolean hasExtra(java.lang.String)>("android.telephony.mbms.extra.FINAL_URI");
+
+        if $z12 != 0 goto label06;
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("MbmsDownloadReceiver", "Download result did not include the path to the final temp file. Ignoring.");
+
+        return 0;
+
+     label06:
+        $r7 = virtualinvoke r20.<android.content.Intent: android.os.Parcelable getParcelableExtra(java.lang.String)>("android.telephony.extra.MBMS_DOWNLOAD_REQUEST");
+
+        r21 = (android.telephony.mbms.DownloadRequest) $r7;
+
+        $r8 = new java.lang.StringBuilder;
+
+        specialinvoke $r8.<java.lang.StringBuilder: void <init>()>();
+
+        $r9 = virtualinvoke r21.<android.telephony.mbms.DownloadRequest: java.lang.String getHash()>();
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r9);
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(".download_token");
+
+        r23 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $r12 = new java.io.File;
+
+        $r13 = virtualinvoke r21.<android.telephony.mbms.DownloadRequest: java.lang.String getFileServiceId()>();
+
+        $r14 = staticinvoke <android.telephony.mbms.MbmsUtils: java.io.File getEmbmsTempFileDirForService(android.content.Context,java.lang.String)>(r19, $r13);
+
+        specialinvoke $r12.<java.io.File: void <init>(java.io.File,java.lang.String)>($r14, r23);
+
+        $z13 = virtualinvoke $r12.<java.io.File: boolean exists()>();
+
+        if $z13 != 0 goto label07;
+
+        $r15 = new java.lang.StringBuilder;
+
+        specialinvoke $r15.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r15.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Supplied download request does not match a token that we have. Expected ");
+
+        virtualinvoke $r15.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r12);
+
+        $r18 = virtualinvoke $r15.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("MbmsDownloadReceiver", $r18);
+
+        return 0;
+
+     label07:
+        goto label13;
+
+     label08:
+        $r3 = "android.telephony.mbms.action.FILE_DESCRIPTOR_REQUEST";
+
+        $r4 = virtualinvoke r20.<android.content.Intent: java.lang.String getAction()>();
+
+        $z1 = virtualinvoke $r3.<java.lang.String: boolean equals(java.lang.Object)>($r4);
+
+        if $z1 == 0 goto label10;
+
+        $z6 = virtualinvoke r20.<android.content.Intent: boolean hasExtra(java.lang.String)>("android.telephony.mbms.extra.SERVICE_ID");
+
+        if $z6 != 0 goto label09;
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("MbmsDownloadReceiver", "Temp file request did not include the associated service id. Ignoring.");
+
+        return 0;
+
+     label09:
+        $z7 = virtualinvoke r20.<android.content.Intent: boolean hasExtra(java.lang.String)>("android.telephony.mbms.extra.TEMP_FILE_ROOT");
+
+        if $z7 != 0 goto label13;
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("MbmsDownloadReceiver", "Download result did not include the temp file root. Ignoring.");
+
+        return 0;
+
+     label10:
+        $r5 = "android.telephony.mbms.action.CLEANUP";
+
+        $r6 = virtualinvoke r20.<android.content.Intent: java.lang.String getAction()>();
+
+        $z2 = virtualinvoke $r5.<java.lang.String: boolean equals(java.lang.Object)>($r6);
+
+        if $z2 == 0 goto label13;
+
+        $z3 = virtualinvoke r20.<android.content.Intent: boolean hasExtra(java.lang.String)>("android.telephony.mbms.extra.SERVICE_ID");
+
+        if $z3 != 0 goto label11;
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("MbmsDownloadReceiver", "Cleanup request did not include the associated service id. Ignoring.");
+
+        return 0;
+
+     label11:
+        $z4 = virtualinvoke r20.<android.content.Intent: boolean hasExtra(java.lang.String)>("android.telephony.mbms.extra.TEMP_FILE_ROOT");
+
+        if $z4 != 0 goto label12;
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("MbmsDownloadReceiver", "Cleanup request did not include the temp file root. Ignoring.");
+
+        return 0;
+
+     label12:
+        $z5 = virtualinvoke r20.<android.content.Intent: boolean hasExtra(java.lang.String)>("android.telephony.mbms.extra.TEMP_FILES_IN_USE");
+
+        if $z5 != 0 goto label13;
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("MbmsDownloadReceiver", "Cleanup request did not include the list of temp files in use. Ignoring.");
+
+        return 0;
+
+     label13:
+        return 1;
+    }
+
+    private void verifyPermissionIntegrity(android.content.Context)
+    {
+        android.telephony.mbms.MbmsDownloadReceiver r0;
+        android.content.Context r1;
+        android.content.pm.PackageManager $r2;
+        android.content.Intent $r3;
+        int $i0;
+        java.lang.IllegalStateException $r4, $r7, $r10, $r12;
+        java.lang.Object $r5;
+        android.content.pm.ResolveInfo $r6;
+        android.content.ComponentName $r8;
+        java.lang.String $r9, $r11;
+        boolean $z0;
+        java.util.List r13;
+        android.content.pm.ActivityInfo r14;
+
+        r0 := @this: android.telephony.mbms.MbmsDownloadReceiver;
+
+        r1 := @parameter0: android.content.Context;
+
+        $r2 = virtualinvoke r1.<android.content.Context: android.content.pm.PackageManager getPackageManager()>();
+
+        $r3 = new android.content.Intent;
+
+        specialinvoke $r3.<android.content.Intent: void <init>(android.content.Context,java.lang.Class)>(r1, class "Landroid/telephony/mbms/MbmsDownloadReceiver;");
+
+        r13 = virtualinvoke $r2.<android.content.pm.PackageManager: java.util.List queryBroadcastReceivers(android.content.Intent,int)>($r3, 0);
+
+        $i0 = interfaceinvoke r13.<java.util.List: int size()>();
+
+        if $i0 != 1 goto label5;
+
+        $r5 = interfaceinvoke r13.<java.util.List: java.lang.Object get(int)>(0);
+
+        $r6 = (android.content.pm.ResolveInfo) $r5;
+
+        r14 = $r6.<android.content.pm.ResolveInfo: android.content.pm.ActivityInfo activityInfo>;
+
+        if r14 == null goto label4;
+
+        $r8 = staticinvoke <android.telephony.mbms.MbmsUtils: android.content.ComponentName getOverrideServiceName(android.content.Context,java.lang.String)>(r1, "android.telephony.action.EmbmsDownload");
+
+        if $r8 == null goto label2;
+
+        $r11 = r14.<android.content.pm.ActivityInfo: java.lang.String permission>;
+
+        if $r11 == null goto label1;
+
+        return;
+
+     label1:
+        $r12 = new java.lang.IllegalStateException;
+
+        specialinvoke $r12.<java.lang.IllegalStateException: void <init>(java.lang.String)>("MbmsDownloadReceiver must require some permission");
+
+        throw $r12;
+
+     label2:
+        $r9 = r14.<android.content.pm.ActivityInfo: java.lang.String permission>;
+
+        $z0 = staticinvoke <java.util.Objects: boolean equals(java.lang.Object,java.lang.Object)>("android.permission.SEND_EMBMS_INTENTS", $r9);
+
+        if $z0 == 0 goto label3;
+
+        return;
+
+     label3:
+        $r10 = new java.lang.IllegalStateException;
+
+        specialinvoke $r10.<java.lang.IllegalStateException: void <init>(java.lang.String)>("MbmsDownloadReceiver must require the SEND_EMBMS_INTENTS permission.");
+
+        throw $r10;
+
+     label4:
+        $r7 = new java.lang.IllegalStateException;
+
+        specialinvoke $r7.<java.lang.IllegalStateException: void <init>(java.lang.String)>("Queried ResolveInfo does not contain a receiver");
+
+        throw $r7;
+
+     label5:
+        $r4 = new java.lang.IllegalStateException;
+
+        specialinvoke $r4.<java.lang.IllegalStateException: void <init>(java.lang.String)>("Non-unique download receiver in your app");
+
+        throw $r4;
+    }
+
+    private static boolean verifyTempFilePath(android.content.Context, java.lang.String, android.net.Uri)
+    {
+        java.lang.String r0, $r1, $r2, $r11, $r16, $r21, r25;
+        boolean $z0, $z1, $z2;
+        java.io.File $r3, $r4, $r9;
+        java.lang.StringBuilder $r5, $r12, $r17;
+        android.content.Context r22;
+        android.net.Uri r23;
+
+        r22 := @parameter0: android.content.Context;
+
+        r0 := @parameter1: java.lang.String;
+
+        r23 := @parameter2: android.net.Uri;
+
+        $r1 = "file";
+
+        $r2 = virtualinvoke r23.<android.net.Uri: java.lang.String getScheme()>();
+
+        $z0 = virtualinvoke $r1.<java.lang.String: boolean equals(java.lang.Object)>($r2);
+
+        if $z0 != 0 goto label1;
+
+        $r17 = new java.lang.StringBuilder;
+
+        specialinvoke $r17.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r17.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Uri ");
+
+        virtualinvoke $r17.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r23);
+
+        virtualinvoke $r17.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" does not have a file scheme");
+
+        $r21 = virtualinvoke $r17.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("MbmsDownloadReceiver", $r21);
+
+        return 0;
+
+     label1:
+        r25 = virtualinvoke r23.<android.net.Uri: java.lang.String getSchemeSpecificPart()>();
+
+        $r3 = new java.io.File;
+
+        specialinvoke $r3.<java.io.File: void <init>(java.lang.String)>(r25);
+
+        $z1 = virtualinvoke $r3.<java.io.File: boolean exists()>();
+
+        if $z1 != 0 goto label2;
+
+        $r12 = new java.lang.StringBuilder;
+
+        specialinvoke $r12.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("File at ");
+
+        virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r25);
+
+        virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" does not exist.");
+
+        $r16 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("MbmsDownloadReceiver", $r16);
+
+        return 0;
+
+     label2:
+        $r4 = staticinvoke <android.telephony.mbms.MbmsUtils: java.io.File getEmbmsTempFileDirForService(android.content.Context,java.lang.String)>(r22, r0);
+
+        $z2 = staticinvoke <android.telephony.mbms.MbmsUtils: boolean isContainedIn(java.io.File,java.io.File)>($r4, $r3);
+
+        if $z2 != 0 goto label3;
+
+        $r5 = new java.lang.StringBuilder;
+
+        specialinvoke $r5.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("File at ");
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r25);
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" is not contained in the temp file root, which is ");
+
+        $r9 = staticinvoke <android.telephony.mbms.MbmsUtils: java.io.File getEmbmsTempFileDirForService(android.content.Context,java.lang.String)>(r22, r0);
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r9);
+
+        $r11 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("MbmsDownloadReceiver", $r11);
+
+        return 0;
+
+     label3:
+        return 1;
+    }
+
+    public void onReceive(android.content.Context, android.content.Intent)
+    {
+        android.telephony.mbms.MbmsDownloadReceiver r0;
+        android.content.Context r1;
+        android.content.Intent r2;
+        boolean $z0, $z1, $z2, $z3, $z4;
+        java.lang.String $r3, $r5, $r6, $r7, $r8, $r9, $r10, $r11;
+        java.io.File $r4;
+
+        r0 := @this: android.telephony.mbms.MbmsDownloadReceiver;
+
+        r1 := @parameter0: android.content.Context;
+
+        r2 := @parameter1: android.content.Intent;
+
+        specialinvoke r0.<android.telephony.mbms.MbmsDownloadReceiver: void verifyPermissionIntegrity(android.content.Context)>(r1);
+
+        $z0 = specialinvoke r0.<android.telephony.mbms.MbmsDownloadReceiver: boolean verifyIntentContents(android.content.Context,android.content.Intent)>(r1, r2);
+
+        if $z0 != 0 goto label1;
+
+        virtualinvoke r0.<android.telephony.mbms.MbmsDownloadReceiver: void setResultCode(int)>(2);
+
+        return;
+
+     label1:
+        $r3 = virtualinvoke r2.<android.content.Intent: java.lang.String getStringExtra(java.lang.String)>("android.telephony.mbms.extra.TEMP_FILE_ROOT");
+
+        $r4 = staticinvoke <android.telephony.mbms.MbmsTempFileProvider: java.io.File getEmbmsTempFileDir(android.content.Context)>(r1);
+
+        $r5 = virtualinvoke $r4.<java.io.File: java.lang.String getPath()>();
+
+        $z1 = staticinvoke <java.util.Objects: boolean equals(java.lang.Object,java.lang.Object)>($r3, $r5);
+
+        if $z1 != 0 goto label2;
+
+        virtualinvoke r0.<android.telephony.mbms.MbmsDownloadReceiver: void setResultCode(int)>(3);
+
+        return;
+
+     label2:
+        $r6 = "android.telephony.mbms.action.DOWNLOAD_RESULT_INTERNAL";
+
+        $r7 = virtualinvoke r2.<android.content.Intent: java.lang.String getAction()>();
+
+        $z2 = virtualinvoke $r6.<java.lang.String: boolean equals(java.lang.Object)>($r7);
+
+        if $z2 == 0 goto label3;
+
+        specialinvoke r0.<android.telephony.mbms.MbmsDownloadReceiver: void moveDownloadedFile(android.content.Context,android.content.Intent)>(r1, r2);
+
+        specialinvoke r0.<android.telephony.mbms.MbmsDownloadReceiver: void cleanupPostMove(android.content.Context,android.content.Intent)>(r1, r2);
+
+        goto label6;
+
+     label3:
+        $r8 = "android.telephony.mbms.action.FILE_DESCRIPTOR_REQUEST";
+
+        $r9 = virtualinvoke r2.<android.content.Intent: java.lang.String getAction()>();
+
+        $z3 = virtualinvoke $r8.<java.lang.String: boolean equals(java.lang.Object)>($r9);
+
+        if $z3 == 0 goto label4;
+
+        specialinvoke r0.<android.telephony.mbms.MbmsDownloadReceiver: void generateTempFiles(android.content.Context,android.content.Intent)>(r1, r2);
+
+        goto label6;
+
+     label4:
+        $r10 = "android.telephony.mbms.action.CLEANUP";
+
+        $r11 = virtualinvoke r2.<android.content.Intent: java.lang.String getAction()>();
+
+        $z4 = virtualinvoke $r10.<java.lang.String: boolean equals(java.lang.Object)>($r11);
+
+        if $z4 == 0 goto label5;
+
+        specialinvoke r0.<android.telephony.mbms.MbmsDownloadReceiver: void cleanupTempFiles(android.content.Context,android.content.Intent)>(r1, r2);
+
+        goto label6;
+
+     label5:
+        virtualinvoke r0.<android.telephony.mbms.MbmsDownloadReceiver: void setResultCode(int)>(1);
+
+     label6:
+        return;
+    }
+
+    public static void <clinit>()
+    {
+        <android.telephony.mbms.MbmsDownloadReceiver: java.lang.String TEMP_FILE_SUFFIX> = ".embms.temp";
+
+        <android.telephony.mbms.MbmsDownloadReceiver: java.lang.String TEMP_FILE_STAGING_LOCATION> = "staged_completed_files";
+
+        <android.telephony.mbms.MbmsDownloadReceiver: int RESULT_TEMP_FILE_GENERATION_ERROR> = 5;
+
+        <android.telephony.mbms.MbmsDownloadReceiver: int RESULT_OK> = 0;
+
+        <android.telephony.mbms.MbmsDownloadReceiver: int RESULT_MALFORMED_INTENT> = 2;
+
+        <android.telephony.mbms.MbmsDownloadReceiver: int RESULT_INVALID_ACTION> = 1;
+
+        <android.telephony.mbms.MbmsDownloadReceiver: int RESULT_DOWNLOAD_FINALIZATION_ERROR> = 4;
+
+        <android.telephony.mbms.MbmsDownloadReceiver: int RESULT_BAD_TEMP_FILE_ROOT> = 3;
+
+        <android.telephony.mbms.MbmsDownloadReceiver: int RESULT_APP_NOTIFICATION_ERROR> = 6;
+
+        <android.telephony.mbms.MbmsDownloadReceiver: java.lang.String MBMS_FILE_PROVIDER_META_DATA_KEY> = "mbms-file-provider-authority";
+
+        <android.telephony.mbms.MbmsDownloadReceiver: int MAX_TEMP_FILE_RETRIES> = 5;
+
+        <android.telephony.mbms.MbmsDownloadReceiver: java.lang.String LOG_TAG> = "MbmsDownloadReceiver";
+
+        <android.telephony.mbms.MbmsDownloadReceiver: java.lang.String EMBMS_INTENT_PERMISSION> = "android.permission.SEND_EMBMS_INTENTS";
+
+        <android.telephony.mbms.MbmsDownloadReceiver: java.lang.String DOWNLOAD_TOKEN_SUFFIX> = ".download_token";
+
+        return;
+    }
+}

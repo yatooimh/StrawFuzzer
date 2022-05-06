@@ -1,0 +1,1652 @@
+final class com.android.server.hdmi.HdmiCecController extends java.lang.Object
+{
+    private static final byte[] EMPTY_BODY;
+    protected static final int HDMI_CEC_HAL_DEATH_COOKIE;
+    private static final int INVALID_PHYSICAL_ADDRESS;
+    private static final int MAX_HDMI_MESSAGE_HISTORY;
+    private static final int NUM_LOGICAL_ADDRESS;
+    private static final java.lang.String TAG;
+    private android.os.Handler mControlHandler;
+    private android.os.Handler mIoHandler;
+    private final android.util.SparseArray mLocalDevices;
+    private final java.util.concurrent.ArrayBlockingQueue mMessageHistory;
+    private final com.android.server.hdmi.HdmiCecController$NativeWrapper mNativeWrapperImpl;
+    private final java.util.List mNeverAssignLogicalAddresses;
+    private final java.util.function.Predicate mRemoteDeviceAddressPredicate;
+    private final com.android.server.hdmi.HdmiControlService mService;
+    private final java.util.function.Predicate mSystemAudioAddressPredicate;
+
+    static void <clinit>()
+    {
+        byte[] $r0;
+
+        <com.android.server.hdmi.HdmiCecController: java.lang.String TAG> = "HdmiCecController";
+
+        <com.android.server.hdmi.HdmiCecController: int NUM_LOGICAL_ADDRESS> = 16;
+
+        <com.android.server.hdmi.HdmiCecController: int MAX_HDMI_MESSAGE_HISTORY> = 250;
+
+        <com.android.server.hdmi.HdmiCecController: int INVALID_PHYSICAL_ADDRESS> = 65535;
+
+        <com.android.server.hdmi.HdmiCecController: int HDMI_CEC_HAL_DEATH_COOKIE> = 353;
+
+        $r0 = <libcore.util.EmptyArray: byte[] BYTE>;
+
+        <com.android.server.hdmi.HdmiCecController: byte[] EMPTY_BODY> = $r0;
+
+        return;
+    }
+
+    private void <init>(com.android.server.hdmi.HdmiControlService, com.android.server.hdmi.HdmiCecController$NativeWrapper)
+    {
+        com.android.server.hdmi.HdmiCecController r0;
+        com.android.server.hdmi.HdmiControlService r1;
+        com.android.server.hdmi.HdmiCecController$NativeWrapper r2;
+        com.android.server.hdmi.HdmiCecController$1 $r3;
+        com.android.server.hdmi.HdmiCecController$2 $r4;
+        android.util.SparseArray $r5;
+        java.util.concurrent.ArrayBlockingQueue $r6;
+        java.lang.String $r7;
+        java.util.List $r8;
+
+        r0 := @this: com.android.server.hdmi.HdmiCecController;
+
+        r1 := @parameter0: com.android.server.hdmi.HdmiControlService;
+
+        r2 := @parameter1: com.android.server.hdmi.HdmiCecController$NativeWrapper;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        $r3 = new com.android.server.hdmi.HdmiCecController$1;
+
+        specialinvoke $r3.<com.android.server.hdmi.HdmiCecController$1: void <init>(com.android.server.hdmi.HdmiCecController)>(r0);
+
+        r0.<com.android.server.hdmi.HdmiCecController: java.util.function.Predicate mRemoteDeviceAddressPredicate> = $r3;
+
+        $r4 = new com.android.server.hdmi.HdmiCecController$2;
+
+        specialinvoke $r4.<com.android.server.hdmi.HdmiCecController$2: void <init>(com.android.server.hdmi.HdmiCecController)>(r0);
+
+        r0.<com.android.server.hdmi.HdmiCecController: java.util.function.Predicate mSystemAudioAddressPredicate> = $r4;
+
+        $r5 = new android.util.SparseArray;
+
+        specialinvoke $r5.<android.util.SparseArray: void <init>()>();
+
+        r0.<com.android.server.hdmi.HdmiCecController: android.util.SparseArray mLocalDevices> = $r5;
+
+        $r6 = new java.util.concurrent.ArrayBlockingQueue;
+
+        specialinvoke $r6.<java.util.concurrent.ArrayBlockingQueue: void <init>(int)>(250);
+
+        r0.<com.android.server.hdmi.HdmiCecController: java.util.concurrent.ArrayBlockingQueue mMessageHistory> = $r6;
+
+        r0.<com.android.server.hdmi.HdmiCecController: com.android.server.hdmi.HdmiControlService mService> = r1;
+
+        r0.<com.android.server.hdmi.HdmiCecController: com.android.server.hdmi.HdmiCecController$NativeWrapper mNativeWrapperImpl> = r2;
+
+        $r7 = staticinvoke <android.os.SystemProperties: java.lang.String get(java.lang.String)>("ro.hdmi.property_hdmi_cec_never_assign_logical_addresses");
+
+        $r8 = staticinvoke <com.android.server.hdmi.HdmiControlService: java.util.List getIntList(java.lang.String)>($r7);
+
+        r0.<com.android.server.hdmi.HdmiCecController: java.util.List mNeverAssignLogicalAddresses> = $r8;
+
+        return;
+    }
+
+    static boolean access$000(com.android.server.hdmi.HdmiCecController, int)
+    {
+        com.android.server.hdmi.HdmiCecController r0;
+        int i0;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.server.hdmi.HdmiCecController;
+
+        i0 := @parameter1: int;
+
+        $z0 = specialinvoke r0.<com.android.server.hdmi.HdmiCecController: boolean isAllocatedLocalDeviceAddress(int)>(i0);
+
+        return $z0;
+    }
+
+    static void access$200(com.android.server.hdmi.HdmiCecController, int, int, com.android.server.hdmi.HdmiCecController$AllocateAddressCallback)
+    {
+        com.android.server.hdmi.HdmiCecController r0;
+        int i0, i1;
+        com.android.server.hdmi.HdmiCecController$AllocateAddressCallback r1;
+
+        r0 := @parameter0: com.android.server.hdmi.HdmiCecController;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        r1 := @parameter3: com.android.server.hdmi.HdmiCecController$AllocateAddressCallback;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiCecController: void handleAllocateLogicalAddress(int,int,com.android.server.hdmi.HdmiCecController$AllocateAddressCallback)>(i0, i1, r1);
+
+        return;
+    }
+
+    static boolean access$300(com.android.server.hdmi.HdmiCecController, int, int, int)
+    {
+        com.android.server.hdmi.HdmiCecController r0;
+        int i0, i1, i2;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.server.hdmi.HdmiCecController;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        i2 := @parameter3: int;
+
+        $z0 = specialinvoke r0.<com.android.server.hdmi.HdmiCecController: boolean sendPollMessage(int,int,int)>(i0, i1, i2);
+
+        return $z0;
+    }
+
+    static void access$400(com.android.server.hdmi.HdmiCecController, int, java.util.List, int, com.android.server.hdmi.HdmiControlService$DevicePollingCallback, java.util.List)
+    {
+        com.android.server.hdmi.HdmiCecController r0;
+        int i0, i1;
+        java.util.List r1, r3;
+        com.android.server.hdmi.HdmiControlService$DevicePollingCallback r2;
+
+        r0 := @parameter0: com.android.server.hdmi.HdmiCecController;
+
+        i0 := @parameter1: int;
+
+        r1 := @parameter2: java.util.List;
+
+        i1 := @parameter3: int;
+
+        r2 := @parameter4: com.android.server.hdmi.HdmiControlService$DevicePollingCallback;
+
+        r3 := @parameter5: java.util.List;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiCecController: void runDevicePolling(int,java.util.List,int,com.android.server.hdmi.HdmiControlService$DevicePollingCallback,java.util.List)>(i0, r1, i1, r2, r3);
+
+        return;
+    }
+
+    static void access$500(com.android.server.hdmi.HdmiCecController, java.lang.Runnable)
+    {
+        com.android.server.hdmi.HdmiCecController r0;
+        java.lang.Runnable r1;
+
+        r0 := @parameter0: com.android.server.hdmi.HdmiCecController;
+
+        r1 := @parameter1: java.lang.Runnable;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiCecController: void runOnServiceThread(java.lang.Runnable)>(r1);
+
+        return;
+    }
+
+    static byte[] access$600(int, byte[])
+    {
+        int i0;
+        byte[] r0, $r1;
+
+        i0 := @parameter0: int;
+
+        r0 := @parameter1: byte[];
+
+        $r1 = staticinvoke <com.android.server.hdmi.HdmiCecController: byte[] buildBody(int,byte[])>(i0, r0);
+
+        return $r1;
+    }
+
+    static com.android.server.hdmi.HdmiCecController$NativeWrapper access$700(com.android.server.hdmi.HdmiCecController)
+    {
+        com.android.server.hdmi.HdmiCecController r0;
+        com.android.server.hdmi.HdmiCecController$NativeWrapper $r1;
+
+        r0 := @parameter0: com.android.server.hdmi.HdmiCecController;
+
+        $r1 = r0.<com.android.server.hdmi.HdmiCecController: com.android.server.hdmi.HdmiCecController$NativeWrapper mNativeWrapperImpl>;
+
+        return $r1;
+    }
+
+    static void access$800(com.android.server.hdmi.HdmiCecController, int, boolean)
+    {
+        com.android.server.hdmi.HdmiCecController r0;
+        int i0;
+        boolean z0;
+
+        r0 := @parameter0: com.android.server.hdmi.HdmiCecController;
+
+        i0 := @parameter1: int;
+
+        z0 := @parameter2: boolean;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiCecController: void handleHotplug(int,boolean)>(i0, z0);
+
+        return;
+    }
+
+    static void access$900(com.android.server.hdmi.HdmiCecController, int, int, byte[])
+    {
+        com.android.server.hdmi.HdmiCecController r0;
+        int i0, i1;
+        byte[] r1;
+
+        r0 := @parameter0: com.android.server.hdmi.HdmiCecController;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        r1 := @parameter3: byte[];
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiCecController: void handleIncomingCecCommand(int,int,byte[])>(i0, i1, r1);
+
+        return;
+    }
+
+    private void addCecMessageToHistory(boolean, com.android.server.hdmi.HdmiCecMessage)
+    {
+        com.android.server.hdmi.HdmiCecController r0;
+        boolean z0;
+        com.android.server.hdmi.HdmiCecMessage r1;
+        com.android.server.hdmi.HdmiCecController$MessageHistoryRecord $r2;
+
+        r0 := @this: com.android.server.hdmi.HdmiCecController;
+
+        z0 := @parameter0: boolean;
+
+        r1 := @parameter1: com.android.server.hdmi.HdmiCecMessage;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiCecController: void assertRunOnServiceThread()>();
+
+        $r2 = new com.android.server.hdmi.HdmiCecController$MessageHistoryRecord;
+
+        specialinvoke $r2.<com.android.server.hdmi.HdmiCecController$MessageHistoryRecord: void <init>(boolean,com.android.server.hdmi.HdmiCecMessage)>(z0, r1);
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiCecController: void addEventToHistory(com.android.server.hdmi.HdmiCecController$Dumpable)>($r2);
+
+        return;
+    }
+
+    private void addEventToHistory(com.android.server.hdmi.HdmiCecController$Dumpable)
+    {
+        com.android.server.hdmi.HdmiCecController r0;
+        com.android.server.hdmi.HdmiCecController$Dumpable r1;
+        java.util.concurrent.ArrayBlockingQueue $r2, $r3, $r5;
+        boolean $z0;
+
+        r0 := @this: com.android.server.hdmi.HdmiCecController;
+
+        r1 := @parameter0: com.android.server.hdmi.HdmiCecController$Dumpable;
+
+        $r2 = r0.<com.android.server.hdmi.HdmiCecController: java.util.concurrent.ArrayBlockingQueue mMessageHistory>;
+
+        $z0 = virtualinvoke $r2.<java.util.concurrent.ArrayBlockingQueue: boolean offer(java.lang.Object)>(r1);
+
+        if $z0 != 0 goto label1;
+
+        $r3 = r0.<com.android.server.hdmi.HdmiCecController: java.util.concurrent.ArrayBlockingQueue mMessageHistory>;
+
+        virtualinvoke $r3.<java.util.concurrent.ArrayBlockingQueue: java.lang.Object poll()>();
+
+        $r5 = r0.<com.android.server.hdmi.HdmiCecController: java.util.concurrent.ArrayBlockingQueue mMessageHistory>;
+
+        virtualinvoke $r5.<java.util.concurrent.ArrayBlockingQueue: boolean offer(java.lang.Object)>(r1);
+
+     label1:
+        return;
+    }
+
+    private void addHotplugEventToHistory(int, boolean)
+    {
+        com.android.server.hdmi.HdmiCecController r0;
+        int i0;
+        boolean z0;
+        com.android.server.hdmi.HdmiCecController$HotplugHistoryRecord $r1;
+
+        r0 := @this: com.android.server.hdmi.HdmiCecController;
+
+        i0 := @parameter0: int;
+
+        z0 := @parameter1: boolean;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiCecController: void assertRunOnServiceThread()>();
+
+        $r1 = new com.android.server.hdmi.HdmiCecController$HotplugHistoryRecord;
+
+        specialinvoke $r1.<com.android.server.hdmi.HdmiCecController$HotplugHistoryRecord: void <init>(int,boolean)>(i0, z0);
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiCecController: void addEventToHistory(com.android.server.hdmi.HdmiCecController$Dumpable)>($r1);
+
+        return;
+    }
+
+    private void assertRunOnIoThread()
+    {
+        com.android.server.hdmi.HdmiCecController r0;
+        android.os.Looper $r1, $r3;
+        android.os.Handler $r2;
+        java.lang.IllegalStateException $r4;
+
+        r0 := @this: com.android.server.hdmi.HdmiCecController;
+
+        $r1 = staticinvoke <android.os.Looper: android.os.Looper myLooper()>();
+
+        $r2 = r0.<com.android.server.hdmi.HdmiCecController: android.os.Handler mIoHandler>;
+
+        $r3 = virtualinvoke $r2.<android.os.Handler: android.os.Looper getLooper()>();
+
+        if $r1 != $r3 goto label1;
+
+        return;
+
+     label1:
+        $r4 = new java.lang.IllegalStateException;
+
+        specialinvoke $r4.<java.lang.IllegalStateException: void <init>(java.lang.String)>("Should run on io thread.");
+
+        throw $r4;
+    }
+
+    private void assertRunOnServiceThread()
+    {
+        com.android.server.hdmi.HdmiCecController r0;
+        android.os.Looper $r1, $r3;
+        android.os.Handler $r2;
+        java.lang.IllegalStateException $r4;
+
+        r0 := @this: com.android.server.hdmi.HdmiCecController;
+
+        $r1 = staticinvoke <android.os.Looper: android.os.Looper myLooper()>();
+
+        $r2 = r0.<com.android.server.hdmi.HdmiCecController: android.os.Handler mControlHandler>;
+
+        $r3 = virtualinvoke $r2.<android.os.Handler: android.os.Looper getLooper()>();
+
+        if $r1 != $r3 goto label1;
+
+        return;
+
+     label1:
+        $r4 = new java.lang.IllegalStateException;
+
+        specialinvoke $r4.<java.lang.IllegalStateException: void <init>(java.lang.String)>("Should run on service thread.");
+
+        throw $r4;
+    }
+
+    private static byte[] buildBody(int, byte[])
+    {
+        int i0, $i1, $i2, $i5;
+        byte[] r0, r1;
+        byte $b3, $b4;
+
+        i0 := @parameter0: int;
+
+        r0 := @parameter1: byte[];
+
+        $i1 = lengthof r0;
+
+        $i2 = $i1 + 1;
+
+        r1 = newarray (byte)[$i2];
+
+        $b3 = (byte) i0;
+
+        $b4 = (byte) $b3;
+
+        r1[0] = $b4;
+
+        $i5 = lengthof r0;
+
+        staticinvoke <java.lang.System: void arraycopy(java.lang.Object,int,java.lang.Object,int,int)>(r0, 0, r1, 1, $i5);
+
+        return r1;
+    }
+
+    static com.android.server.hdmi.HdmiCecController create(com.android.server.hdmi.HdmiControlService)
+    {
+        com.android.server.hdmi.HdmiControlService r0;
+        com.android.server.hdmi.HdmiCecController$NativeWrapperImpl $r1;
+        com.android.server.hdmi.HdmiCecController $r2;
+
+        r0 := @parameter0: com.android.server.hdmi.HdmiControlService;
+
+        $r1 = new com.android.server.hdmi.HdmiCecController$NativeWrapperImpl;
+
+        specialinvoke $r1.<com.android.server.hdmi.HdmiCecController$NativeWrapperImpl: void <init>(com.android.server.hdmi.HdmiCecController$1)>(null);
+
+        $r2 = staticinvoke <com.android.server.hdmi.HdmiCecController: com.android.server.hdmi.HdmiCecController createWithNativeWrapper(com.android.server.hdmi.HdmiControlService,com.android.server.hdmi.HdmiCecController$NativeWrapper)>(r0, $r1);
+
+        return $r2;
+    }
+
+    static com.android.server.hdmi.HdmiCecController createWithNativeWrapper(com.android.server.hdmi.HdmiControlService, com.android.server.hdmi.HdmiCecController$NativeWrapper)
+    {
+        com.android.server.hdmi.HdmiCecController$NativeWrapper r0;
+        com.android.server.hdmi.HdmiCecController $r1;
+        java.lang.String $r2;
+        java.lang.Object[] $r3;
+        com.android.server.hdmi.HdmiControlService r4;
+
+        r4 := @parameter0: com.android.server.hdmi.HdmiControlService;
+
+        r0 := @parameter1: com.android.server.hdmi.HdmiCecController$NativeWrapper;
+
+        $r1 = new com.android.server.hdmi.HdmiCecController;
+
+        specialinvoke $r1.<com.android.server.hdmi.HdmiCecController: void <init>(com.android.server.hdmi.HdmiControlService,com.android.server.hdmi.HdmiCecController$NativeWrapper)>(r4, r0);
+
+        $r2 = interfaceinvoke r0.<com.android.server.hdmi.HdmiCecController$NativeWrapper: java.lang.String nativeInit()>();
+
+        if $r2 != null goto label1;
+
+        $r3 = newarray (java.lang.Object)[0];
+
+        staticinvoke <com.android.server.hdmi.HdmiLogger: void warning(java.lang.String,java.lang.Object[])>("Couldn\'t get tv.cec service.", $r3);
+
+        return null;
+
+     label1:
+        specialinvoke $r1.<com.android.server.hdmi.HdmiCecController: void init(com.android.server.hdmi.HdmiCecController$NativeWrapper)>(r0);
+
+        return $r1;
+    }
+
+    private void handleAllocateLogicalAddress(int, int, com.android.server.hdmi.HdmiCecController$AllocateAddressCallback)
+    {
+        com.android.server.hdmi.HdmiCecController r0;
+        int i0, i1, i3, $i4, $i5, $i6, i8, i9, i10, i11, i12;
+        com.android.server.hdmi.HdmiCecController$AllocateAddressCallback r1;
+        java.lang.Object[] $r2;
+        java.lang.Integer $r3, $r4, $r5, $r8;
+        com.android.server.hdmi.HdmiCecController$4 $r6;
+        java.util.List $r7;
+        boolean $z1, $z2, z3;
+
+        r0 := @this: com.android.server.hdmi.HdmiCecController;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        r1 := @parameter2: com.android.server.hdmi.HdmiCecController$AllocateAddressCallback;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiCecController: void assertRunOnIoThread()>();
+
+        i8 = i1;
+
+        if i1 != 15 goto label03;
+
+        i9 = 0;
+
+     label01:
+        i8 = i1;
+
+        if i9 >= 16 goto label03;
+
+        $i6 = staticinvoke <com.android.server.hdmi.HdmiUtils: int getTypeFromAddress(int)>(i9);
+
+        if i0 != $i6 goto label02;
+
+        i8 = i9;
+
+        goto label03;
+
+     label02:
+        i9 = i9 + 1;
+
+        goto label01;
+
+     label03:
+        i10 = 0;
+
+     label04:
+        i11 = 15;
+
+        if i10 >= 16 goto label09;
+
+        $i4 = i8 + i10;
+
+        i3 = $i4 % 16;
+
+        if i3 == 15 goto label08;
+
+        $i5 = staticinvoke <com.android.server.hdmi.HdmiUtils: int getTypeFromAddress(int)>(i3);
+
+        if i0 != $i5 goto label08;
+
+        $r7 = r0.<com.android.server.hdmi.HdmiCecController: java.util.List mNeverAssignLogicalAddresses>;
+
+        $r8 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i3);
+
+        $z1 = interfaceinvoke $r7.<java.util.List: boolean contains(java.lang.Object)>($r8);
+
+        if $z1 != 0 goto label08;
+
+        i12 = 0;
+
+     label05:
+        z3 = 0;
+
+        if i12 >= 3 goto label07;
+
+        $z2 = specialinvoke r0.<com.android.server.hdmi.HdmiCecController: boolean sendPollMessage(int,int,int)>(i3, i3, 1);
+
+        if $z2 == 0 goto label06;
+
+        z3 = 1;
+
+        goto label07;
+
+     label06:
+        i12 = i12 + 1;
+
+        goto label05;
+
+     label07:
+        if z3 != 0 goto label08;
+
+        i11 = i3;
+
+        goto label09;
+
+     label08:
+        i10 = i10 + 1;
+
+        goto label04;
+
+     label09:
+        $r2 = newarray (java.lang.Object)[3];
+
+        $r3 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i0);
+
+        $r2[0] = $r3;
+
+        $r4 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i1);
+
+        $r2[1] = $r4;
+
+        $r5 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i11);
+
+        $r2[2] = $r5;
+
+        staticinvoke <com.android.server.hdmi.HdmiLogger: void debug(java.lang.String,java.lang.Object[])>("New logical address for device [%d]: [preferred:%d, assigned:%d]", $r2);
+
+        if r1 == null goto label10;
+
+        $r6 = new com.android.server.hdmi.HdmiCecController$4;
+
+        specialinvoke $r6.<com.android.server.hdmi.HdmiCecController$4: void <init>(com.android.server.hdmi.HdmiCecController,com.android.server.hdmi.HdmiCecController$AllocateAddressCallback,int,int)>(r0, r1, i0, i11);
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiCecController: void runOnServiceThread(java.lang.Runnable)>($r6);
+
+     label10:
+        return;
+    }
+
+    private void handleHotplug(int, boolean)
+    {
+        com.android.server.hdmi.HdmiCecController r0;
+        int i0;
+        boolean z0;
+        java.lang.Object[] $r1;
+        java.lang.Integer $r2;
+        java.lang.Boolean $r3;
+        com.android.server.hdmi.HdmiControlService $r4;
+
+        r0 := @this: com.android.server.hdmi.HdmiCecController;
+
+        i0 := @parameter0: int;
+
+        z0 := @parameter1: boolean;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiCecController: void assertRunOnServiceThread()>();
+
+        $r1 = newarray (java.lang.Object)[2];
+
+        $r2 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i0);
+
+        $r1[0] = $r2;
+
+        $r3 = staticinvoke <java.lang.Boolean: java.lang.Boolean valueOf(boolean)>(z0);
+
+        $r1[1] = $r3;
+
+        staticinvoke <com.android.server.hdmi.HdmiLogger: void debug(java.lang.String,java.lang.Object[])>("Hotplug event:[port:%d, connected:%b]", $r1);
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiCecController: void addHotplugEventToHistory(int,boolean)>(i0, z0);
+
+        $r4 = r0.<com.android.server.hdmi.HdmiCecController: com.android.server.hdmi.HdmiControlService mService>;
+
+        virtualinvoke $r4.<com.android.server.hdmi.HdmiControlService: void onHotplug(int,boolean)>(i0, z0);
+
+        return;
+    }
+
+    private void handleIncomingCecCommand(int, int, byte[])
+    {
+        com.android.server.hdmi.HdmiCecController r0;
+        int i0, i1;
+        java.lang.StringBuilder $r2;
+        java.lang.String $r5;
+        java.lang.Object[] $r6;
+        byte[] r7;
+        com.android.server.hdmi.HdmiCecMessage r8;
+
+        r0 := @this: com.android.server.hdmi.HdmiCecController;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        r7 := @parameter2: byte[];
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiCecController: void assertRunOnServiceThread()>();
+
+        r8 = staticinvoke <com.android.server.hdmi.HdmiCecMessageBuilder: com.android.server.hdmi.HdmiCecMessage of(int,int,byte[])>(i0, i1, r7);
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("[R]:");
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r8);
+
+        $r5 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $r6 = newarray (java.lang.Object)[0];
+
+        staticinvoke <com.android.server.hdmi.HdmiLogger: void debug(java.lang.String,java.lang.Object[])>($r5, $r6);
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiCecController: void addCecMessageToHistory(boolean,com.android.server.hdmi.HdmiCecMessage)>(1, r8);
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiCecController: void onReceiveCommand(com.android.server.hdmi.HdmiCecMessage)>(r8);
+
+        return;
+    }
+
+    private void init(com.android.server.hdmi.HdmiCecController$NativeWrapper)
+    {
+        com.android.server.hdmi.HdmiCecController r0;
+        com.android.server.hdmi.HdmiCecController$NativeWrapper r1;
+        android.os.Handler $r2, $r5;
+        com.android.server.hdmi.HdmiControlService $r3, $r6;
+        android.os.Looper $r4, $r7;
+        com.android.server.hdmi.HdmiCecController$HdmiCecCallback $r8;
+
+        r0 := @this: com.android.server.hdmi.HdmiCecController;
+
+        r1 := @parameter0: com.android.server.hdmi.HdmiCecController$NativeWrapper;
+
+        $r2 = new android.os.Handler;
+
+        $r3 = r0.<com.android.server.hdmi.HdmiCecController: com.android.server.hdmi.HdmiControlService mService>;
+
+        $r4 = virtualinvoke $r3.<com.android.server.hdmi.HdmiControlService: android.os.Looper getIoLooper()>();
+
+        specialinvoke $r2.<android.os.Handler: void <init>(android.os.Looper)>($r4);
+
+        r0.<com.android.server.hdmi.HdmiCecController: android.os.Handler mIoHandler> = $r2;
+
+        $r5 = new android.os.Handler;
+
+        $r6 = r0.<com.android.server.hdmi.HdmiCecController: com.android.server.hdmi.HdmiControlService mService>;
+
+        $r7 = virtualinvoke $r6.<com.android.server.hdmi.HdmiControlService: android.os.Looper getServiceLooper()>();
+
+        specialinvoke $r5.<android.os.Handler: void <init>(android.os.Looper)>($r7);
+
+        r0.<com.android.server.hdmi.HdmiCecController: android.os.Handler mControlHandler> = $r5;
+
+        $r8 = new com.android.server.hdmi.HdmiCecController$HdmiCecCallback;
+
+        specialinvoke $r8.<com.android.server.hdmi.HdmiCecController$HdmiCecCallback: void <init>(com.android.server.hdmi.HdmiCecController)>(r0);
+
+        interfaceinvoke r1.<com.android.server.hdmi.HdmiCecController$NativeWrapper: void setCallback(com.android.server.hdmi.HdmiCecController$HdmiCecCallback)>($r8);
+
+        return;
+    }
+
+    private boolean isAcceptableAddress(int)
+    {
+        com.android.server.hdmi.HdmiCecController r0;
+        int i0;
+        boolean $z0;
+
+        r0 := @this: com.android.server.hdmi.HdmiCecController;
+
+        i0 := @parameter0: int;
+
+        if i0 != 15 goto label1;
+
+        return 1;
+
+     label1:
+        $z0 = specialinvoke r0.<com.android.server.hdmi.HdmiCecController: boolean isAllocatedLocalDeviceAddress(int)>(i0);
+
+        return $z0;
+    }
+
+    private boolean isAllocatedLocalDeviceAddress(int)
+    {
+        com.android.server.hdmi.HdmiCecController r0;
+        int i0, $i1, i2;
+        android.util.SparseArray $r1, $r2;
+        java.lang.Object $r3;
+        com.android.server.hdmi.HdmiCecLocalDevice $r4;
+        boolean $z0;
+
+        r0 := @this: com.android.server.hdmi.HdmiCecController;
+
+        i0 := @parameter0: int;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiCecController: void assertRunOnServiceThread()>();
+
+        i2 = 0;
+
+     label1:
+        $r1 = r0.<com.android.server.hdmi.HdmiCecController: android.util.SparseArray mLocalDevices>;
+
+        $i1 = virtualinvoke $r1.<android.util.SparseArray: int size()>();
+
+        if i2 >= $i1 goto label3;
+
+        $r2 = r0.<com.android.server.hdmi.HdmiCecController: android.util.SparseArray mLocalDevices>;
+
+        $r3 = virtualinvoke $r2.<android.util.SparseArray: java.lang.Object valueAt(int)>(i2);
+
+        $r4 = (com.android.server.hdmi.HdmiCecLocalDevice) $r3;
+
+        $z0 = virtualinvoke $r4.<com.android.server.hdmi.HdmiCecLocalDevice: boolean isAddressOf(int)>(i0);
+
+        if $z0 == 0 goto label2;
+
+        return 1;
+
+     label2:
+        i2 = i2 + 1;
+
+        goto label1;
+
+     label3:
+        return 0;
+    }
+
+    private static native int nativeAddLogicalAddress(long, int);
+
+    private static native void nativeClearLogicalAddress(long);
+
+    private static native void nativeEnableAudioReturnChannel(long, int, boolean);
+
+    private static native int nativeGetPhysicalAddress(long);
+
+    private static native android.hardware.hdmi.HdmiPortInfo[] nativeGetPortInfos(long);
+
+    private static native int nativeGetVendorId(long);
+
+    private static native int nativeGetVersion(long);
+
+    private static native long nativeInit(com.android.server.hdmi.HdmiCecController, android.os.MessageQueue);
+
+    private static native boolean nativeIsConnected(long, int);
+
+    private static native int nativeSendCecCommand(long, int, int, byte[]);
+
+    private static native void nativeSetLanguage(long, java.lang.String);
+
+    private static native void nativeSetOption(long, int, boolean);
+
+    private void onReceiveCommand(com.android.server.hdmi.HdmiCecMessage)
+    {
+        com.android.server.hdmi.HdmiCecController r0;
+        com.android.server.hdmi.HdmiCecMessage r1;
+        int $i0;
+        boolean $z0, $z1, $z2;
+        com.android.server.hdmi.HdmiControlService $r2, $r3;
+
+        r0 := @this: com.android.server.hdmi.HdmiCecController;
+
+        r1 := @parameter0: com.android.server.hdmi.HdmiCecMessage;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiCecController: void assertRunOnServiceThread()>();
+
+        $i0 = virtualinvoke r1.<com.android.server.hdmi.HdmiCecMessage: int getDestination()>();
+
+        $z0 = specialinvoke r0.<com.android.server.hdmi.HdmiCecController: boolean isAcceptableAddress(int)>($i0);
+
+        if $z0 != 0 goto label1;
+
+        $r3 = r0.<com.android.server.hdmi.HdmiCecController: com.android.server.hdmi.HdmiControlService mService>;
+
+        $z2 = virtualinvoke $r3.<com.android.server.hdmi.HdmiControlService: boolean isAddressAllocated()>();
+
+        if $z2 != 0 goto label2;
+
+     label1:
+        $r2 = r0.<com.android.server.hdmi.HdmiCecController: com.android.server.hdmi.HdmiControlService mService>;
+
+        $z1 = virtualinvoke $r2.<com.android.server.hdmi.HdmiControlService: boolean handleCecCommand(com.android.server.hdmi.HdmiCecMessage)>(r1);
+
+        if $z1 == 0 goto label2;
+
+        return;
+
+     label2:
+        virtualinvoke r0.<com.android.server.hdmi.HdmiCecController: void maySendFeatureAbortCommand(com.android.server.hdmi.HdmiCecMessage,int)>(r1, 0);
+
+        return;
+    }
+
+    private java.util.List pickPollCandidates(int)
+    {
+        com.android.server.hdmi.HdmiCecController r0;
+        int $i0, $i1, i2, i3, i4;
+        java.util.LinkedList $r2;
+        java.lang.Integer $r3, $r4, $r5, $r6;
+        boolean $z0, $z2;
+        java.util.function.Predicate r7;
+
+        r0 := @this: com.android.server.hdmi.HdmiCecController;
+
+        i2 := @parameter0: int;
+
+        $i0 = i2 & 3;
+
+        if $i0 == 2 goto label1;
+
+        r7 = r0.<com.android.server.hdmi.HdmiCecController: java.util.function.Predicate mRemoteDeviceAddressPredicate>;
+
+        goto label2;
+
+     label1:
+        r7 = r0.<com.android.server.hdmi.HdmiCecController: java.util.function.Predicate mSystemAudioAddressPredicate>;
+
+     label2:
+        $r2 = new java.util.LinkedList;
+
+        specialinvoke $r2.<java.util.LinkedList: void <init>()>();
+
+        $i1 = 196608 & i2;
+
+        if $i1 == 65536 goto label5;
+
+        i3 = 14;
+
+     label3:
+        if i3 < 0 goto label8;
+
+        $r5 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i3);
+
+        $z2 = interfaceinvoke r7.<java.util.function.Predicate: boolean test(java.lang.Object)>($r5);
+
+        if $z2 == 0 goto label4;
+
+        $r6 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i3);
+
+        virtualinvoke $r2.<java.util.LinkedList: boolean add(java.lang.Object)>($r6);
+
+     label4:
+        i3 = i3 + -1;
+
+        goto label3;
+
+     label5:
+        i4 = 0;
+
+     label6:
+        if i4 > 14 goto label8;
+
+        $r3 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i4);
+
+        $z0 = interfaceinvoke r7.<java.util.function.Predicate: boolean test(java.lang.Object)>($r3);
+
+        if $z0 == 0 goto label7;
+
+        $r4 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i4);
+
+        virtualinvoke $r2.<java.util.LinkedList: boolean add(java.lang.Object)>($r4);
+
+     label7:
+        i4 = i4 + 1;
+
+        goto label6;
+
+     label8:
+        return $r2;
+    }
+
+    private void runDevicePolling(int, java.util.List, int, com.android.server.hdmi.HdmiControlService$DevicePollingCallback, java.util.List)
+    {
+        com.android.server.hdmi.HdmiCecController r0;
+        int i0, i1;
+        java.util.List r1, r3;
+        com.android.server.hdmi.HdmiControlService$DevicePollingCallback r2;
+        boolean $z0;
+        com.android.server.hdmi.HdmiCecController$5 $r4;
+        java.lang.Object $r5;
+        java.lang.Integer $r6;
+        java.lang.Object[] $r7;
+        java.lang.String $r8;
+
+        r0 := @this: com.android.server.hdmi.HdmiCecController;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: java.util.List;
+
+        i1 := @parameter2: int;
+
+        r2 := @parameter3: com.android.server.hdmi.HdmiControlService$DevicePollingCallback;
+
+        r3 := @parameter4: java.util.List;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiCecController: void assertRunOnServiceThread()>();
+
+        $z0 = interfaceinvoke r1.<java.util.List: boolean isEmpty()>();
+
+        if $z0 == 0 goto label2;
+
+        if r2 == null goto label1;
+
+        $r7 = newarray (java.lang.Object)[1];
+
+        $r8 = virtualinvoke r3.<java.lang.Object: java.lang.String toString()>();
+
+        $r7[0] = $r8;
+
+        staticinvoke <com.android.server.hdmi.HdmiLogger: void debug(java.lang.String,java.lang.Object[])>("[P]:AllocatedAddress=%s", $r7);
+
+        interfaceinvoke r2.<com.android.server.hdmi.HdmiControlService$DevicePollingCallback: void onPollingFinished(java.util.List)>(r3);
+
+     label1:
+        return;
+
+     label2:
+        $r4 = new com.android.server.hdmi.HdmiCecController$5;
+
+        $r5 = interfaceinvoke r1.<java.util.List: java.lang.Object remove(int)>(0);
+
+        $r6 = (java.lang.Integer) $r5;
+
+        specialinvoke $r4.<com.android.server.hdmi.HdmiCecController$5: void <init>(com.android.server.hdmi.HdmiCecController,int,java.lang.Integer,int,java.util.List,java.util.List,com.android.server.hdmi.HdmiControlService$DevicePollingCallback)>(r0, i0, $r6, i1, r3, r1, r2);
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiCecController: void runOnIoThread(java.lang.Runnable)>($r4);
+
+        return;
+    }
+
+    private void runOnIoThread(java.lang.Runnable)
+    {
+        com.android.server.hdmi.HdmiCecController r0;
+        java.lang.Runnable r1;
+        android.os.Handler $r2;
+
+        r0 := @this: com.android.server.hdmi.HdmiCecController;
+
+        r1 := @parameter0: java.lang.Runnable;
+
+        $r2 = r0.<com.android.server.hdmi.HdmiCecController: android.os.Handler mIoHandler>;
+
+        virtualinvoke $r2.<android.os.Handler: boolean post(java.lang.Runnable)>(r1);
+
+        return;
+    }
+
+    private void runOnServiceThread(java.lang.Runnable)
+    {
+        com.android.server.hdmi.HdmiCecController r0;
+        java.lang.Runnable r1;
+        android.os.Handler $r2;
+
+        r0 := @this: com.android.server.hdmi.HdmiCecController;
+
+        r1 := @parameter0: java.lang.Runnable;
+
+        $r2 = r0.<com.android.server.hdmi.HdmiCecController: android.os.Handler mControlHandler>;
+
+        virtualinvoke $r2.<android.os.Handler: boolean post(java.lang.Runnable)>(r1);
+
+        return;
+    }
+
+    private boolean sendPollMessage(int, int, int)
+    {
+        com.android.server.hdmi.HdmiCecController r0;
+        int i0, i1, i2, i3, i4;
+        byte[] $r1;
+        com.android.server.hdmi.HdmiCecController$NativeWrapper $r2;
+        java.lang.Object[] $r3;
+        java.lang.Integer $r4, $r5, $r6;
+
+        r0 := @this: com.android.server.hdmi.HdmiCecController;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        i2 := @parameter2: int;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiCecController: void assertRunOnIoThread()>();
+
+        i4 = 0;
+
+     label1:
+        if i4 >= i2 goto label4;
+
+        $r2 = r0.<com.android.server.hdmi.HdmiCecController: com.android.server.hdmi.HdmiCecController$NativeWrapper mNativeWrapperImpl>;
+
+        $r1 = <com.android.server.hdmi.HdmiCecController: byte[] EMPTY_BODY>;
+
+        i3 = interfaceinvoke $r2.<com.android.server.hdmi.HdmiCecController$NativeWrapper: int nativeSendCecCommand(int,int,byte[])>(i0, i1, $r1);
+
+        if i3 != 0 goto label2;
+
+        return 1;
+
+     label2:
+        if i3 == 1 goto label3;
+
+        $r3 = newarray (java.lang.Object)[3];
+
+        $r4 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i0);
+
+        $r3[0] = $r4;
+
+        $r5 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i1);
+
+        $r3[1] = $r5;
+
+        $r6 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i3);
+
+        $r3[2] = $r6;
+
+        staticinvoke <com.android.server.hdmi.HdmiLogger: void warning(java.lang.String,java.lang.Object[])>("Failed to send a polling message(%d->%d) with return code %d", $r3);
+
+     label3:
+        i4 = i4 + 1;
+
+        goto label1;
+
+     label4:
+        return 0;
+    }
+
+    void addLocalDevice(int, com.android.server.hdmi.HdmiCecLocalDevice)
+    {
+        com.android.server.hdmi.HdmiCecController r0;
+        int i0;
+        com.android.server.hdmi.HdmiCecLocalDevice r1;
+        android.util.SparseArray $r2;
+
+        r0 := @this: com.android.server.hdmi.HdmiCecController;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: com.android.server.hdmi.HdmiCecLocalDevice;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiCecController: void assertRunOnServiceThread()>();
+
+        $r2 = r0.<com.android.server.hdmi.HdmiCecController: android.util.SparseArray mLocalDevices>;
+
+        virtualinvoke $r2.<android.util.SparseArray: void put(int,java.lang.Object)>(i0, r1);
+
+        return;
+    }
+
+    int addLogicalAddress(int)
+    {
+        com.android.server.hdmi.HdmiCecController r0;
+        int i0, $i1;
+        boolean $z0;
+        com.android.server.hdmi.HdmiCecController$NativeWrapper $r1;
+
+        r0 := @this: com.android.server.hdmi.HdmiCecController;
+
+        i0 := @parameter0: int;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiCecController: void assertRunOnServiceThread()>();
+
+        $z0 = staticinvoke <com.android.server.hdmi.HdmiUtils: boolean isValidAddress(int)>(i0);
+
+        if $z0 == 0 goto label1;
+
+        $r1 = r0.<com.android.server.hdmi.HdmiCecController: com.android.server.hdmi.HdmiCecController$NativeWrapper mNativeWrapperImpl>;
+
+        $i1 = interfaceinvoke $r1.<com.android.server.hdmi.HdmiCecController$NativeWrapper: int nativeAddLogicalAddress(int)>(i0);
+
+        return $i1;
+
+     label1:
+        return 2;
+    }
+
+    void allocateLogicalAddress(int, int, com.android.server.hdmi.HdmiCecController$AllocateAddressCallback)
+    {
+        com.android.server.hdmi.HdmiCecController r0;
+        int i0, i1;
+        com.android.server.hdmi.HdmiCecController$AllocateAddressCallback r1;
+        com.android.server.hdmi.HdmiCecController$3 $r2;
+
+        r0 := @this: com.android.server.hdmi.HdmiCecController;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        r1 := @parameter2: com.android.server.hdmi.HdmiCecController$AllocateAddressCallback;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiCecController: void assertRunOnServiceThread()>();
+
+        $r2 = new com.android.server.hdmi.HdmiCecController$3;
+
+        specialinvoke $r2.<com.android.server.hdmi.HdmiCecController$3: void <init>(com.android.server.hdmi.HdmiCecController,int,int,com.android.server.hdmi.HdmiCecController$AllocateAddressCallback)>(r0, i0, i1, r1);
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiCecController: void runOnIoThread(java.lang.Runnable)>($r2);
+
+        return;
+    }
+
+    void clearLocalDevices()
+    {
+        com.android.server.hdmi.HdmiCecController r0;
+        android.util.SparseArray $r1;
+
+        r0 := @this: com.android.server.hdmi.HdmiCecController;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiCecController: void assertRunOnServiceThread()>();
+
+        $r1 = r0.<com.android.server.hdmi.HdmiCecController: android.util.SparseArray mLocalDevices>;
+
+        virtualinvoke $r1.<android.util.SparseArray: void clear()>();
+
+        return;
+    }
+
+    void clearLogicalAddress()
+    {
+        com.android.server.hdmi.HdmiCecController r0;
+        android.util.SparseArray $r1, $r3;
+        int $i0, i1;
+        com.android.server.hdmi.HdmiCecController$NativeWrapper $r2;
+        java.lang.Object $r4;
+        com.android.server.hdmi.HdmiCecLocalDevice $r5;
+
+        r0 := @this: com.android.server.hdmi.HdmiCecController;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiCecController: void assertRunOnServiceThread()>();
+
+        i1 = 0;
+
+     label1:
+        $r1 = r0.<com.android.server.hdmi.HdmiCecController: android.util.SparseArray mLocalDevices>;
+
+        $i0 = virtualinvoke $r1.<android.util.SparseArray: int size()>();
+
+        if i1 >= $i0 goto label2;
+
+        $r3 = r0.<com.android.server.hdmi.HdmiCecController: android.util.SparseArray mLocalDevices>;
+
+        $r4 = virtualinvoke $r3.<android.util.SparseArray: java.lang.Object valueAt(int)>(i1);
+
+        $r5 = (com.android.server.hdmi.HdmiCecLocalDevice) $r4;
+
+        virtualinvoke $r5.<com.android.server.hdmi.HdmiCecLocalDevice: void clearAddress()>();
+
+        i1 = i1 + 1;
+
+        goto label1;
+
+     label2:
+        $r2 = r0.<com.android.server.hdmi.HdmiCecController: com.android.server.hdmi.HdmiCecController$NativeWrapper mNativeWrapperImpl>;
+
+        interfaceinvoke $r2.<com.android.server.hdmi.HdmiCecController$NativeWrapper: void nativeClearLogicalAddress()>();
+
+        return;
+    }
+
+    void dump(com.android.internal.util.IndentingPrintWriter)
+    {
+        com.android.server.hdmi.HdmiCecController r0;
+        com.android.internal.util.IndentingPrintWriter r1;
+        java.util.Iterator r2;
+        android.util.SparseArray $r3, $r12, $r17;
+        int $i0, $i1, i2;
+        java.text.SimpleDateFormat $r5;
+        java.util.concurrent.ArrayBlockingQueue $r6;
+        boolean $z0;
+        java.lang.Object $r8, $r18;
+        com.android.server.hdmi.HdmiCecController$Dumpable $r9;
+        java.lang.StringBuilder $r10;
+        java.lang.String $r15;
+        com.android.server.hdmi.HdmiCecLocalDevice $r19;
+
+        r0 := @this: com.android.server.hdmi.HdmiCecController;
+
+        r1 := @parameter0: com.android.internal.util.IndentingPrintWriter;
+
+        i2 = 0;
+
+     label1:
+        $r3 = r0.<com.android.server.hdmi.HdmiCecController: android.util.SparseArray mLocalDevices>;
+
+        $i0 = virtualinvoke $r3.<android.util.SparseArray: int size()>();
+
+        if i2 >= $i0 goto label2;
+
+        $r10 = new java.lang.StringBuilder;
+
+        specialinvoke $r10.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("HdmiCecLocalDevice #");
+
+        $r12 = r0.<com.android.server.hdmi.HdmiCecController: android.util.SparseArray mLocalDevices>;
+
+        $i1 = virtualinvoke $r12.<android.util.SparseArray: int keyAt(int)>(i2);
+
+        virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i1);
+
+        virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(":");
+
+        $r15 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<com.android.internal.util.IndentingPrintWriter: void println(java.lang.String)>($r15);
+
+        virtualinvoke r1.<com.android.internal.util.IndentingPrintWriter: com.android.internal.util.IndentingPrintWriter increaseIndent()>();
+
+        $r17 = r0.<com.android.server.hdmi.HdmiCecController: android.util.SparseArray mLocalDevices>;
+
+        $r18 = virtualinvoke $r17.<android.util.SparseArray: java.lang.Object valueAt(int)>(i2);
+
+        $r19 = (com.android.server.hdmi.HdmiCecLocalDevice) $r18;
+
+        virtualinvoke $r19.<com.android.server.hdmi.HdmiCecLocalDevice: void dump(com.android.internal.util.IndentingPrintWriter)>(r1);
+
+        virtualinvoke r1.<com.android.internal.util.IndentingPrintWriter: com.android.internal.util.IndentingPrintWriter decreaseIndent()>();
+
+        i2 = i2 + 1;
+
+        goto label1;
+
+     label2:
+        virtualinvoke r1.<com.android.internal.util.IndentingPrintWriter: void println(java.lang.String)>("CEC message history:");
+
+        virtualinvoke r1.<com.android.internal.util.IndentingPrintWriter: com.android.internal.util.IndentingPrintWriter increaseIndent()>();
+
+        $r5 = new java.text.SimpleDateFormat;
+
+        specialinvoke $r5.<java.text.SimpleDateFormat: void <init>(java.lang.String)>("yyyy-MM-dd HH:mm:ss");
+
+        $r6 = r0.<com.android.server.hdmi.HdmiCecController: java.util.concurrent.ArrayBlockingQueue mMessageHistory>;
+
+        r2 = virtualinvoke $r6.<java.util.concurrent.ArrayBlockingQueue: java.util.Iterator iterator()>();
+
+     label3:
+        $z0 = interfaceinvoke r2.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label4;
+
+        $r8 = interfaceinvoke r2.<java.util.Iterator: java.lang.Object next()>();
+
+        $r9 = (com.android.server.hdmi.HdmiCecController$Dumpable) $r8;
+
+        virtualinvoke $r9.<com.android.server.hdmi.HdmiCecController$Dumpable: void dump(com.android.internal.util.IndentingPrintWriter,java.text.SimpleDateFormat)>(r1, $r5);
+
+        goto label3;
+
+     label4:
+        virtualinvoke r1.<com.android.internal.util.IndentingPrintWriter: com.android.internal.util.IndentingPrintWriter decreaseIndent()>();
+
+        return;
+    }
+
+    void enableAudioReturnChannel(int, boolean)
+    {
+        com.android.server.hdmi.HdmiCecController r0;
+        int i0;
+        boolean z0;
+        com.android.server.hdmi.HdmiCecController$NativeWrapper $r1;
+
+        r0 := @this: com.android.server.hdmi.HdmiCecController;
+
+        i0 := @parameter0: int;
+
+        z0 := @parameter1: boolean;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiCecController: void assertRunOnServiceThread()>();
+
+        $r1 = r0.<com.android.server.hdmi.HdmiCecController: com.android.server.hdmi.HdmiCecController$NativeWrapper mNativeWrapperImpl>;
+
+        interfaceinvoke $r1.<com.android.server.hdmi.HdmiCecController$NativeWrapper: void nativeEnableAudioReturnChannel(int,boolean)>(i0, z0);
+
+        return;
+    }
+
+    void flush(java.lang.Runnable)
+    {
+        com.android.server.hdmi.HdmiCecController r0;
+        java.lang.Runnable r1;
+        com.android.server.hdmi.HdmiCecController$6 $r2;
+
+        r0 := @this: com.android.server.hdmi.HdmiCecController;
+
+        r1 := @parameter0: java.lang.Runnable;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiCecController: void assertRunOnServiceThread()>();
+
+        $r2 = new com.android.server.hdmi.HdmiCecController$6;
+
+        specialinvoke $r2.<com.android.server.hdmi.HdmiCecController$6: void <init>(com.android.server.hdmi.HdmiCecController,java.lang.Runnable)>(r0, r1);
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiCecController: void runOnIoThread(java.lang.Runnable)>($r2);
+
+        return;
+    }
+
+    com.android.server.hdmi.HdmiCecLocalDevice getLocalDevice(int)
+    {
+        com.android.server.hdmi.HdmiCecController r0;
+        int i0;
+        android.util.SparseArray $r1;
+        java.lang.Object $r2;
+        com.android.server.hdmi.HdmiCecLocalDevice $r3;
+
+        r0 := @this: com.android.server.hdmi.HdmiCecController;
+
+        i0 := @parameter0: int;
+
+        $r1 = r0.<com.android.server.hdmi.HdmiCecController: android.util.SparseArray mLocalDevices>;
+
+        $r2 = virtualinvoke $r1.<android.util.SparseArray: java.lang.Object get(int)>(i0);
+
+        $r3 = (com.android.server.hdmi.HdmiCecLocalDevice) $r2;
+
+        return $r3;
+    }
+
+    java.util.List getLocalDeviceList()
+    {
+        com.android.server.hdmi.HdmiCecController r0;
+        android.util.SparseArray $r1;
+        java.util.List $r2;
+
+        r0 := @this: com.android.server.hdmi.HdmiCecController;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiCecController: void assertRunOnServiceThread()>();
+
+        $r1 = r0.<com.android.server.hdmi.HdmiCecController: android.util.SparseArray mLocalDevices>;
+
+        $r2 = staticinvoke <com.android.server.hdmi.HdmiUtils: java.util.List sparseArrayToList(android.util.SparseArray)>($r1);
+
+        return $r2;
+    }
+
+    int getPhysicalAddress()
+    {
+        com.android.server.hdmi.HdmiCecController r0;
+        com.android.server.hdmi.HdmiCecController$NativeWrapper $r1;
+        int $i0;
+
+        r0 := @this: com.android.server.hdmi.HdmiCecController;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiCecController: void assertRunOnServiceThread()>();
+
+        $r1 = r0.<com.android.server.hdmi.HdmiCecController: com.android.server.hdmi.HdmiCecController$NativeWrapper mNativeWrapperImpl>;
+
+        $i0 = interfaceinvoke $r1.<com.android.server.hdmi.HdmiCecController$NativeWrapper: int nativeGetPhysicalAddress()>();
+
+        return $i0;
+    }
+
+    android.hardware.hdmi.HdmiPortInfo[] getPortInfos()
+    {
+        com.android.server.hdmi.HdmiCecController r0;
+        com.android.server.hdmi.HdmiCecController$NativeWrapper $r1;
+        android.hardware.hdmi.HdmiPortInfo[] $r2;
+
+        r0 := @this: com.android.server.hdmi.HdmiCecController;
+
+        $r1 = r0.<com.android.server.hdmi.HdmiCecController: com.android.server.hdmi.HdmiCecController$NativeWrapper mNativeWrapperImpl>;
+
+        $r2 = interfaceinvoke $r1.<com.android.server.hdmi.HdmiCecController$NativeWrapper: android.hardware.hdmi.HdmiPortInfo[] nativeGetPortInfos()>();
+
+        return $r2;
+    }
+
+    int getVendorId()
+    {
+        com.android.server.hdmi.HdmiCecController r0;
+        com.android.server.hdmi.HdmiCecController$NativeWrapper $r1;
+        int $i0;
+
+        r0 := @this: com.android.server.hdmi.HdmiCecController;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiCecController: void assertRunOnServiceThread()>();
+
+        $r1 = r0.<com.android.server.hdmi.HdmiCecController: com.android.server.hdmi.HdmiCecController$NativeWrapper mNativeWrapperImpl>;
+
+        $i0 = interfaceinvoke $r1.<com.android.server.hdmi.HdmiCecController$NativeWrapper: int nativeGetVendorId()>();
+
+        return $i0;
+    }
+
+    int getVersion()
+    {
+        com.android.server.hdmi.HdmiCecController r0;
+        com.android.server.hdmi.HdmiCecController$NativeWrapper $r1;
+        int $i0;
+
+        r0 := @this: com.android.server.hdmi.HdmiCecController;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiCecController: void assertRunOnServiceThread()>();
+
+        $r1 = r0.<com.android.server.hdmi.HdmiCecController: com.android.server.hdmi.HdmiCecController$NativeWrapper mNativeWrapperImpl>;
+
+        $i0 = interfaceinvoke $r1.<com.android.server.hdmi.HdmiCecController$NativeWrapper: int nativeGetVersion()>();
+
+        return $i0;
+    }
+
+    boolean isConnected(int)
+    {
+        com.android.server.hdmi.HdmiCecController r0;
+        int i0;
+        com.android.server.hdmi.HdmiCecController$NativeWrapper $r1;
+        boolean $z0;
+
+        r0 := @this: com.android.server.hdmi.HdmiCecController;
+
+        i0 := @parameter0: int;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiCecController: void assertRunOnServiceThread()>();
+
+        $r1 = r0.<com.android.server.hdmi.HdmiCecController: com.android.server.hdmi.HdmiCecController$NativeWrapper mNativeWrapperImpl>;
+
+        $z0 = interfaceinvoke $r1.<com.android.server.hdmi.HdmiCecController$NativeWrapper: boolean nativeIsConnected(int)>(i0);
+
+        return $z0;
+    }
+
+    void maySendFeatureAbortCommand(com.android.server.hdmi.HdmiCecMessage, int)
+    {
+        com.android.server.hdmi.HdmiCecController r0;
+        com.android.server.hdmi.HdmiCecMessage r1, $r2;
+        int i0, i1, i2, i3;
+
+        r0 := @this: com.android.server.hdmi.HdmiCecController;
+
+        r1 := @parameter0: com.android.server.hdmi.HdmiCecMessage;
+
+        i0 := @parameter1: int;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiCecController: void assertRunOnServiceThread()>();
+
+        i1 = virtualinvoke r1.<com.android.server.hdmi.HdmiCecMessage: int getDestination()>();
+
+        i2 = virtualinvoke r1.<com.android.server.hdmi.HdmiCecMessage: int getSource()>();
+
+        if i1 == 15 goto label3;
+
+        if i2 != 15 goto label1;
+
+        goto label3;
+
+     label1:
+        i3 = virtualinvoke r1.<com.android.server.hdmi.HdmiCecMessage: int getOpcode()>();
+
+        if i3 != 0 goto label2;
+
+        return;
+
+     label2:
+        $r2 = staticinvoke <com.android.server.hdmi.HdmiCecMessageBuilder: com.android.server.hdmi.HdmiCecMessage buildFeatureAbortCommand(int,int,int,int)>(i1, i2, i3, i0);
+
+        virtualinvoke r0.<com.android.server.hdmi.HdmiCecController: void sendCommand(com.android.server.hdmi.HdmiCecMessage)>($r2);
+
+        return;
+
+     label3:
+        return;
+    }
+
+    void pollDevices(com.android.server.hdmi.HdmiControlService$DevicePollingCallback, int, int, int)
+    {
+        com.android.server.hdmi.HdmiCecController r0;
+        com.android.server.hdmi.HdmiControlService$DevicePollingCallback r1;
+        int i0, i1, i2;
+        java.util.List $r2;
+        java.util.ArrayList $r3;
+
+        r0 := @this: com.android.server.hdmi.HdmiCecController;
+
+        r1 := @parameter0: com.android.server.hdmi.HdmiControlService$DevicePollingCallback;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        i2 := @parameter3: int;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiCecController: void assertRunOnServiceThread()>();
+
+        $r2 = specialinvoke r0.<com.android.server.hdmi.HdmiCecController: java.util.List pickPollCandidates(int)>(i1);
+
+        $r3 = new java.util.ArrayList;
+
+        specialinvoke $r3.<java.util.ArrayList: void <init>()>();
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiCecController: void runDevicePolling(int,java.util.List,int,com.android.server.hdmi.HdmiControlService$DevicePollingCallback,java.util.List)>(i0, $r2, i2, r1, $r3);
+
+        return;
+    }
+
+    void sendCommand(com.android.server.hdmi.HdmiCecMessage)
+    {
+        com.android.server.hdmi.HdmiCecController r0;
+        com.android.server.hdmi.HdmiCecMessage r1;
+
+        r0 := @this: com.android.server.hdmi.HdmiCecController;
+
+        r1 := @parameter0: com.android.server.hdmi.HdmiCecMessage;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiCecController: void assertRunOnServiceThread()>();
+
+        virtualinvoke r0.<com.android.server.hdmi.HdmiCecController: void sendCommand(com.android.server.hdmi.HdmiCecMessage,com.android.server.hdmi.HdmiControlService$SendMessageCallback)>(r1, null);
+
+        return;
+    }
+
+    void sendCommand(com.android.server.hdmi.HdmiCecMessage, com.android.server.hdmi.HdmiControlService$SendMessageCallback)
+    {
+        com.android.server.hdmi.HdmiCecController r0;
+        com.android.server.hdmi.HdmiCecMessage r1;
+        com.android.server.hdmi.HdmiControlService$SendMessageCallback r2;
+        com.android.server.hdmi.HdmiCecController$7 $r3;
+
+        r0 := @this: com.android.server.hdmi.HdmiCecController;
+
+        r1 := @parameter0: com.android.server.hdmi.HdmiCecMessage;
+
+        r2 := @parameter1: com.android.server.hdmi.HdmiControlService$SendMessageCallback;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiCecController: void assertRunOnServiceThread()>();
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiCecController: void addCecMessageToHistory(boolean,com.android.server.hdmi.HdmiCecMessage)>(0, r1);
+
+        $r3 = new com.android.server.hdmi.HdmiCecController$7;
+
+        specialinvoke $r3.<com.android.server.hdmi.HdmiCecController$7: void <init>(com.android.server.hdmi.HdmiCecController,com.android.server.hdmi.HdmiCecMessage,com.android.server.hdmi.HdmiControlService$SendMessageCallback)>(r0, r1, r2);
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiCecController: void runOnIoThread(java.lang.Runnable)>($r3);
+
+        return;
+    }
+
+    void setLanguage(java.lang.String)
+    {
+        com.android.server.hdmi.HdmiCecController r0;
+        java.lang.String r1;
+        boolean $z0;
+        com.android.server.hdmi.HdmiCecController$NativeWrapper $r2;
+
+        r0 := @this: com.android.server.hdmi.HdmiCecController;
+
+        r1 := @parameter0: java.lang.String;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiCecController: void assertRunOnServiceThread()>();
+
+        $z0 = staticinvoke <sun.util.locale.LanguageTag: boolean isLanguage(java.lang.String)>(r1);
+
+        if $z0 != 0 goto label1;
+
+        return;
+
+     label1:
+        $r2 = r0.<com.android.server.hdmi.HdmiCecController: com.android.server.hdmi.HdmiCecController$NativeWrapper mNativeWrapperImpl>;
+
+        interfaceinvoke $r2.<com.android.server.hdmi.HdmiCecController$NativeWrapper: void nativeSetLanguage(java.lang.String)>(r1);
+
+        return;
+    }
+
+    void setOption(int, boolean)
+    {
+        com.android.server.hdmi.HdmiCecController r0;
+        int i0;
+        boolean z0;
+        java.lang.Object[] $r1;
+        java.lang.Integer $r2;
+        java.lang.Boolean $r3;
+        com.android.server.hdmi.HdmiCecController$NativeWrapper $r4;
+
+        r0 := @this: com.android.server.hdmi.HdmiCecController;
+
+        i0 := @parameter0: int;
+
+        z0 := @parameter1: boolean;
+
+        specialinvoke r0.<com.android.server.hdmi.HdmiCecController: void assertRunOnServiceThread()>();
+
+        $r1 = newarray (java.lang.Object)[2];
+
+        $r2 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i0);
+
+        $r1[0] = $r2;
+
+        $r3 = staticinvoke <java.lang.Boolean: java.lang.Boolean valueOf(boolean)>(z0);
+
+        $r1[1] = $r3;
+
+        staticinvoke <com.android.server.hdmi.HdmiLogger: void debug(java.lang.String,java.lang.Object[])>("setOption: [flag:%d, enabled:%b]", $r1);
+
+        $r4 = r0.<com.android.server.hdmi.HdmiCecController: com.android.server.hdmi.HdmiCecController$NativeWrapper mNativeWrapperImpl>;
+
+        interfaceinvoke $r4.<com.android.server.hdmi.HdmiCecController$NativeWrapper: void nativeSetOption(int,boolean)>(i0, z0);
+
+        return;
+    }
+}

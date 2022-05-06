@@ -1,0 +1,513 @@
+final class com.android.server.am.NativeCrashListener extends java.lang.Thread
+{
+    static final boolean DEBUG;
+    static final java.lang.String DEBUGGERD_SOCKET_PATH;
+    static final boolean MORE_DEBUG;
+    static final long SOCKET_TIMEOUT_MILLIS;
+    static final java.lang.String TAG;
+    final com.android.server.am.ActivityManagerService mAm;
+
+    void <init>(com.android.server.am.ActivityManagerService)
+    {
+        com.android.server.am.NativeCrashListener r0;
+        com.android.server.am.ActivityManagerService r1;
+
+        r0 := @this: com.android.server.am.NativeCrashListener;
+
+        r1 := @parameter0: com.android.server.am.ActivityManagerService;
+
+        specialinvoke r0.<java.lang.Thread: void <init>()>();
+
+        r0.<com.android.server.am.NativeCrashListener: com.android.server.am.ActivityManagerService mAm> = r1;
+
+        return;
+    }
+
+    static int readExactly(java.io.FileDescriptor, byte[], int, int) throws android.system.ErrnoException, java.io.InterruptedIOException
+    {
+        java.io.FileDescriptor r0;
+        byte[] r1;
+        int i0, $i1, i2, i4, i5, i6;
+
+        r0 := @parameter0: java.io.FileDescriptor;
+
+        r1 := @parameter1: byte[];
+
+        i0 := @parameter2: int;
+
+        i2 := @parameter3: int;
+
+        i4 = i2;
+
+        i5 = 0;
+
+     label1:
+        if i4 <= 0 goto label3;
+
+        $i1 = i0 + i5;
+
+        i6 = staticinvoke <android.system.Os: int read(java.io.FileDescriptor,byte[],int,int)>(r0, r1, $i1, i4);
+
+        if i6 > 0 goto label2;
+
+        return -1;
+
+     label2:
+        i4 = i4 - i6;
+
+        i5 = i5 + i6;
+
+        goto label1;
+
+     label3:
+        return i5;
+    }
+
+    static int unpackInt(byte[], int)
+    {
+        byte[] r0;
+        int i0, $i3, $i6, $i7, $i8, $i11, $i12, $i13, $i16, $i17;
+        byte $b1, $b4, $b9, $b14;
+        short $s2, $s5, $s10, $s15;
+
+        r0 := @parameter0: byte[];
+
+        i0 := @parameter1: int;
+
+        $b1 = r0[i0];
+
+        $s2 = $b1 & 255;
+
+        $i7 = $s2 << 24;
+
+        $i3 = i0 + 1;
+
+        $b4 = r0[$i3];
+
+        $s5 = $b4 & 255;
+
+        $i6 = $s5 << 16;
+
+        $i12 = $i7 | $i6;
+
+        $i8 = i0 + 2;
+
+        $b9 = r0[$i8];
+
+        $s10 = $b9 & 255;
+
+        $i11 = $s10 << 8;
+
+        $i16 = $i12 | $i11;
+
+        $i13 = i0 + 3;
+
+        $b14 = r0[$i13];
+
+        $s15 = $b14 & 255;
+
+        $i17 = $i16 | $s15;
+
+        return $i17;
+    }
+
+    void consumeNativeCrashData(java.io.FileDescriptor)
+    {
+        com.android.server.am.NativeCrashListener r0;
+        byte[] r1, $r10;
+        int i0, $i1, $i2, $i3, $i4, $i5, $i8, $i9, $i11, i14, i15;
+        com.android.server.am.ActivityManagerService$PidMap r2, $r6;
+        java.io.ByteArrayOutputStream $r3;
+        com.android.server.am.ActivityManagerService $r4, $r5, r18;
+        java.lang.String $r9, r19;
+        boolean $z0;
+        byte $b10;
+        java.lang.Throwable $r11, $r12;
+        java.lang.Exception $r13;
+        java.io.FileDescriptor r14;
+        android.system.StructTimeval r16;
+        com.android.server.am.ProcessRecord r17;
+        com.android.server.am.NativeCrashListener$NativeCrashReporter r20;
+        java.lang.StringBuilder r22;
+
+        r0 := @this: com.android.server.am.NativeCrashListener;
+
+        r14 := @parameter0: java.io.FileDescriptor;
+
+        r1 = newarray (byte)[4096];
+
+        $r3 = new java.io.ByteArrayOutputStream;
+
+        specialinvoke $r3.<java.io.ByteArrayOutputStream: void <init>(int)>(4096);
+
+     label01:
+        r16 = staticinvoke <android.system.StructTimeval: android.system.StructTimeval fromMillis(long)>(10000L);
+
+        $i2 = <android.system.OsConstants: int SOL_SOCKET>;
+
+        $i1 = <android.system.OsConstants: int SO_RCVTIMEO>;
+
+        staticinvoke <android.system.Os: void setsockoptTimeval(java.io.FileDescriptor,int,int,android.system.StructTimeval)>(r14, $i2, $i1, r16);
+
+        $i4 = <android.system.OsConstants: int SOL_SOCKET>;
+
+        $i3 = <android.system.OsConstants: int SO_SNDTIMEO>;
+
+        staticinvoke <android.system.Os: void setsockoptTimeval(java.io.FileDescriptor,int,int,android.system.StructTimeval)>(r14, $i4, $i3, r16);
+
+        $i5 = staticinvoke <com.android.server.am.NativeCrashListener: int readExactly(java.io.FileDescriptor,byte[],int,int)>(r14, r1, 0, 8);
+
+        if $i5 == 8 goto label03;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("NativeCrashListener", "Unable to read from debuggerd");
+
+     label02:
+        return;
+
+     label03:
+        i14 = staticinvoke <com.android.server.am.NativeCrashListener: int unpackInt(byte[],int)>(r1, 0);
+
+        i0 = staticinvoke <com.android.server.am.NativeCrashListener: int unpackInt(byte[],int)>(r1, 4);
+
+     label04:
+        if i14 <= 0 goto label28;
+
+     label05:
+        $r4 = r0.<com.android.server.am.NativeCrashListener: com.android.server.am.ActivityManagerService mAm>;
+
+        r2 = $r4.<com.android.server.am.ActivityManagerService: com.android.server.am.ActivityManagerService$PidMap mPidsSelfLocked>;
+
+        entermonitor r2;
+
+     label06:
+        $r5 = r0.<com.android.server.am.NativeCrashListener: com.android.server.am.ActivityManagerService mAm>;
+
+        $r6 = $r5.<com.android.server.am.ActivityManagerService: com.android.server.am.ActivityManagerService$PidMap mPidsSelfLocked>;
+
+        r17 = virtualinvoke $r6.<com.android.server.am.ActivityManagerService$PidMap: com.android.server.am.ProcessRecord get(int)>(i14);
+
+        exitmonitor r2;
+
+     label07:
+        if r17 == null goto label23;
+
+     label08:
+        $z0 = virtualinvoke r17.<com.android.server.am.ProcessRecord: boolean isPersistent()>();
+
+        if $z0 == 0 goto label10;
+
+     label09:
+        return;
+
+     label10:
+        $i8 = lengthof r1;
+
+        i15 = staticinvoke <android.system.Os: int read(java.io.FileDescriptor,byte[],int,int)>(r14, r1, 0, $i8);
+
+     label11:
+        if i15 <= 0 goto label15;
+
+        $i9 = i15 - 1;
+
+        $b10 = r1[$i9];
+
+        if $b10 != 0 goto label14;
+
+     label12:
+        $i11 = i15 - 1;
+
+        virtualinvoke $r3.<java.io.ByteArrayOutputStream: void write(byte[],int,int)>(r1, 0, $i11);
+
+     label13:
+        goto label16;
+
+     label14:
+        virtualinvoke $r3.<java.io.ByteArrayOutputStream: void write(byte[],int,int)>(r1, 0, i15);
+
+     label15:
+        if i15 > 0 goto label10;
+
+     label16:
+        r18 = r0.<com.android.server.am.NativeCrashListener: com.android.server.am.ActivityManagerService mAm>;
+
+        entermonitor r18;
+
+     label17:
+        staticinvoke <com.android.server.am.ActivityManagerService: void boostPriorityForLockedSection()>();
+
+        virtualinvoke r17.<com.android.server.am.ProcessRecord: void setCrashing(boolean)>(1);
+
+        r17.<com.android.server.am.ProcessRecord: boolean forceCrashReport> = 1;
+
+        exitmonitor r18;
+
+     label18:
+        staticinvoke <com.android.server.am.ActivityManagerService: void resetPriorityAfterLockedSection()>();
+
+        r19 = new java.lang.String;
+
+        $r10 = virtualinvoke $r3.<java.io.ByteArrayOutputStream: byte[] toByteArray()>();
+
+        specialinvoke r19.<java.lang.String: void <init>(byte[],java.lang.String)>($r10, "UTF-8");
+
+        r20 = new com.android.server.am.NativeCrashListener$NativeCrashReporter;
+
+        specialinvoke r20.<com.android.server.am.NativeCrashListener$NativeCrashReporter: void <init>(com.android.server.am.NativeCrashListener,com.android.server.am.ProcessRecord,int,java.lang.String)>(r0, r17, i0, r19);
+
+        virtualinvoke r20.<com.android.server.am.NativeCrashListener$NativeCrashReporter: void start()>();
+
+     label19:
+        goto label24;
+
+     label20:
+        $r11 := @caughtexception;
+
+     label21:
+        exitmonitor r18;
+
+     label22:
+        staticinvoke <com.android.server.am.ActivityManagerService: void resetPriorityAfterLockedSection()>();
+
+        throw $r11;
+
+     label23:
+        r22 = new java.lang.StringBuilder;
+
+        specialinvoke r22.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r22.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Couldn\'t find ProcessRecord for pid ");
+
+        virtualinvoke r22.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i14);
+
+        $r9 = virtualinvoke r22.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("NativeCrashListener", $r9);
+
+     label24:
+        goto label29;
+
+     label25:
+        $r12 := @caughtexception;
+
+     label26:
+        exitmonitor r2;
+
+     label27:
+        throw $r12;
+
+     label28:
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("NativeCrashListener", "Bogus pid!");
+
+     label29:
+        goto label31;
+
+     label30:
+        $r13 := @caughtexception;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("NativeCrashListener", "Exception dealing with report", $r13);
+
+     label31:
+        return;
+
+        catch java.lang.Exception from label01 to label02 with label30;
+        catch java.lang.Exception from label03 to label04 with label30;
+        catch java.lang.Exception from label05 to label06 with label30;
+        catch java.lang.Throwable from label06 to label07 with label25;
+        catch java.lang.Exception from label08 to label09 with label30;
+        catch java.lang.Exception from label10 to label11 with label30;
+        catch java.lang.Exception from label12 to label13 with label30;
+        catch java.lang.Exception from label14 to label15 with label30;
+        catch java.lang.Exception from label16 to label17 with label30;
+        catch java.lang.Throwable from label17 to label18 with label20;
+        catch java.lang.Exception from label18 to label19 with label30;
+        catch java.lang.Throwable from label21 to label22 with label20;
+        catch java.lang.Exception from label22 to label23 with label30;
+        catch java.lang.Exception from label23 to label24 with label30;
+        catch java.lang.Throwable from label26 to label27 with label25;
+        catch java.lang.Exception from label27 to label28 with label30;
+        catch java.lang.Exception from label28 to label29 with label30;
+    }
+
+    public void run()
+    {
+        com.android.server.am.NativeCrashListener r0;
+        byte[] r1;
+        java.io.FileDescriptor r2, r14, r15, r16;
+        boolean $z0;
+        int $i0, $i1;
+        android.system.UnixSocketAddress $r4;
+        java.lang.Throwable $r5, $r10, $r11;
+        java.lang.Exception $r6, $r7, $r8, $r9, $r12;
+        java.io.File r25;
+        java.net.SocketAddress r26;
+
+        r0 := @this: com.android.server.am.NativeCrashListener;
+
+        r1 = newarray (byte)[1];
+
+        r25 = new java.io.File;
+
+        specialinvoke r25.<java.io.File: void <init>(java.lang.String)>("/data/system/ndebugsocket");
+
+        $z0 = virtualinvoke r25.<java.io.File: boolean exists()>();
+
+        if $z0 == 0 goto label01;
+
+        virtualinvoke r25.<java.io.File: boolean delete()>();
+
+     label01:
+        $i1 = <android.system.OsConstants: int AF_UNIX>;
+
+        $i0 = <android.system.OsConstants: int SOCK_STREAM>;
+
+        r2 = staticinvoke <android.system.Os: java.io.FileDescriptor socket(int,int,int)>($i1, $i0, 0);
+
+        $r4 = staticinvoke <android.system.UnixSocketAddress: android.system.UnixSocketAddress createFileSystem(java.lang.String)>("/data/system/ndebugsocket");
+
+        r26 = (java.net.SocketAddress) $r4;
+
+        staticinvoke <android.system.Os: void bind(java.io.FileDescriptor,java.net.SocketAddress)>(r2, r26);
+
+        staticinvoke <android.system.Os: void listen(java.io.FileDescriptor,int)>(r2, 1);
+
+        staticinvoke <android.system.Os: void chmod(java.lang.String,int)>("/data/system/ndebugsocket", 511);
+
+     label02:
+        r14 = null;
+
+        r15 = null;
+
+     label03:
+        r16 = staticinvoke <android.system.Os: java.io.FileDescriptor accept(java.io.FileDescriptor,java.net.InetSocketAddress)>(r2, null);
+
+     label04:
+        if r16 == null goto label06;
+
+        r15 = r16;
+
+        r14 = r16;
+
+     label05:
+        virtualinvoke r0.<com.android.server.am.NativeCrashListener: void consumeNativeCrashData(java.io.FileDescriptor)>(r16);
+
+     label06:
+        if r16 == null goto label22;
+
+     label07:
+        staticinvoke <android.system.Os: int write(java.io.FileDescriptor,byte[],int,int)>(r16, r1, 0, 1);
+
+     label08:
+        goto label10;
+
+     label09:
+        $r6 := @caughtexception;
+
+     label10:
+        staticinvoke <android.system.Os: void close(java.io.FileDescriptor)>(r16);
+
+     label11:
+        goto label22;
+
+     label12:
+        $r11 := @caughtexception;
+
+        goto label11;
+
+     label13:
+        $r10 := @caughtexception;
+
+        goto label23;
+
+     label14:
+        $r9 := @caughtexception;
+
+        r15 = r14;
+
+     label15:
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String,java.lang.Throwable)>("NativeCrashListener", "Error handling connection", $r9);
+
+     label16:
+        if r14 == null goto label22;
+
+     label17:
+        staticinvoke <android.system.Os: int write(java.io.FileDescriptor,byte[],int,int)>(r14, r1, 0, 1);
+
+     label18:
+        goto label20;
+
+     label19:
+        $r8 := @caughtexception;
+
+     label20:
+        staticinvoke <android.system.Os: void close(java.io.FileDescriptor)>(r14);
+
+     label21:
+        goto label11;
+
+     label22:
+        goto label02;
+
+     label23:
+        if r15 == null goto label30;
+
+     label24:
+        staticinvoke <android.system.Os: int write(java.io.FileDescriptor,byte[],int,int)>(r15, r1, 0, 1);
+
+     label25:
+        goto label27;
+
+     label26:
+        $r12 := @caughtexception;
+
+     label27:
+        staticinvoke <android.system.Os: void close(java.io.FileDescriptor)>(r15);
+
+     label28:
+        goto label30;
+
+     label29:
+        $r5 := @caughtexception;
+
+     label30:
+        throw $r10;
+
+     label31:
+        $r7 := @caughtexception;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("NativeCrashListener", "Unable to init native debug socket!", $r7);
+
+        return;
+
+        catch java.lang.Exception from label01 to label02 with label31;
+        catch java.lang.Exception from label03 to label04 with label14;
+        catch java.lang.Throwable from label03 to label04 with label13;
+        catch java.lang.Exception from label05 to label06 with label14;
+        catch java.lang.Throwable from label05 to label06 with label13;
+        catch java.lang.Exception from label07 to label08 with label09;
+        catch android.system.ErrnoException from label10 to label11 with label12;
+        catch java.lang.Exception from label10 to label11 with label31;
+        catch java.lang.Throwable from label15 to label16 with label13;
+        catch java.lang.Exception from label17 to label18 with label19;
+        catch android.system.ErrnoException from label20 to label21 with label12;
+        catch java.lang.Exception from label20 to label21 with label31;
+        catch java.lang.Exception from label24 to label25 with label26;
+        catch android.system.ErrnoException from label27 to label28 with label29;
+        catch java.lang.Exception from label27 to label28 with label31;
+        catch java.lang.Exception from label30 to label31 with label31;
+    }
+
+    public static void <clinit>()
+    {
+        <com.android.server.am.NativeCrashListener: java.lang.String TAG> = "NativeCrashListener";
+
+        <com.android.server.am.NativeCrashListener: long SOCKET_TIMEOUT_MILLIS> = 10000L;
+
+        <com.android.server.am.NativeCrashListener: boolean MORE_DEBUG> = 0;
+
+        <com.android.server.am.NativeCrashListener: java.lang.String DEBUGGERD_SOCKET_PATH> = "/data/system/ndebugsocket";
+
+        <com.android.server.am.NativeCrashListener: boolean DEBUG> = 0;
+
+        return;
+    }
+}

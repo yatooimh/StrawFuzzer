@@ -1,0 +1,4111 @@
+public final class com.android.server.content.ContentService extends android.content.IContentService$Stub
+{
+    private static final long BACKGROUND_OBSERVER_DELAY;
+    static final boolean DEBUG;
+    static final java.lang.String TAG;
+    private static final int TOO_MANY_OBSERVERS_THRESHOLD;
+    private static final com.android.internal.os.BinderDeathDispatcher sObserverDeathDispatcher;
+    private static final android.util.ArraySet sObserverLeakDetectedUid;
+    private final android.util.SparseArray mCache;
+    private android.content.BroadcastReceiver mCacheReceiver;
+    private android.content.Context mContext;
+    private boolean mFactoryTest;
+    private final com.android.server.content.ContentService$ObserverNode mRootNode;
+    private com.android.server.content.SyncManager mSyncManager;
+    private final java.lang.Object mSyncManagerLock;
+
+    static void <clinit>()
+    {
+        com.android.internal.os.BinderDeathDispatcher $r0;
+        android.util.ArraySet $r1;
+
+        <com.android.server.content.ContentService: int TOO_MANY_OBSERVERS_THRESHOLD> = 1000;
+
+        <com.android.server.content.ContentService: java.lang.String TAG> = "ContentService";
+
+        <com.android.server.content.ContentService: boolean DEBUG> = 0;
+
+        <com.android.server.content.ContentService: long BACKGROUND_OBSERVER_DELAY> = 10000L;
+
+        $r0 = new com.android.internal.os.BinderDeathDispatcher;
+
+        specialinvoke $r0.<com.android.internal.os.BinderDeathDispatcher: void <init>()>();
+
+        <com.android.server.content.ContentService: com.android.internal.os.BinderDeathDispatcher sObserverDeathDispatcher> = $r0;
+
+        $r1 = new android.util.ArraySet;
+
+        specialinvoke $r1.<android.util.ArraySet: void <init>(int)>(0);
+
+        <com.android.server.content.ContentService: android.util.ArraySet sObserverLeakDetectedUid> = $r1;
+
+        return;
+    }
+
+    void <init>(android.content.Context, boolean)
+    {
+        com.android.server.content.ContentService r0;
+        boolean z0;
+        com.android.server.content.ContentService$ObserverNode $r1;
+        java.lang.Object $r2, $r5;
+        android.util.SparseArray $r3;
+        com.android.server.content.ContentService$1 $r4;
+        com.android.server.content._$$Lambda$ContentService$5_BNVxd6JTWU9ogp3u_0kfiqgbI $r6;
+        com.android.server.pm.permission.PermissionManagerServiceInternal $r7;
+        android.content.IntentFilter $r8, $r13;
+        android.os.UserHandle $r9, $r14;
+        android.content.BroadcastReceiver $r10, $r15;
+        android.content.Context $r11, $r16, r18;
+
+        r0 := @this: com.android.server.content.ContentService;
+
+        r18 := @parameter0: android.content.Context;
+
+        z0 := @parameter1: boolean;
+
+        specialinvoke r0.<android.content.IContentService$Stub: void <init>()>();
+
+        $r1 = new com.android.server.content.ContentService$ObserverNode;
+
+        specialinvoke $r1.<com.android.server.content.ContentService$ObserverNode: void <init>(java.lang.String)>("");
+
+        r0.<com.android.server.content.ContentService: com.android.server.content.ContentService$ObserverNode mRootNode> = $r1;
+
+        r0.<com.android.server.content.ContentService: com.android.server.content.SyncManager mSyncManager> = null;
+
+        $r2 = new java.lang.Object;
+
+        specialinvoke $r2.<java.lang.Object: void <init>()>();
+
+        r0.<com.android.server.content.ContentService: java.lang.Object mSyncManagerLock> = $r2;
+
+        $r3 = new android.util.SparseArray;
+
+        specialinvoke $r3.<android.util.SparseArray: void <init>()>();
+
+        r0.<com.android.server.content.ContentService: android.util.SparseArray mCache> = $r3;
+
+        $r4 = new com.android.server.content.ContentService$1;
+
+        specialinvoke $r4.<com.android.server.content.ContentService$1: void <init>(com.android.server.content.ContentService)>(r0);
+
+        r0.<com.android.server.content.ContentService: android.content.BroadcastReceiver mCacheReceiver> = $r4;
+
+        r0.<com.android.server.content.ContentService: android.content.Context mContext> = r18;
+
+        r0.<com.android.server.content.ContentService: boolean mFactoryTest> = z0;
+
+        $r5 = staticinvoke <com.android.server.LocalServices: java.lang.Object getService(java.lang.Class)>(class "Lcom/android/server/pm/permission/PermissionManagerServiceInternal;");
+
+        $r7 = (com.android.server.pm.permission.PermissionManagerServiceInternal) $r5;
+
+        $r6 = new com.android.server.content._$$Lambda$ContentService$5_BNVxd6JTWU9ogp3u_0kfiqgbI;
+
+        specialinvoke $r6.<com.android.server.content._$$Lambda$ContentService$5_BNVxd6JTWU9ogp3u_0kfiqgbI: void <init>(com.android.server.content.ContentService)>(r0);
+
+        virtualinvoke $r7.<com.android.server.pm.permission.PermissionManagerServiceInternal: void setSyncAdapterPackagesProvider(com.android.server.pm.permission.PermissionManagerServiceInternal$SyncAdapterPackagesProvider)>($r6);
+
+        $r8 = new android.content.IntentFilter;
+
+        specialinvoke $r8.<android.content.IntentFilter: void <init>()>();
+
+        virtualinvoke $r8.<android.content.IntentFilter: void addAction(java.lang.String)>("android.intent.action.PACKAGE_ADDED");
+
+        virtualinvoke $r8.<android.content.IntentFilter: void addAction(java.lang.String)>("android.intent.action.PACKAGE_CHANGED");
+
+        virtualinvoke $r8.<android.content.IntentFilter: void addAction(java.lang.String)>("android.intent.action.PACKAGE_REMOVED");
+
+        virtualinvoke $r8.<android.content.IntentFilter: void addAction(java.lang.String)>("android.intent.action.PACKAGE_DATA_CLEARED");
+
+        virtualinvoke $r8.<android.content.IntentFilter: void addDataScheme(java.lang.String)>("package");
+
+        $r11 = r0.<com.android.server.content.ContentService: android.content.Context mContext>;
+
+        $r10 = r0.<com.android.server.content.ContentService: android.content.BroadcastReceiver mCacheReceiver>;
+
+        $r9 = <android.os.UserHandle: android.os.UserHandle ALL>;
+
+        virtualinvoke $r11.<android.content.Context: android.content.Intent registerReceiverAsUser(android.content.BroadcastReceiver,android.os.UserHandle,android.content.IntentFilter,java.lang.String,android.os.Handler)>($r10, $r9, $r8, null, null);
+
+        $r13 = new android.content.IntentFilter;
+
+        specialinvoke $r13.<android.content.IntentFilter: void <init>()>();
+
+        virtualinvoke $r13.<android.content.IntentFilter: void addAction(java.lang.String)>("android.intent.action.LOCALE_CHANGED");
+
+        $r16 = r0.<com.android.server.content.ContentService: android.content.Context mContext>;
+
+        $r15 = r0.<com.android.server.content.ContentService: android.content.BroadcastReceiver mCacheReceiver>;
+
+        $r14 = <android.os.UserHandle: android.os.UserHandle ALL>;
+
+        virtualinvoke $r16.<android.content.Context: android.content.Intent registerReceiverAsUser(android.content.BroadcastReceiver,android.os.UserHandle,android.content.IntentFilter,java.lang.String,android.os.Handler)>($r15, $r14, $r13, null, null);
+
+        return;
+    }
+
+    static android.util.SparseArray access$000(com.android.server.content.ContentService)
+    {
+        com.android.server.content.ContentService r0;
+        android.util.SparseArray $r1;
+
+        r0 := @parameter0: com.android.server.content.ContentService;
+
+        $r1 = r0.<com.android.server.content.ContentService: android.util.SparseArray mCache>;
+
+        return $r1;
+    }
+
+    static void access$100(com.android.server.content.ContentService, int, java.lang.String, android.net.Uri)
+    {
+        com.android.server.content.ContentService r0;
+        int i0;
+        java.lang.String r1;
+        android.net.Uri r2;
+
+        r0 := @parameter0: com.android.server.content.ContentService;
+
+        i0 := @parameter1: int;
+
+        r1 := @parameter2: java.lang.String;
+
+        r2 := @parameter3: android.net.Uri;
+
+        specialinvoke r0.<com.android.server.content.ContentService: void invalidateCacheLocked(int,java.lang.String,android.net.Uri)>(i0, r1, r2);
+
+        return;
+    }
+
+    static com.android.internal.os.BinderDeathDispatcher access$200()
+    {
+        com.android.internal.os.BinderDeathDispatcher $r0;
+
+        $r0 = <com.android.server.content.ContentService: com.android.internal.os.BinderDeathDispatcher sObserverDeathDispatcher>;
+
+        return $r0;
+    }
+
+    static android.util.ArraySet access$300()
+    {
+        android.util.ArraySet $r0;
+
+        $r0 = <com.android.server.content.ContentService: android.util.ArraySet sObserverLeakDetectedUid>;
+
+        return $r0;
+    }
+
+    private int checkUriPermission(android.net.Uri, int, int, int, int)
+    {
+        com.android.server.content.ContentService r0;
+        int i0, i1, i2, i3, i4;
+        android.app.IActivityManager $r1;
+        android.os.RemoteException $r2;
+        android.net.Uri r3;
+
+        r0 := @this: com.android.server.content.ContentService;
+
+        r3 := @parameter0: android.net.Uri;
+
+        i3 := @parameter1: int;
+
+        i0 := @parameter2: int;
+
+        i1 := @parameter3: int;
+
+        i2 := @parameter4: int;
+
+     label1:
+        $r1 = staticinvoke <android.app.ActivityManager: android.app.IActivityManager getService()>();
+
+        i4 = interfaceinvoke $r1.<android.app.IActivityManager: int checkUriPermission(android.net.Uri,int,int,int,int,android.os.IBinder)>(r3, i3, i0, i1, i2, null);
+
+     label2:
+        return i4;
+
+     label3:
+        $r2 := @caughtexception;
+
+        return -1;
+
+        catch android.os.RemoteException from label1 to label2 with label3;
+    }
+
+    private long clampPeriod(long)
+    {
+        com.android.server.content.ContentService r0;
+        long l0, l1, $l2, l5;
+        byte $b3;
+        java.lang.StringBuilder $r2;
+        java.lang.String $r8;
+
+        r0 := @this: com.android.server.content.ContentService;
+
+        l0 := @parameter0: long;
+
+        $l2 = staticinvoke <android.app.job.JobInfo: long getMinPeriodMillis()>();
+
+        l1 = $l2 / 1000L;
+
+        l5 = l0;
+
+        $b3 = l0 cmp l1;
+
+        if $b3 >= 0 goto label1;
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Requested poll frequency of ");
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>(l0);
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" seconds being rounded up to ");
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>(l1);
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("s.");
+
+        $r8 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("ContentService", $r8);
+
+        l5 = l1;
+
+     label1:
+        return l5;
+    }
+
+    private void enforceCrossUserPermission(int, java.lang.String)
+    {
+        com.android.server.content.ContentService r0;
+        int i0, $i1;
+        java.lang.String r1;
+        android.content.Context $r2;
+
+        r0 := @this: com.android.server.content.ContentService;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: java.lang.String;
+
+        $i1 = staticinvoke <android.os.UserHandle: int getCallingUserId()>();
+
+        if $i1 == i0 goto label1;
+
+        $r2 = r0.<com.android.server.content.ContentService: android.content.Context mContext>;
+
+        virtualinvoke $r2.<android.content.Context: void enforceCallingOrSelfPermission(java.lang.String,java.lang.String)>("android.permission.INTERACT_ACROSS_USERS_FULL", r1);
+
+     label1:
+        return;
+    }
+
+    private void enforceNonFullCrossUserPermission(int, java.lang.String)
+    {
+        com.android.server.content.ContentService r0;
+        int i0, $i1, $i2;
+        java.lang.String r1;
+        android.content.Context $r2, $r3;
+
+        r0 := @this: com.android.server.content.ContentService;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: java.lang.String;
+
+        $i1 = staticinvoke <android.os.UserHandle: int getCallingUserId()>();
+
+        if $i1 != i0 goto label1;
+
+        return;
+
+     label1:
+        $r2 = r0.<com.android.server.content.ContentService: android.content.Context mContext>;
+
+        $i2 = virtualinvoke $r2.<android.content.Context: int checkCallingOrSelfPermission(java.lang.String)>("android.permission.INTERACT_ACROSS_USERS");
+
+        if $i2 != 0 goto label2;
+
+        return;
+
+     label2:
+        $r3 = r0.<com.android.server.content.ContentService: android.content.Context mContext>;
+
+        virtualinvoke $r3.<android.content.Context: void enforceCallingOrSelfPermission(java.lang.String,java.lang.String)>("android.permission.INTERACT_ACROSS_USERS_FULL", r1);
+
+        return;
+    }
+
+    private void enforceShell(java.lang.String)
+    {
+        com.android.server.content.ContentService r0;
+        java.lang.String r1, $r7;
+        int i0;
+        java.lang.StringBuilder $r3;
+        java.lang.SecurityException $r6;
+
+        r0 := @this: com.android.server.content.ContentService;
+
+        r1 := @parameter0: java.lang.String;
+
+        i0 = staticinvoke <android.os.Binder: int getCallingUid()>();
+
+        if i0 == 2000 goto label2;
+
+        if i0 != 0 goto label1;
+
+        goto label2;
+
+     label1:
+        $r3 = new java.lang.StringBuilder;
+
+        specialinvoke $r3.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Non-shell user attempted to call ");
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r6 = new java.lang.SecurityException;
+
+        $r7 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r6.<java.lang.SecurityException: void <init>(java.lang.String)>($r7);
+
+        throw $r6;
+
+     label2:
+        return;
+    }
+
+    private android.util.ArrayMap findOrCreateCacheLocked(int, java.lang.String)
+    {
+        com.android.server.content.ContentService r0;
+        int i0;
+        java.lang.String r1;
+        android.util.ArrayMap r2, $r6, $r8, r10, r11, r12;
+        android.util.SparseArray $r3, $r9;
+        java.lang.Object $r4, $r5;
+
+        r0 := @this: com.android.server.content.ContentService;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: java.lang.String;
+
+        $r3 = r0.<com.android.server.content.ContentService: android.util.SparseArray mCache>;
+
+        $r4 = virtualinvoke $r3.<android.util.SparseArray: java.lang.Object get(int)>(i0);
+
+        r10 = (android.util.ArrayMap) $r4;
+
+        r11 = r10;
+
+        if r10 != null goto label1;
+
+        $r8 = new android.util.ArrayMap;
+
+        specialinvoke $r8.<android.util.ArrayMap: void <init>()>();
+
+        r11 = $r8;
+
+        $r9 = r0.<com.android.server.content.ContentService: android.util.SparseArray mCache>;
+
+        virtualinvoke $r9.<android.util.SparseArray: void put(int,java.lang.Object)>(i0, $r8);
+
+     label1:
+        $r5 = virtualinvoke r11.<android.util.ArrayMap: java.lang.Object get(java.lang.Object)>(r1);
+
+        r2 = (android.util.ArrayMap) $r5;
+
+        r12 = r2;
+
+        if r2 != null goto label2;
+
+        $r6 = new android.util.ArrayMap;
+
+        specialinvoke $r6.<android.util.ArrayMap: void <init>()>();
+
+        r12 = $r6;
+
+        virtualinvoke r11.<android.util.ArrayMap: java.lang.Object put(java.lang.Object,java.lang.Object)>(r1, $r6);
+
+     label2:
+        return r12;
+    }
+
+    private java.lang.String getProviderPackageName(android.net.Uri, int)
+    {
+        com.android.server.content.ContentService r0;
+        int i0;
+        android.content.Context $r1;
+        android.content.pm.PackageManager $r2;
+        java.lang.String $r3, r6;
+        android.net.Uri r4;
+        android.content.pm.ProviderInfo r5;
+
+        r0 := @this: com.android.server.content.ContentService;
+
+        r4 := @parameter0: android.net.Uri;
+
+        i0 := @parameter1: int;
+
+        $r1 = r0.<com.android.server.content.ContentService: android.content.Context mContext>;
+
+        $r2 = virtualinvoke $r1.<android.content.Context: android.content.pm.PackageManager getPackageManager()>();
+
+        $r3 = virtualinvoke r4.<android.net.Uri: java.lang.String getAuthority()>();
+
+        r5 = virtualinvoke $r2.<android.content.pm.PackageManager: android.content.pm.ProviderInfo resolveContentProviderAsUser(java.lang.String,int,int)>($r3, 0, i0);
+
+        if r5 == null goto label1;
+
+        r6 = r5.<android.content.pm.ProviderInfo: java.lang.String packageName>;
+
+        goto label2;
+
+     label1:
+        r6 = null;
+
+     label2:
+        return r6;
+    }
+
+    private int getSyncExemptionAndCleanUpExtrasForCaller(int, android.os.Bundle)
+    {
+        com.android.server.content.ContentService r0;
+        int i0, i1, i2;
+        boolean z0;
+        java.lang.Object $r1;
+        android.os.Bundle r2;
+        android.app.ActivityManagerInternal r3;
+
+        r0 := @this: com.android.server.content.ContentService;
+
+        i0 := @parameter0: int;
+
+        r2 := @parameter1: android.os.Bundle;
+
+        if r2 == null goto label1;
+
+        i1 = virtualinvoke r2.<android.os.Bundle: int getInt(java.lang.String,int)>("v_exemption", -1);
+
+        virtualinvoke r2.<android.os.Bundle: void remove(java.lang.String)>("v_exemption");
+
+        if i1 == -1 goto label1;
+
+        return i1;
+
+     label1:
+        $r1 = staticinvoke <com.android.server.LocalServices: java.lang.Object getService(java.lang.Class)>(class "Landroid/app/ActivityManagerInternal;");
+
+        r3 = (android.app.ActivityManagerInternal) $r1;
+
+        if r3 != null goto label2;
+
+        return 0;
+
+     label2:
+        i2 = virtualinvoke r3.<android.app.ActivityManagerInternal: int getUidProcessState(int)>(i0);
+
+        z0 = virtualinvoke r3.<android.app.ActivityManagerInternal: boolean isUidActive(int)>(i0);
+
+        if i2 <= 2 goto label6;
+
+        if i2 != 3 goto label3;
+
+        goto label6;
+
+     label3:
+        if i2 <= 6 goto label5;
+
+        if z0 == 0 goto label4;
+
+        goto label5;
+
+     label4:
+        return 0;
+
+     label5:
+        return 1;
+
+     label6:
+        return 2;
+    }
+
+    private int getSyncExemptionForCaller(int)
+    {
+        com.android.server.content.ContentService r0;
+        int i0, $i1;
+
+        r0 := @this: com.android.server.content.ContentService;
+
+        i0 := @parameter0: int;
+
+        $i1 = specialinvoke r0.<com.android.server.content.ContentService: int getSyncExemptionAndCleanUpExtrasForCaller(int,android.os.Bundle)>(i0, null);
+
+        return $i1;
+    }
+
+    private com.android.server.content.SyncManager getSyncManager()
+    {
+        com.android.server.content.ContentService r0;
+        java.lang.Object r1;
+        com.android.server.content.SyncManager $r2, r6, r9;
+        boolean $z0;
+        android.content.Context $r3;
+        android.database.sqlite.SQLiteException $r4;
+        java.lang.Throwable $r5;
+
+        r0 := @this: com.android.server.content.ContentService;
+
+        r1 = r0.<com.android.server.content.ContentService: java.lang.Object mSyncManagerLock>;
+
+        entermonitor r1;
+
+     label1:
+        $r2 = r0.<com.android.server.content.ContentService: com.android.server.content.SyncManager mSyncManager>;
+
+        if $r2 != null goto label2;
+
+        r6 = new com.android.server.content.SyncManager;
+
+        $r3 = r0.<com.android.server.content.ContentService: android.content.Context mContext>;
+
+        $z0 = r0.<com.android.server.content.ContentService: boolean mFactoryTest>;
+
+        specialinvoke r6.<com.android.server.content.SyncManager: void <init>(android.content.Context,boolean)>($r3, $z0);
+
+        r0.<com.android.server.content.ContentService: com.android.server.content.SyncManager mSyncManager> = r6;
+
+     label2:
+        goto label6;
+
+     label3:
+        $r5 := @caughtexception;
+
+        goto label8;
+
+     label4:
+        $r4 := @caughtexception;
+
+     label5:
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("ContentService", "Can\'t create SyncManager", $r4);
+
+     label6:
+        r9 = r0.<com.android.server.content.ContentService: com.android.server.content.SyncManager mSyncManager>;
+
+        exitmonitor r1;
+
+     label7:
+        return r9;
+
+     label8:
+        exitmonitor r1;
+
+     label9:
+        throw $r5;
+
+        catch android.database.sqlite.SQLiteException from label1 to label2 with label4;
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label5 to label6 with label3;
+        catch java.lang.Throwable from label6 to label7 with label3;
+        catch java.lang.Throwable from label8 to label9 with label3;
+    }
+
+    private int handleIncomingUser(android.net.Uri, int, int, int, boolean, int)
+    {
+        com.android.server.content.ContentService r0;
+        int i0, i1, $i2, $i3, $i4, $i5, i6, i7, i8;
+        boolean z0, z2;
+        java.lang.StringBuilder $r1, $r7, $r17;
+        java.lang.IllegalArgumentException $r4;
+        java.lang.String $r5, $r15, $r20, r22;
+        android.content.Context $r6, $r16, r23;
+        java.lang.SecurityException $r14;
+        android.net.Uri r21;
+
+        r0 := @this: com.android.server.content.ContentService;
+
+        r21 := @parameter0: android.net.Uri;
+
+        i6 := @parameter1: int;
+
+        i0 := @parameter2: int;
+
+        i7 := @parameter3: int;
+
+        z0 := @parameter4: boolean;
+
+        i1 := @parameter5: int;
+
+        i8 = i1;
+
+        if i1 != -2 goto label1;
+
+        i8 = staticinvoke <android.app.ActivityManager: int getCurrentUser()>();
+
+     label1:
+        r22 = "android.permission.INTERACT_ACROSS_USERS_FULL";
+
+        if i8 != -1 goto label2;
+
+        r23 = r0.<com.android.server.content.ContentService: android.content.Context mContext>;
+
+        $r17 = new java.lang.StringBuilder;
+
+        specialinvoke $r17.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r17.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("No access to ");
+
+        virtualinvoke $r17.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r21);
+
+        $r20 = virtualinvoke $r17.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r23.<android.content.Context: void enforceCallingOrSelfPermission(java.lang.String,java.lang.String)>("android.permission.INTERACT_ACROSS_USERS_FULL", $r20);
+
+        goto label6;
+
+     label2:
+        if i8 < 0 goto label7;
+
+        $i2 = staticinvoke <android.os.UserHandle: int getCallingUserId()>();
+
+        if i8 == $i2 goto label6;
+
+        $i3 = specialinvoke r0.<com.android.server.content.ContentService: int checkUriPermission(android.net.Uri,int,int,int,int)>(r21, i6, i0, i7, i8);
+
+        if $i3 == 0 goto label6;
+
+        $r6 = r0.<com.android.server.content.ContentService: android.content.Context mContext>;
+
+        $i4 = virtualinvoke $r6.<android.content.Context: int checkCallingOrSelfPermission(java.lang.String)>("android.permission.INTERACT_ACROSS_USERS_FULL");
+
+        if $i4 != 0 goto label3;
+
+        z2 = 1;
+
+        goto label4;
+
+     label3:
+        z2 = 0;
+
+        if z0 == 0 goto label4;
+
+        z2 = 0;
+
+        $r16 = r0.<com.android.server.content.ContentService: android.content.Context mContext>;
+
+        $i5 = virtualinvoke $r16.<android.content.Context: int checkCallingOrSelfPermission(java.lang.String)>("android.permission.INTERACT_ACROSS_USERS");
+
+        if $i5 != 0 goto label4;
+
+        z2 = 1;
+
+     label4:
+        if z2 != 0 goto label6;
+
+        if z0 == 0 goto label5;
+
+        r22 = "android.permission.INTERACT_ACROSS_USERS_FULL or android.permission.INTERACT_ACROSS_USERS";
+
+        goto label5;
+
+     label5:
+        $r7 = new java.lang.StringBuilder;
+
+        specialinvoke $r7.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("No access to ");
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r21);
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(": neither user ");
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" nor current process has ");
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r22);
+
+        $r14 = new java.lang.SecurityException;
+
+        $r15 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r14.<java.lang.SecurityException: void <init>(java.lang.String)>($r15);
+
+        throw $r14;
+
+     label6:
+        return i8;
+
+     label7:
+        $r1 = new java.lang.StringBuilder;
+
+        specialinvoke $r1.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Invalid user: ");
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i8);
+
+        $r4 = new java.lang.IllegalArgumentException;
+
+        $r5 = virtualinvoke $r1.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r4.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>($r5);
+
+        throw $r4;
+    }
+
+    private void invalidateCacheLocked(int, java.lang.String, android.net.Uri)
+    {
+        com.android.server.content.ContentService r0;
+        android.net.Uri r1, $r8;
+        android.util.SparseArray $r2;
+        java.lang.Object $r3, $r4, $r5, $r6, $r7;
+        int $i0, i1, i2;
+        java.lang.String $r9, $r10, r12;
+        boolean $z0;
+        android.util.ArrayMap r13, r14;
+        android.util.Pair r15;
+
+        r0 := @this: com.android.server.content.ContentService;
+
+        i1 := @parameter0: int;
+
+        r12 := @parameter1: java.lang.String;
+
+        r1 := @parameter2: android.net.Uri;
+
+        $r2 = r0.<com.android.server.content.ContentService: android.util.SparseArray mCache>;
+
+        $r3 = virtualinvoke $r2.<android.util.SparseArray: java.lang.Object get(int)>(i1);
+
+        r13 = (android.util.ArrayMap) $r3;
+
+        if r13 != null goto label1;
+
+        return;
+
+     label1:
+        $r4 = virtualinvoke r13.<android.util.ArrayMap: java.lang.Object get(java.lang.Object)>(r12);
+
+        r14 = (android.util.ArrayMap) $r4;
+
+        if r14 != null goto label2;
+
+        return;
+
+     label2:
+        if r1 == null goto label7;
+
+        i2 = 0;
+
+     label3:
+        $i0 = virtualinvoke r14.<android.util.ArrayMap: int size()>();
+
+        if i2 >= $i0 goto label6;
+
+        $r5 = virtualinvoke r14.<android.util.ArrayMap: java.lang.Object keyAt(int)>(i2);
+
+        r15 = (android.util.Pair) $r5;
+
+        $r6 = r15.<android.util.Pair: java.lang.Object second>;
+
+        if $r6 == null goto label4;
+
+        $r7 = r15.<android.util.Pair: java.lang.Object second>;
+
+        $r8 = (android.net.Uri) $r7;
+
+        $r9 = virtualinvoke $r8.<android.net.Uri: java.lang.String toString()>();
+
+        $r10 = virtualinvoke r1.<android.net.Uri: java.lang.String toString()>();
+
+        $z0 = virtualinvoke $r9.<java.lang.String: boolean startsWith(java.lang.String)>($r10);
+
+        if $z0 == 0 goto label4;
+
+        virtualinvoke r14.<android.util.ArrayMap: java.lang.Object removeAt(int)>(i2);
+
+        goto label5;
+
+     label4:
+        i2 = i2 + 1;
+
+     label5:
+        goto label3;
+
+     label6:
+        goto label8;
+
+     label7:
+        virtualinvoke r14.<android.util.ArrayMap: void clear()>();
+
+     label8:
+        return;
+    }
+
+    private static int normalizeSyncable(int)
+    {
+        int i0;
+
+        i0 := @parameter0: int;
+
+        if i0 <= 0 goto label1;
+
+        return 1;
+
+     label1:
+        if i0 != 0 goto label2;
+
+        return 0;
+
+     label2:
+        return -2;
+    }
+
+    private void validateExtras(int, android.os.Bundle)
+    {
+        com.android.server.content.ContentService r0;
+        int i0;
+        android.os.Bundle r1;
+        boolean $z0;
+        java.lang.SecurityException $r2;
+
+        r0 := @this: com.android.server.content.ContentService;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: android.os.Bundle;
+
+        $z0 = virtualinvoke r1.<android.os.Bundle: boolean containsKey(java.lang.String)>("v_exemption");
+
+        if $z0 == 0 goto label2;
+
+        if i0 == 0 goto label2;
+
+        if i0 == 1000 goto label2;
+
+        if i0 != 2000 goto label1;
+
+        goto label2;
+
+     label1:
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("ContentService", "Invalid extras specified. requestsync -f/-F needs to run on \'adb shell\'");
+
+        $r2 = new java.lang.SecurityException;
+
+        specialinvoke $r2.<java.lang.SecurityException: void <init>(java.lang.String)>("Invalid extras specified.");
+
+        throw $r2;
+
+     label2:
+        return;
+    }
+
+    public void addPeriodicSync(android.accounts.Account, java.lang.String, android.os.Bundle, long)
+    {
+        com.android.server.content.ContentService r0;
+        java.lang.String r1;
+        android.os.Bundle r2;
+        int i0, $i3;
+        long l1, l2, l4, l5;
+        com.android.server.content.SyncStorageEngine$EndPoint r3;
+        java.lang.IllegalArgumentException $r5, $r6;
+        boolean $z0;
+        android.content.Context $r7;
+        com.android.server.content.SyncManager $r8;
+        java.lang.Throwable $r9;
+        android.accounts.Account r10;
+
+        r0 := @this: com.android.server.content.ContentService;
+
+        r10 := @parameter0: android.accounts.Account;
+
+        r1 := @parameter1: java.lang.String;
+
+        r2 := @parameter2: android.os.Bundle;
+
+        l4 := @parameter3: long;
+
+        staticinvoke <android.os.Bundle: android.os.Bundle setDefusable(android.os.Bundle,boolean)>(r2, 1);
+
+        if r10 == null goto label5;
+
+        $z0 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>(r1);
+
+        if $z0 != 0 goto label4;
+
+        $r7 = r0.<com.android.server.content.ContentService: android.content.Context mContext>;
+
+        virtualinvoke $r7.<android.content.Context: void enforceCallingOrSelfPermission(java.lang.String,java.lang.String)>("android.permission.WRITE_SYNC_SETTINGS", "no permission to write the sync settings");
+
+        $i3 = staticinvoke <android.os.Binder: int getCallingUid()>();
+
+        specialinvoke r0.<com.android.server.content.ContentService: void validateExtras(int,android.os.Bundle)>($i3, r2);
+
+        i0 = staticinvoke <android.os.UserHandle: int getCallingUserId()>();
+
+        l5 = specialinvoke r0.<com.android.server.content.ContentService: long clampPeriod(long)>(l4);
+
+        l1 = staticinvoke <com.android.server.content.SyncStorageEngine: long calculateDefaultFlexTime(long)>(l5);
+
+        l2 = staticinvoke <com.android.server.content.ContentService: long clearCallingIdentity()>();
+
+     label1:
+        r3 = new com.android.server.content.SyncStorageEngine$EndPoint;
+
+        specialinvoke r3.<com.android.server.content.SyncStorageEngine$EndPoint: void <init>(android.accounts.Account,java.lang.String,int)>(r10, r1, i0);
+
+        $r8 = specialinvoke r0.<com.android.server.content.ContentService: com.android.server.content.SyncManager getSyncManager()>();
+
+        virtualinvoke $r8.<com.android.server.content.SyncManager: void updateOrAddPeriodicSync(com.android.server.content.SyncStorageEngine$EndPoint,long,long,android.os.Bundle)>(r3, l5, l1, r2);
+
+     label2:
+        staticinvoke <com.android.server.content.ContentService: void restoreCallingIdentity(long)>(l2);
+
+        return;
+
+     label3:
+        $r9 := @caughtexception;
+
+        staticinvoke <com.android.server.content.ContentService: void restoreCallingIdentity(long)>(l2);
+
+        throw $r9;
+
+     label4:
+        $r6 = new java.lang.IllegalArgumentException;
+
+        specialinvoke $r6.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>("Authority must not be empty.");
+
+        throw $r6;
+
+     label5:
+        $r5 = new java.lang.IllegalArgumentException;
+
+        specialinvoke $r5.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>("Account must not be null");
+
+        throw $r5;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+    }
+
+    public void addStatusChangeListener(int, android.content.ISyncStatusObserver)
+    {
+        com.android.server.content.ContentService r0;
+        int i0, i1, $i3;
+        long l2;
+        com.android.server.content.SyncManager r1;
+        com.android.server.content.SyncStorageEngine $r2;
+        java.lang.Throwable $r3;
+        android.content.ISyncStatusObserver r4;
+
+        r0 := @this: com.android.server.content.ContentService;
+
+        i0 := @parameter0: int;
+
+        r4 := @parameter1: android.content.ISyncStatusObserver;
+
+        i1 = staticinvoke <android.os.Binder: int getCallingUid()>();
+
+        l2 = staticinvoke <com.android.server.content.ContentService: long clearCallingIdentity()>();
+
+     label1:
+        r1 = specialinvoke r0.<com.android.server.content.ContentService: com.android.server.content.SyncManager getSyncManager()>();
+
+     label2:
+        if r1 == null goto label4;
+
+        if r4 == null goto label4;
+
+     label3:
+        $r2 = virtualinvoke r1.<com.android.server.content.SyncManager: com.android.server.content.SyncStorageEngine getSyncStorageEngine()>();
+
+        $i3 = staticinvoke <android.os.UserHandle: int getUserId(int)>(i1);
+
+        virtualinvoke $r2.<com.android.server.content.SyncStorageEngine: void addStatusChangeListener(int,int,android.content.ISyncStatusObserver)>(i0, $i3, r4);
+
+     label4:
+        staticinvoke <com.android.server.content.ContentService: void restoreCallingIdentity(long)>(l2);
+
+        return;
+
+     label5:
+        $r3 := @caughtexception;
+
+        staticinvoke <com.android.server.content.ContentService: void restoreCallingIdentity(long)>(l2);
+
+        throw $r3;
+
+        catch java.lang.Throwable from label1 to label2 with label5;
+        catch java.lang.Throwable from label3 to label4 with label5;
+    }
+
+    public void cancelRequest(android.content.SyncRequest)
+    {
+        com.android.server.content.ContentService r0;
+        com.android.server.content.SyncManager r1, r14;
+        int i0, i1;
+        long l2;
+        android.accounts.Account r3;
+        com.android.server.content.SyncStorageEngine$EndPoint r4;
+        boolean $z0, $z1;
+        android.os.Bundle $r5, $r6;
+        java.lang.String $r9, r13;
+        android.content.Context $r10;
+        java.lang.Throwable $r11;
+        android.content.SyncRequest r12;
+        java.lang.StringBuilder r15;
+
+        r0 := @this: com.android.server.content.ContentService;
+
+        r12 := @parameter0: android.content.SyncRequest;
+
+        r1 = specialinvoke r0.<com.android.server.content.ContentService: com.android.server.content.SyncManager getSyncManager()>();
+
+        if r1 != null goto label1;
+
+        return;
+
+     label1:
+        i0 = staticinvoke <android.os.UserHandle: int getCallingUserId()>();
+
+        i1 = staticinvoke <android.os.Binder: int getCallingUid()>();
+
+        $z0 = virtualinvoke r12.<android.content.SyncRequest: boolean isPeriodic()>();
+
+        if $z0 == 0 goto label2;
+
+        $r10 = r0.<com.android.server.content.ContentService: android.content.Context mContext>;
+
+        virtualinvoke $r10.<android.content.Context: void enforceCallingOrSelfPermission(java.lang.String,java.lang.String)>("android.permission.WRITE_SYNC_SETTINGS", "no permission to write the sync settings");
+
+     label2:
+        $r5 = new android.os.Bundle;
+
+        $r6 = virtualinvoke r12.<android.content.SyncRequest: android.os.Bundle getBundle()>();
+
+        specialinvoke $r5.<android.os.Bundle: void <init>(android.os.Bundle)>($r6);
+
+        specialinvoke r0.<com.android.server.content.ContentService: void validateExtras(int,android.os.Bundle)>(i1, $r5);
+
+        l2 = staticinvoke <com.android.server.content.ContentService: long clearCallingIdentity()>();
+
+     label3:
+        r3 = virtualinvoke r12.<android.content.SyncRequest: android.accounts.Account getAccount()>();
+
+        r13 = virtualinvoke r12.<android.content.SyncRequest: java.lang.String getProvider()>();
+
+        r4 = new com.android.server.content.SyncStorageEngine$EndPoint;
+
+        specialinvoke r4.<com.android.server.content.SyncStorageEngine$EndPoint: void <init>(android.accounts.Account,java.lang.String,int)>(r3, r13, i0);
+
+        $z1 = virtualinvoke r12.<android.content.SyncRequest: boolean isPeriodic()>();
+
+        if $z1 == 0 goto label4;
+
+        r14 = specialinvoke r0.<com.android.server.content.ContentService: com.android.server.content.SyncManager getSyncManager()>();
+
+        r15 = new java.lang.StringBuilder;
+
+        specialinvoke r15.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r15.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("cancelRequest() by uid=");
+
+        virtualinvoke r15.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i1);
+
+        $r9 = virtualinvoke r15.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r14.<com.android.server.content.SyncManager: void removePeriodicSync(com.android.server.content.SyncStorageEngine$EndPoint,android.os.Bundle,java.lang.String)>(r4, $r5, $r9);
+
+     label4:
+        virtualinvoke r1.<com.android.server.content.SyncManager: void cancelScheduledSyncOperation(com.android.server.content.SyncStorageEngine$EndPoint,android.os.Bundle)>(r4, $r5);
+
+        virtualinvoke r1.<com.android.server.content.SyncManager: void cancelActiveSync(com.android.server.content.SyncStorageEngine$EndPoint,android.os.Bundle,java.lang.String)>(r4, $r5, "API");
+
+     label5:
+        staticinvoke <com.android.server.content.ContentService: void restoreCallingIdentity(long)>(l2);
+
+        return;
+
+     label6:
+        $r11 := @caughtexception;
+
+        staticinvoke <com.android.server.content.ContentService: void restoreCallingIdentity(long)>(l2);
+
+        throw $r11;
+
+        catch java.lang.Throwable from label3 to label4 with label6;
+        catch java.lang.Throwable from label4 to label5 with label6;
+    }
+
+    public void cancelSync(android.accounts.Account, java.lang.String, android.content.ComponentName)
+    {
+        com.android.server.content.ContentService r0;
+        android.accounts.Account r1;
+        java.lang.String r2;
+        android.content.ComponentName r3;
+        int $i0;
+
+        r0 := @this: com.android.server.content.ContentService;
+
+        r1 := @parameter0: android.accounts.Account;
+
+        r2 := @parameter1: java.lang.String;
+
+        r3 := @parameter2: android.content.ComponentName;
+
+        $i0 = staticinvoke <android.os.UserHandle: int getCallingUserId()>();
+
+        virtualinvoke r0.<com.android.server.content.ContentService: void cancelSyncAsUser(android.accounts.Account,java.lang.String,android.content.ComponentName,int)>(r1, r2, r3, $i0);
+
+        return;
+    }
+
+    public void cancelSyncAsUser(android.accounts.Account, java.lang.String, android.content.ComponentName, int)
+    {
+        com.android.server.content.ContentService r0;
+        java.lang.String r1, $r5;
+        int i0, $i3;
+        long l1;
+        java.lang.StringBuilder $r2;
+        java.lang.IllegalArgumentException $r6;
+        java.lang.Throwable $r7;
+        android.accounts.Account r8;
+        android.content.ComponentName r9;
+        com.android.server.content.SyncManager r11;
+        com.android.server.content.SyncStorageEngine$EndPoint r12;
+
+        r0 := @this: com.android.server.content.ContentService;
+
+        r8 := @parameter0: android.accounts.Account;
+
+        r1 := @parameter1: java.lang.String;
+
+        r9 := @parameter2: android.content.ComponentName;
+
+        i0 := @parameter3: int;
+
+        if r1 == null goto label2;
+
+        $i3 = virtualinvoke r1.<java.lang.String: int length()>();
+
+        if $i3 == 0 goto label1;
+
+        goto label2;
+
+     label1:
+        $r6 = new java.lang.IllegalArgumentException;
+
+        specialinvoke $r6.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>("Authority must be non-empty");
+
+        throw $r6;
+
+     label2:
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("no permission to modify the sync settings for user ");
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r5 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.server.content.ContentService: void enforceCrossUserPermission(int,java.lang.String)>(i0, $r5);
+
+        l1 = staticinvoke <com.android.server.content.ContentService: long clearCallingIdentity()>();
+
+        if r9 == null goto label3;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("ContentService", "cname not null.");
+
+        return;
+
+     label3:
+        r11 = specialinvoke r0.<com.android.server.content.ContentService: com.android.server.content.SyncManager getSyncManager()>();
+
+     label4:
+        if r11 == null goto label6;
+
+     label5:
+        r12 = new com.android.server.content.SyncStorageEngine$EndPoint;
+
+        specialinvoke r12.<com.android.server.content.SyncStorageEngine$EndPoint: void <init>(android.accounts.Account,java.lang.String,int)>(r8, r1, i0);
+
+        virtualinvoke r11.<com.android.server.content.SyncManager: void clearScheduledSyncOperations(com.android.server.content.SyncStorageEngine$EndPoint)>(r12);
+
+        virtualinvoke r11.<com.android.server.content.SyncManager: void cancelActiveSync(com.android.server.content.SyncStorageEngine$EndPoint,android.os.Bundle,java.lang.String)>(r12, null, "API");
+
+     label6:
+        staticinvoke <com.android.server.content.ContentService: void restoreCallingIdentity(long)>(l1);
+
+        return;
+
+     label7:
+        $r7 := @caughtexception;
+
+        staticinvoke <com.android.server.content.ContentService: void restoreCallingIdentity(long)>(l1);
+
+        throw $r7;
+
+        catch java.lang.Throwable from label3 to label4 with label7;
+        catch java.lang.Throwable from label5 to label6 with label7;
+    }
+
+    protected void dump(java.io.FileDescriptor, java.io.PrintWriter, java.lang.String[])
+    {
+        com.android.server.content.ContentService r0;
+        com.android.internal.util.IndentingPrintWriter r1;
+        long l0;
+        com.android.server.content.ContentService$ObserverNode r2, r5, r37, r46;
+        int[] r3;
+        android.util.SparseIntArray r4;
+        android.content.Context $r6;
+        com.android.server.content.SyncManager $r7, $r8;
+        int $i1, $i2, $i3, $i4, $i5, $i6, i7, $i8, i9, i10, i11, i12;
+        com.android.internal.os.BinderDeathDispatcher $r9;
+        android.util.ArraySet $r10, r40;
+        java.lang.String $r11, $r19;
+        android.util.SparseArray $r13, $r16, $r21, r41;
+        java.lang.Object $r22, $r24;
+        java.lang.Integer $r25, $r26;
+        java.lang.Throwable $r27, $r28, $r29, $r30, $r31, $r32, $r33, r43, r45;
+        java.io.FileDescriptor r34;
+        java.io.PrintWriter r35;
+        java.lang.String[] r36;
+        boolean z1, z2;
+        java.util.ArrayList r38;
+        com.android.server.content.ContentService$2 r39;
+        java.lang.StringBuilder r42;
+
+        r0 := @this: com.android.server.content.ContentService;
+
+        r34 := @parameter0: java.io.FileDescriptor;
+
+        r35 := @parameter1: java.io.PrintWriter;
+
+        r36 := @parameter2: java.lang.String[];
+
+        entermonitor r0;
+
+     label01:
+        $r6 = r0.<com.android.server.content.ContentService: android.content.Context mContext>;
+
+        z1 = staticinvoke <com.android.internal.util.DumpUtils: boolean checkDumpAndUsageStatsPermission(android.content.Context,java.lang.String,java.io.PrintWriter)>($r6, "ContentService", r35);
+
+     label02:
+        if z1 != 0 goto label03;
+
+        exitmonitor r0;
+
+        return;
+
+     label03:
+        r1 = new com.android.internal.util.IndentingPrintWriter;
+
+        specialinvoke r1.<com.android.internal.util.IndentingPrintWriter: void <init>(java.io.Writer,java.lang.String)>(r35, "  ");
+
+        z2 = staticinvoke <com.android.internal.util.ArrayUtils: boolean contains(java.lang.Object[],java.lang.Object)>(r36, "-a");
+
+        l0 = staticinvoke <com.android.server.content.ContentService: long clearCallingIdentity()>();
+
+     label04:
+        $r7 = r0.<com.android.server.content.ContentService: com.android.server.content.SyncManager mSyncManager>;
+
+        if $r7 != null goto label06;
+
+        virtualinvoke r1.<com.android.internal.util.IndentingPrintWriter: void println(java.lang.String)>("SyncManager not available yet");
+
+     label05:
+        goto label07;
+
+     label06:
+        $r8 = r0.<com.android.server.content.ContentService: com.android.server.content.SyncManager mSyncManager>;
+
+        virtualinvoke $r8.<com.android.server.content.SyncManager: void dump(java.io.FileDescriptor,java.io.PrintWriter,boolean)>(r34, r1, z2);
+
+     label07:
+        virtualinvoke r1.<com.android.internal.util.IndentingPrintWriter: void println()>();
+
+        virtualinvoke r1.<com.android.internal.util.IndentingPrintWriter: void println(java.lang.String)>("Observer tree:");
+
+        r2 = r0.<com.android.server.content.ContentService: com.android.server.content.ContentService$ObserverNode mRootNode>;
+
+        entermonitor r2;
+
+     label08:
+        r3 = newarray (int)[2];
+
+        r4 = new android.util.SparseIntArray;
+
+        specialinvoke r4.<android.util.SparseIntArray: void <init>()>();
+
+        r5 = r0.<com.android.server.content.ContentService: com.android.server.content.ContentService$ObserverNode mRootNode>;
+
+     label09:
+        r37 = r2;
+
+     label10:
+        virtualinvoke r5.<com.android.server.content.ContentService$ObserverNode: void dumpLocked(java.io.FileDescriptor,java.io.PrintWriter,java.lang.String[],java.lang.String,java.lang.String,int[],android.util.SparseIntArray)>(r34, r1, r36, "", "  ", r3, r4);
+
+     label11:
+        r37 = r2;
+
+     label12:
+        virtualinvoke r1.<com.android.internal.util.IndentingPrintWriter: void println()>();
+
+     label13:
+        r37 = r2;
+
+     label14:
+        r38 = new java.util.ArrayList;
+
+     label15:
+        r37 = r2;
+
+     label16:
+        specialinvoke r38.<java.util.ArrayList: void <init>()>();
+
+     label17:
+        i7 = 0;
+
+     label18:
+        r37 = r2;
+
+     label19:
+        $i8 = virtualinvoke r4.<android.util.SparseIntArray: int size()>();
+
+        if i7 >= $i8 goto label23;
+
+     label20:
+        r37 = r2;
+
+     label21:
+        $i6 = virtualinvoke r4.<android.util.SparseIntArray: int keyAt(int)>(i7);
+
+        $r26 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i6);
+
+        virtualinvoke r38.<java.util.ArrayList: boolean add(java.lang.Object)>($r26);
+
+     label22:
+        i7 = i7 + 1;
+
+        goto label18;
+
+     label23:
+        r37 = r2;
+
+     label24:
+        r39 = new com.android.server.content.ContentService$2;
+
+     label25:
+        r37 = r2;
+
+     label26:
+        specialinvoke r39.<com.android.server.content.ContentService$2: void <init>(com.android.server.content.ContentService,android.util.SparseIntArray)>(r0, r4);
+
+     label27:
+        r37 = r2;
+
+     label28:
+        staticinvoke <java.util.Collections: void sort(java.util.List,java.util.Comparator)>(r38, r39);
+
+     label29:
+        i9 = 0;
+
+     label30:
+        r37 = r2;
+
+     label31:
+        $i1 = virtualinvoke r38.<java.util.ArrayList: int size()>();
+
+        if i9 >= $i1 goto label45;
+
+     label32:
+        r37 = r2;
+
+     label33:
+        $r24 = virtualinvoke r38.<java.util.ArrayList: java.lang.Object get(int)>(i9);
+
+        $r25 = (java.lang.Integer) $r24;
+
+        i10 = virtualinvoke $r25.<java.lang.Integer: int intValue()>();
+
+     label34:
+        r37 = r2;
+
+     label35:
+        virtualinvoke r1.<com.android.internal.util.IndentingPrintWriter: void print(java.lang.String)>("  pid ");
+
+     label36:
+        r37 = r2;
+
+     label37:
+        virtualinvoke r1.<com.android.internal.util.IndentingPrintWriter: void print(int)>(i10);
+
+     label38:
+        r37 = r2;
+
+     label39:
+        virtualinvoke r1.<com.android.internal.util.IndentingPrintWriter: void print(java.lang.String)>(": ");
+
+     label40:
+        r37 = r2;
+
+     label41:
+        $i5 = virtualinvoke r4.<android.util.SparseIntArray: int get(int)>(i10);
+
+        virtualinvoke r1.<com.android.internal.util.IndentingPrintWriter: void print(int)>($i5);
+
+     label42:
+        r37 = r2;
+
+     label43:
+        virtualinvoke r1.<com.android.internal.util.IndentingPrintWriter: void println(java.lang.String)>(" observers");
+
+     label44:
+        i9 = i9 + 1;
+
+        goto label30;
+
+     label45:
+        r37 = r2;
+
+     label46:
+        virtualinvoke r1.<com.android.internal.util.IndentingPrintWriter: void println()>();
+
+     label47:
+        r37 = r2;
+
+     label48:
+        virtualinvoke r1.<com.android.internal.util.IndentingPrintWriter: void print(java.lang.String)>(" Total number of nodes: ");
+
+     label49:
+        r37 = r2;
+
+     label50:
+        $i2 = r3[0];
+
+        virtualinvoke r1.<com.android.internal.util.IndentingPrintWriter: void println(int)>($i2);
+
+     label51:
+        r37 = r2;
+
+     label52:
+        virtualinvoke r1.<com.android.internal.util.IndentingPrintWriter: void print(java.lang.String)>(" Total number of observers: ");
+
+     label53:
+        r37 = r2;
+
+     label54:
+        $i3 = r3[1];
+
+        virtualinvoke r1.<com.android.internal.util.IndentingPrintWriter: void println(int)>($i3);
+
+     label55:
+        r37 = r2;
+
+     label56:
+        $r9 = <com.android.server.content.ContentService: com.android.internal.os.BinderDeathDispatcher sObserverDeathDispatcher>;
+
+        virtualinvoke $r9.<com.android.internal.os.BinderDeathDispatcher: void dump(java.io.PrintWriter,java.lang.String)>(r1, " ");
+
+     label57:
+        r37 = r2;
+
+     label58:
+        exitmonitor r2;
+
+     label59:
+        r40 = <com.android.server.content.ContentService: android.util.ArraySet sObserverLeakDetectedUid>;
+
+        entermonitor r40;
+
+     label60:
+        virtualinvoke r1.<com.android.internal.util.IndentingPrintWriter: void println()>();
+
+        virtualinvoke r1.<com.android.internal.util.IndentingPrintWriter: void print(java.lang.String)>("Observer leaking UIDs: ");
+
+        $r10 = <com.android.server.content.ContentService: android.util.ArraySet sObserverLeakDetectedUid>;
+
+        $r11 = virtualinvoke $r10.<android.util.ArraySet: java.lang.String toString()>();
+
+        virtualinvoke r1.<com.android.internal.util.IndentingPrintWriter: void println(java.lang.String)>($r11);
+
+        exitmonitor r40;
+
+     label61:
+        r41 = r0.<com.android.server.content.ContentService: android.util.SparseArray mCache>;
+
+        entermonitor r41;
+
+     label62:
+        virtualinvoke r1.<com.android.internal.util.IndentingPrintWriter: void println()>();
+
+        virtualinvoke r1.<com.android.internal.util.IndentingPrintWriter: void println(java.lang.String)>("Cached content:");
+
+        virtualinvoke r1.<com.android.internal.util.IndentingPrintWriter: com.android.internal.util.IndentingPrintWriter increaseIndent()>();
+
+     label63:
+        i11 = 0;
+
+     label64:
+        $r13 = r0.<com.android.server.content.ContentService: android.util.SparseArray mCache>;
+
+        i12 = virtualinvoke $r13.<android.util.SparseArray: int size()>();
+
+     label65:
+        if i11 >= i12 goto label68;
+
+     label66:
+        r42 = new java.lang.StringBuilder;
+
+        specialinvoke r42.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r42.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("User ");
+
+        $r16 = r0.<com.android.server.content.ContentService: android.util.SparseArray mCache>;
+
+        $i4 = virtualinvoke $r16.<android.util.SparseArray: int keyAt(int)>(i11);
+
+        virtualinvoke r42.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i4);
+
+        virtualinvoke r42.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(":");
+
+        $r19 = virtualinvoke r42.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<com.android.internal.util.IndentingPrintWriter: void println(java.lang.String)>($r19);
+
+        virtualinvoke r1.<com.android.internal.util.IndentingPrintWriter: com.android.internal.util.IndentingPrintWriter increaseIndent()>();
+
+        $r21 = r0.<com.android.server.content.ContentService: android.util.SparseArray mCache>;
+
+        $r22 = virtualinvoke $r21.<android.util.SparseArray: java.lang.Object valueAt(int)>(i11);
+
+        virtualinvoke r1.<com.android.internal.util.IndentingPrintWriter: void println(java.lang.Object)>($r22);
+
+        virtualinvoke r1.<com.android.internal.util.IndentingPrintWriter: com.android.internal.util.IndentingPrintWriter decreaseIndent()>();
+
+     label67:
+        i11 = i11 + 1;
+
+        goto label64;
+
+     label68:
+        virtualinvoke r1.<com.android.internal.util.IndentingPrintWriter: com.android.internal.util.IndentingPrintWriter decreaseIndent()>();
+
+        exitmonitor r41;
+
+     label69:
+        staticinvoke <com.android.server.content.ContentService: void restoreCallingIdentity(long)>(l0);
+
+     label70:
+        exitmonitor r0;
+
+        return;
+
+     label71:
+        $r30 := @caughtexception;
+
+        r43 = $r30;
+
+     label72:
+        exitmonitor r41;
+
+     label73:
+        throw r43;
+
+     label74:
+        $r28 := @caughtexception;
+
+        r43 = $r28;
+
+        goto label72;
+
+     label75:
+        $r27 := @caughtexception;
+
+     label76:
+        exitmonitor r40;
+
+     label77:
+        throw $r27;
+
+     label78:
+        $r33 := @caughtexception;
+
+        r45 = $r33;
+
+        r46 = r2;
+
+     label79:
+        r37 = r46;
+
+     label80:
+        exitmonitor r46;
+
+     label81:
+        throw r45;
+
+     label82:
+        $r32 := @caughtexception;
+
+        r45 = $r32;
+
+        r46 = r37;
+
+        goto label79;
+
+     label83:
+        $r31 := @caughtexception;
+
+     label84:
+        staticinvoke <com.android.server.content.ContentService: void restoreCallingIdentity(long)>(l0);
+
+        throw $r31;
+
+     label85:
+        $r29 := @caughtexception;
+
+        exitmonitor r0;
+
+        throw $r29;
+
+        catch java.lang.Throwable from label01 to label02 with label85;
+        catch java.lang.Throwable from label03 to label04 with label85;
+        catch java.lang.Throwable from label04 to label05 with label83;
+        catch java.lang.Throwable from label06 to label07 with label83;
+        catch java.lang.Throwable from label07 to label08 with label83;
+        catch java.lang.Throwable from label08 to label09 with label78;
+        catch java.lang.Throwable from label10 to label11 with label82;
+        catch java.lang.Throwable from label12 to label13 with label82;
+        catch java.lang.Throwable from label14 to label15 with label82;
+        catch java.lang.Throwable from label16 to label17 with label82;
+        catch java.lang.Throwable from label19 to label20 with label82;
+        catch java.lang.Throwable from label21 to label22 with label82;
+        catch java.lang.Throwable from label24 to label25 with label82;
+        catch java.lang.Throwable from label26 to label27 with label82;
+        catch java.lang.Throwable from label28 to label29 with label82;
+        catch java.lang.Throwable from label31 to label32 with label82;
+        catch java.lang.Throwable from label33 to label34 with label82;
+        catch java.lang.Throwable from label35 to label36 with label82;
+        catch java.lang.Throwable from label37 to label38 with label82;
+        catch java.lang.Throwable from label39 to label40 with label82;
+        catch java.lang.Throwable from label41 to label42 with label82;
+        catch java.lang.Throwable from label43 to label44 with label82;
+        catch java.lang.Throwable from label46 to label47 with label82;
+        catch java.lang.Throwable from label48 to label49 with label82;
+        catch java.lang.Throwable from label50 to label51 with label82;
+        catch java.lang.Throwable from label52 to label53 with label82;
+        catch java.lang.Throwable from label54 to label55 with label82;
+        catch java.lang.Throwable from label56 to label57 with label82;
+        catch java.lang.Throwable from label58 to label59 with label82;
+        catch java.lang.Throwable from label59 to label60 with label83;
+        catch java.lang.Throwable from label60 to label61 with label75;
+        catch java.lang.Throwable from label61 to label62 with label83;
+        catch java.lang.Throwable from label62 to label63 with label71;
+        catch java.lang.Throwable from label64 to label65 with label71;
+        catch java.lang.Throwable from label66 to label67 with label74;
+        catch java.lang.Throwable from label68 to label69 with label71;
+        catch java.lang.Throwable from label69 to label70 with label85;
+        catch java.lang.Throwable from label72 to label73 with label74;
+        catch java.lang.Throwable from label73 to label74 with label83;
+        catch java.lang.Throwable from label76 to label77 with label75;
+        catch java.lang.Throwable from label77 to label78 with label83;
+        catch java.lang.Throwable from label80 to label81 with label82;
+        catch java.lang.Throwable from label81 to label82 with label83;
+        catch java.lang.Throwable from label84 to label85 with label85;
+    }
+
+    public android.os.Bundle getCache(java.lang.String, android.net.Uri, int)
+    {
+        com.android.server.content.ContentService r0;
+        int i0, $i1;
+        java.lang.String r1, r9;
+        android.content.Context $r2, $r3;
+        java.lang.Object $r4, $r7;
+        android.app.AppOpsManager $r5;
+        android.util.ArrayMap $r6;
+        java.lang.Throwable $r8;
+        android.net.Uri r10;
+        android.util.Pair r11;
+        android.util.SparseArray r12;
+        android.os.Bundle r13;
+
+        r0 := @this: com.android.server.content.ContentService;
+
+        r9 := @parameter0: java.lang.String;
+
+        r10 := @parameter1: android.net.Uri;
+
+        i0 := @parameter2: int;
+
+        specialinvoke r0.<com.android.server.content.ContentService: void enforceNonFullCrossUserPermission(int,java.lang.String)>(i0, "ContentService");
+
+        $r2 = r0.<com.android.server.content.ContentService: android.content.Context mContext>;
+
+        virtualinvoke $r2.<android.content.Context: void enforceCallingOrSelfPermission(java.lang.String,java.lang.String)>("android.permission.CACHE_CONTENT", "ContentService");
+
+        $r3 = r0.<com.android.server.content.ContentService: android.content.Context mContext>;
+
+        $r4 = virtualinvoke $r3.<android.content.Context: java.lang.Object getSystemService(java.lang.Class)>(class "Landroid/app/AppOpsManager;");
+
+        $r5 = (android.app.AppOpsManager) $r4;
+
+        $i1 = staticinvoke <android.os.Binder: int getCallingUid()>();
+
+        virtualinvoke $r5.<android.app.AppOpsManager: void checkPackage(int,java.lang.String)>($i1, r9);
+
+        r1 = specialinvoke r0.<com.android.server.content.ContentService: java.lang.String getProviderPackageName(android.net.Uri,int)>(r10, i0);
+
+        r11 = staticinvoke <android.util.Pair: android.util.Pair create(java.lang.Object,java.lang.Object)>(r9, r10);
+
+        r12 = r0.<com.android.server.content.ContentService: android.util.SparseArray mCache>;
+
+        entermonitor r12;
+
+     label1:
+        $r6 = specialinvoke r0.<com.android.server.content.ContentService: android.util.ArrayMap findOrCreateCacheLocked(int,java.lang.String)>(i0, r1);
+
+        $r7 = virtualinvoke $r6.<android.util.ArrayMap: java.lang.Object get(java.lang.Object)>(r11);
+
+        r13 = (android.os.Bundle) $r7;
+
+        exitmonitor r12;
+
+     label2:
+        return r13;
+
+     label3:
+        $r8 := @caughtexception;
+
+     label4:
+        exitmonitor r12;
+
+     label5:
+        throw $r8;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    public java.util.List getCurrentSyncs()
+    {
+        com.android.server.content.ContentService r0;
+        int $i0;
+        java.util.List $r1;
+
+        r0 := @this: com.android.server.content.ContentService;
+
+        $i0 = staticinvoke <android.os.UserHandle: int getCallingUserId()>();
+
+        $r1 = virtualinvoke r0.<com.android.server.content.ContentService: java.util.List getCurrentSyncsAsUser(int)>($i0);
+
+        return $r1;
+    }
+
+    public java.util.List getCurrentSyncsAsUser(int)
+    {
+        com.android.server.content.ContentService r0;
+        int i0, $i2;
+        long l1;
+        java.lang.StringBuilder $r1;
+        java.lang.String $r4;
+        android.content.Context $r5, $r6;
+        com.android.server.content.SyncManager $r7;
+        com.android.server.content.SyncStorageEngine $r8;
+        java.lang.Throwable $r9;
+        boolean z0;
+        java.util.List r11;
+
+        r0 := @this: com.android.server.content.ContentService;
+
+        i0 := @parameter0: int;
+
+        $r1 = new java.lang.StringBuilder;
+
+        specialinvoke $r1.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("no permission to read the sync settings for user ");
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r4 = virtualinvoke $r1.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.server.content.ContentService: void enforceCrossUserPermission(int,java.lang.String)>(i0, $r4);
+
+        $r5 = r0.<com.android.server.content.ContentService: android.content.Context mContext>;
+
+        virtualinvoke $r5.<android.content.Context: void enforceCallingOrSelfPermission(java.lang.String,java.lang.String)>("android.permission.READ_SYNC_STATS", "no permission to read the sync stats");
+
+        $r6 = r0.<com.android.server.content.ContentService: android.content.Context mContext>;
+
+        $i2 = virtualinvoke $r6.<android.content.Context: int checkCallingOrSelfPermission(java.lang.String)>("android.permission.GET_ACCOUNTS");
+
+        if $i2 != 0 goto label1;
+
+        z0 = 1;
+
+        goto label2;
+
+     label1:
+        z0 = 0;
+
+     label2:
+        l1 = staticinvoke <com.android.server.content.ContentService: long clearCallingIdentity()>();
+
+     label3:
+        $r7 = specialinvoke r0.<com.android.server.content.ContentService: com.android.server.content.SyncManager getSyncManager()>();
+
+        $r8 = virtualinvoke $r7.<com.android.server.content.SyncManager: com.android.server.content.SyncStorageEngine getSyncStorageEngine()>();
+
+        r11 = virtualinvoke $r8.<com.android.server.content.SyncStorageEngine: java.util.List getCurrentSyncsCopy(int,boolean)>(i0, z0);
+
+     label4:
+        staticinvoke <com.android.server.content.ContentService: void restoreCallingIdentity(long)>(l1);
+
+        return r11;
+
+     label5:
+        $r9 := @caughtexception;
+
+        staticinvoke <com.android.server.content.ContentService: void restoreCallingIdentity(long)>(l1);
+
+        throw $r9;
+
+        catch java.lang.Throwable from label3 to label4 with label5;
+    }
+
+    public int getIsSyncable(android.accounts.Account, java.lang.String)
+    {
+        com.android.server.content.ContentService r0;
+        android.accounts.Account r1;
+        java.lang.String r2;
+        int $i0, $i1;
+
+        r0 := @this: com.android.server.content.ContentService;
+
+        r1 := @parameter0: android.accounts.Account;
+
+        r2 := @parameter1: java.lang.String;
+
+        $i0 = staticinvoke <android.os.UserHandle: int getCallingUserId()>();
+
+        $i1 = virtualinvoke r0.<com.android.server.content.ContentService: int getIsSyncableAsUser(android.accounts.Account,java.lang.String,int)>(r1, r2, $i0);
+
+        return $i1;
+    }
+
+    public int getIsSyncableAsUser(android.accounts.Account, java.lang.String, int)
+    {
+        com.android.server.content.ContentService r0;
+        java.lang.String r1, $r5;
+        long l0;
+        java.lang.StringBuilder $r2;
+        android.content.Context $r6;
+        java.lang.Throwable $r7;
+        android.accounts.Account r8;
+        int i1, i2;
+        com.android.server.content.SyncManager r10;
+
+        r0 := @this: com.android.server.content.ContentService;
+
+        r8 := @parameter0: android.accounts.Account;
+
+        r1 := @parameter1: java.lang.String;
+
+        i1 := @parameter2: int;
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("no permission to read the sync settings for user ");
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i1);
+
+        $r5 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.server.content.ContentService: void enforceCrossUserPermission(int,java.lang.String)>(i1, $r5);
+
+        $r6 = r0.<com.android.server.content.ContentService: android.content.Context mContext>;
+
+        virtualinvoke $r6.<android.content.Context: void enforceCallingOrSelfPermission(java.lang.String,java.lang.String)>("android.permission.READ_SYNC_SETTINGS", "no permission to read the sync settings");
+
+        l0 = staticinvoke <com.android.server.content.ContentService: long clearCallingIdentity()>();
+
+     label1:
+        r10 = specialinvoke r0.<com.android.server.content.ContentService: com.android.server.content.SyncManager getSyncManager()>();
+
+     label2:
+        if r10 == null goto label5;
+
+     label3:
+        i2 = virtualinvoke r10.<com.android.server.content.SyncManager: int computeSyncable(android.accounts.Account,int,java.lang.String,boolean)>(r8, i1, r1, 0);
+
+     label4:
+        staticinvoke <com.android.server.content.ContentService: void restoreCallingIdentity(long)>(l0);
+
+        return i2;
+
+     label5:
+        staticinvoke <com.android.server.content.ContentService: void restoreCallingIdentity(long)>(l0);
+
+        return -1;
+
+     label6:
+        $r7 := @caughtexception;
+
+        staticinvoke <com.android.server.content.ContentService: void restoreCallingIdentity(long)>(l0);
+
+        throw $r7;
+
+        catch java.lang.Throwable from label1 to label2 with label6;
+        catch java.lang.Throwable from label3 to label4 with label6;
+    }
+
+    public boolean getMasterSyncAutomatically()
+    {
+        com.android.server.content.ContentService r0;
+        int $i0;
+        boolean $z0;
+
+        r0 := @this: com.android.server.content.ContentService;
+
+        $i0 = staticinvoke <android.os.UserHandle: int getCallingUserId()>();
+
+        $z0 = virtualinvoke r0.<com.android.server.content.ContentService: boolean getMasterSyncAutomaticallyAsUser(int)>($i0);
+
+        return $z0;
+    }
+
+    public boolean getMasterSyncAutomaticallyAsUser(int)
+    {
+        com.android.server.content.ContentService r0;
+        int i0;
+        long l1;
+        boolean z0;
+        java.lang.StringBuilder $r1;
+        java.lang.String $r4;
+        android.content.Context $r5;
+        com.android.server.content.SyncStorageEngine $r6;
+        java.lang.Throwable $r7;
+        com.android.server.content.SyncManager r9;
+
+        r0 := @this: com.android.server.content.ContentService;
+
+        i0 := @parameter0: int;
+
+        $r1 = new java.lang.StringBuilder;
+
+        specialinvoke $r1.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("no permission to read the sync settings for user ");
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r4 = virtualinvoke $r1.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.server.content.ContentService: void enforceCrossUserPermission(int,java.lang.String)>(i0, $r4);
+
+        $r5 = r0.<com.android.server.content.ContentService: android.content.Context mContext>;
+
+        virtualinvoke $r5.<android.content.Context: void enforceCallingOrSelfPermission(java.lang.String,java.lang.String)>("android.permission.READ_SYNC_SETTINGS", "no permission to read the sync settings");
+
+        l1 = staticinvoke <com.android.server.content.ContentService: long clearCallingIdentity()>();
+
+     label1:
+        r9 = specialinvoke r0.<com.android.server.content.ContentService: com.android.server.content.SyncManager getSyncManager()>();
+
+     label2:
+        if r9 == null goto label5;
+
+     label3:
+        $r6 = virtualinvoke r9.<com.android.server.content.SyncManager: com.android.server.content.SyncStorageEngine getSyncStorageEngine()>();
+
+        z0 = virtualinvoke $r6.<com.android.server.content.SyncStorageEngine: boolean getMasterSyncAutomatically(int)>(i0);
+
+     label4:
+        staticinvoke <com.android.server.content.ContentService: void restoreCallingIdentity(long)>(l1);
+
+        return z0;
+
+     label5:
+        staticinvoke <com.android.server.content.ContentService: void restoreCallingIdentity(long)>(l1);
+
+        return 0;
+
+     label6:
+        $r7 := @caughtexception;
+
+        staticinvoke <com.android.server.content.ContentService: void restoreCallingIdentity(long)>(l1);
+
+        throw $r7;
+
+        catch java.lang.Throwable from label1 to label2 with label6;
+        catch java.lang.Throwable from label3 to label4 with label6;
+    }
+
+    public java.util.List getPeriodicSyncs(android.accounts.Account, java.lang.String, android.content.ComponentName)
+    {
+        com.android.server.content.ContentService r0;
+        java.lang.String r1;
+        int i0;
+        long l1;
+        com.android.server.content.SyncManager r2;
+        java.lang.IllegalArgumentException $r3, $r4;
+        boolean $z0;
+        android.content.Context $r5;
+        java.lang.Throwable $r6;
+        android.accounts.Account r7;
+        android.content.ComponentName r8;
+        com.android.server.content.SyncStorageEngine$EndPoint r9;
+        java.util.List r10;
+
+        r0 := @this: com.android.server.content.ContentService;
+
+        r7 := @parameter0: android.accounts.Account;
+
+        r1 := @parameter1: java.lang.String;
+
+        r8 := @parameter2: android.content.ComponentName;
+
+        if r7 == null goto label5;
+
+        $z0 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>(r1);
+
+        if $z0 != 0 goto label4;
+
+        $r5 = r0.<com.android.server.content.ContentService: android.content.Context mContext>;
+
+        virtualinvoke $r5.<android.content.Context: void enforceCallingOrSelfPermission(java.lang.String,java.lang.String)>("android.permission.READ_SYNC_SETTINGS", "no permission to read the sync settings");
+
+        i0 = staticinvoke <android.os.UserHandle: int getCallingUserId()>();
+
+        l1 = staticinvoke <com.android.server.content.ContentService: long clearCallingIdentity()>();
+
+     label1:
+        r2 = specialinvoke r0.<com.android.server.content.ContentService: com.android.server.content.SyncManager getSyncManager()>();
+
+        r9 = new com.android.server.content.SyncStorageEngine$EndPoint;
+
+        specialinvoke r9.<com.android.server.content.SyncStorageEngine$EndPoint: void <init>(android.accounts.Account,java.lang.String,int)>(r7, r1, i0);
+
+        r10 = virtualinvoke r2.<com.android.server.content.SyncManager: java.util.List getPeriodicSyncs(com.android.server.content.SyncStorageEngine$EndPoint)>(r9);
+
+     label2:
+        staticinvoke <com.android.server.content.ContentService: void restoreCallingIdentity(long)>(l1);
+
+        return r10;
+
+     label3:
+        $r6 := @caughtexception;
+
+        staticinvoke <com.android.server.content.ContentService: void restoreCallingIdentity(long)>(l1);
+
+        throw $r6;
+
+     label4:
+        $r4 = new java.lang.IllegalArgumentException;
+
+        specialinvoke $r4.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>("Authority must not be empty");
+
+        throw $r4;
+
+     label5:
+        $r3 = new java.lang.IllegalArgumentException;
+
+        specialinvoke $r3.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>("Account must not be null");
+
+        throw $r3;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+    }
+
+    public java.lang.String[] getSyncAdapterPackagesForAuthorityAsUser(java.lang.String, int)
+    {
+        com.android.server.content.ContentService r0;
+        int i0;
+        long l1;
+        java.lang.StringBuilder $r2;
+        java.lang.String $r5, r8;
+        com.android.server.content.SyncManager $r6;
+        java.lang.Throwable $r7;
+        java.lang.String[] r9;
+
+        r0 := @this: com.android.server.content.ContentService;
+
+        r8 := @parameter0: java.lang.String;
+
+        i0 := @parameter1: int;
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("no permission to read sync settings for user ");
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r5 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.server.content.ContentService: void enforceCrossUserPermission(int,java.lang.String)>(i0, $r5);
+
+        l1 = staticinvoke <com.android.server.content.ContentService: long clearCallingIdentity()>();
+
+     label1:
+        $r6 = specialinvoke r0.<com.android.server.content.ContentService: com.android.server.content.SyncManager getSyncManager()>();
+
+        r9 = virtualinvoke $r6.<com.android.server.content.SyncManager: java.lang.String[] getSyncAdapterPackagesForAuthorityAsUser(java.lang.String,int)>(r8, i0);
+
+     label2:
+        staticinvoke <com.android.server.content.ContentService: void restoreCallingIdentity(long)>(l1);
+
+        return r9;
+
+     label3:
+        $r7 := @caughtexception;
+
+        staticinvoke <com.android.server.content.ContentService: void restoreCallingIdentity(long)>(l1);
+
+        throw $r7;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+    }
+
+    public android.content.SyncAdapterType[] getSyncAdapterTypes()
+    {
+        com.android.server.content.ContentService r0;
+        int $i0;
+        android.content.SyncAdapterType[] $r1;
+
+        r0 := @this: com.android.server.content.ContentService;
+
+        $i0 = staticinvoke <android.os.UserHandle: int getCallingUserId()>();
+
+        $r1 = virtualinvoke r0.<com.android.server.content.ContentService: android.content.SyncAdapterType[] getSyncAdapterTypesAsUser(int)>($i0);
+
+        return $r1;
+    }
+
+    public android.content.SyncAdapterType[] getSyncAdapterTypesAsUser(int)
+    {
+        com.android.server.content.ContentService r0;
+        int i0;
+        long l1;
+        java.lang.StringBuilder $r1;
+        java.lang.String $r4;
+        com.android.server.content.SyncManager $r5;
+        java.lang.Throwable $r6;
+        android.content.SyncAdapterType[] r8;
+
+        r0 := @this: com.android.server.content.ContentService;
+
+        i0 := @parameter0: int;
+
+        $r1 = new java.lang.StringBuilder;
+
+        specialinvoke $r1.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("no permission to read sync settings for user ");
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r4 = virtualinvoke $r1.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.server.content.ContentService: void enforceCrossUserPermission(int,java.lang.String)>(i0, $r4);
+
+        l1 = staticinvoke <com.android.server.content.ContentService: long clearCallingIdentity()>();
+
+     label1:
+        $r5 = specialinvoke r0.<com.android.server.content.ContentService: com.android.server.content.SyncManager getSyncManager()>();
+
+        r8 = virtualinvoke $r5.<com.android.server.content.SyncManager: android.content.SyncAdapterType[] getSyncAdapterTypes(int)>(i0);
+
+     label2:
+        staticinvoke <com.android.server.content.ContentService: void restoreCallingIdentity(long)>(l1);
+
+        return r8;
+
+     label3:
+        $r6 := @caughtexception;
+
+        staticinvoke <com.android.server.content.ContentService: void restoreCallingIdentity(long)>(l1);
+
+        throw $r6;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+    }
+
+    public boolean getSyncAutomatically(android.accounts.Account, java.lang.String)
+    {
+        com.android.server.content.ContentService r0;
+        android.accounts.Account r1;
+        java.lang.String r2;
+        int $i0;
+        boolean $z0;
+
+        r0 := @this: com.android.server.content.ContentService;
+
+        r1 := @parameter0: android.accounts.Account;
+
+        r2 := @parameter1: java.lang.String;
+
+        $i0 = staticinvoke <android.os.UserHandle: int getCallingUserId()>();
+
+        $z0 = virtualinvoke r0.<com.android.server.content.ContentService: boolean getSyncAutomaticallyAsUser(android.accounts.Account,java.lang.String,int)>(r1, r2, $i0);
+
+        return $z0;
+    }
+
+    public boolean getSyncAutomaticallyAsUser(android.accounts.Account, java.lang.String, int)
+    {
+        com.android.server.content.ContentService r0;
+        java.lang.String r1, $r5;
+        int i0;
+        long l1;
+        boolean z0;
+        java.lang.StringBuilder $r2;
+        android.content.Context $r6;
+        com.android.server.content.SyncStorageEngine $r7;
+        java.lang.Throwable $r8;
+        android.accounts.Account r9;
+        com.android.server.content.SyncManager r11;
+
+        r0 := @this: com.android.server.content.ContentService;
+
+        r9 := @parameter0: android.accounts.Account;
+
+        r1 := @parameter1: java.lang.String;
+
+        i0 := @parameter2: int;
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("no permission to read the sync settings for user ");
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r5 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.server.content.ContentService: void enforceCrossUserPermission(int,java.lang.String)>(i0, $r5);
+
+        $r6 = r0.<com.android.server.content.ContentService: android.content.Context mContext>;
+
+        virtualinvoke $r6.<android.content.Context: void enforceCallingOrSelfPermission(java.lang.String,java.lang.String)>("android.permission.READ_SYNC_SETTINGS", "no permission to read the sync settings");
+
+        l1 = staticinvoke <com.android.server.content.ContentService: long clearCallingIdentity()>();
+
+     label1:
+        r11 = specialinvoke r0.<com.android.server.content.ContentService: com.android.server.content.SyncManager getSyncManager()>();
+
+     label2:
+        if r11 == null goto label5;
+
+     label3:
+        $r7 = virtualinvoke r11.<com.android.server.content.SyncManager: com.android.server.content.SyncStorageEngine getSyncStorageEngine()>();
+
+        z0 = virtualinvoke $r7.<com.android.server.content.SyncStorageEngine: boolean getSyncAutomatically(android.accounts.Account,int,java.lang.String)>(r9, i0, r1);
+
+     label4:
+        staticinvoke <com.android.server.content.ContentService: void restoreCallingIdentity(long)>(l1);
+
+        return z0;
+
+     label5:
+        staticinvoke <com.android.server.content.ContentService: void restoreCallingIdentity(long)>(l1);
+
+        return 0;
+
+     label6:
+        $r8 := @caughtexception;
+
+        staticinvoke <com.android.server.content.ContentService: void restoreCallingIdentity(long)>(l1);
+
+        throw $r8;
+
+        catch java.lang.Throwable from label1 to label2 with label6;
+        catch java.lang.Throwable from label3 to label4 with label6;
+    }
+
+    public android.content.SyncStatusInfo getSyncStatus(android.accounts.Account, java.lang.String, android.content.ComponentName)
+    {
+        com.android.server.content.ContentService r0;
+        android.accounts.Account r1;
+        java.lang.String r2;
+        android.content.ComponentName r3;
+        int $i0;
+        android.content.SyncStatusInfo $r4;
+
+        r0 := @this: com.android.server.content.ContentService;
+
+        r1 := @parameter0: android.accounts.Account;
+
+        r2 := @parameter1: java.lang.String;
+
+        r3 := @parameter2: android.content.ComponentName;
+
+        $i0 = staticinvoke <android.os.UserHandle: int getCallingUserId()>();
+
+        $r4 = virtualinvoke r0.<com.android.server.content.ContentService: android.content.SyncStatusInfo getSyncStatusAsUser(android.accounts.Account,java.lang.String,android.content.ComponentName,int)>(r1, r2, r3, $i0);
+
+        return $r4;
+    }
+
+    public android.content.SyncStatusInfo getSyncStatusAsUser(android.accounts.Account, java.lang.String, android.content.ComponentName, int)
+    {
+        com.android.server.content.ContentService r0;
+        java.lang.String r1, $r7;
+        int i0;
+        long l1;
+        com.android.server.content.SyncStorageEngine$EndPoint r2;
+        boolean $z0;
+        java.lang.IllegalArgumentException $r3, r16;
+        java.lang.StringBuilder $r4;
+        android.content.Context $r8;
+        com.android.server.content.SyncStorageEngine $r9;
+        java.lang.Throwable $r10;
+        android.accounts.Account r11;
+        android.content.ComponentName r12;
+        com.android.server.content.SyncManager r14;
+        android.content.SyncStatusInfo r15;
+
+        r0 := @this: com.android.server.content.ContentService;
+
+        r11 := @parameter0: android.accounts.Account;
+
+        r1 := @parameter1: java.lang.String;
+
+        r12 := @parameter2: android.content.ComponentName;
+
+        i0 := @parameter3: int;
+
+        $z0 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>(r1);
+
+        if $z0 != 0 goto label8;
+
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("no permission to read the sync stats for user ");
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r7 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.server.content.ContentService: void enforceCrossUserPermission(int,java.lang.String)>(i0, $r7);
+
+        $r8 = r0.<com.android.server.content.ContentService: android.content.Context mContext>;
+
+        virtualinvoke $r8.<android.content.Context: void enforceCallingOrSelfPermission(java.lang.String,java.lang.String)>("android.permission.READ_SYNC_STATS", "no permission to read the sync stats");
+
+        l1 = staticinvoke <com.android.server.content.ContentService: long clearCallingIdentity()>();
+
+     label1:
+        r14 = specialinvoke r0.<com.android.server.content.ContentService: com.android.server.content.SyncManager getSyncManager()>();
+
+     label2:
+        if r14 != null goto label3;
+
+        staticinvoke <com.android.server.content.ContentService: void restoreCallingIdentity(long)>(l1);
+
+        return null;
+
+     label3:
+        if r11 == null goto label6;
+
+        if r1 == null goto label6;
+
+     label4:
+        r2 = new com.android.server.content.SyncStorageEngine$EndPoint;
+
+        specialinvoke r2.<com.android.server.content.SyncStorageEngine$EndPoint: void <init>(android.accounts.Account,java.lang.String,int)>(r11, r1, i0);
+
+        $r9 = virtualinvoke r14.<com.android.server.content.SyncManager: com.android.server.content.SyncStorageEngine getSyncStorageEngine()>();
+
+        r15 = virtualinvoke $r9.<com.android.server.content.SyncStorageEngine: android.content.SyncStatusInfo getStatusByAuthority(com.android.server.content.SyncStorageEngine$EndPoint)>(r2);
+
+     label5:
+        staticinvoke <com.android.server.content.ContentService: void restoreCallingIdentity(long)>(l1);
+
+        return r15;
+
+     label6:
+        r16 = new java.lang.IllegalArgumentException;
+
+        specialinvoke r16.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>("Must call sync status with valid authority");
+
+        throw r16;
+
+     label7:
+        $r10 := @caughtexception;
+
+        staticinvoke <com.android.server.content.ContentService: void restoreCallingIdentity(long)>(l1);
+
+        throw $r10;
+
+     label8:
+        $r3 = new java.lang.IllegalArgumentException;
+
+        specialinvoke $r3.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>("Authority must not be empty");
+
+        throw $r3;
+
+        catch java.lang.Throwable from label1 to label2 with label7;
+        catch java.lang.Throwable from label4 to label5 with label7;
+        catch java.lang.Throwable from label6 to label7 with label7;
+    }
+
+    public boolean isSyncActive(android.accounts.Account, java.lang.String, android.content.ComponentName)
+    {
+        com.android.server.content.ContentService r0;
+        java.lang.String r1;
+        int i0;
+        long l1;
+        com.android.server.content.SyncStorageEngine$EndPoint r2;
+        boolean z0;
+        android.content.Context $r3;
+        java.lang.Throwable $r4;
+        android.accounts.Account r5;
+        android.content.ComponentName r6;
+        com.android.server.content.SyncManager r7;
+        com.android.server.content.SyncStorageEngine r8;
+
+        r0 := @this: com.android.server.content.ContentService;
+
+        r5 := @parameter0: android.accounts.Account;
+
+        r1 := @parameter1: java.lang.String;
+
+        r6 := @parameter2: android.content.ComponentName;
+
+        $r3 = r0.<com.android.server.content.ContentService: android.content.Context mContext>;
+
+        virtualinvoke $r3.<android.content.Context: void enforceCallingOrSelfPermission(java.lang.String,java.lang.String)>("android.permission.READ_SYNC_STATS", "no permission to read the sync stats");
+
+        i0 = staticinvoke <android.os.UserHandle: int getCallingUserId()>();
+
+        l1 = staticinvoke <com.android.server.content.ContentService: long clearCallingIdentity()>();
+
+     label1:
+        r7 = specialinvoke r0.<com.android.server.content.ContentService: com.android.server.content.SyncManager getSyncManager()>();
+
+     label2:
+        if r7 != null goto label3;
+
+        staticinvoke <com.android.server.content.ContentService: void restoreCallingIdentity(long)>(l1);
+
+        return 0;
+
+     label3:
+        r8 = virtualinvoke r7.<com.android.server.content.SyncManager: com.android.server.content.SyncStorageEngine getSyncStorageEngine()>();
+
+        r2 = new com.android.server.content.SyncStorageEngine$EndPoint;
+
+        specialinvoke r2.<com.android.server.content.SyncStorageEngine$EndPoint: void <init>(android.accounts.Account,java.lang.String,int)>(r5, r1, i0);
+
+        z0 = virtualinvoke r8.<com.android.server.content.SyncStorageEngine: boolean isSyncActive(com.android.server.content.SyncStorageEngine$EndPoint)>(r2);
+
+     label4:
+        staticinvoke <com.android.server.content.ContentService: void restoreCallingIdentity(long)>(l1);
+
+        return z0;
+
+     label5:
+        $r4 := @caughtexception;
+
+        staticinvoke <com.android.server.content.ContentService: void restoreCallingIdentity(long)>(l1);
+
+        throw $r4;
+
+        catch java.lang.Throwable from label1 to label2 with label5;
+        catch java.lang.Throwable from label3 to label4 with label5;
+    }
+
+    public boolean isSyncPending(android.accounts.Account, java.lang.String, android.content.ComponentName)
+    {
+        com.android.server.content.ContentService r0;
+        android.accounts.Account r1;
+        java.lang.String r2;
+        android.content.ComponentName r3;
+        int $i0;
+        boolean $z0;
+
+        r0 := @this: com.android.server.content.ContentService;
+
+        r1 := @parameter0: android.accounts.Account;
+
+        r2 := @parameter1: java.lang.String;
+
+        r3 := @parameter2: android.content.ComponentName;
+
+        $i0 = staticinvoke <android.os.UserHandle: int getCallingUserId()>();
+
+        $z0 = virtualinvoke r0.<com.android.server.content.ContentService: boolean isSyncPendingAsUser(android.accounts.Account,java.lang.String,android.content.ComponentName,int)>(r1, r2, r3, $i0);
+
+        return $z0;
+    }
+
+    public boolean isSyncPendingAsUser(android.accounts.Account, java.lang.String, android.content.ComponentName, int)
+    {
+        com.android.server.content.ContentService r0;
+        java.lang.String r1, $r7;
+        int i0;
+        long l1;
+        com.android.server.content.SyncStorageEngine$EndPoint r2;
+        boolean z0;
+        android.content.Context $r3;
+        java.lang.StringBuilder $r4;
+        com.android.server.content.SyncStorageEngine $r8;
+        java.lang.Throwable $r9;
+        android.accounts.Account r10;
+        android.content.ComponentName r11;
+        com.android.server.content.SyncManager r13;
+        java.lang.IllegalArgumentException r14;
+
+        r0 := @this: com.android.server.content.ContentService;
+
+        r10 := @parameter0: android.accounts.Account;
+
+        r1 := @parameter1: java.lang.String;
+
+        r11 := @parameter2: android.content.ComponentName;
+
+        i0 := @parameter3: int;
+
+        $r3 = r0.<com.android.server.content.ContentService: android.content.Context mContext>;
+
+        virtualinvoke $r3.<android.content.Context: void enforceCallingOrSelfPermission(java.lang.String,java.lang.String)>("android.permission.READ_SYNC_STATS", "no permission to read the sync stats");
+
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("no permission to retrieve the sync settings for user ");
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r7 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.server.content.ContentService: void enforceCrossUserPermission(int,java.lang.String)>(i0, $r7);
+
+        l1 = staticinvoke <com.android.server.content.ContentService: long clearCallingIdentity()>();
+
+        r13 = specialinvoke r0.<com.android.server.content.ContentService: com.android.server.content.SyncManager getSyncManager()>();
+
+        if r13 != null goto label1;
+
+        return 0;
+
+     label1:
+        if r10 == null goto label4;
+
+        if r1 == null goto label4;
+
+     label2:
+        r2 = new com.android.server.content.SyncStorageEngine$EndPoint;
+
+        specialinvoke r2.<com.android.server.content.SyncStorageEngine$EndPoint: void <init>(android.accounts.Account,java.lang.String,int)>(r10, r1, i0);
+
+        $r8 = virtualinvoke r13.<com.android.server.content.SyncManager: com.android.server.content.SyncStorageEngine getSyncStorageEngine()>();
+
+        z0 = virtualinvoke $r8.<com.android.server.content.SyncStorageEngine: boolean isSyncPending(com.android.server.content.SyncStorageEngine$EndPoint)>(r2);
+
+     label3:
+        staticinvoke <com.android.server.content.ContentService: void restoreCallingIdentity(long)>(l1);
+
+        return z0;
+
+     label4:
+        r14 = new java.lang.IllegalArgumentException;
+
+        specialinvoke r14.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>("Invalid authority specified");
+
+        throw r14;
+
+     label5:
+        $r9 := @caughtexception;
+
+        staticinvoke <com.android.server.content.ContentService: void restoreCallingIdentity(long)>(l1);
+
+        throw $r9;
+
+        catch java.lang.Throwable from label2 to label3 with label5;
+        catch java.lang.Throwable from label4 to label5 with label5;
+    }
+
+    public java.lang.String[] lambda$new$0$ContentService(java.lang.String, int)
+    {
+        com.android.server.content.ContentService r0;
+        java.lang.String r1;
+        int i0;
+        java.lang.String[] $r2;
+
+        r0 := @this: com.android.server.content.ContentService;
+
+        r1 := @parameter0: java.lang.String;
+
+        i0 := @parameter1: int;
+
+        $r2 = virtualinvoke r0.<com.android.server.content.ContentService: java.lang.String[] getSyncAdapterPackagesForAuthorityAsUser(java.lang.String,int)>(r1, i0);
+
+        return $r2;
+    }
+
+    public void notifyChange(android.net.Uri[], android.database.IContentObserver, boolean, int, int, int, java.lang.String)
+    {
+        com.android.server.content.ContentService r0;
+        boolean z0, $z1, $z2, $z3;
+        int i0, i1, i2, i3, i4, $i6, $i7, i9, i10, i11, i12, i13, i15, i20, i24, i25, i26;
+        java.lang.String r1, $r12, $r13, $r18, $r19, $r29, r40, r48, r51;
+        long l5;
+        com.android.server.content.ContentService$ObserverCollector $r2;
+        android.util.ArrayMap $r3;
+        java.lang.Object $r4, $r6, $r7, $r9, $r11, $r16;
+        android.util.Pair $r5, $r8, r39;
+        java.lang.Integer $r10, $r14;
+        com.android.server.content.ContentService$ObserverNode $r15, r42;
+        android.app.ActivityManagerInternal $r17;
+        java.lang.SecurityException $r21;
+        java.lang.StringBuilder $r22;
+        java.lang.Throwable $r30, $r31, $r32, $r33, r58;
+        android.net.Uri[] r34;
+        android.database.IContentObserver r35;
+        android.net.Uri r38, r56;
+        com.android.server.content.SyncManager r53;
+        android.util.SparseArray r55;
+
+        r0 := @this: com.android.server.content.ContentService;
+
+        r34 := @parameter0: android.net.Uri[];
+
+        r35 := @parameter1: android.database.IContentObserver;
+
+        z0 := @parameter2: boolean;
+
+        i0 := @parameter3: int;
+
+        i9 := @parameter4: int;
+
+        i10 := @parameter5: int;
+
+        r1 := @parameter6: java.lang.String;
+
+        i11 = staticinvoke <android.os.Binder: int getCallingUid()>();
+
+        i1 = staticinvoke <android.os.Binder: int getCallingPid()>();
+
+        i2 = staticinvoke <android.os.UserHandle: int getCallingUserId()>();
+
+        $r2 = new com.android.server.content.ContentService$ObserverCollector;
+
+        specialinvoke $r2.<com.android.server.content.ContentService$ObserverCollector: void <init>()>();
+
+        $r3 = new android.util.ArrayMap;
+
+        specialinvoke $r3.<android.util.ArrayMap: void <init>()>();
+
+        i12 = lengthof r34;
+
+        i13 = 0;
+
+     label01:
+        if i13 >= i12 goto label11;
+
+        r38 = r34[i13];
+
+        i3 = specialinvoke r0.<com.android.server.content.ContentService: int handleIncomingUser(android.net.Uri,int,int,int,boolean,int)>(r38, i1, i11, 2, 1, i9);
+
+        $r13 = virtualinvoke r38.<android.net.Uri: java.lang.String getAuthority()>();
+
+        $r14 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i3);
+
+        r39 = staticinvoke <android.util.Pair: android.util.Pair create(java.lang.Object,java.lang.Object)>($r13, $r14);
+
+        $z2 = virtualinvoke $r3.<android.util.ArrayMap: boolean containsKey(java.lang.Object)>(r39);
+
+        if $z2 != 0 goto label05;
+
+        $r16 = staticinvoke <com.android.server.LocalServices: java.lang.Object getService(java.lang.Class)>(class "Landroid/app/ActivityManagerInternal;");
+
+        $r17 = (android.app.ActivityManagerInternal) $r16;
+
+        $r18 = virtualinvoke r38.<android.net.Uri: java.lang.String getAuthority()>();
+
+        r40 = virtualinvoke $r17.<android.app.ActivityManagerInternal: java.lang.String checkContentProviderAccess(java.lang.String,int)>($r18, i3);
+
+        if r40 == null goto label04;
+
+        if i10 >= 26 goto label03;
+
+        $z3 = virtualinvoke r40.<java.lang.String: boolean startsWith(java.lang.String)>("Failed to find provider");
+
+        if $z3 == 0 goto label02;
+
+        goto label04;
+
+     label02:
+        $r22 = new java.lang.StringBuilder;
+
+        specialinvoke $r22.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r22.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Ignoring notify for ");
+
+        virtualinvoke $r22.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r38);
+
+        virtualinvoke $r22.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" from ");
+
+        virtualinvoke $r22.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i11);
+
+        virtualinvoke $r22.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(": ");
+
+        virtualinvoke $r22.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r40);
+
+        $r29 = virtualinvoke $r22.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("ContentService", $r29);
+
+        goto label07;
+
+     label03:
+        $r21 = new java.lang.SecurityException;
+
+        specialinvoke $r21.<java.lang.SecurityException: void <init>(java.lang.String)>(r40);
+
+        throw $r21;
+
+     label04:
+        $r19 = specialinvoke r0.<com.android.server.content.ContentService: java.lang.String getProviderPackageName(android.net.Uri,int)>(r38, i3);
+
+        virtualinvoke $r3.<android.util.ArrayMap: java.lang.Object put(java.lang.Object,java.lang.Object)>(r39, $r19);
+
+        goto label05;
+
+     label05:
+        r42 = r0.<com.android.server.content.ContentService: com.android.server.content.ContentService$ObserverNode mRootNode>;
+
+        entermonitor r42;
+
+     label06:
+        i4 = staticinvoke <com.android.server.content.ContentService$ObserverNode: int countUriSegments(android.net.Uri)>(r38);
+
+        $r15 = r0.<com.android.server.content.ContentService: com.android.server.content.ContentService$ObserverNode mRootNode>;
+
+        virtualinvoke $r15.<com.android.server.content.ContentService$ObserverNode: void collectObserversLocked(android.net.Uri,int,int,android.database.IContentObserver,boolean,int,int,com.android.server.content.ContentService$ObserverCollector)>(r38, i4, 0, r35, z0, i0, i3, $r2);
+
+        exitmonitor r42;
+
+     label07:
+        i13 = i13 + 1;
+
+        goto label01;
+
+     label08:
+        $r32 := @caughtexception;
+
+     label09:
+        exitmonitor r42;
+
+     label10:
+        throw $r32;
+
+     label11:
+        l5 = staticinvoke <com.android.server.content.ContentService: long clearCallingIdentity()>();
+
+     label12:
+        virtualinvoke $r2.<com.android.server.content.ContentService$ObserverCollector: void dispatch()>();
+
+     label13:
+        i15 = 0;
+
+     label14:
+        $i6 = virtualinvoke $r3.<android.util.ArrayMap: int size()>();
+
+        if i15 >= $i6 goto label37;
+
+     label15:
+        $r4 = virtualinvoke $r3.<android.util.ArrayMap: java.lang.Object keyAt(int)>(i15);
+
+        $r5 = (android.util.Pair) $r4;
+
+        $r6 = $r5.<android.util.Pair: java.lang.Object first>;
+
+        r48 = (java.lang.String) $r6;
+
+     label16:
+        $r7 = virtualinvoke $r3.<android.util.ArrayMap: java.lang.Object keyAt(int)>(i15);
+
+        $r8 = (android.util.Pair) $r7;
+
+        $r9 = $r8.<android.util.Pair: java.lang.Object second>;
+
+        $r10 = (java.lang.Integer) $r9;
+
+        i20 = virtualinvoke $r10.<java.lang.Integer: int intValue()>();
+
+     label17:
+        $r11 = virtualinvoke $r3.<android.util.ArrayMap: java.lang.Object valueAt(int)>(i15);
+
+        r51 = (java.lang.String) $r11;
+
+     label18:
+        $i7 = i0 & 1;
+
+        if $i7 == 0 goto label25;
+
+     label19:
+        r53 = specialinvoke r0.<com.android.server.content.ContentService: com.android.server.content.SyncManager getSyncManager()>();
+
+     label20:
+        if r53 == null goto label24;
+
+     label21:
+        i24 = specialinvoke r0.<com.android.server.content.ContentService: int getSyncExemptionForCaller(int)>(i11);
+
+     label22:
+        virtualinvoke r53.<com.android.server.content.SyncManager: void scheduleLocalSync(android.accounts.Account,int,int,java.lang.String,int,int,int,java.lang.String)>(null, i2, i11, r48, i24, i11, i1, r1);
+
+     label23:
+        goto label25;
+
+     label24:
+        goto label25;
+
+     label25:
+        r55 = r0.<com.android.server.content.ContentService: android.util.SparseArray mCache>;
+
+        entermonitor r55;
+
+     label26:
+        i25 = lengthof r34;
+
+     label27:
+        i26 = 0;
+
+     label28:
+        if i26 >= i25 goto label31;
+
+        r56 = r34[i26];
+
+     label29:
+        $r12 = virtualinvoke r56.<android.net.Uri: java.lang.String getAuthority()>();
+
+        $z1 = staticinvoke <java.util.Objects: boolean equals(java.lang.Object,java.lang.Object)>($r12, r48);
+
+        if $z1 == 0 goto label30;
+
+        specialinvoke r0.<com.android.server.content.ContentService: void invalidateCacheLocked(int,java.lang.String,android.net.Uri)>(i20, r51, r56);
+
+     label30:
+        i26 = i26 + 1;
+
+        goto label28;
+
+     label31:
+        exitmonitor r55;
+
+     label32:
+        i15 = i15 + 1;
+
+        goto label14;
+
+     label33:
+        $r31 := @caughtexception;
+
+     label34:
+        exitmonitor r55;
+
+     label35:
+        throw $r31;
+
+     label36:
+        $r30 := @caughtexception;
+
+        r58 = $r30;
+
+        goto label39;
+
+     label37:
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l5);
+
+        return;
+
+     label38:
+        $r33 := @caughtexception;
+
+        r58 = $r33;
+
+     label39:
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l5);
+
+        throw r58;
+
+        catch java.lang.Throwable from label06 to label07 with label08;
+        catch java.lang.Throwable from label09 to label10 with label08;
+        catch java.lang.Throwable from label12 to label13 with label38;
+        catch java.lang.Throwable from label14 to label15 with label38;
+        catch java.lang.Throwable from label15 to label16 with label38;
+        catch java.lang.Throwable from label16 to label17 with label38;
+        catch java.lang.Throwable from label17 to label18 with label38;
+        catch java.lang.Throwable from label19 to label20 with label38;
+        catch java.lang.Throwable from label21 to label22 with label38;
+        catch java.lang.Throwable from label22 to label23 with label36;
+        catch java.lang.Throwable from label25 to label26 with label36;
+        catch java.lang.Throwable from label26 to label27 with label33;
+        catch java.lang.Throwable from label29 to label30 with label33;
+        catch java.lang.Throwable from label31 to label32 with label33;
+        catch java.lang.Throwable from label34 to label35 with label33;
+        catch java.lang.Throwable from label35 to label36 with label36;
+    }
+
+    void onBootPhase(int)
+    {
+        com.android.server.content.ContentService r0;
+        int i0;
+        com.android.server.content.SyncManager r1;
+
+        r0 := @this: com.android.server.content.ContentService;
+
+        i0 := @parameter0: int;
+
+        if i0 == 550 goto label1;
+
+        goto label2;
+
+     label1:
+        specialinvoke r0.<com.android.server.content.ContentService: com.android.server.content.SyncManager getSyncManager()>();
+
+     label2:
+        r1 = r0.<com.android.server.content.ContentService: com.android.server.content.SyncManager mSyncManager>;
+
+        if r1 == null goto label3;
+
+        virtualinvoke r1.<com.android.server.content.SyncManager: void onBootPhase(int)>(i0);
+
+     label3:
+        return;
+    }
+
+    public void onDbCorruption(java.lang.String, java.lang.String, java.lang.String)
+    {
+        com.android.server.content.ContentService r0;
+        java.lang.String r1, r2, r3, $r8;
+        java.lang.StringBuilder $r5;
+
+        r0 := @this: com.android.server.content.ContentService;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 := @parameter1: java.lang.String;
+
+        r3 := @parameter2: java.lang.String;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>(r1, r2);
+
+        $r5 = new java.lang.StringBuilder;
+
+        specialinvoke $r5.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("at ");
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r3);
+
+        $r8 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>(r1, $r8);
+
+        staticinvoke <android.util.Slog: int wtf(java.lang.String,java.lang.String)>(r1, r2);
+
+        return;
+    }
+
+    public void onShellCommand(java.io.FileDescriptor, java.io.FileDescriptor, java.io.FileDescriptor, java.lang.String[], android.os.ShellCallback, android.os.ResultReceiver)
+    {
+        com.android.server.content.ContentService r0;
+        java.io.FileDescriptor r1, r2, r3;
+        java.lang.String[] r4;
+        android.os.ShellCallback r5;
+        android.os.ResultReceiver r6;
+        com.android.server.content.ContentShellCommand $r7;
+
+        r0 := @this: com.android.server.content.ContentService;
+
+        r1 := @parameter0: java.io.FileDescriptor;
+
+        r2 := @parameter1: java.io.FileDescriptor;
+
+        r3 := @parameter2: java.io.FileDescriptor;
+
+        r4 := @parameter3: java.lang.String[];
+
+        r5 := @parameter4: android.os.ShellCallback;
+
+        r6 := @parameter5: android.os.ResultReceiver;
+
+        $r7 = new com.android.server.content.ContentShellCommand;
+
+        specialinvoke $r7.<com.android.server.content.ContentShellCommand: void <init>(android.content.IContentService)>(r0);
+
+        virtualinvoke $r7.<com.android.server.content.ContentShellCommand: int exec(android.os.Binder,java.io.FileDescriptor,java.io.FileDescriptor,java.io.FileDescriptor,java.lang.String[],android.os.ShellCallback,android.os.ResultReceiver)>(r0, r1, r2, r3, r4, r5, r6);
+
+        return;
+    }
+
+    void onStartUser(int)
+    {
+        com.android.server.content.ContentService r0;
+        int i0;
+        com.android.server.content.SyncManager r1;
+
+        r0 := @this: com.android.server.content.ContentService;
+
+        i0 := @parameter0: int;
+
+        r1 = r0.<com.android.server.content.ContentService: com.android.server.content.SyncManager mSyncManager>;
+
+        if r1 == null goto label1;
+
+        virtualinvoke r1.<com.android.server.content.SyncManager: void onStartUser(int)>(i0);
+
+     label1:
+        return;
+    }
+
+    void onStopUser(int)
+    {
+        com.android.server.content.ContentService r0;
+        int i0;
+        com.android.server.content.SyncManager r1;
+
+        r0 := @this: com.android.server.content.ContentService;
+
+        i0 := @parameter0: int;
+
+        r1 = r0.<com.android.server.content.ContentService: com.android.server.content.SyncManager mSyncManager>;
+
+        if r1 == null goto label1;
+
+        virtualinvoke r1.<com.android.server.content.SyncManager: void onStopUser(int)>(i0);
+
+     label1:
+        return;
+    }
+
+    void onUnlockUser(int)
+    {
+        com.android.server.content.ContentService r0;
+        int i0;
+        com.android.server.content.SyncManager r1;
+
+        r0 := @this: com.android.server.content.ContentService;
+
+        i0 := @parameter0: int;
+
+        r1 = r0.<com.android.server.content.ContentService: com.android.server.content.SyncManager mSyncManager>;
+
+        if r1 == null goto label1;
+
+        virtualinvoke r1.<com.android.server.content.SyncManager: void onUnlockUser(int)>(i0);
+
+     label1:
+        return;
+    }
+
+    public void putCache(java.lang.String, android.net.Uri, android.os.Bundle, int)
+    {
+        com.android.server.content.ContentService r0;
+        android.os.Bundle r1;
+        int i0, $i1;
+        android.content.Context $r3, $r4;
+        java.lang.Object $r5;
+        android.app.AppOpsManager $r6;
+        java.lang.Throwable $r9;
+        java.lang.String r10, r12;
+        android.net.Uri r11;
+        android.util.Pair r13;
+        android.util.SparseArray r14;
+        android.util.ArrayMap r15;
+
+        r0 := @this: com.android.server.content.ContentService;
+
+        r10 := @parameter0: java.lang.String;
+
+        r11 := @parameter1: android.net.Uri;
+
+        r1 := @parameter2: android.os.Bundle;
+
+        i0 := @parameter3: int;
+
+        staticinvoke <android.os.Bundle: android.os.Bundle setDefusable(android.os.Bundle,boolean)>(r1, 1);
+
+        specialinvoke r0.<com.android.server.content.ContentService: void enforceNonFullCrossUserPermission(int,java.lang.String)>(i0, "ContentService");
+
+        $r3 = r0.<com.android.server.content.ContentService: android.content.Context mContext>;
+
+        virtualinvoke $r3.<android.content.Context: void enforceCallingOrSelfPermission(java.lang.String,java.lang.String)>("android.permission.CACHE_CONTENT", "ContentService");
+
+        $r4 = r0.<com.android.server.content.ContentService: android.content.Context mContext>;
+
+        $r5 = virtualinvoke $r4.<android.content.Context: java.lang.Object getSystemService(java.lang.Class)>(class "Landroid/app/AppOpsManager;");
+
+        $r6 = (android.app.AppOpsManager) $r5;
+
+        $i1 = staticinvoke <android.os.Binder: int getCallingUid()>();
+
+        virtualinvoke $r6.<android.app.AppOpsManager: void checkPackage(int,java.lang.String)>($i1, r10);
+
+        r12 = specialinvoke r0.<com.android.server.content.ContentService: java.lang.String getProviderPackageName(android.net.Uri,int)>(r11, i0);
+
+        r13 = staticinvoke <android.util.Pair: android.util.Pair create(java.lang.Object,java.lang.Object)>(r10, r11);
+
+        r14 = r0.<com.android.server.content.ContentService: android.util.SparseArray mCache>;
+
+        entermonitor r14;
+
+     label01:
+        r15 = specialinvoke r0.<com.android.server.content.ContentService: android.util.ArrayMap findOrCreateCacheLocked(int,java.lang.String)>(i0, r12);
+
+     label02:
+        if r1 == null goto label05;
+
+     label03:
+        virtualinvoke r15.<android.util.ArrayMap: java.lang.Object put(java.lang.Object,java.lang.Object)>(r13, r1);
+
+     label04:
+        goto label06;
+
+     label05:
+        virtualinvoke r15.<android.util.ArrayMap: java.lang.Object remove(java.lang.Object)>(r13);
+
+     label06:
+        exitmonitor r14;
+
+     label07:
+        return;
+
+     label08:
+        $r9 := @caughtexception;
+
+     label09:
+        exitmonitor r14;
+
+     label10:
+        throw $r9;
+
+        catch java.lang.Throwable from label01 to label02 with label08;
+        catch java.lang.Throwable from label03 to label04 with label08;
+        catch java.lang.Throwable from label05 to label06 with label08;
+        catch java.lang.Throwable from label06 to label07 with label08;
+        catch java.lang.Throwable from label09 to label10 with label08;
+    }
+
+    public void registerContentObserver(android.net.Uri, boolean, android.database.IContentObserver)
+    {
+        com.android.server.content.ContentService r0;
+        android.net.Uri r1;
+        boolean z0;
+        android.database.IContentObserver r2;
+        int $i0;
+
+        r0 := @this: com.android.server.content.ContentService;
+
+        r1 := @parameter0: android.net.Uri;
+
+        z0 := @parameter1: boolean;
+
+        r2 := @parameter2: android.database.IContentObserver;
+
+        $i0 = staticinvoke <android.os.UserHandle: int getCallingUserId()>();
+
+        virtualinvoke r0.<com.android.server.content.ContentService: void registerContentObserver(android.net.Uri,boolean,android.database.IContentObserver,int,int)>(r1, z0, r2, $i0, 10000);
+
+        return;
+    }
+
+    public void registerContentObserver(android.net.Uri, boolean, android.database.IContentObserver, int, int)
+    {
+        com.android.server.content.ContentService r0;
+        boolean z0, $z1;
+        int i0, i1, i2, i4, i5;
+        com.android.server.content.ContentService$ObserverNode r1, r2, r22;
+        java.lang.IllegalArgumentException $r3;
+        java.lang.Object $r4;
+        android.app.ActivityManagerInternal $r5;
+        java.lang.String $r6, $r15, r20;
+        java.lang.SecurityException $r7;
+        java.lang.StringBuilder $r8;
+        java.lang.Throwable $r16, $r17, r23;
+        android.net.Uri r18;
+        android.database.IContentObserver r19;
+
+        r0 := @this: com.android.server.content.ContentService;
+
+        r18 := @parameter0: android.net.Uri;
+
+        z0 := @parameter1: boolean;
+
+        r19 := @parameter2: android.database.IContentObserver;
+
+        i4 := @parameter3: int;
+
+        i0 := @parameter4: int;
+
+        if r19 == null goto label11;
+
+        if r18 == null goto label11;
+
+        i1 = staticinvoke <android.os.Binder: int getCallingUid()>();
+
+        i2 = staticinvoke <android.os.Binder: int getCallingPid()>();
+
+        i5 = specialinvoke r0.<com.android.server.content.ContentService: int handleIncomingUser(android.net.Uri,int,int,int,boolean,int)>(r18, i2, i1, 1, 1, i4);
+
+        $r4 = staticinvoke <com.android.server.LocalServices: java.lang.Object getService(java.lang.Class)>(class "Landroid/app/ActivityManagerInternal;");
+
+        $r5 = (android.app.ActivityManagerInternal) $r4;
+
+        $r6 = virtualinvoke r18.<android.net.Uri: java.lang.String getAuthority()>();
+
+        r20 = virtualinvoke $r5.<android.app.ActivityManagerInternal: java.lang.String checkContentProviderAccess(java.lang.String,int)>($r6, i5);
+
+        if r20 == null goto label03;
+
+        if i0 >= 26 goto label02;
+
+        $z1 = virtualinvoke r20.<java.lang.String: boolean startsWith(java.lang.String)>("Failed to find provider");
+
+        if $z1 == 0 goto label01;
+
+        goto label03;
+
+     label01:
+        $r8 = new java.lang.StringBuilder;
+
+        specialinvoke $r8.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Ignoring content changes for ");
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r18);
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" from ");
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i1);
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(": ");
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r20);
+
+        $r15 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("ContentService", $r15);
+
+        return;
+
+     label02:
+        $r7 = new java.lang.SecurityException;
+
+        specialinvoke $r7.<java.lang.SecurityException: void <init>(java.lang.String)>(r20);
+
+        throw $r7;
+
+     label03:
+        r22 = r0.<com.android.server.content.ContentService: com.android.server.content.ContentService$ObserverNode mRootNode>;
+
+        entermonitor r22;
+
+     label04:
+        r1 = r0.<com.android.server.content.ContentService: com.android.server.content.ContentService$ObserverNode mRootNode>;
+
+        r2 = r0.<com.android.server.content.ContentService: com.android.server.content.ContentService$ObserverNode mRootNode>;
+
+     label05:
+        virtualinvoke r1.<com.android.server.content.ContentService$ObserverNode: void addObserverLocked(android.net.Uri,android.database.IContentObserver,boolean,java.lang.Object,int,int,int)>(r18, r19, z0, r2, i1, i2, i5);
+
+        exitmonitor r22;
+
+     label06:
+        return;
+
+     label07:
+        $r17 := @caughtexception;
+
+        r23 = $r17;
+
+     label08:
+        exitmonitor r22;
+
+     label09:
+        throw r23;
+
+     label10:
+        $r16 := @caughtexception;
+
+        r23 = $r16;
+
+        goto label08;
+
+     label11:
+        $r3 = new java.lang.IllegalArgumentException;
+
+        specialinvoke $r3.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>("You must pass a valid uri and observer");
+
+        throw $r3;
+
+        catch java.lang.Throwable from label04 to label05 with label07;
+        catch java.lang.Throwable from label05 to label06 with label10;
+        catch java.lang.Throwable from label08 to label09 with label10;
+    }
+
+    public void removePeriodicSync(android.accounts.Account, java.lang.String, android.os.Bundle)
+    {
+        com.android.server.content.ContentService r0;
+        java.lang.String r1, $r11;
+        android.os.Bundle r2;
+        int i0, i1, $i3;
+        long l2;
+        com.android.server.content.SyncManager r3;
+        com.android.server.content.SyncStorageEngine$EndPoint r4;
+        java.lang.IllegalArgumentException $r6, $r7;
+        boolean $z0;
+        android.content.Context $r8;
+        java.lang.Throwable $r12;
+        android.accounts.Account r13;
+        java.lang.StringBuilder r14;
+
+        r0 := @this: com.android.server.content.ContentService;
+
+        r13 := @parameter0: android.accounts.Account;
+
+        r1 := @parameter1: java.lang.String;
+
+        r2 := @parameter2: android.os.Bundle;
+
+        staticinvoke <android.os.Bundle: android.os.Bundle setDefusable(android.os.Bundle,boolean)>(r2, 1);
+
+        if r13 == null goto label5;
+
+        $z0 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>(r1);
+
+        if $z0 != 0 goto label4;
+
+        $r8 = r0.<com.android.server.content.ContentService: android.content.Context mContext>;
+
+        virtualinvoke $r8.<android.content.Context: void enforceCallingOrSelfPermission(java.lang.String,java.lang.String)>("android.permission.WRITE_SYNC_SETTINGS", "no permission to write the sync settings");
+
+        $i3 = staticinvoke <android.os.Binder: int getCallingUid()>();
+
+        specialinvoke r0.<com.android.server.content.ContentService: void validateExtras(int,android.os.Bundle)>($i3, r2);
+
+        i0 = staticinvoke <android.os.Binder: int getCallingUid()>();
+
+        i1 = staticinvoke <android.os.UserHandle: int getCallingUserId()>();
+
+        l2 = staticinvoke <com.android.server.content.ContentService: long clearCallingIdentity()>();
+
+     label1:
+        r3 = specialinvoke r0.<com.android.server.content.ContentService: com.android.server.content.SyncManager getSyncManager()>();
+
+        r4 = new com.android.server.content.SyncStorageEngine$EndPoint;
+
+        specialinvoke r4.<com.android.server.content.SyncStorageEngine$EndPoint: void <init>(android.accounts.Account,java.lang.String,int)>(r13, r1, i1);
+
+        r14 = new java.lang.StringBuilder;
+
+        specialinvoke r14.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r14.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("removePeriodicSync() by uid=");
+
+        virtualinvoke r14.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r11 = virtualinvoke r14.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r3.<com.android.server.content.SyncManager: void removePeriodicSync(com.android.server.content.SyncStorageEngine$EndPoint,android.os.Bundle,java.lang.String)>(r4, r2, $r11);
+
+     label2:
+        staticinvoke <com.android.server.content.ContentService: void restoreCallingIdentity(long)>(l2);
+
+        return;
+
+     label3:
+        $r12 := @caughtexception;
+
+        staticinvoke <com.android.server.content.ContentService: void restoreCallingIdentity(long)>(l2);
+
+        throw $r12;
+
+     label4:
+        $r7 = new java.lang.IllegalArgumentException;
+
+        specialinvoke $r7.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>("Authority must not be empty");
+
+        throw $r7;
+
+     label5:
+        $r6 = new java.lang.IllegalArgumentException;
+
+        specialinvoke $r6.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>("Account must not be null");
+
+        throw $r6;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+    }
+
+    public void removeStatusChangeListener(android.content.ISyncStatusObserver)
+    {
+        com.android.server.content.ContentService r0;
+        long l0;
+        com.android.server.content.SyncManager r1;
+        com.android.server.content.SyncStorageEngine $r2;
+        java.lang.Throwable $r3;
+        android.content.ISyncStatusObserver r4;
+
+        r0 := @this: com.android.server.content.ContentService;
+
+        r4 := @parameter0: android.content.ISyncStatusObserver;
+
+        l0 = staticinvoke <com.android.server.content.ContentService: long clearCallingIdentity()>();
+
+     label1:
+        r1 = specialinvoke r0.<com.android.server.content.ContentService: com.android.server.content.SyncManager getSyncManager()>();
+
+     label2:
+        if r1 == null goto label4;
+
+        if r4 == null goto label4;
+
+     label3:
+        $r2 = virtualinvoke r1.<com.android.server.content.SyncManager: com.android.server.content.SyncStorageEngine getSyncStorageEngine()>();
+
+        virtualinvoke $r2.<com.android.server.content.SyncStorageEngine: void removeStatusChangeListener(android.content.ISyncStatusObserver)>(r4);
+
+     label4:
+        staticinvoke <com.android.server.content.ContentService: void restoreCallingIdentity(long)>(l0);
+
+        return;
+
+     label5:
+        $r3 := @caughtexception;
+
+        staticinvoke <com.android.server.content.ContentService: void restoreCallingIdentity(long)>(l0);
+
+        throw $r3;
+
+        catch java.lang.Throwable from label1 to label2 with label5;
+        catch java.lang.Throwable from label3 to label4 with label5;
+    }
+
+    public void requestSync(android.accounts.Account, java.lang.String, android.os.Bundle, java.lang.String)
+    {
+        com.android.server.content.ContentService r0;
+        java.lang.String r1, r3;
+        android.os.Bundle r2;
+        int i0, i1, i2, i3;
+        long l4;
+        com.android.server.content.SyncManager r4;
+        java.lang.Throwable $r6;
+        android.accounts.Account r7;
+
+        r0 := @this: com.android.server.content.ContentService;
+
+        r7 := @parameter0: android.accounts.Account;
+
+        r1 := @parameter1: java.lang.String;
+
+        r2 := @parameter2: android.os.Bundle;
+
+        r3 := @parameter3: java.lang.String;
+
+        staticinvoke <android.os.Bundle: android.os.Bundle setDefusable(android.os.Bundle,boolean)>(r2, 1);
+
+        staticinvoke <android.content.ContentResolver: void validateSyncExtrasBundle(android.os.Bundle)>(r2);
+
+        i0 = staticinvoke <android.os.UserHandle: int getCallingUserId()>();
+
+        i1 = staticinvoke <android.os.Binder: int getCallingUid()>();
+
+        i2 = staticinvoke <android.os.Binder: int getCallingPid()>();
+
+        specialinvoke r0.<com.android.server.content.ContentService: void validateExtras(int,android.os.Bundle)>(i1, r2);
+
+        i3 = specialinvoke r0.<com.android.server.content.ContentService: int getSyncExemptionAndCleanUpExtrasForCaller(int,android.os.Bundle)>(i1, r2);
+
+        l4 = staticinvoke <com.android.server.content.ContentService: long clearCallingIdentity()>();
+
+     label1:
+        r4 = specialinvoke r0.<com.android.server.content.ContentService: com.android.server.content.SyncManager getSyncManager()>();
+
+     label2:
+        if r4 == null goto label4;
+
+     label3:
+        virtualinvoke r4.<com.android.server.content.SyncManager: void scheduleSync(android.accounts.Account,int,int,java.lang.String,android.os.Bundle,int,int,int,int,java.lang.String)>(r7, i0, i1, r1, r2, -2, i3, i1, i2, r3);
+
+     label4:
+        staticinvoke <com.android.server.content.ContentService: void restoreCallingIdentity(long)>(l4);
+
+        return;
+
+     label5:
+        $r6 := @caughtexception;
+
+        staticinvoke <com.android.server.content.ContentService: void restoreCallingIdentity(long)>(l4);
+
+        throw $r6;
+
+        catch java.lang.Throwable from label1 to label2 with label5;
+        catch java.lang.Throwable from label3 to label4 with label5;
+    }
+
+    public void resetTodayStats()
+    {
+        com.android.server.content.ContentService r0;
+        long l0;
+        com.android.server.content.SyncManager $r2, $r3;
+        java.lang.Throwable $r4;
+
+        r0 := @this: com.android.server.content.ContentService;
+
+        specialinvoke r0.<com.android.server.content.ContentService: void enforceShell(java.lang.String)>("resetTodayStats");
+
+        $r2 = r0.<com.android.server.content.ContentService: com.android.server.content.SyncManager mSyncManager>;
+
+        if $r2 == null goto label4;
+
+        l0 = staticinvoke <android.os.Binder: long clearCallingIdentity()>();
+
+     label1:
+        $r3 = r0.<com.android.server.content.ContentService: com.android.server.content.SyncManager mSyncManager>;
+
+        virtualinvoke $r3.<com.android.server.content.SyncManager: void resetTodayStats()>();
+
+     label2:
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l0);
+
+        goto label4;
+
+     label3:
+        $r4 := @caughtexception;
+
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l0);
+
+        throw $r4;
+
+     label4:
+        return;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+    }
+
+    public void setIsSyncable(android.accounts.Account, java.lang.String, int)
+    {
+        com.android.server.content.ContentService r0;
+        android.accounts.Account r1;
+        java.lang.String r2;
+        int i0, $i1;
+
+        r0 := @this: com.android.server.content.ContentService;
+
+        r1 := @parameter0: android.accounts.Account;
+
+        r2 := @parameter1: java.lang.String;
+
+        i0 := @parameter2: int;
+
+        $i1 = staticinvoke <android.os.UserHandle: int getCallingUserId()>();
+
+        virtualinvoke r0.<com.android.server.content.ContentService: void setIsSyncableAsUser(android.accounts.Account,java.lang.String,int,int)>(r1, r2, i0, $i1);
+
+        return;
+    }
+
+    public void setIsSyncableAsUser(android.accounts.Account, java.lang.String, int, int)
+    {
+        com.android.server.content.ContentService r0;
+        java.lang.String r1, $r6;
+        int i0, i1, i2, i4, i5;
+        long l3;
+        boolean $z0;
+        java.lang.IllegalArgumentException $r2;
+        java.lang.StringBuilder $r3;
+        android.content.Context $r7;
+        com.android.server.content.SyncStorageEngine $r8;
+        java.lang.Throwable $r9;
+        android.accounts.Account r10;
+        com.android.server.content.SyncManager r12;
+
+        r0 := @this: com.android.server.content.ContentService;
+
+        r10 := @parameter0: android.accounts.Account;
+
+        r1 := @parameter1: java.lang.String;
+
+        i4 := @parameter2: int;
+
+        i0 := @parameter3: int;
+
+        $z0 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>(r1);
+
+        if $z0 != 0 goto label6;
+
+        $r3 = new java.lang.StringBuilder;
+
+        specialinvoke $r3.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("no permission to set the sync settings for user ");
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r6 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.server.content.ContentService: void enforceCrossUserPermission(int,java.lang.String)>(i0, $r6);
+
+        $r7 = r0.<com.android.server.content.ContentService: android.content.Context mContext>;
+
+        virtualinvoke $r7.<android.content.Context: void enforceCallingOrSelfPermission(java.lang.String,java.lang.String)>("android.permission.WRITE_SYNC_SETTINGS", "no permission to write the sync settings");
+
+        i1 = staticinvoke <com.android.server.content.ContentService: int normalizeSyncable(int)>(i4);
+
+        i2 = staticinvoke <android.os.Binder: int getCallingUid()>();
+
+        i5 = staticinvoke <android.os.Binder: int getCallingPid()>();
+
+        l3 = staticinvoke <com.android.server.content.ContentService: long clearCallingIdentity()>();
+
+     label1:
+        r12 = specialinvoke r0.<com.android.server.content.ContentService: com.android.server.content.SyncManager getSyncManager()>();
+
+     label2:
+        if r12 == null goto label4;
+
+     label3:
+        $r8 = virtualinvoke r12.<com.android.server.content.SyncManager: com.android.server.content.SyncStorageEngine getSyncStorageEngine()>();
+
+        virtualinvoke $r8.<com.android.server.content.SyncStorageEngine: void setIsSyncable(android.accounts.Account,int,java.lang.String,int,int,int)>(r10, i0, r1, i1, i2, i5);
+
+     label4:
+        staticinvoke <com.android.server.content.ContentService: void restoreCallingIdentity(long)>(l3);
+
+        return;
+
+     label5:
+        $r9 := @caughtexception;
+
+        staticinvoke <com.android.server.content.ContentService: void restoreCallingIdentity(long)>(l3);
+
+        throw $r9;
+
+     label6:
+        $r2 = new java.lang.IllegalArgumentException;
+
+        specialinvoke $r2.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>("Authority must not be empty");
+
+        throw $r2;
+
+        catch java.lang.Throwable from label1 to label2 with label5;
+        catch java.lang.Throwable from label3 to label4 with label5;
+    }
+
+    public void setMasterSyncAutomatically(boolean)
+    {
+        com.android.server.content.ContentService r0;
+        boolean z0;
+        int $i0;
+
+        r0 := @this: com.android.server.content.ContentService;
+
+        z0 := @parameter0: boolean;
+
+        $i0 = staticinvoke <android.os.UserHandle: int getCallingUserId()>();
+
+        virtualinvoke r0.<com.android.server.content.ContentService: void setMasterSyncAutomaticallyAsUser(boolean,int)>(z0, $i0);
+
+        return;
+    }
+
+    public void setMasterSyncAutomaticallyAsUser(boolean, int)
+    {
+        com.android.server.content.ContentService r0;
+        boolean z0;
+        int i0, i1, i2, $i4;
+        long l3;
+        java.lang.StringBuilder $r1;
+        java.lang.String $r4;
+        android.content.Context $r5;
+        com.android.server.content.SyncStorageEngine $r6;
+        java.lang.Throwable $r7;
+        com.android.server.content.SyncManager r9;
+
+        r0 := @this: com.android.server.content.ContentService;
+
+        z0 := @parameter0: boolean;
+
+        i0 := @parameter1: int;
+
+        $r1 = new java.lang.StringBuilder;
+
+        specialinvoke $r1.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("no permission to set the sync status for user ");
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r4 = virtualinvoke $r1.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.server.content.ContentService: void enforceCrossUserPermission(int,java.lang.String)>(i0, $r4);
+
+        $r5 = r0.<com.android.server.content.ContentService: android.content.Context mContext>;
+
+        virtualinvoke $r5.<android.content.Context: void enforceCallingOrSelfPermission(java.lang.String,java.lang.String)>("android.permission.WRITE_SYNC_SETTINGS", "no permission to write the sync settings");
+
+        i1 = staticinvoke <android.os.Binder: int getCallingUid()>();
+
+        i2 = staticinvoke <android.os.Binder: int getCallingPid()>();
+
+        l3 = staticinvoke <com.android.server.content.ContentService: long clearCallingIdentity()>();
+
+     label1:
+        r9 = specialinvoke r0.<com.android.server.content.ContentService: com.android.server.content.SyncManager getSyncManager()>();
+
+     label2:
+        if r9 == null goto label4;
+
+     label3:
+        $r6 = virtualinvoke r9.<com.android.server.content.SyncManager: com.android.server.content.SyncStorageEngine getSyncStorageEngine()>();
+
+        $i4 = specialinvoke r0.<com.android.server.content.ContentService: int getSyncExemptionForCaller(int)>(i1);
+
+        virtualinvoke $r6.<com.android.server.content.SyncStorageEngine: void setMasterSyncAutomatically(boolean,int,int,int,int)>(z0, i0, $i4, i1, i2);
+
+     label4:
+        staticinvoke <com.android.server.content.ContentService: void restoreCallingIdentity(long)>(l3);
+
+        return;
+
+     label5:
+        $r7 := @caughtexception;
+
+        staticinvoke <com.android.server.content.ContentService: void restoreCallingIdentity(long)>(l3);
+
+        throw $r7;
+
+        catch java.lang.Throwable from label1 to label2 with label5;
+        catch java.lang.Throwable from label3 to label4 with label5;
+    }
+
+    public void setSyncAutomatically(android.accounts.Account, java.lang.String, boolean)
+    {
+        com.android.server.content.ContentService r0;
+        android.accounts.Account r1;
+        java.lang.String r2;
+        boolean z0;
+        int $i0;
+
+        r0 := @this: com.android.server.content.ContentService;
+
+        r1 := @parameter0: android.accounts.Account;
+
+        r2 := @parameter1: java.lang.String;
+
+        z0 := @parameter2: boolean;
+
+        $i0 = staticinvoke <android.os.UserHandle: int getCallingUserId()>();
+
+        virtualinvoke r0.<com.android.server.content.ContentService: void setSyncAutomaticallyAsUser(android.accounts.Account,java.lang.String,boolean,int)>(r1, r2, z0, $i0);
+
+        return;
+    }
+
+    public void setSyncAutomaticallyAsUser(android.accounts.Account, java.lang.String, boolean, int)
+    {
+        com.android.server.content.ContentService r0;
+        java.lang.String r1, $r7;
+        boolean z0, $z1;
+        int i0, i1, i2, i3;
+        long l4;
+        java.lang.IllegalArgumentException $r2;
+        android.content.Context $r3;
+        java.lang.StringBuilder $r4;
+        com.android.server.content.SyncStorageEngine $r8;
+        java.lang.Throwable $r9;
+        android.accounts.Account r10;
+        com.android.server.content.SyncManager r12;
+
+        r0 := @this: com.android.server.content.ContentService;
+
+        r10 := @parameter0: android.accounts.Account;
+
+        r1 := @parameter1: java.lang.String;
+
+        z0 := @parameter2: boolean;
+
+        i0 := @parameter3: int;
+
+        $z1 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>(r1);
+
+        if $z1 != 0 goto label6;
+
+        $r3 = r0.<com.android.server.content.ContentService: android.content.Context mContext>;
+
+        virtualinvoke $r3.<android.content.Context: void enforceCallingOrSelfPermission(java.lang.String,java.lang.String)>("android.permission.WRITE_SYNC_SETTINGS", "no permission to write the sync settings");
+
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("no permission to modify the sync settings for user ");
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r7 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.server.content.ContentService: void enforceCrossUserPermission(int,java.lang.String)>(i0, $r7);
+
+        i1 = staticinvoke <android.os.Binder: int getCallingUid()>();
+
+        i2 = staticinvoke <android.os.Binder: int getCallingPid()>();
+
+        i3 = specialinvoke r0.<com.android.server.content.ContentService: int getSyncExemptionForCaller(int)>(i1);
+
+        l4 = staticinvoke <com.android.server.content.ContentService: long clearCallingIdentity()>();
+
+     label1:
+        r12 = specialinvoke r0.<com.android.server.content.ContentService: com.android.server.content.SyncManager getSyncManager()>();
+
+     label2:
+        if r12 == null goto label4;
+
+     label3:
+        $r8 = virtualinvoke r12.<com.android.server.content.SyncManager: com.android.server.content.SyncStorageEngine getSyncStorageEngine()>();
+
+        virtualinvoke $r8.<com.android.server.content.SyncStorageEngine: void setSyncAutomatically(android.accounts.Account,int,java.lang.String,boolean,int,int,int)>(r10, i0, r1, z0, i3, i1, i2);
+
+     label4:
+        staticinvoke <com.android.server.content.ContentService: void restoreCallingIdentity(long)>(l4);
+
+        return;
+
+     label5:
+        $r9 := @caughtexception;
+
+        staticinvoke <com.android.server.content.ContentService: void restoreCallingIdentity(long)>(l4);
+
+        throw $r9;
+
+     label6:
+        $r2 = new java.lang.IllegalArgumentException;
+
+        specialinvoke $r2.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>("Authority must be non-empty");
+
+        throw $r2;
+
+        catch java.lang.Throwable from label1 to label2 with label5;
+        catch java.lang.Throwable from label3 to label4 with label5;
+    }
+
+    public void sync(android.content.SyncRequest, java.lang.String)
+    {
+        com.android.server.content.ContentService r0;
+        android.content.SyncRequest r1;
+        java.lang.String r2;
+        int $i0;
+
+        r0 := @this: com.android.server.content.ContentService;
+
+        r1 := @parameter0: android.content.SyncRequest;
+
+        r2 := @parameter1: java.lang.String;
+
+        $i0 = staticinvoke <android.os.UserHandle: int getCallingUserId()>();
+
+        virtualinvoke r0.<com.android.server.content.ContentService: void syncAsUser(android.content.SyncRequest,int,java.lang.String)>(r1, $i0, r2);
+
+        return;
+    }
+
+    public void syncAsUser(android.content.SyncRequest, int, java.lang.String)
+    {
+        com.android.server.content.ContentService r0;
+        int i0, i1, i2, i3;
+        long l4, l5, l6, l7;
+        com.android.server.content.SyncManager r1, $r10;
+        boolean z0;
+        android.accounts.Account r2, $r8;
+        java.lang.StringBuilder $r3;
+        java.lang.String $r6, $r9, r15, r20;
+        android.content.Context $r7;
+        java.lang.Throwable $r11, $r12, $r13, r19;
+        android.content.SyncRequest r14;
+        android.os.Bundle r17;
+        com.android.server.content.SyncStorageEngine$EndPoint r18;
+
+        r0 := @this: com.android.server.content.ContentService;
+
+        r14 := @parameter0: android.content.SyncRequest;
+
+        i0 := @parameter1: int;
+
+        r15 := @parameter2: java.lang.String;
+
+        $r3 = new java.lang.StringBuilder;
+
+        specialinvoke $r3.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("no permission to request sync as user: ");
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r6 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r0.<com.android.server.content.ContentService: void enforceCrossUserPermission(int,java.lang.String)>(i0, $r6);
+
+        i1 = staticinvoke <android.os.Binder: int getCallingUid()>();
+
+        i2 = staticinvoke <android.os.Binder: int getCallingPid()>();
+
+        r17 = virtualinvoke r14.<android.content.SyncRequest: android.os.Bundle getBundle()>();
+
+        specialinvoke r0.<com.android.server.content.ContentService: void validateExtras(int,android.os.Bundle)>(i1, r17);
+
+        i3 = specialinvoke r0.<com.android.server.content.ContentService: int getSyncExemptionAndCleanUpExtrasForCaller(int,android.os.Bundle)>(i1, r17);
+
+        l4 = staticinvoke <com.android.server.content.ContentService: long clearCallingIdentity()>();
+
+     label01:
+        r1 = specialinvoke r0.<com.android.server.content.ContentService: com.android.server.content.SyncManager getSyncManager()>();
+
+     label02:
+        if r1 != null goto label03;
+
+        staticinvoke <com.android.server.content.ContentService: void restoreCallingIdentity(long)>(l4);
+
+        return;
+
+     label03:
+        l5 = virtualinvoke r14.<android.content.SyncRequest: long getSyncFlexTime()>();
+
+        l6 = virtualinvoke r14.<android.content.SyncRequest: long getSyncRunTime()>();
+
+        z0 = virtualinvoke r14.<android.content.SyncRequest: boolean isPeriodic()>();
+
+     label04:
+        if z0 == 0 goto label08;
+
+     label05:
+        $r7 = r0.<com.android.server.content.ContentService: android.content.Context mContext>;
+
+        virtualinvoke $r7.<android.content.Context: void enforceCallingOrSelfPermission(java.lang.String,java.lang.String)>("android.permission.WRITE_SYNC_SETTINGS", "no permission to write the sync settings");
+
+        r18 = new com.android.server.content.SyncStorageEngine$EndPoint;
+
+        $r8 = virtualinvoke r14.<android.content.SyncRequest: android.accounts.Account getAccount()>();
+
+        $r9 = virtualinvoke r14.<android.content.SyncRequest: java.lang.String getProvider()>();
+
+        specialinvoke r18.<com.android.server.content.SyncStorageEngine$EndPoint: void <init>(android.accounts.Account,java.lang.String,int)>($r8, $r9, i0);
+
+        l7 = specialinvoke r0.<com.android.server.content.ContentService: long clampPeriod(long)>(l6);
+
+        $r10 = specialinvoke r0.<com.android.server.content.ContentService: com.android.server.content.SyncManager getSyncManager()>();
+
+        virtualinvoke $r10.<com.android.server.content.SyncManager: void updateOrAddPeriodicSync(com.android.server.content.SyncStorageEngine$EndPoint,long,long,android.os.Bundle)>(r18, l7, l5, r17);
+
+     label06:
+        goto label10;
+
+     label07:
+        $r11 := @caughtexception;
+
+        r19 = $r11;
+
+        goto label13;
+
+     label08:
+        r2 = virtualinvoke r14.<android.content.SyncRequest: android.accounts.Account getAccount()>();
+
+        r20 = virtualinvoke r14.<android.content.SyncRequest: java.lang.String getProvider()>();
+
+     label09:
+        virtualinvoke r1.<com.android.server.content.SyncManager: void scheduleSync(android.accounts.Account,int,int,java.lang.String,android.os.Bundle,int,int,int,int,java.lang.String)>(r2, i0, i1, r20, r17, -2, i3, i1, i2, r15);
+
+     label10:
+        staticinvoke <com.android.server.content.ContentService: void restoreCallingIdentity(long)>(l4);
+
+        return;
+
+     label11:
+        $r13 := @caughtexception;
+
+        r19 = $r13;
+
+        goto label13;
+
+     label12:
+        $r12 := @caughtexception;
+
+        r19 = $r12;
+
+     label13:
+        staticinvoke <com.android.server.content.ContentService: void restoreCallingIdentity(long)>(l4);
+
+        throw r19;
+
+        catch java.lang.Throwable from label01 to label02 with label12;
+        catch java.lang.Throwable from label03 to label04 with label12;
+        catch java.lang.Throwable from label05 to label06 with label07;
+        catch java.lang.Throwable from label08 to label09 with label12;
+        catch java.lang.Throwable from label09 to label10 with label11;
+    }
+
+    public void unregisterContentObserver(android.database.IContentObserver)
+    {
+        com.android.server.content.ContentService r0;
+        com.android.server.content.ContentService$ObserverNode r1, $r3;
+        java.lang.IllegalArgumentException $r2;
+        java.lang.Throwable $r4;
+        android.database.IContentObserver r5;
+
+        r0 := @this: com.android.server.content.ContentService;
+
+        r5 := @parameter0: android.database.IContentObserver;
+
+        if r5 == null goto label6;
+
+        r1 = r0.<com.android.server.content.ContentService: com.android.server.content.ContentService$ObserverNode mRootNode>;
+
+        entermonitor r1;
+
+     label1:
+        $r3 = r0.<com.android.server.content.ContentService: com.android.server.content.ContentService$ObserverNode mRootNode>;
+
+        virtualinvoke $r3.<com.android.server.content.ContentService$ObserverNode: boolean removeObserverLocked(android.database.IContentObserver)>(r5);
+
+        exitmonitor r1;
+
+     label2:
+        return;
+
+     label3:
+        $r4 := @caughtexception;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        throw $r4;
+
+     label6:
+        $r2 = new java.lang.IllegalArgumentException;
+
+        specialinvoke $r2.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>("You must pass a valid observer");
+
+        throw $r2;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+}

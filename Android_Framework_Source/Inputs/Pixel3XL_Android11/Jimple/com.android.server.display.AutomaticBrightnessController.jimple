@@ -1,0 +1,3007 @@
+class com.android.server.display.AutomaticBrightnessController extends java.lang.Object
+{
+    private static final int AMBIENT_LIGHT_LONG_HORIZON_MILLIS;
+    private static final long AMBIENT_LIGHT_PREDICTION_TIME_MILLIS;
+    private static final int AMBIENT_LIGHT_SHORT_HORIZON_MILLIS;
+    private static final int BRIGHTNESS_ADJUSTMENT_SAMPLE_DEBOUNCE_MILLIS;
+    private static final boolean DEBUG_PRETEND_LIGHT_SENSOR_ABSENT;
+    private static final int MSG_BRIGHTNESS_ADJUSTMENT_SAMPLE;
+    private static final int MSG_INVALIDATE_SHORT_TERM_MODEL;
+    private static final int MSG_UPDATE_AMBIENT_LUX;
+    private static final int MSG_UPDATE_FOREGROUND_APP;
+    private static final int MSG_UPDATE_FOREGROUND_APP_SYNC;
+    private static final java.lang.String TAG;
+    private android.app.IActivityTaskManager mActivityTaskManager;
+    private float mAmbientBrighteningThreshold;
+    private final com.android.server.display.HysteresisLevels mAmbientBrightnessThresholds;
+    private float mAmbientDarkeningThreshold;
+    private final int mAmbientLightHorizon;
+    private com.android.server.display.AutomaticBrightnessController$AmbientLightRingBuffer mAmbientLightRingBuffer;
+    private float mAmbientLux;
+    private boolean mAmbientLuxValid;
+    private final long mBrighteningLightDebounceConfig;
+    private float mBrightnessAdjustmentSampleOldBrightness;
+    private float mBrightnessAdjustmentSampleOldLux;
+    private boolean mBrightnessAdjustmentSamplePending;
+    private final com.android.server.display.BrightnessMappingStrategy mBrightnessMapper;
+    private final com.android.server.display.AutomaticBrightnessController$Callbacks mCallbacks;
+    private android.content.Context mContext;
+    private int mCurrentLightSensorRate;
+    private final long mDarkeningLightDebounceConfig;
+    private com.android.server.display.DisplayDeviceConfig mDisplayDeviceConfig;
+    private int mDisplayPolicy;
+    private final float mDozeScaleFactor;
+    private int mForegroundAppCategory;
+    private java.lang.String mForegroundAppPackageName;
+    private com.android.server.display.AutomaticBrightnessController$AutomaticBrightnessHandler mHandler;
+    private final int mInitialLightSensorRate;
+    private final com.android.server.display.AutomaticBrightnessController$Injector mInjector;
+    private float mLastObservedLux;
+    private long mLastObservedLuxTime;
+    private final android.hardware.Sensor mLightSensor;
+    private long mLightSensorEnableTime;
+    private boolean mLightSensorEnabled;
+    private final android.hardware.SensorEventListener mLightSensorListener;
+    private int mLightSensorWarmUpTimeConfig;
+    private boolean mLoggingEnabled;
+    private final int mNormalLightSensorRate;
+    private android.content.pm.PackageManager mPackageManager;
+    private int mPendingForegroundAppCategory;
+    private java.lang.String mPendingForegroundAppPackageName;
+    private int mRecentLightSamples;
+    private final boolean mResetAmbientLuxAfterWarmUpConfig;
+    private float mScreenAutoBrightness;
+    private float mScreenBrighteningThreshold;
+    private final float mScreenBrightnessRangeMaximum;
+    private final float mScreenBrightnessRangeMinimum;
+    private final com.android.server.display.HysteresisLevels mScreenBrightnessThresholds;
+    private float mScreenDarkeningThreshold;
+    private final android.hardware.SensorManager mSensorManager;
+    private float mShortTermModelAnchor;
+    private boolean mShortTermModelValid;
+    private com.android.server.display.AutomaticBrightnessController$TaskStackListenerImpl mTaskStackListener;
+    private final int mWeightingIntercept;
+
+    void <init>(com.android.server.display.AutomaticBrightnessController$Callbacks, android.os.Looper, android.hardware.SensorManager, android.hardware.Sensor, com.android.server.display.BrightnessMappingStrategy, int, float, float, float, int, int, long, long, boolean, com.android.server.display.HysteresisLevels, com.android.server.display.HysteresisLevels, android.content.Context, com.android.server.display.DisplayDeviceConfig)
+    {
+        com.android.server.display.AutomaticBrightnessController r0;
+        com.android.server.display.AutomaticBrightnessController$Callbacks r1;
+        android.os.Looper r2;
+        android.hardware.SensorManager r3;
+        android.hardware.Sensor r4;
+        com.android.server.display.BrightnessMappingStrategy r5;
+        int i0, i1, i2;
+        float f0, f1, f2;
+        long l3, l4;
+        boolean z0;
+        com.android.server.display.HysteresisLevels r6, r7;
+        android.content.Context r8;
+        com.android.server.display.DisplayDeviceConfig r9;
+        com.android.server.display.AutomaticBrightnessController$Injector $r10;
+
+        r0 := @this: com.android.server.display.AutomaticBrightnessController;
+
+        r1 := @parameter0: com.android.server.display.AutomaticBrightnessController$Callbacks;
+
+        r2 := @parameter1: android.os.Looper;
+
+        r3 := @parameter2: android.hardware.SensorManager;
+
+        r4 := @parameter3: android.hardware.Sensor;
+
+        r5 := @parameter4: com.android.server.display.BrightnessMappingStrategy;
+
+        i0 := @parameter5: int;
+
+        f0 := @parameter6: float;
+
+        f1 := @parameter7: float;
+
+        f2 := @parameter8: float;
+
+        i1 := @parameter9: int;
+
+        i2 := @parameter10: int;
+
+        l3 := @parameter11: long;
+
+        l4 := @parameter12: long;
+
+        z0 := @parameter13: boolean;
+
+        r6 := @parameter14: com.android.server.display.HysteresisLevels;
+
+        r7 := @parameter15: com.android.server.display.HysteresisLevels;
+
+        r8 := @parameter16: android.content.Context;
+
+        r9 := @parameter17: com.android.server.display.DisplayDeviceConfig;
+
+        $r10 = new com.android.server.display.AutomaticBrightnessController$Injector;
+
+        specialinvoke $r10.<com.android.server.display.AutomaticBrightnessController$Injector: void <init>()>();
+
+        specialinvoke r0.<com.android.server.display.AutomaticBrightnessController: void <init>(com.android.server.display.AutomaticBrightnessController$Injector,com.android.server.display.AutomaticBrightnessController$Callbacks,android.os.Looper,android.hardware.SensorManager,android.hardware.Sensor,com.android.server.display.BrightnessMappingStrategy,int,float,float,float,int,int,long,long,boolean,com.android.server.display.HysteresisLevels,com.android.server.display.HysteresisLevels,android.content.Context,com.android.server.display.DisplayDeviceConfig)>($r10, r1, r2, r3, r4, r5, i0, f0, f1, f2, i1, i2, l3, l4, z0, r6, r7, r8, r9);
+
+        return;
+    }
+
+    void <init>(com.android.server.display.AutomaticBrightnessController$Injector, com.android.server.display.AutomaticBrightnessController$Callbacks, android.os.Looper, android.hardware.SensorManager, android.hardware.Sensor, com.android.server.display.BrightnessMappingStrategy, int, float, float, float, int, int, long, long, boolean, com.android.server.display.HysteresisLevels, com.android.server.display.HysteresisLevels, android.content.Context, com.android.server.display.DisplayDeviceConfig)
+    {
+        com.android.server.display.AutomaticBrightnessController r0;
+        com.android.server.display.AutomaticBrightnessController$Injector r1;
+        com.android.server.display.AutomaticBrightnessController$Callbacks r2;
+        android.os.Looper r3;
+        android.hardware.SensorManager r4;
+        android.hardware.Sensor r5;
+        com.android.server.display.BrightnessMappingStrategy r6;
+        int i0, i1, i2, $i5, $i6;
+        float f0, f1, f2;
+        long l3, l4, $l7;
+        boolean z0;
+        com.android.server.display.HysteresisLevels r7, r8;
+        android.content.Context r9, $r15;
+        com.android.server.display.DisplayDeviceConfig r10;
+        com.android.server.display.AutomaticBrightnessController$2 $r11;
+        com.android.server.display.AutomaticBrightnessController$AutomaticBrightnessHandler $r12;
+        com.android.server.display.AutomaticBrightnessController$AmbientLightRingBuffer $r13;
+        android.app.IActivityTaskManager $r14;
+        android.content.pm.PackageManager $r16;
+        com.android.server.display.AutomaticBrightnessController$TaskStackListenerImpl $r17;
+
+        r0 := @this: com.android.server.display.AutomaticBrightnessController;
+
+        r1 := @parameter0: com.android.server.display.AutomaticBrightnessController$Injector;
+
+        r2 := @parameter1: com.android.server.display.AutomaticBrightnessController$Callbacks;
+
+        r3 := @parameter2: android.os.Looper;
+
+        r4 := @parameter3: android.hardware.SensorManager;
+
+        r5 := @parameter4: android.hardware.Sensor;
+
+        r6 := @parameter5: com.android.server.display.BrightnessMappingStrategy;
+
+        i0 := @parameter6: int;
+
+        f0 := @parameter7: float;
+
+        f1 := @parameter8: float;
+
+        f2 := @parameter9: float;
+
+        i1 := @parameter10: int;
+
+        i2 := @parameter11: int;
+
+        l3 := @parameter12: long;
+
+        l4 := @parameter13: long;
+
+        z0 := @parameter14: boolean;
+
+        r7 := @parameter15: com.android.server.display.HysteresisLevels;
+
+        r8 := @parameter16: com.android.server.display.HysteresisLevels;
+
+        r9 := @parameter17: android.content.Context;
+
+        r10 := @parameter18: com.android.server.display.DisplayDeviceConfig;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        r0.<com.android.server.display.AutomaticBrightnessController: float mScreenAutoBrightness> = #NaNF;
+
+        r0.<com.android.server.display.AutomaticBrightnessController: int mDisplayPolicy> = 0;
+
+        $r11 = new com.android.server.display.AutomaticBrightnessController$2;
+
+        specialinvoke $r11.<com.android.server.display.AutomaticBrightnessController$2: void <init>(com.android.server.display.AutomaticBrightnessController)>(r0);
+
+        r0.<com.android.server.display.AutomaticBrightnessController: android.hardware.SensorEventListener mLightSensorListener> = $r11;
+
+        r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.AutomaticBrightnessController$Injector mInjector> = r1;
+
+        r0.<com.android.server.display.AutomaticBrightnessController: android.content.Context mContext> = r9;
+
+        r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.AutomaticBrightnessController$Callbacks mCallbacks> = r2;
+
+        r0.<com.android.server.display.AutomaticBrightnessController: android.hardware.SensorManager mSensorManager> = r4;
+
+        r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.BrightnessMappingStrategy mBrightnessMapper> = r6;
+
+        r0.<com.android.server.display.AutomaticBrightnessController: float mScreenBrightnessRangeMinimum> = f0;
+
+        r0.<com.android.server.display.AutomaticBrightnessController: float mScreenBrightnessRangeMaximum> = f1;
+
+        r0.<com.android.server.display.AutomaticBrightnessController: int mLightSensorWarmUpTimeConfig> = i0;
+
+        r0.<com.android.server.display.AutomaticBrightnessController: float mDozeScaleFactor> = f2;
+
+        r0.<com.android.server.display.AutomaticBrightnessController: int mNormalLightSensorRate> = i1;
+
+        r0.<com.android.server.display.AutomaticBrightnessController: int mInitialLightSensorRate> = i2;
+
+        r0.<com.android.server.display.AutomaticBrightnessController: int mCurrentLightSensorRate> = -1;
+
+        r0.<com.android.server.display.AutomaticBrightnessController: long mBrighteningLightDebounceConfig> = l3;
+
+        r0.<com.android.server.display.AutomaticBrightnessController: long mDarkeningLightDebounceConfig> = l4;
+
+        r0.<com.android.server.display.AutomaticBrightnessController: boolean mResetAmbientLuxAfterWarmUpConfig> = z0;
+
+        r0.<com.android.server.display.AutomaticBrightnessController: int mAmbientLightHorizon> = 10000;
+
+        r0.<com.android.server.display.AutomaticBrightnessController: int mWeightingIntercept> = 10000;
+
+        r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.HysteresisLevels mAmbientBrightnessThresholds> = r7;
+
+        r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.HysteresisLevels mScreenBrightnessThresholds> = r8;
+
+        r0.<com.android.server.display.AutomaticBrightnessController: boolean mShortTermModelValid> = 1;
+
+        r0.<com.android.server.display.AutomaticBrightnessController: float mShortTermModelAnchor> = -1.0F;
+
+        r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.DisplayDeviceConfig mDisplayDeviceConfig> = r10;
+
+        $r12 = new com.android.server.display.AutomaticBrightnessController$AutomaticBrightnessHandler;
+
+        specialinvoke $r12.<com.android.server.display.AutomaticBrightnessController$AutomaticBrightnessHandler: void <init>(com.android.server.display.AutomaticBrightnessController,android.os.Looper)>(r0, r3);
+
+        r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.AutomaticBrightnessController$AutomaticBrightnessHandler mHandler> = $r12;
+
+        $r13 = new com.android.server.display.AutomaticBrightnessController$AmbientLightRingBuffer;
+
+        $i5 = r0.<com.android.server.display.AutomaticBrightnessController: int mNormalLightSensorRate>;
+
+        $l7 = (long) $i5;
+
+        $i6 = r0.<com.android.server.display.AutomaticBrightnessController: int mAmbientLightHorizon>;
+
+        specialinvoke $r13.<com.android.server.display.AutomaticBrightnessController$AmbientLightRingBuffer: void <init>(long,int)>($l7, $i6);
+
+        r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.AutomaticBrightnessController$AmbientLightRingBuffer mAmbientLightRingBuffer> = $r13;
+
+        r0.<com.android.server.display.AutomaticBrightnessController: android.hardware.Sensor mLightSensor> = r5;
+
+        $r14 = staticinvoke <android.app.ActivityTaskManager: android.app.IActivityTaskManager getService()>();
+
+        r0.<com.android.server.display.AutomaticBrightnessController: android.app.IActivityTaskManager mActivityTaskManager> = $r14;
+
+        $r15 = r0.<com.android.server.display.AutomaticBrightnessController: android.content.Context mContext>;
+
+        $r16 = virtualinvoke $r15.<android.content.Context: android.content.pm.PackageManager getPackageManager()>();
+
+        r0.<com.android.server.display.AutomaticBrightnessController: android.content.pm.PackageManager mPackageManager> = $r16;
+
+        $r17 = new com.android.server.display.AutomaticBrightnessController$TaskStackListenerImpl;
+
+        specialinvoke $r17.<com.android.server.display.AutomaticBrightnessController$TaskStackListenerImpl: void <init>(com.android.server.display.AutomaticBrightnessController)>(r0);
+
+        r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.AutomaticBrightnessController$TaskStackListenerImpl mTaskStackListener> = $r17;
+
+        r0.<com.android.server.display.AutomaticBrightnessController: java.lang.String mForegroundAppPackageName> = null;
+
+        r0.<com.android.server.display.AutomaticBrightnessController: java.lang.String mPendingForegroundAppPackageName> = null;
+
+        r0.<com.android.server.display.AutomaticBrightnessController: int mForegroundAppCategory> = -1;
+
+        r0.<com.android.server.display.AutomaticBrightnessController: int mPendingForegroundAppCategory> = -1;
+
+        return;
+    }
+
+    static android.app.IActivityTaskManager access$000(com.android.server.display.AutomaticBrightnessController)
+    {
+        com.android.server.display.AutomaticBrightnessController r0;
+        android.app.IActivityTaskManager $r1;
+
+        r0 := @parameter0: com.android.server.display.AutomaticBrightnessController;
+
+        $r1 = r0.<com.android.server.display.AutomaticBrightnessController: android.app.IActivityTaskManager mActivityTaskManager>;
+
+        return $r1;
+    }
+
+    static java.lang.String access$100(com.android.server.display.AutomaticBrightnessController)
+    {
+        com.android.server.display.AutomaticBrightnessController r0;
+        java.lang.String $r1;
+
+        r0 := @parameter0: com.android.server.display.AutomaticBrightnessController;
+
+        $r1 = r0.<com.android.server.display.AutomaticBrightnessController: java.lang.String mForegroundAppPackageName>;
+
+        return $r1;
+    }
+
+    static void access$1000(com.android.server.display.AutomaticBrightnessController)
+    {
+        com.android.server.display.AutomaticBrightnessController r0;
+
+        r0 := @parameter0: com.android.server.display.AutomaticBrightnessController;
+
+        specialinvoke r0.<com.android.server.display.AutomaticBrightnessController: void updateForegroundAppSync()>();
+
+        return;
+    }
+
+    static boolean access$1100(com.android.server.display.AutomaticBrightnessController)
+    {
+        com.android.server.display.AutomaticBrightnessController r0;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.server.display.AutomaticBrightnessController;
+
+        $z0 = r0.<com.android.server.display.AutomaticBrightnessController: boolean mLightSensorEnabled>;
+
+        return $z0;
+    }
+
+    static void access$1200(com.android.server.display.AutomaticBrightnessController, long, float)
+    {
+        com.android.server.display.AutomaticBrightnessController r0;
+        long l0;
+        float f0;
+
+        r0 := @parameter0: com.android.server.display.AutomaticBrightnessController;
+
+        l0 := @parameter1: long;
+
+        f0 := @parameter2: float;
+
+        specialinvoke r0.<com.android.server.display.AutomaticBrightnessController: void handleLightSensorEvent(long,float)>(l0, f0);
+
+        return;
+    }
+
+    static java.lang.String access$202(com.android.server.display.AutomaticBrightnessController, java.lang.String)
+    {
+        com.android.server.display.AutomaticBrightnessController r0;
+        java.lang.String r1;
+
+        r0 := @parameter0: com.android.server.display.AutomaticBrightnessController;
+
+        r1 := @parameter1: java.lang.String;
+
+        r0.<com.android.server.display.AutomaticBrightnessController: java.lang.String mPendingForegroundAppPackageName> = r1;
+
+        return r1;
+    }
+
+    static int access$302(com.android.server.display.AutomaticBrightnessController, int)
+    {
+        com.android.server.display.AutomaticBrightnessController r0;
+        int i0;
+
+        r0 := @parameter0: com.android.server.display.AutomaticBrightnessController;
+
+        i0 := @parameter1: int;
+
+        r0.<com.android.server.display.AutomaticBrightnessController: int mPendingForegroundAppCategory> = i0;
+
+        return i0;
+    }
+
+    static android.content.pm.PackageManager access$400(com.android.server.display.AutomaticBrightnessController)
+    {
+        com.android.server.display.AutomaticBrightnessController r0;
+        android.content.pm.PackageManager $r1;
+
+        r0 := @parameter0: com.android.server.display.AutomaticBrightnessController;
+
+        $r1 = r0.<com.android.server.display.AutomaticBrightnessController: android.content.pm.PackageManager mPackageManager>;
+
+        return $r1;
+    }
+
+    static com.android.server.display.AutomaticBrightnessController$AutomaticBrightnessHandler access$500(com.android.server.display.AutomaticBrightnessController)
+    {
+        com.android.server.display.AutomaticBrightnessController r0;
+        com.android.server.display.AutomaticBrightnessController$AutomaticBrightnessHandler $r1;
+
+        r0 := @parameter0: com.android.server.display.AutomaticBrightnessController;
+
+        $r1 = r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.AutomaticBrightnessController$AutomaticBrightnessHandler mHandler>;
+
+        return $r1;
+    }
+
+    static void access$600(com.android.server.display.AutomaticBrightnessController)
+    {
+        com.android.server.display.AutomaticBrightnessController r0;
+
+        r0 := @parameter0: com.android.server.display.AutomaticBrightnessController;
+
+        specialinvoke r0.<com.android.server.display.AutomaticBrightnessController: void updateAmbientLux()>();
+
+        return;
+    }
+
+    static void access$700(com.android.server.display.AutomaticBrightnessController)
+    {
+        com.android.server.display.AutomaticBrightnessController r0;
+
+        r0 := @parameter0: com.android.server.display.AutomaticBrightnessController;
+
+        specialinvoke r0.<com.android.server.display.AutomaticBrightnessController: void collectBrightnessAdjustmentSample()>();
+
+        return;
+    }
+
+    static void access$800(com.android.server.display.AutomaticBrightnessController)
+    {
+        com.android.server.display.AutomaticBrightnessController r0;
+
+        r0 := @parameter0: com.android.server.display.AutomaticBrightnessController;
+
+        specialinvoke r0.<com.android.server.display.AutomaticBrightnessController: void invalidateShortTermModel()>();
+
+        return;
+    }
+
+    static void access$900(com.android.server.display.AutomaticBrightnessController)
+    {
+        com.android.server.display.AutomaticBrightnessController r0;
+
+        r0 := @parameter0: com.android.server.display.AutomaticBrightnessController;
+
+        specialinvoke r0.<com.android.server.display.AutomaticBrightnessController: void updateForegroundApp()>();
+
+        return;
+    }
+
+    private void adjustLightSensorRate(int)
+    {
+        com.android.server.display.AutomaticBrightnessController r0;
+        int i0, $i1, $i2, $i3;
+        boolean $z0;
+        android.hardware.SensorEventListener $r2, $r6;
+        android.hardware.SensorManager $r3, $r7;
+        com.android.server.display.AutomaticBrightnessController$AutomaticBrightnessHandler $r4;
+        android.hardware.Sensor $r5;
+        java.lang.StringBuilder $r8;
+        java.lang.String $r13;
+
+        r0 := @this: com.android.server.display.AutomaticBrightnessController;
+
+        i0 := @parameter0: int;
+
+        $i1 = r0.<com.android.server.display.AutomaticBrightnessController: int mCurrentLightSensorRate>;
+
+        if i0 == $i1 goto label2;
+
+        $z0 = r0.<com.android.server.display.AutomaticBrightnessController: boolean mLoggingEnabled>;
+
+        if $z0 == 0 goto label1;
+
+        $r8 = new java.lang.StringBuilder;
+
+        specialinvoke $r8.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("adjustLightSensorRate: previousRate=");
+
+        $i3 = r0.<com.android.server.display.AutomaticBrightnessController: int mCurrentLightSensorRate>;
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i3);
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", currentRate=");
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r13 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("AutomaticBrightnessController", $r13);
+
+     label1:
+        r0.<com.android.server.display.AutomaticBrightnessController: int mCurrentLightSensorRate> = i0;
+
+        $r3 = r0.<com.android.server.display.AutomaticBrightnessController: android.hardware.SensorManager mSensorManager>;
+
+        $r2 = r0.<com.android.server.display.AutomaticBrightnessController: android.hardware.SensorEventListener mLightSensorListener>;
+
+        virtualinvoke $r3.<android.hardware.SensorManager: void unregisterListener(android.hardware.SensorEventListener)>($r2);
+
+        $r7 = r0.<com.android.server.display.AutomaticBrightnessController: android.hardware.SensorManager mSensorManager>;
+
+        $r6 = r0.<com.android.server.display.AutomaticBrightnessController: android.hardware.SensorEventListener mLightSensorListener>;
+
+        $r5 = r0.<com.android.server.display.AutomaticBrightnessController: android.hardware.Sensor mLightSensor>;
+
+        $i2 = i0 * 1000;
+
+        $r4 = r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.AutomaticBrightnessController$AutomaticBrightnessHandler mHandler>;
+
+        virtualinvoke $r7.<android.hardware.SensorManager: boolean registerListener(android.hardware.SensorEventListener,android.hardware.Sensor,int,android.os.Handler)>($r6, $r5, $i2, $r4);
+
+     label2:
+        return;
+    }
+
+    private void applyLightSensorMeasurement(long, float)
+    {
+        com.android.server.display.AutomaticBrightnessController r0;
+        long l0, $l4, $l5;
+        float f0;
+        int $i1, $i2, $i3;
+        com.android.server.display.AutomaticBrightnessController$AmbientLightRingBuffer $r1, $r2;
+
+        r0 := @this: com.android.server.display.AutomaticBrightnessController;
+
+        l0 := @parameter0: long;
+
+        f0 := @parameter1: float;
+
+        $i1 = r0.<com.android.server.display.AutomaticBrightnessController: int mRecentLightSamples>;
+
+        $i2 = $i1 + 1;
+
+        r0.<com.android.server.display.AutomaticBrightnessController: int mRecentLightSamples> = $i2;
+
+        $r1 = r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.AutomaticBrightnessController$AmbientLightRingBuffer mAmbientLightRingBuffer>;
+
+        $i3 = r0.<com.android.server.display.AutomaticBrightnessController: int mAmbientLightHorizon>;
+
+        $l4 = (long) $i3;
+
+        $l5 = l0 - $l4;
+
+        virtualinvoke $r1.<com.android.server.display.AutomaticBrightnessController$AmbientLightRingBuffer: void prune(long)>($l5);
+
+        $r2 = r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.AutomaticBrightnessController$AmbientLightRingBuffer mAmbientLightRingBuffer>;
+
+        virtualinvoke $r2.<com.android.server.display.AutomaticBrightnessController$AmbientLightRingBuffer: void push(long,float)>(l0, f0);
+
+        r0.<com.android.server.display.AutomaticBrightnessController: float mLastObservedLux> = f0;
+
+        r0.<com.android.server.display.AutomaticBrightnessController: long mLastObservedLuxTime> = l0;
+
+        return;
+    }
+
+    private float calculateAmbientLux(long, long)
+    {
+        com.android.server.display.AutomaticBrightnessController r0;
+        long l0, l2, $l7, $l10, l14, l17, l19, l21, l22;
+        int i1, $i3, $i9, i16, i18, i20;
+        float f0, f1, $f2, $f3, $f4, $f5, f6, f7;
+        boolean $z0, $z1, $z2, $z3;
+        com.android.server.display.AutomaticBrightnessController$AmbientLightRingBuffer $r1, $r8, $r23, $r26, $r30, $r40;
+        java.lang.StringBuilder $r2, $r9, $r19, $r31;
+        java.lang.String $r7, $r18, $r29, $r37;
+        byte $b6, $b11;
+
+        r0 := @this: com.android.server.display.AutomaticBrightnessController;
+
+        l0 := @parameter0: long;
+
+        l14 := @parameter1: long;
+
+        $z0 = r0.<com.android.server.display.AutomaticBrightnessController: boolean mLoggingEnabled>;
+
+        if $z0 == 0 goto label01;
+
+        $r31 = new java.lang.StringBuilder;
+
+        specialinvoke $r31.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r31.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("calculateAmbientLux(");
+
+        virtualinvoke $r31.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>(l0);
+
+        virtualinvoke $r31.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", ");
+
+        virtualinvoke $r31.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>(l14);
+
+        virtualinvoke $r31.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(")");
+
+        $r37 = virtualinvoke $r31.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("AutomaticBrightnessController", $r37);
+
+     label01:
+        $r1 = r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.AutomaticBrightnessController$AmbientLightRingBuffer mAmbientLightRingBuffer>;
+
+        i1 = virtualinvoke $r1.<com.android.server.display.AutomaticBrightnessController$AmbientLightRingBuffer: int size()>();
+
+        if i1 != 0 goto label02;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("AutomaticBrightnessController", "calculateAmbientLux: No ambient light readings available");
+
+        return -1.0F;
+
+     label02:
+        i16 = 0;
+
+        l17 = l0 - l14;
+
+        i18 = 0;
+
+     label03:
+        $i3 = i1 - 1;
+
+        if i18 >= $i3 goto label04;
+
+        $r30 = r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.AutomaticBrightnessController$AmbientLightRingBuffer mAmbientLightRingBuffer>;
+
+        $i9 = i18 + 1;
+
+        $l10 = virtualinvoke $r30.<com.android.server.display.AutomaticBrightnessController$AmbientLightRingBuffer: long getTime(int)>($i9);
+
+        $b11 = $l10 cmp l17;
+
+        if $b11 > 0 goto label04;
+
+        i16 = i16 + 1;
+
+        i18 = i18 + 1;
+
+        goto label03;
+
+     label04:
+        $z1 = r0.<com.android.server.display.AutomaticBrightnessController: boolean mLoggingEnabled>;
+
+        if $z1 == 0 goto label05;
+
+        $r19 = new java.lang.StringBuilder;
+
+        specialinvoke $r19.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("calculateAmbientLux: selected endIndex=");
+
+        virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i16);
+
+        virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", point=(");
+
+        $r23 = r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.AutomaticBrightnessController$AmbientLightRingBuffer mAmbientLightRingBuffer>;
+
+        $l7 = virtualinvoke $r23.<com.android.server.display.AutomaticBrightnessController$AmbientLightRingBuffer: long getTime(int)>(i16);
+
+        virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l7);
+
+        virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", ");
+
+        $r26 = r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.AutomaticBrightnessController$AmbientLightRingBuffer mAmbientLightRingBuffer>;
+
+        $f5 = virtualinvoke $r26.<com.android.server.display.AutomaticBrightnessController$AmbientLightRingBuffer: float getLux(int)>(i16);
+
+        virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(float)>($f5);
+
+        virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(")");
+
+        $r29 = virtualinvoke $r19.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("AutomaticBrightnessController", $r29);
+
+     label05:
+        f6 = 0.0F;
+
+        f7 = 0.0F;
+
+        l19 = 100L;
+
+        i20 = i1 - 1;
+
+     label06:
+        if i20 < i16 goto label09;
+
+        $r8 = r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.AutomaticBrightnessController$AmbientLightRingBuffer mAmbientLightRingBuffer>;
+
+        l2 = virtualinvoke $r8.<com.android.server.display.AutomaticBrightnessController$AmbientLightRingBuffer: long getTime(int)>(i20);
+
+        l21 = l2;
+
+        if i20 != i16 goto label07;
+
+        l21 = l2;
+
+        $b6 = l2 cmp l17;
+
+        if $b6 >= 0 goto label07;
+
+        l21 = l17;
+
+     label07:
+        l22 = l21 - l0;
+
+        f0 = specialinvoke r0.<com.android.server.display.AutomaticBrightnessController: float calculateWeight(long,long)>(l22, l19);
+
+        $r40 = r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.AutomaticBrightnessController$AmbientLightRingBuffer mAmbientLightRingBuffer>;
+
+        f1 = virtualinvoke $r40.<com.android.server.display.AutomaticBrightnessController$AmbientLightRingBuffer: float getLux(int)>(i20);
+
+        $z3 = r0.<com.android.server.display.AutomaticBrightnessController: boolean mLoggingEnabled>;
+
+        if $z3 == 0 goto label08;
+
+        $r9 = new java.lang.StringBuilder;
+
+        specialinvoke $r9.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("calculateAmbientLux: [");
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>(l22);
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", ");
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>(l19);
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("]: lux=");
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(float)>(f1);
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", weight=");
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(float)>(f0);
+
+        $r18 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("AutomaticBrightnessController", $r18);
+
+     label08:
+        f7 = f7 + f0;
+
+        $f4 = f1 * f0;
+
+        f6 = f6 + $f4;
+
+        l19 = l22;
+
+        i20 = i20 + -1;
+
+        goto label06;
+
+     label09:
+        $z2 = r0.<com.android.server.display.AutomaticBrightnessController: boolean mLoggingEnabled>;
+
+        if $z2 == 0 goto label10;
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("calculateAmbientLux: totalWeight=");
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(float)>(f7);
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", newAmbientLux=");
+
+        $f3 = f6 / f7;
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(float)>($f3);
+
+        $r7 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("AutomaticBrightnessController", $r7);
+
+     label10:
+        $f2 = f6 / f7;
+
+        return $f2;
+    }
+
+    private float calculateWeight(long, long)
+    {
+        com.android.server.display.AutomaticBrightnessController r0;
+        long l0, l1;
+        float $f0, $f1, $f2;
+
+        r0 := @this: com.android.server.display.AutomaticBrightnessController;
+
+        l0 := @parameter0: long;
+
+        l1 := @parameter1: long;
+
+        $f0 = specialinvoke r0.<com.android.server.display.AutomaticBrightnessController: float weightIntegral(long)>(l1);
+
+        $f1 = specialinvoke r0.<com.android.server.display.AutomaticBrightnessController: float weightIntegral(long)>(l0);
+
+        $f2 = $f0 - $f1;
+
+        return $f2;
+    }
+
+    private void cancelBrightnessAdjustmentSample()
+    {
+        com.android.server.display.AutomaticBrightnessController r0;
+        boolean $z0;
+        com.android.server.display.AutomaticBrightnessController$AutomaticBrightnessHandler $r1;
+
+        r0 := @this: com.android.server.display.AutomaticBrightnessController;
+
+        $z0 = r0.<com.android.server.display.AutomaticBrightnessController: boolean mBrightnessAdjustmentSamplePending>;
+
+        if $z0 == 0 goto label1;
+
+        r0.<com.android.server.display.AutomaticBrightnessController: boolean mBrightnessAdjustmentSamplePending> = 0;
+
+        $r1 = r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.AutomaticBrightnessController$AutomaticBrightnessHandler mHandler>;
+
+        virtualinvoke $r1.<com.android.server.display.AutomaticBrightnessController$AutomaticBrightnessHandler: void removeMessages(int)>(2);
+
+     label1:
+        return;
+    }
+
+    private float clampScreenBrightness(float)
+    {
+        com.android.server.display.AutomaticBrightnessController r0;
+        float f0, $f1, $f2, $f3;
+
+        r0 := @this: com.android.server.display.AutomaticBrightnessController;
+
+        f0 := @parameter0: float;
+
+        $f2 = r0.<com.android.server.display.AutomaticBrightnessController: float mScreenBrightnessRangeMinimum>;
+
+        $f1 = r0.<com.android.server.display.AutomaticBrightnessController: float mScreenBrightnessRangeMaximum>;
+
+        $f3 = staticinvoke <android.util.MathUtils: float constrain(float,float,float)>(f0, $f2, $f1);
+
+        return $f3;
+    }
+
+    private void collectBrightnessAdjustmentSample()
+    {
+        com.android.server.display.AutomaticBrightnessController r0;
+        float f0, $f1, $f2, $f3, $f4, $f5, $f6;
+        boolean $z0, $z1, $z2;
+        byte $b0, $b3;
+        java.lang.Object[] $r2;
+        java.lang.Float $r3, $r4, $r5, $r6;
+        java.lang.StringBuilder $r7;
+        com.android.server.display.AutomaticBrightnessController$AmbientLightRingBuffer $r13;
+        java.lang.String $r15;
+
+        r0 := @this: com.android.server.display.AutomaticBrightnessController;
+
+        $z0 = r0.<com.android.server.display.AutomaticBrightnessController: boolean mBrightnessAdjustmentSamplePending>;
+
+        if $z0 == 0 goto label3;
+
+        r0.<com.android.server.display.AutomaticBrightnessController: boolean mBrightnessAdjustmentSamplePending> = 0;
+
+        $z1 = r0.<com.android.server.display.AutomaticBrightnessController: boolean mAmbientLuxValid>;
+
+        if $z1 == 0 goto label3;
+
+        f0 = r0.<com.android.server.display.AutomaticBrightnessController: float mScreenAutoBrightness>;
+
+        $b0 = f0 cmpl 0.0F;
+
+        if $b0 >= 0 goto label1;
+
+        $b3 = f0 cmpl -1.0F;
+
+        if $b3 != 0 goto label3;
+
+     label1:
+        $z2 = r0.<com.android.server.display.AutomaticBrightnessController: boolean mLoggingEnabled>;
+
+        if $z2 == 0 goto label2;
+
+        $r7 = new java.lang.StringBuilder;
+
+        specialinvoke $r7.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Auto-brightness adjustment changed by user: lux=");
+
+        $f5 = r0.<com.android.server.display.AutomaticBrightnessController: float mAmbientLux>;
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(float)>($f5);
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", brightness=");
+
+        $f6 = r0.<com.android.server.display.AutomaticBrightnessController: float mScreenAutoBrightness>;
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(float)>($f6);
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", ring=");
+
+        $r13 = r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.AutomaticBrightnessController$AmbientLightRingBuffer mAmbientLightRingBuffer>;
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r13);
+
+        $r15 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("AutomaticBrightnessController", $r15);
+
+     label2:
+        $r2 = newarray (java.lang.Object)[4];
+
+        $f1 = r0.<com.android.server.display.AutomaticBrightnessController: float mBrightnessAdjustmentSampleOldLux>;
+
+        $r3 = staticinvoke <java.lang.Float: java.lang.Float valueOf(float)>($f1);
+
+        $r2[0] = $r3;
+
+        $f2 = r0.<com.android.server.display.AutomaticBrightnessController: float mBrightnessAdjustmentSampleOldBrightness>;
+
+        $r4 = staticinvoke <java.lang.Float: java.lang.Float valueOf(float)>($f2);
+
+        $r2[1] = $r4;
+
+        $f3 = r0.<com.android.server.display.AutomaticBrightnessController: float mAmbientLux>;
+
+        $r5 = staticinvoke <java.lang.Float: java.lang.Float valueOf(float)>($f3);
+
+        $r2[2] = $r5;
+
+        $f4 = r0.<com.android.server.display.AutomaticBrightnessController: float mScreenAutoBrightness>;
+
+        $r6 = staticinvoke <java.lang.Float: java.lang.Float valueOf(float)>($f4);
+
+        $r2[3] = $r6;
+
+        staticinvoke <android.util.EventLog: int writeEvent(int,java.lang.Object[])>(35000, $r2);
+
+     label3:
+        return;
+    }
+
+    private void handleLightSensorEvent(long, float)
+    {
+        com.android.server.display.AutomaticBrightnessController r0;
+        long l0;
+        float f0;
+        int $i1, $i2, $i3;
+        com.android.server.display.AutomaticBrightnessController$AutomaticBrightnessHandler $r1;
+        com.android.server.display.AutomaticBrightnessController$AmbientLightRingBuffer $r2;
+
+        r0 := @this: com.android.server.display.AutomaticBrightnessController;
+
+        l0 := @parameter0: long;
+
+        f0 := @parameter1: float;
+
+        $i1 = (int) f0;
+
+        staticinvoke <android.os.Trace: void traceCounter(long,java.lang.String,int)>(131072L, "ALS", $i1);
+
+        $r1 = r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.AutomaticBrightnessController$AutomaticBrightnessHandler mHandler>;
+
+        virtualinvoke $r1.<com.android.server.display.AutomaticBrightnessController$AutomaticBrightnessHandler: void removeMessages(int)>(1);
+
+        $r2 = r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.AutomaticBrightnessController$AmbientLightRingBuffer mAmbientLightRingBuffer>;
+
+        $i2 = virtualinvoke $r2.<com.android.server.display.AutomaticBrightnessController$AmbientLightRingBuffer: int size()>();
+
+        if $i2 != 0 goto label1;
+
+        $i3 = r0.<com.android.server.display.AutomaticBrightnessController: int mNormalLightSensorRate>;
+
+        specialinvoke r0.<com.android.server.display.AutomaticBrightnessController: void adjustLightSensorRate(int)>($i3);
+
+     label1:
+        specialinvoke r0.<com.android.server.display.AutomaticBrightnessController: void applyLightSensorMeasurement(long,float)>(l0, f0);
+
+        specialinvoke r0.<com.android.server.display.AutomaticBrightnessController: void updateAmbientLux(long)>(l0);
+
+        return;
+    }
+
+    private void invalidateShortTermModel()
+    {
+        com.android.server.display.AutomaticBrightnessController r0;
+        boolean $z0;
+
+        r0 := @this: com.android.server.display.AutomaticBrightnessController;
+
+        $z0 = r0.<com.android.server.display.AutomaticBrightnessController: boolean mLoggingEnabled>;
+
+        if $z0 == 0 goto label1;
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("AutomaticBrightnessController", "ShortTermModel: invalidate user data");
+
+     label1:
+        r0.<com.android.server.display.AutomaticBrightnessController: boolean mShortTermModelValid> = 0;
+
+        return;
+    }
+
+    private static boolean isInteractivePolicy(int)
+    {
+        int i0;
+        boolean z0;
+
+        i0 := @parameter0: int;
+
+        if i0 == 3 goto label2;
+
+        if i0 == 2 goto label2;
+
+        if i0 != 4 goto label1;
+
+        goto label2;
+
+     label1:
+        z0 = 0;
+
+        goto label3;
+
+     label2:
+        z0 = 1;
+
+     label3:
+        return z0;
+    }
+
+    private long nextAmbientLightBrighteningTransition(long)
+    {
+        com.android.server.display.AutomaticBrightnessController r0;
+        com.android.server.display.AutomaticBrightnessController$AmbientLightRingBuffer $r1, $r2, $r3;
+        long $l0, $l1, l3;
+        float $f0, $f1;
+        byte $b2;
+        int i4, i5;
+
+        r0 := @this: com.android.server.display.AutomaticBrightnessController;
+
+        l3 := @parameter0: long;
+
+        $r1 = r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.AutomaticBrightnessController$AmbientLightRingBuffer mAmbientLightRingBuffer>;
+
+        i4 = virtualinvoke $r1.<com.android.server.display.AutomaticBrightnessController$AmbientLightRingBuffer: int size()>();
+
+        i5 = i4 + -1;
+
+     label1:
+        if i5 < 0 goto label3;
+
+        $r2 = r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.AutomaticBrightnessController$AmbientLightRingBuffer mAmbientLightRingBuffer>;
+
+        $f0 = virtualinvoke $r2.<com.android.server.display.AutomaticBrightnessController$AmbientLightRingBuffer: float getLux(int)>(i5);
+
+        $f1 = r0.<com.android.server.display.AutomaticBrightnessController: float mAmbientBrighteningThreshold>;
+
+        $b2 = $f0 cmpg $f1;
+
+        if $b2 > 0 goto label2;
+
+        goto label3;
+
+     label2:
+        $r3 = r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.AutomaticBrightnessController$AmbientLightRingBuffer mAmbientLightRingBuffer>;
+
+        l3 = virtualinvoke $r3.<com.android.server.display.AutomaticBrightnessController$AmbientLightRingBuffer: long getTime(int)>(i5);
+
+        i5 = i5 + -1;
+
+        goto label1;
+
+     label3:
+        $l0 = r0.<com.android.server.display.AutomaticBrightnessController: long mBrighteningLightDebounceConfig>;
+
+        $l1 = $l0 + l3;
+
+        return $l1;
+    }
+
+    private long nextAmbientLightDarkeningTransition(long)
+    {
+        com.android.server.display.AutomaticBrightnessController r0;
+        com.android.server.display.AutomaticBrightnessController$AmbientLightRingBuffer $r1, $r2, $r3;
+        long $l0, $l1, l3;
+        float $f0, $f1;
+        byte $b2;
+        int i4, i5;
+
+        r0 := @this: com.android.server.display.AutomaticBrightnessController;
+
+        l3 := @parameter0: long;
+
+        $r1 = r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.AutomaticBrightnessController$AmbientLightRingBuffer mAmbientLightRingBuffer>;
+
+        i4 = virtualinvoke $r1.<com.android.server.display.AutomaticBrightnessController$AmbientLightRingBuffer: int size()>();
+
+        i5 = i4 + -1;
+
+     label1:
+        if i5 < 0 goto label3;
+
+        $r2 = r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.AutomaticBrightnessController$AmbientLightRingBuffer mAmbientLightRingBuffer>;
+
+        $f0 = virtualinvoke $r2.<com.android.server.display.AutomaticBrightnessController$AmbientLightRingBuffer: float getLux(int)>(i5);
+
+        $f1 = r0.<com.android.server.display.AutomaticBrightnessController: float mAmbientDarkeningThreshold>;
+
+        $b2 = $f0 cmpl $f1;
+
+        if $b2 < 0 goto label2;
+
+        goto label3;
+
+     label2:
+        $r3 = r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.AutomaticBrightnessController$AmbientLightRingBuffer mAmbientLightRingBuffer>;
+
+        l3 = virtualinvoke $r3.<com.android.server.display.AutomaticBrightnessController$AmbientLightRingBuffer: long getTime(int)>(i5);
+
+        i5 = i5 + -1;
+
+        goto label1;
+
+     label3:
+        $l0 = r0.<com.android.server.display.AutomaticBrightnessController: long mDarkeningLightDebounceConfig>;
+
+        $l1 = $l0 + l3;
+
+        return $l1;
+    }
+
+    private void prepareBrightnessAdjustmentSample()
+    {
+        com.android.server.display.AutomaticBrightnessController r0;
+        boolean $z0, $z2;
+        com.android.server.display.AutomaticBrightnessController$AutomaticBrightnessHandler $r1, $r2;
+        float $f0, f1;
+
+        r0 := @this: com.android.server.display.AutomaticBrightnessController;
+
+        $z0 = r0.<com.android.server.display.AutomaticBrightnessController: boolean mBrightnessAdjustmentSamplePending>;
+
+        if $z0 != 0 goto label3;
+
+        r0.<com.android.server.display.AutomaticBrightnessController: boolean mBrightnessAdjustmentSamplePending> = 1;
+
+        $z2 = r0.<com.android.server.display.AutomaticBrightnessController: boolean mAmbientLuxValid>;
+
+        if $z2 == 0 goto label1;
+
+        f1 = r0.<com.android.server.display.AutomaticBrightnessController: float mAmbientLux>;
+
+        goto label2;
+
+     label1:
+        f1 = -1.0F;
+
+     label2:
+        r0.<com.android.server.display.AutomaticBrightnessController: float mBrightnessAdjustmentSampleOldLux> = f1;
+
+        $f0 = r0.<com.android.server.display.AutomaticBrightnessController: float mScreenAutoBrightness>;
+
+        r0.<com.android.server.display.AutomaticBrightnessController: float mBrightnessAdjustmentSampleOldBrightness> = $f0;
+
+        goto label4;
+
+     label3:
+        $r1 = r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.AutomaticBrightnessController$AutomaticBrightnessHandler mHandler>;
+
+        virtualinvoke $r1.<com.android.server.display.AutomaticBrightnessController$AutomaticBrightnessHandler: void removeMessages(int)>(2);
+
+     label4:
+        $r2 = r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.AutomaticBrightnessController$AutomaticBrightnessHandler mHandler>;
+
+        virtualinvoke $r2.<com.android.server.display.AutomaticBrightnessController$AutomaticBrightnessHandler: boolean sendEmptyMessageDelayed(int,long)>(2, 10000L);
+
+        return;
+    }
+
+    private void registerForegroundAppUpdater()
+    {
+        com.android.server.display.AutomaticBrightnessController r0;
+        com.android.server.display.AutomaticBrightnessController$TaskStackListenerImpl $r3;
+        android.app.IActivityTaskManager $r4;
+        android.os.RemoteException $r5;
+        boolean $z0;
+        java.lang.StringBuilder $r6;
+        java.lang.String $r9;
+
+        r0 := @this: com.android.server.display.AutomaticBrightnessController;
+
+     label1:
+        $r4 = r0.<com.android.server.display.AutomaticBrightnessController: android.app.IActivityTaskManager mActivityTaskManager>;
+
+        $r3 = r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.AutomaticBrightnessController$TaskStackListenerImpl mTaskStackListener>;
+
+        interfaceinvoke $r4.<android.app.IActivityTaskManager: void registerTaskStackListener(android.app.ITaskStackListener)>($r3);
+
+        specialinvoke r0.<com.android.server.display.AutomaticBrightnessController: void updateForegroundApp()>();
+
+     label2:
+        goto label4;
+
+     label3:
+        $r5 := @caughtexception;
+
+        $z0 = r0.<com.android.server.display.AutomaticBrightnessController: boolean mLoggingEnabled>;
+
+        if $z0 == 0 goto label4;
+
+        $r6 = new java.lang.StringBuilder;
+
+        specialinvoke $r6.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Failed to register foreground app updater: ");
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r5);
+
+        $r9 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("AutomaticBrightnessController", $r9);
+
+     label4:
+        return;
+
+        catch android.os.RemoteException from label1 to label2 with label3;
+    }
+
+    private void setAmbientLux(float)
+    {
+        com.android.server.display.AutomaticBrightnessController r0;
+        boolean $z0, $z1, $z2;
+        byte $b0, $b1;
+        com.android.server.display.HysteresisLevels $r2, $r3;
+        float $f0, $f1, $f2, f3, f4, f5;
+        com.android.server.display.BrightnessMappingStrategy $r4;
+        java.lang.StringBuilder $r5;
+        java.lang.String $r9;
+
+        r0 := @this: com.android.server.display.AutomaticBrightnessController;
+
+        f3 := @parameter0: float;
+
+        $z0 = r0.<com.android.server.display.AutomaticBrightnessController: boolean mLoggingEnabled>;
+
+        if $z0 == 0 goto label1;
+
+        $r5 = new java.lang.StringBuilder;
+
+        specialinvoke $r5.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("setAmbientLux(");
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(float)>(f3);
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(")");
+
+        $r9 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("AutomaticBrightnessController", $r9);
+
+     label1:
+        f4 = f3;
+
+        $b0 = f3 cmpg 0.0F;
+
+        if $b0 >= 0 goto label2;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("AutomaticBrightnessController", "Ambient lux was negative, ignoring and setting to 0");
+
+        f4 = 0.0F;
+
+     label2:
+        r0.<com.android.server.display.AutomaticBrightnessController: float mAmbientLux> = f4;
+
+        $r2 = r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.HysteresisLevels mAmbientBrightnessThresholds>;
+
+        $f0 = virtualinvoke $r2.<com.android.server.display.HysteresisLevels: float getBrighteningThreshold(float)>(f4);
+
+        r0.<com.android.server.display.AutomaticBrightnessController: float mAmbientBrighteningThreshold> = $f0;
+
+        $r3 = r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.HysteresisLevels mAmbientBrightnessThresholds>;
+
+        $f1 = virtualinvoke $r3.<com.android.server.display.HysteresisLevels: float getDarkeningThreshold(float)>(f4);
+
+        r0.<com.android.server.display.AutomaticBrightnessController: float mAmbientDarkeningThreshold> = $f1;
+
+        $z1 = r0.<com.android.server.display.AutomaticBrightnessController: boolean mShortTermModelValid>;
+
+        if $z1 != 0 goto label4;
+
+        f5 = r0.<com.android.server.display.AutomaticBrightnessController: float mShortTermModelAnchor>;
+
+        $b1 = f5 cmpl -1.0F;
+
+        if $b1 == 0 goto label4;
+
+        $r4 = r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.BrightnessMappingStrategy mBrightnessMapper>;
+
+        $f2 = r0.<com.android.server.display.AutomaticBrightnessController: float mAmbientLux>;
+
+        $z2 = virtualinvoke $r4.<com.android.server.display.BrightnessMappingStrategy: boolean shouldResetShortTermModel(float,float)>($f2, f5);
+
+        if $z2 == 0 goto label3;
+
+        virtualinvoke r0.<com.android.server.display.AutomaticBrightnessController: void resetShortTermModel()>();
+
+        goto label4;
+
+     label3:
+        r0.<com.android.server.display.AutomaticBrightnessController: boolean mShortTermModelValid> = 1;
+
+     label4:
+        return;
+    }
+
+    private boolean setAutoBrightnessAdjustment(float)
+    {
+        com.android.server.display.AutomaticBrightnessController r0;
+        float f0;
+        com.android.server.display.BrightnessMappingStrategy $r1;
+        boolean $z0;
+
+        r0 := @this: com.android.server.display.AutomaticBrightnessController;
+
+        f0 := @parameter0: float;
+
+        $r1 = r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.BrightnessMappingStrategy mBrightnessMapper>;
+
+        $z0 = virtualinvoke $r1.<com.android.server.display.BrightnessMappingStrategy: boolean setAutoBrightnessAdjustment(float)>(f0);
+
+        return $z0;
+    }
+
+    private boolean setDisplayPolicy(int)
+    {
+        com.android.server.display.AutomaticBrightnessController r0;
+        int i0, i1, $i2;
+        boolean $z0, $z1, $z2, $z3, $z4;
+        com.android.server.display.AutomaticBrightnessController$AutomaticBrightnessHandler $r2, $r4;
+        com.android.server.display.BrightnessMappingStrategy $r3;
+        long $l3;
+        java.lang.StringBuilder $r5;
+        java.lang.String $r10;
+
+        r0 := @this: com.android.server.display.AutomaticBrightnessController;
+
+        i0 := @parameter0: int;
+
+        $i2 = r0.<com.android.server.display.AutomaticBrightnessController: int mDisplayPolicy>;
+
+        if $i2 != i0 goto label1;
+
+        return 0;
+
+     label1:
+        i1 = r0.<com.android.server.display.AutomaticBrightnessController: int mDisplayPolicy>;
+
+        r0.<com.android.server.display.AutomaticBrightnessController: int mDisplayPolicy> = i0;
+
+        $z0 = r0.<com.android.server.display.AutomaticBrightnessController: boolean mLoggingEnabled>;
+
+        if $z0 == 0 goto label2;
+
+        $r5 = new java.lang.StringBuilder;
+
+        specialinvoke $r5.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Display policy transitioning from ");
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i1);
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" to ");
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r10 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("AutomaticBrightnessController", $r10);
+
+     label2:
+        $z1 = staticinvoke <com.android.server.display.AutomaticBrightnessController: boolean isInteractivePolicy(int)>(i0);
+
+        if $z1 != 0 goto label3;
+
+        $z4 = staticinvoke <com.android.server.display.AutomaticBrightnessController: boolean isInteractivePolicy(int)>(i1);
+
+        if $z4 == 0 goto label3;
+
+        $r4 = r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.AutomaticBrightnessController$AutomaticBrightnessHandler mHandler>;
+
+        $r3 = r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.BrightnessMappingStrategy mBrightnessMapper>;
+
+        $l3 = virtualinvoke $r3.<com.android.server.display.BrightnessMappingStrategy: long getShortTermModelTimeout()>();
+
+        virtualinvoke $r4.<com.android.server.display.AutomaticBrightnessController$AutomaticBrightnessHandler: boolean sendEmptyMessageDelayed(int,long)>(3, $l3);
+
+        goto label4;
+
+     label3:
+        $z2 = staticinvoke <com.android.server.display.AutomaticBrightnessController: boolean isInteractivePolicy(int)>(i0);
+
+        if $z2 == 0 goto label4;
+
+        $z3 = staticinvoke <com.android.server.display.AutomaticBrightnessController: boolean isInteractivePolicy(int)>(i1);
+
+        if $z3 != 0 goto label4;
+
+        $r2 = r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.AutomaticBrightnessController$AutomaticBrightnessHandler mHandler>;
+
+        virtualinvoke $r2.<com.android.server.display.AutomaticBrightnessController$AutomaticBrightnessHandler: void removeMessages(int)>(3);
+
+     label4:
+        return 1;
+    }
+
+    private boolean setLightSensorEnabled(boolean)
+    {
+        com.android.server.display.AutomaticBrightnessController r0;
+        boolean z0, $z1, $z2, $z3, $z4;
+        com.android.server.display.AutomaticBrightnessController$AmbientLightRingBuffer $r1;
+        com.android.server.display.AutomaticBrightnessController$AutomaticBrightnessHandler $r2, $r5;
+        android.hardware.SensorEventListener $r3, $r7;
+        android.hardware.SensorManager $r4, $r8;
+        long $l0;
+        int $i1, $i2, $i3;
+        android.hardware.Sensor $r6;
+
+        r0 := @this: com.android.server.display.AutomaticBrightnessController;
+
+        z0 := @parameter0: boolean;
+
+        if z0 == 0 goto label1;
+
+        $z4 = r0.<com.android.server.display.AutomaticBrightnessController: boolean mLightSensorEnabled>;
+
+        if $z4 != 0 goto label2;
+
+        r0.<com.android.server.display.AutomaticBrightnessController: boolean mLightSensorEnabled> = 1;
+
+        $l0 = staticinvoke <android.os.SystemClock: long uptimeMillis()>();
+
+        r0.<com.android.server.display.AutomaticBrightnessController: long mLightSensorEnableTime> = $l0;
+
+        $i1 = r0.<com.android.server.display.AutomaticBrightnessController: int mInitialLightSensorRate>;
+
+        r0.<com.android.server.display.AutomaticBrightnessController: int mCurrentLightSensorRate> = $i1;
+
+        specialinvoke r0.<com.android.server.display.AutomaticBrightnessController: void registerForegroundAppUpdater()>();
+
+        $r8 = r0.<com.android.server.display.AutomaticBrightnessController: android.hardware.SensorManager mSensorManager>;
+
+        $r7 = r0.<com.android.server.display.AutomaticBrightnessController: android.hardware.SensorEventListener mLightSensorListener>;
+
+        $r6 = r0.<com.android.server.display.AutomaticBrightnessController: android.hardware.Sensor mLightSensor>;
+
+        $i2 = r0.<com.android.server.display.AutomaticBrightnessController: int mCurrentLightSensorRate>;
+
+        $i3 = $i2 * 1000;
+
+        $r5 = r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.AutomaticBrightnessController$AutomaticBrightnessHandler mHandler>;
+
+        virtualinvoke $r8.<android.hardware.SensorManager: boolean registerListener(android.hardware.SensorEventListener,android.hardware.Sensor,int,android.os.Handler)>($r7, $r6, $i3, $r5);
+
+        return 1;
+
+     label1:
+        $z1 = r0.<com.android.server.display.AutomaticBrightnessController: boolean mLightSensorEnabled>;
+
+        if $z1 == 0 goto label2;
+
+        r0.<com.android.server.display.AutomaticBrightnessController: boolean mLightSensorEnabled> = 0;
+
+        $z2 = r0.<com.android.server.display.AutomaticBrightnessController: boolean mResetAmbientLuxAfterWarmUpConfig>;
+
+        $z3 = $z2 ^ 1;
+
+        r0.<com.android.server.display.AutomaticBrightnessController: boolean mAmbientLuxValid> = $z3;
+
+        r0.<com.android.server.display.AutomaticBrightnessController: float mScreenAutoBrightness> = #NaNF;
+
+        r0.<com.android.server.display.AutomaticBrightnessController: int mRecentLightSamples> = 0;
+
+        $r1 = r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.AutomaticBrightnessController$AmbientLightRingBuffer mAmbientLightRingBuffer>;
+
+        virtualinvoke $r1.<com.android.server.display.AutomaticBrightnessController$AmbientLightRingBuffer: void clear()>();
+
+        r0.<com.android.server.display.AutomaticBrightnessController: int mCurrentLightSensorRate> = -1;
+
+        $r2 = r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.AutomaticBrightnessController$AutomaticBrightnessHandler mHandler>;
+
+        virtualinvoke $r2.<com.android.server.display.AutomaticBrightnessController$AutomaticBrightnessHandler: void removeMessages(int)>(1);
+
+        specialinvoke r0.<com.android.server.display.AutomaticBrightnessController: void unregisterForegroundAppUpdater()>();
+
+        $r4 = r0.<com.android.server.display.AutomaticBrightnessController: android.hardware.SensorManager mSensorManager>;
+
+        $r3 = r0.<com.android.server.display.AutomaticBrightnessController: android.hardware.SensorEventListener mLightSensorListener>;
+
+        virtualinvoke $r4.<android.hardware.SensorManager: void unregisterListener(android.hardware.SensorEventListener)>($r3);
+
+     label2:
+        return 0;
+    }
+
+    private boolean setScreenBrightnessByUser(float)
+    {
+        com.android.server.display.AutomaticBrightnessController r0;
+        float f0, $f1, $f2, $f3;
+        boolean $z0, $z1;
+        com.android.server.display.BrightnessMappingStrategy $r2;
+        java.lang.StringBuilder $r3;
+        java.lang.String $r6;
+
+        r0 := @this: com.android.server.display.AutomaticBrightnessController;
+
+        f0 := @parameter0: float;
+
+        $z0 = r0.<com.android.server.display.AutomaticBrightnessController: boolean mAmbientLuxValid>;
+
+        if $z0 != 0 goto label1;
+
+        return 0;
+
+     label1:
+        $r2 = r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.BrightnessMappingStrategy mBrightnessMapper>;
+
+        $f1 = r0.<com.android.server.display.AutomaticBrightnessController: float mAmbientLux>;
+
+        virtualinvoke $r2.<com.android.server.display.BrightnessMappingStrategy: void addUserDataPoint(float,float)>($f1, f0);
+
+        r0.<com.android.server.display.AutomaticBrightnessController: boolean mShortTermModelValid> = 1;
+
+        $f2 = r0.<com.android.server.display.AutomaticBrightnessController: float mAmbientLux>;
+
+        r0.<com.android.server.display.AutomaticBrightnessController: float mShortTermModelAnchor> = $f2;
+
+        $z1 = r0.<com.android.server.display.AutomaticBrightnessController: boolean mLoggingEnabled>;
+
+        if $z1 == 0 goto label2;
+
+        $r3 = new java.lang.StringBuilder;
+
+        specialinvoke $r3.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("ShortTermModel: anchor=");
+
+        $f3 = r0.<com.android.server.display.AutomaticBrightnessController: float mShortTermModelAnchor>;
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(float)>($f3);
+
+        $r6 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("AutomaticBrightnessController", $r6);
+
+     label2:
+        return 1;
+    }
+
+    private void unregisterForegroundAppUpdater()
+    {
+        com.android.server.display.AutomaticBrightnessController r0;
+        com.android.server.display.AutomaticBrightnessController$TaskStackListenerImpl $r2;
+        android.app.IActivityTaskManager $r3;
+        android.os.RemoteException $r4;
+
+        r0 := @this: com.android.server.display.AutomaticBrightnessController;
+
+     label1:
+        $r3 = r0.<com.android.server.display.AutomaticBrightnessController: android.app.IActivityTaskManager mActivityTaskManager>;
+
+        $r2 = r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.AutomaticBrightnessController$TaskStackListenerImpl mTaskStackListener>;
+
+        interfaceinvoke $r3.<android.app.IActivityTaskManager: void unregisterTaskStackListener(android.app.ITaskStackListener)>($r2);
+
+     label2:
+        goto label4;
+
+     label3:
+        $r4 := @caughtexception;
+
+     label4:
+        r0.<com.android.server.display.AutomaticBrightnessController: java.lang.String mForegroundAppPackageName> = null;
+
+        r0.<com.android.server.display.AutomaticBrightnessController: int mForegroundAppCategory> = -1;
+
+        return;
+
+        catch android.os.RemoteException from label1 to label2 with label3;
+    }
+
+    private void updateAmbientLux()
+    {
+        com.android.server.display.AutomaticBrightnessController r0;
+        long l0, $l2, $l3;
+        int $i1;
+        com.android.server.display.AutomaticBrightnessController$AmbientLightRingBuffer $r1;
+
+        r0 := @this: com.android.server.display.AutomaticBrightnessController;
+
+        l0 = staticinvoke <android.os.SystemClock: long uptimeMillis()>();
+
+        $r1 = r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.AutomaticBrightnessController$AmbientLightRingBuffer mAmbientLightRingBuffer>;
+
+        $i1 = r0.<com.android.server.display.AutomaticBrightnessController: int mAmbientLightHorizon>;
+
+        $l2 = (long) $i1;
+
+        $l3 = l0 - $l2;
+
+        virtualinvoke $r1.<com.android.server.display.AutomaticBrightnessController$AmbientLightRingBuffer: void prune(long)>($l3);
+
+        specialinvoke r0.<com.android.server.display.AutomaticBrightnessController: void updateAmbientLux(long)>(l0);
+
+        return;
+    }
+
+    private void updateAmbientLux(long)
+    {
+        com.android.server.display.AutomaticBrightnessController r0;
+        long l0, l1, $l3, $l12, $l13, l17, l18, l20, l21, l23, l25;
+        float f0, f1, $f2, $f3, $f4, $f5, $f6, f7, f8;
+        boolean $z0, $z1, $z3, $z4, $z5;
+        int $i2, $i11;
+        com.android.server.display.AutomaticBrightnessController$AutomaticBrightnessHandler $r2, $r27;
+        java.lang.StringBuilder $r3, $r9, $r20, $r28;
+        java.lang.String $r6, $r8, $r19, $r26, $r33, r36;
+        byte $b5, $b6, $b7, $b9, $b10, $b14, $b19, $b22, $b24;
+        com.android.server.display.AutomaticBrightnessController$AmbientLightRingBuffer $r15, $r22;
+
+        r0 := @this: com.android.server.display.AutomaticBrightnessController;
+
+        l17 := @parameter0: long;
+
+        $z0 = r0.<com.android.server.display.AutomaticBrightnessController: boolean mAmbientLuxValid>;
+
+        if $z0 != 0 goto label04;
+
+        $i11 = r0.<com.android.server.display.AutomaticBrightnessController: int mLightSensorWarmUpTimeConfig>;
+
+        $l13 = (long) $i11;
+
+        $l12 = r0.<com.android.server.display.AutomaticBrightnessController: long mLightSensorEnableTime>;
+
+        l18 = $l13 + $l12;
+
+        $b14 = l17 cmp l18;
+
+        if $b14 >= 0 goto label02;
+
+        $z5 = r0.<com.android.server.display.AutomaticBrightnessController: boolean mLoggingEnabled>;
+
+        if $z5 == 0 goto label01;
+
+        $r28 = new java.lang.StringBuilder;
+
+        specialinvoke $r28.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r28.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("updateAmbientLux: Sensor not ready yet: time=");
+
+        virtualinvoke $r28.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>(l17);
+
+        virtualinvoke $r28.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", timeWhenSensorWarmedUp=");
+
+        virtualinvoke $r28.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>(l18);
+
+        $r33 = virtualinvoke $r28.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("AutomaticBrightnessController", $r33);
+
+     label01:
+        $r27 = r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.AutomaticBrightnessController$AutomaticBrightnessHandler mHandler>;
+
+        virtualinvoke $r27.<com.android.server.display.AutomaticBrightnessController$AutomaticBrightnessHandler: boolean sendEmptyMessageAtTime(int,long)>(1, l18);
+
+        return;
+
+     label02:
+        $f5 = specialinvoke r0.<com.android.server.display.AutomaticBrightnessController: float calculateAmbientLux(long,long)>(l17, 2000L);
+
+        specialinvoke r0.<com.android.server.display.AutomaticBrightnessController: void setAmbientLux(float)>($f5);
+
+        r0.<com.android.server.display.AutomaticBrightnessController: boolean mAmbientLuxValid> = 1;
+
+        $z4 = r0.<com.android.server.display.AutomaticBrightnessController: boolean mLoggingEnabled>;
+
+        if $z4 == 0 goto label03;
+
+        $r20 = new java.lang.StringBuilder;
+
+        specialinvoke $r20.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r20.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("updateAmbientLux: Initializing: mAmbientLightRingBuffer=");
+
+        $r22 = r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.AutomaticBrightnessController$AmbientLightRingBuffer mAmbientLightRingBuffer>;
+
+        virtualinvoke $r20.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r22);
+
+        virtualinvoke $r20.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", mAmbientLux=");
+
+        $f6 = r0.<com.android.server.display.AutomaticBrightnessController: float mAmbientLux>;
+
+        virtualinvoke $r20.<java.lang.StringBuilder: java.lang.StringBuilder append(float)>($f6);
+
+        $r26 = virtualinvoke $r20.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("AutomaticBrightnessController", $r26);
+
+     label03:
+        specialinvoke r0.<com.android.server.display.AutomaticBrightnessController: void updateAutoBrightness(boolean,boolean)>(1, 0);
+
+     label04:
+        l0 = specialinvoke r0.<com.android.server.display.AutomaticBrightnessController: long nextAmbientLightBrighteningTransition(long)>(l17);
+
+        l1 = specialinvoke r0.<com.android.server.display.AutomaticBrightnessController: long nextAmbientLightDarkeningTransition(long)>(l17);
+
+        f0 = specialinvoke r0.<com.android.server.display.AutomaticBrightnessController: float calculateAmbientLux(long,long)>(l17, 10000L);
+
+        f1 = specialinvoke r0.<com.android.server.display.AutomaticBrightnessController: float calculateAmbientLux(long,long)>(l17, 2000L);
+
+        f7 = r0.<com.android.server.display.AutomaticBrightnessController: float mAmbientBrighteningThreshold>;
+
+        $b19 = f0 cmpl f7;
+
+        if $b19 < 0 goto label05;
+
+        $b9 = f1 cmpl f7;
+
+        if $b9 < 0 goto label05;
+
+        $b10 = l0 cmp l17;
+
+        if $b10 <= 0 goto label06;
+
+     label05:
+        f8 = r0.<com.android.server.display.AutomaticBrightnessController: float mAmbientDarkeningThreshold>;
+
+        l20 = l0;
+
+        l21 = l1;
+
+        $b22 = f0 cmpg f8;
+
+        if $b22 > 0 goto label10;
+
+        l20 = l0;
+
+        l21 = l1;
+
+        $b5 = f1 cmpg f8;
+
+        if $b5 > 0 goto label10;
+
+        l20 = l0;
+
+        l21 = l1;
+
+        $b6 = l1 cmp l17;
+
+        if $b6 > 0 goto label10;
+
+     label06:
+        specialinvoke r0.<com.android.server.display.AutomaticBrightnessController: void setAmbientLux(float)>(f1);
+
+        $z3 = r0.<com.android.server.display.AutomaticBrightnessController: boolean mLoggingEnabled>;
+
+        if $z3 == 0 goto label09;
+
+        $r9 = new java.lang.StringBuilder;
+
+        specialinvoke $r9.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("updateAmbientLux: ");
+
+        $f2 = r0.<com.android.server.display.AutomaticBrightnessController: float mAmbientLux>;
+
+        $b7 = f1 cmpl $f2;
+
+        if $b7 <= 0 goto label07;
+
+        r36 = "Brightened";
+
+        goto label08;
+
+     label07:
+        r36 = "Darkened";
+
+     label08:
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r36);
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(": mBrighteningLuxThreshold=");
+
+        $f3 = r0.<com.android.server.display.AutomaticBrightnessController: float mAmbientBrighteningThreshold>;
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(float)>($f3);
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", mAmbientLightRingBuffer=");
+
+        $r15 = r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.AutomaticBrightnessController$AmbientLightRingBuffer mAmbientLightRingBuffer>;
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r15);
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", mAmbientLux=");
+
+        $f4 = r0.<com.android.server.display.AutomaticBrightnessController: float mAmbientLux>;
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(float)>($f4);
+
+        $r19 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("AutomaticBrightnessController", $r19);
+
+     label09:
+        specialinvoke r0.<com.android.server.display.AutomaticBrightnessController: void updateAutoBrightness(boolean,boolean)>(1, 0);
+
+        l20 = specialinvoke r0.<com.android.server.display.AutomaticBrightnessController: long nextAmbientLightBrighteningTransition(long)>(l17);
+
+        l21 = specialinvoke r0.<com.android.server.display.AutomaticBrightnessController: long nextAmbientLightDarkeningTransition(long)>(l17);
+
+     label10:
+        l23 = staticinvoke <java.lang.Math: long min(long,long)>(l21, l20);
+
+        $b24 = l23 cmp l17;
+
+        if $b24 <= 0 goto label11;
+
+        l25 = l23;
+
+        goto label12;
+
+     label11:
+        $i2 = r0.<com.android.server.display.AutomaticBrightnessController: int mNormalLightSensorRate>;
+
+        $l3 = (long) $i2;
+
+        l25 = $l3 + l17;
+
+     label12:
+        $z1 = r0.<com.android.server.display.AutomaticBrightnessController: boolean mLoggingEnabled>;
+
+        if $z1 == 0 goto label13;
+
+        $r3 = new java.lang.StringBuilder;
+
+        specialinvoke $r3.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("updateAmbientLux: Scheduling ambient lux update for ");
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>(l25);
+
+        $r6 = staticinvoke <android.util.TimeUtils: java.lang.String formatUptime(long)>(l25);
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r6);
+
+        $r8 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("AutomaticBrightnessController", $r8);
+
+     label13:
+        $r2 = r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.AutomaticBrightnessController$AutomaticBrightnessHandler mHandler>;
+
+        virtualinvoke $r2.<com.android.server.display.AutomaticBrightnessController$AutomaticBrightnessHandler: boolean sendEmptyMessageAtTime(int,long)>(1, l25);
+
+        return;
+    }
+
+    private void updateAutoBrightness(boolean, boolean)
+    {
+        com.android.server.display.AutomaticBrightnessController r0;
+        boolean z0, z1, $z2, $z3, $z4, $z5, $z6;
+        float f0, $f1, $f2, $f3, $f4, $f5, $f6, $f7, $f8, $f9, $f10, $f11, $f12, $f13;
+        int $i0;
+        java.lang.String $r1, $r11, $r19;
+        com.android.server.display.BrightnessMappingStrategy $r2;
+        com.android.server.display.HysteresisLevels $r3, $r4;
+        com.android.server.display.AutomaticBrightnessController$Callbacks $r5;
+        java.lang.StringBuilder $r6, $r12;
+        byte $b2, $b3;
+
+        r0 := @this: com.android.server.display.AutomaticBrightnessController;
+
+        z0 := @parameter0: boolean;
+
+        z1 := @parameter1: boolean;
+
+        $z2 = r0.<com.android.server.display.AutomaticBrightnessController: boolean mAmbientLuxValid>;
+
+        if $z2 != 0 goto label1;
+
+        return;
+
+     label1:
+        $r2 = r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.BrightnessMappingStrategy mBrightnessMapper>;
+
+        $f1 = r0.<com.android.server.display.AutomaticBrightnessController: float mAmbientLux>;
+
+        $r1 = r0.<com.android.server.display.AutomaticBrightnessController: java.lang.String mForegroundAppPackageName>;
+
+        $i0 = r0.<com.android.server.display.AutomaticBrightnessController: int mForegroundAppCategory>;
+
+        $f2 = virtualinvoke $r2.<com.android.server.display.BrightnessMappingStrategy: float getBrightness(float,java.lang.String,int)>($f1, $r1, $i0);
+
+        f0 = specialinvoke r0.<com.android.server.display.AutomaticBrightnessController: float clampScreenBrightness(float)>($f2);
+
+        $f3 = r0.<com.android.server.display.AutomaticBrightnessController: float mScreenAutoBrightness>;
+
+        $z3 = staticinvoke <java.lang.Float: boolean isNaN(float)>($f3);
+
+        if $z3 != 0 goto label3;
+
+        if z1 != 0 goto label3;
+
+        $f9 = r0.<com.android.server.display.AutomaticBrightnessController: float mScreenDarkeningThreshold>;
+
+        $b2 = f0 cmpl $f9;
+
+        if $b2 <= 0 goto label3;
+
+        $f10 = r0.<com.android.server.display.AutomaticBrightnessController: float mScreenBrighteningThreshold>;
+
+        $b3 = f0 cmpg $f10;
+
+        if $b3 >= 0 goto label3;
+
+        $z5 = r0.<com.android.server.display.AutomaticBrightnessController: boolean mLoggingEnabled>;
+
+        if $z5 == 0 goto label2;
+
+        $r12 = new java.lang.StringBuilder;
+
+        specialinvoke $r12.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("ignoring newScreenAutoBrightness: ");
+
+        $f11 = r0.<com.android.server.display.AutomaticBrightnessController: float mScreenDarkeningThreshold>;
+
+        virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(float)>($f11);
+
+        virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" < ");
+
+        virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(float)>(f0);
+
+        virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" < ");
+
+        $f12 = r0.<com.android.server.display.AutomaticBrightnessController: float mScreenBrighteningThreshold>;
+
+        virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(float)>($f12);
+
+        $r19 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("AutomaticBrightnessController", $r19);
+
+     label2:
+        return;
+
+     label3:
+        $f13 = r0.<com.android.server.display.AutomaticBrightnessController: float mScreenAutoBrightness>;
+
+        $z6 = staticinvoke <com.android.internal.BrightnessSynchronizer: boolean floatEquals(float,float)>($f13, f0);
+
+        if $z6 != 0 goto label5;
+
+        $z4 = r0.<com.android.server.display.AutomaticBrightnessController: boolean mLoggingEnabled>;
+
+        if $z4 == 0 goto label4;
+
+        $r6 = new java.lang.StringBuilder;
+
+        specialinvoke $r6.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("updateAutoBrightness: mScreenAutoBrightness=");
+
+        $f8 = r0.<com.android.server.display.AutomaticBrightnessController: float mScreenAutoBrightness>;
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(float)>($f8);
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", newScreenAutoBrightness=");
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(float)>(f0);
+
+        $r11 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("AutomaticBrightnessController", $r11);
+
+     label4:
+        r0.<com.android.server.display.AutomaticBrightnessController: float mScreenAutoBrightness> = f0;
+
+        $r3 = r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.HysteresisLevels mScreenBrightnessThresholds>;
+
+        $f4 = virtualinvoke $r3.<com.android.server.display.HysteresisLevels: float getBrighteningThreshold(float)>(f0);
+
+        $f5 = specialinvoke r0.<com.android.server.display.AutomaticBrightnessController: float clampScreenBrightness(float)>($f4);
+
+        r0.<com.android.server.display.AutomaticBrightnessController: float mScreenBrighteningThreshold> = $f5;
+
+        $r4 = r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.HysteresisLevels mScreenBrightnessThresholds>;
+
+        $f6 = virtualinvoke $r4.<com.android.server.display.HysteresisLevels: float getDarkeningThreshold(float)>(f0);
+
+        $f7 = specialinvoke r0.<com.android.server.display.AutomaticBrightnessController: float clampScreenBrightness(float)>($f6);
+
+        r0.<com.android.server.display.AutomaticBrightnessController: float mScreenDarkeningThreshold> = $f7;
+
+        if z0 == 0 goto label5;
+
+        $r5 = r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.AutomaticBrightnessController$Callbacks mCallbacks>;
+
+        interfaceinvoke $r5.<com.android.server.display.AutomaticBrightnessController$Callbacks: void updateBrightness()>();
+
+     label5:
+        return;
+    }
+
+    private void updateForegroundApp()
+    {
+        com.android.server.display.AutomaticBrightnessController r0;
+        boolean $z0;
+        com.android.server.display.AutomaticBrightnessController$Injector $r1;
+        android.os.Handler $r2;
+        com.android.server.display.AutomaticBrightnessController$1 $r3;
+
+        r0 := @this: com.android.server.display.AutomaticBrightnessController;
+
+        $z0 = r0.<com.android.server.display.AutomaticBrightnessController: boolean mLoggingEnabled>;
+
+        if $z0 == 0 goto label1;
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("AutomaticBrightnessController", "Attempting to update foreground app");
+
+     label1:
+        $r1 = r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.AutomaticBrightnessController$Injector mInjector>;
+
+        $r2 = virtualinvoke $r1.<com.android.server.display.AutomaticBrightnessController$Injector: android.os.Handler getBackgroundThreadHandler()>();
+
+        $r3 = new com.android.server.display.AutomaticBrightnessController$1;
+
+        specialinvoke $r3.<com.android.server.display.AutomaticBrightnessController$1: void <init>(com.android.server.display.AutomaticBrightnessController)>(r0);
+
+        virtualinvoke $r2.<android.os.Handler: boolean post(java.lang.Runnable)>($r3);
+
+        return;
+    }
+
+    private void updateForegroundAppSync()
+    {
+        com.android.server.display.AutomaticBrightnessController r0;
+        boolean $z0;
+        java.lang.String $r2, $r5, $r9;
+        int $i0, $i1;
+        java.lang.StringBuilder $r3;
+
+        r0 := @this: com.android.server.display.AutomaticBrightnessController;
+
+        $z0 = r0.<com.android.server.display.AutomaticBrightnessController: boolean mLoggingEnabled>;
+
+        if $z0 == 0 goto label1;
+
+        $r3 = new java.lang.StringBuilder;
+
+        specialinvoke $r3.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Updating foreground app: packageName=");
+
+        $r5 = r0.<com.android.server.display.AutomaticBrightnessController: java.lang.String mPendingForegroundAppPackageName>;
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r5);
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", category=");
+
+        $i1 = r0.<com.android.server.display.AutomaticBrightnessController: int mPendingForegroundAppCategory>;
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i1);
+
+        $r9 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("AutomaticBrightnessController", $r9);
+
+     label1:
+        $r2 = r0.<com.android.server.display.AutomaticBrightnessController: java.lang.String mPendingForegroundAppPackageName>;
+
+        r0.<com.android.server.display.AutomaticBrightnessController: java.lang.String mForegroundAppPackageName> = $r2;
+
+        r0.<com.android.server.display.AutomaticBrightnessController: java.lang.String mPendingForegroundAppPackageName> = null;
+
+        $i0 = r0.<com.android.server.display.AutomaticBrightnessController: int mPendingForegroundAppCategory>;
+
+        r0.<com.android.server.display.AutomaticBrightnessController: int mForegroundAppCategory> = $i0;
+
+        r0.<com.android.server.display.AutomaticBrightnessController: int mPendingForegroundAppCategory> = -1;
+
+        specialinvoke r0.<com.android.server.display.AutomaticBrightnessController: void updateAutoBrightness(boolean,boolean)>(1, 0);
+
+        return;
+    }
+
+    private float weightIntegral(long)
+    {
+        com.android.server.display.AutomaticBrightnessController r0;
+        long l0;
+        float $f0, $f1, $f2, $f3, $f4, $f5;
+        int $i1;
+
+        r0 := @this: com.android.server.display.AutomaticBrightnessController;
+
+        l0 := @parameter0: long;
+
+        $f4 = (float) l0;
+
+        $f0 = (float) l0;
+
+        $f2 = $f0 * 0.5F;
+
+        $i1 = r0.<com.android.server.display.AutomaticBrightnessController: int mWeightingIntercept>;
+
+        $f1 = (float) $i1;
+
+        $f3 = $f2 + $f1;
+
+        $f5 = $f4 * $f3;
+
+        return $f5;
+    }
+
+    public void configure(boolean, android.hardware.display.BrightnessConfiguration, float, boolean, float, boolean, int)
+    {
+        com.android.server.display.AutomaticBrightnessController r0;
+        android.hardware.display.BrightnessConfiguration r1;
+        float f0, f1;
+        boolean z0, $z2, $z3, $z4, $z5, z6, z7, z8, z9, z10, z11, z12, z13, $z14, $z15;
+        int i0;
+
+        r0 := @this: com.android.server.display.AutomaticBrightnessController;
+
+        z6 := @parameter0: boolean;
+
+        r1 := @parameter1: android.hardware.display.BrightnessConfiguration;
+
+        f0 := @parameter2: float;
+
+        z7 := @parameter3: boolean;
+
+        f1 := @parameter4: float;
+
+        z0 := @parameter5: boolean;
+
+        i0 := @parameter6: int;
+
+        if i0 != 1 goto label01;
+
+        z8 = 1;
+
+        goto label02;
+
+     label01:
+        z8 = 0;
+
+     label02:
+        $z2 = virtualinvoke r0.<com.android.server.display.AutomaticBrightnessController: boolean setBrightnessConfiguration(android.hardware.display.BrightnessConfiguration)>(r1);
+
+        $z3 = specialinvoke r0.<com.android.server.display.AutomaticBrightnessController: boolean setDisplayPolicy(int)>(i0);
+
+        z9 = $z2 | $z3;
+
+        z10 = z9;
+
+        if z0 == 0 goto label03;
+
+        $z5 = specialinvoke r0.<com.android.server.display.AutomaticBrightnessController: boolean setAutoBrightnessAdjustment(float)>(f1);
+
+        z10 = z9 | $z5;
+
+     label03:
+        z11 = z10;
+
+        if z7 == 0 goto label04;
+
+        z11 = z10;
+
+        if z6 == 0 goto label04;
+
+        $z4 = specialinvoke r0.<com.android.server.display.AutomaticBrightnessController: boolean setScreenBrightnessByUser(float)>(f0);
+
+        z11 = z10 | $z4;
+
+     label04:
+        if z7 != 0 goto label06;
+
+        if z0 == 0 goto label05;
+
+        goto label06;
+
+     label05:
+        z12 = 0;
+
+        goto label07;
+
+     label06:
+        z12 = 1;
+
+     label07:
+        if z12 == 0 goto label08;
+
+        if z6 == 0 goto label08;
+
+        if z8 != 0 goto label08;
+
+        specialinvoke r0.<com.android.server.display.AutomaticBrightnessController: void prepareBrightnessAdjustmentSample()>();
+
+     label08:
+        if z6 == 0 goto label09;
+
+        if z8 != 0 goto label09;
+
+        z13 = 1;
+
+        goto label10;
+
+     label09:
+        z13 = 0;
+
+     label10:
+        $z14 = specialinvoke r0.<com.android.server.display.AutomaticBrightnessController: boolean setLightSensorEnabled(boolean)>(z13);
+
+        $z15 = $z14 | z11;
+
+        if $z15 == 0 goto label11;
+
+        specialinvoke r0.<com.android.server.display.AutomaticBrightnessController: void updateAutoBrightness(boolean,boolean)>(0, z12);
+
+     label11:
+        return;
+    }
+
+    public void dump(java.io.PrintWriter)
+    {
+        com.android.server.display.AutomaticBrightnessController r0;
+        java.io.PrintWriter r1;
+        java.lang.StringBuilder $r2, $r6, $r10, $r14, $r18, $r22, $r26, $r30, $r34, $r38, $r42, $r46, $r51, $r55, $r60, $r64, $r68, $r72, $r76, $r80, $r84, $r88, $r92, $r97, $r101, $r106, $r110, $r115, $r120, $r124, $r128, $r132, $r136, $r140, $r145, $r150, $r154;
+        float $f0, $f1, $f2, $f3, $f4, $f5, $f6, $f7, $f8, $f9, $f10, $f11, $f12;
+        java.lang.String $r5, $r9, $r13, $r17, $r21, $r25, $r29, $r33, $r37, $r41, $r45, $r50, $r54, $r57, $r59, $r63, $r67, $r71, $r75, $r79, $r83, $r87, $r91, $r94, $r96, $r100, $r105, $r109, $r112, $r114, $r119, $r123, $r127, $r131, $r135, $r139, $r142, $r144, $r147, $r149, $r153, $r157;
+        int $i0, $i1, $i2, $i5, $i6, $i8, $i10, $i11, $i13, $i14;
+        long $l3, $l4, $l7, $l9, $l12;
+        boolean $z0, $z1, $z2, $z3, $z4;
+        android.hardware.Sensor $r48;
+        com.android.server.display.AutomaticBrightnessController$AmbientLightRingBuffer $r103;
+        com.android.server.display.BrightnessMappingStrategy $r117, $r158;
+        com.android.server.display.HysteresisLevels $r159, $r160;
+
+        r0 := @this: com.android.server.display.AutomaticBrightnessController;
+
+        r1 := @parameter0: java.io.PrintWriter;
+
+        virtualinvoke r1.<java.io.PrintWriter: void println()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>("Automatic Brightness Controller Configuration:");
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  mScreenBrightnessRangeMinimum=");
+
+        $f0 = r0.<com.android.server.display.AutomaticBrightnessController: float mScreenBrightnessRangeMinimum>;
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(float)>($f0);
+
+        $r5 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r5);
+
+        $r6 = new java.lang.StringBuilder;
+
+        specialinvoke $r6.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  mScreenBrightnessRangeMaximum=");
+
+        $f1 = r0.<com.android.server.display.AutomaticBrightnessController: float mScreenBrightnessRangeMaximum>;
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(float)>($f1);
+
+        $r9 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r9);
+
+        $r10 = new java.lang.StringBuilder;
+
+        specialinvoke $r10.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  mDozeScaleFactor=");
+
+        $f2 = r0.<com.android.server.display.AutomaticBrightnessController: float mDozeScaleFactor>;
+
+        virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(float)>($f2);
+
+        $r13 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r13);
+
+        $r14 = new java.lang.StringBuilder;
+
+        specialinvoke $r14.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r14.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  mInitialLightSensorRate=");
+
+        $i0 = r0.<com.android.server.display.AutomaticBrightnessController: int mInitialLightSensorRate>;
+
+        virtualinvoke $r14.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i0);
+
+        $r17 = virtualinvoke $r14.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r17);
+
+        $r18 = new java.lang.StringBuilder;
+
+        specialinvoke $r18.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r18.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  mNormalLightSensorRate=");
+
+        $i1 = r0.<com.android.server.display.AutomaticBrightnessController: int mNormalLightSensorRate>;
+
+        virtualinvoke $r18.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i1);
+
+        $r21 = virtualinvoke $r18.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r21);
+
+        $r22 = new java.lang.StringBuilder;
+
+        specialinvoke $r22.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r22.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  mLightSensorWarmUpTimeConfig=");
+
+        $i2 = r0.<com.android.server.display.AutomaticBrightnessController: int mLightSensorWarmUpTimeConfig>;
+
+        virtualinvoke $r22.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i2);
+
+        $r25 = virtualinvoke $r22.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r25);
+
+        $r26 = new java.lang.StringBuilder;
+
+        specialinvoke $r26.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r26.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  mBrighteningLightDebounceConfig=");
+
+        $l3 = r0.<com.android.server.display.AutomaticBrightnessController: long mBrighteningLightDebounceConfig>;
+
+        virtualinvoke $r26.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l3);
+
+        $r29 = virtualinvoke $r26.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r29);
+
+        $r30 = new java.lang.StringBuilder;
+
+        specialinvoke $r30.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r30.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  mDarkeningLightDebounceConfig=");
+
+        $l4 = r0.<com.android.server.display.AutomaticBrightnessController: long mDarkeningLightDebounceConfig>;
+
+        virtualinvoke $r30.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l4);
+
+        $r33 = virtualinvoke $r30.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r33);
+
+        $r34 = new java.lang.StringBuilder;
+
+        specialinvoke $r34.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r34.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  mResetAmbientLuxAfterWarmUpConfig=");
+
+        $z0 = r0.<com.android.server.display.AutomaticBrightnessController: boolean mResetAmbientLuxAfterWarmUpConfig>;
+
+        virtualinvoke $r34.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>($z0);
+
+        $r37 = virtualinvoke $r34.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r37);
+
+        $r38 = new java.lang.StringBuilder;
+
+        specialinvoke $r38.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r38.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  mAmbientLightHorizon=");
+
+        $i5 = r0.<com.android.server.display.AutomaticBrightnessController: int mAmbientLightHorizon>;
+
+        virtualinvoke $r38.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i5);
+
+        $r41 = virtualinvoke $r38.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r41);
+
+        $r42 = new java.lang.StringBuilder;
+
+        specialinvoke $r42.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r42.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  mWeightingIntercept=");
+
+        $i6 = r0.<com.android.server.display.AutomaticBrightnessController: int mWeightingIntercept>;
+
+        virtualinvoke $r42.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i6);
+
+        $r45 = virtualinvoke $r42.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r45);
+
+        virtualinvoke r1.<java.io.PrintWriter: void println()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>("Automatic Brightness Controller State:");
+
+        $r46 = new java.lang.StringBuilder;
+
+        specialinvoke $r46.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r46.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  mLightSensor=");
+
+        $r48 = r0.<com.android.server.display.AutomaticBrightnessController: android.hardware.Sensor mLightSensor>;
+
+        virtualinvoke $r46.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r48);
+
+        $r50 = virtualinvoke $r46.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r50);
+
+        $r51 = new java.lang.StringBuilder;
+
+        specialinvoke $r51.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r51.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  mLightSensorEnabled=");
+
+        $z1 = r0.<com.android.server.display.AutomaticBrightnessController: boolean mLightSensorEnabled>;
+
+        virtualinvoke $r51.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>($z1);
+
+        $r54 = virtualinvoke $r51.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r54);
+
+        $r55 = new java.lang.StringBuilder;
+
+        specialinvoke $r55.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r55.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  mLightSensorEnableTime=");
+
+        $l7 = r0.<com.android.server.display.AutomaticBrightnessController: long mLightSensorEnableTime>;
+
+        $r57 = staticinvoke <android.util.TimeUtils: java.lang.String formatUptime(long)>($l7);
+
+        virtualinvoke $r55.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r57);
+
+        $r59 = virtualinvoke $r55.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r59);
+
+        $r60 = new java.lang.StringBuilder;
+
+        specialinvoke $r60.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r60.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  mCurrentLightSensorRate=");
+
+        $i8 = r0.<com.android.server.display.AutomaticBrightnessController: int mCurrentLightSensorRate>;
+
+        virtualinvoke $r60.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i8);
+
+        $r63 = virtualinvoke $r60.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r63);
+
+        $r64 = new java.lang.StringBuilder;
+
+        specialinvoke $r64.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r64.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  mAmbientLux=");
+
+        $f3 = r0.<com.android.server.display.AutomaticBrightnessController: float mAmbientLux>;
+
+        virtualinvoke $r64.<java.lang.StringBuilder: java.lang.StringBuilder append(float)>($f3);
+
+        $r67 = virtualinvoke $r64.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r67);
+
+        $r68 = new java.lang.StringBuilder;
+
+        specialinvoke $r68.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r68.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  mAmbientLuxValid=");
+
+        $z2 = r0.<com.android.server.display.AutomaticBrightnessController: boolean mAmbientLuxValid>;
+
+        virtualinvoke $r68.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>($z2);
+
+        $r71 = virtualinvoke $r68.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r71);
+
+        $r72 = new java.lang.StringBuilder;
+
+        specialinvoke $r72.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r72.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  mAmbientBrighteningThreshold=");
+
+        $f4 = r0.<com.android.server.display.AutomaticBrightnessController: float mAmbientBrighteningThreshold>;
+
+        virtualinvoke $r72.<java.lang.StringBuilder: java.lang.StringBuilder append(float)>($f4);
+
+        $r75 = virtualinvoke $r72.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r75);
+
+        $r76 = new java.lang.StringBuilder;
+
+        specialinvoke $r76.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r76.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  mAmbientDarkeningThreshold=");
+
+        $f5 = r0.<com.android.server.display.AutomaticBrightnessController: float mAmbientDarkeningThreshold>;
+
+        virtualinvoke $r76.<java.lang.StringBuilder: java.lang.StringBuilder append(float)>($f5);
+
+        $r79 = virtualinvoke $r76.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r79);
+
+        $r80 = new java.lang.StringBuilder;
+
+        specialinvoke $r80.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r80.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  mScreenBrighteningThreshold=");
+
+        $f6 = r0.<com.android.server.display.AutomaticBrightnessController: float mScreenBrighteningThreshold>;
+
+        virtualinvoke $r80.<java.lang.StringBuilder: java.lang.StringBuilder append(float)>($f6);
+
+        $r83 = virtualinvoke $r80.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r83);
+
+        $r84 = new java.lang.StringBuilder;
+
+        specialinvoke $r84.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r84.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  mScreenDarkeningThreshold=");
+
+        $f7 = r0.<com.android.server.display.AutomaticBrightnessController: float mScreenDarkeningThreshold>;
+
+        virtualinvoke $r84.<java.lang.StringBuilder: java.lang.StringBuilder append(float)>($f7);
+
+        $r87 = virtualinvoke $r84.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r87);
+
+        $r88 = new java.lang.StringBuilder;
+
+        specialinvoke $r88.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r88.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  mLastObservedLux=");
+
+        $f8 = r0.<com.android.server.display.AutomaticBrightnessController: float mLastObservedLux>;
+
+        virtualinvoke $r88.<java.lang.StringBuilder: java.lang.StringBuilder append(float)>($f8);
+
+        $r91 = virtualinvoke $r88.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r91);
+
+        $r92 = new java.lang.StringBuilder;
+
+        specialinvoke $r92.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r92.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  mLastObservedLuxTime=");
+
+        $l9 = r0.<com.android.server.display.AutomaticBrightnessController: long mLastObservedLuxTime>;
+
+        $r94 = staticinvoke <android.util.TimeUtils: java.lang.String formatUptime(long)>($l9);
+
+        virtualinvoke $r92.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r94);
+
+        $r96 = virtualinvoke $r92.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r96);
+
+        $r97 = new java.lang.StringBuilder;
+
+        specialinvoke $r97.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r97.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  mRecentLightSamples=");
+
+        $i10 = r0.<com.android.server.display.AutomaticBrightnessController: int mRecentLightSamples>;
+
+        virtualinvoke $r97.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i10);
+
+        $r100 = virtualinvoke $r97.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r100);
+
+        $r101 = new java.lang.StringBuilder;
+
+        specialinvoke $r101.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r101.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  mAmbientLightRingBuffer=");
+
+        $r103 = r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.AutomaticBrightnessController$AmbientLightRingBuffer mAmbientLightRingBuffer>;
+
+        virtualinvoke $r101.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r103);
+
+        $r105 = virtualinvoke $r101.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r105);
+
+        $r106 = new java.lang.StringBuilder;
+
+        specialinvoke $r106.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r106.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  mScreenAutoBrightness=");
+
+        $f9 = r0.<com.android.server.display.AutomaticBrightnessController: float mScreenAutoBrightness>;
+
+        virtualinvoke $r106.<java.lang.StringBuilder: java.lang.StringBuilder append(float)>($f9);
+
+        $r109 = virtualinvoke $r106.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r109);
+
+        $r110 = new java.lang.StringBuilder;
+
+        specialinvoke $r110.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r110.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  mDisplayPolicy=");
+
+        $i11 = r0.<com.android.server.display.AutomaticBrightnessController: int mDisplayPolicy>;
+
+        $r112 = staticinvoke <android.hardware.display.DisplayManagerInternal$DisplayPowerRequest: java.lang.String policyToString(int)>($i11);
+
+        virtualinvoke $r110.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r112);
+
+        $r114 = virtualinvoke $r110.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r114);
+
+        $r115 = new java.lang.StringBuilder;
+
+        specialinvoke $r115.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r115.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  mShortTermModelTimeout=");
+
+        $r117 = r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.BrightnessMappingStrategy mBrightnessMapper>;
+
+        $l12 = virtualinvoke $r117.<com.android.server.display.BrightnessMappingStrategy: long getShortTermModelTimeout()>();
+
+        virtualinvoke $r115.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l12);
+
+        $r119 = virtualinvoke $r115.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r119);
+
+        $r120 = new java.lang.StringBuilder;
+
+        specialinvoke $r120.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r120.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  mShortTermModelAnchor=");
+
+        $f10 = r0.<com.android.server.display.AutomaticBrightnessController: float mShortTermModelAnchor>;
+
+        virtualinvoke $r120.<java.lang.StringBuilder: java.lang.StringBuilder append(float)>($f10);
+
+        $r123 = virtualinvoke $r120.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r123);
+
+        $r124 = new java.lang.StringBuilder;
+
+        specialinvoke $r124.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r124.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  mShortTermModelValid=");
+
+        $z3 = r0.<com.android.server.display.AutomaticBrightnessController: boolean mShortTermModelValid>;
+
+        virtualinvoke $r124.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>($z3);
+
+        $r127 = virtualinvoke $r124.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r127);
+
+        $r128 = new java.lang.StringBuilder;
+
+        specialinvoke $r128.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r128.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  mBrightnessAdjustmentSamplePending=");
+
+        $z4 = r0.<com.android.server.display.AutomaticBrightnessController: boolean mBrightnessAdjustmentSamplePending>;
+
+        virtualinvoke $r128.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>($z4);
+
+        $r131 = virtualinvoke $r128.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r131);
+
+        $r132 = new java.lang.StringBuilder;
+
+        specialinvoke $r132.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r132.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  mBrightnessAdjustmentSampleOldLux=");
+
+        $f11 = r0.<com.android.server.display.AutomaticBrightnessController: float mBrightnessAdjustmentSampleOldLux>;
+
+        virtualinvoke $r132.<java.lang.StringBuilder: java.lang.StringBuilder append(float)>($f11);
+
+        $r135 = virtualinvoke $r132.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r135);
+
+        $r136 = new java.lang.StringBuilder;
+
+        specialinvoke $r136.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r136.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  mBrightnessAdjustmentSampleOldBrightness=");
+
+        $f12 = r0.<com.android.server.display.AutomaticBrightnessController: float mBrightnessAdjustmentSampleOldBrightness>;
+
+        virtualinvoke $r136.<java.lang.StringBuilder: java.lang.StringBuilder append(float)>($f12);
+
+        $r139 = virtualinvoke $r136.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r139);
+
+        $r140 = new java.lang.StringBuilder;
+
+        specialinvoke $r140.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r140.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  mForegroundAppPackageName=");
+
+        $r142 = r0.<com.android.server.display.AutomaticBrightnessController: java.lang.String mForegroundAppPackageName>;
+
+        virtualinvoke $r140.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r142);
+
+        $r144 = virtualinvoke $r140.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r144);
+
+        $r145 = new java.lang.StringBuilder;
+
+        specialinvoke $r145.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r145.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  mPendingForegroundAppPackageName=");
+
+        $r147 = r0.<com.android.server.display.AutomaticBrightnessController: java.lang.String mPendingForegroundAppPackageName>;
+
+        virtualinvoke $r145.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r147);
+
+        $r149 = virtualinvoke $r145.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r149);
+
+        $r150 = new java.lang.StringBuilder;
+
+        specialinvoke $r150.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r150.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  mForegroundAppCategory=");
+
+        $i13 = r0.<com.android.server.display.AutomaticBrightnessController: int mForegroundAppCategory>;
+
+        virtualinvoke $r150.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i13);
+
+        $r153 = virtualinvoke $r150.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r153);
+
+        $r154 = new java.lang.StringBuilder;
+
+        specialinvoke $r154.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r154.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  mPendingForegroundAppCategory=");
+
+        $i14 = r0.<com.android.server.display.AutomaticBrightnessController: int mPendingForegroundAppCategory>;
+
+        virtualinvoke $r154.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i14);
+
+        $r157 = virtualinvoke $r154.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r157);
+
+        virtualinvoke r1.<java.io.PrintWriter: void println()>();
+
+        $r158 = r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.BrightnessMappingStrategy mBrightnessMapper>;
+
+        virtualinvoke $r158.<com.android.server.display.BrightnessMappingStrategy: void dump(java.io.PrintWriter)>(r1);
+
+        virtualinvoke r1.<java.io.PrintWriter: void println()>();
+
+        $r159 = r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.HysteresisLevels mAmbientBrightnessThresholds>;
+
+        virtualinvoke $r159.<com.android.server.display.HysteresisLevels: void dump(java.io.PrintWriter)>(r1);
+
+        $r160 = r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.HysteresisLevels mScreenBrightnessThresholds>;
+
+        virtualinvoke $r160.<com.android.server.display.HysteresisLevels: void dump(java.io.PrintWriter)>(r1);
+
+        return;
+    }
+
+    public float getAutomaticScreenBrightness()
+    {
+        com.android.server.display.AutomaticBrightnessController r0;
+        boolean $z0;
+        int $i0;
+        float $f0, $f1, $f2, $f3;
+
+        r0 := @this: com.android.server.display.AutomaticBrightnessController;
+
+        $z0 = r0.<com.android.server.display.AutomaticBrightnessController: boolean mAmbientLuxValid>;
+
+        if $z0 != 0 goto label1;
+
+        return #NaNF;
+
+     label1:
+        $i0 = r0.<com.android.server.display.AutomaticBrightnessController: int mDisplayPolicy>;
+
+        if $i0 != 1 goto label2;
+
+        $f2 = r0.<com.android.server.display.AutomaticBrightnessController: float mScreenAutoBrightness>;
+
+        $f1 = r0.<com.android.server.display.AutomaticBrightnessController: float mDozeScaleFactor>;
+
+        $f3 = $f2 * $f1;
+
+        return $f3;
+
+     label2:
+        $f0 = r0.<com.android.server.display.AutomaticBrightnessController: float mScreenAutoBrightness>;
+
+        return $f0;
+    }
+
+    public float getAutomaticScreenBrightnessAdjustment()
+    {
+        com.android.server.display.AutomaticBrightnessController r0;
+        com.android.server.display.BrightnessMappingStrategy $r1;
+        float $f0;
+
+        r0 := @this: com.android.server.display.AutomaticBrightnessController;
+
+        $r1 = r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.BrightnessMappingStrategy mBrightnessMapper>;
+
+        $f0 = virtualinvoke $r1.<com.android.server.display.BrightnessMappingStrategy: float getAutoBrightnessAdjustment()>();
+
+        return $f0;
+    }
+
+    public android.hardware.display.BrightnessConfiguration getDefaultConfig()
+    {
+        com.android.server.display.AutomaticBrightnessController r0;
+        com.android.server.display.BrightnessMappingStrategy $r1;
+        android.hardware.display.BrightnessConfiguration $r2;
+
+        r0 := @this: com.android.server.display.AutomaticBrightnessController;
+
+        $r1 = r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.BrightnessMappingStrategy mBrightnessMapper>;
+
+        $r2 = virtualinvoke $r1.<com.android.server.display.BrightnessMappingStrategy: android.hardware.display.BrightnessConfiguration getDefaultConfig()>();
+
+        return $r2;
+    }
+
+    public boolean hasUserDataPoints()
+    {
+        com.android.server.display.AutomaticBrightnessController r0;
+        com.android.server.display.BrightnessMappingStrategy $r1;
+        boolean $z0;
+
+        r0 := @this: com.android.server.display.AutomaticBrightnessController;
+
+        $r1 = r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.BrightnessMappingStrategy mBrightnessMapper>;
+
+        $z0 = virtualinvoke $r1.<com.android.server.display.BrightnessMappingStrategy: boolean hasUserDataPoints()>();
+
+        return $z0;
+    }
+
+    public boolean hasValidAmbientLux()
+    {
+        com.android.server.display.AutomaticBrightnessController r0;
+        boolean $z0;
+
+        r0 := @this: com.android.server.display.AutomaticBrightnessController;
+
+        $z0 = r0.<com.android.server.display.AutomaticBrightnessController: boolean mAmbientLuxValid>;
+
+        return $z0;
+    }
+
+    public boolean isDefaultConfig()
+    {
+        com.android.server.display.AutomaticBrightnessController r0;
+        com.android.server.display.BrightnessMappingStrategy $r1;
+        boolean $z0;
+
+        r0 := @this: com.android.server.display.AutomaticBrightnessController;
+
+        $r1 = r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.BrightnessMappingStrategy mBrightnessMapper>;
+
+        $z0 = virtualinvoke $r1.<com.android.server.display.BrightnessMappingStrategy: boolean isDefaultConfig()>();
+
+        return $z0;
+    }
+
+    public void resetShortTermModel()
+    {
+        com.android.server.display.AutomaticBrightnessController r0;
+        com.android.server.display.BrightnessMappingStrategy $r1;
+
+        r0 := @this: com.android.server.display.AutomaticBrightnessController;
+
+        $r1 = r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.BrightnessMappingStrategy mBrightnessMapper>;
+
+        virtualinvoke $r1.<com.android.server.display.BrightnessMappingStrategy: void clearUserDataPoints()>();
+
+        r0.<com.android.server.display.AutomaticBrightnessController: boolean mShortTermModelValid> = 1;
+
+        r0.<com.android.server.display.AutomaticBrightnessController: float mShortTermModelAnchor> = -1.0F;
+
+        return;
+    }
+
+    public boolean setBrightnessConfiguration(android.hardware.display.BrightnessConfiguration)
+    {
+        com.android.server.display.AutomaticBrightnessController r0;
+        android.hardware.display.BrightnessConfiguration r1;
+        com.android.server.display.BrightnessMappingStrategy $r2;
+        boolean $z0;
+
+        r0 := @this: com.android.server.display.AutomaticBrightnessController;
+
+        r1 := @parameter0: android.hardware.display.BrightnessConfiguration;
+
+        $r2 = r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.BrightnessMappingStrategy mBrightnessMapper>;
+
+        $z0 = virtualinvoke $r2.<com.android.server.display.BrightnessMappingStrategy: boolean setBrightnessConfiguration(android.hardware.display.BrightnessConfiguration)>(r1);
+
+        if $z0 == 0 goto label1;
+
+        virtualinvoke r0.<com.android.server.display.AutomaticBrightnessController: void resetShortTermModel()>();
+
+        return 1;
+
+     label1:
+        return 0;
+    }
+
+    public boolean setLoggingEnabled(boolean)
+    {
+        com.android.server.display.AutomaticBrightnessController r0;
+        boolean z0, $z1;
+        com.android.server.display.BrightnessMappingStrategy $r1;
+
+        r0 := @this: com.android.server.display.AutomaticBrightnessController;
+
+        z0 := @parameter0: boolean;
+
+        $z1 = r0.<com.android.server.display.AutomaticBrightnessController: boolean mLoggingEnabled>;
+
+        if $z1 != z0 goto label1;
+
+        return 0;
+
+     label1:
+        $r1 = r0.<com.android.server.display.AutomaticBrightnessController: com.android.server.display.BrightnessMappingStrategy mBrightnessMapper>;
+
+        virtualinvoke $r1.<com.android.server.display.BrightnessMappingStrategy: boolean setLoggingEnabled(boolean)>(z0);
+
+        r0.<com.android.server.display.AutomaticBrightnessController: boolean mLoggingEnabled> = z0;
+
+        return 1;
+    }
+
+    public static void <clinit>()
+    {
+        <com.android.server.display.AutomaticBrightnessController: java.lang.String TAG> = "AutomaticBrightnessController";
+
+        <com.android.server.display.AutomaticBrightnessController: int MSG_UPDATE_FOREGROUND_APP_SYNC> = 5;
+
+        <com.android.server.display.AutomaticBrightnessController: int MSG_UPDATE_FOREGROUND_APP> = 4;
+
+        <com.android.server.display.AutomaticBrightnessController: int MSG_UPDATE_AMBIENT_LUX> = 1;
+
+        <com.android.server.display.AutomaticBrightnessController: int MSG_INVALIDATE_SHORT_TERM_MODEL> = 3;
+
+        <com.android.server.display.AutomaticBrightnessController: int MSG_BRIGHTNESS_ADJUSTMENT_SAMPLE> = 2;
+
+        <com.android.server.display.AutomaticBrightnessController: boolean DEBUG_PRETEND_LIGHT_SENSOR_ABSENT> = 0;
+
+        <com.android.server.display.AutomaticBrightnessController: int BRIGHTNESS_ADJUSTMENT_SAMPLE_DEBOUNCE_MILLIS> = 10000;
+
+        <com.android.server.display.AutomaticBrightnessController: int AMBIENT_LIGHT_SHORT_HORIZON_MILLIS> = 2000;
+
+        <com.android.server.display.AutomaticBrightnessController: long AMBIENT_LIGHT_PREDICTION_TIME_MILLIS> = 100L;
+
+        <com.android.server.display.AutomaticBrightnessController: int AMBIENT_LIGHT_LONG_HORIZON_MILLIS> = 10000;
+
+        return;
+    }
+}

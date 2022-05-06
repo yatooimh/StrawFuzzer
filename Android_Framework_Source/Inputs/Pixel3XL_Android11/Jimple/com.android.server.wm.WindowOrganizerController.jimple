@@ -1,0 +1,1432 @@
+class com.android.server.wm.WindowOrganizerController extends android.window.IWindowOrganizerController$Stub implements com.android.server.wm.BLASTSyncEngine$TransactionReadyListener
+{
+    static final int CONTROLLABLE_CONFIGS;
+    static final int CONTROLLABLE_WINDOW_CONFIGS;
+    private static final java.lang.String TAG;
+    private static final int TRANSACT_EFFECTS_CLIENT_CONFIG;
+    private static final int TRANSACT_EFFECTS_LIFECYCLE;
+    private final com.android.server.wm.BLASTSyncEngine mBLASTSyncEngine;
+    final com.android.server.wm.DisplayAreaOrganizerController mDisplayAreaOrganizerController;
+    private final com.android.server.wm.WindowManagerGlobalLock mGlobalLock;
+    private final com.android.server.wm.ActivityTaskManagerService mService;
+    final com.android.server.wm.TaskOrganizerController mTaskOrganizerController;
+    private final java.util.HashMap mTransactionCallbacksByPendingSyncId;
+
+    void <init>(com.android.server.wm.ActivityTaskManagerService)
+    {
+        com.android.server.wm.WindowOrganizerController r0;
+        com.android.server.wm.ActivityTaskManagerService r1, $r6, $r8;
+        com.android.server.wm.BLASTSyncEngine $r2;
+        java.util.HashMap $r3;
+        com.android.server.wm.WindowManagerGlobalLock $r4;
+        com.android.server.wm.TaskOrganizerController $r5;
+        com.android.server.wm.DisplayAreaOrganizerController $r7;
+
+        r0 := @this: com.android.server.wm.WindowOrganizerController;
+
+        r1 := @parameter0: com.android.server.wm.ActivityTaskManagerService;
+
+        specialinvoke r0.<android.window.IWindowOrganizerController$Stub: void <init>()>();
+
+        $r2 = new com.android.server.wm.BLASTSyncEngine;
+
+        specialinvoke $r2.<com.android.server.wm.BLASTSyncEngine: void <init>()>();
+
+        r0.<com.android.server.wm.WindowOrganizerController: com.android.server.wm.BLASTSyncEngine mBLASTSyncEngine> = $r2;
+
+        $r3 = new java.util.HashMap;
+
+        specialinvoke $r3.<java.util.HashMap: void <init>()>();
+
+        r0.<com.android.server.wm.WindowOrganizerController: java.util.HashMap mTransactionCallbacksByPendingSyncId> = $r3;
+
+        r0.<com.android.server.wm.WindowOrganizerController: com.android.server.wm.ActivityTaskManagerService mService> = r1;
+
+        $r4 = r1.<com.android.server.wm.ActivityTaskManagerService: com.android.server.wm.WindowManagerGlobalLock mGlobalLock>;
+
+        r0.<com.android.server.wm.WindowOrganizerController: com.android.server.wm.WindowManagerGlobalLock mGlobalLock> = $r4;
+
+        $r5 = new com.android.server.wm.TaskOrganizerController;
+
+        $r6 = r0.<com.android.server.wm.WindowOrganizerController: com.android.server.wm.ActivityTaskManagerService mService>;
+
+        specialinvoke $r5.<com.android.server.wm.TaskOrganizerController: void <init>(com.android.server.wm.ActivityTaskManagerService)>($r6);
+
+        r0.<com.android.server.wm.WindowOrganizerController: com.android.server.wm.TaskOrganizerController mTaskOrganizerController> = $r5;
+
+        $r7 = new com.android.server.wm.DisplayAreaOrganizerController;
+
+        $r8 = r0.<com.android.server.wm.WindowOrganizerController: com.android.server.wm.ActivityTaskManagerService mService>;
+
+        specialinvoke $r7.<com.android.server.wm.DisplayAreaOrganizerController: void <init>(com.android.server.wm.ActivityTaskManagerService)>($r8);
+
+        r0.<com.android.server.wm.WindowOrganizerController: com.android.server.wm.DisplayAreaOrganizerController mDisplayAreaOrganizerController> = $r7;
+
+        return;
+    }
+
+    private int applyChanges(com.android.server.wm.WindowContainer, android.window.WindowContainerTransaction$Change)
+    {
+        com.android.server.wm.WindowOrganizerController r0;
+        com.android.server.wm.WindowContainer r1;
+        android.window.WindowContainerTransaction$Change r2;
+        int i0, $i1, $i2, $i3, $i4, i5, i8;
+        boolean $z0, $z1;
+        android.content.res.Configuration $r4, $r5, $r6;
+        byte b6, b7;
+
+        r0 := @this: com.android.server.wm.WindowOrganizerController;
+
+        r1 := @parameter0: com.android.server.wm.WindowContainer;
+
+        r2 := @parameter1: android.window.WindowContainerTransaction$Change;
+
+        $i1 = virtualinvoke r2.<android.window.WindowContainerTransaction$Change: int getConfigSetMask()>();
+
+        i0 = $i1 & 536873984;
+
+        $i2 = virtualinvoke r2.<android.window.WindowContainerTransaction$Change: int getWindowSetMask()>();
+
+        i5 = $i2 & 3;
+
+        b6 = 0;
+
+        if i0 == 0 goto label1;
+
+        $r4 = new android.content.res.Configuration;
+
+        $r5 = virtualinvoke r1.<com.android.server.wm.WindowContainer: android.content.res.Configuration getRequestedOverrideConfiguration()>();
+
+        specialinvoke $r4.<android.content.res.Configuration: void <init>(android.content.res.Configuration)>($r5);
+
+        $r6 = virtualinvoke r2.<android.window.WindowContainerTransaction$Change: android.content.res.Configuration getConfiguration()>();
+
+        virtualinvoke $r4.<android.content.res.Configuration: void setTo(android.content.res.Configuration,int,int)>($r6, i0, i5);
+
+        virtualinvoke r1.<com.android.server.wm.WindowContainer: void onRequestedOverrideConfigurationChanged(android.content.res.Configuration)>($r4);
+
+        specialinvoke r0.<com.android.server.wm.WindowOrganizerController: void resizePinnedStackIfNeeded(com.android.server.wm.ConfigurationContainer,int,int,android.content.res.Configuration)>(r1, i0, i5, $r4);
+
+        b6 = 0 | 1;
+
+     label1:
+        b7 = b6;
+
+        $i3 = virtualinvoke r2.<android.window.WindowContainerTransaction$Change: int getChangeMask()>();
+
+        $i4 = $i3 & 1;
+
+        if $i4 == 0 goto label2;
+
+        b7 = b6;
+
+        $z0 = virtualinvoke r2.<android.window.WindowContainerTransaction$Change: boolean getFocusable()>();
+
+        $z1 = virtualinvoke r1.<com.android.server.wm.WindowContainer: boolean setFocusable(boolean)>($z0);
+
+        if $z1 == 0 goto label2;
+
+        b7 = b6 | 2;
+
+     label2:
+        i8 = virtualinvoke r2.<android.window.WindowContainerTransaction$Change: int getWindowingMode()>();
+
+        if i8 <= -1 goto label3;
+
+        virtualinvoke r1.<com.android.server.wm.WindowContainer: void setWindowingMode(int)>(i8);
+
+     label3:
+        return b7;
+    }
+
+    private int applyTaskChanges(com.android.server.wm.Task, android.window.WindowContainerTransaction$Change)
+    {
+        com.android.server.wm.WindowOrganizerController r0;
+        com.android.server.wm.Task r1;
+        android.view.SurfaceControl$Transaction r2;
+        int $i0, $i1, i4;
+        com.android.server.wm.ActivityTaskManagerService $r3;
+        com.android.server.wm.ActivityStackSupervisor $r4;
+        boolean $z0, $z1;
+        android.window.WindowContainerTransaction$Change r5;
+        byte b3;
+        android.graphics.Rect r6;
+
+        r0 := @this: com.android.server.wm.WindowOrganizerController;
+
+        r1 := @parameter0: com.android.server.wm.Task;
+
+        r5 := @parameter1: android.window.WindowContainerTransaction$Change;
+
+        r2 = virtualinvoke r5.<android.window.WindowContainerTransaction$Change: android.view.SurfaceControl$Transaction getBoundsChangeTransaction()>();
+
+        b3 = 0;
+
+        $i0 = virtualinvoke r5.<android.window.WindowContainerTransaction$Change: int getChangeMask()>();
+
+        $i1 = $i0 & 8;
+
+        if $i1 == 0 goto label1;
+
+        b3 = 0;
+
+        $z0 = virtualinvoke r5.<android.window.WindowContainerTransaction$Change: boolean getHidden()>();
+
+        $z1 = virtualinvoke r1.<com.android.server.wm.Task: boolean setForceHidden(int,boolean)>(2, $z0);
+
+        if $z1 == 0 goto label1;
+
+        b3 = 2;
+
+     label1:
+        i4 = virtualinvoke r5.<android.window.WindowContainerTransaction$Change: int getActivityWindowingMode()>();
+
+        if i4 <= -1 goto label2;
+
+        virtualinvoke r1.<com.android.server.wm.Task: void setActivityWindowingMode(int)>(i4);
+
+     label2:
+        if r2 == null goto label3;
+
+        virtualinvoke r1.<com.android.server.wm.Task: void setMainWindowSizeChangeTransaction(android.view.SurfaceControl$Transaction)>(r2);
+
+     label3:
+        r6 = virtualinvoke r5.<android.window.WindowContainerTransaction$Change: android.graphics.Rect getEnterPipBounds()>();
+
+        if r6 == null goto label4;
+
+        $r3 = r0.<com.android.server.wm.WindowOrganizerController: com.android.server.wm.ActivityTaskManagerService mService>;
+
+        $r4 = $r3.<com.android.server.wm.ActivityTaskManagerService: com.android.server.wm.ActivityStackSupervisor mStackSupervisor>;
+
+        virtualinvoke $r4.<com.android.server.wm.ActivityStackSupervisor: void updatePictureInPictureMode(com.android.server.wm.Task,android.graphics.Rect,boolean)>(r1, r6, 1);
+
+     label4:
+        return b3;
+    }
+
+    private int applyWindowContainerChange(com.android.server.wm.WindowContainer, android.window.WindowContainerTransaction$Change)
+    {
+        com.android.server.wm.WindowOrganizerController r0;
+        com.android.server.wm.WindowContainer r1;
+        android.window.WindowContainerTransaction$Change r2;
+        int i0, $i1, i2;
+        boolean $z0;
+        com.android.server.wm.Task $r3;
+
+        r0 := @this: com.android.server.wm.WindowOrganizerController;
+
+        r1 := @parameter0: com.android.server.wm.WindowContainer;
+
+        r2 := @parameter1: android.window.WindowContainerTransaction$Change;
+
+        specialinvoke r0.<com.android.server.wm.WindowOrganizerController: void sanitizeWindowContainer(com.android.server.wm.WindowContainer)>(r1);
+
+        i0 = specialinvoke r0.<com.android.server.wm.WindowOrganizerController: int applyChanges(com.android.server.wm.WindowContainer,android.window.WindowContainerTransaction$Change)>(r1, r2);
+
+        i2 = i0;
+
+        $z0 = r1 instanceof com.android.server.wm.Task;
+
+        if $z0 == 0 goto label1;
+
+        $r3 = virtualinvoke r1.<com.android.server.wm.WindowContainer: com.android.server.wm.Task asTask()>();
+
+        $i1 = specialinvoke r0.<com.android.server.wm.WindowOrganizerController: int applyTaskChanges(com.android.server.wm.Task,android.window.WindowContainerTransaction$Change)>($r3, r2);
+
+        i2 = i0 | $i1;
+
+     label1:
+        return i2;
+    }
+
+    private void enforceStackPermission(java.lang.String)
+    {
+        com.android.server.wm.WindowOrganizerController r0;
+        java.lang.String r1;
+        com.android.server.wm.ActivityTaskManagerService $r2;
+        android.app.ActivityManagerInternal $r3;
+
+        r0 := @this: com.android.server.wm.WindowOrganizerController;
+
+        r1 := @parameter0: java.lang.String;
+
+        $r2 = r0.<com.android.server.wm.WindowOrganizerController: com.android.server.wm.ActivityTaskManagerService mService>;
+
+        $r3 = $r2.<com.android.server.wm.ActivityTaskManagerService: android.app.ActivityManagerInternal mAmInternal>;
+
+        virtualinvoke $r3.<android.app.ActivityManagerInternal: void enforceCallingPermission(java.lang.String,java.lang.String)>("android.permission.MANAGE_ACTIVITY_STACKS", r1);
+
+        return;
+    }
+
+    private void resizePinnedStackIfNeeded(com.android.server.wm.ConfigurationContainer, int, int, android.content.res.Configuration)
+    {
+        com.android.server.wm.WindowOrganizerController r0;
+        int i0, i1, $i2, $i3;
+        android.content.res.Configuration r1;
+        boolean $z0, $z1;
+        android.app.WindowConfiguration $r2;
+        android.graphics.Rect $r3;
+        com.android.server.wm.ConfigurationContainer r4;
+        com.android.server.wm.ActivityStack r5;
+
+        r0 := @this: com.android.server.wm.WindowOrganizerController;
+
+        r4 := @parameter0: com.android.server.wm.ConfigurationContainer;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        r1 := @parameter3: android.content.res.Configuration;
+
+        $z0 = r4 instanceof com.android.server.wm.ActivityStack;
+
+        if $z0 == 0 goto label1;
+
+        $i2 = 536870912 & i0;
+
+        if $i2 == 0 goto label1;
+
+        $i3 = i1 & 1;
+
+        if $i3 == 0 goto label1;
+
+        r5 = (com.android.server.wm.ActivityStack) r4;
+
+        $z1 = virtualinvoke r5.<com.android.server.wm.ActivityStack: boolean inPinnedWindowingMode()>();
+
+        if $z1 == 0 goto label1;
+
+        $r2 = r1.<android.content.res.Configuration: android.app.WindowConfiguration windowConfiguration>;
+
+        $r3 = virtualinvoke $r2.<android.app.WindowConfiguration: android.graphics.Rect getBounds()>();
+
+        virtualinvoke r5.<com.android.server.wm.ActivityStack: void resize(android.graphics.Rect,boolean,boolean)>($r3, 1, 1);
+
+     label1:
+        return;
+    }
+
+    private int sanitizeAndApplyHierarchyOp(com.android.server.wm.WindowContainer, android.window.WindowContainerTransaction$HierarchyOp)
+    {
+        com.android.server.wm.WindowOrganizerController r0;
+        com.android.server.wm.Task r1, $r8, r30;
+        com.android.server.wm.DisplayContent r2;
+        com.android.server.wm.ActivityStack r3, r32, r33;
+        boolean z0, $z1, $z2, $z3, $z4, $z5, $z6, $z7, $z8, $z9, $z10, $z11, z12, $z13;
+        java.lang.IllegalArgumentException $r4;
+        com.android.server.wm.TaskDisplayArea $r5, $r6, $r14, $r15, $r22;
+        com.android.server.wm.WindowContainer $r7, $r12, $r13, r27, r34;
+        java.lang.RuntimeException $r9;
+        android.os.IBinder $r10, $r11;
+        java.lang.StringBuilder $r16, $r23;
+        java.lang.String $r21, $r26;
+        android.window.WindowContainerTransaction$HierarchyOp r28;
+        int i2;
+
+        r0 := @this: com.android.server.wm.WindowOrganizerController;
+
+        r27 := @parameter0: com.android.server.wm.WindowContainer;
+
+        r28 := @parameter1: android.window.WindowContainerTransaction$HierarchyOp;
+
+        r1 = virtualinvoke r27.<com.android.server.wm.WindowContainer: com.android.server.wm.Task asTask()>();
+
+        if r1 == null goto label24;
+
+        r2 = virtualinvoke r1.<com.android.server.wm.Task: com.android.server.wm.DisplayContent getDisplayContent()>();
+
+        if r2 != null goto label01;
+
+        $r23 = new java.lang.StringBuilder;
+
+        specialinvoke $r23.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r23.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Container is no longer attached: ");
+
+        virtualinvoke $r23.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r1);
+
+        $r26 = virtualinvoke $r23.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("WindowOrganizerController", $r26);
+
+        return 0;
+
+     label01:
+        r3 = (com.android.server.wm.ActivityStack) r1;
+
+        z0 = virtualinvoke r28.<android.window.WindowContainerTransaction$HierarchyOp: boolean isReparent()>();
+
+        i2 = 2147483647;
+
+        if z0 == 0 goto label18;
+
+        $z4 = virtualinvoke r1.<com.android.server.wm.Task: boolean isRootTask()>();
+
+        if $z4 == 0 goto label02;
+
+        $z11 = r1.<com.android.server.wm.Task: boolean mCreatedByOrganizer>;
+
+        if $z11 == 0 goto label03;
+
+     label02:
+        $r7 = virtualinvoke r1.<com.android.server.wm.Task: com.android.server.wm.WindowContainer getParent()>();
+
+        $r8 = virtualinvoke $r7.<com.android.server.wm.WindowContainer: com.android.server.wm.Task asTask()>();
+
+        $z5 = $r8.<com.android.server.wm.Task: boolean mCreatedByOrganizer>;
+
+        if $z5 == 0 goto label04;
+
+     label03:
+        z12 = 1;
+
+        goto label05;
+
+     label04:
+        z12 = 0;
+
+     label05:
+        if z12 == 0 goto label17;
+
+        $r10 = virtualinvoke r28.<android.window.WindowContainerTransaction$HierarchyOp: android.os.IBinder getNewParent()>();
+
+        if $r10 != null goto label06;
+
+        r30 = null;
+
+        goto label07;
+
+     label06:
+        $r11 = virtualinvoke r28.<android.window.WindowContainerTransaction$HierarchyOp: android.os.IBinder getNewParent()>();
+
+        $r12 = staticinvoke <com.android.server.wm.WindowContainer: com.android.server.wm.WindowContainer fromBinder(android.os.IBinder)>($r11);
+
+        r30 = virtualinvoke $r12.<com.android.server.wm.WindowContainer: com.android.server.wm.Task asTask()>();
+
+     label07:
+        $r13 = virtualinvoke r1.<com.android.server.wm.Task: com.android.server.wm.WindowContainer getParent()>();
+
+        if $r13 == r30 goto label12;
+
+        if r30 != null goto label08;
+
+        $r22 = virtualinvoke r2.<com.android.server.wm.DisplayContent: com.android.server.wm.TaskDisplayArea getDefaultTaskDisplayArea()>();
+
+        $z10 = virtualinvoke r28.<android.window.WindowContainerTransaction$HierarchyOp: boolean getToTop()>();
+
+        virtualinvoke r3.<com.android.server.wm.ActivityStack: void reparent(com.android.server.wm.TaskDisplayArea,boolean)>($r22, $z10);
+
+        goto label16;
+
+     label08:
+        $z7 = virtualinvoke r30.<com.android.server.wm.Task: boolean inMultiWindowMode()>();
+
+        if $z7 == 0 goto label09;
+
+        $z8 = virtualinvoke r1.<com.android.server.wm.Task: boolean isResizeable()>();
+
+        if $z8 != 0 goto label09;
+
+        $z9 = virtualinvoke r1.<com.android.server.wm.Task: boolean isLeafTask()>();
+
+        if $z9 == 0 goto label09;
+
+        $r16 = new java.lang.StringBuilder;
+
+        specialinvoke $r16.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r16.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Can\'t support task that doesn\'t support multi-window mode in multi-window mode... newParent=");
+
+        virtualinvoke $r16.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r30);
+
+        virtualinvoke $r16.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" task=");
+
+        virtualinvoke $r16.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r1);
+
+        $r21 = virtualinvoke $r16.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("WindowOrganizerController", $r21);
+
+        return 0;
+
+     label09:
+        r32 = (com.android.server.wm.ActivityStack) r30;
+
+        $z13 = virtualinvoke r28.<android.window.WindowContainerTransaction$HierarchyOp: boolean getToTop()>();
+
+        if $z13 == 0 goto label10;
+
+        goto label11;
+
+     label10:
+        i2 = -2147483648;
+
+     label11:
+        virtualinvoke r1.<com.android.server.wm.Task: void reparent(com.android.server.wm.ActivityStack,int,boolean,java.lang.String)>(r32, i2, 0, "sanitizeAndApplyHierarchyOp");
+
+        goto label16;
+
+     label12:
+        if r30 == null goto label13;
+
+        goto label14;
+
+     label13:
+        r30 = virtualinvoke r1.<com.android.server.wm.Task: com.android.server.wm.Task getRootTask()>();
+
+     label14:
+        r33 = (com.android.server.wm.ActivityStack) r30;
+
+        $z6 = virtualinvoke r28.<android.window.WindowContainerTransaction$HierarchyOp: boolean getToTop()>();
+
+        if $z6 == 0 goto label15;
+
+        $r15 = virtualinvoke r3.<com.android.server.wm.ActivityStack: com.android.server.wm.TaskDisplayArea getDisplayArea()>();
+
+        virtualinvoke $r15.<com.android.server.wm.TaskDisplayArea: void positionStackAtTop(com.android.server.wm.ActivityStack,boolean)>(r33, 0);
+
+        goto label16;
+
+     label15:
+        $r14 = virtualinvoke r3.<com.android.server.wm.ActivityStack: com.android.server.wm.TaskDisplayArea getDisplayArea()>();
+
+        virtualinvoke $r14.<com.android.server.wm.TaskDisplayArea: void positionStackAtBottom(com.android.server.wm.ActivityStack)>(r33);
+
+     label16:
+        goto label23;
+
+     label17:
+        $r9 = new java.lang.RuntimeException;
+
+        specialinvoke $r9.<java.lang.RuntimeException: void <init>(java.lang.String)>("Reparenting leaf Tasks is not supported now.");
+
+        throw $r9;
+
+     label18:
+        $z1 = virtualinvoke r1.<com.android.server.wm.Task: boolean isRootTask()>();
+
+        if $z1 == 0 goto label20;
+
+        $z3 = virtualinvoke r28.<android.window.WindowContainerTransaction$HierarchyOp: boolean getToTop()>();
+
+        if $z3 == 0 goto label19;
+
+        $r6 = virtualinvoke r3.<com.android.server.wm.ActivityStack: com.android.server.wm.TaskDisplayArea getDisplayArea()>();
+
+        virtualinvoke $r6.<com.android.server.wm.TaskDisplayArea: void positionStackAtTop(com.android.server.wm.ActivityStack,boolean)>(r3, 0);
+
+        goto label23;
+
+     label19:
+        $r5 = virtualinvoke r3.<com.android.server.wm.ActivityStack: com.android.server.wm.TaskDisplayArea getDisplayArea()>();
+
+        virtualinvoke $r5.<com.android.server.wm.TaskDisplayArea: void positionStackAtBottom(com.android.server.wm.ActivityStack)>(r3);
+
+        goto label23;
+
+     label20:
+        r34 = virtualinvoke r1.<com.android.server.wm.Task: com.android.server.wm.WindowContainer getParent()>();
+
+        $z2 = virtualinvoke r28.<android.window.WindowContainerTransaction$HierarchyOp: boolean getToTop()>();
+
+        if $z2 == 0 goto label21;
+
+        goto label22;
+
+     label21:
+        i2 = -2147483648;
+
+     label22:
+        virtualinvoke r34.<com.android.server.wm.WindowContainer: void positionChildAt(int,com.android.server.wm.WindowContainer,boolean)>(i2, r1, 0);
+
+     label23:
+        return 2;
+
+     label24:
+        $r4 = new java.lang.IllegalArgumentException;
+
+        specialinvoke $r4.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>("Invalid container in hierarchy op");
+
+        throw $r4;
+    }
+
+    private void sanitizeWindowContainer(com.android.server.wm.WindowContainer)
+    {
+        com.android.server.wm.WindowOrganizerController r0;
+        com.android.server.wm.WindowContainer r1;
+        boolean $z0, $z1;
+        java.lang.RuntimeException $r2;
+
+        r0 := @this: com.android.server.wm.WindowOrganizerController;
+
+        r1 := @parameter0: com.android.server.wm.WindowContainer;
+
+        $z0 = r1 instanceof com.android.server.wm.Task;
+
+        if $z0 != 0 goto label2;
+
+        $z1 = r1 instanceof com.android.server.wm.DisplayArea;
+
+        if $z1 == 0 goto label1;
+
+        goto label2;
+
+     label1:
+        $r2 = new java.lang.RuntimeException;
+
+        specialinvoke $r2.<java.lang.RuntimeException: void <init>(java.lang.String)>("Invalid token in task or displayArea transaction");
+
+        throw $r2;
+
+     label2:
+        return;
+    }
+
+    void addToSyncSet(int, com.android.server.wm.WindowContainer)
+    {
+        com.android.server.wm.WindowOrganizerController r0;
+        int i0;
+        com.android.server.wm.WindowContainer r1;
+        com.android.server.wm.BLASTSyncEngine $r2;
+
+        r0 := @this: com.android.server.wm.WindowOrganizerController;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: com.android.server.wm.WindowContainer;
+
+        $r2 = r0.<com.android.server.wm.WindowOrganizerController: com.android.server.wm.BLASTSyncEngine mBLASTSyncEngine>;
+
+        virtualinvoke $r2.<com.android.server.wm.BLASTSyncEngine: boolean addToSyncSet(int,com.android.server.wm.WindowContainer)>(i0, r1);
+
+        return;
+    }
+
+    public int applySyncTransaction(android.window.WindowContainerTransaction, android.window.IWindowContainerTransactionCallback)
+    {
+        com.android.server.wm.WindowOrganizerController r0;
+        long l0;
+        com.android.server.wm.WindowManagerGlobalLock r1;
+        int i1, $i2, $i3, $i4, $i5, $i6, $i7, $i8, $i9, $i11, $i12, i14, i15, i16, i17, i18, $i19;
+        com.android.server.wm.ActivityTaskManagerService $r3, $r8, $r9, $r16, $r49;
+        java.util.Map $r4, $r6;
+        java.util.Set $r5, $r7;
+        com.android.server.wm.'-$$Lambda$1uR2GodW3-TXQGLlsV_nCi1hRIE' $r10;
+        com.android.internal.util.function.pooled.ArgumentPlaceholder $r11;
+        java.lang.Integer $r12;
+        java.lang.Boolean $r13;
+        java.lang.Object $r14, $r18, $r19, $r22, $r32, $r37, $r38, $r40;
+        com.android.server.wm.WindowContainer $r15, $r21, $r27, $r31, r55, r59;
+        com.android.server.wm.RootWindowContainer $r17;
+        android.os.IBinder $r20, $r33, $r39;
+        android.window.WindowContainerTransaction$Change $r23, $r41;
+        boolean $z0, $z1, $z2, $z3, $z4, $z5, $z7, $z8;
+        float $f0, $f1;
+        java.lang.String $r30, $r36, $r44;
+        java.lang.Throwable $r45, $r46, $r47, $r48;
+        android.window.WindowContainerTransaction r50;
+        android.window.IWindowContainerTransactionCallback r51;
+        java.util.Iterator r53, r61;
+        java.util.Map$Entry r54, r62;
+        java.util.List r57;
+        android.window.WindowContainerTransaction$HierarchyOp r58;
+        com.android.server.wm.Task r63, r65;
+        android.graphics.Rect r64;
+        android.view.SurfaceControl r69;
+        com.android.internal.util.function.pooled.PooledConsumer r70;
+        android.util.ArraySet r75;
+        java.lang.StringBuilder r76, r77, r78;
+        java.lang.IllegalArgumentException r79, r81;
+        android.view.SurfaceControl$Transaction r80;
+        com.android.internal.util.function.TriConsumer r82;
+
+        r0 := @this: com.android.server.wm.WindowOrganizerController;
+
+        r50 := @parameter0: android.window.WindowContainerTransaction;
+
+        r51 := @parameter1: android.window.IWindowContainerTransactionCallback;
+
+        specialinvoke r0.<com.android.server.wm.WindowOrganizerController: void enforceStackPermission(java.lang.String)>("applySyncTransaction()");
+
+        i14 = -1;
+
+        if r50 == null goto label77;
+
+        l0 = staticinvoke <android.os.Binder: long clearCallingIdentity()>();
+
+     label01:
+        r1 = r0.<com.android.server.wm.WindowOrganizerController: com.android.server.wm.WindowManagerGlobalLock mGlobalLock>;
+
+        entermonitor r1;
+
+     label02:
+        staticinvoke <com.android.server.wm.WindowManagerService: void boostPriorityForLockedSection()>();
+
+     label03:
+        i15 = 0;
+
+        if r51 == null goto label05;
+
+     label04:
+        i14 = virtualinvoke r0.<com.android.server.wm.WindowOrganizerController: int startSyncWithOrganizer(android.window.IWindowContainerTransactionCallback)>(r51);
+
+     label05:
+        $r3 = r0.<com.android.server.wm.WindowOrganizerController: com.android.server.wm.ActivityTaskManagerService mService>;
+
+        virtualinvoke $r3.<com.android.server.wm.ActivityTaskManagerService: void deferWindowLayout()>();
+
+     label06:
+        r75 = new android.util.ArraySet;
+
+        specialinvoke r75.<android.util.ArraySet: void <init>()>();
+
+     label07:
+        $r4 = virtualinvoke r50.<android.window.WindowContainerTransaction: java.util.Map getChanges()>();
+
+        $r5 = interfaceinvoke $r4.<java.util.Map: java.util.Set entrySet()>();
+
+        r53 = interfaceinvoke $r5.<java.util.Set: java.util.Iterator iterator()>();
+
+     label08:
+        $z7 = interfaceinvoke r53.<java.util.Iterator: boolean hasNext()>();
+
+        if $z7 == 0 goto label17;
+
+     label09:
+        $r37 = interfaceinvoke r53.<java.util.Iterator: java.lang.Object next()>();
+
+        r54 = (java.util.Map$Entry) $r37;
+
+        $r38 = interfaceinvoke r54.<java.util.Map$Entry: java.lang.Object getKey()>();
+
+        $r39 = (android.os.IBinder) $r38;
+
+        r55 = staticinvoke <com.android.server.wm.WindowContainer: com.android.server.wm.WindowContainer fromBinder(android.os.IBinder)>($r39);
+
+        $z5 = virtualinvoke r55.<com.android.server.wm.WindowContainer: boolean isAttached()>();
+
+        if $z5 != 0 goto label11;
+
+        r76 = new java.lang.StringBuilder;
+
+        specialinvoke r76.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r76.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Attempt to operate on detached container: ");
+
+        virtualinvoke r76.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r55);
+
+        $r44 = virtualinvoke r76.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("WindowOrganizerController", $r44);
+
+     label10:
+        goto label08;
+
+     label11:
+        if i14 < 0 goto label13;
+
+     label12:
+        virtualinvoke r0.<com.android.server.wm.WindowOrganizerController: void addToSyncSet(int,com.android.server.wm.WindowContainer)>(i14, r55);
+
+     label13:
+        $r40 = interfaceinvoke r54.<java.util.Map$Entry: java.lang.Object getValue()>();
+
+        $r41 = (android.window.WindowContainerTransaction$Change) $r40;
+
+        i16 = specialinvoke r0.<com.android.server.wm.WindowOrganizerController: int applyWindowContainerChange(com.android.server.wm.WindowContainer,android.window.WindowContainerTransaction$Change)>(r55, $r41);
+
+     label14:
+        i15 = i15 | i16;
+
+        $i11 = i15 & 2;
+
+        if $i11 != 0 goto label16;
+
+        $i12 = i16 & 1;
+
+        if $i12 == 0 goto label16;
+
+     label15:
+        virtualinvoke r75.<android.util.ArraySet: boolean add(java.lang.Object)>(r55);
+
+     label16:
+        goto label08;
+
+     label17:
+        r57 = virtualinvoke r50.<android.window.WindowContainerTransaction: java.util.List getHierarchyOps()>();
+
+     label18:
+        i17 = 0;
+
+     label19:
+        i1 = interfaceinvoke r57.<java.util.List: int size()>();
+
+     label20:
+        if i17 >= i1 goto label27;
+
+     label21:
+        $r32 = interfaceinvoke r57.<java.util.List: java.lang.Object get(int)>(i17);
+
+        r58 = (android.window.WindowContainerTransaction$HierarchyOp) $r32;
+
+        $r33 = virtualinvoke r58.<android.window.WindowContainerTransaction$HierarchyOp: android.os.IBinder getContainer()>();
+
+        r59 = staticinvoke <com.android.server.wm.WindowContainer: com.android.server.wm.WindowContainer fromBinder(android.os.IBinder)>($r33);
+
+        $z4 = virtualinvoke r59.<com.android.server.wm.WindowContainer: boolean isAttached()>();
+
+        if $z4 != 0 goto label23;
+
+        r77 = new java.lang.StringBuilder;
+
+        specialinvoke r77.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r77.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Attempt to operate on detached container: ");
+
+        virtualinvoke r77.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r59);
+
+        $r36 = virtualinvoke r77.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("WindowOrganizerController", $r36);
+
+     label22:
+        goto label26;
+
+     label23:
+        if i14 < 0 goto label25;
+
+     label24:
+        virtualinvoke r0.<com.android.server.wm.WindowOrganizerController: void addToSyncSet(int,com.android.server.wm.WindowContainer)>(i14, r59);
+
+     label25:
+        $i9 = specialinvoke r0.<com.android.server.wm.WindowOrganizerController: int sanitizeAndApplyHierarchyOp(com.android.server.wm.WindowContainer,android.window.WindowContainerTransaction$HierarchyOp)>(r59, r58);
+
+        i15 = i15 | $i9;
+
+     label26:
+        i17 = i17 + 1;
+
+        goto label20;
+
+     label27:
+        $r6 = virtualinvoke r50.<android.window.WindowContainerTransaction: java.util.Map getChanges()>();
+
+        $r7 = interfaceinvoke $r6.<java.util.Map: java.util.Set entrySet()>();
+
+        r61 = interfaceinvoke $r7.<java.util.Set: java.util.Iterator iterator()>();
+
+     label28:
+        $z8 = interfaceinvoke r61.<java.util.Iterator: boolean hasNext()>();
+
+        if $z8 == 0 goto label46;
+
+     label29:
+        $r18 = interfaceinvoke r61.<java.util.Iterator: java.lang.Object next()>();
+
+        r62 = (java.util.Map$Entry) $r18;
+
+        $r19 = interfaceinvoke r62.<java.util.Map$Entry: java.lang.Object getKey()>();
+
+        $r20 = (android.os.IBinder) $r19;
+
+        $r21 = staticinvoke <com.android.server.wm.WindowContainer: com.android.server.wm.WindowContainer fromBinder(android.os.IBinder)>($r20);
+
+        r63 = virtualinvoke $r21.<com.android.server.wm.WindowContainer: com.android.server.wm.Task asTask()>();
+
+        $r22 = interfaceinvoke r62.<java.util.Map$Entry: java.lang.Object getValue()>();
+
+        $r23 = (android.window.WindowContainerTransaction$Change) $r22;
+
+        r64 = virtualinvoke $r23.<android.window.WindowContainerTransaction$Change: android.graphics.Rect getBoundsChangeSurfaceBounds()>();
+
+     label30:
+        if r63 == null goto label45;
+
+     label31:
+        $z0 = virtualinvoke r63.<com.android.server.wm.Task: boolean isAttached()>();
+
+        if $z0 == 0 goto label45;
+
+     label32:
+        if r64 != null goto label33;
+
+        goto label28;
+
+     label33:
+        $z1 = virtualinvoke r63.<com.android.server.wm.Task: boolean isOrganized()>();
+
+        if $z1 != 0 goto label40;
+
+        $r27 = virtualinvoke r63.<com.android.server.wm.Task: com.android.server.wm.WindowContainer getParent()>();
+
+        if $r27 == null goto label35;
+
+        $r31 = virtualinvoke r63.<com.android.server.wm.Task: com.android.server.wm.WindowContainer getParent()>();
+
+        r65 = virtualinvoke $r31.<com.android.server.wm.WindowContainer: com.android.server.wm.Task asTask()>();
+
+     label34:
+        goto label36;
+
+     label35:
+        r65 = null;
+
+     label36:
+        if r65 == null goto label39;
+
+     label37:
+        $z3 = r65.<com.android.server.wm.Task: boolean mCreatedByOrganizer>;
+
+        if $z3 == 0 goto label39;
+
+     label38:
+        goto label40;
+
+     label39:
+        r79 = new java.lang.IllegalArgumentException;
+
+        r78 = new java.lang.StringBuilder;
+
+        specialinvoke r78.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r78.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Can\'t manipulate non-organized task surface ");
+
+        virtualinvoke r78.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r63);
+
+        $r30 = virtualinvoke r78.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r79.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>($r30);
+
+        throw r79;
+
+     label40:
+        r80 = new android.view.SurfaceControl$Transaction;
+
+        specialinvoke r80.<android.view.SurfaceControl$Transaction: void <init>()>();
+
+        r69 = virtualinvoke r63.<com.android.server.wm.Task: android.view.SurfaceControl getSurfaceControl()>();
+
+        $i5 = r64.<android.graphics.Rect: int left>;
+
+        $f1 = (float) $i5;
+
+        $i6 = r64.<android.graphics.Rect: int top>;
+
+        $f0 = (float) $i6;
+
+        virtualinvoke r80.<android.view.SurfaceControl$Transaction: android.view.SurfaceControl$Transaction setPosition(android.view.SurfaceControl,float,float)>(r69, $f1, $f0);
+
+        $z2 = virtualinvoke r64.<android.graphics.Rect: boolean isEmpty()>();
+
+        if $z2 == 0 goto label42;
+
+        virtualinvoke r80.<android.view.SurfaceControl$Transaction: android.view.SurfaceControl$Transaction setWindowCrop(android.view.SurfaceControl,android.graphics.Rect)>(r69, null);
+
+     label41:
+        goto label43;
+
+     label42:
+        $i7 = virtualinvoke r64.<android.graphics.Rect: int width()>();
+
+        $i8 = virtualinvoke r64.<android.graphics.Rect: int height()>();
+
+        virtualinvoke r80.<android.view.SurfaceControl$Transaction: android.view.SurfaceControl$Transaction setWindowCrop(android.view.SurfaceControl,int,int)>(r69, $i7, $i8);
+
+     label43:
+        virtualinvoke r63.<com.android.server.wm.Task: void setMainWindowSizeChangeTransaction(android.view.SurfaceControl$Transaction)>(r80);
+
+     label44:
+        goto label28;
+
+     label45:
+        goto label28;
+
+     label46:
+        $i2 = i15 & 2;
+
+        if $i2 == 0 goto label49;
+
+     label47:
+        $r16 = r0.<com.android.server.wm.WindowOrganizerController: com.android.server.wm.ActivityTaskManagerService mService>;
+
+        $r17 = $r16.<com.android.server.wm.ActivityTaskManagerService: com.android.server.wm.RootWindowContainer mRootWindowContainer>;
+
+        virtualinvoke $r17.<com.android.server.wm.RootWindowContainer: void ensureActivitiesVisible(com.android.server.wm.ActivityRecord,int,boolean)>(null, 0, 1);
+
+     label48:
+        goto label60;
+
+     label49:
+        $i3 = i15 & 1;
+
+        if $i3 == 0 goto label60;
+
+     label50:
+        $r10 = <com.android.server.wm._$$Lambda$1uR2GodW3_TXQGLlsV_nCi1hRIE: com.android.server.wm.'-$$Lambda$1uR2GodW3-TXQGLlsV_nCi1hRIE' INSTANCE>;
+
+        $r11 = staticinvoke <com.android.internal.util.function.pooled.PooledLambda: com.android.internal.util.function.pooled.ArgumentPlaceholder __(java.lang.Class)>(class "Lcom/android/server/wm/ActivityRecord;");
+
+        $r12 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(0);
+
+        $r13 = staticinvoke <java.lang.Boolean: java.lang.Boolean valueOf(boolean)>(1);
+
+        r82 = (com.android.internal.util.function.TriConsumer) $r10;
+
+        r70 = staticinvoke <com.android.internal.util.function.pooled.PooledLambda: com.android.internal.util.function.pooled.PooledConsumer obtainConsumer(com.android.internal.util.function.TriConsumer,com.android.internal.util.function.pooled.ArgumentPlaceholder,java.lang.Object,java.lang.Object)>(r82, $r11, $r12, $r13);
+
+     label51:
+        $i4 = virtualinvoke r75.<android.util.ArraySet: int size()>();
+
+        i18 = $i4 - 1;
+
+     label52:
+        if i18 < 0 goto label55;
+
+     label53:
+        $r14 = virtualinvoke r75.<android.util.ArraySet: java.lang.Object valueAt(int)>(i18);
+
+        $r15 = (com.android.server.wm.WindowContainer) $r14;
+
+        virtualinvoke $r15.<com.android.server.wm.WindowContainer: void forAllActivities(java.util.function.Consumer)>(r70);
+
+     label54:
+        i18 = i18 + -1;
+
+        goto label52;
+
+     label55:
+        interfaceinvoke r70.<com.android.internal.util.function.pooled.PooledConsumer: void recycle()>();
+
+     label56:
+        goto label60;
+
+     label57:
+        $r46 := @caughtexception;
+
+     label58:
+        interfaceinvoke r70.<com.android.internal.util.function.pooled.PooledConsumer: void recycle()>();
+
+     label59:
+        throw $r46;
+
+     label60:
+        $i19 = i15 & 1;
+
+        if $i19 != 0 goto label62;
+
+     label61:
+        $r9 = r0.<com.android.server.wm.WindowOrganizerController: com.android.server.wm.ActivityTaskManagerService mService>;
+
+        virtualinvoke $r9.<com.android.server.wm.ActivityTaskManagerService: void addWindowLayoutReasons(int)>(1);
+
+     label62:
+        $r8 = r0.<com.android.server.wm.WindowOrganizerController: com.android.server.wm.ActivityTaskManagerService mService>;
+
+        virtualinvoke $r8.<com.android.server.wm.ActivityTaskManagerService: void continueWindowLayout()>();
+
+     label63:
+        if i14 < 0 goto label65;
+
+     label64:
+        virtualinvoke r0.<com.android.server.wm.WindowOrganizerController: void setSyncReady(int)>(i14);
+
+     label65:
+        exitmonitor r1;
+
+     label66:
+        staticinvoke <com.android.server.wm.WindowManagerService: void resetPriorityAfterLockedSection()>();
+
+     label67:
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l0);
+
+        return i14;
+
+     label68:
+        $r48 := @caughtexception;
+
+     label69:
+        $r49 = r0.<com.android.server.wm.WindowOrganizerController: com.android.server.wm.ActivityTaskManagerService mService>;
+
+        virtualinvoke $r49.<com.android.server.wm.ActivityTaskManagerService: void continueWindowLayout()>();
+
+     label70:
+        if i14 < 0 goto label72;
+
+     label71:
+        virtualinvoke r0.<com.android.server.wm.WindowOrganizerController: void setSyncReady(int)>(i14);
+
+     label72:
+        throw $r48;
+
+     label73:
+        $r45 := @caughtexception;
+
+     label74:
+        exitmonitor r1;
+
+     label75:
+        staticinvoke <com.android.server.wm.WindowManagerService: void resetPriorityAfterLockedSection()>();
+
+        throw $r45;
+
+     label76:
+        $r47 := @caughtexception;
+
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l0);
+
+        throw $r47;
+
+     label77:
+        r81 = new java.lang.IllegalArgumentException;
+
+        specialinvoke r81.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>("Null transaction passed to applySyncTransaction");
+
+        throw r81;
+
+        catch java.lang.Throwable from label01 to label02 with label76;
+        catch java.lang.Throwable from label02 to label03 with label73;
+        catch java.lang.Throwable from label04 to label05 with label73;
+        catch java.lang.Throwable from label05 to label06 with label73;
+        catch java.lang.Throwable from label06 to label07 with label68;
+        catch java.lang.Throwable from label07 to label08 with label68;
+        catch java.lang.Throwable from label08 to label09 with label68;
+        catch java.lang.Throwable from label09 to label10 with label68;
+        catch java.lang.Throwable from label12 to label13 with label68;
+        catch java.lang.Throwable from label13 to label14 with label68;
+        catch java.lang.Throwable from label15 to label16 with label68;
+        catch java.lang.Throwable from label17 to label18 with label68;
+        catch java.lang.Throwable from label19 to label20 with label68;
+        catch java.lang.Throwable from label21 to label22 with label68;
+        catch java.lang.Throwable from label24 to label25 with label68;
+        catch java.lang.Throwable from label25 to label26 with label68;
+        catch java.lang.Throwable from label27 to label28 with label68;
+        catch java.lang.Throwable from label28 to label29 with label68;
+        catch java.lang.Throwable from label29 to label30 with label68;
+        catch java.lang.Throwable from label31 to label32 with label68;
+        catch java.lang.Throwable from label33 to label34 with label68;
+        catch java.lang.Throwable from label37 to label38 with label68;
+        catch java.lang.Throwable from label39 to label40 with label68;
+        catch java.lang.Throwable from label40 to label41 with label68;
+        catch java.lang.Throwable from label42 to label43 with label68;
+        catch java.lang.Throwable from label43 to label44 with label68;
+        catch java.lang.Throwable from label47 to label48 with label68;
+        catch java.lang.Throwable from label50 to label51 with label68;
+        catch java.lang.Throwable from label51 to label52 with label57;
+        catch java.lang.Throwable from label53 to label54 with label57;
+        catch java.lang.Throwable from label55 to label56 with label68;
+        catch java.lang.Throwable from label58 to label59 with label68;
+        catch java.lang.Throwable from label59 to label60 with label68;
+        catch java.lang.Throwable from label61 to label62 with label68;
+        catch java.lang.Throwable from label62 to label63 with label73;
+        catch java.lang.Throwable from label64 to label65 with label73;
+        catch java.lang.Throwable from label65 to label66 with label73;
+        catch java.lang.Throwable from label66 to label67 with label76;
+        catch java.lang.Throwable from label69 to label70 with label73;
+        catch java.lang.Throwable from label71 to label72 with label73;
+        catch java.lang.Throwable from label72 to label73 with label73;
+        catch java.lang.Throwable from label74 to label75 with label73;
+        catch java.lang.Throwable from label75 to label76 with label76;
+    }
+
+    public void applyTransaction(android.window.WindowContainerTransaction)
+    {
+        com.android.server.wm.WindowOrganizerController r0;
+        android.window.WindowContainerTransaction r1;
+
+        r0 := @this: com.android.server.wm.WindowOrganizerController;
+
+        r1 := @parameter0: android.window.WindowContainerTransaction;
+
+        virtualinvoke r0.<com.android.server.wm.WindowOrganizerController: int applySyncTransaction(android.window.WindowContainerTransaction,android.window.IWindowContainerTransactionCallback)>(r1, null);
+
+        return;
+    }
+
+    public android.window.IDisplayAreaOrganizerController getDisplayAreaOrganizerController()
+    {
+        com.android.server.wm.WindowOrganizerController r0;
+        com.android.server.wm.DisplayAreaOrganizerController $r1;
+
+        r0 := @this: com.android.server.wm.WindowOrganizerController;
+
+        specialinvoke r0.<com.android.server.wm.WindowOrganizerController: void enforceStackPermission(java.lang.String)>("getDisplayAreaOrganizerController()");
+
+        $r1 = r0.<com.android.server.wm.WindowOrganizerController: com.android.server.wm.DisplayAreaOrganizerController mDisplayAreaOrganizerController>;
+
+        return $r1;
+    }
+
+    public android.window.ITaskOrganizerController getTaskOrganizerController()
+    {
+        com.android.server.wm.WindowOrganizerController r0;
+        com.android.server.wm.TaskOrganizerController $r1;
+
+        r0 := @this: com.android.server.wm.WindowOrganizerController;
+
+        specialinvoke r0.<com.android.server.wm.WindowOrganizerController: void enforceStackPermission(java.lang.String)>("getTaskOrganizerController()");
+
+        $r1 = r0.<com.android.server.wm.WindowOrganizerController: com.android.server.wm.TaskOrganizerController mTaskOrganizerController>;
+
+        return $r1;
+    }
+
+    public void onTransactionReady(int, java.util.Set)
+    {
+        com.android.server.wm.WindowOrganizerController r0;
+        int i0;
+        android.window.IWindowContainerTransactionCallback r1;
+        java.util.HashMap $r3, $r7;
+        java.lang.Integer $r4, $r8;
+        java.lang.Object $r5, $r10;
+        android.view.SurfaceControl$Transaction $r6;
+        boolean $z0;
+        com.android.server.wm.WindowContainer $r11;
+        android.os.RemoteException $r12;
+        java.util.Set r13;
+        java.util.Iterator r14;
+
+        r0 := @this: com.android.server.wm.WindowOrganizerController;
+
+        i0 := @parameter0: int;
+
+        r13 := @parameter1: java.util.Set;
+
+        $r3 = r0.<com.android.server.wm.WindowOrganizerController: java.util.HashMap mTransactionCallbacksByPendingSyncId>;
+
+        $r4 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i0);
+
+        $r5 = virtualinvoke $r3.<java.util.HashMap: java.lang.Object get(java.lang.Object)>($r4);
+
+        r1 = (android.window.IWindowContainerTransactionCallback) $r5;
+
+        $r6 = new android.view.SurfaceControl$Transaction;
+
+        specialinvoke $r6.<android.view.SurfaceControl$Transaction: void <init>()>();
+
+        r14 = interfaceinvoke r13.<java.util.Set: java.util.Iterator iterator()>();
+
+     label1:
+        $z0 = interfaceinvoke r14.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label2;
+
+        $r10 = interfaceinvoke r14.<java.util.Iterator: java.lang.Object next()>();
+
+        $r11 = (com.android.server.wm.WindowContainer) $r10;
+
+        virtualinvoke $r11.<com.android.server.wm.WindowContainer: void mergeBlastSyncTransaction(android.view.SurfaceControl$Transaction)>($r6);
+
+        goto label1;
+
+     label2:
+        interfaceinvoke r1.<android.window.IWindowContainerTransactionCallback: void onTransactionReady(int,android.view.SurfaceControl$Transaction)>(i0, $r6);
+
+     label3:
+        goto label5;
+
+     label4:
+        $r12 := @caughtexception;
+
+        virtualinvoke $r6.<android.view.SurfaceControl$Transaction: void apply()>();
+
+     label5:
+        $r7 = r0.<com.android.server.wm.WindowOrganizerController: java.util.HashMap mTransactionCallbacksByPendingSyncId>;
+
+        $r8 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i0);
+
+        virtualinvoke $r7.<java.util.HashMap: java.lang.Object remove(java.lang.Object)>($r8);
+
+        return;
+
+        catch android.os.RemoteException from label2 to label3 with label4;
+    }
+
+    void setSyncReady(int)
+    {
+        com.android.server.wm.WindowOrganizerController r0;
+        int i0;
+        com.android.server.wm.BLASTSyncEngine $r1;
+
+        r0 := @this: com.android.server.wm.WindowOrganizerController;
+
+        i0 := @parameter0: int;
+
+        $r1 = r0.<com.android.server.wm.WindowOrganizerController: com.android.server.wm.BLASTSyncEngine mBLASTSyncEngine>;
+
+        virtualinvoke $r1.<com.android.server.wm.BLASTSyncEngine: void setReady(int)>(i0);
+
+        return;
+    }
+
+    int startSyncWithOrganizer(android.window.IWindowContainerTransactionCallback)
+    {
+        com.android.server.wm.WindowOrganizerController r0;
+        android.window.IWindowContainerTransactionCallback r1;
+        int i0;
+        com.android.server.wm.BLASTSyncEngine $r2;
+        java.util.HashMap $r3;
+        java.lang.Integer $r4;
+
+        r0 := @this: com.android.server.wm.WindowOrganizerController;
+
+        r1 := @parameter0: android.window.IWindowContainerTransactionCallback;
+
+        $r2 = r0.<com.android.server.wm.WindowOrganizerController: com.android.server.wm.BLASTSyncEngine mBLASTSyncEngine>;
+
+        i0 = virtualinvoke $r2.<com.android.server.wm.BLASTSyncEngine: int startSyncSet(com.android.server.wm.BLASTSyncEngine$TransactionReadyListener)>(r0);
+
+        $r3 = r0.<com.android.server.wm.WindowOrganizerController: java.util.HashMap mTransactionCallbacksByPendingSyncId>;
+
+        $r4 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i0);
+
+        virtualinvoke $r3.<java.util.HashMap: java.lang.Object put(java.lang.Object,java.lang.Object)>($r4, r1);
+
+        return i0;
+    }
+
+    public boolean takeScreenshot(android.window.WindowContainerToken, android.view.SurfaceControl)
+    {
+        com.android.server.wm.WindowOrganizerController r0;
+        android.view.SurfaceControl r1, $r9, $r23, r32;
+        android.view.SurfaceControl$Builder r3, $r20, $r21, $r22, $r24, $r25;
+        com.android.server.wm.ActivityTaskManagerService $r4, $r11;
+        android.app.ActivityManagerInternal $r5;
+        android.os.IBinder $r6;
+        java.lang.RuntimeException $r7;
+        android.graphics.Rect $r8;
+        android.graphics.GraphicBuffer $r10, $r27;
+        com.android.server.wm.WindowManagerService $r12;
+        java.util.function.Function $r13;
+        java.lang.Object $r14;
+        java.lang.StringBuilder $r15;
+        java.lang.String $r16, $r19;
+        int $i0, $i1;
+        android.view.Surface $r26;
+        android.window.WindowContainerToken r28;
+        com.android.server.wm.WindowContainer r29;
+        android.view.SurfaceControl$ScreenshotGraphicBuffer r30;
+
+        r0 := @this: com.android.server.wm.WindowOrganizerController;
+
+        r28 := @parameter0: android.window.WindowContainerToken;
+
+        r1 := @parameter1: android.view.SurfaceControl;
+
+        $r4 = r0.<com.android.server.wm.WindowOrganizerController: com.android.server.wm.ActivityTaskManagerService mService>;
+
+        $r5 = $r4.<com.android.server.wm.ActivityTaskManagerService: android.app.ActivityManagerInternal mAmInternal>;
+
+        virtualinvoke $r5.<android.app.ActivityManagerInternal: void enforceCallingPermission(java.lang.String,java.lang.String)>("android.permission.READ_FRAME_BUFFER", "takeScreenshot()");
+
+        $r6 = virtualinvoke r28.<android.window.WindowContainerToken: android.os.IBinder asBinder()>();
+
+        r29 = staticinvoke <com.android.server.wm.WindowContainer: com.android.server.wm.WindowContainer fromBinder(android.os.IBinder)>($r6);
+
+        if r29 == null goto label3;
+
+        $r8 = new android.graphics.Rect;
+
+        specialinvoke $r8.<android.graphics.Rect: void <init>()>();
+
+        virtualinvoke r29.<com.android.server.wm.WindowContainer: void getBounds(android.graphics.Rect)>($r8);
+
+        virtualinvoke $r8.<android.graphics.Rect: void offsetTo(int,int)>(0, 0);
+
+        $r9 = virtualinvoke r29.<com.android.server.wm.WindowContainer: android.view.SurfaceControl getSurfaceControl()>();
+
+        r30 = staticinvoke <android.view.SurfaceControl: android.view.SurfaceControl$ScreenshotGraphicBuffer captureLayers(android.view.SurfaceControl,android.graphics.Rect,float)>($r9, $r8, 1.0F);
+
+        if r30 == null goto label2;
+
+        $r10 = virtualinvoke r30.<android.view.SurfaceControl$ScreenshotGraphicBuffer: android.graphics.GraphicBuffer getGraphicBuffer()>();
+
+        if $r10 != null goto label1;
+
+        goto label2;
+
+     label1:
+        $r11 = r0.<com.android.server.wm.WindowOrganizerController: com.android.server.wm.ActivityTaskManagerService mService>;
+
+        $r12 = $r11.<com.android.server.wm.ActivityTaskManagerService: com.android.server.wm.WindowManagerService mWindowManager>;
+
+        $r13 = $r12.<com.android.server.wm.WindowManagerService: java.util.function.Function mSurfaceControlFactory>;
+
+        $r14 = interfaceinvoke $r13.<java.util.function.Function: java.lang.Object apply(java.lang.Object)>(null);
+
+        r3 = (android.view.SurfaceControl$Builder) $r14;
+
+        $r15 = new java.lang.StringBuilder;
+
+        specialinvoke $r15.<java.lang.StringBuilder: void <init>()>();
+
+        $r16 = virtualinvoke r29.<com.android.server.wm.WindowContainer: java.lang.String getName()>();
+
+        virtualinvoke $r15.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r16);
+
+        virtualinvoke $r15.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" - Organizer Screenshot");
+
+        $r19 = virtualinvoke $r15.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $r20 = virtualinvoke r3.<android.view.SurfaceControl$Builder: android.view.SurfaceControl$Builder setName(java.lang.String)>($r19);
+
+        $i0 = virtualinvoke $r8.<android.graphics.Rect: int width()>();
+
+        $i1 = virtualinvoke $r8.<android.graphics.Rect: int height()>();
+
+        $r21 = virtualinvoke $r20.<android.view.SurfaceControl$Builder: android.view.SurfaceControl$Builder setBufferSize(int,int)>($i0, $i1);
+
+        $r22 = virtualinvoke $r21.<android.view.SurfaceControl$Builder: android.view.SurfaceControl$Builder setFormat(int)>(-3);
+
+        $r23 = virtualinvoke r29.<com.android.server.wm.WindowContainer: android.view.SurfaceControl getParentSurfaceControl()>();
+
+        $r24 = virtualinvoke $r22.<android.view.SurfaceControl$Builder: android.view.SurfaceControl$Builder setParent(android.view.SurfaceControl)>($r23);
+
+        $r25 = virtualinvoke $r24.<android.view.SurfaceControl$Builder: android.view.SurfaceControl$Builder setCallsite(java.lang.String)>("WindowOrganizerController.takeScreenshot");
+
+        r32 = virtualinvoke $r25.<android.view.SurfaceControl$Builder: android.view.SurfaceControl build()>();
+
+        $r26 = new android.view.Surface;
+
+        specialinvoke $r26.<android.view.Surface: void <init>()>();
+
+        virtualinvoke $r26.<android.view.Surface: void copyFrom(android.view.SurfaceControl)>(r32);
+
+        $r27 = virtualinvoke r30.<android.view.SurfaceControl$ScreenshotGraphicBuffer: android.graphics.GraphicBuffer getGraphicBuffer()>();
+
+        virtualinvoke $r26.<android.view.Surface: void attachAndQueueBufferWithColorSpace(android.graphics.GraphicBuffer,android.graphics.ColorSpace)>($r27, null);
+
+        virtualinvoke $r26.<android.view.Surface: void release()>();
+
+        virtualinvoke r1.<android.view.SurfaceControl: void copyFrom(android.view.SurfaceControl,java.lang.String)>(r32, "WindowOrganizerController.takeScreenshot");
+
+        return 1;
+
+     label2:
+        return 0;
+
+     label3:
+        $r7 = new java.lang.RuntimeException;
+
+        specialinvoke $r7.<java.lang.RuntimeException: void <init>(java.lang.String)>("Invalid token in screenshot transaction");
+
+        throw $r7;
+    }
+
+    public static void <clinit>()
+    {
+        <com.android.server.wm.WindowOrganizerController: int TRANSACT_EFFECTS_LIFECYCLE> = 2;
+
+        <com.android.server.wm.WindowOrganizerController: int TRANSACT_EFFECTS_CLIENT_CONFIG> = 1;
+
+        <com.android.server.wm.WindowOrganizerController: java.lang.String TAG> = "WindowOrganizerController";
+
+        <com.android.server.wm.WindowOrganizerController: int CONTROLLABLE_WINDOW_CONFIGS> = 3;
+
+        <com.android.server.wm.WindowOrganizerController: int CONTROLLABLE_CONFIGS> = 536873984;
+
+        return;
+    }
+}

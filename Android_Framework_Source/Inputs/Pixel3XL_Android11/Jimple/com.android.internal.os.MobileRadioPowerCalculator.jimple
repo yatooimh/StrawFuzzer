@@ -1,0 +1,479 @@
+public class com.android.internal.os.MobileRadioPowerCalculator extends com.android.internal.os.PowerCalculator
+{
+    private static final boolean DEBUG;
+    private static final java.lang.String TAG;
+    private final double[] mPowerBins;
+    private final double mPowerRadioOn;
+    private final double mPowerScan;
+    private android.os.BatteryStats mStats;
+    private long mTotalAppMobileActiveMs;
+
+    public void <init>(com.android.internal.os.PowerProfile, android.os.BatteryStats)
+    {
+        com.android.internal.os.MobileRadioPowerCalculator r0;
+        com.android.internal.os.PowerProfile r1;
+        android.os.BatteryStats r2;
+        int $i0, $i2, $i3, $i4, $i6, $i7, i8, i9, i10;
+        double[] $r3, $r4, r5, r6, r7;
+        byte $b1, $b5;
+        double $d0, $d1, $d2, $d3, $d4, $d5, $d6, $d7, $d8, $d9, $d10, d11, d12, d13;
+
+        r0 := @this: com.android.internal.os.MobileRadioPowerCalculator;
+
+        r1 := @parameter0: com.android.internal.os.PowerProfile;
+
+        r2 := @parameter1: android.os.BatteryStats;
+
+        specialinvoke r0.<com.android.internal.os.PowerCalculator: void <init>()>();
+
+        $i0 = staticinvoke <android.telephony.CellSignalStrength: int getNumSignalStrengthLevels()>();
+
+        $r3 = newarray (double)[$i0];
+
+        r0.<com.android.internal.os.MobileRadioPowerCalculator: double[] mPowerBins> = $r3;
+
+        r0.<com.android.internal.os.MobileRadioPowerCalculator: long mTotalAppMobileActiveMs> = 0L;
+
+        d11 = virtualinvoke r1.<com.android.internal.os.PowerProfile: double getAveragePowerOrDefault(java.lang.String,double)>("radio.active", -1.0);
+
+        $b1 = d11 cmpl -1.0;
+
+        if $b1 == 0 goto label1;
+
+        r0.<com.android.internal.os.MobileRadioPowerCalculator: double mPowerRadioOn> = d11;
+
+        goto label4;
+
+     label1:
+        $d0 = virtualinvoke r1.<com.android.internal.os.PowerProfile: double getAveragePower(java.lang.String)>("modem.controller.rx");
+
+        d12 = 0.0 + $d0;
+
+        i8 = 0;
+
+     label2:
+        r5 = r0.<com.android.internal.os.MobileRadioPowerCalculator: double[] mPowerBins>;
+
+        $i2 = lengthof r5;
+
+        if i8 >= $i2 goto label3;
+
+        $d10 = virtualinvoke r1.<com.android.internal.os.PowerProfile: double getAveragePower(java.lang.String,int)>("modem.controller.tx", i8);
+
+        d12 = d12 + $d10;
+
+        i8 = i8 + 1;
+
+        goto label2;
+
+     label3:
+        $i3 = lengthof r5;
+
+        $i4 = $i3 + 1;
+
+        $d1 = (double) $i4;
+
+        $d2 = d12 / $d1;
+
+        r0.<com.android.internal.os.MobileRadioPowerCalculator: double mPowerRadioOn> = $d2;
+
+     label4:
+        $d3 = virtualinvoke r1.<com.android.internal.os.PowerProfile: double getAveragePowerOrDefault(java.lang.String,double)>("radio.on", -1.0);
+
+        $b5 = $d3 cmpl -1.0;
+
+        if $b5 == 0 goto label7;
+
+        i9 = 0;
+
+     label5:
+        r6 = r0.<com.android.internal.os.MobileRadioPowerCalculator: double[] mPowerBins>;
+
+        $i7 = lengthof r6;
+
+        if i9 >= $i7 goto label6;
+
+        $d9 = virtualinvoke r1.<com.android.internal.os.PowerProfile: double getAveragePower(java.lang.String,int)>("radio.on", i9);
+
+        r6[i9] = $d9;
+
+        i9 = i9 + 1;
+
+        goto label5;
+
+     label6:
+        goto label9;
+
+     label7:
+        d13 = virtualinvoke r1.<com.android.internal.os.PowerProfile: double getAveragePower(java.lang.String)>("modem.controller.idle");
+
+        $r4 = r0.<com.android.internal.os.MobileRadioPowerCalculator: double[] mPowerBins>;
+
+        $d4 = 25.0 * d13;
+
+        $d5 = $d4 / 180.0;
+
+        $r4[0] = $d5;
+
+        i10 = 1;
+
+     label8:
+        r7 = r0.<com.android.internal.os.MobileRadioPowerCalculator: double[] mPowerBins>;
+
+        $i6 = lengthof r7;
+
+        if i10 >= $i6 goto label9;
+
+        $d7 = d13 / 256.0;
+
+        $d8 = staticinvoke <java.lang.Math: double max(double,double)>(1.0, $d7);
+
+        r7[i10] = $d8;
+
+        i10 = i10 + 1;
+
+        goto label8;
+
+     label9:
+        $d6 = virtualinvoke r1.<com.android.internal.os.PowerProfile: double getAveragePowerOrDefault(java.lang.String,double)>("radio.scanning", 0.0);
+
+        r0.<com.android.internal.os.MobileRadioPowerCalculator: double mPowerScan> = $d6;
+
+        r0.<com.android.internal.os.MobileRadioPowerCalculator: android.os.BatteryStats mStats> = r2;
+
+        return;
+    }
+
+    private double getMobilePowerPerPacket(long, int)
+    {
+        com.android.internal.os.MobileRadioPowerCalculator r0;
+        int i0;
+        double d0, $d1, $d2, $d3, d4, $d5, $d6;
+        long l1, $l2, $l3, $l4, l7, l8;
+        android.os.BatteryStats $r1, $r2, $r3;
+        byte $b5, $b6;
+
+        r0 := @this: com.android.internal.os.MobileRadioPowerCalculator;
+
+        l7 := @parameter0: long;
+
+        i0 := @parameter1: int;
+
+        $d1 = r0.<com.android.internal.os.MobileRadioPowerCalculator: double mPowerRadioOn>;
+
+        d0 = $d1 / 3600.0;
+
+        $r1 = r0.<com.android.internal.os.MobileRadioPowerCalculator: android.os.BatteryStats mStats>;
+
+        $l2 = virtualinvoke $r1.<android.os.BatteryStats: long getNetworkActivityPackets(int,int)>(0, i0);
+
+        $r2 = r0.<com.android.internal.os.MobileRadioPowerCalculator: android.os.BatteryStats mStats>;
+
+        $l3 = virtualinvoke $r2.<android.os.BatteryStats: long getNetworkActivityPackets(int,int)>(1, i0);
+
+        l1 = $l2 + $l3;
+
+        $r3 = r0.<com.android.internal.os.MobileRadioPowerCalculator: android.os.BatteryStats mStats>;
+
+        $l4 = virtualinvoke $r3.<android.os.BatteryStats: long getMobileRadioActiveTime(long,int)>(l7, i0);
+
+        l8 = $l4 / 1000L;
+
+        $b5 = l1 cmp 0L;
+
+        if $b5 == 0 goto label1;
+
+        $b6 = l8 cmp 0L;
+
+        if $b6 == 0 goto label1;
+
+        $d3 = (double) l1;
+
+        $d2 = (double) l8;
+
+        d4 = $d3 / $d2;
+
+        goto label2;
+
+     label1:
+        d4 = 12.20703125;
+
+     label2:
+        $d5 = d0 / d4;
+
+        $d6 = $d5 / 3600.0;
+
+        return $d6;
+    }
+
+    public void calculateApp(com.android.internal.os.BatterySipper, android.os.BatteryStats$Uid, long, long, int)
+    {
+        com.android.internal.os.MobileRadioPowerCalculator r0;
+        com.android.internal.os.BatterySipper r1;
+        android.os.BatteryStats$Uid r2;
+        long l0, l1, $l3, $l4, $l5, $l6, $l8, $l9, $l10, $l12, $l13, $l14, $l15, $l16, $l17, $l18;
+        int i2, $i7;
+        byte $b11;
+        double $d0, $d1, $d2, $d3, $d4, $d5, $d6;
+
+        r0 := @this: com.android.internal.os.MobileRadioPowerCalculator;
+
+        r1 := @parameter0: com.android.internal.os.BatterySipper;
+
+        r2 := @parameter1: android.os.BatteryStats$Uid;
+
+        l0 := @parameter2: long;
+
+        l1 := @parameter3: long;
+
+        i2 := @parameter4: int;
+
+        $l3 = virtualinvoke r2.<android.os.BatteryStats$Uid: long getNetworkActivityPackets(int,int)>(0, i2);
+
+        r1.<com.android.internal.os.BatterySipper: long mobileRxPackets> = $l3;
+
+        $l4 = virtualinvoke r2.<android.os.BatteryStats$Uid: long getNetworkActivityPackets(int,int)>(1, i2);
+
+        r1.<com.android.internal.os.BatterySipper: long mobileTxPackets> = $l4;
+
+        $l5 = virtualinvoke r2.<android.os.BatteryStats$Uid: long getMobileRadioActiveTime(int)>(i2);
+
+        $l6 = $l5 / 1000L;
+
+        r1.<com.android.internal.os.BatterySipper: long mobileActive> = $l6;
+
+        $i7 = virtualinvoke r2.<android.os.BatteryStats$Uid: int getMobileRadioActiveCount(int)>(i2);
+
+        r1.<com.android.internal.os.BatterySipper: int mobileActiveCount> = $i7;
+
+        $l8 = virtualinvoke r2.<android.os.BatteryStats$Uid: long getNetworkActivityBytes(int,int)>(0, i2);
+
+        r1.<com.android.internal.os.BatterySipper: long mobileRxBytes> = $l8;
+
+        $l9 = virtualinvoke r2.<android.os.BatteryStats$Uid: long getNetworkActivityBytes(int,int)>(1, i2);
+
+        r1.<com.android.internal.os.BatterySipper: long mobileTxBytes> = $l9;
+
+        $l10 = r1.<com.android.internal.os.BatterySipper: long mobileActive>;
+
+        $b11 = $l10 cmp 0L;
+
+        if $b11 <= 0 goto label1;
+
+        $l16 = r0.<com.android.internal.os.MobileRadioPowerCalculator: long mTotalAppMobileActiveMs>;
+
+        $l15 = r1.<com.android.internal.os.BatterySipper: long mobileActive>;
+
+        $l17 = $l16 + $l15;
+
+        r0.<com.android.internal.os.MobileRadioPowerCalculator: long mTotalAppMobileActiveMs> = $l17;
+
+        $l18 = r1.<com.android.internal.os.BatterySipper: long mobileActive>;
+
+        $d4 = (double) $l18;
+
+        $d3 = r0.<com.android.internal.os.MobileRadioPowerCalculator: double mPowerRadioOn>;
+
+        $d5 = $d4 * $d3;
+
+        $d6 = $d5 / 3600000.0;
+
+        r1.<com.android.internal.os.BatterySipper: double mobileRadioPowerMah> = $d6;
+
+        goto label2;
+
+     label1:
+        $l13 = r1.<com.android.internal.os.BatterySipper: long mobileRxPackets>;
+
+        $l12 = r1.<com.android.internal.os.BatterySipper: long mobileTxPackets>;
+
+        $l14 = $l13 + $l12;
+
+        $d0 = (double) $l14;
+
+        $d1 = specialinvoke r0.<com.android.internal.os.MobileRadioPowerCalculator: double getMobilePowerPerPacket(long,int)>(l0, i2);
+
+        $d2 = $d0 * $d1;
+
+        r1.<com.android.internal.os.BatterySipper: double mobileRadioPowerMah> = $d2;
+
+     label2:
+        return;
+    }
+
+    public void calculateRemaining(com.android.internal.os.BatterySipper, android.os.BatteryStats, long, long, int)
+    {
+        com.android.internal.os.MobileRadioPowerCalculator r0;
+        com.android.internal.os.BatterySipper r1;
+        android.os.BatteryStats r2, $r4;
+        int i0, $i2, $i11, i17;
+        long l1, $l3, $l4, $l5, $l6, $l7, $l12, l13, l14, l15, l16, l18;
+        double[] $r3, $r5;
+        double $d0, $d1, $d2, $d3, $d4, $d5, $d6, $d7, $d8, $d9, $d10, $d11, $d12, $d13, $d14, $d15, d16, d17;
+        byte $b8, $b9, $b10;
+
+        r0 := @this: com.android.internal.os.MobileRadioPowerCalculator;
+
+        r1 := @parameter0: com.android.internal.os.BatterySipper;
+
+        r2 := @parameter1: android.os.BatteryStats;
+
+        l13 := @parameter2: long;
+
+        l14 := @parameter3: long;
+
+        i0 := @parameter4: int;
+
+        d16 = 0.0;
+
+        l15 = 0L;
+
+        l16 = 0L;
+
+        i17 = 0;
+
+     label1:
+        $r3 = r0.<com.android.internal.os.MobileRadioPowerCalculator: double[] mPowerBins>;
+
+        $i2 = lengthof $r3;
+
+        if i17 >= $i2 goto label3;
+
+        $l12 = virtualinvoke r2.<android.os.BatteryStats: long getPhoneSignalStrengthTime(int,long,int)>(i17, l13, i0);
+
+        l1 = $l12 / 1000L;
+
+        $d13 = (double) l1;
+
+        $r5 = r0.<com.android.internal.os.MobileRadioPowerCalculator: double[] mPowerBins>;
+
+        $d12 = $r5[i17];
+
+        $d14 = $d13 * $d12;
+
+        $d15 = $d14 / 3600000.0;
+
+        d16 = d16 + $d15;
+
+        l15 = l15 + l1;
+
+        if i17 != 0 goto label2;
+
+        l16 = l1;
+
+        goto label2;
+
+     label2:
+        i17 = i17 + 1;
+
+        goto label1;
+
+     label3:
+        $l3 = virtualinvoke r2.<android.os.BatteryStats: long getPhoneSignalScanningTime(long,int)>(l13, i0);
+
+        $l4 = $l3 / 1000L;
+
+        $d1 = (double) $l4;
+
+        $d0 = r0.<com.android.internal.os.MobileRadioPowerCalculator: double mPowerScan>;
+
+        $d2 = $d1 * $d0;
+
+        $d3 = $d2 / 3600000.0;
+
+        d17 = d16 + $d3;
+
+        $r4 = r0.<com.android.internal.os.MobileRadioPowerCalculator: android.os.BatteryStats mStats>;
+
+        $l5 = virtualinvoke $r4.<android.os.BatteryStats: long getMobileRadioActiveTime(long,int)>(l13, i0);
+
+        $l7 = $l5 / 1000L;
+
+        $l6 = r0.<com.android.internal.os.MobileRadioPowerCalculator: long mTotalAppMobileActiveMs>;
+
+        l18 = $l7 - $l6;
+
+        $b8 = l18 cmp 0L;
+
+        if $b8 <= 0 goto label4;
+
+        $d9 = r0.<com.android.internal.os.MobileRadioPowerCalculator: double mPowerRadioOn>;
+
+        $d8 = (double) l18;
+
+        $d10 = $d9 * $d8;
+
+        $d11 = $d10 / 3600000.0;
+
+        d17 = d17 + $d11;
+
+        goto label4;
+
+     label4:
+        $b9 = d17 cmpl 0.0;
+
+        if $b9 == 0 goto label6;
+
+        $b10 = l15 cmp 0L;
+
+        if $b10 == 0 goto label5;
+
+        $d4 = (double) l16;
+
+        $d6 = $d4 * 100.0;
+
+        $d5 = (double) l15;
+
+        $d7 = $d6 / $d5;
+
+        r1.<com.android.internal.os.BatterySipper: double noCoveragePercent> = $d7;
+
+     label5:
+        r1.<com.android.internal.os.BatterySipper: long mobileActive> = l18;
+
+        $i11 = virtualinvoke r2.<android.os.BatteryStats: int getMobileRadioActiveUnknownCount(int)>(i0);
+
+        r1.<com.android.internal.os.BatterySipper: int mobileActiveCount> = $i11;
+
+        r1.<com.android.internal.os.BatterySipper: double mobileRadioPowerMah> = d17;
+
+     label6:
+        return;
+    }
+
+    public void reset()
+    {
+        com.android.internal.os.MobileRadioPowerCalculator r0;
+
+        r0 := @this: com.android.internal.os.MobileRadioPowerCalculator;
+
+        r0.<com.android.internal.os.MobileRadioPowerCalculator: long mTotalAppMobileActiveMs> = 0L;
+
+        return;
+    }
+
+    public void reset(android.os.BatteryStats)
+    {
+        com.android.internal.os.MobileRadioPowerCalculator r0;
+        android.os.BatteryStats r1;
+
+        r0 := @this: com.android.internal.os.MobileRadioPowerCalculator;
+
+        r1 := @parameter0: android.os.BatteryStats;
+
+        virtualinvoke r0.<com.android.internal.os.MobileRadioPowerCalculator: void reset()>();
+
+        r0.<com.android.internal.os.MobileRadioPowerCalculator: android.os.BatteryStats mStats> = r1;
+
+        return;
+    }
+
+    public static void <clinit>()
+    {
+        <com.android.internal.os.MobileRadioPowerCalculator: java.lang.String TAG> = "MobileRadioPowerController";
+
+        <com.android.internal.os.MobileRadioPowerCalculator: boolean DEBUG> = 0;
+
+        return;
+    }
+}

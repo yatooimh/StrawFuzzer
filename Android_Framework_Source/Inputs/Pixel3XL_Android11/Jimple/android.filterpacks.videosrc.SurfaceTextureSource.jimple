@@ -1,0 +1,499 @@
+public class android.filterpacks.videosrc.SurfaceTextureSource extends android.filterfw.core.Filter
+{
+    private static final java.lang.String TAG;
+    private static final boolean mLogVerbose;
+    private static final float[] mSourceCoords;
+    private boolean mCloseOnTimeout;
+    private boolean mFirstFrame;
+    private android.filterfw.core.ShaderProgram mFrameExtractor;
+    private float[] mFrameTransform;
+    private int mHeight;
+    private float[] mMappedCoords;
+    private android.filterfw.core.GLFrame mMediaFrame;
+    private android.os.ConditionVariable mNewFrameAvailable;
+    private android.filterfw.core.MutableFrameFormat mOutputFormat;
+    private final java.lang.String mRenderShader;
+    private android.filterpacks.videosrc.SurfaceTextureSource$SurfaceTextureSourceListener mSourceListener;
+    private android.graphics.SurfaceTexture mSurfaceTexture;
+    private boolean mWaitForNewFrame;
+    private int mWaitTimeout;
+    private int mWidth;
+    private android.graphics.SurfaceTexture$OnFrameAvailableListener onFrameAvailableListener;
+
+    static void <clinit>()
+    {
+        float[] $r0;
+        boolean $z0;
+
+        <android.filterpacks.videosrc.SurfaceTextureSource: java.lang.String TAG> = "SurfaceTextureSource";
+
+        $r0 = newarray (float)[16];
+
+        $r0[0] = 0.0F;
+
+        $r0[1] = 1.0F;
+
+        $r0[2] = 0.0F;
+
+        $r0[3] = 1.0F;
+
+        $r0[4] = 1.0F;
+
+        $r0[5] = 1.0F;
+
+        $r0[6] = 0.0F;
+
+        $r0[7] = 1.0F;
+
+        $r0[8] = 0.0F;
+
+        $r0[9] = 0.0F;
+
+        $r0[10] = 0.0F;
+
+        $r0[11] = 1.0F;
+
+        $r0[12] = 1.0F;
+
+        $r0[13] = 0.0F;
+
+        $r0[14] = 0.0F;
+
+        $r0[15] = 1.0F;
+
+        <android.filterpacks.videosrc.SurfaceTextureSource: float[] mSourceCoords> = $r0;
+
+        $z0 = staticinvoke <android.util.Log: boolean isLoggable(java.lang.String,int)>("SurfaceTextureSource", 2);
+
+        <android.filterpacks.videosrc.SurfaceTextureSource: boolean mLogVerbose> = $z0;
+
+        return;
+    }
+
+    public void <init>(java.lang.String)
+    {
+        android.filterpacks.videosrc.SurfaceTextureSource r0;
+        java.lang.String r1;
+        android.filterpacks.videosrc.SurfaceTextureSource$1 $r2;
+        android.os.ConditionVariable $r3;
+        float[] $r4, $r5;
+
+        r0 := @this: android.filterpacks.videosrc.SurfaceTextureSource;
+
+        r1 := @parameter0: java.lang.String;
+
+        specialinvoke r0.<android.filterfw.core.Filter: void <init>(java.lang.String)>(r1);
+
+        r0.<android.filterpacks.videosrc.SurfaceTextureSource: boolean mWaitForNewFrame> = 1;
+
+        r0.<android.filterpacks.videosrc.SurfaceTextureSource: int mWaitTimeout> = 1000;
+
+        r0.<android.filterpacks.videosrc.SurfaceTextureSource: boolean mCloseOnTimeout> = 0;
+
+        r0.<android.filterpacks.videosrc.SurfaceTextureSource: java.lang.String mRenderShader> = "#extension GL_OES_EGL_image_external : require\nprecision mediump float;\nuniform samplerExternalOES tex_sampler_0;\nvarying vec2 v_texcoord;\nvoid main() {\n  gl_FragColor = texture2D(tex_sampler_0, v_texcoord);\n}\n";
+
+        $r2 = new android.filterpacks.videosrc.SurfaceTextureSource$1;
+
+        specialinvoke $r2.<android.filterpacks.videosrc.SurfaceTextureSource$1: void <init>(android.filterpacks.videosrc.SurfaceTextureSource)>(r0);
+
+        r0.<android.filterpacks.videosrc.SurfaceTextureSource: android.graphics.SurfaceTexture$OnFrameAvailableListener onFrameAvailableListener> = $r2;
+
+        $r3 = new android.os.ConditionVariable;
+
+        specialinvoke $r3.<android.os.ConditionVariable: void <init>()>();
+
+        r0.<android.filterpacks.videosrc.SurfaceTextureSource: android.os.ConditionVariable mNewFrameAvailable> = $r3;
+
+        $r4 = newarray (float)[16];
+
+        r0.<android.filterpacks.videosrc.SurfaceTextureSource: float[] mFrameTransform> = $r4;
+
+        $r5 = newarray (float)[16];
+
+        r0.<android.filterpacks.videosrc.SurfaceTextureSource: float[] mMappedCoords> = $r5;
+
+        return;
+    }
+
+    static boolean access$000()
+    {
+        boolean $z0;
+
+        $z0 = <android.filterpacks.videosrc.SurfaceTextureSource: boolean mLogVerbose>;
+
+        return $z0;
+    }
+
+    static android.os.ConditionVariable access$100(android.filterpacks.videosrc.SurfaceTextureSource)
+    {
+        android.filterpacks.videosrc.SurfaceTextureSource r0;
+        android.os.ConditionVariable $r1;
+
+        r0 := @parameter0: android.filterpacks.videosrc.SurfaceTextureSource;
+
+        $r1 = r0.<android.filterpacks.videosrc.SurfaceTextureSource: android.os.ConditionVariable mNewFrameAvailable>;
+
+        return $r1;
+    }
+
+    private void createFormats()
+    {
+        android.filterpacks.videosrc.SurfaceTextureSource r0;
+        int $i0, $i1;
+        android.filterfw.core.MutableFrameFormat $r1;
+
+        r0 := @this: android.filterpacks.videosrc.SurfaceTextureSource;
+
+        $i1 = r0.<android.filterpacks.videosrc.SurfaceTextureSource: int mWidth>;
+
+        $i0 = r0.<android.filterpacks.videosrc.SurfaceTextureSource: int mHeight>;
+
+        $r1 = staticinvoke <android.filterfw.format.ImageFormat: android.filterfw.core.MutableFrameFormat create(int,int,int,int)>($i1, $i0, 3, 3);
+
+        r0.<android.filterpacks.videosrc.SurfaceTextureSource: android.filterfw.core.MutableFrameFormat mOutputFormat> = $r1;
+
+        return;
+    }
+
+    public void close(android.filterfw.core.FilterContext)
+    {
+        android.filterpacks.videosrc.SurfaceTextureSource r0;
+        android.filterfw.core.FilterContext r1;
+        boolean $z0;
+        android.filterpacks.videosrc.SurfaceTextureSource$SurfaceTextureSourceListener $r2;
+        android.graphics.SurfaceTexture $r3;
+
+        r0 := @this: android.filterpacks.videosrc.SurfaceTextureSource;
+
+        r1 := @parameter0: android.filterfw.core.FilterContext;
+
+        $z0 = <android.filterpacks.videosrc.SurfaceTextureSource: boolean mLogVerbose>;
+
+        if $z0 == 0 goto label1;
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("SurfaceTextureSource", "SurfaceTextureSource closed");
+
+     label1:
+        $r2 = r0.<android.filterpacks.videosrc.SurfaceTextureSource: android.filterpacks.videosrc.SurfaceTextureSource$SurfaceTextureSourceListener mSourceListener>;
+
+        interfaceinvoke $r2.<android.filterpacks.videosrc.SurfaceTextureSource$SurfaceTextureSourceListener: void onSurfaceTextureSourceReady(android.graphics.SurfaceTexture)>(null);
+
+        $r3 = r0.<android.filterpacks.videosrc.SurfaceTextureSource: android.graphics.SurfaceTexture mSurfaceTexture>;
+
+        virtualinvoke $r3.<android.graphics.SurfaceTexture: void release()>();
+
+        r0.<android.filterpacks.videosrc.SurfaceTextureSource: android.graphics.SurfaceTexture mSurfaceTexture> = null;
+
+        return;
+    }
+
+    public void fieldPortValueUpdated(java.lang.String, android.filterfw.core.FilterContext)
+    {
+        android.filterpacks.videosrc.SurfaceTextureSource r0;
+        java.lang.String r1;
+        android.filterfw.core.FilterContext r2;
+        boolean $z0, $z1;
+        int $i0, $i1;
+        android.filterfw.core.MutableFrameFormat $r3;
+
+        r0 := @this: android.filterpacks.videosrc.SurfaceTextureSource;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 := @parameter1: android.filterfw.core.FilterContext;
+
+        $z0 = virtualinvoke r1.<java.lang.String: boolean equals(java.lang.Object)>("width");
+
+        if $z0 != 0 goto label1;
+
+        $z1 = virtualinvoke r1.<java.lang.String: boolean equals(java.lang.Object)>("height");
+
+        if $z1 == 0 goto label2;
+
+     label1:
+        $r3 = r0.<android.filterpacks.videosrc.SurfaceTextureSource: android.filterfw.core.MutableFrameFormat mOutputFormat>;
+
+        $i1 = r0.<android.filterpacks.videosrc.SurfaceTextureSource: int mWidth>;
+
+        $i0 = r0.<android.filterpacks.videosrc.SurfaceTextureSource: int mHeight>;
+
+        virtualinvoke $r3.<android.filterfw.core.MutableFrameFormat: void setDimensions(int,int)>($i1, $i0);
+
+     label2:
+        return;
+    }
+
+    public void open(android.filterfw.core.FilterContext)
+    {
+        android.filterpacks.videosrc.SurfaceTextureSource r0;
+        boolean $z0;
+        android.graphics.SurfaceTexture $r1, $r4;
+        android.filterfw.core.GLFrame $r2;
+        int $i0;
+        android.graphics.SurfaceTexture$OnFrameAvailableListener $r3;
+        android.filterpacks.videosrc.SurfaceTextureSource$SurfaceTextureSourceListener $r5;
+        android.filterfw.core.FilterContext r6;
+
+        r0 := @this: android.filterpacks.videosrc.SurfaceTextureSource;
+
+        r6 := @parameter0: android.filterfw.core.FilterContext;
+
+        $z0 = <android.filterpacks.videosrc.SurfaceTextureSource: boolean mLogVerbose>;
+
+        if $z0 == 0 goto label1;
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("SurfaceTextureSource", "Opening SurfaceTextureSource");
+
+     label1:
+        $r1 = new android.graphics.SurfaceTexture;
+
+        $r2 = r0.<android.filterpacks.videosrc.SurfaceTextureSource: android.filterfw.core.GLFrame mMediaFrame>;
+
+        $i0 = virtualinvoke $r2.<android.filterfw.core.GLFrame: int getTextureId()>();
+
+        specialinvoke $r1.<android.graphics.SurfaceTexture: void <init>(int)>($i0);
+
+        r0.<android.filterpacks.videosrc.SurfaceTextureSource: android.graphics.SurfaceTexture mSurfaceTexture> = $r1;
+
+        $r3 = r0.<android.filterpacks.videosrc.SurfaceTextureSource: android.graphics.SurfaceTexture$OnFrameAvailableListener onFrameAvailableListener>;
+
+        virtualinvoke $r1.<android.graphics.SurfaceTexture: void setOnFrameAvailableListener(android.graphics.SurfaceTexture$OnFrameAvailableListener)>($r3);
+
+        $r5 = r0.<android.filterpacks.videosrc.SurfaceTextureSource: android.filterpacks.videosrc.SurfaceTextureSource$SurfaceTextureSourceListener mSourceListener>;
+
+        $r4 = r0.<android.filterpacks.videosrc.SurfaceTextureSource: android.graphics.SurfaceTexture mSurfaceTexture>;
+
+        interfaceinvoke $r5.<android.filterpacks.videosrc.SurfaceTextureSource$SurfaceTextureSourceListener: void onSurfaceTextureSourceReady(android.graphics.SurfaceTexture)>($r4);
+
+        r0.<android.filterpacks.videosrc.SurfaceTextureSource: boolean mFirstFrame> = 1;
+
+        return;
+    }
+
+    protected void prepare(android.filterfw.core.FilterContext)
+    {
+        android.filterpacks.videosrc.SurfaceTextureSource r0;
+        android.filterfw.core.FilterContext r1;
+        boolean $z0;
+        android.filterfw.core.FrameManager $r2;
+        android.filterfw.core.MutableFrameFormat $r3;
+        android.filterfw.core.Frame $r4;
+        android.filterfw.core.GLFrame $r5;
+        android.filterfw.core.ShaderProgram $r6;
+
+        r0 := @this: android.filterpacks.videosrc.SurfaceTextureSource;
+
+        r1 := @parameter0: android.filterfw.core.FilterContext;
+
+        $z0 = <android.filterpacks.videosrc.SurfaceTextureSource: boolean mLogVerbose>;
+
+        if $z0 == 0 goto label1;
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("SurfaceTextureSource", "Preparing SurfaceTextureSource");
+
+     label1:
+        specialinvoke r0.<android.filterpacks.videosrc.SurfaceTextureSource: void createFormats()>();
+
+        $r2 = virtualinvoke r1.<android.filterfw.core.FilterContext: android.filterfw.core.FrameManager getFrameManager()>();
+
+        $r3 = r0.<android.filterpacks.videosrc.SurfaceTextureSource: android.filterfw.core.MutableFrameFormat mOutputFormat>;
+
+        $r4 = virtualinvoke $r2.<android.filterfw.core.FrameManager: android.filterfw.core.Frame newBoundFrame(android.filterfw.core.FrameFormat,int,long)>($r3, 104, 0L);
+
+        $r5 = (android.filterfw.core.GLFrame) $r4;
+
+        r0.<android.filterpacks.videosrc.SurfaceTextureSource: android.filterfw.core.GLFrame mMediaFrame> = $r5;
+
+        $r6 = new android.filterfw.core.ShaderProgram;
+
+        specialinvoke $r6.<android.filterfw.core.ShaderProgram: void <init>(android.filterfw.core.FilterContext,java.lang.String)>(r1, "#extension GL_OES_EGL_image_external : require\nprecision mediump float;\nuniform samplerExternalOES tex_sampler_0;\nvarying vec2 v_texcoord;\nvoid main() {\n  gl_FragColor = texture2D(tex_sampler_0, v_texcoord);\n}\n");
+
+        r0.<android.filterpacks.videosrc.SurfaceTextureSource: android.filterfw.core.ShaderProgram mFrameExtractor> = $r6;
+
+        return;
+    }
+
+    public void process(android.filterfw.core.FilterContext)
+    {
+        android.filterpacks.videosrc.SurfaceTextureSource r0;
+        int i0;
+        android.filterfw.core.ShaderProgram r1, $r18;
+        float[] r2, $r11, $r12, $r13, $r14;
+        boolean $z0, $z1, $z3, $z4, $z5, $z6;
+        android.os.ConditionVariable $r3, $r4, $r6;
+        long $l1, $l4;
+        java.lang.RuntimeException $r7;
+        android.filterfw.core.FilterContext r8;
+        android.graphics.SurfaceTexture $r9, $r10, $r20;
+        float $f0, $f1, $f2, $f3, $f4, $f5, $f6, $f7;
+        android.filterfw.core.FrameManager $r15;
+        android.filterfw.core.MutableFrameFormat $r16;
+        android.filterfw.core.Frame r17;
+        android.filterfw.core.GLFrame $r19;
+
+        r0 := @this: android.filterpacks.videosrc.SurfaceTextureSource;
+
+        r8 := @parameter0: android.filterfw.core.FilterContext;
+
+        $z0 = <android.filterpacks.videosrc.SurfaceTextureSource: boolean mLogVerbose>;
+
+        if $z0 == 0 goto label1;
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("SurfaceTextureSource", "Processing new frame");
+
+     label1:
+        $z1 = r0.<android.filterpacks.videosrc.SurfaceTextureSource: boolean mWaitForNewFrame>;
+
+        if $z1 != 0 goto label2;
+
+        $z6 = r0.<android.filterpacks.videosrc.SurfaceTextureSource: boolean mFirstFrame>;
+
+        if $z6 == 0 goto label7;
+
+     label2:
+        i0 = r0.<android.filterpacks.videosrc.SurfaceTextureSource: int mWaitTimeout>;
+
+        if i0 == 0 goto label5;
+
+        $r6 = r0.<android.filterpacks.videosrc.SurfaceTextureSource: android.os.ConditionVariable mNewFrameAvailable>;
+
+        $l1 = (long) i0;
+
+        $z3 = virtualinvoke $r6.<android.os.ConditionVariable: boolean block(long)>($l1);
+
+        if $z3 != 0 goto label6;
+
+        $z4 = r0.<android.filterpacks.videosrc.SurfaceTextureSource: boolean mCloseOnTimeout>;
+
+        if $z4 == 0 goto label4;
+
+        $z5 = <android.filterpacks.videosrc.SurfaceTextureSource: boolean mLogVerbose>;
+
+        if $z5 == 0 goto label3;
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("SurfaceTextureSource", "Timeout waiting for a new frame. Closing.");
+
+     label3:
+        virtualinvoke r0.<android.filterpacks.videosrc.SurfaceTextureSource: void closeOutputPort(java.lang.String)>("video");
+
+        return;
+
+     label4:
+        $r7 = new java.lang.RuntimeException;
+
+        specialinvoke $r7.<java.lang.RuntimeException: void <init>(java.lang.String)>("Timeout waiting for new frame");
+
+        throw $r7;
+
+     label5:
+        $r3 = r0.<android.filterpacks.videosrc.SurfaceTextureSource: android.os.ConditionVariable mNewFrameAvailable>;
+
+        virtualinvoke $r3.<android.os.ConditionVariable: void block()>();
+
+     label6:
+        $r4 = r0.<android.filterpacks.videosrc.SurfaceTextureSource: android.os.ConditionVariable mNewFrameAvailable>;
+
+        virtualinvoke $r4.<android.os.ConditionVariable: void close()>();
+
+        r0.<android.filterpacks.videosrc.SurfaceTextureSource: boolean mFirstFrame> = 0;
+
+     label7:
+        $r9 = r0.<android.filterpacks.videosrc.SurfaceTextureSource: android.graphics.SurfaceTexture mSurfaceTexture>;
+
+        virtualinvoke $r9.<android.graphics.SurfaceTexture: void updateTexImage()>();
+
+        $r10 = r0.<android.filterpacks.videosrc.SurfaceTextureSource: android.graphics.SurfaceTexture mSurfaceTexture>;
+
+        $r11 = r0.<android.filterpacks.videosrc.SurfaceTextureSource: float[] mFrameTransform>;
+
+        virtualinvoke $r10.<android.graphics.SurfaceTexture: void getTransformMatrix(float[])>($r11);
+
+        $r12 = r0.<android.filterpacks.videosrc.SurfaceTextureSource: float[] mMappedCoords>;
+
+        $r13 = r0.<android.filterpacks.videosrc.SurfaceTextureSource: float[] mFrameTransform>;
+
+        $r14 = <android.filterpacks.videosrc.SurfaceTextureSource: float[] mSourceCoords>;
+
+        staticinvoke <android.opengl.Matrix: void multiplyMM(float[],int,float[],int,float[],int)>($r12, 0, $r13, 0, $r14, 0);
+
+        r1 = r0.<android.filterpacks.videosrc.SurfaceTextureSource: android.filterfw.core.ShaderProgram mFrameExtractor>;
+
+        r2 = r0.<android.filterpacks.videosrc.SurfaceTextureSource: float[] mMappedCoords>;
+
+        $f0 = r2[0];
+
+        $f1 = r2[1];
+
+        $f2 = r2[4];
+
+        $f3 = r2[5];
+
+        $f4 = r2[8];
+
+        $f5 = r2[9];
+
+        $f6 = r2[12];
+
+        $f7 = r2[13];
+
+        virtualinvoke r1.<android.filterfw.core.ShaderProgram: boolean setSourceRegion(float,float,float,float,float,float,float,float)>($f0, $f1, $f2, $f3, $f4, $f5, $f6, $f7);
+
+        $r15 = virtualinvoke r8.<android.filterfw.core.FilterContext: android.filterfw.core.FrameManager getFrameManager()>();
+
+        $r16 = r0.<android.filterpacks.videosrc.SurfaceTextureSource: android.filterfw.core.MutableFrameFormat mOutputFormat>;
+
+        r17 = virtualinvoke $r15.<android.filterfw.core.FrameManager: android.filterfw.core.Frame newFrame(android.filterfw.core.FrameFormat)>($r16);
+
+        $r18 = r0.<android.filterpacks.videosrc.SurfaceTextureSource: android.filterfw.core.ShaderProgram mFrameExtractor>;
+
+        $r19 = r0.<android.filterpacks.videosrc.SurfaceTextureSource: android.filterfw.core.GLFrame mMediaFrame>;
+
+        virtualinvoke $r18.<android.filterfw.core.ShaderProgram: void process(android.filterfw.core.Frame,android.filterfw.core.Frame)>($r19, r17);
+
+        $r20 = r0.<android.filterpacks.videosrc.SurfaceTextureSource: android.graphics.SurfaceTexture mSurfaceTexture>;
+
+        $l4 = virtualinvoke $r20.<android.graphics.SurfaceTexture: long getTimestamp()>();
+
+        virtualinvoke r17.<android.filterfw.core.Frame: void setTimestamp(long)>($l4);
+
+        virtualinvoke r0.<android.filterpacks.videosrc.SurfaceTextureSource: void pushOutput(java.lang.String,android.filterfw.core.Frame)>("video", r17);
+
+        virtualinvoke r17.<android.filterfw.core.Frame: android.filterfw.core.Frame release()>();
+
+        return;
+    }
+
+    public void setupPorts()
+    {
+        android.filterpacks.videosrc.SurfaceTextureSource r0;
+        android.filterfw.core.MutableFrameFormat $r1;
+
+        r0 := @this: android.filterpacks.videosrc.SurfaceTextureSource;
+
+        $r1 = staticinvoke <android.filterfw.format.ImageFormat: android.filterfw.core.MutableFrameFormat create(int,int)>(3, 3);
+
+        virtualinvoke r0.<android.filterpacks.videosrc.SurfaceTextureSource: void addOutputPort(java.lang.String,android.filterfw.core.FrameFormat)>("video", $r1);
+
+        return;
+    }
+
+    public void tearDown(android.filterfw.core.FilterContext)
+    {
+        android.filterpacks.videosrc.SurfaceTextureSource r0;
+        android.filterfw.core.FilterContext r2;
+        android.filterfw.core.GLFrame r3;
+
+        r0 := @this: android.filterpacks.videosrc.SurfaceTextureSource;
+
+        r2 := @parameter0: android.filterfw.core.FilterContext;
+
+        r3 = r0.<android.filterpacks.videosrc.SurfaceTextureSource: android.filterfw.core.GLFrame mMediaFrame>;
+
+        if r3 == null goto label1;
+
+        virtualinvoke r3.<android.filterfw.core.GLFrame: android.filterfw.core.Frame release()>();
+
+     label1:
+        return;
+    }
+}

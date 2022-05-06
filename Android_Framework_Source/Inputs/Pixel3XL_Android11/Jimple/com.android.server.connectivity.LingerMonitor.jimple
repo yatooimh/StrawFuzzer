@@ -1,0 +1,807 @@
+public class com.android.server.connectivity.LingerMonitor extends java.lang.Object
+{
+    public static final android.content.Intent CELLULAR_SETTINGS;
+    private static final boolean DBG;
+    public static final int DEFAULT_NOTIFICATION_DAILY_LIMIT;
+    public static final long DEFAULT_NOTIFICATION_RATE_LIMIT_MILLIS;
+    public static final int NOTIFY_TYPE_NONE;
+    public static final int NOTIFY_TYPE_NOTIFICATION;
+    public static final int NOTIFY_TYPE_TOAST;
+    private static final java.lang.String TAG;
+    private static final java.util.HashMap TRANSPORT_NAMES;
+    private static final boolean VDBG;
+    private static android.util.SparseArray sNotifyTypeNames;
+    private final android.content.Context mContext;
+    private final int mDailyLimit;
+    private final android.util.SparseBooleanArray mEverNotified;
+    private long mFirstNotificationMillis;
+    private long mLastNotificationMillis;
+    private int mNotificationCounter;
+    private final android.util.SparseIntArray mNotifications;
+    private final com.android.server.connectivity.NetworkNotificationManager mNotifier;
+    private final long mRateLimitMillis;
+
+    static void <clinit>()
+    {
+        java.lang.Class $r0;
+        java.lang.String $r1;
+        java.util.HashMap $r2;
+        android.content.Intent $r3, $r5;
+        android.content.ComponentName $r4;
+        java.lang.Class[] $r6;
+        java.lang.String[] $r7;
+        android.util.SparseArray $r8;
+
+        <com.android.server.connectivity.LingerMonitor: boolean VDBG> = 0;
+
+        <com.android.server.connectivity.LingerMonitor: int NOTIFY_TYPE_TOAST> = 2;
+
+        <com.android.server.connectivity.LingerMonitor: int NOTIFY_TYPE_NOTIFICATION> = 1;
+
+        <com.android.server.connectivity.LingerMonitor: int NOTIFY_TYPE_NONE> = 0;
+
+        <com.android.server.connectivity.LingerMonitor: long DEFAULT_NOTIFICATION_RATE_LIMIT_MILLIS> = 60000L;
+
+        <com.android.server.connectivity.LingerMonitor: int DEFAULT_NOTIFICATION_DAILY_LIMIT> = 3;
+
+        <com.android.server.connectivity.LingerMonitor: boolean DBG> = 1;
+
+        $r0 = class "Lcom/android/server/connectivity/LingerMonitor;";
+
+        $r1 = virtualinvoke $r0.<java.lang.Class: java.lang.String getSimpleName()>();
+
+        <com.android.server.connectivity.LingerMonitor: java.lang.String TAG> = $r1;
+
+        $r2 = staticinvoke <com.android.server.connectivity.LingerMonitor: java.util.HashMap makeTransportToNameMap()>();
+
+        <com.android.server.connectivity.LingerMonitor: java.util.HashMap TRANSPORT_NAMES> = $r2;
+
+        $r3 = new android.content.Intent;
+
+        specialinvoke $r3.<android.content.Intent: void <init>()>();
+
+        $r4 = new android.content.ComponentName;
+
+        specialinvoke $r4.<android.content.ComponentName: void <init>(java.lang.String,java.lang.String)>("com.android.settings", "com.android.settings.Settings$DataUsageSummaryActivity");
+
+        $r5 = virtualinvoke $r3.<android.content.Intent: android.content.Intent setComponent(android.content.ComponentName)>($r4);
+
+        <com.android.server.connectivity.LingerMonitor: android.content.Intent CELLULAR_SETTINGS> = $r5;
+
+        $r6 = newarray (java.lang.Class)[1];
+
+        $r6[0] = class "Lcom/android/server/connectivity/LingerMonitor;";
+
+        $r7 = newarray (java.lang.String)[1];
+
+        $r7[0] = "NOTIFY_TYPE_";
+
+        $r8 = staticinvoke <com.android.internal.util.MessageUtils: android.util.SparseArray findMessageNames(java.lang.Class[],java.lang.String[])>($r6, $r7);
+
+        <com.android.server.connectivity.LingerMonitor: android.util.SparseArray sNotifyTypeNames> = $r8;
+
+        return;
+    }
+
+    public void <init>(android.content.Context, com.android.server.connectivity.NetworkNotificationManager, int, long)
+    {
+        com.android.server.connectivity.LingerMonitor r0;
+        android.content.Context r1;
+        com.android.server.connectivity.NetworkNotificationManager r2;
+        int i0;
+        long l1, $l2;
+        android.util.SparseIntArray $r3;
+        android.util.SparseBooleanArray $r4;
+
+        r0 := @this: com.android.server.connectivity.LingerMonitor;
+
+        r1 := @parameter0: android.content.Context;
+
+        r2 := @parameter1: com.android.server.connectivity.NetworkNotificationManager;
+
+        i0 := @parameter2: int;
+
+        l1 := @parameter3: long;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        $r3 = new android.util.SparseIntArray;
+
+        specialinvoke $r3.<android.util.SparseIntArray: void <init>()>();
+
+        r0.<com.android.server.connectivity.LingerMonitor: android.util.SparseIntArray mNotifications> = $r3;
+
+        $r4 = new android.util.SparseBooleanArray;
+
+        specialinvoke $r4.<android.util.SparseBooleanArray: void <init>()>();
+
+        r0.<com.android.server.connectivity.LingerMonitor: android.util.SparseBooleanArray mEverNotified> = $r4;
+
+        r0.<com.android.server.connectivity.LingerMonitor: android.content.Context mContext> = r1;
+
+        r0.<com.android.server.connectivity.LingerMonitor: com.android.server.connectivity.NetworkNotificationManager mNotifier> = r2;
+
+        r0.<com.android.server.connectivity.LingerMonitor: int mDailyLimit> = i0;
+
+        r0.<com.android.server.connectivity.LingerMonitor: long mRateLimitMillis> = l1;
+
+        $l2 = neg l1;
+
+        r0.<com.android.server.connectivity.LingerMonitor: long mLastNotificationMillis> = $l2;
+
+        return;
+    }
+
+    private boolean everNotified(com.android.server.connectivity.NetworkAgentInfo)
+    {
+        com.android.server.connectivity.LingerMonitor r0;
+        com.android.server.connectivity.NetworkAgentInfo r1;
+        android.net.Network $r2;
+        int $i0;
+        android.util.SparseBooleanArray $r3;
+        boolean $z0;
+
+        r0 := @this: com.android.server.connectivity.LingerMonitor;
+
+        r1 := @parameter0: com.android.server.connectivity.NetworkAgentInfo;
+
+        $r3 = r0.<com.android.server.connectivity.LingerMonitor: android.util.SparseBooleanArray mEverNotified>;
+
+        $r2 = r1.<com.android.server.connectivity.NetworkAgentInfo: android.net.Network network>;
+
+        $i0 = $r2.<android.net.Network: int netId>;
+
+        $z0 = virtualinvoke $r3.<android.util.SparseBooleanArray: boolean get(int,boolean)>($i0, 0);
+
+        return $z0;
+    }
+
+    private int getNotificationSource(com.android.server.connectivity.NetworkAgentInfo)
+    {
+        com.android.server.connectivity.LingerMonitor r0;
+        com.android.server.connectivity.NetworkAgentInfo r1;
+        android.util.SparseIntArray $r2, $r3, $r5;
+        int $i0, $i1, $i2, $i3, i4;
+        android.net.Network $r4;
+
+        r0 := @this: com.android.server.connectivity.LingerMonitor;
+
+        r1 := @parameter0: com.android.server.connectivity.NetworkAgentInfo;
+
+        i4 = 0;
+
+     label1:
+        $r2 = r0.<com.android.server.connectivity.LingerMonitor: android.util.SparseIntArray mNotifications>;
+
+        $i0 = virtualinvoke $r2.<android.util.SparseIntArray: int size()>();
+
+        if i4 >= $i0 goto label3;
+
+        $r3 = r0.<com.android.server.connectivity.LingerMonitor: android.util.SparseIntArray mNotifications>;
+
+        $i1 = virtualinvoke $r3.<android.util.SparseIntArray: int valueAt(int)>(i4);
+
+        $r4 = r1.<com.android.server.connectivity.NetworkAgentInfo: android.net.Network network>;
+
+        $i2 = $r4.<android.net.Network: int netId>;
+
+        if $i1 != $i2 goto label2;
+
+        $r5 = r0.<com.android.server.connectivity.LingerMonitor: android.util.SparseIntArray mNotifications>;
+
+        $i3 = virtualinvoke $r5.<android.util.SparseIntArray: int keyAt(int)>(i4);
+
+        return $i3;
+
+     label2:
+        i4 = i4 + 1;
+
+        goto label1;
+
+     label3:
+        return 0;
+    }
+
+    private static boolean hasTransport(com.android.server.connectivity.NetworkAgentInfo, int)
+    {
+        com.android.server.connectivity.NetworkAgentInfo r0;
+        int i0;
+        android.net.NetworkCapabilities $r1;
+        boolean $z0;
+
+        r0 := @parameter0: com.android.server.connectivity.NetworkAgentInfo;
+
+        i0 := @parameter1: int;
+
+        $r1 = r0.<com.android.server.connectivity.NetworkAgentInfo: android.net.NetworkCapabilities networkCapabilities>;
+
+        $z0 = virtualinvoke $r1.<android.net.NetworkCapabilities: boolean hasTransport(int)>(i0);
+
+        return $z0;
+    }
+
+    private boolean isAboveDailyLimit(long)
+    {
+        com.android.server.connectivity.LingerMonitor r0;
+        long l0, $l2, $l4, $l5;
+        int i1, $i7, $i8;
+        byte $b3, $b6;
+
+        r0 := @this: com.android.server.connectivity.LingerMonitor;
+
+        l0 := @parameter0: long;
+
+        $l2 = r0.<com.android.server.connectivity.LingerMonitor: long mFirstNotificationMillis>;
+
+        $b3 = $l2 cmp 0L;
+
+        if $b3 != 0 goto label1;
+
+        r0.<com.android.server.connectivity.LingerMonitor: long mFirstNotificationMillis> = l0;
+
+     label1:
+        $l4 = r0.<com.android.server.connectivity.LingerMonitor: long mFirstNotificationMillis>;
+
+        $l5 = l0 - $l4;
+
+        $b6 = $l5 cmp 86400000L;
+
+        if $b6 <= 0 goto label2;
+
+        r0.<com.android.server.connectivity.LingerMonitor: int mNotificationCounter> = 0;
+
+        r0.<com.android.server.connectivity.LingerMonitor: long mFirstNotificationMillis> = 0L;
+
+     label2:
+        i1 = r0.<com.android.server.connectivity.LingerMonitor: int mNotificationCounter>;
+
+        $i7 = r0.<com.android.server.connectivity.LingerMonitor: int mDailyLimit>;
+
+        if i1 < $i7 goto label3;
+
+        return 1;
+
+     label3:
+        $i8 = i1 + 1;
+
+        r0.<com.android.server.connectivity.LingerMonitor: int mNotificationCounter> = $i8;
+
+        return 0;
+    }
+
+    private boolean isRateLimited(long)
+    {
+        com.android.server.connectivity.LingerMonitor r0;
+        long l0, $l1, $l2, $l3;
+        byte $b4;
+
+        r0 := @this: com.android.server.connectivity.LingerMonitor;
+
+        l0 := @parameter0: long;
+
+        $l1 = r0.<com.android.server.connectivity.LingerMonitor: long mLastNotificationMillis>;
+
+        $l3 = l0 - $l1;
+
+        $l2 = r0.<com.android.server.connectivity.LingerMonitor: long mRateLimitMillis>;
+
+        $b4 = $l3 cmp $l2;
+
+        if $b4 >= 0 goto label1;
+
+        return 1;
+
+     label1:
+        r0.<com.android.server.connectivity.LingerMonitor: long mLastNotificationMillis> = l0;
+
+        return 0;
+    }
+
+    private static java.util.HashMap makeTransportToNameMap()
+    {
+        android.util.SparseArray r0;
+        java.lang.Class[] $r2;
+        java.lang.String[] $r3;
+        java.util.HashMap $r4;
+        int $i0, $i1, i2;
+        java.lang.Object $r5;
+        java.lang.String $r6;
+        java.lang.Integer $r7;
+
+        $r2 = newarray (java.lang.Class)[1];
+
+        $r2[0] = class "Landroid/net/NetworkCapabilities;";
+
+        $r3 = newarray (java.lang.String)[1];
+
+        $r3[0] = "TRANSPORT_";
+
+        r0 = staticinvoke <com.android.internal.util.MessageUtils: android.util.SparseArray findMessageNames(java.lang.Class[],java.lang.String[])>($r2, $r3);
+
+        $r4 = new java.util.HashMap;
+
+        specialinvoke $r4.<java.util.HashMap: void <init>()>();
+
+        i2 = 0;
+
+     label1:
+        $i0 = virtualinvoke r0.<android.util.SparseArray: int size()>();
+
+        if i2 >= $i0 goto label2;
+
+        $r5 = virtualinvoke r0.<android.util.SparseArray: java.lang.Object valueAt(int)>(i2);
+
+        $r6 = (java.lang.String) $r5;
+
+        $i1 = virtualinvoke r0.<android.util.SparseArray: int keyAt(int)>(i2);
+
+        $r7 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i1);
+
+        virtualinvoke $r4.<java.util.HashMap: java.lang.Object put(java.lang.Object,java.lang.Object)>($r6, $r7);
+
+        i2 = i2 + 1;
+
+        goto label1;
+
+     label2:
+        return $r4;
+    }
+
+    private void maybeStopNotifying(com.android.server.connectivity.NetworkAgentInfo)
+    {
+        com.android.server.connectivity.LingerMonitor r0;
+        com.android.server.connectivity.NetworkAgentInfo r1;
+        int i0;
+        android.util.SparseIntArray $r2;
+        com.android.server.connectivity.NetworkNotificationManager $r3;
+
+        r0 := @this: com.android.server.connectivity.LingerMonitor;
+
+        r1 := @parameter0: com.android.server.connectivity.NetworkAgentInfo;
+
+        i0 = specialinvoke r0.<com.android.server.connectivity.LingerMonitor: int getNotificationSource(com.android.server.connectivity.NetworkAgentInfo)>(r1);
+
+        if i0 == 0 goto label1;
+
+        $r2 = r0.<com.android.server.connectivity.LingerMonitor: android.util.SparseIntArray mNotifications>;
+
+        virtualinvoke $r2.<android.util.SparseIntArray: void delete(int)>(i0);
+
+        $r3 = r0.<com.android.server.connectivity.LingerMonitor: com.android.server.connectivity.NetworkNotificationManager mNotifier>;
+
+        virtualinvoke $r3.<com.android.server.connectivity.NetworkNotificationManager: void clearNotification(int)>(i0);
+
+     label1:
+        return;
+    }
+
+    private void notify(com.android.server.connectivity.NetworkAgentInfo, com.android.server.connectivity.NetworkAgentInfo, boolean)
+    {
+        com.android.server.connectivity.LingerMonitor r0;
+        boolean z0;
+        int i0, $i2, $i3, $i4, i6;
+        java.lang.String r1, $r9, $r12, $r19, $r21, $r23, $r33, r36;
+        android.util.SparseArray r3;
+        android.content.Context $r5;
+        android.content.res.Resources $r6;
+        java.lang.StringBuilder $r7, $r15, $r30;
+        java.lang.Object $r20;
+        android.net.Network $r24, $r25, $r27;
+        android.util.SparseIntArray $r26;
+        android.util.SparseBooleanArray $r28;
+        com.android.server.connectivity.NetworkNotificationManager $r29;
+        com.android.server.connectivity.NetworkAgentInfo r34, r35;
+
+        r0 := @this: com.android.server.connectivity.LingerMonitor;
+
+        r34 := @parameter0: com.android.server.connectivity.NetworkAgentInfo;
+
+        r35 := @parameter1: com.android.server.connectivity.NetworkAgentInfo;
+
+        z0 := @parameter2: boolean;
+
+        $r5 = r0.<com.android.server.connectivity.LingerMonitor: android.content.Context mContext>;
+
+        $r6 = virtualinvoke $r5.<android.content.Context: android.content.res.Resources getResources()>();
+
+        i0 = virtualinvoke $r6.<android.content.res.Resources: int getInteger(int)>(17694855);
+
+        i6 = i0;
+
+        if i0 != 1 goto label1;
+
+        i6 = i0;
+
+        if z0 == 0 goto label1;
+
+        i6 = 2;
+
+     label1:
+        if i6 == 0 goto label5;
+
+        if i6 == 1 goto label3;
+
+        if i6 == 2 goto label2;
+
+        r36 = <com.android.server.connectivity.LingerMonitor: java.lang.String TAG>;
+
+        $r30 = new java.lang.StringBuilder;
+
+        specialinvoke $r30.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r30.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Unknown notify type ");
+
+        virtualinvoke $r30.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i6);
+
+        $r33 = virtualinvoke $r30.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>(r36, $r33);
+
+        return;
+
+     label2:
+        $r29 = r0.<com.android.server.connectivity.LingerMonitor: com.android.server.connectivity.NetworkNotificationManager mNotifier>;
+
+        virtualinvoke $r29.<com.android.server.connectivity.NetworkNotificationManager: void showToast(com.android.server.connectivity.NetworkAgentInfo,com.android.server.connectivity.NetworkAgentInfo)>(r34, r35);
+
+        goto label4;
+
+     label3:
+        specialinvoke r0.<com.android.server.connectivity.LingerMonitor: void showNotification(com.android.server.connectivity.NetworkAgentInfo,com.android.server.connectivity.NetworkAgentInfo)>(r34, r35);
+
+     label4:
+        r1 = <com.android.server.connectivity.LingerMonitor: java.lang.String TAG>;
+
+        $r7 = new java.lang.StringBuilder;
+
+        specialinvoke $r7.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Notifying switch from=");
+
+        $r9 = virtualinvoke r34.<com.android.server.connectivity.NetworkAgentInfo: java.lang.String toShortString()>();
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r9);
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" to=");
+
+        $r12 = virtualinvoke r35.<com.android.server.connectivity.NetworkAgentInfo: java.lang.String toShortString()>();
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r12);
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" type=");
+
+        r3 = <com.android.server.connectivity.LingerMonitor: android.util.SparseArray sNotifyTypeNames>;
+
+        $r15 = new java.lang.StringBuilder;
+
+        specialinvoke $r15.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r15.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("unknown(");
+
+        virtualinvoke $r15.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i6);
+
+        virtualinvoke $r15.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(")");
+
+        $r19 = virtualinvoke $r15.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $r20 = virtualinvoke r3.<android.util.SparseArray: java.lang.Object get(int,java.lang.Object)>(i6, $r19);
+
+        $r21 = (java.lang.String) $r20;
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r21);
+
+        $r23 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>(r1, $r23);
+
+        $r26 = r0.<com.android.server.connectivity.LingerMonitor: android.util.SparseIntArray mNotifications>;
+
+        $r24 = r34.<com.android.server.connectivity.NetworkAgentInfo: android.net.Network network>;
+
+        $i3 = $r24.<android.net.Network: int netId>;
+
+        $r25 = r35.<com.android.server.connectivity.NetworkAgentInfo: android.net.Network network>;
+
+        $i2 = $r25.<android.net.Network: int netId>;
+
+        virtualinvoke $r26.<android.util.SparseIntArray: void put(int,int)>($i3, $i2);
+
+        $r28 = r0.<com.android.server.connectivity.LingerMonitor: android.util.SparseBooleanArray mEverNotified>;
+
+        $r27 = r34.<com.android.server.connectivity.NetworkAgentInfo: android.net.Network network>;
+
+        $i4 = $r27.<android.net.Network: int netId>;
+
+        virtualinvoke $r28.<android.util.SparseBooleanArray: void put(int,boolean)>($i4, 1);
+
+        return;
+
+     label5:
+        return;
+    }
+
+    private void showNotification(com.android.server.connectivity.NetworkAgentInfo, com.android.server.connectivity.NetworkAgentInfo)
+    {
+        com.android.server.connectivity.LingerMonitor r0;
+        com.android.server.connectivity.NetworkAgentInfo r1, r2;
+        android.net.Network $r3;
+        com.android.server.connectivity.NetworkNotificationManager $r4;
+        int $i0;
+        com.android.server.connectivity.NetworkNotificationManager$NotificationType $r5;
+        android.app.PendingIntent $r6;
+
+        r0 := @this: com.android.server.connectivity.LingerMonitor;
+
+        r1 := @parameter0: com.android.server.connectivity.NetworkAgentInfo;
+
+        r2 := @parameter1: com.android.server.connectivity.NetworkAgentInfo;
+
+        $r4 = r0.<com.android.server.connectivity.LingerMonitor: com.android.server.connectivity.NetworkNotificationManager mNotifier>;
+
+        $r3 = r1.<com.android.server.connectivity.NetworkAgentInfo: android.net.Network network>;
+
+        $i0 = $r3.<android.net.Network: int netId>;
+
+        $r5 = <com.android.server.connectivity.NetworkNotificationManager$NotificationType: com.android.server.connectivity.NetworkNotificationManager$NotificationType NETWORK_SWITCH>;
+
+        $r6 = virtualinvoke r0.<com.android.server.connectivity.LingerMonitor: android.app.PendingIntent createNotificationIntent()>();
+
+        virtualinvoke $r4.<com.android.server.connectivity.NetworkNotificationManager: void showNotification(int,com.android.server.connectivity.NetworkNotificationManager$NotificationType,com.android.server.connectivity.NetworkAgentInfo,com.android.server.connectivity.NetworkAgentInfo,android.app.PendingIntent,boolean)>($i0, $r5, r1, r2, $r6, 1);
+
+        return;
+    }
+
+    protected android.app.PendingIntent createNotificationIntent()
+    {
+        com.android.server.connectivity.LingerMonitor r0;
+        android.os.UserHandle $r1;
+        android.content.Intent $r2;
+        android.content.Context $r3;
+        android.app.PendingIntent $r4;
+
+        r0 := @this: com.android.server.connectivity.LingerMonitor;
+
+        $r3 = r0.<com.android.server.connectivity.LingerMonitor: android.content.Context mContext>;
+
+        $r2 = <com.android.server.connectivity.LingerMonitor: android.content.Intent CELLULAR_SETTINGS>;
+
+        $r1 = <android.os.UserHandle: android.os.UserHandle CURRENT>;
+
+        $r4 = staticinvoke <android.app.PendingIntent: android.app.PendingIntent getActivityAsUser(android.content.Context,int,android.content.Intent,int,android.os.Bundle,android.os.UserHandle)>($r3, 0, $r2, 268435456, null, $r1);
+
+        return $r4;
+    }
+
+    public boolean isNotificationEnabled(com.android.server.connectivity.NetworkAgentInfo, com.android.server.connectivity.NetworkAgentInfo)
+    {
+        com.android.server.connectivity.LingerMonitor r0;
+        com.android.server.connectivity.NetworkAgentInfo r1, r2;
+        java.lang.String[] r3, r25;
+        int i0, i1, i2, $i3, i5;
+        android.content.Context $r4;
+        android.content.res.Resources $r5;
+        boolean $z0, $z1, $z2;
+        java.lang.StringBuilder $r6, $r13, $r20;
+        java.lang.String $r8, $r10, $r15, $r17, $r23, r24, r26;
+        java.lang.Object $r11, $r18;
+        java.lang.Integer $r12, $r19;
+        java.util.HashMap r28, r30;
+
+        r0 := @this: com.android.server.connectivity.LingerMonitor;
+
+        r1 := @parameter0: com.android.server.connectivity.NetworkAgentInfo;
+
+        r2 := @parameter1: com.android.server.connectivity.NetworkAgentInfo;
+
+        $r4 = r0.<com.android.server.connectivity.LingerMonitor: android.content.Context mContext>;
+
+        $r5 = virtualinvoke $r4.<android.content.Context: android.content.res.Resources getResources()>();
+
+        r3 = virtualinvoke $r5.<android.content.res.Resources: java.lang.String[] getStringArray(int)>(17236055);
+
+        i0 = lengthof r3;
+
+        i5 = 0;
+
+     label1:
+        if i5 >= i0 goto label5;
+
+        r24 = r3[i5];
+
+        $z0 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>(r24);
+
+        if $z0 == 0 goto label2;
+
+        goto label4;
+
+     label2:
+        r25 = virtualinvoke r24.<java.lang.String: java.lang.String[] split(java.lang.String,int)>("-", 2);
+
+        $i3 = lengthof r25;
+
+        if $i3 == 2 goto label3;
+
+        r26 = <com.android.server.connectivity.LingerMonitor: java.lang.String TAG>;
+
+        $r20 = new java.lang.StringBuilder;
+
+        specialinvoke $r20.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r20.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Invalid network switch notification configuration: ");
+
+        virtualinvoke $r20.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r24);
+
+        $r23 = virtualinvoke $r20.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>(r26, $r23);
+
+        goto label4;
+
+     label3:
+        r28 = <com.android.server.connectivity.LingerMonitor: java.util.HashMap TRANSPORT_NAMES>;
+
+        $r6 = new java.lang.StringBuilder;
+
+        specialinvoke $r6.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("TRANSPORT_");
+
+        $r8 = r25[0];
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r8);
+
+        $r10 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $r11 = virtualinvoke r28.<java.util.HashMap: java.lang.Object get(java.lang.Object)>($r10);
+
+        $r12 = (java.lang.Integer) $r11;
+
+        i1 = virtualinvoke $r12.<java.lang.Integer: int intValue()>();
+
+        r30 = <com.android.server.connectivity.LingerMonitor: java.util.HashMap TRANSPORT_NAMES>;
+
+        $r13 = new java.lang.StringBuilder;
+
+        specialinvoke $r13.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("TRANSPORT_");
+
+        $r15 = r25[1];
+
+        virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r15);
+
+        $r17 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $r18 = virtualinvoke r30.<java.util.HashMap: java.lang.Object get(java.lang.Object)>($r17);
+
+        $r19 = (java.lang.Integer) $r18;
+
+        i2 = virtualinvoke $r19.<java.lang.Integer: int intValue()>();
+
+        $z1 = staticinvoke <com.android.server.connectivity.LingerMonitor: boolean hasTransport(com.android.server.connectivity.NetworkAgentInfo,int)>(r1, i1);
+
+        if $z1 == 0 goto label4;
+
+        $z2 = staticinvoke <com.android.server.connectivity.LingerMonitor: boolean hasTransport(com.android.server.connectivity.NetworkAgentInfo,int)>(r2, i2);
+
+        if $z2 == 0 goto label4;
+
+        return 1;
+
+     label4:
+        i5 = i5 + 1;
+
+        goto label1;
+
+     label5:
+        return 0;
+    }
+
+    public void noteDisconnect(com.android.server.connectivity.NetworkAgentInfo)
+    {
+        com.android.server.connectivity.LingerMonitor r0;
+        com.android.server.connectivity.NetworkAgentInfo r1;
+        android.net.Network $r2, $r4;
+        int $i0, $i1;
+        android.util.SparseIntArray $r3;
+        android.util.SparseBooleanArray $r5;
+
+        r0 := @this: com.android.server.connectivity.LingerMonitor;
+
+        r1 := @parameter0: com.android.server.connectivity.NetworkAgentInfo;
+
+        $r3 = r0.<com.android.server.connectivity.LingerMonitor: android.util.SparseIntArray mNotifications>;
+
+        $r2 = r1.<com.android.server.connectivity.NetworkAgentInfo: android.net.Network network>;
+
+        $i0 = $r2.<android.net.Network: int netId>;
+
+        virtualinvoke $r3.<android.util.SparseIntArray: void delete(int)>($i0);
+
+        $r5 = r0.<com.android.server.connectivity.LingerMonitor: android.util.SparseBooleanArray mEverNotified>;
+
+        $r4 = r1.<com.android.server.connectivity.NetworkAgentInfo: android.net.Network network>;
+
+        $i1 = $r4.<android.net.Network: int netId>;
+
+        virtualinvoke $r5.<android.util.SparseBooleanArray: void delete(int)>($i1);
+
+        specialinvoke r0.<com.android.server.connectivity.LingerMonitor: void maybeStopNotifying(com.android.server.connectivity.NetworkAgentInfo)>(r1);
+
+        return;
+    }
+
+    public void noteLingerDefaultNetwork(com.android.server.connectivity.NetworkAgentInfo, com.android.server.connectivity.NetworkAgentInfo)
+    {
+        com.android.server.connectivity.LingerMonitor r0;
+        com.android.server.connectivity.NetworkAgentInfo r1, r2;
+        boolean z0, $z1, $z2, $z3, $z4, $z5, $z6;
+        long l0;
+        android.net.NetworkCapabilities $r3;
+
+        r0 := @this: com.android.server.connectivity.LingerMonitor;
+
+        r1 := @parameter0: com.android.server.connectivity.NetworkAgentInfo;
+
+        r2 := @parameter1: com.android.server.connectivity.NetworkAgentInfo;
+
+        specialinvoke r0.<com.android.server.connectivity.LingerMonitor: void maybeStopNotifying(com.android.server.connectivity.NetworkAgentInfo)>(r1);
+
+        if r2 != null goto label1;
+
+        return;
+
+     label1:
+        $z1 = r1.<com.android.server.connectivity.NetworkAgentInfo: boolean everValidated>;
+
+        if $z1 != 0 goto label2;
+
+        return;
+
+     label2:
+        $r3 = r1.<com.android.server.connectivity.NetworkAgentInfo: android.net.NetworkCapabilities networkCapabilities>;
+
+        z0 = virtualinvoke $r3.<android.net.NetworkCapabilities: boolean hasCapability(int)>(17);
+
+        $z2 = specialinvoke r0.<com.android.server.connectivity.LingerMonitor: boolean everNotified(com.android.server.connectivity.NetworkAgentInfo)>(r1);
+
+        if $z2 == 0 goto label3;
+
+        return;
+
+     label3:
+        $z3 = r1.<com.android.server.connectivity.NetworkAgentInfo: boolean lastValidated>;
+
+        if $z3 == 0 goto label4;
+
+        return;
+
+     label4:
+        $z4 = virtualinvoke r0.<com.android.server.connectivity.LingerMonitor: boolean isNotificationEnabled(com.android.server.connectivity.NetworkAgentInfo,com.android.server.connectivity.NetworkAgentInfo)>(r1, r2);
+
+        if $z4 != 0 goto label5;
+
+        return;
+
+     label5:
+        l0 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        $z5 = specialinvoke r0.<com.android.server.connectivity.LingerMonitor: boolean isRateLimited(long)>(l0);
+
+        if $z5 != 0 goto label7;
+
+        $z6 = specialinvoke r0.<com.android.server.connectivity.LingerMonitor: boolean isAboveDailyLimit(long)>(l0);
+
+        if $z6 == 0 goto label6;
+
+        goto label7;
+
+     label6:
+        specialinvoke r0.<com.android.server.connectivity.LingerMonitor: void notify(com.android.server.connectivity.NetworkAgentInfo,com.android.server.connectivity.NetworkAgentInfo,boolean)>(r1, r2, z0);
+
+        return;
+
+     label7:
+        return;
+    }
+}

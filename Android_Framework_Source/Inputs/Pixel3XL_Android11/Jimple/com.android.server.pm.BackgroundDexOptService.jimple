@@ -1,0 +1,1834 @@
+public class com.android.server.pm.BackgroundDexOptService extends android.app.job.JobService
+{
+    private static final boolean DEBUG;
+    private static final long IDLE_OPTIMIZATION_PERIOD;
+    private static final int JOB_IDLE_OPTIMIZE;
+    private static final int JOB_POST_BOOT_UPDATE;
+    private static final int LOW_THRESHOLD_MULTIPLIER_FOR_DOWNGRADE;
+    private static final int OPTIMIZE_ABORT_BY_JOB_SCHEDULER;
+    private static final int OPTIMIZE_ABORT_NO_SPACE_LEFT;
+    private static final int OPTIMIZE_CONTINUE;
+    private static final int OPTIMIZE_PROCESSED;
+    private static final java.lang.String TAG;
+    private static final long mDowngradeUnusedAppsThresholdInMillis;
+    private static android.content.ComponentName sDexoptServiceName;
+    static final android.util.ArraySet sFailedPackageNamesPrimary;
+    static final android.util.ArraySet sFailedPackageNamesSecondary;
+    private static java.util.List sPackagesUpdatedListeners;
+    private final java.util.concurrent.atomic.AtomicBoolean mAbortIdleOptimization;
+    private final java.util.concurrent.atomic.AtomicBoolean mAbortPostBootUpdate;
+    private final java.io.File mDataDir;
+    private final java.util.concurrent.atomic.AtomicBoolean mExitPostBootUpdate;
+
+    static void <clinit>()
+    {
+        boolean z0;
+        java.util.concurrent.TimeUnit $r0, $r7;
+        android.content.ComponentName $r1;
+        java.lang.Class $r2;
+        java.lang.String $r3;
+        android.util.ArraySet $r4, $r5;
+        long $l0, l1;
+        java.util.ArrayList $r6;
+
+        <com.android.server.pm.BackgroundDexOptService: java.lang.String TAG> = "BackgroundDexOptService";
+
+        <com.android.server.pm.BackgroundDexOptService: int OPTIMIZE_PROCESSED> = 0;
+
+        <com.android.server.pm.BackgroundDexOptService: int OPTIMIZE_CONTINUE> = 1;
+
+        <com.android.server.pm.BackgroundDexOptService: int OPTIMIZE_ABORT_NO_SPACE_LEFT> = 3;
+
+        <com.android.server.pm.BackgroundDexOptService: int OPTIMIZE_ABORT_BY_JOB_SCHEDULER> = 2;
+
+        <com.android.server.pm.BackgroundDexOptService: int LOW_THRESHOLD_MULTIPLIER_FOR_DOWNGRADE> = 2;
+
+        <com.android.server.pm.BackgroundDexOptService: int JOB_POST_BOOT_UPDATE> = 801;
+
+        <com.android.server.pm.BackgroundDexOptService: int JOB_IDLE_OPTIMIZE> = 800;
+
+        z0 = staticinvoke <android.util.Log: boolean isLoggable(java.lang.String,int)>("BackgroundDexOptService", 3);
+
+        <com.android.server.pm.BackgroundDexOptService: boolean DEBUG> = z0;
+
+        if z0 == 0 goto label1;
+
+        $r7 = <java.util.concurrent.TimeUnit: java.util.concurrent.TimeUnit MINUTES>;
+
+        l1 = virtualinvoke $r7.<java.util.concurrent.TimeUnit: long toMillis(long)>(1L);
+
+        goto label2;
+
+     label1:
+        $r0 = <java.util.concurrent.TimeUnit: java.util.concurrent.TimeUnit DAYS>;
+
+        l1 = virtualinvoke $r0.<java.util.concurrent.TimeUnit: long toMillis(long)>(1L);
+
+     label2:
+        <com.android.server.pm.BackgroundDexOptService: long IDLE_OPTIMIZATION_PERIOD> = l1;
+
+        $r1 = new android.content.ComponentName;
+
+        $r2 = class "Lcom/android/server/pm/BackgroundDexOptService;";
+
+        $r3 = virtualinvoke $r2.<java.lang.Class: java.lang.String getName()>();
+
+        specialinvoke $r1.<android.content.ComponentName: void <init>(java.lang.String,java.lang.String)>("android", $r3);
+
+        <com.android.server.pm.BackgroundDexOptService: android.content.ComponentName sDexoptServiceName> = $r1;
+
+        $r4 = new android.util.ArraySet;
+
+        specialinvoke $r4.<android.util.ArraySet: void <init>()>();
+
+        <com.android.server.pm.BackgroundDexOptService: android.util.ArraySet sFailedPackageNamesPrimary> = $r4;
+
+        $r5 = new android.util.ArraySet;
+
+        specialinvoke $r5.<android.util.ArraySet: void <init>()>();
+
+        <com.android.server.pm.BackgroundDexOptService: android.util.ArraySet sFailedPackageNamesSecondary> = $r5;
+
+        $l0 = staticinvoke <com.android.server.pm.BackgroundDexOptService: long getDowngradeUnusedAppsThresholdInMillis()>();
+
+        <com.android.server.pm.BackgroundDexOptService: long mDowngradeUnusedAppsThresholdInMillis> = $l0;
+
+        $r6 = new java.util.ArrayList;
+
+        specialinvoke $r6.<java.util.ArrayList: void <init>()>();
+
+        <com.android.server.pm.BackgroundDexOptService: java.util.List sPackagesUpdatedListeners> = $r6;
+
+        return;
+    }
+
+    public void <init>()
+    {
+        com.android.server.pm.BackgroundDexOptService r0;
+        java.util.concurrent.atomic.AtomicBoolean $r1, $r2, $r3;
+        java.io.File $r4;
+
+        r0 := @this: com.android.server.pm.BackgroundDexOptService;
+
+        specialinvoke r0.<android.app.job.JobService: void <init>()>();
+
+        $r1 = new java.util.concurrent.atomic.AtomicBoolean;
+
+        specialinvoke $r1.<java.util.concurrent.atomic.AtomicBoolean: void <init>(boolean)>(0);
+
+        r0.<com.android.server.pm.BackgroundDexOptService: java.util.concurrent.atomic.AtomicBoolean mAbortPostBootUpdate> = $r1;
+
+        $r2 = new java.util.concurrent.atomic.AtomicBoolean;
+
+        specialinvoke $r2.<java.util.concurrent.atomic.AtomicBoolean: void <init>(boolean)>(0);
+
+        r0.<com.android.server.pm.BackgroundDexOptService: java.util.concurrent.atomic.AtomicBoolean mAbortIdleOptimization> = $r2;
+
+        $r3 = new java.util.concurrent.atomic.AtomicBoolean;
+
+        specialinvoke $r3.<java.util.concurrent.atomic.AtomicBoolean: void <init>(boolean)>(0);
+
+        r0.<com.android.server.pm.BackgroundDexOptService: java.util.concurrent.atomic.AtomicBoolean mExitPostBootUpdate> = $r3;
+
+        $r4 = staticinvoke <android.os.Environment: java.io.File getDataDirectory()>();
+
+        r0.<com.android.server.pm.BackgroundDexOptService: java.io.File mDataDir> = $r4;
+
+        return;
+    }
+
+    private int abortIdleOptimizations(long)
+    {
+        com.android.server.pm.BackgroundDexOptService r0;
+        long l0, l1;
+        java.util.concurrent.atomic.AtomicBoolean $r2;
+        boolean $z0;
+        java.io.File $r3;
+        byte $b2;
+        java.lang.StringBuilder $r4;
+        java.lang.String $r7;
+
+        r0 := @this: com.android.server.pm.BackgroundDexOptService;
+
+        l0 := @parameter0: long;
+
+        $r2 = r0.<com.android.server.pm.BackgroundDexOptService: java.util.concurrent.atomic.AtomicBoolean mAbortIdleOptimization>;
+
+        $z0 = virtualinvoke $r2.<java.util.concurrent.atomic.AtomicBoolean: boolean get()>();
+
+        if $z0 == 0 goto label1;
+
+        return 2;
+
+     label1:
+        $r3 = r0.<com.android.server.pm.BackgroundDexOptService: java.io.File mDataDir>;
+
+        l1 = virtualinvoke $r3.<java.io.File: long getUsableSpace()>();
+
+        $b2 = l1 cmp l0;
+
+        if $b2 >= 0 goto label2;
+
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Aborting background dex opt job due to low storage: ");
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>(l1);
+
+        $r7 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("BackgroundDexOptService", $r7);
+
+        return 3;
+
+     label2:
+        return 1;
+    }
+
+    static void access$000(com.android.server.pm.BackgroundDexOptService, android.app.job.JobParameters, com.android.server.pm.PackageManagerService, android.util.ArraySet)
+    {
+        com.android.server.pm.BackgroundDexOptService r0;
+        android.app.job.JobParameters r1;
+        com.android.server.pm.PackageManagerService r2;
+        android.util.ArraySet r3;
+
+        r0 := @parameter0: com.android.server.pm.BackgroundDexOptService;
+
+        r1 := @parameter1: android.app.job.JobParameters;
+
+        r2 := @parameter2: com.android.server.pm.PackageManagerService;
+
+        r3 := @parameter3: android.util.ArraySet;
+
+        specialinvoke r0.<com.android.server.pm.BackgroundDexOptService: void postBootUpdate(android.app.job.JobParameters,com.android.server.pm.PackageManagerService,android.util.ArraySet)>(r1, r2, r3);
+
+        return;
+    }
+
+    static int access$100(com.android.server.pm.BackgroundDexOptService, com.android.server.pm.PackageManagerService, android.util.ArraySet, android.content.Context)
+    {
+        com.android.server.pm.BackgroundDexOptService r0;
+        com.android.server.pm.PackageManagerService r1;
+        android.util.ArraySet r2;
+        android.content.Context r3;
+        int $i0;
+
+        r0 := @parameter0: com.android.server.pm.BackgroundDexOptService;
+
+        r1 := @parameter1: com.android.server.pm.PackageManagerService;
+
+        r2 := @parameter2: android.util.ArraySet;
+
+        r3 := @parameter3: android.content.Context;
+
+        $i0 = specialinvoke r0.<com.android.server.pm.BackgroundDexOptService: int idleOptimization(com.android.server.pm.PackageManagerService,android.util.ArraySet,android.content.Context)>(r1, r2, r3);
+
+        return $i0;
+    }
+
+    public static void addPackagesUpdatedListener(com.android.server.pm.BackgroundDexOptService$PackagesUpdatedListener)
+    {
+        java.util.List r0, $r1;
+        java.lang.Throwable $r2;
+        com.android.server.pm.BackgroundDexOptService$PackagesUpdatedListener r3;
+
+        r3 := @parameter0: com.android.server.pm.BackgroundDexOptService$PackagesUpdatedListener;
+
+        r0 = <com.android.server.pm.BackgroundDexOptService: java.util.List sPackagesUpdatedListeners>;
+
+        entermonitor r0;
+
+     label1:
+        $r1 = <com.android.server.pm.BackgroundDexOptService: java.util.List sPackagesUpdatedListeners>;
+
+        interfaceinvoke $r1.<java.util.List: boolean add(java.lang.Object)>(r3);
+
+        exitmonitor r0;
+
+     label2:
+        return;
+
+     label3:
+        $r2 := @caughtexception;
+
+     label4:
+        exitmonitor r0;
+
+     label5:
+        throw $r2;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    private boolean downgradePackage(com.android.server.pm.PackageManagerService, java.lang.String, boolean)
+    {
+        com.android.server.pm.BackgroundDexOptService r0;
+        com.android.server.pm.PackageManagerService r1;
+        java.lang.String r2, $r7, $r8;
+        long l0, $l2;
+        java.lang.StringBuilder $r4;
+        boolean $z1, $z2, z3, z4;
+
+        r0 := @this: com.android.server.pm.BackgroundDexOptService;
+
+        r1 := @parameter0: com.android.server.pm.PackageManagerService;
+
+        r2 := @parameter1: java.lang.String;
+
+        z3 := @parameter2: boolean;
+
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Downgrading ");
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r2);
+
+        $r7 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("BackgroundDexOptService", $r7);
+
+        l0 = specialinvoke r0.<com.android.server.pm.BackgroundDexOptService: long getPackageSize(com.android.server.pm.PackageManagerService,java.lang.String)>(r1, r2);
+
+        if z3 != 0 goto label2;
+
+        $r8 = "android";
+
+        $z2 = virtualinvoke $r8.<java.lang.String: boolean equals(java.lang.Object)>(r2);
+
+        if $z2 == 0 goto label1;
+
+        goto label2;
+
+     label1:
+        z4 = specialinvoke r0.<com.android.server.pm.BackgroundDexOptService: boolean performDexOptSecondary(com.android.server.pm.PackageManagerService,java.lang.String,int,int)>(r1, r2, 5, 548);
+
+        goto label4;
+
+     label2:
+        $z1 = virtualinvoke r1.<com.android.server.pm.PackageManagerService: boolean canHaveOatDir(java.lang.String)>(r2);
+
+        if $z1 != 0 goto label3;
+
+        virtualinvoke r1.<com.android.server.pm.PackageManagerService: void deleteOatArtifactsOfPackage(java.lang.String)>(r2);
+
+        z4 = 0;
+
+        goto label4;
+
+     label3:
+        z4 = specialinvoke r0.<com.android.server.pm.BackgroundDexOptService: boolean performDexOptPrimary(com.android.server.pm.PackageManagerService,java.lang.String,int,int)>(r1, r2, 5, 548);
+
+     label4:
+        if z4 == 0 goto label5;
+
+        $l2 = specialinvoke r0.<com.android.server.pm.BackgroundDexOptService: long getPackageSize(com.android.server.pm.PackageManagerService,java.lang.String)>(r1, r2);
+
+        staticinvoke <com.android.internal.util.FrameworkStatsLog: void write(int,java.lang.String,long,long,boolean)>(128, r2, l0, $l2, 0);
+
+     label5:
+        return z4;
+    }
+
+    private int getBatteryLevel()
+    {
+        com.android.server.pm.BackgroundDexOptService r0;
+        android.content.Intent r1;
+        int i0, i1, $i2, $i3;
+        android.content.IntentFilter $r2;
+        boolean $z0;
+
+        r0 := @this: com.android.server.pm.BackgroundDexOptService;
+
+        $r2 = new android.content.IntentFilter;
+
+        specialinvoke $r2.<android.content.IntentFilter: void <init>(java.lang.String)>("android.intent.action.BATTERY_CHANGED");
+
+        r1 = virtualinvoke r0.<com.android.server.pm.BackgroundDexOptService: android.content.Intent registerReceiver(android.content.BroadcastReceiver,android.content.IntentFilter)>(null, $r2);
+
+        i0 = virtualinvoke r1.<android.content.Intent: int getIntExtra(java.lang.String,int)>("level", -1);
+
+        i1 = virtualinvoke r1.<android.content.Intent: int getIntExtra(java.lang.String,int)>("scale", -1);
+
+        $z0 = virtualinvoke r1.<android.content.Intent: boolean getBooleanExtra(java.lang.String,boolean)>("present", 1);
+
+        if $z0 != 0 goto label1;
+
+        return 100;
+
+     label1:
+        if i0 < 0 goto label3;
+
+        if i1 > 0 goto label2;
+
+        goto label3;
+
+     label2:
+        $i2 = i0 * 100;
+
+        $i3 = $i2 / i1;
+
+        return $i3;
+
+     label3:
+        return 0;
+    }
+
+    private long getDirectorySize(java.io.File)
+    {
+        com.android.server.pm.BackgroundDexOptService r0;
+        int i0, i3;
+        boolean $z0;
+        java.io.File $r1, r2;
+        long $l1, l2, l4;
+        java.io.File[] r3;
+
+        r0 := @this: com.android.server.pm.BackgroundDexOptService;
+
+        r2 := @parameter0: java.io.File;
+
+        l2 = 0L;
+
+        $z0 = virtualinvoke r2.<java.io.File: boolean isDirectory()>();
+
+        if $z0 == 0 goto label2;
+
+        r3 = virtualinvoke r2.<java.io.File: java.io.File[] listFiles()>();
+
+        i0 = lengthof r3;
+
+        i3 = 0;
+
+     label1:
+        l4 = l2;
+
+        if i3 >= i0 goto label3;
+
+        $r1 = r3[i3];
+
+        $l1 = specialinvoke r0.<com.android.server.pm.BackgroundDexOptService: long getDirectorySize(java.io.File)>($r1);
+
+        l2 = l2 + $l1;
+
+        i3 = i3 + 1;
+
+        goto label1;
+
+     label2:
+        l4 = virtualinvoke r2.<java.io.File: long length()>();
+
+     label3:
+        return l4;
+    }
+
+    private static long getDowngradeUnusedAppsThresholdInMillis()
+    {
+        java.lang.String r0;
+        boolean $z0;
+        java.util.concurrent.TimeUnit $r1;
+        long $l1, $l2;
+
+        r0 = staticinvoke <android.os.SystemProperties: java.lang.String get(java.lang.String)>("pm.dexopt.downgrade_after_inactive_days");
+
+        if r0 == null goto label2;
+
+        $z0 = virtualinvoke r0.<java.lang.String: boolean isEmpty()>();
+
+        if $z0 == 0 goto label1;
+
+        goto label2;
+
+     label1:
+        $r1 = <java.util.concurrent.TimeUnit: java.util.concurrent.TimeUnit DAYS>;
+
+        $l1 = staticinvoke <java.lang.Long: long parseLong(java.lang.String)>(r0);
+
+        $l2 = virtualinvoke $r1.<java.util.concurrent.TimeUnit: long toMillis(long)>($l1);
+
+        return $l2;
+
+     label2:
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("BackgroundDexOptService", "SysProp pm.dexopt.downgrade_after_inactive_days not set");
+
+        return 9223372036854775807L;
+    }
+
+    private long getLowStorageThreshold(android.content.Context)
+    {
+        com.android.server.pm.BackgroundDexOptService r0;
+        android.content.Context r1;
+        long l0;
+        android.os.storage.StorageManager $r2;
+        java.io.File $r3;
+        byte $b1;
+
+        r0 := @this: com.android.server.pm.BackgroundDexOptService;
+
+        r1 := @parameter0: android.content.Context;
+
+        $r2 = staticinvoke <android.os.storage.StorageManager: android.os.storage.StorageManager 'from'(android.content.Context)>(r1);
+
+        $r3 = r0.<com.android.server.pm.BackgroundDexOptService: java.io.File mDataDir>;
+
+        l0 = virtualinvoke $r2.<android.os.storage.StorageManager: long getStorageLowBytes(java.io.File)>($r3);
+
+        $b1 = l0 cmp 0L;
+
+        if $b1 != 0 goto label1;
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>("BackgroundDexOptService", "Invalid low storage threshold");
+
+     label1:
+        return l0;
+    }
+
+    private long getPackageSize(com.android.server.pm.PackageManagerService, java.lang.String)
+    {
+        com.android.server.pm.BackgroundDexOptService r0;
+        int i0, i5;
+        android.content.pm.ApplicationInfo $r1, $r2, $r6, $r8;
+        java.lang.String[] $r3, $r7, $r9, r17;
+        java.lang.String $r4, $r10, r13;
+        java.nio.file.Path $r5, $r11;
+        boolean $z0, $z1, $z2;
+        long $l1, $l2, l3, l4;
+        com.android.server.pm.PackageManagerService r12;
+        android.content.pm.PackageInfo r14;
+        java.io.File r15, r16, r18, r19;
+
+        r0 := @this: com.android.server.pm.BackgroundDexOptService;
+
+        r12 := @parameter0: com.android.server.pm.PackageManagerService;
+
+        r13 := @parameter1: java.lang.String;
+
+        r14 = virtualinvoke r12.<com.android.server.pm.PackageManagerService: android.content.pm.PackageInfo getPackageInfo(java.lang.String,int,int)>(r13, 0, 0);
+
+        if r14 == null goto label5;
+
+        $r1 = r14.<android.content.pm.PackageInfo: android.content.pm.ApplicationInfo applicationInfo>;
+
+        if $r1 == null goto label5;
+
+        $r2 = r14.<android.content.pm.PackageInfo: android.content.pm.ApplicationInfo applicationInfo>;
+
+        $r4 = $r2.<android.content.pm.ApplicationInfo: java.lang.String sourceDir>;
+
+        $r3 = newarray (java.lang.String)[0];
+
+        $r5 = staticinvoke <java.nio.file.Paths: java.nio.file.Path get(java.lang.String,java.lang.String[])>($r4, $r3);
+
+        r15 = interfaceinvoke $r5.<java.nio.file.Path: java.io.File toFile()>();
+
+        r16 = r15;
+
+        $z0 = virtualinvoke r15.<java.io.File: boolean isFile()>();
+
+        if $z0 == 0 goto label1;
+
+        r16 = virtualinvoke r15.<java.io.File: java.io.File getParentFile()>();
+
+     label1:
+        $l1 = specialinvoke r0.<com.android.server.pm.BackgroundDexOptService: long getDirectorySize(java.io.File)>(r16);
+
+        l3 = 0L + $l1;
+
+        l4 = l3;
+
+        $r6 = r14.<android.content.pm.PackageInfo: android.content.pm.ApplicationInfo applicationInfo>;
+
+        $r7 = $r6.<android.content.pm.ApplicationInfo: java.lang.String[] splitSourceDirs>;
+
+        $z1 = staticinvoke <com.android.internal.util.ArrayUtils: boolean isEmpty(java.lang.Object[])>($r7);
+
+        if $z1 != 0 goto label4;
+
+        $r8 = r14.<android.content.pm.PackageInfo: android.content.pm.ApplicationInfo applicationInfo>;
+
+        r17 = $r8.<android.content.pm.ApplicationInfo: java.lang.String[] splitSourceDirs>;
+
+        i0 = lengthof r17;
+
+        i5 = 0;
+
+     label2:
+        l4 = l3;
+
+        if i5 >= i0 goto label4;
+
+        $r10 = r17[i5];
+
+        $r9 = newarray (java.lang.String)[0];
+
+        $r11 = staticinvoke <java.nio.file.Paths: java.nio.file.Path get(java.lang.String,java.lang.String[])>($r10, $r9);
+
+        r18 = interfaceinvoke $r11.<java.nio.file.Path: java.io.File toFile()>();
+
+        r19 = r18;
+
+        $z2 = virtualinvoke r18.<java.io.File: boolean isFile()>();
+
+        if $z2 == 0 goto label3;
+
+        r19 = virtualinvoke r18.<java.io.File: java.io.File getParentFile()>();
+
+     label3:
+        $l2 = specialinvoke r0.<com.android.server.pm.BackgroundDexOptService: long getDirectorySize(java.io.File)>(r19);
+
+        l3 = l3 + $l2;
+
+        i5 = i5 + 1;
+
+        goto label2;
+
+     label4:
+        return l4;
+
+     label5:
+        return 0L;
+    }
+
+    private int idleOptimization(com.android.server.pm.PackageManagerService, android.util.ArraySet, android.content.Context)
+    {
+        com.android.server.pm.BackgroundDexOptService r0;
+        com.android.server.pm.PackageManagerService r1;
+        android.util.ArraySet r2;
+        android.content.Context r3;
+        java.util.concurrent.atomic.AtomicBoolean $r4, $r5;
+        long $l1;
+        int $i2;
+
+        r0 := @this: com.android.server.pm.BackgroundDexOptService;
+
+        r1 := @parameter0: com.android.server.pm.PackageManagerService;
+
+        r2 := @parameter1: android.util.ArraySet;
+
+        r3 := @parameter2: android.content.Context;
+
+        staticinvoke <android.util.Log: int i(java.lang.String,java.lang.String)>("BackgroundDexOptService", "Performing idle optimizations");
+
+        $r4 = r0.<com.android.server.pm.BackgroundDexOptService: java.util.concurrent.atomic.AtomicBoolean mExitPostBootUpdate>;
+
+        virtualinvoke $r4.<java.util.concurrent.atomic.AtomicBoolean: void set(boolean)>(1);
+
+        $r5 = r0.<com.android.server.pm.BackgroundDexOptService: java.util.concurrent.atomic.AtomicBoolean mAbortIdleOptimization>;
+
+        virtualinvoke $r5.<java.util.concurrent.atomic.AtomicBoolean: void set(boolean)>(0);
+
+        $l1 = specialinvoke r0.<com.android.server.pm.BackgroundDexOptService: long getLowStorageThreshold(android.content.Context)>(r3);
+
+        $i2 = specialinvoke r0.<com.android.server.pm.BackgroundDexOptService: int idleOptimizePackages(com.android.server.pm.PackageManagerService,android.util.ArraySet,long)>(r1, r2, $l1);
+
+        return $i2;
+    }
+
+    private int idleOptimizePackages(com.android.server.pm.PackageManagerService, android.util.ArraySet, long)
+    {
+        com.android.server.pm.BackgroundDexOptService r0;
+        long l0, $l1, $l3;
+        boolean z0, z1, $z2, $z3, $z5;
+        java.util.Set r2;
+        java.lang.String r3, $r7, $r9, $r11;
+        android.util.ArraySet $r4, r19, r23;
+        java.lang.Object $r12;
+        com.android.server.pm.dex.DexManager $r13;
+        java.lang.Throwable $r14, $r15, $r16, $r17, r24;
+        com.android.server.pm.PackageManagerService r18;
+        int i5, i6, i7, i8;
+        java.lang.StringBuilder r20, r21;
+        java.util.Iterator r22;
+
+        r0 := @this: com.android.server.pm.BackgroundDexOptService;
+
+        r18 := @parameter0: com.android.server.pm.PackageManagerService;
+
+        r19 := @parameter1: android.util.ArraySet;
+
+        l0 := @parameter2: long;
+
+        $r4 = new android.util.ArraySet;
+
+        specialinvoke $r4.<android.util.ArraySet: void <init>()>();
+
+     label01:
+        z0 = specialinvoke r0.<com.android.server.pm.BackgroundDexOptService: boolean supportSecondaryDex()>();
+
+     label02:
+        if z0 == 0 goto label05;
+
+     label03:
+        $r13 = virtualinvoke r18.<com.android.server.pm.PackageManagerService: com.android.server.pm.dex.DexManager getDexManager()>();
+
+        i5 = specialinvoke r0.<com.android.server.pm.BackgroundDexOptService: int reconcileSecondaryDexFiles(com.android.server.pm.dex.DexManager)>($r13);
+
+     label04:
+        if i5 != 2 goto label05;
+
+        specialinvoke r0.<com.android.server.pm.BackgroundDexOptService: void notifyPinService(android.util.ArraySet)>($r4);
+
+        specialinvoke r0.<com.android.server.pm.BackgroundDexOptService: void notifyPackagesUpdated(android.util.ArraySet)>($r4);
+
+        return i5;
+
+     label05:
+        $l1 = l0 * 2L;
+
+        z1 = specialinvoke r0.<com.android.server.pm.BackgroundDexOptService: boolean shouldDowngrade(long)>($l1);
+
+        r20 = new java.lang.StringBuilder;
+
+        specialinvoke r20.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r20.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Should Downgrade ");
+
+        virtualinvoke r20.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>(z1);
+
+        $r7 = virtualinvoke r20.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("BackgroundDexOptService", $r7);
+
+     label06:
+        if z1 == 0 goto label21;
+
+     label07:
+        $l3 = <com.android.server.pm.BackgroundDexOptService: long mDowngradeUnusedAppsThresholdInMillis>;
+
+        r2 = virtualinvoke r18.<com.android.server.pm.PackageManagerService: java.util.Set getUnusedPackages(long)>($l3);
+
+        r21 = new java.lang.StringBuilder;
+
+        specialinvoke r21.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r21.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Unsused Packages ");
+
+        $r9 = staticinvoke <java.lang.String: java.lang.String join(java.lang.CharSequence,java.lang.Iterable)>(",", r2);
+
+        virtualinvoke r21.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r9);
+
+        $r11 = virtualinvoke r21.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("BackgroundDexOptService", $r11);
+
+        $z2 = interfaceinvoke r2.<java.util.Set: boolean isEmpty()>();
+
+        if $z2 != 0 goto label20;
+
+        r22 = interfaceinvoke r2.<java.util.Set: java.util.Iterator iterator()>();
+
+     label08:
+        $z3 = interfaceinvoke r22.<java.util.Iterator: boolean hasNext()>();
+
+        if $z3 == 0 goto label14;
+
+        $r12 = interfaceinvoke r22.<java.util.Iterator: java.lang.Object next()>();
+
+        r3 = (java.lang.String) $r12;
+
+        i6 = specialinvoke r0.<com.android.server.pm.BackgroundDexOptService: int abortIdleOptimizations(long)>(-1L);
+
+     label09:
+        if i6 == 1 goto label10;
+
+        specialinvoke r0.<com.android.server.pm.BackgroundDexOptService: void notifyPinService(android.util.ArraySet)>($r4);
+
+        specialinvoke r0.<com.android.server.pm.BackgroundDexOptService: void notifyPackagesUpdated(android.util.ArraySet)>($r4);
+
+        return i6;
+
+     label10:
+        $z5 = specialinvoke r0.<com.android.server.pm.BackgroundDexOptService: boolean downgradePackage(com.android.server.pm.PackageManagerService,java.lang.String,boolean)>(r18, r3, 1);
+
+        if $z5 == 0 goto label11;
+
+        virtualinvoke $r4.<android.util.ArraySet: boolean add(java.lang.Object)>(r3);
+
+     label11:
+        if z0 == 0 goto label13;
+
+     label12:
+        specialinvoke r0.<com.android.server.pm.BackgroundDexOptService: boolean downgradePackage(com.android.server.pm.PackageManagerService,java.lang.String,boolean)>(r18, r3, 0);
+
+     label13:
+        goto label08;
+
+     label14:
+        r23 = new android.util.ArraySet;
+
+     label15:
+        specialinvoke r23.<android.util.ArraySet: void <init>(android.util.ArraySet)>(r19);
+
+     label16:
+        virtualinvoke r23.<android.util.ArraySet: boolean removeAll(java.util.Collection)>(r2);
+
+     label17:
+        r19 = r23;
+
+        goto label21;
+
+     label18:
+        $r17 := @caughtexception;
+
+        r24 = $r17;
+
+        goto label28;
+
+     label19:
+        $r16 := @caughtexception;
+
+        r24 = $r16;
+
+        goto label28;
+
+     label20:
+        goto label21;
+
+     label21:
+        i7 = specialinvoke r0.<com.android.server.pm.BackgroundDexOptService: int optimizePackages(com.android.server.pm.PackageManagerService,android.util.ArraySet,long,boolean,android.util.ArraySet)>(r18, r19, l0, 1, $r4);
+
+     label22:
+        if i7 == 0 goto label23;
+
+        specialinvoke r0.<com.android.server.pm.BackgroundDexOptService: void notifyPinService(android.util.ArraySet)>($r4);
+
+        specialinvoke r0.<com.android.server.pm.BackgroundDexOptService: void notifyPackagesUpdated(android.util.ArraySet)>($r4);
+
+        return i7;
+
+     label23:
+        if z0 != 0 goto label24;
+
+        specialinvoke r0.<com.android.server.pm.BackgroundDexOptService: void notifyPinService(android.util.ArraySet)>($r4);
+
+        specialinvoke r0.<com.android.server.pm.BackgroundDexOptService: void notifyPackagesUpdated(android.util.ArraySet)>($r4);
+
+        return 0;
+
+     label24:
+        i8 = specialinvoke r0.<com.android.server.pm.BackgroundDexOptService: int optimizePackages(com.android.server.pm.PackageManagerService,android.util.ArraySet,long,boolean,android.util.ArraySet)>(r18, r19, l0, 0, $r4);
+
+     label25:
+        specialinvoke r0.<com.android.server.pm.BackgroundDexOptService: void notifyPinService(android.util.ArraySet)>($r4);
+
+        specialinvoke r0.<com.android.server.pm.BackgroundDexOptService: void notifyPackagesUpdated(android.util.ArraySet)>($r4);
+
+        return i8;
+
+     label26:
+        $r15 := @caughtexception;
+
+        r24 = $r15;
+
+        goto label28;
+
+     label27:
+        $r14 := @caughtexception;
+
+        r24 = $r14;
+
+     label28:
+        specialinvoke r0.<com.android.server.pm.BackgroundDexOptService: void notifyPinService(android.util.ArraySet)>($r4);
+
+        specialinvoke r0.<com.android.server.pm.BackgroundDexOptService: void notifyPackagesUpdated(android.util.ArraySet)>($r4);
+
+        throw r24;
+
+        catch java.lang.Throwable from label01 to label02 with label27;
+        catch java.lang.Throwable from label03 to label04 with label27;
+        catch java.lang.Throwable from label05 to label06 with label27;
+        catch java.lang.Throwable from label07 to label08 with label27;
+        catch java.lang.Throwable from label08 to label09 with label27;
+        catch java.lang.Throwable from label10 to label11 with label27;
+        catch java.lang.Throwable from label12 to label13 with label27;
+        catch java.lang.Throwable from label14 to label15 with label27;
+        catch java.lang.Throwable from label15 to label16 with label19;
+        catch java.lang.Throwable from label16 to label17 with label18;
+        catch java.lang.Throwable from label21 to label22 with label26;
+        catch java.lang.Throwable from label24 to label25 with label26;
+    }
+
+    private static boolean isBackgroundDexoptDisabled()
+    {
+        boolean $z0;
+
+        $z0 = staticinvoke <android.os.SystemProperties: boolean getBoolean(java.lang.String,boolean)>("pm.dexopt.disable_bg_dexopt", 0);
+
+        return $z0;
+    }
+
+    static java.lang.Integer lambda$performDexOptPrimary$0(com.android.server.pm.PackageManagerService, java.lang.String, int, int)
+    {
+        com.android.server.pm.PackageManagerService r0;
+        java.lang.String r1;
+        int i0, i1, $i2;
+        com.android.server.pm.dex.DexoptOptions $r2;
+        java.lang.Integer $r3;
+
+        r0 := @parameter0: com.android.server.pm.PackageManagerService;
+
+        r1 := @parameter1: java.lang.String;
+
+        i0 := @parameter2: int;
+
+        i1 := @parameter3: int;
+
+        $r2 = new com.android.server.pm.dex.DexoptOptions;
+
+        specialinvoke $r2.<com.android.server.pm.dex.DexoptOptions: void <init>(java.lang.String,int,int)>(r1, i0, i1);
+
+        $i2 = virtualinvoke r0.<com.android.server.pm.PackageManagerService: int performDexOptWithStatus(com.android.server.pm.dex.DexoptOptions)>($r2);
+
+        $r3 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i2);
+
+        return $r3;
+    }
+
+    static java.lang.Integer lambda$performDexOptSecondary$1(com.android.server.pm.PackageManagerService, com.android.server.pm.dex.DexoptOptions)
+    {
+        com.android.server.pm.PackageManagerService r0;
+        com.android.server.pm.dex.DexoptOptions r1;
+        boolean $z0;
+        java.lang.Integer $r2;
+        byte b0;
+
+        r0 := @parameter0: com.android.server.pm.PackageManagerService;
+
+        r1 := @parameter1: com.android.server.pm.dex.DexoptOptions;
+
+        $z0 = virtualinvoke r0.<com.android.server.pm.PackageManagerService: boolean performDexOpt(com.android.server.pm.dex.DexoptOptions)>(r1);
+
+        if $z0 == 0 goto label1;
+
+        b0 = 1;
+
+        goto label2;
+
+     label1:
+        b0 = -1;
+
+     label2:
+        $r2 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(b0);
+
+        return $r2;
+    }
+
+    public static void notifyPackageChanged(java.lang.String)
+    {
+        android.util.ArraySet $r0, $r1, r5, r6;
+        java.lang.Throwable $r2, $r3;
+        java.lang.String r4;
+
+        r4 := @parameter0: java.lang.String;
+
+        r5 = <com.android.server.pm.BackgroundDexOptService: android.util.ArraySet sFailedPackageNamesPrimary>;
+
+        entermonitor r5;
+
+     label01:
+        $r0 = <com.android.server.pm.BackgroundDexOptService: android.util.ArraySet sFailedPackageNamesPrimary>;
+
+        virtualinvoke $r0.<android.util.ArraySet: boolean remove(java.lang.Object)>(r4);
+
+        exitmonitor r5;
+
+     label02:
+        r6 = <com.android.server.pm.BackgroundDexOptService: android.util.ArraySet sFailedPackageNamesSecondary>;
+
+        entermonitor r6;
+
+     label03:
+        $r1 = <com.android.server.pm.BackgroundDexOptService: android.util.ArraySet sFailedPackageNamesSecondary>;
+
+        virtualinvoke $r1.<android.util.ArraySet: boolean remove(java.lang.Object)>(r4);
+
+        exitmonitor r6;
+
+     label04:
+        return;
+
+     label05:
+        $r2 := @caughtexception;
+
+     label06:
+        exitmonitor r6;
+
+     label07:
+        throw $r2;
+
+     label08:
+        $r3 := @caughtexception;
+
+     label09:
+        exitmonitor r5;
+
+     label10:
+        throw $r3;
+
+        catch java.lang.Throwable from label01 to label02 with label08;
+        catch java.lang.Throwable from label03 to label04 with label05;
+        catch java.lang.Throwable from label06 to label07 with label05;
+        catch java.lang.Throwable from label09 to label10 with label08;
+    }
+
+    private void notifyPackagesUpdated(android.util.ArraySet)
+    {
+        com.android.server.pm.BackgroundDexOptService r0;
+        java.util.List r1, $r3;
+        java.util.Iterator r2;
+        boolean $z0;
+        java.lang.Object $r4;
+        com.android.server.pm.BackgroundDexOptService$PackagesUpdatedListener $r5;
+        java.lang.Throwable $r6;
+        android.util.ArraySet r7;
+
+        r0 := @this: com.android.server.pm.BackgroundDexOptService;
+
+        r7 := @parameter0: android.util.ArraySet;
+
+        r1 = <com.android.server.pm.BackgroundDexOptService: java.util.List sPackagesUpdatedListeners>;
+
+        entermonitor r1;
+
+     label1:
+        $r3 = <com.android.server.pm.BackgroundDexOptService: java.util.List sPackagesUpdatedListeners>;
+
+        r2 = interfaceinvoke $r3.<java.util.List: java.util.Iterator iterator()>();
+
+     label2:
+        $z0 = interfaceinvoke r2.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label4;
+
+        $r4 = interfaceinvoke r2.<java.util.Iterator: java.lang.Object next()>();
+
+        $r5 = (com.android.server.pm.BackgroundDexOptService$PackagesUpdatedListener) $r4;
+
+        interfaceinvoke $r5.<com.android.server.pm.BackgroundDexOptService$PackagesUpdatedListener: void onPackagesUpdated(android.util.ArraySet)>(r7);
+
+     label3:
+        goto label2;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        return;
+
+     label6:
+        $r6 := @caughtexception;
+
+     label7:
+        exitmonitor r1;
+
+     label8:
+        throw $r6;
+
+        catch java.lang.Throwable from label1 to label2 with label6;
+        catch java.lang.Throwable from label2 to label3 with label6;
+        catch java.lang.Throwable from label4 to label5 with label6;
+        catch java.lang.Throwable from label7 to label8 with label6;
+    }
+
+    private void notifyPinService(android.util.ArraySet)
+    {
+        com.android.server.pm.BackgroundDexOptService r0;
+        android.util.ArraySet r1;
+        com.android.server.PinnerService r2;
+        java.lang.Object $r4;
+        java.lang.StringBuilder $r5;
+        java.lang.String $r8;
+
+        r0 := @this: com.android.server.pm.BackgroundDexOptService;
+
+        r1 := @parameter0: android.util.ArraySet;
+
+        $r4 = staticinvoke <com.android.server.LocalServices: java.lang.Object getService(java.lang.Class)>(class "Lcom/android/server/PinnerService;");
+
+        r2 = (com.android.server.PinnerService) $r4;
+
+        if r2 == null goto label1;
+
+        $r5 = new java.lang.StringBuilder;
+
+        specialinvoke $r5.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Pinning optimized code ");
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r1);
+
+        $r8 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int i(java.lang.String,java.lang.String)>("BackgroundDexOptService", $r8);
+
+        virtualinvoke r2.<com.android.server.PinnerService: void update(android.util.ArraySet,boolean)>(r1, 0);
+
+     label1:
+        return;
+    }
+
+    private boolean optimizePackage(com.android.server.pm.PackageManagerService, java.lang.String, boolean)
+    {
+        com.android.server.pm.BackgroundDexOptService r0;
+        com.android.server.pm.PackageManagerService r1;
+        java.lang.String r2, $r3;
+        boolean $z0, z1, z2;
+
+        r0 := @this: com.android.server.pm.BackgroundDexOptService;
+
+        r1 := @parameter0: com.android.server.pm.PackageManagerService;
+
+        r2 := @parameter1: java.lang.String;
+
+        z1 := @parameter2: boolean;
+
+        if z1 != 0 goto label2;
+
+        $r3 = "android";
+
+        $z0 = virtualinvoke $r3.<java.lang.String: boolean equals(java.lang.Object)>(r2);
+
+        if $z0 == 0 goto label1;
+
+        goto label2;
+
+     label1:
+        z2 = specialinvoke r0.<com.android.server.pm.BackgroundDexOptService: boolean performDexOptSecondary(com.android.server.pm.PackageManagerService,java.lang.String,int,int)>(r1, r2, 3, 517);
+
+        goto label3;
+
+     label2:
+        z2 = specialinvoke r0.<com.android.server.pm.BackgroundDexOptService: boolean performDexOptPrimary(com.android.server.pm.PackageManagerService,java.lang.String,int,int)>(r1, r2, 3, 517);
+
+     label3:
+        return z2;
+    }
+
+    private int optimizePackages(com.android.server.pm.PackageManagerService, android.util.ArraySet, long, boolean, android.util.ArraySet)
+    {
+        com.android.server.pm.BackgroundDexOptService r0;
+        com.android.server.pm.PackageManagerService r1;
+        long l0;
+        boolean z0, $z1, $z2;
+        android.util.ArraySet r2, r5;
+        java.util.Iterator r3;
+        int i1;
+        java.lang.Object $r4;
+        java.lang.String r6;
+
+        r0 := @this: com.android.server.pm.BackgroundDexOptService;
+
+        r1 := @parameter0: com.android.server.pm.PackageManagerService;
+
+        r5 := @parameter1: android.util.ArraySet;
+
+        l0 := @parameter2: long;
+
+        z0 := @parameter3: boolean;
+
+        r2 := @parameter4: android.util.ArraySet;
+
+        r3 = virtualinvoke r5.<android.util.ArraySet: java.util.Iterator iterator()>();
+
+     label1:
+        $z1 = interfaceinvoke r3.<java.util.Iterator: boolean hasNext()>();
+
+        if $z1 == 0 goto label4;
+
+        $r4 = interfaceinvoke r3.<java.util.Iterator: java.lang.Object next()>();
+
+        r6 = (java.lang.String) $r4;
+
+        i1 = specialinvoke r0.<com.android.server.pm.BackgroundDexOptService: int abortIdleOptimizations(long)>(l0);
+
+        if i1 == 1 goto label2;
+
+        return i1;
+
+     label2:
+        $z2 = specialinvoke r0.<com.android.server.pm.BackgroundDexOptService: boolean optimizePackage(com.android.server.pm.PackageManagerService,java.lang.String,boolean)>(r1, r6, z0);
+
+        if $z2 == 0 goto label3;
+
+        virtualinvoke r2.<android.util.ArraySet: boolean add(java.lang.Object)>(r6);
+
+     label3:
+        goto label1;
+
+     label4:
+        return 0;
+    }
+
+    private boolean performDexOptPrimary(com.android.server.pm.PackageManagerService, java.lang.String, int, int)
+    {
+        com.android.server.pm.BackgroundDexOptService r0;
+        java.lang.String r1;
+        int i0, i1, $i2;
+        com.android.server.pm._$$Lambda$BackgroundDexOptService$_KiE2NsUP__OYmoSDt9BwEQICZw $r2;
+        com.android.server.pm.PackageManagerService r3;
+        boolean z0;
+
+        r0 := @this: com.android.server.pm.BackgroundDexOptService;
+
+        r3 := @parameter0: com.android.server.pm.PackageManagerService;
+
+        r1 := @parameter1: java.lang.String;
+
+        i0 := @parameter2: int;
+
+        i1 := @parameter3: int;
+
+        $r2 = new com.android.server.pm._$$Lambda$BackgroundDexOptService$_KiE2NsUP__OYmoSDt9BwEQICZw;
+
+        specialinvoke $r2.<com.android.server.pm._$$Lambda$BackgroundDexOptService$_KiE2NsUP__OYmoSDt9BwEQICZw: void <init>(com.android.server.pm.PackageManagerService,java.lang.String,int,int)>(r3, r1, i0, i1);
+
+        z0 = 0;
+
+        $i2 = specialinvoke r0.<com.android.server.pm.BackgroundDexOptService: int trackPerformDexOpt(java.lang.String,boolean,java.util.function.Supplier)>(r1, 0, $r2);
+
+        if $i2 != 1 goto label1;
+
+        z0 = 1;
+
+     label1:
+        return z0;
+    }
+
+    private boolean performDexOptSecondary(com.android.server.pm.PackageManagerService, java.lang.String, int, int)
+    {
+        com.android.server.pm.BackgroundDexOptService r0;
+        java.lang.String r1;
+        int i0, i1, $i2, $i3;
+        com.android.server.pm._$$Lambda$BackgroundDexOptService$TAsfDUuoxt92xKFoSCfpMUmY2Es $r2;
+        com.android.server.pm.dex.DexoptOptions $r3;
+        com.android.server.pm.PackageManagerService r4;
+        boolean z0;
+
+        r0 := @this: com.android.server.pm.BackgroundDexOptService;
+
+        r4 := @parameter0: com.android.server.pm.PackageManagerService;
+
+        r1 := @parameter1: java.lang.String;
+
+        i0 := @parameter2: int;
+
+        i1 := @parameter3: int;
+
+        $r2 = new com.android.server.pm._$$Lambda$BackgroundDexOptService$TAsfDUuoxt92xKFoSCfpMUmY2Es;
+
+        $r3 = new com.android.server.pm.dex.DexoptOptions;
+
+        $i2 = i1 | 8;
+
+        specialinvoke $r3.<com.android.server.pm.dex.DexoptOptions: void <init>(java.lang.String,int,int)>(r1, i0, $i2);
+
+        specialinvoke $r2.<com.android.server.pm._$$Lambda$BackgroundDexOptService$TAsfDUuoxt92xKFoSCfpMUmY2Es: void <init>(com.android.server.pm.PackageManagerService,com.android.server.pm.dex.DexoptOptions)>(r4, $r3);
+
+        z0 = 1;
+
+        $i3 = specialinvoke r0.<com.android.server.pm.BackgroundDexOptService: int trackPerformDexOpt(java.lang.String,boolean,java.util.function.Supplier)>(r1, 1, $r2);
+
+        if $i3 != 1 goto label1;
+
+        goto label2;
+
+     label1:
+        z0 = 0;
+
+     label2:
+        return z0;
+    }
+
+    private void postBootUpdate(android.app.job.JobParameters, com.android.server.pm.PackageManagerService, android.util.ArraySet)
+    {
+        com.android.server.pm.BackgroundDexOptService r0;
+        android.app.job.JobParameters r1;
+        int i0, $i3, $i5;
+        long l1, l2;
+        java.lang.String r3, $r15;
+        android.content.res.Resources $r4;
+        java.util.concurrent.atomic.AtomicBoolean $r5, $r8, $r9;
+        android.util.ArraySet $r6, r17;
+        boolean $z0, $z1, $z2;
+        java.lang.Object $r7;
+        java.io.File $r10;
+        byte $b4;
+        com.android.server.pm.dex.DexoptOptions $r11;
+        java.lang.StringBuilder $r12;
+        com.android.server.pm.PackageManagerService r16;
+        java.util.Iterator r18;
+
+        r0 := @this: com.android.server.pm.BackgroundDexOptService;
+
+        r1 := @parameter0: android.app.job.JobParameters;
+
+        r16 := @parameter1: com.android.server.pm.PackageManagerService;
+
+        r17 := @parameter2: android.util.ArraySet;
+
+        $r4 = virtualinvoke r0.<com.android.server.pm.BackgroundDexOptService: android.content.res.Resources getResources()>();
+
+        i0 = virtualinvoke $r4.<android.content.res.Resources: int getInteger(int)>(17694830);
+
+        l1 = specialinvoke r0.<com.android.server.pm.BackgroundDexOptService: long getLowStorageThreshold(android.content.Context)>(r0);
+
+        $r5 = r0.<com.android.server.pm.BackgroundDexOptService: java.util.concurrent.atomic.AtomicBoolean mAbortPostBootUpdate>;
+
+        virtualinvoke $r5.<java.util.concurrent.atomic.AtomicBoolean: void set(boolean)>(0);
+
+        $r6 = new android.util.ArraySet;
+
+        specialinvoke $r6.<android.util.ArraySet: void <init>()>();
+
+        r18 = virtualinvoke r17.<android.util.ArraySet: java.util.Iterator iterator()>();
+
+     label1:
+        $z0 = interfaceinvoke r18.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label7;
+
+        $r7 = interfaceinvoke r18.<java.util.Iterator: java.lang.Object next()>();
+
+        r3 = (java.lang.String) $r7;
+
+        $r8 = r0.<com.android.server.pm.BackgroundDexOptService: java.util.concurrent.atomic.AtomicBoolean mAbortPostBootUpdate>;
+
+        $z1 = virtualinvoke $r8.<java.util.concurrent.atomic.AtomicBoolean: boolean get()>();
+
+        if $z1 == 0 goto label2;
+
+        return;
+
+     label2:
+        $r9 = r0.<com.android.server.pm.BackgroundDexOptService: java.util.concurrent.atomic.AtomicBoolean mExitPostBootUpdate>;
+
+        $z2 = virtualinvoke $r9.<java.util.concurrent.atomic.AtomicBoolean: boolean get()>();
+
+        if $z2 == 0 goto label3;
+
+        goto label7;
+
+     label3:
+        $i3 = specialinvoke r0.<com.android.server.pm.BackgroundDexOptService: int getBatteryLevel()>();
+
+        if $i3 >= i0 goto label4;
+
+        goto label7;
+
+     label4:
+        $r10 = r0.<com.android.server.pm.BackgroundDexOptService: java.io.File mDataDir>;
+
+        l2 = virtualinvoke $r10.<java.io.File: long getUsableSpace()>();
+
+        $b4 = l2 cmp l1;
+
+        if $b4 >= 0 goto label5;
+
+        $r12 = new java.lang.StringBuilder;
+
+        specialinvoke $r12.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Aborting background dex opt job due to low storage: ");
+
+        virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>(l2);
+
+        $r15 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("BackgroundDexOptService", $r15);
+
+        goto label7;
+
+     label5:
+        $r11 = new com.android.server.pm.dex.DexoptOptions;
+
+        specialinvoke $r11.<com.android.server.pm.dex.DexoptOptions: void <init>(java.lang.String,int,int)>(r3, 1, 4);
+
+        $i5 = virtualinvoke r16.<com.android.server.pm.PackageManagerService: int performDexOptWithStatus(com.android.server.pm.dex.DexoptOptions)>($r11);
+
+        if $i5 != 1 goto label6;
+
+        virtualinvoke $r6.<android.util.ArraySet: boolean add(java.lang.Object)>(r3);
+
+     label6:
+        goto label1;
+
+     label7:
+        specialinvoke r0.<com.android.server.pm.BackgroundDexOptService: void notifyPinService(android.util.ArraySet)>($r6);
+
+        specialinvoke r0.<com.android.server.pm.BackgroundDexOptService: void notifyPackagesUpdated(android.util.ArraySet)>($r6);
+
+        virtualinvoke r0.<com.android.server.pm.BackgroundDexOptService: void jobFinished(android.app.job.JobParameters,boolean)>(r1, 0);
+
+        return;
+    }
+
+    private int reconcileSecondaryDexFiles(com.android.server.pm.dex.DexManager)
+    {
+        com.android.server.pm.BackgroundDexOptService r0;
+        com.android.server.pm.dex.DexManager r1;
+        java.util.Iterator r2;
+        java.lang.String r3;
+        java.util.Set $r4;
+        boolean $z0, $z1;
+        java.lang.Object $r5;
+        java.util.concurrent.atomic.AtomicBoolean $r6;
+
+        r0 := @this: com.android.server.pm.BackgroundDexOptService;
+
+        r1 := @parameter0: com.android.server.pm.dex.DexManager;
+
+        $r4 = virtualinvoke r1.<com.android.server.pm.dex.DexManager: java.util.Set getAllPackagesWithSecondaryDexFiles()>();
+
+        r2 = interfaceinvoke $r4.<java.util.Set: java.util.Iterator iterator()>();
+
+     label1:
+        $z0 = interfaceinvoke r2.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label3;
+
+        $r5 = interfaceinvoke r2.<java.util.Iterator: java.lang.Object next()>();
+
+        r3 = (java.lang.String) $r5;
+
+        $r6 = r0.<com.android.server.pm.BackgroundDexOptService: java.util.concurrent.atomic.AtomicBoolean mAbortIdleOptimization>;
+
+        $z1 = virtualinvoke $r6.<java.util.concurrent.atomic.AtomicBoolean: boolean get()>();
+
+        if $z1 == 0 goto label2;
+
+        return 2;
+
+     label2:
+        virtualinvoke r1.<com.android.server.pm.dex.DexManager: void reconcileSecondaryDexFiles(java.lang.String)>(r3);
+
+        goto label1;
+
+     label3:
+        return 0;
+    }
+
+    public static void removePackagesUpdatedListener(com.android.server.pm.BackgroundDexOptService$PackagesUpdatedListener)
+    {
+        java.util.List r0, $r1;
+        java.lang.Throwable $r2;
+        com.android.server.pm.BackgroundDexOptService$PackagesUpdatedListener r3;
+
+        r3 := @parameter0: com.android.server.pm.BackgroundDexOptService$PackagesUpdatedListener;
+
+        r0 = <com.android.server.pm.BackgroundDexOptService: java.util.List sPackagesUpdatedListeners>;
+
+        entermonitor r0;
+
+     label1:
+        $r1 = <com.android.server.pm.BackgroundDexOptService: java.util.List sPackagesUpdatedListeners>;
+
+        interfaceinvoke $r1.<java.util.List: boolean remove(java.lang.Object)>(r3);
+
+        exitmonitor r0;
+
+     label2:
+        return;
+
+     label3:
+        $r2 := @caughtexception;
+
+     label4:
+        exitmonitor r0;
+
+     label5:
+        throw $r2;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    private boolean runIdleOptimization(android.app.job.JobParameters, com.android.server.pm.PackageManagerService, android.util.ArraySet)
+    {
+        com.android.server.pm.BackgroundDexOptService r0;
+        android.app.job.JobParameters r1;
+        com.android.server.pm.PackageManagerService r2;
+        android.util.ArraySet r3;
+        com.android.server.pm.BackgroundDexOptService$2 $r4;
+
+        r0 := @this: com.android.server.pm.BackgroundDexOptService;
+
+        r1 := @parameter0: android.app.job.JobParameters;
+
+        r2 := @parameter1: com.android.server.pm.PackageManagerService;
+
+        r3 := @parameter2: android.util.ArraySet;
+
+        $r4 = new com.android.server.pm.BackgroundDexOptService$2;
+
+        specialinvoke $r4.<com.android.server.pm.BackgroundDexOptService$2: void <init>(com.android.server.pm.BackgroundDexOptService,java.lang.String,com.android.server.pm.PackageManagerService,android.util.ArraySet,android.app.job.JobParameters)>(r0, "BackgroundDexOptService_IdleOptimization", r2, r3, r1);
+
+        virtualinvoke $r4.<com.android.server.pm.BackgroundDexOptService$2: void start()>();
+
+        return 1;
+    }
+
+    public static boolean runIdleOptimizationsNow(com.android.server.pm.PackageManagerService, android.content.Context, java.util.List)
+    {
+        com.android.server.pm.PackageManagerService r0;
+        android.content.Context r1;
+        com.android.server.pm.BackgroundDexOptService $r3;
+        android.util.ArraySet $r4, r6;
+        int $i0;
+        java.util.List r5;
+        boolean z0;
+
+        r0 := @parameter0: com.android.server.pm.PackageManagerService;
+
+        r1 := @parameter1: android.content.Context;
+
+        r5 := @parameter2: java.util.List;
+
+        $r3 = new com.android.server.pm.BackgroundDexOptService;
+
+        specialinvoke $r3.<com.android.server.pm.BackgroundDexOptService: void <init>()>();
+
+        if r5 != null goto label1;
+
+        r6 = virtualinvoke r0.<com.android.server.pm.PackageManagerService: android.util.ArraySet getOptimizablePackages()>();
+
+        goto label2;
+
+     label1:
+        $r4 = new android.util.ArraySet;
+
+        specialinvoke $r4.<android.util.ArraySet: void <init>(java.util.Collection)>(r5);
+
+        r6 = $r4;
+
+     label2:
+        $i0 = specialinvoke $r3.<com.android.server.pm.BackgroundDexOptService: int idleOptimization(com.android.server.pm.PackageManagerService,android.util.ArraySet,android.content.Context)>(r0, r6, r1);
+
+        if $i0 != 0 goto label3;
+
+        z0 = 1;
+
+        goto label4;
+
+     label3:
+        z0 = 0;
+
+     label4:
+        return z0;
+    }
+
+    private boolean runPostBootUpdate(android.app.job.JobParameters, com.android.server.pm.PackageManagerService, android.util.ArraySet)
+    {
+        com.android.server.pm.BackgroundDexOptService r0;
+        android.app.job.JobParameters r1;
+        com.android.server.pm.PackageManagerService r2;
+        android.util.ArraySet r3;
+        java.util.concurrent.atomic.AtomicBoolean $r4;
+        boolean $z0;
+        com.android.server.pm.BackgroundDexOptService$1 $r5;
+
+        r0 := @this: com.android.server.pm.BackgroundDexOptService;
+
+        r1 := @parameter0: android.app.job.JobParameters;
+
+        r2 := @parameter1: com.android.server.pm.PackageManagerService;
+
+        r3 := @parameter2: android.util.ArraySet;
+
+        $r4 = r0.<com.android.server.pm.BackgroundDexOptService: java.util.concurrent.atomic.AtomicBoolean mExitPostBootUpdate>;
+
+        $z0 = virtualinvoke $r4.<java.util.concurrent.atomic.AtomicBoolean: boolean get()>();
+
+        if $z0 == 0 goto label1;
+
+        return 0;
+
+     label1:
+        $r5 = new com.android.server.pm.BackgroundDexOptService$1;
+
+        specialinvoke $r5.<com.android.server.pm.BackgroundDexOptService$1: void <init>(com.android.server.pm.BackgroundDexOptService,java.lang.String,android.app.job.JobParameters,com.android.server.pm.PackageManagerService,android.util.ArraySet)>(r0, "BackgroundDexOptService_PostBootUpdate", r1, r2, r3);
+
+        virtualinvoke $r5.<com.android.server.pm.BackgroundDexOptService$1: void start()>();
+
+        return 1;
+    }
+
+    public static void schedule(android.content.Context)
+    {
+        boolean $z0;
+        java.lang.Object $r0;
+        android.app.job.JobInfo$Builder $r1, $r4, $r6, $r8, $r10, $r11, $r12;
+        android.content.ComponentName $r2, $r9;
+        java.util.concurrent.TimeUnit $r3, $r5;
+        long $l0, $l1, $l3;
+        android.app.job.JobInfo $r7, $r13;
+        android.content.Context r14;
+        android.app.job.JobScheduler r15;
+
+        r14 := @parameter0: android.content.Context;
+
+        $z0 = staticinvoke <com.android.server.pm.BackgroundDexOptService: boolean isBackgroundDexoptDisabled()>();
+
+        if $z0 == 0 goto label1;
+
+        return;
+
+     label1:
+        $r0 = virtualinvoke r14.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("jobscheduler");
+
+        r15 = (android.app.job.JobScheduler) $r0;
+
+        $r1 = new android.app.job.JobInfo$Builder;
+
+        $r2 = <com.android.server.pm.BackgroundDexOptService: android.content.ComponentName sDexoptServiceName>;
+
+        specialinvoke $r1.<android.app.job.JobInfo$Builder: void <init>(int,android.content.ComponentName)>(801, $r2);
+
+        $r3 = <java.util.concurrent.TimeUnit: java.util.concurrent.TimeUnit MINUTES>;
+
+        $l0 = virtualinvoke $r3.<java.util.concurrent.TimeUnit: long toMillis(long)>(1L);
+
+        $r4 = virtualinvoke $r1.<android.app.job.JobInfo$Builder: android.app.job.JobInfo$Builder setMinimumLatency(long)>($l0);
+
+        $r5 = <java.util.concurrent.TimeUnit: java.util.concurrent.TimeUnit MINUTES>;
+
+        $l1 = virtualinvoke $r5.<java.util.concurrent.TimeUnit: long toMillis(long)>(1L);
+
+        $r6 = virtualinvoke $r4.<android.app.job.JobInfo$Builder: android.app.job.JobInfo$Builder setOverrideDeadline(long)>($l1);
+
+        $r7 = virtualinvoke $r6.<android.app.job.JobInfo$Builder: android.app.job.JobInfo build()>();
+
+        virtualinvoke r15.<android.app.job.JobScheduler: int schedule(android.app.job.JobInfo)>($r7);
+
+        $r8 = new android.app.job.JobInfo$Builder;
+
+        $r9 = <com.android.server.pm.BackgroundDexOptService: android.content.ComponentName sDexoptServiceName>;
+
+        specialinvoke $r8.<android.app.job.JobInfo$Builder: void <init>(int,android.content.ComponentName)>(800, $r9);
+
+        $r10 = virtualinvoke $r8.<android.app.job.JobInfo$Builder: android.app.job.JobInfo$Builder setRequiresDeviceIdle(boolean)>(1);
+
+        $r11 = virtualinvoke $r10.<android.app.job.JobInfo$Builder: android.app.job.JobInfo$Builder setRequiresCharging(boolean)>(1);
+
+        $l3 = <com.android.server.pm.BackgroundDexOptService: long IDLE_OPTIMIZATION_PERIOD>;
+
+        $r12 = virtualinvoke $r11.<android.app.job.JobInfo$Builder: android.app.job.JobInfo$Builder setPeriodic(long)>($l3);
+
+        $r13 = virtualinvoke $r12.<android.app.job.JobInfo$Builder: android.app.job.JobInfo build()>();
+
+        virtualinvoke r15.<android.app.job.JobScheduler: int schedule(android.app.job.JobInfo)>($r13);
+
+        return;
+    }
+
+    private boolean shouldDowngrade(long)
+    {
+        com.android.server.pm.BackgroundDexOptService r0;
+        long l0, $l1;
+        java.io.File $r1;
+        byte $b2;
+
+        r0 := @this: com.android.server.pm.BackgroundDexOptService;
+
+        l0 := @parameter0: long;
+
+        $r1 = r0.<com.android.server.pm.BackgroundDexOptService: java.io.File mDataDir>;
+
+        $l1 = virtualinvoke $r1.<java.io.File: long getUsableSpace()>();
+
+        $b2 = $l1 cmp l0;
+
+        if $b2 >= 0 goto label1;
+
+        return 1;
+
+     label1:
+        return 0;
+    }
+
+    private boolean supportSecondaryDex()
+    {
+        com.android.server.pm.BackgroundDexOptService r0;
+        boolean $z0;
+
+        r0 := @this: com.android.server.pm.BackgroundDexOptService;
+
+        $z0 = staticinvoke <android.os.SystemProperties: boolean getBoolean(java.lang.String,boolean)>("dalvik.vm.dexopt.secondary", 0);
+
+        return $z0;
+    }
+
+    private int trackPerformDexOpt(java.lang.String, boolean, java.util.function.Supplier)
+    {
+        com.android.server.pm.BackgroundDexOptService r0;
+        boolean z0, $z1;
+        java.util.function.Supplier r1;
+        int i0;
+        java.lang.Object $r2;
+        java.lang.Integer $r3;
+        java.lang.Throwable $r4, $r5;
+        java.lang.String r6;
+        android.util.ArraySet r7;
+
+        r0 := @this: com.android.server.pm.BackgroundDexOptService;
+
+        r6 := @parameter0: java.lang.String;
+
+        z0 := @parameter1: boolean;
+
+        r1 := @parameter2: java.util.function.Supplier;
+
+        if z0 == 0 goto label01;
+
+        r7 = <com.android.server.pm.BackgroundDexOptService: android.util.ArraySet sFailedPackageNamesPrimary>;
+
+        goto label02;
+
+     label01:
+        r7 = <com.android.server.pm.BackgroundDexOptService: android.util.ArraySet sFailedPackageNamesSecondary>;
+
+     label02:
+        entermonitor r7;
+
+     label03:
+        $z1 = virtualinvoke r7.<android.util.ArraySet: boolean contains(java.lang.Object)>(r6);
+
+        if $z1 == 0 goto label05;
+
+        exitmonitor r7;
+
+     label04:
+        return 0;
+
+     label05:
+        virtualinvoke r7.<android.util.ArraySet: boolean add(java.lang.Object)>(r6);
+
+        exitmonitor r7;
+
+     label06:
+        $r2 = interfaceinvoke r1.<java.util.function.Supplier: java.lang.Object get()>();
+
+        $r3 = (java.lang.Integer) $r2;
+
+        i0 = virtualinvoke $r3.<java.lang.Integer: int intValue()>();
+
+        if i0 == -1 goto label12;
+
+        entermonitor r7;
+
+     label07:
+        virtualinvoke r7.<android.util.ArraySet: boolean remove(java.lang.Object)>(r6);
+
+        exitmonitor r7;
+
+     label08:
+        goto label12;
+
+     label09:
+        $r5 := @caughtexception;
+
+     label10:
+        exitmonitor r7;
+
+     label11:
+        throw $r5;
+
+     label12:
+        return i0;
+
+     label13:
+        $r4 := @caughtexception;
+
+     label14:
+        exitmonitor r7;
+
+     label15:
+        throw $r4;
+
+        catch java.lang.Throwable from label03 to label04 with label13;
+        catch java.lang.Throwable from label05 to label06 with label13;
+        catch java.lang.Throwable from label07 to label08 with label09;
+        catch java.lang.Throwable from label10 to label11 with label09;
+        catch java.lang.Throwable from label14 to label15 with label13;
+    }
+
+    public boolean onStartJob(android.app.job.JobParameters)
+    {
+        com.android.server.pm.BackgroundDexOptService r0;
+        android.app.job.JobParameters r1;
+        com.android.server.pm.PackageManagerService r2;
+        android.util.ArraySet r3;
+        android.os.IBinder $r4;
+        boolean $z0, $z1, z2;
+        int $i0;
+
+        r0 := @this: com.android.server.pm.BackgroundDexOptService;
+
+        r1 := @parameter0: android.app.job.JobParameters;
+
+        $r4 = staticinvoke <android.os.ServiceManager: android.os.IBinder getService(java.lang.String)>("package");
+
+        r2 = (com.android.server.pm.PackageManagerService) $r4;
+
+        $z0 = virtualinvoke r2.<com.android.server.pm.PackageManagerService: boolean isStorageLow()>();
+
+        if $z0 == 0 goto label1;
+
+        return 0;
+
+     label1:
+        r3 = virtualinvoke r2.<com.android.server.pm.PackageManagerService: android.util.ArraySet getOptimizablePackages()>();
+
+        $z1 = virtualinvoke r3.<android.util.ArraySet: boolean isEmpty()>();
+
+        if $z1 == 0 goto label2;
+
+        return 0;
+
+     label2:
+        $i0 = virtualinvoke r1.<android.app.job.JobParameters: int getJobId()>();
+
+        if $i0 != 801 goto label3;
+
+        z2 = specialinvoke r0.<com.android.server.pm.BackgroundDexOptService: boolean runPostBootUpdate(android.app.job.JobParameters,com.android.server.pm.PackageManagerService,android.util.ArraySet)>(r1, r2, r3);
+
+        goto label4;
+
+     label3:
+        z2 = specialinvoke r0.<com.android.server.pm.BackgroundDexOptService: boolean runIdleOptimization(android.app.job.JobParameters,com.android.server.pm.PackageManagerService,android.util.ArraySet)>(r1, r2, r3);
+
+     label4:
+        return z2;
+    }
+
+    public boolean onStopJob(android.app.job.JobParameters)
+    {
+        com.android.server.pm.BackgroundDexOptService r0;
+        android.app.job.JobParameters r1;
+        int $i0;
+        java.util.concurrent.atomic.AtomicBoolean $r2, $r3;
+
+        r0 := @this: com.android.server.pm.BackgroundDexOptService;
+
+        r1 := @parameter0: android.app.job.JobParameters;
+
+        $i0 = virtualinvoke r1.<android.app.job.JobParameters: int getJobId()>();
+
+        if $i0 != 801 goto label1;
+
+        $r3 = r0.<com.android.server.pm.BackgroundDexOptService: java.util.concurrent.atomic.AtomicBoolean mAbortPostBootUpdate>;
+
+        virtualinvoke $r3.<java.util.concurrent.atomic.AtomicBoolean: void set(boolean)>(1);
+
+        return 0;
+
+     label1:
+        $r2 = r0.<com.android.server.pm.BackgroundDexOptService: java.util.concurrent.atomic.AtomicBoolean mAbortIdleOptimization>;
+
+        virtualinvoke $r2.<java.util.concurrent.atomic.AtomicBoolean: void set(boolean)>(1);
+
+        return 1;
+    }
+}

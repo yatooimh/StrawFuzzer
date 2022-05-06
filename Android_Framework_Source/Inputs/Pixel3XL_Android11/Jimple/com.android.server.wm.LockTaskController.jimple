@@ -1,0 +1,2354 @@
+public class com.android.server.wm.LockTaskController extends java.lang.Object
+{
+    private static final java.lang.String LOCK_TASK_TAG;
+    private static final android.util.SparseArray STATUS_BAR_FLAG_MAP_LOCKED;
+    static final int STATUS_BAR_MASK_LOCKED;
+    static final int STATUS_BAR_MASK_PINNED;
+    private static final java.lang.String TAG;
+    private static final java.lang.String TAG_LOCKTASK;
+    private final android.content.Context mContext;
+    android.app.admin.IDevicePolicyManager mDevicePolicyManager;
+    private final android.os.Handler mHandler;
+    com.android.internal.widget.LockPatternUtils mLockPatternUtils;
+    private final android.util.SparseIntArray mLockTaskFeatures;
+    private volatile int mLockTaskModeState;
+    private final java.util.ArrayList mLockTaskModeTasks;
+    private final android.util.SparseArray mLockTaskPackages;
+    private int mPendingDisableFromDismiss;
+    com.android.internal.statusbar.IStatusBarService mStatusBarService;
+    private final com.android.server.wm.ActivityStackSupervisor mSupervisor;
+    android.telecom.TelecomManager mTelecomManager;
+    private final android.os.IBinder mToken;
+    com.android.server.wm.WindowManagerService mWindowManager;
+
+    static void <clinit>()
+    {
+        android.util.SparseArray $r0, $r5, $r11, r16, r18;
+        android.util.Pair $r1, $r4, $r8, $r10, $r13;
+        java.lang.Integer $r2, $r3, $r6, $r7, $r9, $r12, $r14, r17;
+
+        <com.android.server.wm.LockTaskController: java.lang.String TAG_LOCKTASK> = "ActivityTaskManager";
+
+        <com.android.server.wm.LockTaskController: java.lang.String TAG> = "ActivityTaskManager";
+
+        <com.android.server.wm.LockTaskController: int STATUS_BAR_MASK_PINNED> = 43974656;
+
+        <com.android.server.wm.LockTaskController: int STATUS_BAR_MASK_LOCKED> = 61210624;
+
+        <com.android.server.wm.LockTaskController: java.lang.String LOCK_TASK_TAG> = "Lock-to-App";
+
+        $r0 = new android.util.SparseArray;
+
+        specialinvoke $r0.<android.util.SparseArray: void <init>()>();
+
+        <com.android.server.wm.LockTaskController: android.util.SparseArray STATUS_BAR_FLAG_MAP_LOCKED> = $r0;
+
+        $r1 = new android.util.Pair;
+
+        $r2 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(8388608);
+
+        $r3 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(2);
+
+        specialinvoke $r1.<android.util.Pair: void <init>(java.lang.Object,java.lang.Object)>($r2, $r3);
+
+        virtualinvoke $r0.<android.util.SparseArray: void append(int,java.lang.Object)>(1, $r1);
+
+        $r5 = <com.android.server.wm.LockTaskController: android.util.SparseArray STATUS_BAR_FLAG_MAP_LOCKED>;
+
+        $r4 = new android.util.Pair;
+
+        $r6 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(393216);
+
+        $r7 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(4);
+
+        specialinvoke $r4.<android.util.Pair: void <init>(java.lang.Object,java.lang.Object)>($r6, $r7);
+
+        virtualinvoke $r5.<android.util.SparseArray: void append(int,java.lang.Object)>(2, $r4);
+
+        r16 = <com.android.server.wm.LockTaskController: android.util.SparseArray STATUS_BAR_FLAG_MAP_LOCKED>;
+
+        r17 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(0);
+
+        $r8 = new android.util.Pair;
+
+        $r9 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(2097152);
+
+        specialinvoke $r8.<android.util.Pair: void <init>(java.lang.Object,java.lang.Object)>($r9, r17);
+
+        virtualinvoke r16.<android.util.SparseArray: void append(int,java.lang.Object)>(4, $r8);
+
+        $r11 = <com.android.server.wm.LockTaskController: android.util.SparseArray STATUS_BAR_FLAG_MAP_LOCKED>;
+
+        $r10 = new android.util.Pair;
+
+        $r12 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(16777216);
+
+        specialinvoke $r10.<android.util.Pair: void <init>(java.lang.Object,java.lang.Object)>($r12, r17);
+
+        virtualinvoke $r11.<android.util.SparseArray: void append(int,java.lang.Object)>(8, $r10);
+
+        r18 = <com.android.server.wm.LockTaskController: android.util.SparseArray STATUS_BAR_FLAG_MAP_LOCKED>;
+
+        $r13 = new android.util.Pair;
+
+        $r14 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(8);
+
+        specialinvoke $r13.<android.util.Pair: void <init>(java.lang.Object,java.lang.Object)>(r17, $r14);
+
+        virtualinvoke r18.<android.util.SparseArray: void append(int,java.lang.Object)>(16, $r13);
+
+        return;
+    }
+
+    void <init>(android.content.Context, com.android.server.wm.ActivityStackSupervisor, android.os.Handler)
+    {
+        com.android.server.wm.LockTaskController r0;
+        android.content.Context r1;
+        com.android.server.wm.ActivityStackSupervisor r2;
+        android.os.Handler r3;
+        com.android.server.wm.LockTaskController$LockTaskToken $r4;
+        java.util.ArrayList $r5;
+        android.util.SparseArray $r6;
+        android.util.SparseIntArray $r7;
+
+        r0 := @this: com.android.server.wm.LockTaskController;
+
+        r1 := @parameter0: android.content.Context;
+
+        r2 := @parameter1: com.android.server.wm.ActivityStackSupervisor;
+
+        r3 := @parameter2: android.os.Handler;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        $r4 = new com.android.server.wm.LockTaskController$LockTaskToken;
+
+        specialinvoke $r4.<com.android.server.wm.LockTaskController$LockTaskToken: void <init>(com.android.server.wm.LockTaskController$1)>(null);
+
+        r0.<com.android.server.wm.LockTaskController: android.os.IBinder mToken> = $r4;
+
+        $r5 = new java.util.ArrayList;
+
+        specialinvoke $r5.<java.util.ArrayList: void <init>()>();
+
+        r0.<com.android.server.wm.LockTaskController: java.util.ArrayList mLockTaskModeTasks> = $r5;
+
+        $r6 = new android.util.SparseArray;
+
+        specialinvoke $r6.<android.util.SparseArray: void <init>()>();
+
+        r0.<com.android.server.wm.LockTaskController: android.util.SparseArray mLockTaskPackages> = $r6;
+
+        $r7 = new android.util.SparseIntArray;
+
+        specialinvoke $r7.<android.util.SparseIntArray: void <init>()>();
+
+        r0.<com.android.server.wm.LockTaskController: android.util.SparseIntArray mLockTaskFeatures> = $r7;
+
+        r0.<com.android.server.wm.LockTaskController: int mLockTaskModeState> = 0;
+
+        r0.<com.android.server.wm.LockTaskController: int mPendingDisableFromDismiss> = -10000;
+
+        r0.<com.android.server.wm.LockTaskController: android.content.Context mContext> = r1;
+
+        r0.<com.android.server.wm.LockTaskController: com.android.server.wm.ActivityStackSupervisor mSupervisor> = r2;
+
+        r0.<com.android.server.wm.LockTaskController: android.os.Handler mHandler> = r3;
+
+        return;
+    }
+
+    static android.os.Handler access$100(com.android.server.wm.LockTaskController)
+    {
+        com.android.server.wm.LockTaskController r0;
+        android.os.Handler $r1;
+
+        r0 := @parameter0: com.android.server.wm.LockTaskController;
+
+        $r1 = r0.<com.android.server.wm.LockTaskController: android.os.Handler mHandler>;
+
+        return $r1;
+    }
+
+    static int access$200(com.android.server.wm.LockTaskController)
+    {
+        com.android.server.wm.LockTaskController r0;
+        int $i0;
+
+        r0 := @parameter0: com.android.server.wm.LockTaskController;
+
+        $i0 = r0.<com.android.server.wm.LockTaskController: int mPendingDisableFromDismiss>;
+
+        return $i0;
+    }
+
+    static int access$202(com.android.server.wm.LockTaskController, int)
+    {
+        com.android.server.wm.LockTaskController r0;
+        int i0;
+
+        r0 := @parameter0: com.android.server.wm.LockTaskController;
+
+        i0 := @parameter1: int;
+
+        r0.<com.android.server.wm.LockTaskController: int mPendingDisableFromDismiss> = i0;
+
+        return i0;
+    }
+
+    static android.os.IBinder access$300(com.android.server.wm.LockTaskController)
+    {
+        com.android.server.wm.LockTaskController r0;
+        android.os.IBinder $r1;
+
+        r0 := @parameter0: com.android.server.wm.LockTaskController;
+
+        $r1 = r0.<com.android.server.wm.LockTaskController: android.os.IBinder mToken>;
+
+        return $r1;
+    }
+
+    private android.app.admin.IDevicePolicyManager getDevicePolicyManager()
+    {
+        com.android.server.wm.LockTaskController r0;
+        android.app.admin.IDevicePolicyManager r1, $r2, $r4;
+        android.os.IBinder $r3;
+
+        r0 := @this: com.android.server.wm.LockTaskController;
+
+        $r2 = r0.<com.android.server.wm.LockTaskController: android.app.admin.IDevicePolicyManager mDevicePolicyManager>;
+
+        if $r2 != null goto label1;
+
+        $r3 = staticinvoke <android.os.ServiceManager: android.os.IBinder checkService(java.lang.String)>("device_policy");
+
+        r1 = staticinvoke <android.app.admin.IDevicePolicyManager$Stub: android.app.admin.IDevicePolicyManager asInterface(android.os.IBinder)>($r3);
+
+        r0.<com.android.server.wm.LockTaskController: android.app.admin.IDevicePolicyManager mDevicePolicyManager> = r1;
+
+        if r1 != null goto label1;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("ActivityTaskManager", "warning: no DEVICE_POLICY_SERVICE");
+
+     label1:
+        $r4 = r0.<com.android.server.wm.LockTaskController: android.app.admin.IDevicePolicyManager mDevicePolicyManager>;
+
+        return $r4;
+    }
+
+    private com.android.internal.widget.LockPatternUtils getLockPatternUtils()
+    {
+        com.android.server.wm.LockTaskController r0;
+        com.android.internal.widget.LockPatternUtils r1, $r2;
+        android.content.Context $r3;
+
+        r0 := @this: com.android.server.wm.LockTaskController;
+
+        r1 = r0.<com.android.server.wm.LockTaskController: com.android.internal.widget.LockPatternUtils mLockPatternUtils>;
+
+        if r1 != null goto label1;
+
+        $r2 = new com.android.internal.widget.LockPatternUtils;
+
+        $r3 = r0.<com.android.server.wm.LockTaskController: android.content.Context mContext>;
+
+        specialinvoke $r2.<com.android.internal.widget.LockPatternUtils: void <init>(android.content.Context)>($r3);
+
+        return $r2;
+
+     label1:
+        return r1;
+    }
+
+    private int getLockTaskFeaturesForUser(int)
+    {
+        com.android.server.wm.LockTaskController r0;
+        int i0, $i1;
+        android.util.SparseIntArray $r1;
+
+        r0 := @this: com.android.server.wm.LockTaskController;
+
+        i0 := @parameter0: int;
+
+        $r1 = r0.<com.android.server.wm.LockTaskController: android.util.SparseIntArray mLockTaskFeatures>;
+
+        $i1 = virtualinvoke $r1.<android.util.SparseIntArray: int get(int,int)>(i0, 0);
+
+        return $i1;
+    }
+
+    private com.android.internal.statusbar.IStatusBarService getStatusBarService()
+    {
+        com.android.server.wm.LockTaskController r0;
+        com.android.internal.statusbar.IStatusBarService r1, $r2, $r4;
+        android.os.IBinder $r3;
+
+        r0 := @this: com.android.server.wm.LockTaskController;
+
+        $r2 = r0.<com.android.server.wm.LockTaskController: com.android.internal.statusbar.IStatusBarService mStatusBarService>;
+
+        if $r2 != null goto label1;
+
+        $r3 = staticinvoke <android.os.ServiceManager: android.os.IBinder checkService(java.lang.String)>("statusbar");
+
+        r1 = staticinvoke <com.android.internal.statusbar.IStatusBarService$Stub: com.android.internal.statusbar.IStatusBarService asInterface(android.os.IBinder)>($r3);
+
+        r0.<com.android.server.wm.LockTaskController: com.android.internal.statusbar.IStatusBarService mStatusBarService> = r1;
+
+        if r1 != null goto label1;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("StatusBarManager", "warning: no STATUS_BAR_SERVICE");
+
+     label1:
+        $r4 = r0.<com.android.server.wm.LockTaskController: com.android.internal.statusbar.IStatusBarService mStatusBarService>;
+
+        return $r4;
+    }
+
+    private android.telecom.TelecomManager getTelecomManager()
+    {
+        com.android.server.wm.LockTaskController r0;
+        android.telecom.TelecomManager r1, $r4;
+        android.content.Context $r2;
+        java.lang.Object $r3;
+
+        r0 := @this: com.android.server.wm.LockTaskController;
+
+        r1 = r0.<com.android.server.wm.LockTaskController: android.telecom.TelecomManager mTelecomManager>;
+
+        if r1 != null goto label1;
+
+        $r2 = r0.<com.android.server.wm.LockTaskController: android.content.Context mContext>;
+
+        $r3 = virtualinvoke $r2.<android.content.Context: java.lang.Object getSystemService(java.lang.Class)>(class "Landroid/telecom/TelecomManager;");
+
+        $r4 = (android.telecom.TelecomManager) $r3;
+
+        return $r4;
+
+     label1:
+        return r1;
+    }
+
+    private boolean isBlockingInTaskEnabled(int)
+    {
+        com.android.server.wm.LockTaskController r0;
+        int i0, $i1, $i2;
+        boolean z0;
+
+        r0 := @this: com.android.server.wm.LockTaskController;
+
+        i0 := @parameter0: int;
+
+        $i1 = specialinvoke r0.<com.android.server.wm.LockTaskController: int getLockTaskFeaturesForUser(int)>(i0);
+
+        $i2 = $i1 & 64;
+
+        if $i2 == 0 goto label1;
+
+        z0 = 1;
+
+        goto label2;
+
+     label1:
+        z0 = 0;
+
+     label2:
+        return z0;
+    }
+
+    private boolean isEmergencyCallTask(com.android.server.wm.Task)
+    {
+        com.android.server.wm.LockTaskController r0;
+        android.content.Intent r1;
+        android.content.ComponentName $r2, $r3, $r6;
+        boolean $z0, $z1, $z2;
+        java.lang.String $r4, $r5, $r7, r10;
+        com.android.server.wm.Task r8;
+        android.telecom.TelecomManager r9;
+
+        r0 := @this: com.android.server.wm.LockTaskController;
+
+        r8 := @parameter0: com.android.server.wm.Task;
+
+        r1 = r8.<com.android.server.wm.Task: android.content.Intent intent>;
+
+        if r1 != null goto label1;
+
+        return 0;
+
+     label1:
+        $r2 = <android.telecom.TelecomManager: android.content.ComponentName EMERGENCY_DIALER_COMPONENT>;
+
+        $r3 = virtualinvoke r1.<android.content.Intent: android.content.ComponentName getComponent()>();
+
+        $z0 = virtualinvoke $r2.<android.content.ComponentName: boolean equals(java.lang.Object)>($r3);
+
+        if $z0 == 0 goto label2;
+
+        return 1;
+
+     label2:
+        $r4 = "android.intent.action.CALL_EMERGENCY";
+
+        $r5 = virtualinvoke r1.<android.content.Intent: java.lang.String getAction()>();
+
+        $z1 = virtualinvoke $r4.<java.lang.String: boolean equals(java.lang.Object)>($r5);
+
+        if $z1 == 0 goto label3;
+
+        return 1;
+
+     label3:
+        r9 = specialinvoke r0.<com.android.server.wm.LockTaskController: android.telecom.TelecomManager getTelecomManager()>();
+
+        if r9 == null goto label4;
+
+        r10 = virtualinvoke r9.<android.telecom.TelecomManager: java.lang.String getSystemDialerPackage()>();
+
+        goto label5;
+
+     label4:
+        r10 = null;
+
+     label5:
+        if r10 == null goto label6;
+
+        $r6 = virtualinvoke r1.<android.content.Intent: android.content.ComponentName getComponent()>();
+
+        $r7 = virtualinvoke $r6.<android.content.ComponentName: java.lang.String getPackageName()>();
+
+        $z2 = virtualinvoke r10.<java.lang.String: boolean equals(java.lang.Object)>($r7);
+
+        if $z2 == 0 goto label6;
+
+        return 1;
+
+     label6:
+        return 0;
+    }
+
+    private boolean isKeyguardAllowed(int)
+    {
+        com.android.server.wm.LockTaskController r0;
+        int i0, $i1, $i2;
+        boolean z0;
+
+        r0 := @this: com.android.server.wm.LockTaskController;
+
+        i0 := @parameter0: int;
+
+        $i1 = specialinvoke r0.<com.android.server.wm.LockTaskController: int getLockTaskFeaturesForUser(int)>(i0);
+
+        $i2 = $i1 & 32;
+
+        if $i2 == 0 goto label1;
+
+        z0 = 1;
+
+        goto label2;
+
+     label1:
+        z0 = 0;
+
+     label2:
+        return z0;
+    }
+
+    private boolean isLockTaskModeViolationInternal(com.android.server.wm.Task, boolean)
+    {
+        com.android.server.wm.LockTaskController r0;
+        com.android.server.wm.Task r1;
+        boolean z0, $z2, $z3, $z4, $z5, $z6, $z7, z8, z9;
+        int $i0, $i1;
+        java.util.ArrayList $r2;
+
+        r0 := @this: com.android.server.wm.LockTaskController;
+
+        r1 := @parameter0: com.android.server.wm.Task;
+
+        z8 := @parameter1: boolean;
+
+        z0 = virtualinvoke r0.<com.android.server.wm.LockTaskController: boolean isTaskLocked(com.android.server.wm.Task)>(r1);
+
+        if z0 == 0 goto label1;
+
+        if z8 != 0 goto label1;
+
+        return 0;
+
+     label1:
+        $z2 = virtualinvoke r1.<com.android.server.wm.Task: boolean isActivityTypeRecents()>();
+
+        if $z2 == 0 goto label2;
+
+        $i1 = r1.<com.android.server.wm.Task: int mUserId>;
+
+        $z7 = specialinvoke r0.<com.android.server.wm.LockTaskController: boolean isRecentsAllowed(int)>($i1);
+
+        if $z7 == 0 goto label2;
+
+        return 0;
+
+     label2:
+        $i0 = r1.<com.android.server.wm.Task: int mUserId>;
+
+        $z3 = specialinvoke r0.<com.android.server.wm.LockTaskController: boolean isKeyguardAllowed(int)>($i0);
+
+        if $z3 == 0 goto label3;
+
+        $z6 = specialinvoke r0.<com.android.server.wm.LockTaskController: boolean isEmergencyCallTask(com.android.server.wm.Task)>(r1);
+
+        if $z6 == 0 goto label3;
+
+        return 0;
+
+     label3:
+        z9 = 0;
+
+        $z4 = virtualinvoke r0.<com.android.server.wm.LockTaskController: boolean isTaskWhitelisted(com.android.server.wm.Task)>(r1);
+
+        if $z4 != 0 goto label4;
+
+        z9 = 0;
+
+        $r2 = r0.<com.android.server.wm.LockTaskController: java.util.ArrayList mLockTaskModeTasks>;
+
+        $z5 = virtualinvoke $r2.<java.util.ArrayList: boolean isEmpty()>();
+
+        if $z5 != 0 goto label4;
+
+        z9 = 1;
+
+     label4:
+        return z9;
+    }
+
+    private boolean isRecentsAllowed(int)
+    {
+        com.android.server.wm.LockTaskController r0;
+        int i0, $i1, $i2;
+        boolean z0;
+
+        r0 := @this: com.android.server.wm.LockTaskController;
+
+        i0 := @parameter0: int;
+
+        $i1 = specialinvoke r0.<com.android.server.wm.LockTaskController: int getLockTaskFeaturesForUser(int)>(i0);
+
+        $i2 = $i1 & 8;
+
+        if $i2 == 0 goto label1;
+
+        z0 = 1;
+
+        goto label2;
+
+     label1:
+        z0 = 0;
+
+     label2:
+        return z0;
+    }
+
+    private boolean isRootTask(com.android.server.wm.Task)
+    {
+        com.android.server.wm.LockTaskController r0;
+        com.android.server.wm.Task r1;
+        java.util.ArrayList $r2;
+        int $i0;
+        boolean z0;
+
+        r0 := @this: com.android.server.wm.LockTaskController;
+
+        r1 := @parameter0: com.android.server.wm.Task;
+
+        $r2 = r0.<com.android.server.wm.LockTaskController: java.util.ArrayList mLockTaskModeTasks>;
+
+        $i0 = virtualinvoke $r2.<java.util.ArrayList: int indexOf(java.lang.Object)>(r1);
+
+        if $i0 != 0 goto label1;
+
+        z0 = 1;
+
+        goto label2;
+
+     label1:
+        z0 = 0;
+
+     label2:
+        return z0;
+    }
+
+    private void lockKeyguardIfNeeded()
+    {
+        com.android.server.wm.LockTaskController r0;
+        boolean $z0;
+        com.android.server.wm.WindowManagerService $r1, $r2;
+        com.android.internal.widget.LockPatternUtils $r3;
+
+        r0 := @this: com.android.server.wm.LockTaskController;
+
+        $z0 = specialinvoke r0.<com.android.server.wm.LockTaskController: boolean shouldLockKeyguard()>();
+
+        if $z0 == 0 goto label1;
+
+        $r1 = r0.<com.android.server.wm.LockTaskController: com.android.server.wm.WindowManagerService mWindowManager>;
+
+        virtualinvoke $r1.<com.android.server.wm.WindowManagerService: void lockNow(android.os.Bundle)>(null);
+
+        $r2 = r0.<com.android.server.wm.LockTaskController: com.android.server.wm.WindowManagerService mWindowManager>;
+
+        virtualinvoke $r2.<com.android.server.wm.WindowManagerService: void dismissKeyguard(com.android.internal.policy.IKeyguardDismissCallback,java.lang.CharSequence)>(null, null);
+
+        $r3 = specialinvoke r0.<com.android.server.wm.LockTaskController: com.android.internal.widget.LockPatternUtils getLockPatternUtils()>();
+
+        virtualinvoke $r3.<com.android.internal.widget.LockPatternUtils: void requireCredentialEntry(int)>(-1);
+
+     label1:
+        return;
+    }
+
+    private java.lang.String lockTaskModeToString()
+    {
+        com.android.server.wm.LockTaskController r0;
+        int i0, $i1;
+        java.lang.StringBuilder $r2;
+        java.lang.String $r5;
+
+        r0 := @this: com.android.server.wm.LockTaskController;
+
+        i0 = r0.<com.android.server.wm.LockTaskController: int mLockTaskModeState>;
+
+        if i0 == 0 goto label3;
+
+        if i0 == 1 goto label2;
+
+        if i0 == 2 goto label1;
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("unknown=");
+
+        $i1 = r0.<com.android.server.wm.LockTaskController: int mLockTaskModeState>;
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i1);
+
+        $r5 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        return $r5;
+
+     label1:
+        return "PINNED";
+
+     label2:
+        return "LOCKED";
+
+     label3:
+        return "NONE";
+    }
+
+    private void performStartLockTask(java.lang.String, int, int)
+    {
+        com.android.server.wm.LockTaskController r0;
+        int i0, i1;
+        com.android.server.wm.WindowManagerService $r1;
+        android.app.admin.IDevicePolicyManager $r2, $r3;
+        com.android.internal.statusbar.IStatusBarService $r4;
+        android.os.RemoteException $r5;
+        java.lang.RuntimeException $r6;
+        java.lang.String r7;
+
+        r0 := @this: com.android.server.wm.LockTaskController;
+
+        r7 := @parameter0: java.lang.String;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        if i1 != 2 goto label2;
+
+     label1:
+        $r4 = specialinvoke r0.<com.android.server.wm.LockTaskController: com.android.internal.statusbar.IStatusBarService getStatusBarService()>();
+
+        interfaceinvoke $r4.<com.android.internal.statusbar.IStatusBarService: void showPinningEnterExitToast(boolean)>(1);
+
+     label2:
+        $r1 = r0.<com.android.server.wm.LockTaskController: com.android.server.wm.WindowManagerService mWindowManager>;
+
+        virtualinvoke $r1.<com.android.server.wm.WindowManagerService: void onLockTaskStateChanged(int)>(i1);
+
+        r0.<com.android.server.wm.LockTaskController: int mLockTaskModeState> = i1;
+
+        specialinvoke r0.<com.android.server.wm.LockTaskController: void setStatusBarState(int,int)>(i1, i0);
+
+        specialinvoke r0.<com.android.server.wm.LockTaskController: void setKeyguardState(int,int)>(i1, i0);
+
+        $r2 = specialinvoke r0.<com.android.server.wm.LockTaskController: android.app.admin.IDevicePolicyManager getDevicePolicyManager()>();
+
+        if $r2 == null goto label3;
+
+        $r3 = specialinvoke r0.<com.android.server.wm.LockTaskController: android.app.admin.IDevicePolicyManager getDevicePolicyManager()>();
+
+        interfaceinvoke $r3.<android.app.admin.IDevicePolicyManager: void notifyLockTaskModeChanged(boolean,java.lang.String,int)>(1, r7, i0);
+
+     label3:
+        return;
+
+     label4:
+        $r5 := @caughtexception;
+
+        $r6 = new java.lang.RuntimeException;
+
+        specialinvoke $r6.<java.lang.RuntimeException: void <init>(java.lang.Throwable)>($r5);
+
+        throw $r6;
+
+        catch android.os.RemoteException from label1 to label2 with label4;
+        catch android.os.RemoteException from label2 to label3 with label4;
+    }
+
+    private void performStopLockTask(int)
+    {
+        com.android.server.wm.LockTaskController r0;
+        int i0, i1, $i2, $i3, $i4;
+        android.app.admin.IDevicePolicyManager $r2, $r5;
+        com.android.server.wm.WindowManagerService $r3;
+        com.android.internal.statusbar.IStatusBarService $r4;
+        android.os.RemoteException $r6;
+        java.lang.RuntimeException $r7;
+
+        r0 := @this: com.android.server.wm.LockTaskController;
+
+        i0 := @parameter0: int;
+
+        i1 = r0.<com.android.server.wm.LockTaskController: int mLockTaskModeState>;
+
+        r0.<com.android.server.wm.LockTaskController: int mLockTaskModeState> = 0;
+
+     label1:
+        $i2 = r0.<com.android.server.wm.LockTaskController: int mLockTaskModeState>;
+
+        specialinvoke r0.<com.android.server.wm.LockTaskController: void setStatusBarState(int,int)>($i2, i0);
+
+        $i3 = r0.<com.android.server.wm.LockTaskController: int mLockTaskModeState>;
+
+        specialinvoke r0.<com.android.server.wm.LockTaskController: void setKeyguardState(int,int)>($i3, i0);
+
+     label2:
+        if i1 != 2 goto label4;
+
+     label3:
+        specialinvoke r0.<com.android.server.wm.LockTaskController: void lockKeyguardIfNeeded()>();
+
+     label4:
+        $r2 = specialinvoke r0.<com.android.server.wm.LockTaskController: android.app.admin.IDevicePolicyManager getDevicePolicyManager()>();
+
+        if $r2 == null goto label5;
+
+        $r5 = specialinvoke r0.<com.android.server.wm.LockTaskController: android.app.admin.IDevicePolicyManager getDevicePolicyManager()>();
+
+        interfaceinvoke $r5.<android.app.admin.IDevicePolicyManager: void notifyLockTaskModeChanged(boolean,java.lang.String,int)>(0, null, i0);
+
+     label5:
+        if i1 != 2 goto label7;
+
+     label6:
+        $r4 = specialinvoke r0.<com.android.server.wm.LockTaskController: com.android.internal.statusbar.IStatusBarService getStatusBarService()>();
+
+        interfaceinvoke $r4.<com.android.internal.statusbar.IStatusBarService: void showPinningEnterExitToast(boolean)>(0);
+
+     label7:
+        $r3 = r0.<com.android.server.wm.LockTaskController: com.android.server.wm.WindowManagerService mWindowManager>;
+
+        $i4 = r0.<com.android.server.wm.LockTaskController: int mLockTaskModeState>;
+
+        virtualinvoke $r3.<com.android.server.wm.WindowManagerService: void onLockTaskStateChanged(int)>($i4);
+
+     label8:
+        return;
+
+     label9:
+        $r6 := @caughtexception;
+
+        $r7 = new java.lang.RuntimeException;
+
+        specialinvoke $r7.<java.lang.RuntimeException: void <init>(java.lang.Throwable)>($r6);
+
+        throw $r7;
+
+        catch android.os.RemoteException from label1 to label2 with label9;
+        catch android.os.RemoteException from label3 to label4 with label9;
+        catch android.os.RemoteException from label4 to label5 with label9;
+        catch android.os.RemoteException from label6 to label7 with label9;
+        catch android.os.RemoteException from label7 to label8 with label9;
+    }
+
+    private void removeLockedTask(com.android.server.wm.Task)
+    {
+        com.android.server.wm.LockTaskController r0;
+        com.android.server.wm.Task r1;
+        java.util.ArrayList $r2, $r3;
+        boolean $z0, $z1;
+        com.android.server.wm._$$Lambda$LockTaskController$NMEqFdnoSJ8A7QRxQO_ZoqXOmVc $r4;
+        android.os.Handler $r5;
+
+        r0 := @this: com.android.server.wm.LockTaskController;
+
+        r1 := @parameter0: com.android.server.wm.Task;
+
+        $r2 = r0.<com.android.server.wm.LockTaskController: java.util.ArrayList mLockTaskModeTasks>;
+
+        $z0 = virtualinvoke $r2.<java.util.ArrayList: boolean remove(java.lang.Object)>(r1);
+
+        if $z0 != 0 goto label1;
+
+        return;
+
+     label1:
+        $r3 = r0.<com.android.server.wm.LockTaskController: java.util.ArrayList mLockTaskModeTasks>;
+
+        $z1 = virtualinvoke $r3.<java.util.ArrayList: boolean isEmpty()>();
+
+        if $z1 == 0 goto label2;
+
+        $r5 = r0.<com.android.server.wm.LockTaskController: android.os.Handler mHandler>;
+
+        $r4 = new com.android.server.wm._$$Lambda$LockTaskController$NMEqFdnoSJ8A7QRxQO_ZoqXOmVc;
+
+        specialinvoke $r4.<com.android.server.wm._$$Lambda$LockTaskController$NMEqFdnoSJ8A7QRxQO_ZoqXOmVc: void <init>(com.android.server.wm.LockTaskController,com.android.server.wm.Task)>(r0, r1);
+
+        virtualinvoke $r5.<android.os.Handler: boolean post(java.lang.Runnable)>($r4);
+
+     label2:
+        return;
+    }
+
+    private void setKeyguardState(int, int)
+    {
+        com.android.server.wm.LockTaskController r0;
+        int i0, i1;
+        android.os.IBinder $r1, $r4, $r9, $r11;
+        com.android.server.wm.WindowManagerService $r2, $r3, $r5, $r6, $r8, $r10, $r12;
+        boolean $z0, $z1, $z2;
+        com.android.server.wm.LockTaskController$1 $r7;
+
+        r0 := @this: com.android.server.wm.LockTaskController;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        r0.<com.android.server.wm.LockTaskController: int mPendingDisableFromDismiss> = -10000;
+
+        if i0 != 0 goto label1;
+
+        $r12 = r0.<com.android.server.wm.LockTaskController: com.android.server.wm.WindowManagerService mWindowManager>;
+
+        $r11 = r0.<com.android.server.wm.LockTaskController: android.os.IBinder mToken>;
+
+        virtualinvoke $r12.<com.android.server.wm.WindowManagerService: void reenableKeyguard(android.os.IBinder,int)>($r11, i1);
+
+        goto label5;
+
+     label1:
+        if i0 != 1 goto label4;
+
+        $z0 = specialinvoke r0.<com.android.server.wm.LockTaskController: boolean isKeyguardAllowed(int)>(i1);
+
+        if $z0 == 0 goto label2;
+
+        $r10 = r0.<com.android.server.wm.LockTaskController: com.android.server.wm.WindowManagerService mWindowManager>;
+
+        $r9 = r0.<com.android.server.wm.LockTaskController: android.os.IBinder mToken>;
+
+        virtualinvoke $r10.<com.android.server.wm.WindowManagerService: void reenableKeyguard(android.os.IBinder,int)>($r9, i1);
+
+        goto label5;
+
+     label2:
+        $r3 = r0.<com.android.server.wm.LockTaskController: com.android.server.wm.WindowManagerService mWindowManager>;
+
+        $z1 = virtualinvoke $r3.<com.android.server.wm.WindowManagerService: boolean isKeyguardLocked()>();
+
+        if $z1 == 0 goto label3;
+
+        $r6 = r0.<com.android.server.wm.LockTaskController: com.android.server.wm.WindowManagerService mWindowManager>;
+
+        $z2 = virtualinvoke $r6.<com.android.server.wm.WindowManagerService: boolean isKeyguardSecure(int)>(i1);
+
+        if $z2 != 0 goto label3;
+
+        r0.<com.android.server.wm.LockTaskController: int mPendingDisableFromDismiss> = i1;
+
+        $r8 = r0.<com.android.server.wm.LockTaskController: com.android.server.wm.WindowManagerService mWindowManager>;
+
+        $r7 = new com.android.server.wm.LockTaskController$1;
+
+        specialinvoke $r7.<com.android.server.wm.LockTaskController$1: void <init>(com.android.server.wm.LockTaskController,int)>(r0, i1);
+
+        virtualinvoke $r8.<com.android.server.wm.WindowManagerService: void dismissKeyguard(com.android.internal.policy.IKeyguardDismissCallback,java.lang.CharSequence)>($r7, null);
+
+        goto label5;
+
+     label3:
+        $r5 = r0.<com.android.server.wm.LockTaskController: com.android.server.wm.WindowManagerService mWindowManager>;
+
+        $r4 = r0.<com.android.server.wm.LockTaskController: android.os.IBinder mToken>;
+
+        virtualinvoke $r5.<com.android.server.wm.WindowManagerService: void disableKeyguard(android.os.IBinder,java.lang.String,int)>($r4, "Lock-to-App", i1);
+
+        goto label5;
+
+     label4:
+        $r2 = r0.<com.android.server.wm.LockTaskController: com.android.server.wm.WindowManagerService mWindowManager>;
+
+        $r1 = r0.<com.android.server.wm.LockTaskController: android.os.IBinder mToken>;
+
+        virtualinvoke $r2.<com.android.server.wm.WindowManagerService: void disableKeyguard(android.os.IBinder,java.lang.String,int)>($r1, "Lock-to-App", i1);
+
+     label5:
+        return;
+    }
+
+    private void setLockTaskMode(com.android.server.wm.Task, int, java.lang.String, boolean)
+    {
+        com.android.server.wm.LockTaskController r0;
+        int i0, $i1, $i2, $i3, $i4;
+        boolean $z0, $z1, z5, $z6, z7;
+        java.util.ArrayList $r1, $r9, $r17;
+        com.android.server.wm.RootWindowContainer $r2, $r6;
+        com.android.server.wm.TaskDisplayArea $r3;
+        com.android.server.wm.ActivityStack $r4, r19;
+        com.android.server.wm.ActivityStackSupervisor $r5, $r10, r18, r20;
+        com.android.server.wm.DisplayContent $r7, $r8;
+        com.android.server.wm.RecentTasks $r11;
+        com.android.server.wm._$$Lambda$LockTaskController$mYEdosOvuhEWdcYLQrOC83U4Wms $r12;
+        android.os.Handler $r13;
+        com.android.server.wm.Task r14;
+        java.lang.String r15;
+        android.content.Intent r16;
+
+        r0 := @this: com.android.server.wm.LockTaskController;
+
+        r14 := @parameter0: com.android.server.wm.Task;
+
+        i0 := @parameter1: int;
+
+        r15 := @parameter2: java.lang.String;
+
+        z5 := @parameter3: boolean;
+
+        $i1 = r14.<com.android.server.wm.Task: int mLockTaskAuth>;
+
+        if $i1 != 0 goto label1;
+
+        return;
+
+     label1:
+        $z0 = virtualinvoke r0.<com.android.server.wm.LockTaskController: boolean isLockTaskModeViolation(com.android.server.wm.Task)>(r14);
+
+        if $z0 == 0 goto label2;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("ActivityTaskManager", "setLockTaskMode: Attempt to start an unauthorized lock task.");
+
+        return;
+
+     label2:
+        r16 = r14.<com.android.server.wm.Task: android.content.Intent intent>;
+
+        $r1 = r0.<com.android.server.wm.LockTaskController: java.util.ArrayList mLockTaskModeTasks>;
+
+        $z1 = virtualinvoke $r1.<java.util.ArrayList: boolean isEmpty()>();
+
+        if $z1 == 0 goto label3;
+
+        if r16 == null goto label3;
+
+        $r10 = r0.<com.android.server.wm.LockTaskController: com.android.server.wm.ActivityStackSupervisor mSupervisor>;
+
+        $r11 = $r10.<com.android.server.wm.ActivityStackSupervisor: com.android.server.wm.RecentTasks mRecentTasks>;
+
+        $i4 = r14.<com.android.server.wm.Task: int mUserId>;
+
+        virtualinvoke $r11.<com.android.server.wm.RecentTasks: void onLockTaskModeStateChanged(int,int)>(i0, $i4);
+
+        $r13 = r0.<com.android.server.wm.LockTaskController: android.os.Handler mHandler>;
+
+        $r12 = new com.android.server.wm._$$Lambda$LockTaskController$mYEdosOvuhEWdcYLQrOC83U4Wms;
+
+        specialinvoke $r12.<com.android.server.wm._$$Lambda$LockTaskController$mYEdosOvuhEWdcYLQrOC83U4Wms: void <init>(com.android.server.wm.LockTaskController,android.content.Intent,com.android.server.wm.Task,int)>(r0, r16, r14, i0);
+
+        virtualinvoke $r13.<android.os.Handler: boolean post(java.lang.Runnable)>($r12);
+
+     label3:
+        $r17 = r0.<com.android.server.wm.LockTaskController: java.util.ArrayList mLockTaskModeTasks>;
+
+        $z6 = virtualinvoke $r17.<java.util.ArrayList: boolean contains(java.lang.Object)>(r14);
+
+        if $z6 != 0 goto label4;
+
+        $r9 = r0.<com.android.server.wm.LockTaskController: java.util.ArrayList mLockTaskModeTasks>;
+
+        virtualinvoke $r9.<java.util.ArrayList: boolean add(java.lang.Object)>(r14);
+
+     label4:
+        $i2 = r14.<com.android.server.wm.Task: int mLockTaskUid>;
+
+        if $i2 != -1 goto label5;
+
+        $i3 = r14.<com.android.server.wm.Task: int effectiveUid>;
+
+        r14.<com.android.server.wm.Task: int mLockTaskUid> = $i3;
+
+     label5:
+        if z5 == 0 goto label8;
+
+        r18 = r0.<com.android.server.wm.LockTaskController: com.android.server.wm.ActivityStackSupervisor mSupervisor>;
+
+        if i0 == 0 goto label6;
+
+        z7 = 1;
+
+        goto label7;
+
+     label6:
+        z7 = 0;
+
+     label7:
+        virtualinvoke r18.<com.android.server.wm.ActivityStackSupervisor: void findTaskToMoveToFront(com.android.server.wm.Task,int,android.app.ActivityOptions,java.lang.String,boolean)>(r14, 0, null, r15, z7);
+
+        $r5 = r0.<com.android.server.wm.LockTaskController: com.android.server.wm.ActivityStackSupervisor mSupervisor>;
+
+        $r6 = $r5.<com.android.server.wm.ActivityStackSupervisor: com.android.server.wm.RootWindowContainer mRootWindowContainer>;
+
+        virtualinvoke $r6.<com.android.server.wm.RootWindowContainer: boolean resumeFocusedStacksTopActivities()>();
+
+        r19 = virtualinvoke r14.<com.android.server.wm.Task: com.android.server.wm.ActivityStack getStack()>();
+
+        if r19 == null goto label9;
+
+        $r7 = virtualinvoke r19.<com.android.server.wm.ActivityStack: com.android.server.wm.DisplayContent getDisplay()>();
+
+        $r8 = $r7.<com.android.server.wm.DisplayContent: com.android.server.wm.DisplayContent mDisplayContent>;
+
+        virtualinvoke $r8.<com.android.server.wm.DisplayContent: void executeAppTransition()>();
+
+        goto label9;
+
+     label8:
+        if i0 == 0 goto label9;
+
+        r20 = r0.<com.android.server.wm.LockTaskController: com.android.server.wm.ActivityStackSupervisor mSupervisor>;
+
+        $r2 = r20.<com.android.server.wm.ActivityStackSupervisor: com.android.server.wm.RootWindowContainer mRootWindowContainer>;
+
+        $r3 = virtualinvoke $r2.<com.android.server.wm.RootWindowContainer: com.android.server.wm.TaskDisplayArea getDefaultTaskDisplayArea()>();
+
+        $r4 = virtualinvoke r14.<com.android.server.wm.Task: com.android.server.wm.ActivityStack getStack()>();
+
+        virtualinvoke r20.<com.android.server.wm.ActivityStackSupervisor: void handleNonResizableTaskIfNeeded(com.android.server.wm.Task,int,com.android.server.wm.TaskDisplayArea,com.android.server.wm.ActivityStack,boolean)>(r14, 0, $r3, $r4, 1);
+
+        goto label9;
+
+     label9:
+        return;
+    }
+
+    private void setStatusBarState(int, int)
+    {
+        com.android.server.wm.LockTaskController r0;
+        int i0, i1, $i2, i5, i6;
+        android.util.Pair r1;
+        java.lang.Object $r2, $r4;
+        java.lang.Integer $r3, $r5;
+        android.os.RemoteException $r6;
+        com.android.internal.statusbar.IStatusBarService r7;
+        android.os.IBinder $r8, $r11;
+        android.content.Context $r9, $r12;
+        java.lang.String $r10, $r13;
+
+        r0 := @this: com.android.server.wm.LockTaskController;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        r7 = specialinvoke r0.<com.android.server.wm.LockTaskController: com.android.internal.statusbar.IStatusBarService getStatusBarService()>();
+
+        if r7 != null goto label1;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("ActivityTaskManager", "Can\'t find StatusBarService");
+
+        return;
+
+     label1:
+        i5 = 0;
+
+        i6 = 0;
+
+        if i0 != 2 goto label2;
+
+        i5 = 43974656;
+
+        goto label3;
+
+     label2:
+        if i0 != 1 goto label3;
+
+        $i2 = specialinvoke r0.<com.android.server.wm.LockTaskController: int getLockTaskFeaturesForUser(int)>(i1);
+
+        r1 = virtualinvoke r0.<com.android.server.wm.LockTaskController: android.util.Pair getStatusBarDisableFlags(int)>($i2);
+
+        $r2 = r1.<android.util.Pair: java.lang.Object first>;
+
+        $r3 = (java.lang.Integer) $r2;
+
+        i5 = virtualinvoke $r3.<java.lang.Integer: int intValue()>();
+
+        $r4 = r1.<android.util.Pair: java.lang.Object second>;
+
+        $r5 = (java.lang.Integer) $r4;
+
+        i6 = virtualinvoke $r5.<java.lang.Integer: int intValue()>();
+
+     label3:
+        $r8 = r0.<com.android.server.wm.LockTaskController: android.os.IBinder mToken>;
+
+        $r9 = r0.<com.android.server.wm.LockTaskController: android.content.Context mContext>;
+
+        $r10 = virtualinvoke $r9.<android.content.Context: java.lang.String getPackageName()>();
+
+        interfaceinvoke r7.<com.android.internal.statusbar.IStatusBarService: void disable(int,android.os.IBinder,java.lang.String)>(i5, $r8, $r10);
+
+        $r11 = r0.<com.android.server.wm.LockTaskController: android.os.IBinder mToken>;
+
+        $r12 = r0.<com.android.server.wm.LockTaskController: android.content.Context mContext>;
+
+        $r13 = virtualinvoke $r12.<android.content.Context: java.lang.String getPackageName()>();
+
+        interfaceinvoke r7.<com.android.internal.statusbar.IStatusBarService: void disable2(int,android.os.IBinder,java.lang.String)>(i6, $r11, $r13);
+
+     label4:
+        goto label6;
+
+     label5:
+        $r6 := @caughtexception;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("ActivityTaskManager", "Failed to set status bar flags", $r6);
+
+     label6:
+        return;
+
+        catch android.os.RemoteException from label3 to label4 with label5;
+    }
+
+    private boolean shouldLockKeyguard()
+    {
+        com.android.server.wm.LockTaskController r0;
+        int i0;
+        android.content.Context $r2;
+        android.content.ContentResolver $r3;
+        android.provider.Settings$SettingNotFoundException $r4;
+        java.lang.Object[] $r5;
+        java.lang.Integer $r6;
+        com.android.internal.widget.LockPatternUtils $r7;
+        boolean $z0, z1;
+
+        r0 := @this: com.android.server.wm.LockTaskController;
+
+        z1 = 1;
+
+     label1:
+        $r2 = r0.<com.android.server.wm.LockTaskController: android.content.Context mContext>;
+
+        $r3 = virtualinvoke $r2.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        i0 = staticinvoke <android.provider.Settings$Secure: int getIntForUser(android.content.ContentResolver,java.lang.String,int)>($r3, "lock_to_app_exit_locked", -2);
+
+     label2:
+        if i0 == 0 goto label3;
+
+        goto label4;
+
+     label3:
+        z1 = 0;
+
+     label4:
+        return z1;
+
+     label5:
+        $r4 := @caughtexception;
+
+        $r5 = newarray (java.lang.Object)[3];
+
+        $r5[0] = "127605586";
+
+        $r6 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(-1);
+
+        $r5[1] = $r6;
+
+        $r5[2] = "";
+
+        staticinvoke <android.util.EventLog: int writeEvent(int,java.lang.Object[])>(1397638484, $r5);
+
+        $r7 = specialinvoke r0.<com.android.server.wm.LockTaskController: com.android.internal.widget.LockPatternUtils getLockPatternUtils()>();
+
+        $z0 = virtualinvoke $r7.<com.android.internal.widget.LockPatternUtils: boolean isSecure(int)>(-2);
+
+        return $z0;
+
+        catch android.provider.Settings$SettingNotFoundException from label1 to label2 with label5;
+    }
+
+    boolean activityBlockedFromFinish(com.android.server.wm.ActivityRecord)
+    {
+        com.android.server.wm.LockTaskController r0;
+        com.android.server.wm.ActivityRecord r1, $r3, $r4;
+        com.android.server.wm.Task r2;
+        int $i0;
+        boolean $z0;
+
+        r0 := @this: com.android.server.wm.LockTaskController;
+
+        r1 := @parameter0: com.android.server.wm.ActivityRecord;
+
+        r2 = virtualinvoke r1.<com.android.server.wm.ActivityRecord: com.android.server.wm.Task getTask()>();
+
+        $r3 = virtualinvoke r2.<com.android.server.wm.Task: com.android.server.wm.ActivityRecord getRootActivity()>();
+
+        if r1 != $r3 goto label1;
+
+        $r4 = virtualinvoke r2.<com.android.server.wm.Task: com.android.server.wm.ActivityRecord getTopNonFinishingActivity()>();
+
+        if r1 != $r4 goto label1;
+
+        $i0 = r2.<com.android.server.wm.Task: int mLockTaskAuth>;
+
+        if $i0 == 4 goto label1;
+
+        $z0 = specialinvoke r0.<com.android.server.wm.LockTaskController: boolean isRootTask(com.android.server.wm.Task)>(r2);
+
+        if $z0 == 0 goto label1;
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("ActivityTaskManager", "Not finishing task in lock task mode");
+
+        virtualinvoke r0.<com.android.server.wm.LockTaskController: void showLockTaskToast()>();
+
+        return 1;
+
+     label1:
+        return 0;
+    }
+
+    boolean canMoveTaskToBack(com.android.server.wm.Task)
+    {
+        com.android.server.wm.LockTaskController r0;
+        com.android.server.wm.Task r1;
+        boolean $z0;
+
+        r0 := @this: com.android.server.wm.LockTaskController;
+
+        r1 := @parameter0: com.android.server.wm.Task;
+
+        $z0 = specialinvoke r0.<com.android.server.wm.LockTaskController: boolean isRootTask(com.android.server.wm.Task)>(r1);
+
+        if $z0 == 0 goto label1;
+
+        virtualinvoke r0.<com.android.server.wm.LockTaskController: void showLockTaskToast()>();
+
+        return 0;
+
+     label1:
+        return 1;
+    }
+
+    void clearLockedTask(com.android.server.wm.Task)
+    {
+        com.android.server.wm.LockTaskController r0;
+        com.android.server.wm.Task r1, $r11;
+        java.util.ArrayList $r2, $r3, $r5, $r8, $r9;
+        boolean $z0, $z1;
+        java.lang.Object $r4, $r10;
+        com.android.server.wm.ActivityStackSupervisor $r6;
+        com.android.server.wm.RootWindowContainer $r7;
+        int $i0, i1;
+
+        r0 := @this: com.android.server.wm.LockTaskController;
+
+        r1 := @parameter0: com.android.server.wm.Task;
+
+        if r1 == null goto label5;
+
+        $r2 = r0.<com.android.server.wm.LockTaskController: java.util.ArrayList mLockTaskModeTasks>;
+
+        $z0 = virtualinvoke $r2.<java.util.ArrayList: boolean isEmpty()>();
+
+        if $z0 == 0 goto label1;
+
+        goto label5;
+
+     label1:
+        $r3 = r0.<com.android.server.wm.LockTaskController: java.util.ArrayList mLockTaskModeTasks>;
+
+        $r4 = virtualinvoke $r3.<java.util.ArrayList: java.lang.Object get(int)>(0);
+
+        if r1 != $r4 goto label3;
+
+        $r8 = r0.<com.android.server.wm.LockTaskController: java.util.ArrayList mLockTaskModeTasks>;
+
+        $i0 = virtualinvoke $r8.<java.util.ArrayList: int size()>();
+
+        i1 = $i0 - 1;
+
+     label2:
+        if i1 <= 0 goto label3;
+
+        $r9 = r0.<com.android.server.wm.LockTaskController: java.util.ArrayList mLockTaskModeTasks>;
+
+        $r10 = virtualinvoke $r9.<java.util.ArrayList: java.lang.Object get(int)>(i1);
+
+        $r11 = (com.android.server.wm.Task) $r10;
+
+        virtualinvoke r0.<com.android.server.wm.LockTaskController: void clearLockedTask(com.android.server.wm.Task)>($r11);
+
+        i1 = i1 + -1;
+
+        goto label2;
+
+     label3:
+        specialinvoke r0.<com.android.server.wm.LockTaskController: void removeLockedTask(com.android.server.wm.Task)>(r1);
+
+        $r5 = r0.<com.android.server.wm.LockTaskController: java.util.ArrayList mLockTaskModeTasks>;
+
+        $z1 = virtualinvoke $r5.<java.util.ArrayList: boolean isEmpty()>();
+
+        if $z1 == 0 goto label4;
+
+        return;
+
+     label4:
+        virtualinvoke r1.<com.android.server.wm.Task: void performClearTaskLocked()>();
+
+        $r6 = r0.<com.android.server.wm.LockTaskController: com.android.server.wm.ActivityStackSupervisor mSupervisor>;
+
+        $r7 = $r6.<com.android.server.wm.ActivityStackSupervisor: com.android.server.wm.RootWindowContainer mRootWindowContainer>;
+
+        virtualinvoke $r7.<com.android.server.wm.RootWindowContainer: boolean resumeFocusedStacksTopActivities()>();
+
+        return;
+
+     label5:
+        return;
+    }
+
+    void clearLockedTasks(java.lang.String)
+    {
+        com.android.server.wm.LockTaskController r0;
+        java.lang.String r1;
+        java.util.ArrayList $r2, $r3;
+        boolean $z0;
+        java.lang.Object $r4;
+        com.android.server.wm.Task $r5;
+
+        r0 := @this: com.android.server.wm.LockTaskController;
+
+        r1 := @parameter0: java.lang.String;
+
+        $r2 = r0.<com.android.server.wm.LockTaskController: java.util.ArrayList mLockTaskModeTasks>;
+
+        $z0 = virtualinvoke $r2.<java.util.ArrayList: boolean isEmpty()>();
+
+        if $z0 != 0 goto label1;
+
+        $r3 = r0.<com.android.server.wm.LockTaskController: java.util.ArrayList mLockTaskModeTasks>;
+
+        $r4 = virtualinvoke $r3.<java.util.ArrayList: java.lang.Object get(int)>(0);
+
+        $r5 = (com.android.server.wm.Task) $r4;
+
+        virtualinvoke r0.<com.android.server.wm.LockTaskController: void clearLockedTask(com.android.server.wm.Task)>($r5);
+
+     label1:
+        return;
+    }
+
+    public void dump(java.io.PrintWriter, java.lang.String)
+    {
+        com.android.server.wm.LockTaskController r0;
+        java.io.PrintWriter r1;
+        java.lang.StringBuilder $r2, $r6, $r9, $r15, $r20, $r25, $r37;
+        java.lang.String $r5, $r12, $r14, $r18, $r23, $r34, $r36, $r45, r46, r49;
+        java.util.ArrayList $r19, $r42;
+        int $i0, $i1, $i2, i3, i4;
+        android.util.SparseArray $r24, $r28, $r31;
+        java.lang.Object $r32, $r43;
+        java.lang.Object[] $r33;
+
+        r0 := @this: com.android.server.wm.LockTaskController;
+
+        r1 := @parameter0: java.io.PrintWriter;
+
+        r46 := @parameter1: java.lang.String;
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r46);
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("LockTaskController:");
+
+        $r5 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r5);
+
+        $r6 = new java.lang.StringBuilder;
+
+        specialinvoke $r6.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r46);
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  ");
+
+        r49 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $r9 = new java.lang.StringBuilder;
+
+        specialinvoke $r9.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r49);
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("mLockTaskModeState=");
+
+        $r12 = specialinvoke r0.<com.android.server.wm.LockTaskController: java.lang.String lockTaskModeToString()>();
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r12);
+
+        $r14 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r14);
+
+        $r15 = new java.lang.StringBuilder;
+
+        specialinvoke $r15.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r15.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r49);
+
+        virtualinvoke $r15.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("mLockTaskModeTasks=");
+
+        $r18 = virtualinvoke $r15.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r18);
+
+        i3 = 0;
+
+     label1:
+        $r19 = r0.<com.android.server.wm.LockTaskController: java.util.ArrayList mLockTaskModeTasks>;
+
+        $i0 = virtualinvoke $r19.<java.util.ArrayList: int size()>();
+
+        if i3 >= $i0 goto label2;
+
+        $r37 = new java.lang.StringBuilder;
+
+        specialinvoke $r37.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r37.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r49);
+
+        virtualinvoke $r37.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  #");
+
+        virtualinvoke $r37.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i3);
+
+        virtualinvoke $r37.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" ");
+
+        $r42 = r0.<com.android.server.wm.LockTaskController: java.util.ArrayList mLockTaskModeTasks>;
+
+        $r43 = virtualinvoke $r42.<java.util.ArrayList: java.lang.Object get(int)>(i3);
+
+        virtualinvoke $r37.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r43);
+
+        $r45 = virtualinvoke $r37.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r45);
+
+        i3 = i3 + 1;
+
+        goto label1;
+
+     label2:
+        $r20 = new java.lang.StringBuilder;
+
+        specialinvoke $r20.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r20.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r49);
+
+        virtualinvoke $r20.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("mLockTaskPackages (userId:packages)=");
+
+        $r23 = virtualinvoke $r20.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r23);
+
+        i4 = 0;
+
+     label3:
+        $r24 = r0.<com.android.server.wm.LockTaskController: android.util.SparseArray mLockTaskPackages>;
+
+        $i1 = virtualinvoke $r24.<android.util.SparseArray: int size()>();
+
+        if i4 >= $i1 goto label4;
+
+        $r25 = new java.lang.StringBuilder;
+
+        specialinvoke $r25.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r25.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r49);
+
+        virtualinvoke $r25.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  u");
+
+        $r28 = r0.<com.android.server.wm.LockTaskController: android.util.SparseArray mLockTaskPackages>;
+
+        $i2 = virtualinvoke $r28.<android.util.SparseArray: int keyAt(int)>(i4);
+
+        virtualinvoke $r25.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i2);
+
+        virtualinvoke $r25.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(":");
+
+        $r31 = r0.<com.android.server.wm.LockTaskController: android.util.SparseArray mLockTaskPackages>;
+
+        $r32 = virtualinvoke $r31.<android.util.SparseArray: java.lang.Object valueAt(int)>(i4);
+
+        $r33 = (java.lang.Object[]) $r32;
+
+        $r34 = staticinvoke <java.util.Arrays: java.lang.String toString(java.lang.Object[])>($r33);
+
+        virtualinvoke $r25.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r34);
+
+        $r36 = virtualinvoke $r25.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r36);
+
+        i4 = i4 + 1;
+
+        goto label3;
+
+     label4:
+        virtualinvoke r1.<java.io.PrintWriter: void println()>();
+
+        return;
+    }
+
+    int getLockTaskModeState()
+    {
+        com.android.server.wm.LockTaskController r0;
+        int $i0;
+
+        r0 := @this: com.android.server.wm.LockTaskController;
+
+        $i0 = r0.<com.android.server.wm.LockTaskController: int mLockTaskModeState>;
+
+        return $i0;
+    }
+
+    com.android.server.wm.Task getRootTask()
+    {
+        com.android.server.wm.LockTaskController r0;
+        java.util.ArrayList $r1, $r2;
+        boolean $z0;
+        java.lang.Object $r3;
+        com.android.server.wm.Task $r4;
+
+        r0 := @this: com.android.server.wm.LockTaskController;
+
+        $r1 = r0.<com.android.server.wm.LockTaskController: java.util.ArrayList mLockTaskModeTasks>;
+
+        $z0 = virtualinvoke $r1.<java.util.ArrayList: boolean isEmpty()>();
+
+        if $z0 == 0 goto label1;
+
+        return null;
+
+     label1:
+        $r2 = r0.<com.android.server.wm.LockTaskController: java.util.ArrayList mLockTaskModeTasks>;
+
+        $r3 = virtualinvoke $r2.<java.util.ArrayList: java.lang.Object get(int)>(0);
+
+        $r4 = (com.android.server.wm.Task) $r3;
+
+        return $r4;
+    }
+
+    android.util.Pair getStatusBarDisableFlags(int)
+    {
+        com.android.server.wm.LockTaskController r0;
+        int i0, $i1, $i2, $i3, $i4, $i5, $i6, i7, i8, i9, i10, i11;
+        android.util.Pair r1, $r3;
+        android.util.SparseArray $r2, $r6, $r8;
+        java.lang.Integer $r4, $r5, $r10, $r12;
+        java.lang.Object $r7, $r9, $r11;
+
+        r0 := @this: com.android.server.wm.LockTaskController;
+
+        i0 := @parameter0: int;
+
+        i7 = 67043328;
+
+        i8 = 31;
+
+        $r2 = <com.android.server.wm.LockTaskController: android.util.SparseArray STATUS_BAR_FLAG_MAP_LOCKED>;
+
+        $i1 = virtualinvoke $r2.<android.util.SparseArray: int size()>();
+
+        i9 = $i1 - 1;
+
+     label1:
+        if i9 < 0 goto label3;
+
+        $r6 = <com.android.server.wm.LockTaskController: android.util.SparseArray STATUS_BAR_FLAG_MAP_LOCKED>;
+
+        $r7 = virtualinvoke $r6.<android.util.SparseArray: java.lang.Object valueAt(int)>(i9);
+
+        r1 = (android.util.Pair) $r7;
+
+        i10 = i7;
+
+        i11 = i8;
+
+        $r8 = <com.android.server.wm.LockTaskController: android.util.SparseArray STATUS_BAR_FLAG_MAP_LOCKED>;
+
+        $i3 = virtualinvoke $r8.<android.util.SparseArray: int keyAt(int)>(i9);
+
+        $i4 = $i3 & i0;
+
+        if $i4 == 0 goto label2;
+
+        $r9 = r1.<android.util.Pair: java.lang.Object first>;
+
+        $r10 = (java.lang.Integer) $r9;
+
+        $i5 = virtualinvoke $r10.<java.lang.Integer: int intValue()>();
+
+        i10 = i7 & $i5;
+
+        $r11 = r1.<android.util.Pair: java.lang.Object second>;
+
+        $r12 = (java.lang.Integer) $r11;
+
+        $i6 = virtualinvoke $r12.<java.lang.Integer: int intValue()>();
+
+        i11 = i8 & $i6;
+
+     label2:
+        i9 = i9 + -1;
+
+        i7 = i10;
+
+        i8 = i11;
+
+        goto label1;
+
+     label3:
+        $r3 = new android.util.Pair;
+
+        $i2 = i7 & 61210624;
+
+        $r4 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i2);
+
+        $r5 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i8);
+
+        specialinvoke $r3.<android.util.Pair: void <init>(java.lang.Object,java.lang.Object)>($r4, $r5);
+
+        return $r3;
+    }
+
+    boolean isActivityAllowed(int, java.lang.String, int)
+    {
+        com.android.server.wm.LockTaskController r0;
+        int i0, i1, $i2;
+        java.lang.String r1;
+        boolean $z0, $z1;
+
+        r0 := @this: com.android.server.wm.LockTaskController;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: java.lang.String;
+
+        i1 := @parameter2: int;
+
+        $i2 = r0.<com.android.server.wm.LockTaskController: int mLockTaskModeState>;
+
+        if $i2 != 1 goto label4;
+
+        $z0 = specialinvoke r0.<com.android.server.wm.LockTaskController: boolean isBlockingInTaskEnabled(int)>(i0);
+
+        if $z0 != 0 goto label1;
+
+        goto label4;
+
+     label1:
+        if i1 == 1 goto label3;
+
+        if i1 == 2 goto label2;
+
+        $z1 = virtualinvoke r0.<com.android.server.wm.LockTaskController: boolean isPackageWhitelisted(int,java.lang.String)>(i0, r1);
+
+        return $z1;
+
+     label2:
+        return 1;
+
+     label3:
+        return 0;
+
+     label4:
+        return 1;
+    }
+
+    boolean isLockTaskModeViolation(com.android.server.wm.Task)
+    {
+        com.android.server.wm.LockTaskController r0;
+        com.android.server.wm.Task r1;
+        boolean $z0;
+
+        r0 := @this: com.android.server.wm.LockTaskController;
+
+        r1 := @parameter0: com.android.server.wm.Task;
+
+        $z0 = virtualinvoke r0.<com.android.server.wm.LockTaskController: boolean isLockTaskModeViolation(com.android.server.wm.Task,boolean)>(r1, 0);
+
+        return $z0;
+    }
+
+    boolean isLockTaskModeViolation(com.android.server.wm.Task, boolean)
+    {
+        com.android.server.wm.LockTaskController r0;
+        com.android.server.wm.Task r1;
+        boolean z0, $z1;
+
+        r0 := @this: com.android.server.wm.LockTaskController;
+
+        r1 := @parameter0: com.android.server.wm.Task;
+
+        z0 := @parameter1: boolean;
+
+        $z1 = specialinvoke r0.<com.android.server.wm.LockTaskController: boolean isLockTaskModeViolationInternal(com.android.server.wm.Task,boolean)>(r1, z0);
+
+        if $z1 == 0 goto label1;
+
+        virtualinvoke r0.<com.android.server.wm.LockTaskController: void showLockTaskToast()>();
+
+        return 1;
+
+     label1:
+        return 0;
+    }
+
+    boolean isPackageWhitelisted(int, java.lang.String)
+    {
+        com.android.server.wm.LockTaskController r0;
+        java.lang.String r1, $r5;
+        java.lang.String[] r2;
+        int i0, i1, i2;
+        android.util.SparseArray $r3;
+        java.lang.Object $r4;
+        boolean $z0;
+
+        r0 := @this: com.android.server.wm.LockTaskController;
+
+        i1 := @parameter0: int;
+
+        r1 := @parameter1: java.lang.String;
+
+        if r1 != null goto label1;
+
+        return 0;
+
+     label1:
+        $r3 = r0.<com.android.server.wm.LockTaskController: android.util.SparseArray mLockTaskPackages>;
+
+        $r4 = virtualinvoke $r3.<android.util.SparseArray: java.lang.Object get(int)>(i1);
+
+        r2 = (java.lang.String[]) $r4;
+
+        if r2 != null goto label2;
+
+        return 0;
+
+     label2:
+        i0 = lengthof r2;
+
+        i2 = 0;
+
+     label3:
+        if i2 >= i0 goto label5;
+
+        $r5 = r2[i2];
+
+        $z0 = virtualinvoke r1.<java.lang.String: boolean equals(java.lang.Object)>($r5);
+
+        if $z0 == 0 goto label4;
+
+        return 1;
+
+     label4:
+        i2 = i2 + 1;
+
+        goto label3;
+
+     label5:
+        return 0;
+    }
+
+    boolean isTaskLocked(com.android.server.wm.Task)
+    {
+        com.android.server.wm.LockTaskController r0;
+        com.android.server.wm.Task r1;
+        java.util.ArrayList $r2;
+        boolean $z0;
+
+        r0 := @this: com.android.server.wm.LockTaskController;
+
+        r1 := @parameter0: com.android.server.wm.Task;
+
+        $r2 = r0.<com.android.server.wm.LockTaskController: java.util.ArrayList mLockTaskModeTasks>;
+
+        $z0 = virtualinvoke $r2.<java.util.ArrayList: boolean contains(java.lang.Object)>(r1);
+
+        return $z0;
+    }
+
+    boolean isTaskWhitelisted(com.android.server.wm.Task)
+    {
+        com.android.server.wm.LockTaskController r0;
+        com.android.server.wm.Task r1;
+        int i0;
+
+        r0 := @this: com.android.server.wm.LockTaskController;
+
+        r1 := @parameter0: com.android.server.wm.Task;
+
+        i0 = r1.<com.android.server.wm.Task: int mLockTaskAuth>;
+
+        if i0 == 2 goto label1;
+
+        if i0 == 3 goto label1;
+
+        if i0 == 4 goto label1;
+
+        return 0;
+
+     label1:
+        return 1;
+    }
+
+    public void lambda$removeLockedTask$0$LockTaskController(com.android.server.wm.Task)
+    {
+        com.android.server.wm.LockTaskController r0;
+        com.android.server.wm.Task r1;
+        int $i0;
+
+        r0 := @this: com.android.server.wm.LockTaskController;
+
+        r1 := @parameter0: com.android.server.wm.Task;
+
+        $i0 = r1.<com.android.server.wm.Task: int mUserId>;
+
+        specialinvoke r0.<com.android.server.wm.LockTaskController: void performStopLockTask(int)>($i0);
+
+        return;
+    }
+
+    public void lambda$setLockTaskMode$1$LockTaskController(android.content.Intent, com.android.server.wm.Task, int)
+    {
+        com.android.server.wm.LockTaskController r0;
+        android.content.Intent r1;
+        com.android.server.wm.Task r2;
+        int i0, $i1;
+        android.content.ComponentName $r3;
+        java.lang.String $r4;
+
+        r0 := @this: com.android.server.wm.LockTaskController;
+
+        r1 := @parameter0: android.content.Intent;
+
+        r2 := @parameter1: com.android.server.wm.Task;
+
+        i0 := @parameter2: int;
+
+        $r3 = virtualinvoke r1.<android.content.Intent: android.content.ComponentName getComponent()>();
+
+        $r4 = virtualinvoke $r3.<android.content.ComponentName: java.lang.String getPackageName()>();
+
+        $i1 = r2.<com.android.server.wm.Task: int mUserId>;
+
+        specialinvoke r0.<com.android.server.wm.LockTaskController: void performStartLockTask(java.lang.String,int,int)>($r4, $i1, i0);
+
+        return;
+    }
+
+    public void lambda$updateLockTaskFeatures$2$LockTaskController(int)
+    {
+        com.android.server.wm.LockTaskController r0;
+        int i0, $i1, $i2, $i3;
+
+        r0 := @this: com.android.server.wm.LockTaskController;
+
+        i0 := @parameter0: int;
+
+        $i1 = r0.<com.android.server.wm.LockTaskController: int mLockTaskModeState>;
+
+        if $i1 != 1 goto label1;
+
+        $i2 = r0.<com.android.server.wm.LockTaskController: int mLockTaskModeState>;
+
+        specialinvoke r0.<com.android.server.wm.LockTaskController: void setStatusBarState(int,int)>($i2, i0);
+
+        $i3 = r0.<com.android.server.wm.LockTaskController: int mLockTaskModeState>;
+
+        specialinvoke r0.<com.android.server.wm.LockTaskController: void setKeyguardState(int,int)>($i3, i0);
+
+     label1:
+        return;
+    }
+
+    void setWindowManager(com.android.server.wm.WindowManagerService)
+    {
+        com.android.server.wm.LockTaskController r0;
+        com.android.server.wm.WindowManagerService r1;
+
+        r0 := @this: com.android.server.wm.LockTaskController;
+
+        r1 := @parameter0: com.android.server.wm.WindowManagerService;
+
+        r0.<com.android.server.wm.LockTaskController: com.android.server.wm.WindowManagerService mWindowManager> = r1;
+
+        return;
+    }
+
+    void showLockTaskToast()
+    {
+        com.android.server.wm.LockTaskController r0;
+        int $i0;
+        com.android.internal.statusbar.IStatusBarService $r2;
+        android.os.RemoteException $r3;
+
+        r0 := @this: com.android.server.wm.LockTaskController;
+
+        $i0 = r0.<com.android.server.wm.LockTaskController: int mLockTaskModeState>;
+
+        if $i0 != 2 goto label4;
+
+     label1:
+        $r2 = specialinvoke r0.<com.android.server.wm.LockTaskController: com.android.internal.statusbar.IStatusBarService getStatusBarService()>();
+
+        interfaceinvoke $r2.<com.android.internal.statusbar.IStatusBarService: void showPinningEscapeToast()>();
+
+     label2:
+        goto label4;
+
+     label3:
+        $r3 := @caughtexception;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("ActivityTaskManager", "Failed to send pinning escape toast", $r3);
+
+     label4:
+        return;
+
+        catch android.os.RemoteException from label1 to label2 with label3;
+    }
+
+    void startLockTaskMode(com.android.server.wm.Task, boolean, int)
+    {
+        com.android.server.wm.LockTaskController r0;
+        com.android.server.wm.Task r1;
+        boolean z0;
+        com.android.server.statusbar.StatusBarManagerInternal r2;
+        int $i0, $i1, i2;
+        java.lang.Object $r3;
+        byte b3;
+
+        r0 := @this: com.android.server.wm.LockTaskController;
+
+        r1 := @parameter0: com.android.server.wm.Task;
+
+        z0 := @parameter1: boolean;
+
+        i2 := @parameter2: int;
+
+        if z0 != 0 goto label2;
+
+        r1.<com.android.server.wm.Task: int mLockTaskUid> = i2;
+
+        $i0 = r1.<com.android.server.wm.Task: int mLockTaskAuth>;
+
+        if $i0 != 1 goto label2;
+
+        $r3 = staticinvoke <com.android.server.LocalServices: java.lang.Object getService(java.lang.Class)>(class "Lcom/android/server/statusbar/StatusBarManagerInternal;");
+
+        r2 = (com.android.server.statusbar.StatusBarManagerInternal) $r3;
+
+        if r2 == null goto label1;
+
+        $i1 = r1.<com.android.server.wm.Task: int mTaskId>;
+
+        interfaceinvoke r2.<com.android.server.statusbar.StatusBarManagerInternal: void showScreenPinningRequest(int)>($i1);
+
+     label1:
+        return;
+
+     label2:
+        if z0 == 0 goto label3;
+
+        b3 = 2;
+
+        goto label4;
+
+     label3:
+        b3 = 1;
+
+     label4:
+        specialinvoke r0.<com.android.server.wm.LockTaskController: void setLockTaskMode(com.android.server.wm.Task,int,java.lang.String,boolean)>(r1, b3, "startLockTask", 1);
+
+        return;
+    }
+
+    void stopLockTaskMode(com.android.server.wm.Task, boolean, int)
+    {
+        com.android.server.wm.LockTaskController r0;
+        com.android.server.wm.Task r1;
+        boolean z0;
+        int i0, $i1, $i2, $i3, $i4, $i5, $i6, $i7;
+        java.lang.IllegalArgumentException $r3;
+        java.lang.StringBuilder $r4;
+        java.lang.SecurityException $r11;
+        java.lang.String $r12;
+
+        r0 := @this: com.android.server.wm.LockTaskController;
+
+        r1 := @parameter0: com.android.server.wm.Task;
+
+        z0 := @parameter1: boolean;
+
+        i0 := @parameter2: int;
+
+        $i1 = r0.<com.android.server.wm.LockTaskController: int mLockTaskModeState>;
+
+        if $i1 != 0 goto label1;
+
+        return;
+
+     label1:
+        if z0 == 0 goto label3;
+
+        $i7 = r0.<com.android.server.wm.LockTaskController: int mLockTaskModeState>;
+
+        if $i7 != 2 goto label2;
+
+        virtualinvoke r0.<com.android.server.wm.LockTaskController: void clearLockedTasks(java.lang.String)>("stopAppPinning");
+
+        goto label6;
+
+     label2:
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("ActivityTaskManager", "Attempted to stop LockTask with isSystemCaller=true");
+
+        virtualinvoke r0.<com.android.server.wm.LockTaskController: void showLockTaskToast()>();
+
+        goto label6;
+
+     label3:
+        if r1 == null goto label7;
+
+        $i2 = r1.<com.android.server.wm.Task: int mLockTaskUid>;
+
+        if i0 == $i2 goto label5;
+
+        $i3 = r1.<com.android.server.wm.Task: int mLockTaskUid>;
+
+        if $i3 != 0 goto label4;
+
+        $i6 = r1.<com.android.server.wm.Task: int effectiveUid>;
+
+        if i0 != $i6 goto label4;
+
+        goto label5;
+
+     label4:
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Invalid uid, expected ");
+
+        $i4 = r1.<com.android.server.wm.Task: int mLockTaskUid>;
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i4);
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" callingUid=");
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" effectiveUid=");
+
+        $i5 = r1.<com.android.server.wm.Task: int effectiveUid>;
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i5);
+
+        $r11 = new java.lang.SecurityException;
+
+        $r12 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r11.<java.lang.SecurityException: void <init>(java.lang.String)>($r12);
+
+        throw $r11;
+
+     label5:
+        virtualinvoke r0.<com.android.server.wm.LockTaskController: void clearLockedTask(com.android.server.wm.Task)>(r1);
+
+     label6:
+        return;
+
+     label7:
+        $r3 = new java.lang.IllegalArgumentException;
+
+        specialinvoke $r3.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>("can\'t stop LockTask for null task");
+
+        throw $r3;
+    }
+
+    void updateLockTaskFeatures(int, int)
+    {
+        com.android.server.wm.LockTaskController r0;
+        int i0, i1, $i2, $i3;
+        android.util.SparseIntArray $r1;
+        java.util.ArrayList $r2, $r3;
+        boolean $z0;
+        java.lang.Object $r4;
+        com.android.server.wm.Task $r5;
+        com.android.server.wm._$$Lambda$LockTaskController$nuVptnoYwaF1CYydSggC_oxSSSc $r6;
+        android.os.Handler $r7;
+
+        r0 := @this: com.android.server.wm.LockTaskController;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        $i2 = specialinvoke r0.<com.android.server.wm.LockTaskController: int getLockTaskFeaturesForUser(int)>(i0);
+
+        if i1 != $i2 goto label1;
+
+        return;
+
+     label1:
+        $r1 = r0.<com.android.server.wm.LockTaskController: android.util.SparseIntArray mLockTaskFeatures>;
+
+        virtualinvoke $r1.<android.util.SparseIntArray: void put(int,int)>(i0, i1);
+
+        $r2 = r0.<com.android.server.wm.LockTaskController: java.util.ArrayList mLockTaskModeTasks>;
+
+        $z0 = virtualinvoke $r2.<java.util.ArrayList: boolean isEmpty()>();
+
+        if $z0 != 0 goto label2;
+
+        $r3 = r0.<com.android.server.wm.LockTaskController: java.util.ArrayList mLockTaskModeTasks>;
+
+        $r4 = virtualinvoke $r3.<java.util.ArrayList: java.lang.Object get(int)>(0);
+
+        $r5 = (com.android.server.wm.Task) $r4;
+
+        $i3 = $r5.<com.android.server.wm.Task: int mUserId>;
+
+        if i0 != $i3 goto label2;
+
+        $r7 = r0.<com.android.server.wm.LockTaskController: android.os.Handler mHandler>;
+
+        $r6 = new com.android.server.wm._$$Lambda$LockTaskController$nuVptnoYwaF1CYydSggC_oxSSSc;
+
+        specialinvoke $r6.<com.android.server.wm._$$Lambda$LockTaskController$nuVptnoYwaF1CYydSggC_oxSSSc: void <init>(com.android.server.wm.LockTaskController,int)>(r0, i0);
+
+        virtualinvoke $r7.<android.os.Handler: boolean post(java.lang.Runnable)>($r6);
+
+     label2:
+        return;
+    }
+
+    void updateLockTaskPackages(int, java.lang.String[])
+    {
+        com.android.server.wm.LockTaskController r0;
+        android.util.SparseArray $r1;
+        java.util.ArrayList $r2, $r8, $r11;
+        int $i0, $i1, $i2, $i3, $i4, $i5, i6, i7, $i8, $i9;
+        com.android.server.wm.ActivityStackSupervisor $r3, $r6, $r9;
+        com.android.server.wm.'-$$Lambda$7nuK7cv058ES7c7refBFgc-jagk' $r4;
+        com.android.server.wm.RootWindowContainer $r5, $r7, $r10;
+        boolean $z0, z2, z3, z4, z5, z6;
+        java.lang.Object $r12;
+        java.lang.String[] r13;
+        com.android.server.wm.Task r14, r16;
+        com.android.server.wm.ActivityRecord r15;
+        java.util.function.Consumer r17;
+
+        r0 := @this: com.android.server.wm.LockTaskController;
+
+        i6 := @parameter0: int;
+
+        r13 := @parameter1: java.lang.String[];
+
+        $r1 = r0.<com.android.server.wm.LockTaskController: android.util.SparseArray mLockTaskPackages>;
+
+        virtualinvoke $r1.<android.util.SparseArray: void put(int,java.lang.Object)>(i6, r13);
+
+        z2 = 0;
+
+        $r2 = r0.<com.android.server.wm.LockTaskController: java.util.ArrayList mLockTaskModeTasks>;
+
+        $i0 = virtualinvoke $r2.<java.util.ArrayList: int size()>();
+
+        i7 = $i0 - 1;
+
+     label01:
+        z3 = 0;
+
+        if i7 < 0 goto label09;
+
+        $r11 = r0.<com.android.server.wm.LockTaskController: java.util.ArrayList mLockTaskModeTasks>;
+
+        $r12 = virtualinvoke $r11.<java.util.ArrayList: java.lang.Object get(int)>(i7);
+
+        r14 = (com.android.server.wm.Task) $r12;
+
+        $i2 = r14.<com.android.server.wm.Task: int mLockTaskAuth>;
+
+        if $i2 == 2 goto label03;
+
+        $i5 = r14.<com.android.server.wm.Task: int mLockTaskAuth>;
+
+        if $i5 != 3 goto label02;
+
+        goto label03;
+
+     label02:
+        z4 = 0;
+
+        goto label04;
+
+     label03:
+        z4 = 1;
+
+     label04:
+        virtualinvoke r14.<com.android.server.wm.Task: void setLockTaskAuth()>();
+
+        $i8 = r14.<com.android.server.wm.Task: int mLockTaskAuth>;
+
+        if $i8 == 2 goto label05;
+
+        $i4 = r14.<com.android.server.wm.Task: int mLockTaskAuth>;
+
+        if $i4 != 3 goto label06;
+
+     label05:
+        z3 = 1;
+
+     label06:
+        z5 = z2;
+
+        $i9 = r0.<com.android.server.wm.LockTaskController: int mLockTaskModeState>;
+
+        if $i9 != 1 goto label08;
+
+        z5 = z2;
+
+        $i3 = r14.<com.android.server.wm.Task: int mUserId>;
+
+        if $i3 != i6 goto label08;
+
+        z5 = z2;
+
+        if z4 == 0 goto label08;
+
+        if z3 == 0 goto label07;
+
+        z5 = z2;
+
+        goto label08;
+
+     label07:
+        specialinvoke r0.<com.android.server.wm.LockTaskController: void removeLockedTask(com.android.server.wm.Task)>(r14);
+
+        virtualinvoke r14.<com.android.server.wm.Task: void performClearTaskLocked()>();
+
+        z5 = 1;
+
+     label08:
+        i7 = i7 + -1;
+
+        z2 = z5;
+
+        goto label01;
+
+     label09:
+        $r3 = r0.<com.android.server.wm.LockTaskController: com.android.server.wm.ActivityStackSupervisor mSupervisor>;
+
+        $r5 = $r3.<com.android.server.wm.ActivityStackSupervisor: com.android.server.wm.RootWindowContainer mRootWindowContainer>;
+
+        $r4 = <com.android.server.wm._$$Lambda$7nuK7cv058ES7c7refBFgc_jagk: com.android.server.wm.'-$$Lambda$7nuK7cv058ES7c7refBFgc-jagk' INSTANCE>;
+
+        r17 = (java.util.function.Consumer) $r4;
+
+        virtualinvoke $r5.<com.android.server.wm.RootWindowContainer: void forAllTasks(java.util.function.Consumer)>(r17);
+
+        $r6 = r0.<com.android.server.wm.LockTaskController: com.android.server.wm.ActivityStackSupervisor mSupervisor>;
+
+        $r7 = $r6.<com.android.server.wm.ActivityStackSupervisor: com.android.server.wm.RootWindowContainer mRootWindowContainer>;
+
+        r15 = virtualinvoke $r7.<com.android.server.wm.RootWindowContainer: com.android.server.wm.ActivityRecord topRunningActivity()>();
+
+        if r15 == null goto label10;
+
+        r16 = virtualinvoke r15.<com.android.server.wm.ActivityRecord: com.android.server.wm.Task getTask()>();
+
+        goto label11;
+
+     label10:
+        r16 = null;
+
+     label11:
+        z6 = z2;
+
+        $r8 = r0.<com.android.server.wm.LockTaskController: java.util.ArrayList mLockTaskModeTasks>;
+
+        $z0 = virtualinvoke $r8.<java.util.ArrayList: boolean isEmpty()>();
+
+        if $z0 == 0 goto label12;
+
+        z6 = z2;
+
+        if r16 == null goto label12;
+
+        z6 = z2;
+
+        $i1 = r16.<com.android.server.wm.Task: int mLockTaskAuth>;
+
+        if $i1 != 2 goto label12;
+
+        specialinvoke r0.<com.android.server.wm.LockTaskController: void setLockTaskMode(com.android.server.wm.Task,int,java.lang.String,boolean)>(r16, 1, "package updated", 0);
+
+        z6 = 1;
+
+     label12:
+        if z6 == 0 goto label13;
+
+        $r9 = r0.<com.android.server.wm.LockTaskController: com.android.server.wm.ActivityStackSupervisor mSupervisor>;
+
+        $r10 = $r9.<com.android.server.wm.ActivityStackSupervisor: com.android.server.wm.RootWindowContainer mRootWindowContainer>;
+
+        virtualinvoke $r10.<com.android.server.wm.RootWindowContainer: boolean resumeFocusedStacksTopActivities()>();
+
+     label13:
+        return;
+    }
+}

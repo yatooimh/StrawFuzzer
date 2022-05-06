@@ -1,0 +1,790 @@
+public class com.android.internal.telephony.CellularNetworkValidator extends java.lang.Object
+{
+    private static final java.lang.String LOG_TAG;
+    public static final long MAX_VALIDATION_CACHE_TTL;
+    private static final int STATE_IDLE;
+    private static final int STATE_VALIDATED;
+    private static final int STATE_VALIDATING;
+    private static com.android.internal.telephony.CellularNetworkValidator sInstance;
+    private static boolean sWaitForNetworkAvailableWhenCacheHit;
+    private android.net.ConnectivityManager mConnectivityManager;
+    private android.content.Context mContext;
+    public android.os.Handler mHandler;
+    public com.android.internal.telephony.CellularNetworkValidator$ConnectivityNetworkCallback mNetworkCallback;
+    private android.net.NetworkRequest mNetworkRequest;
+    private boolean mReleaseAfterValidation;
+    private int mState;
+    private int mSubId;
+    private long mTimeoutInMs;
+    private final com.android.internal.telephony.CellularNetworkValidator$ValidatedNetworkCache mValidatedNetworkCache;
+    private com.android.internal.telephony.CellularNetworkValidator$ValidationCallback mValidationCallback;
+
+    static void <clinit>()
+    {
+        java.util.concurrent.TimeUnit $r0;
+        long $l0;
+
+        <com.android.internal.telephony.CellularNetworkValidator: int STATE_VALIDATING> = 1;
+
+        <com.android.internal.telephony.CellularNetworkValidator: int STATE_VALIDATED> = 2;
+
+        <com.android.internal.telephony.CellularNetworkValidator: int STATE_IDLE> = 0;
+
+        <com.android.internal.telephony.CellularNetworkValidator: java.lang.String LOG_TAG> = "NetworkValidator";
+
+        <com.android.internal.telephony.CellularNetworkValidator: boolean sWaitForNetworkAvailableWhenCacheHit> = 1;
+
+        $r0 = <java.util.concurrent.TimeUnit: java.util.concurrent.TimeUnit DAYS>;
+
+        $l0 = virtualinvoke $r0.<java.util.concurrent.TimeUnit: long toMillis(long)>(1L);
+
+        <com.android.internal.telephony.CellularNetworkValidator: long MAX_VALIDATION_CACHE_TTL> = $l0;
+
+        return;
+    }
+
+    public void <init>(android.content.Context)
+    {
+        com.android.internal.telephony.CellularNetworkValidator r0;
+        android.content.Context r1;
+        android.os.Handler $r2;
+        com.android.internal.telephony.CellularNetworkValidator$ValidatedNetworkCache $r3;
+        java.lang.Object $r4;
+        android.net.ConnectivityManager $r5;
+
+        r0 := @this: com.android.internal.telephony.CellularNetworkValidator;
+
+        r1 := @parameter0: android.content.Context;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        r0.<com.android.internal.telephony.CellularNetworkValidator: int mState> = 0;
+
+        $r2 = new android.os.Handler;
+
+        specialinvoke $r2.<android.os.Handler: void <init>()>();
+
+        r0.<com.android.internal.telephony.CellularNetworkValidator: android.os.Handler mHandler> = $r2;
+
+        $r3 = new com.android.internal.telephony.CellularNetworkValidator$ValidatedNetworkCache;
+
+        specialinvoke $r3.<com.android.internal.telephony.CellularNetworkValidator$ValidatedNetworkCache: void <init>(com.android.internal.telephony.CellularNetworkValidator,com.android.internal.telephony.CellularNetworkValidator$1)>(r0, null);
+
+        r0.<com.android.internal.telephony.CellularNetworkValidator: com.android.internal.telephony.CellularNetworkValidator$ValidatedNetworkCache mValidatedNetworkCache> = $r3;
+
+        r0.<com.android.internal.telephony.CellularNetworkValidator: android.content.Context mContext> = r1;
+
+        $r4 = virtualinvoke r1.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("connectivity");
+
+        $r5 = (android.net.ConnectivityManager) $r4;
+
+        r0.<com.android.internal.telephony.CellularNetworkValidator: android.net.ConnectivityManager mConnectivityManager> = $r5;
+
+        return;
+    }
+
+    static void access$100(java.lang.String)
+    {
+        java.lang.String r0;
+
+        r0 := @parameter0: java.lang.String;
+
+        staticinvoke <com.android.internal.telephony.CellularNetworkValidator: void logd(java.lang.String)>(r0);
+
+        return;
+    }
+
+    static android.content.Context access$200(com.android.internal.telephony.CellularNetworkValidator)
+    {
+        com.android.internal.telephony.CellularNetworkValidator r0;
+        android.content.Context $r1;
+
+        r0 := @parameter0: com.android.internal.telephony.CellularNetworkValidator;
+
+        $r1 = r0.<com.android.internal.telephony.CellularNetworkValidator: android.content.Context mContext>;
+
+        return $r1;
+    }
+
+    static com.android.internal.telephony.CellularNetworkValidator$ValidatedNetworkCache access$300(com.android.internal.telephony.CellularNetworkValidator)
+    {
+        com.android.internal.telephony.CellularNetworkValidator r0;
+        com.android.internal.telephony.CellularNetworkValidator$ValidatedNetworkCache $r1;
+
+        r0 := @parameter0: com.android.internal.telephony.CellularNetworkValidator;
+
+        $r1 = r0.<com.android.internal.telephony.CellularNetworkValidator: com.android.internal.telephony.CellularNetworkValidator$ValidatedNetworkCache mValidatedNetworkCache>;
+
+        return $r1;
+    }
+
+    static void access$400(com.android.internal.telephony.CellularNetworkValidator, boolean, int)
+    {
+        com.android.internal.telephony.CellularNetworkValidator r0;
+        boolean z0;
+        int i0;
+
+        r0 := @parameter0: com.android.internal.telephony.CellularNetworkValidator;
+
+        z0 := @parameter1: boolean;
+
+        i0 := @parameter2: int;
+
+        specialinvoke r0.<com.android.internal.telephony.CellularNetworkValidator: void reportValidationResult(boolean,int)>(z0, i0);
+
+        return;
+    }
+
+    static void access$500(com.android.internal.telephony.CellularNetworkValidator, android.net.Network, int)
+    {
+        com.android.internal.telephony.CellularNetworkValidator r0;
+        android.net.Network r1;
+        int i0;
+
+        r0 := @parameter0: com.android.internal.telephony.CellularNetworkValidator;
+
+        r1 := @parameter1: android.net.Network;
+
+        i0 := @parameter2: int;
+
+        specialinvoke r0.<com.android.internal.telephony.CellularNetworkValidator: void reportNetworkAvailable(android.net.Network,int)>(r1, i0);
+
+        return;
+    }
+
+    private android.net.NetworkRequest createNetworkRequest()
+    {
+        com.android.internal.telephony.CellularNetworkValidator r0;
+        android.net.NetworkRequest$Builder $r1, $r2, $r3, $r7;
+        android.net.TelephonyNetworkSpecifier$Builder $r4, $r5;
+        int $i0;
+        android.net.TelephonyNetworkSpecifier $r6;
+        android.net.NetworkRequest $r8;
+
+        r0 := @this: com.android.internal.telephony.CellularNetworkValidator;
+
+        $r1 = new android.net.NetworkRequest$Builder;
+
+        specialinvoke $r1.<android.net.NetworkRequest$Builder: void <init>()>();
+
+        $r2 = virtualinvoke $r1.<android.net.NetworkRequest$Builder: android.net.NetworkRequest$Builder addCapability(int)>(12);
+
+        $r3 = virtualinvoke $r2.<android.net.NetworkRequest$Builder: android.net.NetworkRequest$Builder addTransportType(int)>(0);
+
+        $r4 = new android.net.TelephonyNetworkSpecifier$Builder;
+
+        specialinvoke $r4.<android.net.TelephonyNetworkSpecifier$Builder: void <init>()>();
+
+        $i0 = r0.<com.android.internal.telephony.CellularNetworkValidator: int mSubId>;
+
+        $r5 = virtualinvoke $r4.<android.net.TelephonyNetworkSpecifier$Builder: android.net.TelephonyNetworkSpecifier$Builder setSubscriptionId(int)>($i0);
+
+        $r6 = virtualinvoke $r5.<android.net.TelephonyNetworkSpecifier$Builder: android.net.TelephonyNetworkSpecifier build()>();
+
+        $r7 = virtualinvoke $r3.<android.net.NetworkRequest$Builder: android.net.NetworkRequest$Builder setNetworkSpecifier(android.net.NetworkSpecifier)>($r6);
+
+        $r8 = virtualinvoke $r7.<android.net.NetworkRequest$Builder: android.net.NetworkRequest build()>();
+
+        return $r8;
+    }
+
+    public static com.android.internal.telephony.CellularNetworkValidator getInstance()
+    {
+        com.android.internal.telephony.CellularNetworkValidator $r0;
+
+        $r0 = <com.android.internal.telephony.CellularNetworkValidator: com.android.internal.telephony.CellularNetworkValidator sInstance>;
+
+        return $r0;
+    }
+
+    private static void logd(java.lang.String)
+    {
+        java.lang.String r0;
+
+        r0 := @parameter0: java.lang.String;
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("NetworkValidator", r0);
+
+        return;
+    }
+
+    public static com.android.internal.telephony.CellularNetworkValidator make(android.content.Context)
+    {
+        android.content.Context r0;
+        com.android.internal.telephony.CellularNetworkValidator $r1, $r2, $r3;
+
+        r0 := @parameter0: android.content.Context;
+
+        $r1 = <com.android.internal.telephony.CellularNetworkValidator: com.android.internal.telephony.CellularNetworkValidator sInstance>;
+
+        if $r1 == null goto label1;
+
+        staticinvoke <com.android.internal.telephony.CellularNetworkValidator: void logd(java.lang.String)>("createCellularNetworkValidator failed. Instance already exists.");
+
+        goto label2;
+
+     label1:
+        $r2 = new com.android.internal.telephony.CellularNetworkValidator;
+
+        specialinvoke $r2.<com.android.internal.telephony.CellularNetworkValidator: void <init>(android.content.Context)>(r0);
+
+        <com.android.internal.telephony.CellularNetworkValidator: com.android.internal.telephony.CellularNetworkValidator sInstance> = $r2;
+
+     label2:
+        $r3 = <com.android.internal.telephony.CellularNetworkValidator: com.android.internal.telephony.CellularNetworkValidator sInstance>;
+
+        return $r3;
+    }
+
+    private void onValidationTimeout(int)
+    {
+        com.android.internal.telephony.CellularNetworkValidator r0;
+        int i0;
+        java.lang.String $r4;
+        com.android.internal.telephony.CellularNetworkValidator$ValidatedNetworkCache $r5;
+        java.lang.Throwable $r6;
+        java.lang.StringBuilder r7;
+
+        r0 := @this: com.android.internal.telephony.CellularNetworkValidator;
+
+        i0 := @parameter0: int;
+
+        entermonitor r0;
+
+     label1:
+        r7 = new java.lang.StringBuilder;
+
+        specialinvoke r7.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("timeout on subId ");
+
+        virtualinvoke r7.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        virtualinvoke r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" validation.");
+
+        $r4 = virtualinvoke r7.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.internal.telephony.CellularNetworkValidator: void logd(java.lang.String)>($r4);
+
+        $r5 = r0.<com.android.internal.telephony.CellularNetworkValidator: com.android.internal.telephony.CellularNetworkValidator$ValidatedNetworkCache mValidatedNetworkCache>;
+
+        virtualinvoke $r5.<com.android.internal.telephony.CellularNetworkValidator$ValidatedNetworkCache: void storeLastValidationResult(int,boolean)>(i0, 0);
+
+        specialinvoke r0.<com.android.internal.telephony.CellularNetworkValidator: void reportValidationResult(boolean,int)>(0, i0);
+
+     label2:
+        exitmonitor r0;
+
+        return;
+
+     label3:
+        $r6 := @caughtexception;
+
+        exitmonitor r0;
+
+        throw $r6;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+    }
+
+    private void reportNetworkAvailable(android.net.Network, int)
+    {
+        com.android.internal.telephony.CellularNetworkValidator r0;
+        int i0, i1;
+        com.android.internal.telephony.CellularNetworkValidator$ValidationCallback $r1;
+        java.lang.Throwable $r2;
+        android.net.Network r3;
+
+        r0 := @this: com.android.internal.telephony.CellularNetworkValidator;
+
+        r3 := @parameter0: android.net.Network;
+
+        i0 := @parameter1: int;
+
+        entermonitor r0;
+
+     label1:
+        i1 = r0.<com.android.internal.telephony.CellularNetworkValidator: int mSubId>;
+
+     label2:
+        if i1 == i0 goto label3;
+
+        exitmonitor r0;
+
+        return;
+
+     label3:
+        $r1 = r0.<com.android.internal.telephony.CellularNetworkValidator: com.android.internal.telephony.CellularNetworkValidator$ValidationCallback mValidationCallback>;
+
+        interfaceinvoke $r1.<com.android.internal.telephony.CellularNetworkValidator$ValidationCallback: void onNetworkAvailable(android.net.Network,int)>(r3, i0);
+
+     label4:
+        exitmonitor r0;
+
+        return;
+
+     label5:
+        $r2 := @caughtexception;
+
+        exitmonitor r0;
+
+        throw $r2;
+
+        catch java.lang.Throwable from label1 to label2 with label5;
+        catch java.lang.Throwable from label3 to label4 with label5;
+    }
+
+    private void reportValidationResult(boolean, int)
+    {
+        com.android.internal.telephony.CellularNetworkValidator r0;
+        boolean z0, $z1;
+        int i0, $i1, $i2, i3;
+        android.os.Handler r1, $r2;
+        com.android.internal.telephony.CellularNetworkValidator$ValidationCallback $r3;
+        java.lang.Throwable $r4;
+        byte b4;
+        com.android.internal.telephony._$$Lambda$CellularNetworkValidator$AmbAIO1LrfK5ajxthuqK3LSNLR8 r5;
+        com.android.internal.telephony.metrics.TelephonyMetrics r6;
+
+        r0 := @this: com.android.internal.telephony.CellularNetworkValidator;
+
+        z0 := @parameter0: boolean;
+
+        i3 := @parameter1: int;
+
+        entermonitor r0;
+
+     label01:
+        i0 = r0.<com.android.internal.telephony.CellularNetworkValidator: int mSubId>;
+
+     label02:
+        if i0 == i3 goto label03;
+
+        exitmonitor r0;
+
+        return;
+
+     label03:
+        $r2 = r0.<com.android.internal.telephony.CellularNetworkValidator: android.os.Handler mHandler>;
+
+        virtualinvoke $r2.<android.os.Handler: void removeCallbacksAndMessages(java.lang.Object)>(null);
+
+        $i1 = r0.<com.android.internal.telephony.CellularNetworkValidator: int mState>;
+
+        if $i1 != 1 goto label13;
+
+        $r3 = r0.<com.android.internal.telephony.CellularNetworkValidator: com.android.internal.telephony.CellularNetworkValidator$ValidationCallback mValidationCallback>;
+
+        $i2 = r0.<com.android.internal.telephony.CellularNetworkValidator: int mSubId>;
+
+        interfaceinvoke $r3.<com.android.internal.telephony.CellularNetworkValidator$ValidationCallback: void onValidationDone(boolean,int)>(z0, $i2);
+
+     label04:
+        b4 = 2;
+
+     label05:
+        r0.<com.android.internal.telephony.CellularNetworkValidator: int mState> = 2;
+
+        $z1 = r0.<com.android.internal.telephony.CellularNetworkValidator: boolean mReleaseAfterValidation>;
+
+        if $z1 != 0 goto label09;
+
+     label06:
+        if z0 == 0 goto label09;
+
+     label07:
+        r1 = r0.<com.android.internal.telephony.CellularNetworkValidator: android.os.Handler mHandler>;
+
+        r5 = new com.android.internal.telephony._$$Lambda$CellularNetworkValidator$AmbAIO1LrfK5ajxthuqK3LSNLR8;
+
+        specialinvoke r5.<com.android.internal.telephony._$$Lambda$CellularNetworkValidator$AmbAIO1LrfK5ajxthuqK3LSNLR8: void <init>(com.android.internal.telephony.CellularNetworkValidator)>(r0);
+
+        virtualinvoke r1.<android.os.Handler: boolean postDelayed(java.lang.Runnable,long)>(r5, 500L);
+
+     label08:
+        goto label10;
+
+     label09:
+        virtualinvoke r0.<com.android.internal.telephony.CellularNetworkValidator: void stopValidation()>();
+
+     label10:
+        r6 = staticinvoke <com.android.internal.telephony.metrics.TelephonyMetrics: com.android.internal.telephony.metrics.TelephonyMetrics getInstance()>();
+
+     label11:
+        if z0 == 0 goto label12;
+
+        b4 = 3;
+
+        goto label12;
+
+     label12:
+        virtualinvoke r6.<com.android.internal.telephony.metrics.TelephonyMetrics: void writeNetworkValidate(int)>(b4);
+
+     label13:
+        exitmonitor r0;
+
+        return;
+
+     label14:
+        $r4 := @caughtexception;
+
+        exitmonitor r0;
+
+        throw $r4;
+
+        catch java.lang.Throwable from label01 to label02 with label14;
+        catch java.lang.Throwable from label03 to label04 with label14;
+        catch java.lang.Throwable from label05 to label06 with label14;
+        catch java.lang.Throwable from label07 to label08 with label14;
+        catch java.lang.Throwable from label09 to label10 with label14;
+        catch java.lang.Throwable from label10 to label11 with label14;
+        catch java.lang.Throwable from label12 to label13 with label14;
+    }
+
+    public int getSubIdInValidation()
+    {
+        com.android.internal.telephony.CellularNetworkValidator r0;
+        int i0;
+        java.lang.Throwable $r2;
+
+        r0 := @this: com.android.internal.telephony.CellularNetworkValidator;
+
+        entermonitor r0;
+
+     label1:
+        i0 = r0.<com.android.internal.telephony.CellularNetworkValidator: int mSubId>;
+
+     label2:
+        exitmonitor r0;
+
+        return i0;
+
+     label3:
+        $r2 := @caughtexception;
+
+        exitmonitor r0;
+
+        throw $r2;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+    }
+
+    public boolean isValidating()
+    {
+        com.android.internal.telephony.CellularNetworkValidator r0;
+        int i0;
+        java.lang.Throwable $r2;
+        boolean z0;
+
+        r0 := @this: com.android.internal.telephony.CellularNetworkValidator;
+
+        entermonitor r0;
+
+     label1:
+        i0 = r0.<com.android.internal.telephony.CellularNetworkValidator: int mState>;
+
+     label2:
+        if i0 == 0 goto label3;
+
+        z0 = 1;
+
+        goto label4;
+
+     label3:
+        z0 = 0;
+
+     label4:
+        exitmonitor r0;
+
+        return z0;
+
+     label5:
+        $r2 := @caughtexception;
+
+        exitmonitor r0;
+
+        throw $r2;
+
+        catch java.lang.Throwable from label1 to label2 with label5;
+    }
+
+    public boolean isValidationFeatureSupported()
+    {
+        com.android.internal.telephony.CellularNetworkValidator r0;
+        com.android.internal.telephony.PhoneConfigurationManager $r1;
+        android.telephony.PhoneCapability $r2;
+        boolean $z0;
+
+        r0 := @this: com.android.internal.telephony.CellularNetworkValidator;
+
+        $r1 = staticinvoke <com.android.internal.telephony.PhoneConfigurationManager: com.android.internal.telephony.PhoneConfigurationManager getInstance()>();
+
+        $r2 = virtualinvoke $r1.<com.android.internal.telephony.PhoneConfigurationManager: android.telephony.PhoneCapability getCurrentPhoneCapability()>();
+
+        $z0 = $r2.<android.telephony.PhoneCapability: boolean validationBeforeSwitchSupported>;
+
+        return $z0;
+    }
+
+    public void lambda$reportValidationResult$1$CellularNetworkValidator()
+    {
+        com.android.internal.telephony.CellularNetworkValidator r0;
+
+        r0 := @this: com.android.internal.telephony.CellularNetworkValidator;
+
+        virtualinvoke r0.<com.android.internal.telephony.CellularNetworkValidator: void stopValidation()>();
+
+        return;
+    }
+
+    public void lambda$validate$0$CellularNetworkValidator(int)
+    {
+        com.android.internal.telephony.CellularNetworkValidator r0;
+        int i0;
+
+        r0 := @this: com.android.internal.telephony.CellularNetworkValidator;
+
+        i0 := @parameter0: int;
+
+        specialinvoke r0.<com.android.internal.telephony.CellularNetworkValidator: void onValidationTimeout(int)>(i0);
+
+        return;
+    }
+
+    public void stopValidation()
+    {
+        com.android.internal.telephony.CellularNetworkValidator r0;
+        boolean $z0;
+        com.android.internal.telephony.CellularNetworkValidator$ConnectivityNetworkCallback $r2, $r4;
+        android.os.Handler $r3;
+        android.net.ConnectivityManager $r5;
+        java.lang.Throwable $r6;
+
+        r0 := @this: com.android.internal.telephony.CellularNetworkValidator;
+
+        entermonitor r0;
+
+     label1:
+        $z0 = virtualinvoke r0.<com.android.internal.telephony.CellularNetworkValidator: boolean isValidating()>();
+
+        if $z0 != 0 goto label3;
+
+        staticinvoke <com.android.internal.telephony.CellularNetworkValidator: void logd(java.lang.String)>("No need to stop validation.");
+
+     label2:
+        exitmonitor r0;
+
+        return;
+
+     label3:
+        $r2 = r0.<com.android.internal.telephony.CellularNetworkValidator: com.android.internal.telephony.CellularNetworkValidator$ConnectivityNetworkCallback mNetworkCallback>;
+
+        if $r2 == null goto label4;
+
+        $r5 = r0.<com.android.internal.telephony.CellularNetworkValidator: android.net.ConnectivityManager mConnectivityManager>;
+
+        $r4 = r0.<com.android.internal.telephony.CellularNetworkValidator: com.android.internal.telephony.CellularNetworkValidator$ConnectivityNetworkCallback mNetworkCallback>;
+
+        virtualinvoke $r5.<android.net.ConnectivityManager: void unregisterNetworkCallback(android.net.ConnectivityManager$NetworkCallback)>($r4);
+
+     label4:
+        r0.<com.android.internal.telephony.CellularNetworkValidator: int mState> = 0;
+
+        $r3 = r0.<com.android.internal.telephony.CellularNetworkValidator: android.os.Handler mHandler>;
+
+        virtualinvoke $r3.<android.os.Handler: void removeCallbacksAndMessages(java.lang.Object)>(null);
+
+        r0.<com.android.internal.telephony.CellularNetworkValidator: int mSubId> = -1;
+
+     label5:
+        exitmonitor r0;
+
+        return;
+
+     label6:
+        $r6 := @caughtexception;
+
+        exitmonitor r0;
+
+        throw $r6;
+
+        catch java.lang.Throwable from label1 to label2 with label6;
+        catch java.lang.Throwable from label3 to label4 with label6;
+        catch java.lang.Throwable from label4 to label5 with label6;
+    }
+
+    public void validate(int, long, boolean, com.android.internal.telephony.CellularNetworkValidator$ValidationCallback)
+    {
+        com.android.internal.telephony.CellularNetworkValidator r0;
+        int i0, i2, $i3;
+        long l1, $l4, $l5;
+        boolean z0, $z1, $z2, $z3, $z4, $z6;
+        com.android.internal.telephony.SubscriptionController $r1;
+        android.net.NetworkRequest $r2, $r11;
+        java.lang.String $r9, $r16;
+        android.os.Handler $r10, r22;
+        android.net.ConnectivityManager $r12;
+        com.android.internal.telephony.CellularNetworkValidator$ValidatedNetworkCache $r13;
+        java.lang.Throwable $r17;
+        com.android.internal.telephony.CellularNetworkValidator$ValidationCallback r18;
+        java.lang.StringBuilder r19, r20;
+        com.android.internal.telephony.CellularNetworkValidator$ConnectivityNetworkCallback r21;
+        com.android.internal.telephony._$$Lambda$CellularNetworkValidator$WBqTrL5sif6RU4vOzdV3Doj2Gwk r23;
+
+        r0 := @this: com.android.internal.telephony.CellularNetworkValidator;
+
+        i0 := @parameter0: int;
+
+        l1 := @parameter1: long;
+
+        z0 := @parameter2: boolean;
+
+        r18 := @parameter3: com.android.internal.telephony.CellularNetworkValidator$ValidationCallback;
+
+        entermonitor r0;
+
+     label01:
+        i2 = r0.<com.android.internal.telephony.CellularNetworkValidator: int mSubId>;
+
+     label02:
+        if i0 != i2 goto label03;
+
+        exitmonitor r0;
+
+        return;
+
+     label03:
+        $r1 = staticinvoke <com.android.internal.telephony.SubscriptionController: com.android.internal.telephony.SubscriptionController getInstance()>();
+
+        $z1 = virtualinvoke $r1.<com.android.internal.telephony.SubscriptionController: boolean isActiveSubId(int)>(i0);
+
+        if $z1 != 0 goto label05;
+
+        r19 = new java.lang.StringBuilder;
+
+        specialinvoke r19.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r19.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Failed to start validation. Inactive subId ");
+
+        virtualinvoke r19.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r16 = virtualinvoke r19.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.internal.telephony.CellularNetworkValidator: void logd(java.lang.String)>($r16);
+
+        interfaceinvoke r18.<com.android.internal.telephony.CellularNetworkValidator$ValidationCallback: void onValidationDone(boolean,int)>(0, i0);
+
+     label04:
+        exitmonitor r0;
+
+        return;
+
+     label05:
+        $z2 = virtualinvoke r0.<com.android.internal.telephony.CellularNetworkValidator: boolean isValidating()>();
+
+        if $z2 == 0 goto label06;
+
+        virtualinvoke r0.<com.android.internal.telephony.CellularNetworkValidator: void stopValidation()>();
+
+     label06:
+        $z3 = <com.android.internal.telephony.CellularNetworkValidator: boolean sWaitForNetworkAvailableWhenCacheHit>;
+
+        if $z3 != 0 goto label08;
+
+        $r13 = r0.<com.android.internal.telephony.CellularNetworkValidator: com.android.internal.telephony.CellularNetworkValidator$ValidatedNetworkCache mValidatedNetworkCache>;
+
+        $z6 = virtualinvoke $r13.<com.android.internal.telephony.CellularNetworkValidator$ValidatedNetworkCache: boolean isRecentlyValidated(int)>(i0);
+
+        if $z6 == 0 goto label08;
+
+        interfaceinvoke r18.<com.android.internal.telephony.CellularNetworkValidator$ValidationCallback: void onValidationDone(boolean,int)>(1, i0);
+
+     label07:
+        exitmonitor r0;
+
+        return;
+
+     label08:
+        r0.<com.android.internal.telephony.CellularNetworkValidator: int mState> = 1;
+
+        r0.<com.android.internal.telephony.CellularNetworkValidator: int mSubId> = i0;
+
+        r0.<com.android.internal.telephony.CellularNetworkValidator: long mTimeoutInMs> = l1;
+
+        r0.<com.android.internal.telephony.CellularNetworkValidator: com.android.internal.telephony.CellularNetworkValidator$ValidationCallback mValidationCallback> = r18;
+
+        r0.<com.android.internal.telephony.CellularNetworkValidator: boolean mReleaseAfterValidation> = z0;
+
+        $r2 = specialinvoke r0.<com.android.internal.telephony.CellularNetworkValidator: android.net.NetworkRequest createNetworkRequest()>();
+
+        r0.<com.android.internal.telephony.CellularNetworkValidator: android.net.NetworkRequest mNetworkRequest> = $r2;
+
+        r20 = new java.lang.StringBuilder;
+
+        specialinvoke r20.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r20.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Start validating subId ");
+
+        $i3 = r0.<com.android.internal.telephony.CellularNetworkValidator: int mSubId>;
+
+        virtualinvoke r20.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i3);
+
+        virtualinvoke r20.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" mTimeoutInMs ");
+
+        $l4 = r0.<com.android.internal.telephony.CellularNetworkValidator: long mTimeoutInMs>;
+
+        virtualinvoke r20.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l4);
+
+        virtualinvoke r20.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" mReleaseAfterValidation ");
+
+        $z4 = r0.<com.android.internal.telephony.CellularNetworkValidator: boolean mReleaseAfterValidation>;
+
+        virtualinvoke r20.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>($z4);
+
+        $r9 = virtualinvoke r20.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.internal.telephony.CellularNetworkValidator: void logd(java.lang.String)>($r9);
+
+        r21 = new com.android.internal.telephony.CellularNetworkValidator$ConnectivityNetworkCallback;
+
+        specialinvoke r21.<com.android.internal.telephony.CellularNetworkValidator$ConnectivityNetworkCallback: void <init>(com.android.internal.telephony.CellularNetworkValidator,int)>(r0, i0);
+
+        r0.<com.android.internal.telephony.CellularNetworkValidator: com.android.internal.telephony.CellularNetworkValidator$ConnectivityNetworkCallback mNetworkCallback> = r21;
+
+        $r12 = r0.<com.android.internal.telephony.CellularNetworkValidator: android.net.ConnectivityManager mConnectivityManager>;
+
+        $r11 = r0.<com.android.internal.telephony.CellularNetworkValidator: android.net.NetworkRequest mNetworkRequest>;
+
+        $r10 = r0.<com.android.internal.telephony.CellularNetworkValidator: android.os.Handler mHandler>;
+
+        virtualinvoke $r12.<android.net.ConnectivityManager: void requestNetwork(android.net.NetworkRequest,android.net.ConnectivityManager$NetworkCallback,android.os.Handler)>($r11, r21, $r10);
+
+        r22 = r0.<com.android.internal.telephony.CellularNetworkValidator: android.os.Handler mHandler>;
+
+        r23 = new com.android.internal.telephony._$$Lambda$CellularNetworkValidator$WBqTrL5sif6RU4vOzdV3Doj2Gwk;
+
+        specialinvoke r23.<com.android.internal.telephony._$$Lambda$CellularNetworkValidator$WBqTrL5sif6RU4vOzdV3Doj2Gwk: void <init>(com.android.internal.telephony.CellularNetworkValidator,int)>(r0, i0);
+
+        $l5 = r0.<com.android.internal.telephony.CellularNetworkValidator: long mTimeoutInMs>;
+
+        virtualinvoke r22.<android.os.Handler: boolean postDelayed(java.lang.Runnable,long)>(r23, $l5);
+
+     label09:
+        exitmonitor r0;
+
+        return;
+
+     label10:
+        $r17 := @caughtexception;
+
+        exitmonitor r0;
+
+        throw $r17;
+
+        catch java.lang.Throwable from label01 to label02 with label10;
+        catch java.lang.Throwable from label03 to label04 with label10;
+        catch java.lang.Throwable from label05 to label06 with label10;
+        catch java.lang.Throwable from label06 to label07 with label10;
+        catch java.lang.Throwable from label08 to label09 with label10;
+    }
+}

@@ -1,0 +1,2536 @@
+public final class com.android.server.PinnerService extends com.android.server.SystemService
+{
+    private static final boolean DEBUG;
+    private static final int KEY_ASSISTANT;
+    private static final int KEY_CAMERA;
+    private static final int KEY_HOME;
+    private static final int MATCH_FLAGS;
+    private static final int MAX_ASSISTANT_PIN_SIZE;
+    private static final int MAX_CAMERA_PIN_SIZE;
+    private static final int MAX_HOME_PIN_SIZE;
+    private static final int PAGE_SIZE;
+    private static final java.lang.String PIN_META_FILENAME;
+    private static boolean PROP_PIN_CAMERA;
+    private static boolean PROP_PIN_ODEX;
+    private static boolean PROP_PIN_PINLIST;
+    private static final java.lang.String TAG;
+    private final android.app.IActivityManager mAm;
+    private final android.app.ActivityManagerInternal mAmInternal;
+    private final com.android.server.wm.ActivityTaskManagerInternal mAtmInternal;
+    private com.android.server.PinnerService$BinderService mBinderService;
+    private final android.content.BroadcastReceiver mBroadcastReceiver;
+    private final android.content.Context mContext;
+    private final android.util.ArrayMap mPendingRepin;
+    private final android.util.ArraySet mPinKeys;
+    private final android.util.ArrayMap mPinnedApps;
+    private final java.util.ArrayList mPinnedFiles;
+    private com.android.server.PinnerService$PinnerHandler mPinnerHandler;
+    private android.app.SearchManager mSearchManager;
+    private final android.os.UserManager mUserManager;
+
+    static void <clinit>()
+    {
+        int $i0, $i2;
+        long $l1;
+        boolean $z0, $z1, $z2, $z3;
+
+        <com.android.server.PinnerService: java.lang.String TAG> = "PinnerService";
+
+        <com.android.server.PinnerService: java.lang.String PIN_META_FILENAME> = "pinlist.meta";
+
+        <com.android.server.PinnerService: int MAX_HOME_PIN_SIZE> = 6291456;
+
+        <com.android.server.PinnerService: int MAX_CAMERA_PIN_SIZE> = 83886080;
+
+        <com.android.server.PinnerService: int MAX_ASSISTANT_PIN_SIZE> = 62914560;
+
+        <com.android.server.PinnerService: int MATCH_FLAGS> = 851968;
+
+        <com.android.server.PinnerService: int KEY_HOME> = 1;
+
+        <com.android.server.PinnerService: int KEY_CAMERA> = 0;
+
+        <com.android.server.PinnerService: int KEY_ASSISTANT> = 2;
+
+        <com.android.server.PinnerService: boolean DEBUG> = 0;
+
+        $i0 = <android.system.OsConstants: int _SC_PAGESIZE>;
+
+        $l1 = staticinvoke <android.system.Os: long sysconf(int)>($i0);
+
+        $i2 = (int) $l1;
+
+        <com.android.server.PinnerService: int PAGE_SIZE> = $i2;
+
+        $z0 = staticinvoke <android.os.SystemProperties: boolean getBoolean(java.lang.String,boolean)>("pinner.pin_camera", 0);
+
+        $z1 = staticinvoke <android.provider.DeviceConfig: boolean getBoolean(java.lang.String,java.lang.String,boolean)>("runtime_native_boot", "pin_camera", $z0);
+
+        <com.android.server.PinnerService: boolean PROP_PIN_CAMERA> = $z1;
+
+        $z2 = staticinvoke <android.os.SystemProperties: boolean getBoolean(java.lang.String,boolean)>("pinner.use_pinlist", 1);
+
+        <com.android.server.PinnerService: boolean PROP_PIN_PINLIST> = $z2;
+
+        $z3 = staticinvoke <android.os.SystemProperties: boolean getBoolean(java.lang.String,boolean)>("pinner.whole_odex", 1);
+
+        <com.android.server.PinnerService: boolean PROP_PIN_ODEX> = $z3;
+
+        return;
+    }
+
+    public void <init>(android.content.Context)
+    {
+        com.android.server.PinnerService r0;
+        boolean z0, z1, z2, $z5;
+        java.util.ArrayList $r1;
+        android.util.ArrayMap $r2, $r3;
+        android.util.ArraySet $r4, $r24, $r26, $r28;
+        com.android.server.PinnerService$1 $r5;
+        android.content.res.Resources $r6, $r7, $r8;
+        com.android.server.PinnerService$PinnerHandler $r9;
+        com.android.internal.os.BackgroundThread $r10;
+        android.os.Looper $r11;
+        java.lang.Object $r12, $r14, $r18;
+        com.android.server.wm.ActivityTaskManagerInternal $r13;
+        android.app.ActivityManagerInternal $r15;
+        android.app.IActivityManager $r16;
+        android.content.Context $r17, $r22, r30;
+        android.os.UserManager $r19;
+        android.content.IntentFilter $r20;
+        android.content.BroadcastReceiver $r21;
+        java.lang.Integer $r25, $r27, $r29;
+
+        r0 := @this: com.android.server.PinnerService;
+
+        r30 := @parameter0: android.content.Context;
+
+        specialinvoke r0.<com.android.server.SystemService: void <init>(android.content.Context)>(r30);
+
+        $r1 = new java.util.ArrayList;
+
+        specialinvoke $r1.<java.util.ArrayList: void <init>()>();
+
+        r0.<com.android.server.PinnerService: java.util.ArrayList mPinnedFiles> = $r1;
+
+        $r2 = new android.util.ArrayMap;
+
+        specialinvoke $r2.<android.util.ArrayMap: void <init>()>();
+
+        r0.<com.android.server.PinnerService: android.util.ArrayMap mPinnedApps> = $r2;
+
+        $r3 = new android.util.ArrayMap;
+
+        specialinvoke $r3.<android.util.ArrayMap: void <init>()>();
+
+        r0.<com.android.server.PinnerService: android.util.ArrayMap mPendingRepin> = $r3;
+
+        $r4 = new android.util.ArraySet;
+
+        specialinvoke $r4.<android.util.ArraySet: void <init>()>();
+
+        r0.<com.android.server.PinnerService: android.util.ArraySet mPinKeys> = $r4;
+
+        r0.<com.android.server.PinnerService: com.android.server.PinnerService$PinnerHandler mPinnerHandler> = null;
+
+        $r5 = new com.android.server.PinnerService$1;
+
+        specialinvoke $r5.<com.android.server.PinnerService$1: void <init>(com.android.server.PinnerService)>(r0);
+
+        r0.<com.android.server.PinnerService: android.content.BroadcastReceiver mBroadcastReceiver> = $r5;
+
+        r0.<com.android.server.PinnerService: android.content.Context mContext> = r30;
+
+        $r6 = virtualinvoke r30.<android.content.Context: android.content.res.Resources getResources()>();
+
+        z0 = virtualinvoke $r6.<android.content.res.Resources: boolean getBoolean(int)>(17891502);
+
+        $r7 = virtualinvoke r30.<android.content.Context: android.content.res.Resources getResources()>();
+
+        z1 = virtualinvoke $r7.<android.content.res.Resources: boolean getBoolean(int)>(17891503);
+
+        $r8 = virtualinvoke r30.<android.content.Context: android.content.res.Resources getResources()>();
+
+        z2 = virtualinvoke $r8.<android.content.res.Resources: boolean getBoolean(int)>(17891501);
+
+        if z0 == 0 goto label1;
+
+        $z5 = <com.android.server.PinnerService: boolean PROP_PIN_CAMERA>;
+
+        if $z5 == 0 goto label1;
+
+        $r28 = r0.<com.android.server.PinnerService: android.util.ArraySet mPinKeys>;
+
+        $r29 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(0);
+
+        virtualinvoke $r28.<android.util.ArraySet: boolean add(java.lang.Object)>($r29);
+
+     label1:
+        if z1 == 0 goto label2;
+
+        $r26 = r0.<com.android.server.PinnerService: android.util.ArraySet mPinKeys>;
+
+        $r27 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(1);
+
+        virtualinvoke $r26.<android.util.ArraySet: boolean add(java.lang.Object)>($r27);
+
+     label2:
+        if z2 == 0 goto label3;
+
+        $r24 = r0.<com.android.server.PinnerService: android.util.ArraySet mPinKeys>;
+
+        $r25 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(2);
+
+        virtualinvoke $r24.<android.util.ArraySet: boolean add(java.lang.Object)>($r25);
+
+     label3:
+        $r9 = new com.android.server.PinnerService$PinnerHandler;
+
+        $r10 = staticinvoke <com.android.internal.os.BackgroundThread: com.android.internal.os.BackgroundThread get()>();
+
+        $r11 = virtualinvoke $r10.<com.android.internal.os.BackgroundThread: android.os.Looper getLooper()>();
+
+        specialinvoke $r9.<com.android.server.PinnerService$PinnerHandler: void <init>(com.android.server.PinnerService,android.os.Looper)>(r0, $r11);
+
+        r0.<com.android.server.PinnerService: com.android.server.PinnerService$PinnerHandler mPinnerHandler> = $r9;
+
+        $r12 = staticinvoke <com.android.server.LocalServices: java.lang.Object getService(java.lang.Class)>(class "Lcom/android/server/wm/ActivityTaskManagerInternal;");
+
+        $r13 = (com.android.server.wm.ActivityTaskManagerInternal) $r12;
+
+        r0.<com.android.server.PinnerService: com.android.server.wm.ActivityTaskManagerInternal mAtmInternal> = $r13;
+
+        $r14 = staticinvoke <com.android.server.LocalServices: java.lang.Object getService(java.lang.Class)>(class "Landroid/app/ActivityManagerInternal;");
+
+        $r15 = (android.app.ActivityManagerInternal) $r14;
+
+        r0.<com.android.server.PinnerService: android.app.ActivityManagerInternal mAmInternal> = $r15;
+
+        $r16 = staticinvoke <android.app.ActivityManager: android.app.IActivityManager getService()>();
+
+        r0.<com.android.server.PinnerService: android.app.IActivityManager mAm> = $r16;
+
+        $r17 = r0.<com.android.server.PinnerService: android.content.Context mContext>;
+
+        $r18 = virtualinvoke $r17.<android.content.Context: java.lang.Object getSystemService(java.lang.Class)>(class "Landroid/os/UserManager;");
+
+        $r19 = (android.os.UserManager) $r18;
+
+        r0.<com.android.server.PinnerService: android.os.UserManager mUserManager> = $r19;
+
+        $r20 = new android.content.IntentFilter;
+
+        specialinvoke $r20.<android.content.IntentFilter: void <init>()>();
+
+        virtualinvoke $r20.<android.content.IntentFilter: void addAction(java.lang.String)>("android.intent.action.PACKAGE_REPLACED");
+
+        virtualinvoke $r20.<android.content.IntentFilter: void addDataScheme(java.lang.String)>("package");
+
+        $r22 = r0.<com.android.server.PinnerService: android.content.Context mContext>;
+
+        $r21 = r0.<com.android.server.PinnerService: android.content.BroadcastReceiver mBroadcastReceiver>;
+
+        virtualinvoke $r22.<android.content.Context: android.content.Intent registerReceiver(android.content.BroadcastReceiver,android.content.IntentFilter)>($r21, $r20);
+
+        specialinvoke r0.<com.android.server.PinnerService: void registerUidListener()>();
+
+        specialinvoke r0.<com.android.server.PinnerService: void registerUserSetupCompleteListener()>();
+
+        return;
+    }
+
+    static void access$100(com.android.server.PinnerService, int, int, boolean)
+    {
+        com.android.server.PinnerService r0;
+        int i0, i1;
+        boolean z0;
+
+        r0 := @parameter0: com.android.server.PinnerService;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        z0 := @parameter3: boolean;
+
+        specialinvoke r0.<com.android.server.PinnerService: void sendPinAppMessage(int,int,boolean)>(i0, i1, z0);
+
+        return;
+    }
+
+    static java.lang.String access$1000(com.android.server.PinnerService, int)
+    {
+        com.android.server.PinnerService r0;
+        int i0;
+        java.lang.String $r1;
+
+        r0 := @parameter0: com.android.server.PinnerService;
+
+        i0 := @parameter1: int;
+
+        $r1 = specialinvoke r0.<com.android.server.PinnerService: java.lang.String getNameForKey(int)>(i0);
+
+        return $r1;
+    }
+
+    static android.util.ArrayMap access$1100(com.android.server.PinnerService)
+    {
+        com.android.server.PinnerService r0;
+        android.util.ArrayMap $r1;
+
+        r0 := @parameter0: com.android.server.PinnerService;
+
+        $r1 = r0.<com.android.server.PinnerService: android.util.ArrayMap mPendingRepin>;
+
+        return $r1;
+    }
+
+    static void access$1200(long, long)
+    {
+        long l0, l1;
+
+        l0 := @parameter0: long;
+
+        l1 := @parameter1: long;
+
+        staticinvoke <com.android.server.PinnerService: void safeMunmap(long,long)>(l0, l1);
+
+        return;
+    }
+
+    static android.app.ActivityManagerInternal access$1300(com.android.server.PinnerService)
+    {
+        com.android.server.PinnerService r0;
+        android.app.ActivityManagerInternal $r1;
+
+        r0 := @parameter0: com.android.server.PinnerService;
+
+        $r1 = r0.<com.android.server.PinnerService: android.app.ActivityManagerInternal mAmInternal>;
+
+        return $r1;
+    }
+
+    static void access$1400(com.android.server.PinnerService)
+    {
+        com.android.server.PinnerService r0;
+
+        r0 := @parameter0: com.android.server.PinnerService;
+
+        specialinvoke r0.<com.android.server.PinnerService: void handlePinOnStart()>();
+
+        return;
+    }
+
+    static com.android.server.PinnerService$PinnerHandler access$200(com.android.server.PinnerService)
+    {
+        com.android.server.PinnerService r0;
+        com.android.server.PinnerService$PinnerHandler $r1;
+
+        r0 := @parameter0: com.android.server.PinnerService;
+
+        $r1 = r0.<com.android.server.PinnerService: com.android.server.PinnerService$PinnerHandler mPinnerHandler>;
+
+        return $r1;
+    }
+
+    static void access$300(com.android.server.PinnerService, int)
+    {
+        com.android.server.PinnerService r0;
+        int i0;
+
+        r0 := @parameter0: com.android.server.PinnerService;
+
+        i0 := @parameter1: int;
+
+        specialinvoke r0.<com.android.server.PinnerService: void handleUidActive(int)>(i0);
+
+        return;
+    }
+
+    static void access$400(com.android.server.PinnerService, int)
+    {
+        com.android.server.PinnerService r0;
+        int i0;
+
+        r0 := @parameter0: com.android.server.PinnerService;
+
+        i0 := @parameter1: int;
+
+        specialinvoke r0.<com.android.server.PinnerService: void handleUidGone(int)>(i0);
+
+        return;
+    }
+
+    static android.content.Context access$700(com.android.server.PinnerService)
+    {
+        com.android.server.PinnerService r0;
+        android.content.Context $r1;
+
+        r0 := @parameter0: com.android.server.PinnerService;
+
+        $r1 = r0.<com.android.server.PinnerService: android.content.Context mContext>;
+
+        return $r1;
+    }
+
+    static java.util.ArrayList access$800(com.android.server.PinnerService)
+    {
+        com.android.server.PinnerService r0;
+        java.util.ArrayList $r1;
+
+        r0 := @parameter0: com.android.server.PinnerService;
+
+        $r1 = r0.<com.android.server.PinnerService: java.util.ArrayList mPinnedFiles>;
+
+        return $r1;
+    }
+
+    static android.util.ArrayMap access$900(com.android.server.PinnerService)
+    {
+        com.android.server.PinnerService r0;
+        android.util.ArrayMap $r1;
+
+        r0 := @parameter0: com.android.server.PinnerService;
+
+        $r1 = r0.<com.android.server.PinnerService: android.util.ArrayMap mPinnedApps>;
+
+        return $r1;
+    }
+
+    private static int clamp(int, int, int)
+    {
+        int i0, i1, i2, $i3, $i4;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        i2 := @parameter2: int;
+
+        $i3 = staticinvoke <java.lang.Math: int min(int,int)>(i1, i2);
+
+        $i4 = staticinvoke <java.lang.Math: int max(int,int)>(i0, $i3);
+
+        return $i4;
+    }
+
+    private android.content.pm.ApplicationInfo getApplicationInfoForIntent(android.content.Intent, int, boolean)
+    {
+        com.android.server.PinnerService r0;
+        int i0, $i1, $i2;
+        boolean z0, $z1, $z2;
+        java.util.Iterator r1;
+        android.content.pm.ResolveInfo r2, r15;
+        android.content.Context $r3, $r6;
+        android.content.pm.PackageManager $r4, $r7;
+        android.content.pm.ActivityInfo $r5, $r9, $r11, $r12;
+        java.lang.Object $r8;
+        android.content.pm.ApplicationInfo $r10, $r13, r17, r18;
+        android.content.Intent r14;
+        java.util.List r16;
+
+        r0 := @this: com.android.server.PinnerService;
+
+        r14 := @parameter0: android.content.Intent;
+
+        i0 := @parameter1: int;
+
+        z0 := @parameter2: boolean;
+
+        if r14 != null goto label1;
+
+        return null;
+
+     label1:
+        $r3 = r0.<com.android.server.PinnerService: android.content.Context mContext>;
+
+        $r4 = virtualinvoke $r3.<android.content.Context: android.content.pm.PackageManager getPackageManager()>();
+
+        r15 = virtualinvoke $r4.<android.content.pm.PackageManager: android.content.pm.ResolveInfo resolveActivityAsUser(android.content.Intent,int,int)>(r14, 851968, i0);
+
+        if r15 != null goto label2;
+
+        return null;
+
+     label2:
+        $r5 = r15.<android.content.pm.ResolveInfo: android.content.pm.ActivityInfo activityInfo>;
+
+        $z1 = specialinvoke r0.<com.android.server.PinnerService: boolean isResolverActivity(android.content.pm.ActivityInfo)>($r5);
+
+        if $z1 != 0 goto label3;
+
+        $r12 = r15.<android.content.pm.ResolveInfo: android.content.pm.ActivityInfo activityInfo>;
+
+        $r13 = $r12.<android.content.pm.ActivityInfo: android.content.pm.ApplicationInfo applicationInfo>;
+
+        return $r13;
+
+     label3:
+        if z0 == 0 goto label8;
+
+        $r6 = r0.<com.android.server.PinnerService: android.content.Context mContext>;
+
+        $r7 = virtualinvoke $r6.<android.content.Context: android.content.pm.PackageManager getPackageManager()>();
+
+        r16 = virtualinvoke $r7.<android.content.pm.PackageManager: java.util.List queryIntentActivitiesAsUser(android.content.Intent,int,int)>(r14, 851968, i0);
+
+        r17 = null;
+
+        r1 = interfaceinvoke r16.<java.util.List: java.util.Iterator iterator()>();
+
+     label4:
+        $z2 = interfaceinvoke r1.<java.util.Iterator: boolean hasNext()>();
+
+        if $z2 == 0 goto label7;
+
+        $r8 = interfaceinvoke r1.<java.util.Iterator: java.lang.Object next()>();
+
+        r2 = (android.content.pm.ResolveInfo) $r8;
+
+        r18 = r17;
+
+        $r9 = r2.<android.content.pm.ResolveInfo: android.content.pm.ActivityInfo activityInfo>;
+
+        $r10 = $r9.<android.content.pm.ActivityInfo: android.content.pm.ApplicationInfo applicationInfo>;
+
+        $i1 = $r10.<android.content.pm.ApplicationInfo: int flags>;
+
+        $i2 = $i1 & 1;
+
+        if $i2 == 0 goto label6;
+
+        if r17 != null goto label5;
+
+        $r11 = r2.<android.content.pm.ResolveInfo: android.content.pm.ActivityInfo activityInfo>;
+
+        r18 = $r11.<android.content.pm.ActivityInfo: android.content.pm.ApplicationInfo applicationInfo>;
+
+        goto label6;
+
+     label5:
+        return null;
+
+     label6:
+        r17 = r18;
+
+        goto label4;
+
+     label7:
+        return r17;
+
+     label8:
+        return null;
+    }
+
+    private android.content.pm.ApplicationInfo getAssistantInfo(int)
+    {
+        com.android.server.PinnerService r0;
+        int i0;
+        android.app.SearchManager r1;
+        android.content.Intent $r2;
+        android.content.pm.ApplicationInfo $r3;
+
+        r0 := @this: com.android.server.PinnerService;
+
+        i0 := @parameter0: int;
+
+        r1 = r0.<com.android.server.PinnerService: android.app.SearchManager mSearchManager>;
+
+        if r1 == null goto label1;
+
+        $r2 = virtualinvoke r1.<android.app.SearchManager: android.content.Intent getAssistIntent(boolean)>(0);
+
+        $r3 = specialinvoke r0.<com.android.server.PinnerService: android.content.pm.ApplicationInfo getApplicationInfoForIntent(android.content.Intent,int,boolean)>($r2, i0, 1);
+
+        return $r3;
+
+     label1:
+        return null;
+    }
+
+    private android.content.pm.ApplicationInfo getCameraInfo(int)
+    {
+        com.android.server.PinnerService r0;
+        int i0;
+        android.content.Intent $r1, $r2, $r3;
+        android.content.pm.ApplicationInfo r4, r5, r6;
+
+        r0 := @this: com.android.server.PinnerService;
+
+        i0 := @parameter0: int;
+
+        $r1 = new android.content.Intent;
+
+        specialinvoke $r1.<android.content.Intent: void <init>(java.lang.String)>("android.media.action.STILL_IMAGE_CAMERA");
+
+        r4 = specialinvoke r0.<com.android.server.PinnerService: android.content.pm.ApplicationInfo getApplicationInfoForIntent(android.content.Intent,int,boolean)>($r1, i0, 0);
+
+        r5 = r4;
+
+        if r4 != null goto label1;
+
+        $r3 = new android.content.Intent;
+
+        specialinvoke $r3.<android.content.Intent: void <init>(java.lang.String)>("android.media.action.STILL_IMAGE_CAMERA_SECURE");
+
+        r5 = specialinvoke r0.<com.android.server.PinnerService: android.content.pm.ApplicationInfo getApplicationInfoForIntent(android.content.Intent,int,boolean)>($r3, i0, 0);
+
+     label1:
+        r6 = r5;
+
+        if r5 != null goto label2;
+
+        $r2 = new android.content.Intent;
+
+        specialinvoke $r2.<android.content.Intent: void <init>(java.lang.String)>("android.media.action.STILL_IMAGE_CAMERA");
+
+        r6 = specialinvoke r0.<com.android.server.PinnerService: android.content.pm.ApplicationInfo getApplicationInfoForIntent(android.content.Intent,int,boolean)>($r2, i0, 1);
+
+     label2:
+        return r6;
+    }
+
+    private android.content.pm.ApplicationInfo getHomeInfo(int)
+    {
+        com.android.server.PinnerService r0;
+        int i0;
+        com.android.server.wm.ActivityTaskManagerInternal $r1;
+        android.content.Intent $r2;
+        android.content.pm.ApplicationInfo $r3;
+
+        r0 := @this: com.android.server.PinnerService;
+
+        i0 := @parameter0: int;
+
+        $r1 = r0.<com.android.server.PinnerService: com.android.server.wm.ActivityTaskManagerInternal mAtmInternal>;
+
+        $r2 = virtualinvoke $r1.<com.android.server.wm.ActivityTaskManagerInternal: android.content.Intent getHomeIntent()>();
+
+        $r3 = specialinvoke r0.<com.android.server.PinnerService: android.content.pm.ApplicationInfo getApplicationInfoForIntent(android.content.Intent,int,boolean)>($r2, i0, 0);
+
+        return $r3;
+    }
+
+    private android.content.pm.ApplicationInfo getInfoForKey(int, int)
+    {
+        com.android.server.PinnerService r0;
+        int i0, i1;
+        android.content.pm.ApplicationInfo $r1, $r2, $r3;
+
+        r0 := @this: com.android.server.PinnerService;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        if i0 == 0 goto label3;
+
+        if i0 == 1 goto label2;
+
+        if i0 == 2 goto label1;
+
+        return null;
+
+     label1:
+        $r3 = specialinvoke r0.<com.android.server.PinnerService: android.content.pm.ApplicationInfo getAssistantInfo(int)>(i1);
+
+        return $r3;
+
+     label2:
+        $r2 = specialinvoke r0.<com.android.server.PinnerService: android.content.pm.ApplicationInfo getHomeInfo(int)>(i1);
+
+        return $r2;
+
+     label3:
+        $r1 = specialinvoke r0.<com.android.server.PinnerService: android.content.pm.ApplicationInfo getCameraInfo(int)>(i1);
+
+        return $r1;
+    }
+
+    private java.lang.String getNameForKey(int)
+    {
+        com.android.server.PinnerService r0;
+        int i0;
+
+        r0 := @this: com.android.server.PinnerService;
+
+        i0 := @parameter0: int;
+
+        if i0 == 0 goto label3;
+
+        if i0 == 1 goto label2;
+
+        if i0 == 2 goto label1;
+
+        return null;
+
+     label1:
+        return "Assistant";
+
+     label2:
+        return "Home";
+
+     label3:
+        return "Camera";
+    }
+
+    private int getSizeLimitForKey(int)
+    {
+        com.android.server.PinnerService r0;
+        int i0;
+
+        r0 := @this: com.android.server.PinnerService;
+
+        i0 := @parameter0: int;
+
+        if i0 == 0 goto label3;
+
+        if i0 == 1 goto label2;
+
+        if i0 == 2 goto label1;
+
+        return 0;
+
+     label1:
+        return 62914560;
+
+     label2:
+        return 6291456;
+
+     label3:
+        return 83886080;
+    }
+
+    private int getUidForKey(int)
+    {
+        com.android.server.PinnerService r0;
+        android.util.ArrayMap $r1;
+        java.lang.Integer $r2;
+        java.lang.Object $r3;
+        boolean $z0;
+        java.lang.Throwable $r4;
+        int i0, i1;
+        com.android.server.PinnerService$PinnedApp r5;
+
+        r0 := @this: com.android.server.PinnerService;
+
+        i0 := @parameter0: int;
+
+        entermonitor r0;
+
+     label01:
+        $r1 = r0.<com.android.server.PinnerService: android.util.ArrayMap mPinnedApps>;
+
+        $r2 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i0);
+
+        $r3 = virtualinvoke $r1.<android.util.ArrayMap: java.lang.Object get(java.lang.Object)>($r2);
+
+        r5 = (com.android.server.PinnerService$PinnedApp) $r3;
+
+     label02:
+        if r5 == null goto label05;
+
+     label03:
+        $z0 = r5.<com.android.server.PinnerService$PinnedApp: boolean active>;
+
+        if $z0 == 0 goto label05;
+
+        i1 = r5.<com.android.server.PinnerService$PinnedApp: int uid>;
+
+     label04:
+        goto label06;
+
+     label05:
+        i1 = -1;
+
+     label06:
+        exitmonitor r0;
+
+     label07:
+        return i1;
+
+     label08:
+        $r4 := @caughtexception;
+
+     label09:
+        exitmonitor r0;
+
+     label10:
+        throw $r4;
+
+        catch java.lang.Throwable from label01 to label02 with label08;
+        catch java.lang.Throwable from label03 to label04 with label08;
+        catch java.lang.Throwable from label06 to label07 with label08;
+        catch java.lang.Throwable from label09 to label10 with label08;
+    }
+
+    private void handlePinOnStart()
+    {
+        com.android.server.PinnerService r0;
+        int i0, i2;
+        java.lang.String r1, $r2, $r9;
+        boolean $z0;
+        android.content.Context $r3, $r10;
+        android.content.res.Resources $r4, $r11;
+        java.util.ArrayList $r5;
+        java.lang.StringBuilder $r6;
+        java.lang.Throwable $r12;
+        java.lang.String[] r13;
+        com.android.server.PinnerService$PinnedFile r14;
+
+        r0 := @this: com.android.server.PinnerService;
+
+        $r2 = staticinvoke <android.os.SystemProperties: java.lang.String get(java.lang.String,java.lang.String)>("dalvik.vm.boot-image", "");
+
+        $z0 = virtualinvoke $r2.<java.lang.String: boolean endsWith(java.lang.String)>("boot-image.prof");
+
+        if $z0 == 0 goto label01;
+
+        $r10 = r0.<com.android.server.PinnerService: android.content.Context mContext>;
+
+        $r11 = virtualinvoke $r10.<android.content.Context: android.content.res.Resources getResources()>();
+
+        r13 = virtualinvoke $r11.<android.content.res.Resources: java.lang.String[] getStringArray(int)>(17236044);
+
+        goto label02;
+
+     label01:
+        $r3 = r0.<com.android.server.PinnerService: android.content.Context mContext>;
+
+        $r4 = virtualinvoke $r3.<android.content.Context: android.content.res.Resources getResources()>();
+
+        r13 = virtualinvoke $r4.<android.content.res.Resources: java.lang.String[] getStringArray(int)>(17236009);
+
+     label02:
+        i0 = lengthof r13;
+
+        i2 = 0;
+
+     label03:
+        if i2 >= i0 goto label10;
+
+        r1 = r13[i2];
+
+        r14 = staticinvoke <com.android.server.PinnerService: com.android.server.PinnerService$PinnedFile pinFile(java.lang.String,int,boolean)>(r1, 2147483647, 0);
+
+        if r14 != null goto label04;
+
+        $r6 = new java.lang.StringBuilder;
+
+        specialinvoke $r6.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Failed to pin file = ");
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r9 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("PinnerService", $r9);
+
+        goto label06;
+
+     label04:
+        entermonitor r0;
+
+     label05:
+        $r5 = r0.<com.android.server.PinnerService: java.util.ArrayList mPinnedFiles>;
+
+        virtualinvoke $r5.<java.util.ArrayList: boolean add(java.lang.Object)>(r14);
+
+        exitmonitor r0;
+
+     label06:
+        i2 = i2 + 1;
+
+        goto label03;
+
+     label07:
+        $r12 := @caughtexception;
+
+     label08:
+        exitmonitor r0;
+
+     label09:
+        throw $r12;
+
+     label10:
+        return;
+
+        catch java.lang.Throwable from label05 to label06 with label07;
+        catch java.lang.Throwable from label08 to label09 with label07;
+    }
+
+    private void handleUidActive(int)
+    {
+        com.android.server.PinnerService r0;
+        int i0;
+
+        r0 := @this: com.android.server.PinnerService;
+
+        i0 := @parameter0: int;
+
+        specialinvoke r0.<com.android.server.PinnerService: void updateActiveState(int,boolean)>(i0, 1);
+
+        return;
+    }
+
+    private void handleUidGone(int)
+    {
+        com.android.server.PinnerService r0;
+        int i0, i1, $i2;
+        android.util.ArrayMap $r2, $r7;
+        java.lang.Integer $r3, $r4, $r6, $r8;
+        java.lang.Object $r5;
+        java.lang.Throwable $r10;
+
+        r0 := @this: com.android.server.PinnerService;
+
+        i0 := @parameter0: int;
+
+        specialinvoke r0.<com.android.server.PinnerService: void updateActiveState(int,boolean)>(i0, 0);
+
+        entermonitor r0;
+
+     label1:
+        $r2 = r0.<com.android.server.PinnerService: android.util.ArrayMap mPendingRepin>;
+
+        $r3 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i0);
+
+        $r4 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(-1);
+
+        $r5 = virtualinvoke $r2.<android.util.ArrayMap: java.lang.Object getOrDefault(java.lang.Object,java.lang.Object)>($r3, $r4);
+
+        $r6 = (java.lang.Integer) $r5;
+
+        i1 = virtualinvoke $r6.<java.lang.Integer: int intValue()>();
+
+     label2:
+        if i1 != -1 goto label5;
+
+     label3:
+        exitmonitor r0;
+
+     label4:
+        return;
+
+     label5:
+        $r7 = r0.<com.android.server.PinnerService: android.util.ArrayMap mPendingRepin>;
+
+        $r8 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i0);
+
+        virtualinvoke $r7.<android.util.ArrayMap: java.lang.Object remove(java.lang.Object)>($r8);
+
+        exitmonitor r0;
+
+     label6:
+        $i2 = staticinvoke <android.app.ActivityManager: int getCurrentUser()>();
+
+        specialinvoke r0.<com.android.server.PinnerService: void pinApp(int,int,boolean)>(i1, $i2, 0);
+
+        return;
+
+     label7:
+        $r10 := @caughtexception;
+
+     label8:
+        exitmonitor r0;
+
+     label9:
+        throw $r10;
+
+        catch java.lang.Throwable from label1 to label2 with label7;
+        catch java.lang.Throwable from label3 to label4 with label7;
+        catch java.lang.Throwable from label5 to label6 with label7;
+        catch java.lang.Throwable from label8 to label9 with label7;
+    }
+
+    private boolean isResolverActivity(android.content.pm.ActivityInfo)
+    {
+        com.android.server.PinnerService r0;
+        android.content.pm.ActivityInfo r1;
+        java.lang.Class $r2;
+        java.lang.String $r3, $r4;
+        boolean $z0;
+
+        r0 := @this: com.android.server.PinnerService;
+
+        r1 := @parameter0: android.content.pm.ActivityInfo;
+
+        $r2 = class "Lcom/android/internal/app/ResolverActivity;";
+
+        $r3 = virtualinvoke $r2.<java.lang.Class: java.lang.String getName()>();
+
+        $r4 = r1.<android.content.pm.ActivityInfo: java.lang.String name>;
+
+        $z0 = virtualinvoke $r3.<java.lang.String: boolean equals(java.lang.Object)>($r4);
+
+        return $z0;
+    }
+
+    public static void lambda$6bekYOn4YXi0x7vYNWO40QyA-s8(com.android.server.PinnerService, int, int, boolean)
+    {
+        com.android.server.PinnerService r0;
+        int i0, i1;
+        boolean z0;
+
+        r0 := @parameter0: com.android.server.PinnerService;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        z0 := @parameter3: boolean;
+
+        specialinvoke r0.<com.android.server.PinnerService: void pinApp(int,int,boolean)>(i0, i1, z0);
+
+        return;
+    }
+
+    public static void lambda$GeEX-8XoHeV0LEszxat7jOSlrs4(com.android.server.PinnerService, int)
+    {
+        com.android.server.PinnerService r0;
+        int i0;
+
+        r0 := @parameter0: com.android.server.PinnerService;
+
+        i0 := @parameter1: int;
+
+        specialinvoke r0.<com.android.server.PinnerService: void pinApps(int)>(i0);
+
+        return;
+    }
+
+    private static java.io.InputStream maybeOpenPinMetaInZip(java.util.zip.ZipFile, java.lang.String)
+    {
+        java.lang.String r0, $r4;
+        java.util.zip.ZipEntry r1;
+        boolean $z0;
+        java.lang.Throwable $r2;
+        java.lang.Object[] $r3;
+        java.util.zip.ZipFile r5;
+        java.io.InputStream r6;
+
+        r5 := @parameter0: java.util.zip.ZipFile;
+
+        r0 := @parameter1: java.lang.String;
+
+        $z0 = <com.android.server.PinnerService: boolean PROP_PIN_PINLIST>;
+
+        if $z0 != 0 goto label1;
+
+        return null;
+
+     label1:
+        r1 = virtualinvoke r5.<java.util.zip.ZipFile: java.util.zip.ZipEntry getEntry(java.lang.String)>("pinlist.meta");
+
+        r6 = null;
+
+        if r1 == null goto label5;
+
+     label2:
+        r6 = virtualinvoke r5.<java.util.zip.ZipFile: java.io.InputStream getInputStream(java.util.zip.ZipEntry)>(r1);
+
+     label3:
+        goto label5;
+
+     label4:
+        $r2 := @caughtexception;
+
+        $r3 = newarray (java.lang.Object)[1];
+
+        $r3[0] = r0;
+
+        $r4 = staticinvoke <java.lang.String: java.lang.String format(java.lang.String,java.lang.Object[])>("error reading pin metadata \"%s\": pinning as blob", $r3);
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String,java.lang.Throwable)>("PinnerService", $r4, $r2);
+
+        r6 = null;
+
+     label5:
+        return r6;
+
+        catch java.io.IOException from label2 to label3 with label4;
+    }
+
+    private static java.util.zip.ZipFile maybeOpenZip(java.lang.String)
+    {
+        java.lang.Throwable $r0;
+        java.lang.Object[] $r1;
+        java.lang.String $r2, r3;
+        java.util.zip.ZipFile r4, r5;
+
+        r3 := @parameter0: java.lang.String;
+
+     label1:
+        r4 = new java.util.zip.ZipFile;
+
+        specialinvoke r4.<java.util.zip.ZipFile: void <init>(java.lang.String)>(r3);
+
+     label2:
+        r5 = r4;
+
+        goto label4;
+
+     label3:
+        $r0 := @caughtexception;
+
+        $r1 = newarray (java.lang.Object)[1];
+
+        $r1[0] = r3;
+
+        $r2 = staticinvoke <java.lang.String: java.lang.String format(java.lang.String,java.lang.Object[])>("could not open \"%s\" as zip: pinning as blob", $r1);
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String,java.lang.Throwable)>("PinnerService", $r2, $r0);
+
+        r5 = null;
+
+     label4:
+        return r5;
+
+        catch java.io.IOException from label1 to label2 with label3;
+    }
+
+    private void pinApp(int, int, boolean)
+    {
+        com.android.server.PinnerService r0;
+        int i0, i1, i2;
+        boolean z0;
+        android.util.ArrayMap $r1;
+        java.lang.Integer $r2, $r3;
+        java.lang.Throwable $r5;
+        android.content.pm.ApplicationInfo r7;
+
+        r0 := @this: com.android.server.PinnerService;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        z0 := @parameter2: boolean;
+
+        i2 = specialinvoke r0.<com.android.server.PinnerService: int getUidForKey(int)>(i0);
+
+        if z0 != 0 goto label6;
+
+        if i2 == -1 goto label6;
+
+        entermonitor r0;
+
+     label1:
+        $r1 = r0.<com.android.server.PinnerService: android.util.ArrayMap mPendingRepin>;
+
+        $r2 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i2);
+
+        $r3 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i0);
+
+        virtualinvoke $r1.<android.util.ArrayMap: java.lang.Object put(java.lang.Object,java.lang.Object)>($r2, $r3);
+
+        exitmonitor r0;
+
+     label2:
+        return;
+
+     label3:
+        $r5 := @caughtexception;
+
+     label4:
+        exitmonitor r0;
+
+     label5:
+        throw $r5;
+
+     label6:
+        specialinvoke r0.<com.android.server.PinnerService: void unpinApp(int)>(i0);
+
+        r7 = specialinvoke r0.<com.android.server.PinnerService: android.content.pm.ApplicationInfo getInfoForKey(int,int)>(i0, i1);
+
+        if r7 == null goto label7;
+
+        specialinvoke r0.<com.android.server.PinnerService: void pinApp(int,android.content.pm.ApplicationInfo)>(i0, r7);
+
+     label7:
+        return;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    private void pinApp(int, android.content.pm.ApplicationInfo)
+    {
+        com.android.server.PinnerService r0;
+        int i0, i1, i3, i4;
+        com.android.server.PinnerService$PinnedApp $r2;
+        android.util.ArrayMap $r3;
+        java.lang.Integer $r4;
+        java.util.ArrayList $r6, $r10;
+        java.lang.String $r7, $r9, $r14, r20, r23, r24, r25;
+        java.lang.String[] $r8, r26, r27;
+        boolean $z1;
+        java.lang.StringBuilder $r11;
+        java.lang.Throwable $r15, $r16, $r17, $r18;
+        android.content.pm.ApplicationInfo r19;
+        com.android.server.PinnerService$PinnedFile r21, r29;
+
+        r0 := @this: com.android.server.PinnerService;
+
+        i3 := @parameter0: int;
+
+        r19 := @parameter1: android.content.pm.ApplicationInfo;
+
+        if r19 != null goto label01;
+
+        return;
+
+     label01:
+        $r2 = new com.android.server.PinnerService$PinnedApp;
+
+        specialinvoke $r2.<com.android.server.PinnerService$PinnedApp: void <init>(com.android.server.PinnerService,android.content.pm.ApplicationInfo,com.android.server.PinnerService$1)>(r0, r19, null);
+
+        entermonitor r0;
+
+     label02:
+        $r3 = r0.<com.android.server.PinnerService: android.util.ArrayMap mPinnedApps>;
+
+        $r4 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i3);
+
+        virtualinvoke $r3.<android.util.ArrayMap: java.lang.Object put(java.lang.Object,java.lang.Object)>($r4, $r2);
+
+        exitmonitor r0;
+
+     label03:
+        i0 = specialinvoke r0.<com.android.server.PinnerService: int getSizeLimitForKey(int)>(i3);
+
+        r20 = r19.<android.content.pm.ApplicationInfo: java.lang.String sourceDir>;
+
+        r21 = staticinvoke <com.android.server.PinnerService: com.android.server.PinnerService$PinnedFile pinFile(java.lang.String,int,boolean)>(r20, i0, 1);
+
+        if r21 != null goto label04;
+
+        $r11 = new java.lang.StringBuilder;
+
+        specialinvoke $r11.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Failed to pin ");
+
+        virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r20);
+
+        $r14 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("PinnerService", $r14);
+
+        return;
+
+     label04:
+        entermonitor r0;
+
+     label05:
+        $r6 = $r2.<com.android.server.PinnerService$PinnedApp: java.util.ArrayList mFiles>;
+
+        virtualinvoke $r6.<java.util.ArrayList: boolean add(java.lang.Object)>(r21);
+
+        exitmonitor r0;
+
+     label06:
+        $r7 = r19.<android.content.pm.ApplicationInfo: java.lang.String primaryCpuAbi>;
+
+        if $r7 == null goto label07;
+
+        r23 = r19.<android.content.pm.ApplicationInfo: java.lang.String primaryCpuAbi>;
+
+        goto label08;
+
+     label07:
+        $r8 = <android.os.Build: java.lang.String[] SUPPORTED_ABIS>;
+
+        r23 = $r8[0];
+
+     label08:
+        r24 = staticinvoke <dalvik.system.VMRuntime: java.lang.String getInstructionSet(java.lang.String)>(r23);
+
+        r25 = virtualinvoke r19.<android.content.pm.ApplicationInfo: java.lang.String getBaseCodePath()>();
+
+        r26 = null;
+
+     label09:
+        r27 = staticinvoke <dalvik.system.DexFile: java.lang.String[] getDexFileOutputPaths(java.lang.String,java.lang.String)>(r25, r24);
+
+     label10:
+        r26 = r27;
+
+     label11:
+        goto label13;
+
+     label12:
+        $r18 := @caughtexception;
+
+        goto label11;
+
+     label13:
+        if r26 != null goto label14;
+
+        return;
+
+     label14:
+        i1 = lengthof r26;
+
+        i4 = 0;
+
+     label15:
+        if i4 >= i1 goto label23;
+
+        $r9 = r26[i4];
+
+        r29 = staticinvoke <com.android.server.PinnerService: com.android.server.PinnerService$PinnedFile pinFile(java.lang.String,int,boolean)>($r9, i0, 0);
+
+        if r29 == null goto label22;
+
+        entermonitor r0;
+
+     label16:
+        $z1 = <com.android.server.PinnerService: boolean PROP_PIN_ODEX>;
+
+        if $z1 == 0 goto label17;
+
+        $r10 = $r2.<com.android.server.PinnerService$PinnedApp: java.util.ArrayList mFiles>;
+
+        virtualinvoke $r10.<java.util.ArrayList: boolean add(java.lang.Object)>(r29);
+
+     label17:
+        exitmonitor r0;
+
+     label18:
+        goto label22;
+
+     label19:
+        $r15 := @caughtexception;
+
+     label20:
+        exitmonitor r0;
+
+     label21:
+        throw $r15;
+
+     label22:
+        i4 = i4 + 1;
+
+        goto label15;
+
+     label23:
+        return;
+
+     label24:
+        $r17 := @caughtexception;
+
+     label25:
+        exitmonitor r0;
+
+     label26:
+        throw $r17;
+
+     label27:
+        $r16 := @caughtexception;
+
+     label28:
+        exitmonitor r0;
+
+     label29:
+        throw $r16;
+
+        catch java.lang.Throwable from label02 to label03 with label27;
+        catch java.lang.Throwable from label05 to label06 with label24;
+        catch java.io.IOException from label09 to label10 with label12;
+        catch java.lang.Throwable from label16 to label17 with label19;
+        catch java.lang.Throwable from label17 to label18 with label19;
+        catch java.lang.Throwable from label20 to label21 with label19;
+        catch java.lang.Throwable from label25 to label26 with label24;
+        catch java.lang.Throwable from label28 to label29 with label27;
+    }
+
+    private void pinApps(int)
+    {
+        com.android.server.PinnerService r0;
+        int i0, $i1, $i2, i3;
+        android.util.ArraySet $r1, $r2;
+        java.lang.Object $r3;
+        java.lang.Integer $r4;
+
+        r0 := @this: com.android.server.PinnerService;
+
+        i0 := @parameter0: int;
+
+        $r1 = r0.<com.android.server.PinnerService: android.util.ArraySet mPinKeys>;
+
+        $i1 = virtualinvoke $r1.<android.util.ArraySet: int size()>();
+
+        i3 = $i1 - 1;
+
+     label1:
+        if i3 < 0 goto label2;
+
+        $r2 = r0.<com.android.server.PinnerService: android.util.ArraySet mPinKeys>;
+
+        $r3 = virtualinvoke $r2.<android.util.ArraySet: java.lang.Object valueAt(int)>(i3);
+
+        $r4 = (java.lang.Integer) $r3;
+
+        $i2 = virtualinvoke $r4.<java.lang.Integer: int intValue()>();
+
+        specialinvoke r0.<com.android.server.PinnerService: void pinApp(int,int,boolean)>($i2, i0, 1);
+
+        i3 = i3 + -1;
+
+        goto label1;
+
+     label2:
+        return;
+    }
+
+    private static com.android.server.PinnerService$PinnedFile pinFile(java.lang.String, int, boolean)
+    {
+        int i0;
+        boolean z0;
+        java.lang.String $r0, r3;
+        java.lang.Throwable $r2;
+        java.util.zip.ZipFile r4, r5;
+        java.io.InputStream r6, r7;
+        com.android.server.PinnerService$PinRangeSource r10;
+        com.android.server.PinnerService$PinnedFile r11;
+        java.lang.StringBuilder r12;
+        com.android.server.PinnerService$PinRangeSourceStream r13;
+        com.android.server.PinnerService$PinRangeSourceStatic r14;
+
+        r3 := @parameter0: java.lang.String;
+
+        i0 := @parameter1: int;
+
+        z0 := @parameter2: boolean;
+
+        r4 = null;
+
+        r5 = null;
+
+        r6 = null;
+
+        if z0 == 0 goto label04;
+
+        r7 = null;
+
+     label01:
+        r4 = staticinvoke <com.android.server.PinnerService: java.util.zip.ZipFile maybeOpenZip(java.lang.String)>(r3);
+
+     label02:
+        goto label04;
+
+     label03:
+        $r2 := @caughtexception;
+
+        goto label26;
+
+     label04:
+        if r4 == null goto label06;
+
+        r5 = r4;
+
+        r7 = null;
+
+     label05:
+        r6 = staticinvoke <com.android.server.PinnerService: java.io.InputStream maybeOpenPinMetaInZip(java.util.zip.ZipFile,java.lang.String)>(r4, r3);
+
+     label06:
+        r5 = r4;
+
+        r7 = r6;
+
+     label07:
+        r12 = new java.lang.StringBuilder;
+
+     label08:
+        r5 = r4;
+
+        r7 = r6;
+
+     label09:
+        specialinvoke r12.<java.lang.StringBuilder: void <init>()>();
+
+     label10:
+        r5 = r4;
+
+        r7 = r6;
+
+     label11:
+        virtualinvoke r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("pinRangeStream: ");
+
+     label12:
+        r5 = r4;
+
+        r7 = r6;
+
+     label13:
+        virtualinvoke r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r6);
+
+     label14:
+        r5 = r4;
+
+        r7 = r6;
+
+     label15:
+        $r0 = virtualinvoke r12.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("PinnerService", $r0);
+
+     label16:
+        if r6 == null goto label21;
+
+        r5 = r4;
+
+        r7 = r6;
+
+     label17:
+        r13 = new com.android.server.PinnerService$PinRangeSourceStream;
+
+        r10 = r13;
+
+     label18:
+        r5 = r4;
+
+        r7 = r6;
+
+     label19:
+        specialinvoke r13.<com.android.server.PinnerService$PinRangeSourceStream: void <init>(java.io.InputStream)>(r6);
+
+     label20:
+        goto label23;
+
+     label21:
+        r5 = r4;
+
+        r7 = r6;
+
+     label22:
+        r14 = new com.android.server.PinnerService$PinRangeSourceStatic;
+
+        specialinvoke r14.<com.android.server.PinnerService$PinRangeSourceStatic: void <init>(int,int)>(0, 2147483647);
+
+        r10 = r14;
+
+     label23:
+        r5 = r4;
+
+        r7 = r6;
+
+     label24:
+        r11 = staticinvoke <com.android.server.PinnerService: com.android.server.PinnerService$PinnedFile pinFileRanges(java.lang.String,int,com.android.server.PinnerService$PinRangeSource)>(r3, i0, r10);
+
+     label25:
+        staticinvoke <com.android.server.PinnerService: void safeClose(java.io.Closeable)>(r6);
+
+        staticinvoke <com.android.server.PinnerService: void safeClose(java.io.Closeable)>(r4);
+
+        return r11;
+
+     label26:
+        staticinvoke <com.android.server.PinnerService: void safeClose(java.io.Closeable)>(r7);
+
+        staticinvoke <com.android.server.PinnerService: void safeClose(java.io.Closeable)>(r5);
+
+        throw $r2;
+
+        catch java.lang.Throwable from label01 to label02 with label03;
+        catch java.lang.Throwable from label05 to label06 with label03;
+        catch java.lang.Throwable from label07 to label08 with label03;
+        catch java.lang.Throwable from label09 to label10 with label03;
+        catch java.lang.Throwable from label11 to label12 with label03;
+        catch java.lang.Throwable from label13 to label14 with label03;
+        catch java.lang.Throwable from label15 to label16 with label03;
+        catch java.lang.Throwable from label17 to label18 with label03;
+        catch java.lang.Throwable from label19 to label20 with label03;
+        catch java.lang.Throwable from label22 to label23 with label03;
+        catch java.lang.Throwable from label24 to label25 with label03;
+    }
+
+    private static com.android.server.PinnerService$PinnedFile pinFileRanges(java.lang.String, int, com.android.server.PinnerService$PinRangeSource)
+    {
+        int i1, i2, $i3, $i4, $i5, $i6, $i7, $i9, $i10, $i11, $i14, $i15, $i16, $i17, $i18, $i19, $i20, $i21, $i22, $i23, $i24, $i28, $i29, $i30, $i31, $i32, i36, i40, i43, i44, i46, i47, i48, i49, i50, i51, i52, i53;
+        java.io.FileDescriptor $r0, r23, r26;
+        android.system.StructStat $r1;
+        long $l8, $l13, $l25, $l26, $l27, $l33, $l35, l39, l41, l42;
+        com.android.server.PinnerService$PinnedFile $r2;
+        byte $b12, $b54, $b55;
+        boolean $z0;
+        java.lang.Throwable $r3, $r4, $r5, $r8, $r9, $r10, $r11, $r12, $r13, $r14, $r15, $r16, $r17, $r18, $r19, r25, r28;
+        java.lang.String r20, $r40;
+        com.android.server.PinnerService$PinRangeSource r21;
+        com.android.server.PinnerService$PinRange r24;
+        java.lang.StringBuilder r39;
+
+        r20 := @parameter0: java.lang.String;
+
+        i36 := @parameter1: int;
+
+        r21 := @parameter2: com.android.server.PinnerService$PinRangeSource;
+
+        $r0 = new java.io.FileDescriptor;
+
+        specialinvoke $r0.<java.io.FileDescriptor: void <init>()>();
+
+     label01:
+        $i4 = <android.system.OsConstants: int O_RDONLY>;
+
+        $i3 = <android.system.OsConstants: int O_CLOEXEC>;
+
+        $i6 = $i4 | $i3;
+
+        $i5 = <android.system.OsConstants: int O_NOFOLLOW>;
+
+        $i7 = $i6 | $i5;
+
+        r23 = staticinvoke <android.system.Os: java.io.FileDescriptor open(java.lang.String,int,int)>(r20, $i7, 0);
+
+     label02:
+        $r1 = staticinvoke <android.system.Os: android.system.StructStat fstat(java.io.FileDescriptor)>(r23);
+
+        $l8 = $r1.<android.system.StructStat: long st_size>;
+
+        l39 = staticinvoke <java.lang.Math: long min(long,long)>($l8, 2147483647L);
+
+     label03:
+        i40 = (int) l39;
+
+        l41 = (long) i40;
+
+     label04:
+        $i10 = <android.system.OsConstants: int PROT_READ>;
+
+        $i9 = <android.system.OsConstants: int MAP_SHARED>;
+
+        l42 = staticinvoke <android.system.Os: long mmap(long,long,int,int,java.io.FileDescriptor,long)>(0L, l41, $i10, $i9, r23, 0L);
+
+     label05:
+        r24 = new com.android.server.PinnerService$PinRange;
+
+        specialinvoke r24.<com.android.server.PinnerService$PinRange: void <init>()>();
+
+        i43 = <com.android.server.PinnerService: int PAGE_SIZE>;
+
+     label06:
+        $i11 = i36 % i43;
+
+        if $i11 == 0 goto label11;
+
+     label07:
+        i44 = <com.android.server.PinnerService: int PAGE_SIZE>;
+
+     label08:
+        $i32 = i36 % i44;
+
+        i46 = i36 - $i32;
+
+        i47 = 0;
+
+        goto label12;
+
+     label09:
+        $r3 := @caughtexception;
+
+        r25 = $r3;
+
+        i48 = i40;
+
+        r26 = r23;
+
+        goto label39;
+
+     label10:
+        $r10 := @caughtexception;
+
+        i48 = i40;
+
+        r26 = r23;
+
+        r28 = $r10;
+
+        goto label35;
+
+     label11:
+        i46 = i36;
+
+        i47 = 0;
+
+     label12:
+        if i47 >= i46 goto label22;
+
+     label13:
+        $z0 = virtualinvoke r21.<com.android.server.PinnerService$PinRangeSource: boolean read(com.android.server.PinnerService$PinRange)>(r24);
+
+        if $z0 == 0 goto label22;
+
+        i49 = r24.<com.android.server.PinnerService$PinRange: int start>;
+
+        i50 = r24.<com.android.server.PinnerService$PinRange: int length>;
+
+        i1 = staticinvoke <com.android.server.PinnerService: int clamp(int,int,int)>(0, i49, i40);
+
+        $i15 = i46 - i47;
+
+        $i14 = i40 - i1;
+
+        $i16 = staticinvoke <com.android.server.PinnerService: int clamp(int,int,int)>(0, i50, $i14);
+
+        $i17 = staticinvoke <java.lang.Math: int min(int,int)>($i15, $i16);
+
+        $i18 = <com.android.server.PinnerService: int PAGE_SIZE>;
+
+        $i19 = i1 % $i18;
+
+        i51 = $i17 + $i19;
+
+        i2 = <com.android.server.PinnerService: int PAGE_SIZE>;
+
+     label14:
+        i52 = i51;
+
+     label15:
+        $i20 = <com.android.server.PinnerService: int PAGE_SIZE>;
+
+        $i21 = i51 % $i20;
+
+        if $i21 == 0 goto label16;
+
+        $i30 = <com.android.server.PinnerService: int PAGE_SIZE>;
+
+        $i28 = <com.android.server.PinnerService: int PAGE_SIZE>;
+
+        $i29 = i51 % $i28;
+
+        $i31 = $i30 - $i29;
+
+        i52 = i51 + $i31;
+
+     label16:
+        $i22 = i46 - i47;
+
+        i53 = staticinvoke <com.android.server.PinnerService: int clamp(int,int,int)>(0, i52, $i22);
+
+     label17:
+        if i53 <= 0 goto label19;
+
+     label18:
+        $i23 = i1 % i2;
+
+        $i24 = i1 - $i23;
+
+        $l25 = (long) $i24;
+
+        $l27 = $l25 + l42;
+
+        $l26 = (long) i53;
+
+        staticinvoke <android.system.Os: void mlock(long,long)>($l27, $l26);
+
+     label19:
+        i47 = i47 + i53;
+
+        goto label12;
+
+     label20:
+        $r9 := @caughtexception;
+
+        r25 = $r9;
+
+        i48 = i40;
+
+        r26 = r23;
+
+        goto label39;
+
+     label21:
+        $r11 := @caughtexception;
+
+        i48 = i40;
+
+        r26 = r23;
+
+        r28 = $r11;
+
+        goto label35;
+
+     label22:
+        $r2 = new com.android.server.PinnerService$PinnedFile;
+
+        specialinvoke $r2.<com.android.server.PinnerService$PinnedFile: void <init>(long,int,java.lang.String,int)>(l42, i40, r20, i47);
+
+     label23:
+        staticinvoke <com.android.server.PinnerService: void safeClose(java.io.FileDescriptor)>(r23);
+
+        $b12 = -1L cmp 0L;
+
+        if $b12 < 0 goto label24;
+
+        $l13 = (long) i40;
+
+        staticinvoke <com.android.server.PinnerService: void safeMunmap(long,long)>(-1L, $l13);
+
+     label24:
+        return $r2;
+
+     label25:
+        $r4 := @caughtexception;
+
+        r25 = $r4;
+
+        i48 = i40;
+
+        r26 = r23;
+
+        goto label39;
+
+     label26:
+        $r5 := @caughtexception;
+
+        i48 = i40;
+
+        r28 = $r5;
+
+        r26 = r23;
+
+        goto label35;
+
+     label27:
+        $r18 := @caughtexception;
+
+        r25 = $r18;
+
+        i48 = i40;
+
+        r26 = r23;
+
+        goto label39;
+
+     label28:
+        $r8 := @caughtexception;
+
+        i48 = i40;
+
+        r28 = $r8;
+
+        r26 = r23;
+
+        goto label35;
+
+     label29:
+        $r13 := @caughtexception;
+
+        r25 = $r13;
+
+        i48 = i40;
+
+        r26 = r23;
+
+        l42 = -1L;
+
+        goto label39;
+
+     label30:
+        $r15 := @caughtexception;
+
+        i48 = i40;
+
+        r28 = $r15;
+
+        r26 = r23;
+
+        l42 = -1L;
+
+        goto label35;
+
+     label31:
+        $r12 := @caughtexception;
+
+        r25 = $r12;
+
+        r26 = r23;
+
+        l42 = -1L;
+
+        i48 = 0;
+
+        goto label39;
+
+     label32:
+        $r19 := @caughtexception;
+
+        r28 = $r19;
+
+        r26 = r23;
+
+        l42 = -1L;
+
+        i48 = 0;
+
+        goto label35;
+
+     label33:
+        $r16 := @caughtexception;
+
+        r25 = $r16;
+
+        r26 = $r0;
+
+        l42 = -1L;
+
+        i48 = 0;
+
+        goto label39;
+
+     label34:
+        $r17 := @caughtexception;
+
+        r28 = $r17;
+
+        i48 = 0;
+
+        l42 = -1L;
+
+        r26 = $r0;
+
+     label35:
+        r39 = new java.lang.StringBuilder;
+
+        specialinvoke r39.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r39.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Could not pin file ");
+
+        virtualinvoke r39.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r20);
+
+        $r40 = virtualinvoke r39.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("PinnerService", $r40, r28);
+
+     label36:
+        staticinvoke <com.android.server.PinnerService: void safeClose(java.io.FileDescriptor)>(r26);
+
+        $b54 = l42 cmp 0L;
+
+        if $b54 < 0 goto label37;
+
+        $l35 = (long) i48;
+
+        staticinvoke <com.android.server.PinnerService: void safeMunmap(long,long)>(l42, $l35);
+
+     label37:
+        return null;
+
+     label38:
+        $r14 := @caughtexception;
+
+        r25 = $r14;
+
+     label39:
+        staticinvoke <com.android.server.PinnerService: void safeClose(java.io.FileDescriptor)>(r26);
+
+        $b55 = l42 cmp 0L;
+
+        if $b55 < 0 goto label40;
+
+        $l33 = (long) i48;
+
+        staticinvoke <com.android.server.PinnerService: void safeMunmap(long,long)>(l42, $l33);
+
+     label40:
+        throw r25;
+
+        catch android.system.ErrnoException from label01 to label02 with label34;
+        catch java.lang.Throwable from label01 to label02 with label33;
+        catch android.system.ErrnoException from label02 to label03 with label32;
+        catch java.lang.Throwable from label02 to label03 with label31;
+        catch android.system.ErrnoException from label04 to label05 with label30;
+        catch java.lang.Throwable from label04 to label05 with label29;
+        catch android.system.ErrnoException from label05 to label06 with label28;
+        catch java.lang.Throwable from label05 to label06 with label27;
+        catch android.system.ErrnoException from label07 to label08 with label10;
+        catch java.lang.Throwable from label07 to label08 with label09;
+        catch android.system.ErrnoException from label13 to label14 with label21;
+        catch java.lang.Throwable from label13 to label14 with label20;
+        catch android.system.ErrnoException from label15 to label16 with label21;
+        catch java.lang.Throwable from label15 to label16 with label20;
+        catch android.system.ErrnoException from label16 to label17 with label21;
+        catch java.lang.Throwable from label16 to label17 with label20;
+        catch android.system.ErrnoException from label18 to label19 with label21;
+        catch java.lang.Throwable from label18 to label19 with label20;
+        catch android.system.ErrnoException from label22 to label23 with label26;
+        catch java.lang.Throwable from label22 to label23 with label25;
+        catch java.lang.Throwable from label35 to label36 with label38;
+    }
+
+    private void registerUidListener()
+    {
+        com.android.server.PinnerService r0;
+        android.app.IActivityManager r1;
+        android.os.RemoteException $r2;
+        com.android.server.PinnerService$3 r3;
+
+        r0 := @this: com.android.server.PinnerService;
+
+     label1:
+        r1 = r0.<com.android.server.PinnerService: android.app.IActivityManager mAm>;
+
+        r3 = new com.android.server.PinnerService$3;
+
+        specialinvoke r3.<com.android.server.PinnerService$3: void <init>(com.android.server.PinnerService)>(r0);
+
+        interfaceinvoke r1.<android.app.IActivityManager: void registerUidObserver(android.app.IUidObserver,int,int,java.lang.String)>(r3, 10, 0, null);
+
+     label2:
+        goto label4;
+
+     label3:
+        $r2 := @caughtexception;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("PinnerService", "Failed to register uid observer", $r2);
+
+     label4:
+        return;
+
+        catch android.os.RemoteException from label1 to label2 with label3;
+    }
+
+    private void registerUserSetupCompleteListener()
+    {
+        com.android.server.PinnerService r0;
+        android.net.Uri r1;
+        android.content.Context $r2;
+        android.content.ContentResolver $r3;
+        com.android.server.PinnerService$2 $r4;
+
+        r0 := @this: com.android.server.PinnerService;
+
+        r1 = staticinvoke <android.provider.Settings$Secure: android.net.Uri getUriFor(java.lang.String)>("user_setup_complete");
+
+        $r2 = r0.<com.android.server.PinnerService: android.content.Context mContext>;
+
+        $r3 = virtualinvoke $r2.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        $r4 = new com.android.server.PinnerService$2;
+
+        specialinvoke $r4.<com.android.server.PinnerService$2: void <init>(com.android.server.PinnerService,android.os.Handler,android.net.Uri)>(r0, null, r1);
+
+        virtualinvoke $r3.<android.content.ContentResolver: void registerContentObserver(android.net.Uri,boolean,android.database.ContentObserver,int)>(r1, 0, $r4, -1);
+
+        return;
+    }
+
+    private static void safeClose(java.io.Closeable)
+    {
+        java.io.Closeable r0;
+        java.lang.Throwable $r3;
+        java.lang.StringBuilder $r4;
+        java.lang.String $r7;
+
+        r0 := @parameter0: java.io.Closeable;
+
+        if r0 == null goto label4;
+
+     label1:
+        interfaceinvoke r0.<java.io.Closeable: void close()>();
+
+     label2:
+        goto label4;
+
+     label3:
+        $r3 := @caughtexception;
+
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("ignoring error closing resource: ");
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r0);
+
+        $r7 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String,java.lang.Throwable)>("PinnerService", $r7, $r3);
+
+     label4:
+        return;
+
+        catch java.io.IOException from label1 to label2 with label3;
+    }
+
+    private static void safeClose(java.io.FileDescriptor)
+    {
+        boolean $z0;
+        java.lang.Throwable $r0;
+        int $i0, $i1;
+        java.io.FileDescriptor r2;
+        java.lang.AssertionError r4;
+        android.system.ErrnoException r5;
+
+        r2 := @parameter0: java.io.FileDescriptor;
+
+        if r2 == null goto label5;
+
+        $z0 = virtualinvoke r2.<java.io.FileDescriptor: boolean valid()>();
+
+        if $z0 == 0 goto label5;
+
+     label1:
+        staticinvoke <android.system.Os: void close(java.io.FileDescriptor)>(r2);
+
+     label2:
+        goto label5;
+
+     label3:
+        $r0 := @caughtexception;
+
+        r5 = (android.system.ErrnoException) $r0;
+
+        $i1 = r5.<android.system.ErrnoException: int errno>;
+
+        $i0 = <android.system.OsConstants: int EBADF>;
+
+        if $i1 == $i0 goto label4;
+
+        goto label5;
+
+     label4:
+        r4 = new java.lang.AssertionError;
+
+        specialinvoke r4.<java.lang.AssertionError: void <init>(java.lang.Object)>($r0);
+
+        throw r4;
+
+     label5:
+        return;
+
+        catch android.system.ErrnoException from label1 to label2 with label3;
+    }
+
+    private static void safeMunmap(long, long)
+    {
+        long l0, l1;
+        java.lang.Throwable $r1;
+
+        l0 := @parameter0: long;
+
+        l1 := @parameter1: long;
+
+     label1:
+        staticinvoke <android.system.Os: void munmap(long,long)>(l0, l1);
+
+     label2:
+        goto label4;
+
+     label3:
+        $r1 := @caughtexception;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String,java.lang.Throwable)>("PinnerService", "ignoring error in unmap", $r1);
+
+     label4:
+        return;
+
+        catch android.system.ErrnoException from label1 to label2 with label3;
+    }
+
+    private void sendPinAppMessage(int, int, boolean)
+    {
+        com.android.server.PinnerService r0;
+        int i0, i1;
+        boolean z0;
+        com.android.server.PinnerService$PinnerHandler $r1;
+        com.android.server.'-$$Lambda$PinnerService$6bekYOn4YXi0x7vYNWO40QyA-s8' $r2;
+        java.lang.Integer $r3, $r4;
+        java.lang.Boolean $r5;
+        android.os.Message $r6;
+        com.android.internal.util.function.QuadConsumer r7;
+
+        r0 := @this: com.android.server.PinnerService;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        z0 := @parameter2: boolean;
+
+        $r1 = r0.<com.android.server.PinnerService: com.android.server.PinnerService$PinnerHandler mPinnerHandler>;
+
+        $r2 = <com.android.server._$$Lambda$PinnerService$6bekYOn4YXi0x7vYNWO40QyA_s8: com.android.server.'-$$Lambda$PinnerService$6bekYOn4YXi0x7vYNWO40QyA-s8' INSTANCE>;
+
+        $r3 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i0);
+
+        $r4 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i1);
+
+        $r5 = staticinvoke <java.lang.Boolean: java.lang.Boolean valueOf(boolean)>(z0);
+
+        r7 = (com.android.internal.util.function.QuadConsumer) $r2;
+
+        $r6 = staticinvoke <com.android.internal.util.function.pooled.PooledLambda: android.os.Message obtainMessage(com.android.internal.util.function.QuadConsumer,java.lang.Object,java.lang.Object,java.lang.Object,java.lang.Object)>(r7, r0, $r3, $r4, $r5);
+
+        virtualinvoke $r1.<com.android.server.PinnerService$PinnerHandler: boolean sendMessage(android.os.Message)>($r6);
+
+        return;
+    }
+
+    private void sendPinAppsMessage(int)
+    {
+        com.android.server.PinnerService r0;
+        int i0;
+        com.android.server.PinnerService$PinnerHandler $r1;
+        com.android.server.'-$$Lambda$PinnerService$GeEX-8XoHeV0LEszxat7jOSlrs4' $r2;
+        java.lang.Integer $r3;
+        android.os.Message $r4;
+        java.util.function.BiConsumer r5;
+
+        r0 := @this: com.android.server.PinnerService;
+
+        i0 := @parameter0: int;
+
+        $r1 = r0.<com.android.server.PinnerService: com.android.server.PinnerService$PinnerHandler mPinnerHandler>;
+
+        $r2 = <com.android.server._$$Lambda$PinnerService$GeEX_8XoHeV0LEszxat7jOSlrs4: com.android.server.'-$$Lambda$PinnerService$GeEX-8XoHeV0LEszxat7jOSlrs4' INSTANCE>;
+
+        $r3 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i0);
+
+        r5 = (java.util.function.BiConsumer) $r2;
+
+        $r4 = staticinvoke <com.android.internal.util.function.pooled.PooledLambda: android.os.Message obtainMessage(java.util.function.BiConsumer,java.lang.Object,java.lang.Object)>(r5, r0, $r3);
+
+        virtualinvoke $r1.<com.android.server.PinnerService$PinnerHandler: boolean sendMessage(android.os.Message)>($r4);
+
+        return;
+    }
+
+    private void unpinApp(int)
+    {
+        com.android.server.PinnerService r0;
+        int i0;
+        com.android.server.PinnerService$PinnedApp r1;
+        android.util.ArrayMap $r2, $r5;
+        java.lang.Integer $r3, $r6;
+        java.lang.Object $r4, $r9;
+        java.util.ArrayList $r8, r12;
+        boolean $z0;
+        com.android.server.PinnerService$PinnedFile $r10;
+        java.lang.Throwable $r11;
+        java.util.Iterator r13;
+
+        r0 := @this: com.android.server.PinnerService;
+
+        i0 := @parameter0: int;
+
+        entermonitor r0;
+
+     label01:
+        $r2 = r0.<com.android.server.PinnerService: android.util.ArrayMap mPinnedApps>;
+
+        $r3 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i0);
+
+        $r4 = virtualinvoke $r2.<android.util.ArrayMap: java.lang.Object get(java.lang.Object)>($r3);
+
+        r1 = (com.android.server.PinnerService$PinnedApp) $r4;
+
+     label02:
+        if r1 != null goto label05;
+
+     label03:
+        exitmonitor r0;
+
+     label04:
+        return;
+
+     label05:
+        $r5 = r0.<com.android.server.PinnerService: android.util.ArrayMap mPinnedApps>;
+
+        $r6 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i0);
+
+        virtualinvoke $r5.<android.util.ArrayMap: java.lang.Object remove(java.lang.Object)>($r6);
+
+        r12 = new java.util.ArrayList;
+
+        $r8 = r1.<com.android.server.PinnerService$PinnedApp: java.util.ArrayList mFiles>;
+
+        specialinvoke r12.<java.util.ArrayList: void <init>(java.util.Collection)>($r8);
+
+        exitmonitor r0;
+
+     label06:
+        r13 = virtualinvoke r12.<java.util.ArrayList: java.util.Iterator iterator()>();
+
+     label07:
+        $z0 = interfaceinvoke r13.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label08;
+
+        $r9 = interfaceinvoke r13.<java.util.Iterator: java.lang.Object next()>();
+
+        $r10 = (com.android.server.PinnerService$PinnedFile) $r9;
+
+        virtualinvoke $r10.<com.android.server.PinnerService$PinnedFile: void close()>();
+
+        goto label07;
+
+     label08:
+        return;
+
+     label09:
+        $r11 := @caughtexception;
+
+     label10:
+        exitmonitor r0;
+
+     label11:
+        throw $r11;
+
+        catch java.lang.Throwable from label01 to label02 with label09;
+        catch java.lang.Throwable from label03 to label04 with label09;
+        catch java.lang.Throwable from label05 to label06 with label09;
+        catch java.lang.Throwable from label10 to label11 with label09;
+    }
+
+    private void updateActiveState(int, boolean)
+    {
+        com.android.server.PinnerService r0;
+        int i0, $i1, $i2, i3;
+        boolean z0;
+        android.util.ArrayMap $r1, $r2;
+        java.lang.Object $r3;
+        java.lang.Throwable $r4;
+        com.android.server.PinnerService$PinnedApp r5;
+
+        r0 := @this: com.android.server.PinnerService;
+
+        i0 := @parameter0: int;
+
+        z0 := @parameter1: boolean;
+
+        entermonitor r0;
+
+     label1:
+        $r1 = r0.<com.android.server.PinnerService: android.util.ArrayMap mPinnedApps>;
+
+        $i1 = virtualinvoke $r1.<android.util.ArrayMap: int size()>();
+
+        i3 = $i1 - 1;
+
+     label2:
+        if i3 < 0 goto label5;
+
+     label3:
+        $r2 = r0.<com.android.server.PinnerService: android.util.ArrayMap mPinnedApps>;
+
+        $r3 = virtualinvoke $r2.<android.util.ArrayMap: java.lang.Object valueAt(int)>(i3);
+
+        r5 = (com.android.server.PinnerService$PinnedApp) $r3;
+
+        $i2 = r5.<com.android.server.PinnerService$PinnedApp: int uid>;
+
+        if $i2 != i0 goto label4;
+
+        r5.<com.android.server.PinnerService$PinnedApp: boolean active> = z0;
+
+     label4:
+        i3 = i3 + -1;
+
+        goto label2;
+
+     label5:
+        exitmonitor r0;
+
+     label6:
+        return;
+
+     label7:
+        $r4 := @caughtexception;
+
+     label8:
+        exitmonitor r0;
+
+     label9:
+        throw $r4;
+
+        catch java.lang.Throwable from label1 to label2 with label7;
+        catch java.lang.Throwable from label3 to label4 with label7;
+        catch java.lang.Throwable from label5 to label6 with label7;
+        catch java.lang.Throwable from label8 to label9 with label7;
+    }
+
+    public void onBootPhase(int)
+    {
+        com.android.server.PinnerService r0;
+        int i0;
+        android.content.Context $r1;
+        java.lang.Object $r2;
+        android.app.SearchManager $r3;
+
+        r0 := @this: com.android.server.PinnerService;
+
+        i0 := @parameter0: int;
+
+        if i0 != 500 goto label1;
+
+        $r1 = r0.<com.android.server.PinnerService: android.content.Context mContext>;
+
+        $r2 = virtualinvoke $r1.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("search");
+
+        $r3 = (android.app.SearchManager) $r2;
+
+        r0.<com.android.server.PinnerService: android.app.SearchManager mSearchManager> = $r3;
+
+        specialinvoke r0.<com.android.server.PinnerService: void sendPinAppsMessage(int)>(0);
+
+     label1:
+        return;
+    }
+
+    public void onStart()
+    {
+        com.android.server.PinnerService r0;
+        com.android.server.PinnerService$BinderService $r2;
+        com.android.server.PinnerService$PinnerHandler $r3;
+        android.os.Message $r4;
+
+        r0 := @this: com.android.server.PinnerService;
+
+        $r2 = new com.android.server.PinnerService$BinderService;
+
+        specialinvoke $r2.<com.android.server.PinnerService$BinderService: void <init>(com.android.server.PinnerService,com.android.server.PinnerService$1)>(r0, null);
+
+        r0.<com.android.server.PinnerService: com.android.server.PinnerService$BinderService mBinderService> = $r2;
+
+        virtualinvoke r0.<com.android.server.PinnerService: void publishBinderService(java.lang.String,android.os.IBinder)>("pinner", $r2);
+
+        virtualinvoke r0.<com.android.server.PinnerService: void publishLocalService(java.lang.Class,java.lang.Object)>(class "Lcom/android/server/PinnerService;", r0);
+
+        $r3 = r0.<com.android.server.PinnerService: com.android.server.PinnerService$PinnerHandler mPinnerHandler>;
+
+        $r4 = virtualinvoke $r3.<com.android.server.PinnerService$PinnerHandler: android.os.Message obtainMessage(int)>(4001);
+
+        virtualinvoke $r4.<android.os.Message: void sendToTarget()>();
+
+        specialinvoke r0.<com.android.server.PinnerService: void sendPinAppsMessage(int)>(0);
+
+        return;
+    }
+
+    public void onSwitchUser(int)
+    {
+        com.android.server.PinnerService r0;
+        int i0;
+        android.os.UserManager $r1;
+        boolean $z0;
+
+        r0 := @this: com.android.server.PinnerService;
+
+        i0 := @parameter0: int;
+
+        $r1 = r0.<com.android.server.PinnerService: android.os.UserManager mUserManager>;
+
+        $z0 = virtualinvoke $r1.<android.os.UserManager: boolean isManagedProfile(int)>(i0);
+
+        if $z0 != 0 goto label1;
+
+        specialinvoke r0.<com.android.server.PinnerService: void sendPinAppsMessage(int)>(i0);
+
+     label1:
+        return;
+    }
+
+    public void onUnlockUser(int)
+    {
+        com.android.server.PinnerService r0;
+        int i0;
+        android.os.UserManager $r1;
+        boolean $z0;
+
+        r0 := @this: com.android.server.PinnerService;
+
+        i0 := @parameter0: int;
+
+        $r1 = r0.<com.android.server.PinnerService: android.os.UserManager mUserManager>;
+
+        $z0 = virtualinvoke $r1.<android.os.UserManager: boolean isManagedProfile(int)>(i0);
+
+        if $z0 != 0 goto label1;
+
+        specialinvoke r0.<com.android.server.PinnerService: void sendPinAppsMessage(int)>(i0);
+
+     label1:
+        return;
+    }
+
+    public void update(android.util.ArraySet, boolean)
+    {
+        com.android.server.PinnerService r0;
+        android.util.ArraySet r1, $r4, $r5;
+        boolean z0, $z1;
+        int i0, i1, $i2, i4;
+        android.content.pm.ApplicationInfo r2;
+        java.lang.Object $r6;
+        java.lang.Integer $r7;
+        java.lang.String $r8, $r11, $r15;
+        java.lang.StringBuilder $r9;
+
+        r0 := @this: com.android.server.PinnerService;
+
+        r1 := @parameter0: android.util.ArraySet;
+
+        z0 := @parameter1: boolean;
+
+        i0 = staticinvoke <android.app.ActivityManager: int getCurrentUser()>();
+
+        $r4 = r0.<com.android.server.PinnerService: android.util.ArraySet mPinKeys>;
+
+        $i2 = virtualinvoke $r4.<android.util.ArraySet: int size()>();
+
+        i4 = $i2 - 1;
+
+     label1:
+        if i4 < 0 goto label3;
+
+        $r5 = r0.<com.android.server.PinnerService: android.util.ArraySet mPinKeys>;
+
+        $r6 = virtualinvoke $r5.<android.util.ArraySet: java.lang.Object valueAt(int)>(i4);
+
+        $r7 = (java.lang.Integer) $r6;
+
+        i1 = virtualinvoke $r7.<java.lang.Integer: int intValue()>();
+
+        r2 = specialinvoke r0.<com.android.server.PinnerService: android.content.pm.ApplicationInfo getInfoForKey(int,int)>(i1, i0);
+
+        if r2 == null goto label2;
+
+        $r8 = r2.<android.content.pm.ApplicationInfo: java.lang.String packageName>;
+
+        $z1 = virtualinvoke r1.<android.util.ArraySet: boolean contains(java.lang.Object)>($r8);
+
+        if $z1 == 0 goto label2;
+
+        $r9 = new java.lang.StringBuilder;
+
+        specialinvoke $r9.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Updating pinned files for ");
+
+        $r11 = r2.<android.content.pm.ApplicationInfo: java.lang.String packageName>;
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r11);
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" force=");
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>(z0);
+
+        $r15 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("PinnerService", $r15);
+
+        specialinvoke r0.<com.android.server.PinnerService: void sendPinAppMessage(int,int,boolean)>(i1, i0, z0);
+
+     label2:
+        i4 = i4 + -1;
+
+        goto label1;
+
+     label3:
+        return;
+    }
+}

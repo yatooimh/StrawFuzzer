@@ -1,0 +1,2055 @@
+public final class com.android.server.am.CachedAppOptimizer extends java.lang.Object
+{
+    private static final java.lang.String COMPACT_ACTION_ANON;
+    private static final int COMPACT_ACTION_ANON_FLAG;
+    private static final java.lang.String COMPACT_ACTION_FILE;
+    private static final int COMPACT_ACTION_FILE_FLAG;
+    private static final java.lang.String COMPACT_ACTION_FULL;
+    private static final int COMPACT_ACTION_FULL_FLAG;
+    private static final java.lang.String COMPACT_ACTION_NONE;
+    private static final int COMPACT_ACTION_NONE_FLAG;
+    static final int COMPACT_PROCESS_BFGS;
+    static final int COMPACT_PROCESS_FULL;
+    static final int COMPACT_PROCESS_MSG;
+    static final int COMPACT_PROCESS_PERSISTENT;
+    static final int COMPACT_PROCESS_SOME;
+    static final int COMPACT_SYSTEM_MSG;
+    static final int DEFAULT_COMPACT_ACTION_1;
+    static final int DEFAULT_COMPACT_ACTION_2;
+    static final long DEFAULT_COMPACT_FULL_DELTA_RSS_THROTTLE_KB;
+    static final long DEFAULT_COMPACT_FULL_RSS_THROTTLE_KB;
+    static final java.lang.String DEFAULT_COMPACT_PROC_STATE_THROTTLE;
+    static final long DEFAULT_COMPACT_THROTTLE_1;
+    static final long DEFAULT_COMPACT_THROTTLE_2;
+    static final long DEFAULT_COMPACT_THROTTLE_3;
+    static final long DEFAULT_COMPACT_THROTTLE_4;
+    static final long DEFAULT_COMPACT_THROTTLE_5;
+    static final long DEFAULT_COMPACT_THROTTLE_6;
+    static final float DEFAULT_STATSD_SAMPLE_RATE;
+    static final java.lang.Boolean DEFAULT_USE_COMPACTION;
+    static final java.lang.Boolean DEFAULT_USE_FREEZER;
+    static final int DO_FREEZE;
+    static final int FREEZE_TIMEOUT_MS;
+    static final java.lang.String KEY_COMPACT_ACTION_1;
+    static final java.lang.String KEY_COMPACT_ACTION_2;
+    static final java.lang.String KEY_COMPACT_FULL_DELTA_RSS_THROTTLE_KB;
+    static final java.lang.String KEY_COMPACT_FULL_RSS_THROTTLE_KB;
+    static final java.lang.String KEY_COMPACT_PROC_STATE_THROTTLE;
+    static final java.lang.String KEY_COMPACT_STATSD_SAMPLE_RATE;
+    static final java.lang.String KEY_COMPACT_THROTTLE_1;
+    static final java.lang.String KEY_COMPACT_THROTTLE_2;
+    static final java.lang.String KEY_COMPACT_THROTTLE_3;
+    static final java.lang.String KEY_COMPACT_THROTTLE_4;
+    static final java.lang.String KEY_COMPACT_THROTTLE_5;
+    static final java.lang.String KEY_COMPACT_THROTTLE_6;
+    static final java.lang.String KEY_FREEZER_STATSD_SAMPLE_RATE;
+    static final java.lang.String KEY_USE_COMPACTION;
+    static final java.lang.String KEY_USE_FREEZER;
+    static final int REPORT_UNFREEZE;
+    static final int REPORT_UNFREEZE_MSG;
+    static final int SET_FROZEN_PROCESS_MSG;
+    private final com.android.server.am.ActivityManagerService mAm;
+    private int mBfgsCompactionCount;
+    final com.android.server.ServiceThread mCachedAppOptimizerThread;
+    volatile java.lang.String mCompactActionFull;
+    volatile java.lang.String mCompactActionSome;
+    volatile float mCompactStatsdSampleRate;
+    volatile long mCompactThrottleBFGS;
+    volatile long mCompactThrottleFullFull;
+    volatile long mCompactThrottleFullSome;
+    volatile long mCompactThrottlePersistent;
+    volatile long mCompactThrottleSomeFull;
+    volatile long mCompactThrottleSomeSome;
+    android.os.Handler mCompactionHandler;
+    private android.os.Handler mFreezeHandler;
+    volatile float mFreezerStatsdSampleRate;
+    volatile long mFullAnonRssThrottleKb;
+    private int mFullCompactionCount;
+    volatile long mFullDeltaRssThrottleKb;
+    java.util.LinkedHashMap mLastCompactionStats;
+    private final android.provider.DeviceConfig$OnPropertiesChangedListener mOnFlagsChangedListener;
+    private final java.util.ArrayList mPendingCompactionProcesses;
+    private int mPersistentCompactionCount;
+    private final java.lang.Object mPhenotypeFlagLock;
+    final java.util.Set mProcStateThrottle;
+    private final com.android.server.am.CachedAppOptimizer$ProcessDependencies mProcessDependencies;
+    private final java.util.Random mRandom;
+    private int mSomeCompactionCount;
+    private com.android.server.am.CachedAppOptimizer$PropertyChangedCallbackForTest mTestCallback;
+    private volatile boolean mUseCompaction;
+    private volatile boolean mUseFreezer;
+
+    static void <clinit>()
+    {
+        java.lang.Boolean r0;
+        java.lang.String $r1;
+
+        <com.android.server.am.CachedAppOptimizer: int SET_FROZEN_PROCESS_MSG> = 3;
+
+        <com.android.server.am.CachedAppOptimizer: int REPORT_UNFREEZE_MSG> = 4;
+
+        <com.android.server.am.CachedAppOptimizer: int REPORT_UNFREEZE> = 2;
+
+        <com.android.server.am.CachedAppOptimizer: java.lang.String KEY_USE_FREEZER> = "use_freezer";
+
+        <com.android.server.am.CachedAppOptimizer: java.lang.String KEY_USE_COMPACTION> = "use_compaction";
+
+        <com.android.server.am.CachedAppOptimizer: java.lang.String KEY_FREEZER_STATSD_SAMPLE_RATE> = "freeze_statsd_sample_rate";
+
+        <com.android.server.am.CachedAppOptimizer: java.lang.String KEY_COMPACT_THROTTLE_6> = "compact_throttle_6";
+
+        <com.android.server.am.CachedAppOptimizer: java.lang.String KEY_COMPACT_THROTTLE_5> = "compact_throttle_5";
+
+        <com.android.server.am.CachedAppOptimizer: java.lang.String KEY_COMPACT_THROTTLE_4> = "compact_throttle_4";
+
+        <com.android.server.am.CachedAppOptimizer: java.lang.String KEY_COMPACT_THROTTLE_3> = "compact_throttle_3";
+
+        <com.android.server.am.CachedAppOptimizer: java.lang.String KEY_COMPACT_THROTTLE_2> = "compact_throttle_2";
+
+        <com.android.server.am.CachedAppOptimizer: java.lang.String KEY_COMPACT_THROTTLE_1> = "compact_throttle_1";
+
+        <com.android.server.am.CachedAppOptimizer: java.lang.String KEY_COMPACT_STATSD_SAMPLE_RATE> = "compact_statsd_sample_rate";
+
+        <com.android.server.am.CachedAppOptimizer: java.lang.String KEY_COMPACT_PROC_STATE_THROTTLE> = "compact_proc_state_throttle";
+
+        <com.android.server.am.CachedAppOptimizer: java.lang.String KEY_COMPACT_FULL_RSS_THROTTLE_KB> = "compact_full_rss_throttle_kb";
+
+        <com.android.server.am.CachedAppOptimizer: java.lang.String KEY_COMPACT_FULL_DELTA_RSS_THROTTLE_KB> = "compact_full_delta_rss_throttle_kb";
+
+        <com.android.server.am.CachedAppOptimizer: java.lang.String KEY_COMPACT_ACTION_2> = "compact_action_2";
+
+        <com.android.server.am.CachedAppOptimizer: java.lang.String KEY_COMPACT_ACTION_1> = "compact_action_1";
+
+        <com.android.server.am.CachedAppOptimizer: int FREEZE_TIMEOUT_MS> = 500;
+
+        <com.android.server.am.CachedAppOptimizer: int DO_FREEZE> = 1;
+
+        <com.android.server.am.CachedAppOptimizer: float DEFAULT_STATSD_SAMPLE_RATE> = 0.1F;
+
+        <com.android.server.am.CachedAppOptimizer: long DEFAULT_COMPACT_THROTTLE_6> = 600000L;
+
+        <com.android.server.am.CachedAppOptimizer: long DEFAULT_COMPACT_THROTTLE_5> = 600000L;
+
+        <com.android.server.am.CachedAppOptimizer: long DEFAULT_COMPACT_THROTTLE_4> = 10000L;
+
+        <com.android.server.am.CachedAppOptimizer: long DEFAULT_COMPACT_THROTTLE_3> = 500L;
+
+        <com.android.server.am.CachedAppOptimizer: long DEFAULT_COMPACT_THROTTLE_2> = 10000L;
+
+        <com.android.server.am.CachedAppOptimizer: long DEFAULT_COMPACT_THROTTLE_1> = 5000L;
+
+        <com.android.server.am.CachedAppOptimizer: long DEFAULT_COMPACT_FULL_RSS_THROTTLE_KB> = 12000L;
+
+        <com.android.server.am.CachedAppOptimizer: long DEFAULT_COMPACT_FULL_DELTA_RSS_THROTTLE_KB> = 8000L;
+
+        <com.android.server.am.CachedAppOptimizer: int DEFAULT_COMPACT_ACTION_2> = 3;
+
+        <com.android.server.am.CachedAppOptimizer: int DEFAULT_COMPACT_ACTION_1> = 1;
+
+        <com.android.server.am.CachedAppOptimizer: int COMPACT_SYSTEM_MSG> = 2;
+
+        <com.android.server.am.CachedAppOptimizer: int COMPACT_PROCESS_SOME> = 1;
+
+        <com.android.server.am.CachedAppOptimizer: int COMPACT_PROCESS_PERSISTENT> = 3;
+
+        <com.android.server.am.CachedAppOptimizer: int COMPACT_PROCESS_MSG> = 1;
+
+        <com.android.server.am.CachedAppOptimizer: int COMPACT_PROCESS_FULL> = 2;
+
+        <com.android.server.am.CachedAppOptimizer: int COMPACT_PROCESS_BFGS> = 4;
+
+        <com.android.server.am.CachedAppOptimizer: int COMPACT_ACTION_NONE_FLAG> = 4;
+
+        <com.android.server.am.CachedAppOptimizer: java.lang.String COMPACT_ACTION_NONE> = "";
+
+        <com.android.server.am.CachedAppOptimizer: int COMPACT_ACTION_FULL_FLAG> = 3;
+
+        <com.android.server.am.CachedAppOptimizer: java.lang.String COMPACT_ACTION_FULL> = "all";
+
+        <com.android.server.am.CachedAppOptimizer: int COMPACT_ACTION_FILE_FLAG> = 1;
+
+        <com.android.server.am.CachedAppOptimizer: java.lang.String COMPACT_ACTION_FILE> = "file";
+
+        <com.android.server.am.CachedAppOptimizer: int COMPACT_ACTION_ANON_FLAG> = 2;
+
+        <com.android.server.am.CachedAppOptimizer: java.lang.String COMPACT_ACTION_ANON> = "anon";
+
+        r0 = staticinvoke <java.lang.Boolean: java.lang.Boolean valueOf(boolean)>(0);
+
+        <com.android.server.am.CachedAppOptimizer: java.lang.Boolean DEFAULT_USE_COMPACTION> = r0;
+
+        <com.android.server.am.CachedAppOptimizer: java.lang.Boolean DEFAULT_USE_FREEZER> = r0;
+
+        $r1 = staticinvoke <java.lang.String: java.lang.String valueOf(int)>(11);
+
+        <com.android.server.am.CachedAppOptimizer: java.lang.String DEFAULT_COMPACT_PROC_STATE_THROTTLE> = $r1;
+
+        return;
+    }
+
+    public void <init>(com.android.server.am.ActivityManagerService)
+    {
+        com.android.server.am.CachedAppOptimizer r0;
+        com.android.server.am.ActivityManagerService r1;
+        com.android.server.am.CachedAppOptimizer$DefaultProcessDependencies $r2;
+
+        r0 := @this: com.android.server.am.CachedAppOptimizer;
+
+        r1 := @parameter0: com.android.server.am.ActivityManagerService;
+
+        $r2 = new com.android.server.am.CachedAppOptimizer$DefaultProcessDependencies;
+
+        specialinvoke $r2.<com.android.server.am.CachedAppOptimizer$DefaultProcessDependencies: void <init>(com.android.server.am.CachedAppOptimizer$1)>(null);
+
+        specialinvoke r0.<com.android.server.am.CachedAppOptimizer: void <init>(com.android.server.am.ActivityManagerService,com.android.server.am.CachedAppOptimizer$PropertyChangedCallbackForTest,com.android.server.am.CachedAppOptimizer$ProcessDependencies)>(r1, null, $r2);
+
+        return;
+    }
+
+    void <init>(com.android.server.am.ActivityManagerService, com.android.server.am.CachedAppOptimizer$PropertyChangedCallbackForTest, com.android.server.am.CachedAppOptimizer$ProcessDependencies)
+    {
+        com.android.server.am.CachedAppOptimizer r0;
+        com.android.server.am.ActivityManagerService r1;
+        com.android.server.am.CachedAppOptimizer$PropertyChangedCallbackForTest r2;
+        com.android.server.am.CachedAppOptimizer$ProcessDependencies r3;
+        java.util.ArrayList $r4;
+        com.android.server.am.CachedAppOptimizer$1 $r5;
+        java.lang.Object $r6;
+        java.lang.String $r7, $r8;
+        java.lang.Boolean $r9, $r10;
+        boolean $z0, $z1;
+        java.util.Random $r11;
+        com.android.server.am.CachedAppOptimizer$2 $r12;
+        com.android.server.ServiceThread $r13;
+        java.util.HashSet $r14;
+
+        r0 := @this: com.android.server.am.CachedAppOptimizer;
+
+        r1 := @parameter0: com.android.server.am.ActivityManagerService;
+
+        r2 := @parameter1: com.android.server.am.CachedAppOptimizer$PropertyChangedCallbackForTest;
+
+        r3 := @parameter2: com.android.server.am.CachedAppOptimizer$ProcessDependencies;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        $r4 = new java.util.ArrayList;
+
+        specialinvoke $r4.<java.util.ArrayList: void <init>()>();
+
+        r0.<com.android.server.am.CachedAppOptimizer: java.util.ArrayList mPendingCompactionProcesses> = $r4;
+
+        $r5 = new com.android.server.am.CachedAppOptimizer$1;
+
+        specialinvoke $r5.<com.android.server.am.CachedAppOptimizer$1: void <init>(com.android.server.am.CachedAppOptimizer)>(r0);
+
+        r0.<com.android.server.am.CachedAppOptimizer: android.provider.DeviceConfig$OnPropertiesChangedListener mOnFlagsChangedListener> = $r5;
+
+        $r6 = new java.lang.Object;
+
+        specialinvoke $r6.<java.lang.Object: void <init>()>();
+
+        r0.<com.android.server.am.CachedAppOptimizer: java.lang.Object mPhenotypeFlagLock> = $r6;
+
+        $r7 = staticinvoke <com.android.server.am.CachedAppOptimizer: java.lang.String compactActionIntToString(int)>(1);
+
+        r0.<com.android.server.am.CachedAppOptimizer: java.lang.String mCompactActionSome> = $r7;
+
+        $r8 = staticinvoke <com.android.server.am.CachedAppOptimizer: java.lang.String compactActionIntToString(int)>(3);
+
+        r0.<com.android.server.am.CachedAppOptimizer: java.lang.String mCompactActionFull> = $r8;
+
+        r0.<com.android.server.am.CachedAppOptimizer: long mCompactThrottleSomeSome> = 5000L;
+
+        r0.<com.android.server.am.CachedAppOptimizer: long mCompactThrottleSomeFull> = 10000L;
+
+        r0.<com.android.server.am.CachedAppOptimizer: long mCompactThrottleFullSome> = 500L;
+
+        r0.<com.android.server.am.CachedAppOptimizer: long mCompactThrottleFullFull> = 10000L;
+
+        r0.<com.android.server.am.CachedAppOptimizer: long mCompactThrottleBFGS> = 600000L;
+
+        r0.<com.android.server.am.CachedAppOptimizer: long mCompactThrottlePersistent> = 600000L;
+
+        $r9 = <com.android.server.am.CachedAppOptimizer: java.lang.Boolean DEFAULT_USE_COMPACTION>;
+
+        $z0 = virtualinvoke $r9.<java.lang.Boolean: boolean booleanValue()>();
+
+        r0.<com.android.server.am.CachedAppOptimizer: boolean mUseCompaction> = $z0;
+
+        $r10 = <com.android.server.am.CachedAppOptimizer: java.lang.Boolean DEFAULT_USE_FREEZER>;
+
+        $z1 = virtualinvoke $r10.<java.lang.Boolean: boolean booleanValue()>();
+
+        r0.<com.android.server.am.CachedAppOptimizer: boolean mUseFreezer> = $z1;
+
+        $r11 = new java.util.Random;
+
+        specialinvoke $r11.<java.util.Random: void <init>()>();
+
+        r0.<com.android.server.am.CachedAppOptimizer: java.util.Random mRandom> = $r11;
+
+        r0.<com.android.server.am.CachedAppOptimizer: float mCompactStatsdSampleRate> = 0.1F;
+
+        r0.<com.android.server.am.CachedAppOptimizer: float mFreezerStatsdSampleRate> = 0.1F;
+
+        r0.<com.android.server.am.CachedAppOptimizer: long mFullAnonRssThrottleKb> = 12000L;
+
+        r0.<com.android.server.am.CachedAppOptimizer: long mFullDeltaRssThrottleKb> = 8000L;
+
+        $r12 = new com.android.server.am.CachedAppOptimizer$2;
+
+        specialinvoke $r12.<com.android.server.am.CachedAppOptimizer$2: void <init>(com.android.server.am.CachedAppOptimizer)>(r0);
+
+        r0.<com.android.server.am.CachedAppOptimizer: java.util.LinkedHashMap mLastCompactionStats> = $r12;
+
+        r0.<com.android.server.am.CachedAppOptimizer: com.android.server.am.ActivityManagerService mAm> = r1;
+
+        $r13 = new com.android.server.ServiceThread;
+
+        specialinvoke $r13.<com.android.server.ServiceThread: void <init>(java.lang.String,int,boolean)>("CachedAppOptimizerThread", -2, 1);
+
+        r0.<com.android.server.am.CachedAppOptimizer: com.android.server.ServiceThread mCachedAppOptimizerThread> = $r13;
+
+        $r14 = new java.util.HashSet;
+
+        specialinvoke $r14.<java.util.HashSet: void <init>()>();
+
+        r0.<com.android.server.am.CachedAppOptimizer: java.util.Set mProcStateThrottle> = $r14;
+
+        r0.<com.android.server.am.CachedAppOptimizer: com.android.server.am.CachedAppOptimizer$ProcessDependencies mProcessDependencies> = r3;
+
+        r0.<com.android.server.am.CachedAppOptimizer: com.android.server.am.CachedAppOptimizer$PropertyChangedCallbackForTest mTestCallback> = r2;
+
+        return;
+    }
+
+    static java.lang.Object access$000(com.android.server.am.CachedAppOptimizer)
+    {
+        com.android.server.am.CachedAppOptimizer r0;
+        java.lang.Object $r1;
+
+        r0 := @parameter0: com.android.server.am.CachedAppOptimizer;
+
+        $r1 = r0.<com.android.server.am.CachedAppOptimizer: java.lang.Object mPhenotypeFlagLock>;
+
+        return $r1;
+    }
+
+    static void access$100(com.android.server.am.CachedAppOptimizer)
+    {
+        com.android.server.am.CachedAppOptimizer r0;
+
+        r0 := @parameter0: com.android.server.am.CachedAppOptimizer;
+
+        specialinvoke r0.<com.android.server.am.CachedAppOptimizer: void updateUseCompaction()>();
+
+        return;
+    }
+
+    static com.android.server.am.ActivityManagerService access$1300(com.android.server.am.CachedAppOptimizer)
+    {
+        com.android.server.am.CachedAppOptimizer r0;
+        com.android.server.am.ActivityManagerService $r1;
+
+        r0 := @parameter0: com.android.server.am.CachedAppOptimizer;
+
+        $r1 = r0.<com.android.server.am.CachedAppOptimizer: com.android.server.am.ActivityManagerService mAm>;
+
+        return $r1;
+    }
+
+    static java.util.ArrayList access$1400(com.android.server.am.CachedAppOptimizer)
+    {
+        com.android.server.am.CachedAppOptimizer r0;
+        java.util.ArrayList $r1;
+
+        r0 := @parameter0: com.android.server.am.CachedAppOptimizer;
+
+        $r1 = r0.<com.android.server.am.CachedAppOptimizer: java.util.ArrayList mPendingCompactionProcesses>;
+
+        return $r1;
+    }
+
+    static com.android.server.am.CachedAppOptimizer$ProcessDependencies access$1500(com.android.server.am.CachedAppOptimizer)
+    {
+        com.android.server.am.CachedAppOptimizer r0;
+        com.android.server.am.CachedAppOptimizer$ProcessDependencies $r1;
+
+        r0 := @parameter0: com.android.server.am.CachedAppOptimizer;
+
+        $r1 = r0.<com.android.server.am.CachedAppOptimizer: com.android.server.am.CachedAppOptimizer$ProcessDependencies mProcessDependencies>;
+
+        return $r1;
+    }
+
+    static int access$1608(com.android.server.am.CachedAppOptimizer)
+    {
+        com.android.server.am.CachedAppOptimizer r0;
+        int i0, $i1;
+
+        r0 := @parameter0: com.android.server.am.CachedAppOptimizer;
+
+        i0 = r0.<com.android.server.am.CachedAppOptimizer: int mSomeCompactionCount>;
+
+        $i1 = i0 + 1;
+
+        r0.<com.android.server.am.CachedAppOptimizer: int mSomeCompactionCount> = $i1;
+
+        return i0;
+    }
+
+    static int access$1708(com.android.server.am.CachedAppOptimizer)
+    {
+        com.android.server.am.CachedAppOptimizer r0;
+        int i0, $i1;
+
+        r0 := @parameter0: com.android.server.am.CachedAppOptimizer;
+
+        i0 = r0.<com.android.server.am.CachedAppOptimizer: int mFullCompactionCount>;
+
+        $i1 = i0 + 1;
+
+        r0.<com.android.server.am.CachedAppOptimizer: int mFullCompactionCount> = $i1;
+
+        return i0;
+    }
+
+    static int access$1808(com.android.server.am.CachedAppOptimizer)
+    {
+        com.android.server.am.CachedAppOptimizer r0;
+        int i0, $i1;
+
+        r0 := @parameter0: com.android.server.am.CachedAppOptimizer;
+
+        i0 = r0.<com.android.server.am.CachedAppOptimizer: int mPersistentCompactionCount>;
+
+        $i1 = i0 + 1;
+
+        r0.<com.android.server.am.CachedAppOptimizer: int mPersistentCompactionCount> = $i1;
+
+        return i0;
+    }
+
+    static int access$1908(com.android.server.am.CachedAppOptimizer)
+    {
+        com.android.server.am.CachedAppOptimizer r0;
+        int i0, $i1;
+
+        r0 := @parameter0: com.android.server.am.CachedAppOptimizer;
+
+        i0 = r0.<com.android.server.am.CachedAppOptimizer: int mBfgsCompactionCount>;
+
+        $i1 = i0 + 1;
+
+        r0.<com.android.server.am.CachedAppOptimizer: int mBfgsCompactionCount> = $i1;
+
+        return i0;
+    }
+
+    static void access$200(com.android.server.am.CachedAppOptimizer)
+    {
+        com.android.server.am.CachedAppOptimizer r0;
+
+        r0 := @parameter0: com.android.server.am.CachedAppOptimizer;
+
+        specialinvoke r0.<com.android.server.am.CachedAppOptimizer: void updateCompactionActions()>();
+
+        return;
+    }
+
+    static java.util.Random access$2000(com.android.server.am.CachedAppOptimizer)
+    {
+        com.android.server.am.CachedAppOptimizer r0;
+        java.util.Random $r1;
+
+        r0 := @parameter0: com.android.server.am.CachedAppOptimizer;
+
+        $r1 = r0.<com.android.server.am.CachedAppOptimizer: java.util.Random mRandom>;
+
+        return $r1;
+    }
+
+    static void access$2100(com.android.server.am.CachedAppOptimizer)
+    {
+        com.android.server.am.CachedAppOptimizer r0;
+
+        r0 := @parameter0: com.android.server.am.CachedAppOptimizer;
+
+        specialinvoke r0.<com.android.server.am.CachedAppOptimizer: void compactSystem()>();
+
+        return;
+    }
+
+    static void access$300(com.android.server.am.CachedAppOptimizer)
+    {
+        com.android.server.am.CachedAppOptimizer r0;
+
+        r0 := @parameter0: com.android.server.am.CachedAppOptimizer;
+
+        specialinvoke r0.<com.android.server.am.CachedAppOptimizer: void updateCompactionThrottles()>();
+
+        return;
+    }
+
+    static void access$400(com.android.server.am.CachedAppOptimizer)
+    {
+        com.android.server.am.CachedAppOptimizer r0;
+
+        r0 := @parameter0: com.android.server.am.CachedAppOptimizer;
+
+        specialinvoke r0.<com.android.server.am.CachedAppOptimizer: void updateCompactStatsdSampleRate()>();
+
+        return;
+    }
+
+    static void access$500(com.android.server.am.CachedAppOptimizer)
+    {
+        com.android.server.am.CachedAppOptimizer r0;
+
+        r0 := @parameter0: com.android.server.am.CachedAppOptimizer;
+
+        specialinvoke r0.<com.android.server.am.CachedAppOptimizer: void updateFreezerStatsdSampleRate()>();
+
+        return;
+    }
+
+    static void access$600(com.android.server.am.CachedAppOptimizer)
+    {
+        com.android.server.am.CachedAppOptimizer r0;
+
+        r0 := @parameter0: com.android.server.am.CachedAppOptimizer;
+
+        specialinvoke r0.<com.android.server.am.CachedAppOptimizer: void updateFullRssThrottle()>();
+
+        return;
+    }
+
+    static void access$700(com.android.server.am.CachedAppOptimizer)
+    {
+        com.android.server.am.CachedAppOptimizer r0;
+
+        r0 := @parameter0: com.android.server.am.CachedAppOptimizer;
+
+        specialinvoke r0.<com.android.server.am.CachedAppOptimizer: void updateFullDeltaRssThrottle()>();
+
+        return;
+    }
+
+    static void access$800(com.android.server.am.CachedAppOptimizer)
+    {
+        com.android.server.am.CachedAppOptimizer r0;
+
+        r0 := @parameter0: com.android.server.am.CachedAppOptimizer;
+
+        specialinvoke r0.<com.android.server.am.CachedAppOptimizer: void updateProcStateThrottle()>();
+
+        return;
+    }
+
+    static com.android.server.am.CachedAppOptimizer$PropertyChangedCallbackForTest access$900(com.android.server.am.CachedAppOptimizer)
+    {
+        com.android.server.am.CachedAppOptimizer r0;
+        com.android.server.am.CachedAppOptimizer$PropertyChangedCallbackForTest $r1;
+
+        r0 := @parameter0: com.android.server.am.CachedAppOptimizer;
+
+        $r1 = r0.<com.android.server.am.CachedAppOptimizer: com.android.server.am.CachedAppOptimizer$PropertyChangedCallbackForTest mTestCallback>;
+
+        return $r1;
+    }
+
+    static java.lang.String compactActionIntToString(int)
+    {
+        int i0;
+
+        i0 := @parameter0: int;
+
+        if i0 == 1 goto label3;
+
+        if i0 == 2 goto label2;
+
+        if i0 == 3 goto label1;
+
+        return "";
+
+     label1:
+        return "all";
+
+     label2:
+        return "anon";
+
+     label3:
+        return "file";
+    }
+
+    private native void compactSystem();
+
+    public static boolean isFreezerSupported()
+    {
+        int $i0;
+        char $c1;
+        java.lang.Throwable $r1, $r9;
+        java.lang.String $r3, $r4, $r7, $r8;
+        java.lang.Exception $r5;
+        boolean z0;
+        java.io.FileReader r10, r11, r12, r17;
+        java.lang.StringBuilder r18, r19;
+        java.io.IOException r20;
+
+        z0 = 0;
+
+        r10 = null;
+
+        r11 = null;
+
+     label01:
+        r17 = new java.io.FileReader;
+
+     label02:
+        r10 = null;
+
+        r11 = null;
+
+     label03:
+        specialinvoke r17.<java.io.FileReader: void <init>(java.lang.String)>("/dev/freezer/frozen/freezer.killable");
+
+     label04:
+        r12 = r17;
+
+        r10 = r17;
+
+        r11 = r17;
+
+     label05:
+        $i0 = virtualinvoke r17.<java.io.FileReader: int read()>();
+
+        $c1 = (char) $i0;
+
+        if $c1 != 49 goto label07;
+
+     label06:
+        z0 = 1;
+
+        goto label12;
+
+     label07:
+        r10 = r17;
+
+        r11 = r17;
+
+     label08:
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("ActivityManager", "Freezer killability is turned off, disabling freezer");
+
+     label09:
+        goto label12;
+
+     label10:
+        $r5 := @caughtexception;
+
+        r18 = new java.lang.StringBuilder;
+
+        specialinvoke r18.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r18.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Unable to read freezer.killable, disabling freezer: ");
+
+        $r7 = virtualinvoke $r5.<java.lang.Exception: java.lang.String toString()>();
+
+        virtualinvoke r18.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r7);
+
+        $r8 = virtualinvoke r18.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("ActivityManager", $r8);
+
+        z0 = 0;
+
+        r12 = r10;
+
+        goto label12;
+
+     label11:
+        $r9 := @caughtexception;
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("ActivityManager", "Freezer.killable not present, disabling freezer");
+
+        r12 = r11;
+
+     label12:
+        if r12 == null goto label16;
+
+     label13:
+        virtualinvoke r12.<java.io.FileReader: void close()>();
+
+     label14:
+        goto label16;
+
+     label15:
+        $r1 := @caughtexception;
+
+        r19 = new java.lang.StringBuilder;
+
+        specialinvoke r19.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r19.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Exception closing freezer.killable: ");
+
+        r20 = (java.io.IOException) $r1;
+
+        $r3 = virtualinvoke r20.<java.io.IOException: java.lang.String toString()>();
+
+        virtualinvoke r19.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r3);
+
+        $r4 = virtualinvoke r19.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("ActivityManager", $r4);
+
+     label16:
+        return z0;
+
+        catch java.io.FileNotFoundException from label01 to label02 with label11;
+        catch java.lang.Exception from label01 to label02 with label10;
+        catch java.io.FileNotFoundException from label03 to label04 with label11;
+        catch java.lang.Exception from label03 to label04 with label10;
+        catch java.io.FileNotFoundException from label05 to label06 with label11;
+        catch java.lang.Exception from label05 to label06 with label10;
+        catch java.io.FileNotFoundException from label08 to label09 with label11;
+        catch java.lang.Exception from label08 to label09 with label10;
+        catch java.io.IOException from label13 to label14 with label15;
+    }
+
+    private boolean parseProcStateThrottle(java.lang.String)
+    {
+        com.android.server.am.CachedAppOptimizer r0;
+        int i0, $i1, i3;
+        java.util.Set $r1, $r2;
+        java.lang.Integer $r3;
+        java.lang.Throwable $r4;
+        java.lang.StringBuilder $r5;
+        java.lang.String $r8, r9, r11;
+        java.lang.String[] r10;
+
+        r0 := @this: com.android.server.am.CachedAppOptimizer;
+
+        r9 := @parameter0: java.lang.String;
+
+        r10 = staticinvoke <android.text.TextUtils: java.lang.String[] split(java.lang.String,java.lang.String)>(r9, ",");
+
+        $r1 = r0.<com.android.server.am.CachedAppOptimizer: java.util.Set mProcStateThrottle>;
+
+        interfaceinvoke $r1.<java.util.Set: void clear()>();
+
+        i0 = lengthof r10;
+
+        i3 = 0;
+
+     label1:
+        if i3 >= i0 goto label5;
+
+        r11 = r10[i3];
+
+     label2:
+        $r2 = r0.<com.android.server.am.CachedAppOptimizer: java.util.Set mProcStateThrottle>;
+
+        $i1 = staticinvoke <java.lang.Integer: int parseInt(java.lang.String)>(r11);
+
+        $r3 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i1);
+
+        interfaceinvoke $r2.<java.util.Set: boolean add(java.lang.Object)>($r3);
+
+     label3:
+        i3 = i3 + 1;
+
+        goto label1;
+
+     label4:
+        $r4 := @caughtexception;
+
+        $r5 = new java.lang.StringBuilder;
+
+        specialinvoke $r5.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Failed to parse default app compaction proc state: ");
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r11);
+
+        $r8 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("ActivityManager", $r8);
+
+        return 0;
+
+     label5:
+        return 1;
+
+        catch java.lang.NumberFormatException from label2 to label3 with label4;
+    }
+
+    private void updateCompactStatsdSampleRate()
+    {
+        com.android.server.am.CachedAppOptimizer r0;
+        float $f0, $f1, $f2, $f3;
+
+        r0 := @this: com.android.server.am.CachedAppOptimizer;
+
+        $f0 = staticinvoke <android.provider.DeviceConfig: float getFloat(java.lang.String,java.lang.String,float)>("activity_manager", "compact_statsd_sample_rate", 0.1F);
+
+        r0.<com.android.server.am.CachedAppOptimizer: float mCompactStatsdSampleRate> = $f0;
+
+        $f1 = r0.<com.android.server.am.CachedAppOptimizer: float mCompactStatsdSampleRate>;
+
+        $f2 = staticinvoke <java.lang.Math: float max(float,float)>(0.0F, $f1);
+
+        $f3 = staticinvoke <java.lang.Math: float min(float,float)>(1.0F, $f2);
+
+        r0.<com.android.server.am.CachedAppOptimizer: float mCompactStatsdSampleRate> = $f3;
+
+        return;
+    }
+
+    private void updateCompactionActions()
+    {
+        com.android.server.am.CachedAppOptimizer r0;
+        int i0, i1;
+        java.lang.String $r1, $r2;
+
+        r0 := @this: com.android.server.am.CachedAppOptimizer;
+
+        i0 = staticinvoke <android.provider.DeviceConfig: int getInt(java.lang.String,java.lang.String,int)>("activity_manager", "compact_action_1", 1);
+
+        i1 = staticinvoke <android.provider.DeviceConfig: int getInt(java.lang.String,java.lang.String,int)>("activity_manager", "compact_action_2", 3);
+
+        $r1 = staticinvoke <com.android.server.am.CachedAppOptimizer: java.lang.String compactActionIntToString(int)>(i0);
+
+        r0.<com.android.server.am.CachedAppOptimizer: java.lang.String mCompactActionSome> = $r1;
+
+        $r2 = staticinvoke <com.android.server.am.CachedAppOptimizer: java.lang.String compactActionIntToString(int)>(i1);
+
+        r0.<com.android.server.am.CachedAppOptimizer: java.lang.String mCompactActionFull> = $r2;
+
+        return;
+    }
+
+    private void updateCompactionThrottles()
+    {
+        com.android.server.am.CachedAppOptimizer r0;
+        java.lang.String r1, r2, r3, r4, r5, r7;
+        boolean $z0, $z1, $z2, $z3, $z4, $z5, z6;
+        int $i0, $i2, $i4, $i6, $i8, $i10;
+        long $l1, $l3, $l5, $l7, $l9, $l11;
+        java.lang.Throwable $r6;
+
+        r0 := @this: com.android.server.am.CachedAppOptimizer;
+
+        z6 = 0;
+
+        r1 = staticinvoke <android.provider.DeviceConfig: java.lang.String getProperty(java.lang.String,java.lang.String)>("activity_manager", "compact_throttle_1");
+
+        r2 = staticinvoke <android.provider.DeviceConfig: java.lang.String getProperty(java.lang.String,java.lang.String)>("activity_manager", "compact_throttle_2");
+
+        r7 = staticinvoke <android.provider.DeviceConfig: java.lang.String getProperty(java.lang.String,java.lang.String)>("activity_manager", "compact_throttle_3");
+
+        r3 = staticinvoke <android.provider.DeviceConfig: java.lang.String getProperty(java.lang.String,java.lang.String)>("activity_manager", "compact_throttle_4");
+
+        r4 = staticinvoke <android.provider.DeviceConfig: java.lang.String getProperty(java.lang.String,java.lang.String)>("activity_manager", "compact_throttle_5");
+
+        r5 = staticinvoke <android.provider.DeviceConfig: java.lang.String getProperty(java.lang.String,java.lang.String)>("activity_manager", "compact_throttle_6");
+
+        $z0 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>(r1);
+
+        if $z0 != 0 goto label4;
+
+        $z1 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>(r2);
+
+        if $z1 != 0 goto label4;
+
+        $z2 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>(r7);
+
+        if $z2 != 0 goto label4;
+
+        $z3 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>(r3);
+
+        if $z3 != 0 goto label4;
+
+        $z4 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>(r4);
+
+        if $z4 != 0 goto label4;
+
+        $z5 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>(r5);
+
+        if $z5 == 0 goto label1;
+
+        goto label4;
+
+     label1:
+        $i0 = staticinvoke <java.lang.Integer: int parseInt(java.lang.String)>(r1);
+
+        $l1 = (long) $i0;
+
+        r0.<com.android.server.am.CachedAppOptimizer: long mCompactThrottleSomeSome> = $l1;
+
+        $i2 = staticinvoke <java.lang.Integer: int parseInt(java.lang.String)>(r2);
+
+        $l3 = (long) $i2;
+
+        r0.<com.android.server.am.CachedAppOptimizer: long mCompactThrottleSomeFull> = $l3;
+
+        $i4 = staticinvoke <java.lang.Integer: int parseInt(java.lang.String)>(r7);
+
+        $l5 = (long) $i4;
+
+        r0.<com.android.server.am.CachedAppOptimizer: long mCompactThrottleFullSome> = $l5;
+
+        $i6 = staticinvoke <java.lang.Integer: int parseInt(java.lang.String)>(r3);
+
+        $l7 = (long) $i6;
+
+        r0.<com.android.server.am.CachedAppOptimizer: long mCompactThrottleFullFull> = $l7;
+
+        $i8 = staticinvoke <java.lang.Integer: int parseInt(java.lang.String)>(r4);
+
+        $l9 = (long) $i8;
+
+        r0.<com.android.server.am.CachedAppOptimizer: long mCompactThrottleBFGS> = $l9;
+
+        $i10 = staticinvoke <java.lang.Integer: int parseInt(java.lang.String)>(r5);
+
+        $l11 = (long) $i10;
+
+        r0.<com.android.server.am.CachedAppOptimizer: long mCompactThrottlePersistent> = $l11;
+
+     label2:
+        goto label5;
+
+     label3:
+        $r6 := @caughtexception;
+
+        z6 = 1;
+
+        goto label5;
+
+     label4:
+        z6 = 1;
+
+     label5:
+        if z6 == 0 goto label6;
+
+        r0.<com.android.server.am.CachedAppOptimizer: long mCompactThrottleSomeSome> = 5000L;
+
+        r0.<com.android.server.am.CachedAppOptimizer: long mCompactThrottleSomeFull> = 10000L;
+
+        r0.<com.android.server.am.CachedAppOptimizer: long mCompactThrottleFullSome> = 500L;
+
+        r0.<com.android.server.am.CachedAppOptimizer: long mCompactThrottleFullFull> = 10000L;
+
+        r0.<com.android.server.am.CachedAppOptimizer: long mCompactThrottleBFGS> = 600000L;
+
+        r0.<com.android.server.am.CachedAppOptimizer: long mCompactThrottlePersistent> = 600000L;
+
+     label6:
+        return;
+
+        catch java.lang.NumberFormatException from label1 to label2 with label3;
+    }
+
+    private void updateFreezerStatsdSampleRate()
+    {
+        com.android.server.am.CachedAppOptimizer r0;
+        float $f0, $f1, $f2, $f3;
+
+        r0 := @this: com.android.server.am.CachedAppOptimizer;
+
+        $f0 = staticinvoke <android.provider.DeviceConfig: float getFloat(java.lang.String,java.lang.String,float)>("activity_manager", "freeze_statsd_sample_rate", 0.1F);
+
+        r0.<com.android.server.am.CachedAppOptimizer: float mFreezerStatsdSampleRate> = $f0;
+
+        $f1 = r0.<com.android.server.am.CachedAppOptimizer: float mFreezerStatsdSampleRate>;
+
+        $f2 = staticinvoke <java.lang.Math: float max(float,float)>(0.0F, $f1);
+
+        $f3 = staticinvoke <java.lang.Math: float min(float,float)>(1.0F, $f2);
+
+        r0.<com.android.server.am.CachedAppOptimizer: float mFreezerStatsdSampleRate> = $f3;
+
+        return;
+    }
+
+    private void updateFullDeltaRssThrottle()
+    {
+        com.android.server.am.CachedAppOptimizer r0;
+        long $l0, $l1;
+        byte $b2;
+
+        r0 := @this: com.android.server.am.CachedAppOptimizer;
+
+        $l0 = staticinvoke <android.provider.DeviceConfig: long getLong(java.lang.String,java.lang.String,long)>("activity_manager", "compact_full_delta_rss_throttle_kb", 8000L);
+
+        r0.<com.android.server.am.CachedAppOptimizer: long mFullDeltaRssThrottleKb> = $l0;
+
+        $l1 = r0.<com.android.server.am.CachedAppOptimizer: long mFullDeltaRssThrottleKb>;
+
+        $b2 = $l1 cmp 0L;
+
+        if $b2 >= 0 goto label1;
+
+        r0.<com.android.server.am.CachedAppOptimizer: long mFullDeltaRssThrottleKb> = 8000L;
+
+     label1:
+        return;
+    }
+
+    private void updateFullRssThrottle()
+    {
+        com.android.server.am.CachedAppOptimizer r0;
+        long $l0, $l1;
+        byte $b2;
+
+        r0 := @this: com.android.server.am.CachedAppOptimizer;
+
+        $l0 = staticinvoke <android.provider.DeviceConfig: long getLong(java.lang.String,java.lang.String,long)>("activity_manager", "compact_full_rss_throttle_kb", 12000L);
+
+        r0.<com.android.server.am.CachedAppOptimizer: long mFullAnonRssThrottleKb> = $l0;
+
+        $l1 = r0.<com.android.server.am.CachedAppOptimizer: long mFullAnonRssThrottleKb>;
+
+        $b2 = $l1 cmp 0L;
+
+        if $b2 >= 0 goto label1;
+
+        r0.<com.android.server.am.CachedAppOptimizer: long mFullAnonRssThrottleKb> = 12000L;
+
+     label1:
+        return;
+    }
+
+    private void updateProcStateThrottle()
+    {
+        com.android.server.am.CachedAppOptimizer r0;
+        java.lang.String $r2, $r7, $r8, $r11, $r13, r14;
+        boolean $z0, $z1;
+        java.lang.StringBuilder $r3, $r9;
+
+        r0 := @this: com.android.server.am.CachedAppOptimizer;
+
+        $r2 = <com.android.server.am.CachedAppOptimizer: java.lang.String DEFAULT_COMPACT_PROC_STATE_THROTTLE>;
+
+        r14 = staticinvoke <android.provider.DeviceConfig: java.lang.String getString(java.lang.String,java.lang.String,java.lang.String)>("activity_manager", "compact_proc_state_throttle", $r2);
+
+        $z0 = specialinvoke r0.<com.android.server.am.CachedAppOptimizer: boolean parseProcStateThrottle(java.lang.String)>(r14);
+
+        if $z0 != 0 goto label1;
+
+        $r3 = new java.lang.StringBuilder;
+
+        specialinvoke $r3.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Unable to parse app compact proc state throttle \"");
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r14);
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("\" falling back to default.");
+
+        $r7 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("ActivityManager", $r7);
+
+        $r8 = <com.android.server.am.CachedAppOptimizer: java.lang.String DEFAULT_COMPACT_PROC_STATE_THROTTLE>;
+
+        $z1 = specialinvoke r0.<com.android.server.am.CachedAppOptimizer: boolean parseProcStateThrottle(java.lang.String)>($r8);
+
+        if $z1 != 0 goto label1;
+
+        $r9 = new java.lang.StringBuilder;
+
+        specialinvoke $r9.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Unable to parse default app compact proc state throttle ");
+
+        $r11 = <com.android.server.am.CachedAppOptimizer: java.lang.String DEFAULT_COMPACT_PROC_STATE_THROTTLE>;
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r11);
+
+        $r13 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int wtf(java.lang.String,java.lang.String)>("ActivityManager", $r13);
+
+     label1:
+        return;
+    }
+
+    private void updateUseCompaction()
+    {
+        com.android.server.am.CachedAppOptimizer r0;
+        java.lang.Boolean $r1;
+        boolean $z0, $z1, $z2, $z3;
+        com.android.server.ServiceThread $r2, $r4;
+        com.android.server.am.CachedAppOptimizer$MemCompactionHandler $r3;
+
+        r0 := @this: com.android.server.am.CachedAppOptimizer;
+
+        $r1 = <com.android.server.am.CachedAppOptimizer: java.lang.Boolean DEFAULT_USE_COMPACTION>;
+
+        $z0 = virtualinvoke $r1.<java.lang.Boolean: boolean booleanValue()>();
+
+        $z1 = staticinvoke <android.provider.DeviceConfig: boolean getBoolean(java.lang.String,java.lang.String,boolean)>("activity_manager", "use_compaction", $z0);
+
+        r0.<com.android.server.am.CachedAppOptimizer: boolean mUseCompaction> = $z1;
+
+        $z2 = r0.<com.android.server.am.CachedAppOptimizer: boolean mUseCompaction>;
+
+        if $z2 == 0 goto label2;
+
+        $r2 = r0.<com.android.server.am.CachedAppOptimizer: com.android.server.ServiceThread mCachedAppOptimizerThread>;
+
+        $z3 = virtualinvoke $r2.<com.android.server.ServiceThread: boolean isAlive()>();
+
+        if $z3 != 0 goto label1;
+
+        $r4 = r0.<com.android.server.am.CachedAppOptimizer: com.android.server.ServiceThread mCachedAppOptimizerThread>;
+
+        virtualinvoke $r4.<com.android.server.ServiceThread: void start()>();
+
+     label1:
+        $r3 = new com.android.server.am.CachedAppOptimizer$MemCompactionHandler;
+
+        specialinvoke $r3.<com.android.server.am.CachedAppOptimizer$MemCompactionHandler: void <init>(com.android.server.am.CachedAppOptimizer,com.android.server.am.CachedAppOptimizer$1)>(r0, null);
+
+        r0.<com.android.server.am.CachedAppOptimizer: android.os.Handler mCompactionHandler> = $r3;
+
+     label2:
+        return;
+    }
+
+    private void updateUseFreezer()
+    {
+        com.android.server.am.CachedAppOptimizer r0;
+        java.lang.String r1, $r5, $r6;
+        com.android.server.am.ActivityManagerService $r2;
+        android.content.Context $r3;
+        android.content.ContentResolver $r4;
+        boolean $z0, $z1, $z2, $z3, $z4, $z5, $z6;
+        com.android.server.ServiceThread $r7, $r9;
+        com.android.server.am.CachedAppOptimizer$FreezeHandler $r8;
+        java.lang.Boolean $r10;
+
+        r0 := @this: com.android.server.am.CachedAppOptimizer;
+
+        $r2 = r0.<com.android.server.am.CachedAppOptimizer: com.android.server.am.ActivityManagerService mAm>;
+
+        $r3 = $r2.<com.android.server.am.ActivityManagerService: android.content.Context mContext>;
+
+        $r4 = virtualinvoke $r3.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        r1 = staticinvoke <android.provider.Settings$Global: java.lang.String getString(android.content.ContentResolver,java.lang.String)>($r4, "cached_apps_freezer");
+
+        $r5 = "disabled";
+
+        $z0 = virtualinvoke $r5.<java.lang.String: boolean equals(java.lang.Object)>(r1);
+
+        if $z0 == 0 goto label1;
+
+        r0.<com.android.server.am.CachedAppOptimizer: boolean mUseFreezer> = 0;
+
+        goto label3;
+
+     label1:
+        $r6 = "enabled";
+
+        $z1 = virtualinvoke $r6.<java.lang.String: boolean equals(java.lang.Object)>(r1);
+
+        if $z1 != 0 goto label2;
+
+        $r10 = <com.android.server.am.CachedAppOptimizer: java.lang.Boolean DEFAULT_USE_FREEZER>;
+
+        $z4 = virtualinvoke $r10.<java.lang.Boolean: boolean booleanValue()>();
+
+        $z5 = staticinvoke <android.provider.DeviceConfig: boolean getBoolean(java.lang.String,java.lang.String,boolean)>("activity_manager_native_boot", "use_freezer", $z4);
+
+        if $z5 == 0 goto label3;
+
+     label2:
+        $z2 = staticinvoke <com.android.server.am.CachedAppOptimizer: boolean isFreezerSupported()>();
+
+        r0.<com.android.server.am.CachedAppOptimizer: boolean mUseFreezer> = $z2;
+
+     label3:
+        $z6 = r0.<com.android.server.am.CachedAppOptimizer: boolean mUseFreezer>;
+
+        if $z6 == 0 goto label5;
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("ActivityManager", "Freezer enabled");
+
+        $r7 = r0.<com.android.server.am.CachedAppOptimizer: com.android.server.ServiceThread mCachedAppOptimizerThread>;
+
+        $z3 = virtualinvoke $r7.<com.android.server.ServiceThread: boolean isAlive()>();
+
+        if $z3 != 0 goto label4;
+
+        $r9 = r0.<com.android.server.am.CachedAppOptimizer: com.android.server.ServiceThread mCachedAppOptimizerThread>;
+
+        virtualinvoke $r9.<com.android.server.ServiceThread: void start()>();
+
+     label4:
+        $r8 = new com.android.server.am.CachedAppOptimizer$FreezeHandler;
+
+        specialinvoke $r8.<com.android.server.am.CachedAppOptimizer$FreezeHandler: void <init>(com.android.server.am.CachedAppOptimizer,com.android.server.am.CachedAppOptimizer$1)>(r0, null);
+
+        r0.<com.android.server.am.CachedAppOptimizer: android.os.Handler mFreezeHandler> = $r8;
+
+     label5:
+        return;
+    }
+
+    void compactAllSystem()
+    {
+        com.android.server.am.CachedAppOptimizer r0;
+        android.os.Handler r1;
+        boolean $z0;
+        android.os.Message $r2;
+
+        r0 := @this: com.android.server.am.CachedAppOptimizer;
+
+        $z0 = r0.<com.android.server.am.CachedAppOptimizer: boolean mUseCompaction>;
+
+        if $z0 == 0 goto label1;
+
+        r1 = r0.<com.android.server.am.CachedAppOptimizer: android.os.Handler mCompactionHandler>;
+
+        $r2 = virtualinvoke r1.<android.os.Handler: android.os.Message obtainMessage(int)>(2);
+
+        virtualinvoke r1.<android.os.Handler: boolean sendMessage(android.os.Message)>($r2);
+
+     label1:
+        return;
+    }
+
+    void compactAppBfgs(com.android.server.am.ProcessRecord)
+    {
+        com.android.server.am.CachedAppOptimizer r0;
+        com.android.server.am.ProcessRecord r1;
+        android.os.Handler r2;
+        java.util.ArrayList $r3;
+        int $i0, $i1;
+        android.os.Message $r4;
+
+        r0 := @this: com.android.server.am.CachedAppOptimizer;
+
+        r1 := @parameter0: com.android.server.am.ProcessRecord;
+
+        r1.<com.android.server.am.ProcessRecord: int reqCompactAction> = 4;
+
+        $r3 = r0.<com.android.server.am.CachedAppOptimizer: java.util.ArrayList mPendingCompactionProcesses>;
+
+        virtualinvoke $r3.<java.util.ArrayList: boolean add(java.lang.Object)>(r1);
+
+        r2 = r0.<com.android.server.am.CachedAppOptimizer: android.os.Handler mCompactionHandler>;
+
+        $i1 = r1.<com.android.server.am.ProcessRecord: int curAdj>;
+
+        $i0 = r1.<com.android.server.am.ProcessRecord: int setProcState>;
+
+        $r4 = virtualinvoke r2.<android.os.Handler: android.os.Message obtainMessage(int,int,int)>(1, $i1, $i0);
+
+        virtualinvoke r2.<android.os.Handler: boolean sendMessage(android.os.Message)>($r4);
+
+        return;
+    }
+
+    void compactAppFull(com.android.server.am.ProcessRecord)
+    {
+        com.android.server.am.CachedAppOptimizer r0;
+        com.android.server.am.ProcessRecord r1;
+        android.os.Handler r2;
+        java.util.ArrayList $r3;
+        int $i0, $i1;
+        android.os.Message $r4;
+
+        r0 := @this: com.android.server.am.CachedAppOptimizer;
+
+        r1 := @parameter0: com.android.server.am.ProcessRecord;
+
+        r1.<com.android.server.am.ProcessRecord: int reqCompactAction> = 2;
+
+        $r3 = r0.<com.android.server.am.CachedAppOptimizer: java.util.ArrayList mPendingCompactionProcesses>;
+
+        virtualinvoke $r3.<java.util.ArrayList: boolean add(java.lang.Object)>(r1);
+
+        r2 = r0.<com.android.server.am.CachedAppOptimizer: android.os.Handler mCompactionHandler>;
+
+        $i1 = r1.<com.android.server.am.ProcessRecord: int setAdj>;
+
+        $i0 = r1.<com.android.server.am.ProcessRecord: int setProcState>;
+
+        $r4 = virtualinvoke r2.<android.os.Handler: android.os.Message obtainMessage(int,int,int)>(1, $i1, $i0);
+
+        virtualinvoke r2.<android.os.Handler: boolean sendMessage(android.os.Message)>($r4);
+
+        return;
+    }
+
+    void compactAppPersistent(com.android.server.am.ProcessRecord)
+    {
+        com.android.server.am.CachedAppOptimizer r0;
+        com.android.server.am.ProcessRecord r1;
+        android.os.Handler r2;
+        java.util.ArrayList $r3;
+        int $i0, $i1;
+        android.os.Message $r4;
+
+        r0 := @this: com.android.server.am.CachedAppOptimizer;
+
+        r1 := @parameter0: com.android.server.am.ProcessRecord;
+
+        r1.<com.android.server.am.ProcessRecord: int reqCompactAction> = 3;
+
+        $r3 = r0.<com.android.server.am.CachedAppOptimizer: java.util.ArrayList mPendingCompactionProcesses>;
+
+        virtualinvoke $r3.<java.util.ArrayList: boolean add(java.lang.Object)>(r1);
+
+        r2 = r0.<com.android.server.am.CachedAppOptimizer: android.os.Handler mCompactionHandler>;
+
+        $i1 = r1.<com.android.server.am.ProcessRecord: int curAdj>;
+
+        $i0 = r1.<com.android.server.am.ProcessRecord: int setProcState>;
+
+        $r4 = virtualinvoke r2.<android.os.Handler: android.os.Message obtainMessage(int,int,int)>(1, $i1, $i0);
+
+        virtualinvoke r2.<android.os.Handler: boolean sendMessage(android.os.Message)>($r4);
+
+        return;
+    }
+
+    void compactAppSome(com.android.server.am.ProcessRecord)
+    {
+        com.android.server.am.CachedAppOptimizer r0;
+        com.android.server.am.ProcessRecord r1;
+        android.os.Handler r2;
+        java.util.ArrayList $r3;
+        int $i0, $i1;
+        android.os.Message $r4;
+
+        r0 := @this: com.android.server.am.CachedAppOptimizer;
+
+        r1 := @parameter0: com.android.server.am.ProcessRecord;
+
+        r1.<com.android.server.am.ProcessRecord: int reqCompactAction> = 1;
+
+        $r3 = r0.<com.android.server.am.CachedAppOptimizer: java.util.ArrayList mPendingCompactionProcesses>;
+
+        virtualinvoke $r3.<java.util.ArrayList: boolean add(java.lang.Object)>(r1);
+
+        r2 = r0.<com.android.server.am.CachedAppOptimizer: android.os.Handler mCompactionHandler>;
+
+        $i1 = r1.<com.android.server.am.ProcessRecord: int setAdj>;
+
+        $i0 = r1.<com.android.server.am.ProcessRecord: int setProcState>;
+
+        $r4 = virtualinvoke r2.<android.os.Handler: android.os.Message obtainMessage(int,int,int)>(1, $i1, $i0);
+
+        virtualinvoke r2.<android.os.Handler: boolean sendMessage(android.os.Message)>($r4);
+
+        return;
+    }
+
+    void dump(java.io.PrintWriter)
+    {
+        com.android.server.am.CachedAppOptimizer r0;
+        java.lang.Object r1;
+        boolean $z0, $z1;
+        java.lang.String $r4, $r6, $r8, $r10, $r12, $r15, $r18, $r21, $r24, $r27, $r30, $r33, $r36, $r39, $r44, $r46, $r56, $r61, $r64, $r67;
+        long $l0, $l1, $l2, $l3, $l4, $l5, $l6, $l7;
+        float $f0, $f1;
+        java.lang.Integer[] $r41;
+        java.util.Set $r42;
+        java.lang.Object[] $r43;
+        int $i8, $i9, $i10, $i11, $i12;
+        java.util.LinkedHashMap $r58;
+        java.lang.Throwable $r68;
+        java.io.PrintWriter r69;
+        java.lang.StringBuilder r70, r71, r72, r73, r74, r75, r76, r77, r78, r79, r80, r81, r82, r83, r84, r85, r86;
+
+        r0 := @this: com.android.server.am.CachedAppOptimizer;
+
+        r69 := @parameter0: java.io.PrintWriter;
+
+        virtualinvoke r69.<java.io.PrintWriter: void println(java.lang.String)>("CachedAppOptimizer settings");
+
+        r1 = r0.<com.android.server.am.CachedAppOptimizer: java.lang.Object mPhenotypeFlagLock>;
+
+        entermonitor r1;
+
+     label1:
+        r70 = new java.lang.StringBuilder;
+
+        specialinvoke r70.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r70.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  use_compaction=");
+
+        $z0 = r0.<com.android.server.am.CachedAppOptimizer: boolean mUseCompaction>;
+
+        virtualinvoke r70.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>($z0);
+
+        $r4 = virtualinvoke r70.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r69.<java.io.PrintWriter: void println(java.lang.String)>($r4);
+
+        r71 = new java.lang.StringBuilder;
+
+        specialinvoke r71.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r71.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  compact_action_1=");
+
+        $r6 = r0.<com.android.server.am.CachedAppOptimizer: java.lang.String mCompactActionSome>;
+
+        virtualinvoke r71.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r6);
+
+        $r8 = virtualinvoke r71.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r69.<java.io.PrintWriter: void println(java.lang.String)>($r8);
+
+        r72 = new java.lang.StringBuilder;
+
+        specialinvoke r72.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r72.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  compact_action_2=");
+
+        $r10 = r0.<com.android.server.am.CachedAppOptimizer: java.lang.String mCompactActionFull>;
+
+        virtualinvoke r72.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r10);
+
+        $r12 = virtualinvoke r72.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r69.<java.io.PrintWriter: void println(java.lang.String)>($r12);
+
+        r73 = new java.lang.StringBuilder;
+
+        specialinvoke r73.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r73.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  compact_throttle_1=");
+
+        $l0 = r0.<com.android.server.am.CachedAppOptimizer: long mCompactThrottleSomeSome>;
+
+        virtualinvoke r73.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l0);
+
+        $r15 = virtualinvoke r73.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r69.<java.io.PrintWriter: void println(java.lang.String)>($r15);
+
+        r74 = new java.lang.StringBuilder;
+
+        specialinvoke r74.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r74.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  compact_throttle_2=");
+
+        $l1 = r0.<com.android.server.am.CachedAppOptimizer: long mCompactThrottleSomeFull>;
+
+        virtualinvoke r74.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l1);
+
+        $r18 = virtualinvoke r74.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r69.<java.io.PrintWriter: void println(java.lang.String)>($r18);
+
+        r75 = new java.lang.StringBuilder;
+
+        specialinvoke r75.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r75.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  compact_throttle_3=");
+
+        $l2 = r0.<com.android.server.am.CachedAppOptimizer: long mCompactThrottleFullSome>;
+
+        virtualinvoke r75.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l2);
+
+        $r21 = virtualinvoke r75.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r69.<java.io.PrintWriter: void println(java.lang.String)>($r21);
+
+        r76 = new java.lang.StringBuilder;
+
+        specialinvoke r76.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r76.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  compact_throttle_4=");
+
+        $l3 = r0.<com.android.server.am.CachedAppOptimizer: long mCompactThrottleFullFull>;
+
+        virtualinvoke r76.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l3);
+
+        $r24 = virtualinvoke r76.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r69.<java.io.PrintWriter: void println(java.lang.String)>($r24);
+
+        r77 = new java.lang.StringBuilder;
+
+        specialinvoke r77.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r77.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  compact_throttle_5=");
+
+        $l4 = r0.<com.android.server.am.CachedAppOptimizer: long mCompactThrottleBFGS>;
+
+        virtualinvoke r77.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l4);
+
+        $r27 = virtualinvoke r77.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r69.<java.io.PrintWriter: void println(java.lang.String)>($r27);
+
+        r78 = new java.lang.StringBuilder;
+
+        specialinvoke r78.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r78.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  compact_throttle_6=");
+
+        $l5 = r0.<com.android.server.am.CachedAppOptimizer: long mCompactThrottlePersistent>;
+
+        virtualinvoke r78.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l5);
+
+        $r30 = virtualinvoke r78.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r69.<java.io.PrintWriter: void println(java.lang.String)>($r30);
+
+        r79 = new java.lang.StringBuilder;
+
+        specialinvoke r79.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r79.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  compact_statsd_sample_rate=");
+
+        $f0 = r0.<com.android.server.am.CachedAppOptimizer: float mCompactStatsdSampleRate>;
+
+        virtualinvoke r79.<java.lang.StringBuilder: java.lang.StringBuilder append(float)>($f0);
+
+        $r33 = virtualinvoke r79.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r69.<java.io.PrintWriter: void println(java.lang.String)>($r33);
+
+        r80 = new java.lang.StringBuilder;
+
+        specialinvoke r80.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r80.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  compact_full_rss_throttle_kb=");
+
+        $l6 = r0.<com.android.server.am.CachedAppOptimizer: long mFullAnonRssThrottleKb>;
+
+        virtualinvoke r80.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l6);
+
+        $r36 = virtualinvoke r80.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r69.<java.io.PrintWriter: void println(java.lang.String)>($r36);
+
+        r81 = new java.lang.StringBuilder;
+
+        specialinvoke r81.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r81.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  compact_full_delta_rss_throttle_kb=");
+
+        $l7 = r0.<com.android.server.am.CachedAppOptimizer: long mFullDeltaRssThrottleKb>;
+
+        virtualinvoke r81.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>($l7);
+
+        $r39 = virtualinvoke r81.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r69.<java.io.PrintWriter: void println(java.lang.String)>($r39);
+
+        r82 = new java.lang.StringBuilder;
+
+        specialinvoke r82.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r82.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  compact_proc_state_throttle=");
+
+        $r42 = r0.<com.android.server.am.CachedAppOptimizer: java.util.Set mProcStateThrottle>;
+
+        $r41 = newarray (java.lang.Integer)[0];
+
+        $r43 = interfaceinvoke $r42.<java.util.Set: java.lang.Object[] toArray(java.lang.Object[])>($r41);
+
+        $r44 = staticinvoke <java.util.Arrays: java.lang.String toString(java.lang.Object[])>($r43);
+
+        virtualinvoke r82.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r44);
+
+        $r46 = virtualinvoke r82.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r69.<java.io.PrintWriter: void println(java.lang.String)>($r46);
+
+        r83 = new java.lang.StringBuilder;
+
+        specialinvoke r83.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r83.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  ");
+
+        $i8 = r0.<com.android.server.am.CachedAppOptimizer: int mSomeCompactionCount>;
+
+        virtualinvoke r83.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i8);
+
+        virtualinvoke r83.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" some, ");
+
+        $i9 = r0.<com.android.server.am.CachedAppOptimizer: int mFullCompactionCount>;
+
+        virtualinvoke r83.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i9);
+
+        virtualinvoke r83.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" full, ");
+
+        $i10 = r0.<com.android.server.am.CachedAppOptimizer: int mPersistentCompactionCount>;
+
+        virtualinvoke r83.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i10);
+
+        virtualinvoke r83.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" persistent, ");
+
+        $i11 = r0.<com.android.server.am.CachedAppOptimizer: int mBfgsCompactionCount>;
+
+        virtualinvoke r83.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i11);
+
+        virtualinvoke r83.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" BFGS compactions.");
+
+        $r56 = virtualinvoke r83.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r69.<java.io.PrintWriter: void println(java.lang.String)>($r56);
+
+        r84 = new java.lang.StringBuilder;
+
+        specialinvoke r84.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r84.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  Tracking last compaction stats for ");
+
+        $r58 = r0.<com.android.server.am.CachedAppOptimizer: java.util.LinkedHashMap mLastCompactionStats>;
+
+        $i12 = virtualinvoke $r58.<java.util.LinkedHashMap: int size()>();
+
+        virtualinvoke r84.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i12);
+
+        virtualinvoke r84.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" processes.");
+
+        $r61 = virtualinvoke r84.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r69.<java.io.PrintWriter: void println(java.lang.String)>($r61);
+
+        r85 = new java.lang.StringBuilder;
+
+        specialinvoke r85.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r85.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" use_freezer=");
+
+        $z1 = r0.<com.android.server.am.CachedAppOptimizer: boolean mUseFreezer>;
+
+        virtualinvoke r85.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>($z1);
+
+        $r64 = virtualinvoke r85.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r69.<java.io.PrintWriter: void println(java.lang.String)>($r64);
+
+        r86 = new java.lang.StringBuilder;
+
+        specialinvoke r86.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r86.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("  freeze_statsd_sample_rate=");
+
+        $f1 = r0.<com.android.server.am.CachedAppOptimizer: float mFreezerStatsdSampleRate>;
+
+        virtualinvoke r86.<java.lang.StringBuilder: java.lang.StringBuilder append(float)>($f1);
+
+        $r67 = virtualinvoke r86.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r69.<java.io.PrintWriter: void println(java.lang.String)>($r67);
+
+        exitmonitor r1;
+
+     label2:
+        return;
+
+     label3:
+        $r68 := @caughtexception;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        throw $r68;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    void freezeAppAsync(com.android.server.am.ProcessRecord)
+    {
+        com.android.server.am.CachedAppOptimizer r0;
+        com.android.server.am.ProcessRecord r1;
+        android.os.Handler r2, $r3;
+        android.os.Message $r4;
+
+        r0 := @this: com.android.server.am.CachedAppOptimizer;
+
+        r1 := @parameter0: com.android.server.am.ProcessRecord;
+
+        $r3 = r0.<com.android.server.am.CachedAppOptimizer: android.os.Handler mFreezeHandler>;
+
+        virtualinvoke $r3.<android.os.Handler: void removeMessages(int,java.lang.Object)>(3, r1);
+
+        r2 = r0.<com.android.server.am.CachedAppOptimizer: android.os.Handler mFreezeHandler>;
+
+        $r4 = virtualinvoke r2.<android.os.Handler: android.os.Message obtainMessage(int,int,int,java.lang.Object)>(3, 1, 0, r1);
+
+        virtualinvoke r2.<android.os.Handler: boolean sendMessageDelayed(android.os.Message,long)>($r4, 500L);
+
+        return;
+    }
+
+    public void init()
+    {
+        com.android.server.am.CachedAppOptimizer r0;
+        java.lang.Object r1;
+        android.app.Application $r3;
+        java.util.concurrent.Executor $r4;
+        android.provider.DeviceConfig$OnPropertiesChangedListener $r5;
+        com.android.server.ServiceThread $r6;
+        int $i0;
+        java.lang.Throwable $r7;
+
+        r0 := @this: com.android.server.am.CachedAppOptimizer;
+
+        $r3 = staticinvoke <android.app.ActivityThread: android.app.Application currentApplication()>();
+
+        $r4 = virtualinvoke $r3.<android.app.Application: java.util.concurrent.Executor getMainExecutor()>();
+
+        $r5 = r0.<com.android.server.am.CachedAppOptimizer: android.provider.DeviceConfig$OnPropertiesChangedListener mOnFlagsChangedListener>;
+
+        staticinvoke <android.provider.DeviceConfig: void addOnPropertiesChangedListener(java.lang.String,java.util.concurrent.Executor,android.provider.DeviceConfig$OnPropertiesChangedListener)>("activity_manager", $r4, $r5);
+
+        r1 = r0.<com.android.server.am.CachedAppOptimizer: java.lang.Object mPhenotypeFlagLock>;
+
+        entermonitor r1;
+
+     label1:
+        specialinvoke r0.<com.android.server.am.CachedAppOptimizer: void updateUseCompaction()>();
+
+        specialinvoke r0.<com.android.server.am.CachedAppOptimizer: void updateCompactionActions()>();
+
+        specialinvoke r0.<com.android.server.am.CachedAppOptimizer: void updateCompactionThrottles()>();
+
+        specialinvoke r0.<com.android.server.am.CachedAppOptimizer: void updateCompactStatsdSampleRate()>();
+
+        specialinvoke r0.<com.android.server.am.CachedAppOptimizer: void updateFreezerStatsdSampleRate()>();
+
+        specialinvoke r0.<com.android.server.am.CachedAppOptimizer: void updateFullRssThrottle()>();
+
+        specialinvoke r0.<com.android.server.am.CachedAppOptimizer: void updateFullDeltaRssThrottle()>();
+
+        specialinvoke r0.<com.android.server.am.CachedAppOptimizer: void updateProcStateThrottle()>();
+
+        specialinvoke r0.<com.android.server.am.CachedAppOptimizer: void updateUseFreezer()>();
+
+        exitmonitor r1;
+
+     label2:
+        $r6 = r0.<com.android.server.am.CachedAppOptimizer: com.android.server.ServiceThread mCachedAppOptimizerThread>;
+
+        $i0 = virtualinvoke $r6.<com.android.server.ServiceThread: int getThreadId()>();
+
+        staticinvoke <android.os.Process: void setThreadGroupAndCpuset(int,int)>($i0, 2);
+
+        return;
+
+     label3:
+        $r7 := @caughtexception;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        throw $r7;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    boolean shouldCompactBFGS(com.android.server.am.ProcessRecord, long)
+    {
+        com.android.server.am.CachedAppOptimizer r0;
+        com.android.server.am.ProcessRecord r1;
+        long l0, $l1, $l3, $l4, $l5;
+        byte $b2, $b6;
+        boolean z0;
+
+        r0 := @this: com.android.server.am.CachedAppOptimizer;
+
+        r1 := @parameter0: com.android.server.am.ProcessRecord;
+
+        l0 := @parameter1: long;
+
+        $l1 = r1.<com.android.server.am.ProcessRecord: long lastCompactTime>;
+
+        $b2 = $l1 cmp 0L;
+
+        if $b2 == 0 goto label2;
+
+        $l3 = r1.<com.android.server.am.ProcessRecord: long lastCompactTime>;
+
+        $l5 = l0 - $l3;
+
+        $l4 = r0.<com.android.server.am.CachedAppOptimizer: long mCompactThrottleBFGS>;
+
+        $b6 = $l5 cmp $l4;
+
+        if $b6 <= 0 goto label1;
+
+        goto label2;
+
+     label1:
+        z0 = 0;
+
+        goto label3;
+
+     label2:
+        z0 = 1;
+
+     label3:
+        return z0;
+    }
+
+    boolean shouldCompactPersistent(com.android.server.am.ProcessRecord, long)
+    {
+        com.android.server.am.CachedAppOptimizer r0;
+        com.android.server.am.ProcessRecord r1;
+        long l0, $l1, $l3, $l4, $l5;
+        byte $b2, $b6;
+        boolean z0;
+
+        r0 := @this: com.android.server.am.CachedAppOptimizer;
+
+        r1 := @parameter0: com.android.server.am.ProcessRecord;
+
+        l0 := @parameter1: long;
+
+        $l1 = r1.<com.android.server.am.ProcessRecord: long lastCompactTime>;
+
+        $b2 = $l1 cmp 0L;
+
+        if $b2 == 0 goto label2;
+
+        $l3 = r1.<com.android.server.am.ProcessRecord: long lastCompactTime>;
+
+        $l5 = l0 - $l3;
+
+        $l4 = r0.<com.android.server.am.CachedAppOptimizer: long mCompactThrottlePersistent>;
+
+        $b6 = $l5 cmp $l4;
+
+        if $b6 <= 0 goto label1;
+
+        goto label2;
+
+     label1:
+        z0 = 0;
+
+        goto label3;
+
+     label2:
+        z0 = 1;
+
+     label3:
+        return z0;
+    }
+
+    void unfreezeAppLocked(com.android.server.am.ProcessRecord)
+    {
+        com.android.server.am.CachedAppOptimizer r0;
+        com.android.server.am.ProcessRecord r1;
+        long l0, $l3, $l6, $l7, $l9;
+        android.os.Handler $r2, r33;
+        boolean $z0, $z1;
+        int $i1, $i2, $i4, $i8, $i10, $i11, $i13;
+        java.lang.StringBuilder $r3, $r12, $r21;
+        java.lang.String $r7, $r9, $r10, $r16, $r19, $r25, $r28;
+        android.os.Message $r11;
+        java.lang.Exception $r20;
+
+        r0 := @this: com.android.server.am.CachedAppOptimizer;
+
+        r1 := @parameter0: com.android.server.am.ProcessRecord;
+
+        $r2 = r0.<com.android.server.am.CachedAppOptimizer: android.os.Handler mFreezeHandler>;
+
+        virtualinvoke $r2.<android.os.Handler: void removeMessages(int,java.lang.Object)>(3, r1);
+
+        $z0 = r1.<com.android.server.am.ProcessRecord: boolean frozen>;
+
+        if $z0 != 0 goto label1;
+
+        $r12 = new java.lang.StringBuilder;
+
+        specialinvoke $r12.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Skipping unfreeze for process ");
+
+        $i11 = r1.<com.android.server.am.ProcessRecord: int pid>;
+
+        virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i11);
+
+        virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" ");
+
+        $r16 = r1.<com.android.server.am.ProcessRecord: java.lang.String processName>;
+
+        virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r16);
+
+        virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" (not frozen)");
+
+        $r19 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("ActivityManager", $r19);
+
+        return;
+
+     label1:
+        l0 = r1.<com.android.server.am.ProcessRecord: long freezeUnfreezeTime>;
+
+     label2:
+        $i2 = r1.<com.android.server.am.ProcessRecord: int pid>;
+
+        $i1 = r1.<com.android.server.am.ProcessRecord: int uid>;
+
+        staticinvoke <android.os.Process: void setProcessFrozen(int,int,boolean)>($i2, $i1, 0);
+
+        $l3 = staticinvoke <android.os.SystemClock: long uptimeMillis()>();
+
+        r1.<com.android.server.am.ProcessRecord: long freezeUnfreezeTime> = $l3;
+
+        r1.<com.android.server.am.ProcessRecord: boolean frozen> = 0;
+
+     label3:
+        goto label5;
+
+     label4:
+        $r20 := @caughtexception;
+
+        $r21 = new java.lang.StringBuilder;
+
+        specialinvoke $r21.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r21.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Unable to unfreeze ");
+
+        $i13 = r1.<com.android.server.am.ProcessRecord: int pid>;
+
+        virtualinvoke $r21.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i13);
+
+        virtualinvoke $r21.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" ");
+
+        $r25 = r1.<com.android.server.am.ProcessRecord: java.lang.String processName>;
+
+        virtualinvoke $r21.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r25);
+
+        virtualinvoke $r21.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(". Any related user experience might be hanged.");
+
+        $r28 = virtualinvoke $r21.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("ActivityManager", $r28);
+
+     label5:
+        $z1 = r1.<com.android.server.am.ProcessRecord: boolean frozen>;
+
+        if $z1 != 0 goto label6;
+
+        $r3 = new java.lang.StringBuilder;
+
+        specialinvoke $r3.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("sync unfroze ");
+
+        $i4 = r1.<com.android.server.am.ProcessRecord: int pid>;
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i4);
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" ");
+
+        $r7 = r1.<com.android.server.am.ProcessRecord: java.lang.String processName>;
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r7);
+
+        $r9 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("ActivityManager", $r9);
+
+        r33 = r0.<com.android.server.am.CachedAppOptimizer: android.os.Handler mFreezeHandler>;
+
+        $i8 = r1.<com.android.server.am.ProcessRecord: int pid>;
+
+        $l6 = r1.<com.android.server.am.ProcessRecord: long freezeUnfreezeTime>;
+
+        $l7 = $l6 - l0;
+
+        $l9 = staticinvoke <java.lang.Math: long min(long,long)>($l7, 2147483647L);
+
+        $i10 = (int) $l9;
+
+        $r10 = r1.<com.android.server.am.ProcessRecord: java.lang.String processName>;
+
+        $r11 = virtualinvoke r33.<android.os.Handler: android.os.Message obtainMessage(int,int,int,java.lang.Object)>(4, $i8, $i10, $r10);
+
+        virtualinvoke r33.<android.os.Handler: boolean sendMessage(android.os.Message)>($r11);
+
+     label6:
+        return;
+
+        catch java.lang.Exception from label2 to label3 with label4;
+    }
+
+    public boolean useCompaction()
+    {
+        com.android.server.am.CachedAppOptimizer r0;
+        java.lang.Object r1;
+        boolean z0;
+        java.lang.Throwable $r3;
+
+        r0 := @this: com.android.server.am.CachedAppOptimizer;
+
+        r1 = r0.<com.android.server.am.CachedAppOptimizer: java.lang.Object mPhenotypeFlagLock>;
+
+        entermonitor r1;
+
+     label1:
+        z0 = r0.<com.android.server.am.CachedAppOptimizer: boolean mUseCompaction>;
+
+        exitmonitor r1;
+
+     label2:
+        return z0;
+
+     label3:
+        $r3 := @caughtexception;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        throw $r3;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    public boolean useFreezer()
+    {
+        com.android.server.am.CachedAppOptimizer r0;
+        java.lang.Object r1;
+        boolean z0;
+        java.lang.Throwable $r3;
+
+        r0 := @this: com.android.server.am.CachedAppOptimizer;
+
+        r1 = r0.<com.android.server.am.CachedAppOptimizer: java.lang.Object mPhenotypeFlagLock>;
+
+        entermonitor r1;
+
+     label1:
+        z0 = r0.<com.android.server.am.CachedAppOptimizer: boolean mUseFreezer>;
+
+        exitmonitor r1;
+
+     label2:
+        return z0;
+
+     label3:
+        $r3 := @caughtexception;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        throw $r3;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+}

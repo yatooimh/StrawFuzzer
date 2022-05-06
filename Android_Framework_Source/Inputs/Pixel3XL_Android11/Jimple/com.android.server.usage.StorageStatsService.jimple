@@ -1,0 +1,2222 @@
+public class com.android.server.usage.StorageStatsService extends android.app.usage.IStorageStatsManager$Stub
+{
+    private static final long DEFAULT_QUOTA;
+    private static final long DELAY_IN_MILLIS;
+    private static final java.lang.String PROP_DISABLE_QUOTA;
+    private static final java.lang.String PROP_STORAGE_CRATES;
+    private static final java.lang.String PROP_VERIFY_STORAGE;
+    private static final java.lang.String TAG;
+    private final android.app.AppOpsManager mAppOps;
+    private final android.util.ArrayMap mCacheQuotas;
+    private final android.content.Context mContext;
+    private final com.android.server.usage.StorageStatsService$H mHandler;
+    private final com.android.server.pm.Installer mInstaller;
+    private final android.content.pm.PackageManager mPackage;
+    private final android.os.storage.StorageManager mStorage;
+    private final java.util.concurrent.CopyOnWriteArrayList mStorageStatsAugmenters;
+    private final android.os.UserManager mUser;
+
+    static void <clinit>()
+    {
+        android.util.DataUnit $r0;
+        long $l0;
+
+        <com.android.server.usage.StorageStatsService: java.lang.String TAG> = "StorageStatsService";
+
+        <com.android.server.usage.StorageStatsService: java.lang.String PROP_VERIFY_STORAGE> = "fw.verify_storage";
+
+        <com.android.server.usage.StorageStatsService: java.lang.String PROP_STORAGE_CRATES> = "fw.storage_crates";
+
+        <com.android.server.usage.StorageStatsService: java.lang.String PROP_DISABLE_QUOTA> = "fw.disable_quota";
+
+        <com.android.server.usage.StorageStatsService: long DELAY_IN_MILLIS> = 30000L;
+
+        $r0 = <android.util.DataUnit: android.util.DataUnit MEBIBYTES>;
+
+        $l0 = virtualinvoke $r0.<android.util.DataUnit: long toBytes(long)>(64L);
+
+        <com.android.server.usage.StorageStatsService: long DEFAULT_QUOTA> = $l0;
+
+        return;
+    }
+
+    public void <init>(android.content.Context)
+    {
+        com.android.server.usage.StorageStatsService r0;
+        java.util.concurrent.CopyOnWriteArrayList $r1;
+        java.lang.Object $r2, $r4, $r6, $r8, $r10, $r13, $r15, $r17;
+        android.content.Context $r3, r27;
+        android.app.AppOpsManager $r5, $r7;
+        android.os.UserManager $r9, $r11;
+        android.content.pm.PackageManager $r12, $r14;
+        android.os.storage.StorageManager $r16, $r18, $r25;
+        android.util.ArrayMap $r19;
+        com.android.server.pm.Installer $r20;
+        com.android.server.usage.StorageStatsService$H $r21;
+        com.android.server.IoThread $r22;
+        android.os.Looper $r23;
+        com.android.server.usage.StorageStatsService$1 $r24;
+        com.android.server.usage.StorageStatsService$LocalService $r26;
+
+        r0 := @this: com.android.server.usage.StorageStatsService;
+
+        r27 := @parameter0: android.content.Context;
+
+        specialinvoke r0.<android.app.usage.IStorageStatsManager$Stub: void <init>()>();
+
+        $r1 = new java.util.concurrent.CopyOnWriteArrayList;
+
+        specialinvoke $r1.<java.util.concurrent.CopyOnWriteArrayList: void <init>()>();
+
+        r0.<com.android.server.usage.StorageStatsService: java.util.concurrent.CopyOnWriteArrayList mStorageStatsAugmenters> = $r1;
+
+        $r2 = staticinvoke <com.android.internal.util.Preconditions: java.lang.Object checkNotNull(java.lang.Object)>(r27);
+
+        $r3 = (android.content.Context) $r2;
+
+        r0.<com.android.server.usage.StorageStatsService: android.content.Context mContext> = $r3;
+
+        $r4 = virtualinvoke r27.<android.content.Context: java.lang.Object getSystemService(java.lang.Class)>(class "Landroid/app/AppOpsManager;");
+
+        $r5 = (android.app.AppOpsManager) $r4;
+
+        $r6 = staticinvoke <com.android.internal.util.Preconditions: java.lang.Object checkNotNull(java.lang.Object)>($r5);
+
+        $r7 = (android.app.AppOpsManager) $r6;
+
+        r0.<com.android.server.usage.StorageStatsService: android.app.AppOpsManager mAppOps> = $r7;
+
+        $r8 = virtualinvoke r27.<android.content.Context: java.lang.Object getSystemService(java.lang.Class)>(class "Landroid/os/UserManager;");
+
+        $r9 = (android.os.UserManager) $r8;
+
+        $r10 = staticinvoke <com.android.internal.util.Preconditions: java.lang.Object checkNotNull(java.lang.Object)>($r9);
+
+        $r11 = (android.os.UserManager) $r10;
+
+        r0.<com.android.server.usage.StorageStatsService: android.os.UserManager mUser> = $r11;
+
+        $r12 = virtualinvoke r27.<android.content.Context: android.content.pm.PackageManager getPackageManager()>();
+
+        $r13 = staticinvoke <com.android.internal.util.Preconditions: java.lang.Object checkNotNull(java.lang.Object)>($r12);
+
+        $r14 = (android.content.pm.PackageManager) $r13;
+
+        r0.<com.android.server.usage.StorageStatsService: android.content.pm.PackageManager mPackage> = $r14;
+
+        $r15 = virtualinvoke r27.<android.content.Context: java.lang.Object getSystemService(java.lang.Class)>(class "Landroid/os/storage/StorageManager;");
+
+        $r16 = (android.os.storage.StorageManager) $r15;
+
+        $r17 = staticinvoke <com.android.internal.util.Preconditions: java.lang.Object checkNotNull(java.lang.Object)>($r16);
+
+        $r18 = (android.os.storage.StorageManager) $r17;
+
+        r0.<com.android.server.usage.StorageStatsService: android.os.storage.StorageManager mStorage> = $r18;
+
+        $r19 = new android.util.ArrayMap;
+
+        specialinvoke $r19.<android.util.ArrayMap: void <init>()>();
+
+        r0.<com.android.server.usage.StorageStatsService: android.util.ArrayMap mCacheQuotas> = $r19;
+
+        $r20 = new com.android.server.pm.Installer;
+
+        specialinvoke $r20.<com.android.server.pm.Installer: void <init>(android.content.Context)>(r27);
+
+        r0.<com.android.server.usage.StorageStatsService: com.android.server.pm.Installer mInstaller> = $r20;
+
+        virtualinvoke $r20.<com.android.server.pm.Installer: void onStart()>();
+
+        specialinvoke r0.<com.android.server.usage.StorageStatsService: void invalidateMounts()>();
+
+        $r21 = new com.android.server.usage.StorageStatsService$H;
+
+        $r22 = staticinvoke <com.android.server.IoThread: com.android.server.IoThread get()>();
+
+        $r23 = virtualinvoke $r22.<com.android.server.IoThread: android.os.Looper getLooper()>();
+
+        specialinvoke $r21.<com.android.server.usage.StorageStatsService$H: void <init>(com.android.server.usage.StorageStatsService,android.os.Looper)>(r0, $r23);
+
+        r0.<com.android.server.usage.StorageStatsService: com.android.server.usage.StorageStatsService$H mHandler> = $r21;
+
+        virtualinvoke $r21.<com.android.server.usage.StorageStatsService$H: boolean sendEmptyMessage(int)>(101);
+
+        $r25 = r0.<com.android.server.usage.StorageStatsService: android.os.storage.StorageManager mStorage>;
+
+        $r24 = new com.android.server.usage.StorageStatsService$1;
+
+        specialinvoke $r24.<com.android.server.usage.StorageStatsService$1: void <init>(com.android.server.usage.StorageStatsService)>(r0);
+
+        virtualinvoke $r25.<android.os.storage.StorageManager: void registerListener(android.os.storage.StorageEventListener)>($r24);
+
+        $r26 = new com.android.server.usage.StorageStatsService$LocalService;
+
+        specialinvoke $r26.<com.android.server.usage.StorageStatsService$LocalService: void <init>(com.android.server.usage.StorageStatsService,com.android.server.usage.StorageStatsService$1)>(r0, null);
+
+        staticinvoke <com.android.server.LocalServices: void addService(java.lang.Class,java.lang.Object)>(class "Lcom/android/server/usage/StorageStatsManagerInternal;", $r26);
+
+        return;
+    }
+
+    static void access$000(com.android.server.usage.StorageStatsService)
+    {
+        com.android.server.usage.StorageStatsService r0;
+
+        r0 := @parameter0: com.android.server.usage.StorageStatsService;
+
+        specialinvoke r0.<com.android.server.usage.StorageStatsService: void invalidateMounts()>();
+
+        return;
+    }
+
+    static android.content.Context access$200(com.android.server.usage.StorageStatsService)
+    {
+        com.android.server.usage.StorageStatsService r0;
+        android.content.Context $r1;
+
+        r0 := @parameter0: com.android.server.usage.StorageStatsService;
+
+        $r1 = r0.<com.android.server.usage.StorageStatsService: android.content.Context mContext>;
+
+        return $r1;
+    }
+
+    static com.android.server.pm.Installer access$300(com.android.server.usage.StorageStatsService)
+    {
+        com.android.server.usage.StorageStatsService r0;
+        com.android.server.pm.Installer $r1;
+
+        r0 := @parameter0: com.android.server.usage.StorageStatsService;
+
+        $r1 = r0.<com.android.server.usage.StorageStatsService: com.android.server.pm.Installer mInstaller>;
+
+        return $r1;
+    }
+
+    static android.util.ArrayMap access$400(com.android.server.usage.StorageStatsService)
+    {
+        com.android.server.usage.StorageStatsService r0;
+        android.util.ArrayMap $r1;
+
+        r0 := @parameter0: com.android.server.usage.StorageStatsService;
+
+        $r1 = r0.<com.android.server.usage.StorageStatsService: android.util.ArrayMap mCacheQuotas>;
+
+        return $r1;
+    }
+
+    static java.util.concurrent.CopyOnWriteArrayList access$500(com.android.server.usage.StorageStatsService)
+    {
+        com.android.server.usage.StorageStatsService r0;
+        java.util.concurrent.CopyOnWriteArrayList $r1;
+
+        r0 := @parameter0: com.android.server.usage.StorageStatsService;
+
+        $r1 = r0.<com.android.server.usage.StorageStatsService: java.util.concurrent.CopyOnWriteArrayList mStorageStatsAugmenters>;
+
+        return $r1;
+    }
+
+    private static void checkCratesEnable()
+    {
+        boolean $z0;
+        java.lang.IllegalStateException $r0;
+
+        $z0 = staticinvoke <android.os.SystemProperties: boolean getBoolean(java.lang.String,boolean)>("fw.storage_crates", 0);
+
+        if $z0 == 0 goto label1;
+
+        return;
+
+     label1:
+        $r0 = new java.lang.IllegalStateException;
+
+        specialinvoke $r0.<java.lang.IllegalStateException: void <init>(java.lang.String)>("Storage Crate feature is disabled.");
+
+        throw $r0;
+    }
+
+    private static void checkEquals(java.lang.String, long, long)
+    {
+        java.lang.String r0, $r8;
+        long l0, l1;
+        byte $b2;
+        java.lang.StringBuilder $r2;
+
+        r0 := @parameter0: java.lang.String;
+
+        l0 := @parameter1: long;
+
+        l1 := @parameter2: long;
+
+        $b2 = l0 cmp l1;
+
+        if $b2 == 0 goto label1;
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r0);
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" expected ");
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>(l0);
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" actual ");
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>(l1);
+
+        $r8 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("StorageStatsService", $r8);
+
+     label1:
+        return;
+    }
+
+    private static void checkEquals(java.lang.String, android.content.pm.PackageStats, android.content.pm.PackageStats)
+    {
+        java.lang.String r0, $r6, $r10, $r14, $r18, $r22, $r26;
+        android.content.pm.PackageStats r1, r2;
+        java.lang.StringBuilder $r3, $r7, $r11, $r15, $r19, $r23;
+        long $l0, $l1, $l2, $l3, $l4, $l5, $l6, $l7, $l8, $l9, $l10, $l11;
+
+        r0 := @parameter0: java.lang.String;
+
+        r1 := @parameter1: android.content.pm.PackageStats;
+
+        r2 := @parameter2: android.content.pm.PackageStats;
+
+        $r3 = new java.lang.StringBuilder;
+
+        specialinvoke $r3.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r0);
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" codeSize");
+
+        $r6 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $l1 = r1.<android.content.pm.PackageStats: long codeSize>;
+
+        $l0 = r2.<android.content.pm.PackageStats: long codeSize>;
+
+        staticinvoke <com.android.server.usage.StorageStatsService: void checkEquals(java.lang.String,long,long)>($r6, $l1, $l0);
+
+        $r7 = new java.lang.StringBuilder;
+
+        specialinvoke $r7.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r0);
+
+        virtualinvoke $r7.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" dataSize");
+
+        $r10 = virtualinvoke $r7.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $l3 = r1.<android.content.pm.PackageStats: long dataSize>;
+
+        $l2 = r2.<android.content.pm.PackageStats: long dataSize>;
+
+        staticinvoke <com.android.server.usage.StorageStatsService: void checkEquals(java.lang.String,long,long)>($r10, $l3, $l2);
+
+        $r11 = new java.lang.StringBuilder;
+
+        specialinvoke $r11.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r0);
+
+        virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" cacheSize");
+
+        $r14 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $l5 = r1.<android.content.pm.PackageStats: long cacheSize>;
+
+        $l4 = r2.<android.content.pm.PackageStats: long cacheSize>;
+
+        staticinvoke <com.android.server.usage.StorageStatsService: void checkEquals(java.lang.String,long,long)>($r14, $l5, $l4);
+
+        $r15 = new java.lang.StringBuilder;
+
+        specialinvoke $r15.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r15.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r0);
+
+        virtualinvoke $r15.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" externalCodeSize");
+
+        $r18 = virtualinvoke $r15.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $l7 = r1.<android.content.pm.PackageStats: long externalCodeSize>;
+
+        $l6 = r2.<android.content.pm.PackageStats: long externalCodeSize>;
+
+        staticinvoke <com.android.server.usage.StorageStatsService: void checkEquals(java.lang.String,long,long)>($r18, $l7, $l6);
+
+        $r19 = new java.lang.StringBuilder;
+
+        specialinvoke $r19.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r0);
+
+        virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" externalDataSize");
+
+        $r22 = virtualinvoke $r19.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $l9 = r1.<android.content.pm.PackageStats: long externalDataSize>;
+
+        $l8 = r2.<android.content.pm.PackageStats: long externalDataSize>;
+
+        staticinvoke <com.android.server.usage.StorageStatsService: void checkEquals(java.lang.String,long,long)>($r22, $l9, $l8);
+
+        $r23 = new java.lang.StringBuilder;
+
+        specialinvoke $r23.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r23.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r0);
+
+        virtualinvoke $r23.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" externalCacheSize");
+
+        $r26 = virtualinvoke $r23.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $l11 = r1.<android.content.pm.PackageStats: long externalCacheSize>;
+
+        $l10 = r2.<android.content.pm.PackageStats: long externalCacheSize>;
+
+        staticinvoke <com.android.server.usage.StorageStatsService: void checkEquals(java.lang.String,long,long)>($r26, $l11, $l10);
+
+        return;
+    }
+
+    private static void checkEquals(java.lang.String, long[], long[])
+    {
+        java.lang.String r0, $r9;
+        long[] r1, r2;
+        int $i0, i3;
+        java.lang.StringBuilder $r4;
+        long $l1, $l2;
+
+        r0 := @parameter0: java.lang.String;
+
+        r1 := @parameter1: long[];
+
+        r2 := @parameter2: long[];
+
+        i3 = 0;
+
+     label1:
+        $i0 = lengthof r1;
+
+        if i3 >= $i0 goto label2;
+
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r0);
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("[");
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i3);
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("]");
+
+        $r9 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $l2 = r1[i3];
+
+        $l1 = r2[i3];
+
+        staticinvoke <com.android.server.usage.StorageStatsService: void checkEquals(java.lang.String,long,long)>($r9, $l2, $l1);
+
+        i3 = i3 + 1;
+
+        goto label1;
+
+     label2:
+        return;
+    }
+
+    private java.lang.String checkStatsPermission(int, java.lang.String, boolean)
+    {
+        com.android.server.usage.StorageStatsService r0;
+        int i0, $i1, i2;
+        java.lang.String r1, $r9, $r17;
+        boolean z0;
+        android.app.AppOpsManager $r2, $r18;
+        android.content.Context $r3;
+        java.lang.StringBuilder $r4, $r10;
+
+        r0 := @this: com.android.server.usage.StorageStatsService;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: java.lang.String;
+
+        z0 := @parameter2: boolean;
+
+        if z0 == 0 goto label1;
+
+        $r18 = r0.<com.android.server.usage.StorageStatsService: android.app.AppOpsManager mAppOps>;
+
+        i2 = virtualinvoke $r18.<android.app.AppOpsManager: int noteOp(int,int,java.lang.String)>(43, i0, r1);
+
+        goto label2;
+
+     label1:
+        $r2 = r0.<com.android.server.usage.StorageStatsService: android.app.AppOpsManager mAppOps>;
+
+        i2 = virtualinvoke $r2.<android.app.AppOpsManager: int checkOp(int,int,java.lang.String)>(43, i0, r1);
+
+     label2:
+        if i2 == 0 goto label5;
+
+        if i2 == 3 goto label3;
+
+        $r10 = new java.lang.StringBuilder;
+
+        specialinvoke $r10.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Package ");
+
+        virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" from UID ");
+
+        virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" blocked by mode ");
+
+        virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i2);
+
+        $r17 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        return $r17;
+
+     label3:
+        $r3 = r0.<com.android.server.usage.StorageStatsService: android.content.Context mContext>;
+
+        $i1 = virtualinvoke $r3.<android.content.Context: int checkCallingOrSelfPermission(java.lang.String)>("android.permission.PACKAGE_USAGE_STATS");
+
+        if $i1 != 0 goto label4;
+
+        return null;
+
+     label4:
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Caller does not have android.permission.PACKAGE_USAGE_STATS; callingPackage=");
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", callingUid=");
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r9 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        return $r9;
+
+     label5:
+        return null;
+    }
+
+    private static java.util.List convertCrateInfoFrom(android.os.storage.CrateMetadata[])
+    {
+        android.os.storage.CrateMetadata[] r0;
+        int i0, $i1, i2;
+        boolean $z0, $z1, $z2;
+        java.util.ArrayList $r2;
+        java.lang.String $r3, $r4, $r5, $r6;
+        java.util.List $r7;
+        android.os.storage.CrateMetadata r8;
+        android.os.storage.CrateInfo r9;
+
+        r0 := @parameter0: android.os.storage.CrateMetadata[];
+
+        $z0 = staticinvoke <com.android.internal.util.ArrayUtils: boolean isEmpty(java.lang.Object[])>(r0);
+
+        if $z0 == 0 goto label1;
+
+        $r7 = <java.util.Collections: java.util.List EMPTY_LIST>;
+
+        return $r7;
+
+     label1:
+        $r2 = new java.util.ArrayList;
+
+        specialinvoke $r2.<java.util.ArrayList: void <init>()>();
+
+        i0 = lengthof r0;
+
+        i2 = 0;
+
+     label2:
+        if i2 >= i0 goto label6;
+
+        r8 = r0[i2];
+
+        if r8 == null goto label5;
+
+        $r3 = r8.<android.os.storage.CrateMetadata: java.lang.String id>;
+
+        $z1 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>($r3);
+
+        if $z1 != 0 goto label5;
+
+        $r4 = r8.<android.os.storage.CrateMetadata: java.lang.String packageName>;
+
+        $z2 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>($r4);
+
+        if $z2 == 0 goto label3;
+
+        goto label5;
+
+     label3:
+        $i1 = r8.<android.os.storage.CrateMetadata: int uid>;
+
+        $r6 = r8.<android.os.storage.CrateMetadata: java.lang.String packageName>;
+
+        $r5 = r8.<android.os.storage.CrateMetadata: java.lang.String id>;
+
+        r9 = staticinvoke <android.os.storage.CrateInfo: android.os.storage.CrateInfo copyFrom(int,java.lang.String,java.lang.String)>($i1, $r6, $r5);
+
+        if r9 != null goto label4;
+
+        goto label5;
+
+     label4:
+        virtualinvoke $r2.<java.util.ArrayList: boolean add(java.lang.Object)>(r9);
+
+     label5:
+        i2 = i2 + 1;
+
+        goto label2;
+
+     label6:
+        return $r2;
+    }
+
+    private void enforceCratesPermission(int, java.lang.String)
+    {
+        com.android.server.usage.StorageStatsService r0;
+        int i0;
+        java.lang.String r1;
+        android.content.Context $r2;
+
+        r0 := @this: com.android.server.usage.StorageStatsService;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: java.lang.String;
+
+        $r2 = r0.<com.android.server.usage.StorageStatsService: android.content.Context mContext>;
+
+        virtualinvoke $r2.<android.content.Context: void enforceCallingOrSelfPermission(java.lang.String,java.lang.String)>("android.permission.MANAGE_CRATES", r1);
+
+        return;
+    }
+
+    private void enforceStatsPermission(int, java.lang.String)
+    {
+        com.android.server.usage.StorageStatsService r0;
+        int i0;
+        java.lang.SecurityException $r1;
+        java.lang.String r2, r3;
+
+        r0 := @this: com.android.server.usage.StorageStatsService;
+
+        i0 := @parameter0: int;
+
+        r2 := @parameter1: java.lang.String;
+
+        r3 = specialinvoke r0.<com.android.server.usage.StorageStatsService: java.lang.String checkStatsPermission(int,java.lang.String,boolean)>(i0, r2, 1);
+
+        if r3 != null goto label1;
+
+        return;
+
+     label1:
+        $r1 = new java.lang.SecurityException;
+
+        specialinvoke $r1.<java.lang.SecurityException: void <init>(java.lang.String)>(r3);
+
+        throw $r1;
+    }
+
+    private android.content.pm.ParceledListSlice getAppCrates(java.lang.String, java.lang.String[], int)
+    {
+        com.android.server.usage.StorageStatsService r0;
+        java.lang.String[] r1;
+        int i0;
+        android.content.pm.ParceledListSlice $r2;
+        com.android.server.pm.Installer $r3;
+        android.os.storage.CrateMetadata[] $r4;
+        java.util.List $r5;
+        com.android.server.pm.Installer$InstallerException $r6;
+        android.os.ParcelableException $r7;
+        java.io.IOException $r8;
+        java.lang.String $r9, r10;
+
+        r0 := @this: com.android.server.usage.StorageStatsService;
+
+        r10 := @parameter0: java.lang.String;
+
+        r1 := @parameter1: java.lang.String[];
+
+        i0 := @parameter2: int;
+
+     label1:
+        $r2 = new android.content.pm.ParceledListSlice;
+
+        $r3 = r0.<com.android.server.usage.StorageStatsService: com.android.server.pm.Installer mInstaller>;
+
+        $r4 = virtualinvoke $r3.<com.android.server.pm.Installer: android.os.storage.CrateMetadata[] getAppCrates(java.lang.String,java.lang.String[],int)>(r10, r1, i0);
+
+        $r5 = staticinvoke <com.android.server.usage.StorageStatsService: java.util.List convertCrateInfoFrom(android.os.storage.CrateMetadata[])>($r4);
+
+        specialinvoke $r2.<android.content.pm.ParceledListSlice: void <init>(java.util.List)>($r5);
+
+     label2:
+        return $r2;
+
+     label3:
+        $r6 := @caughtexception;
+
+        $r7 = new android.os.ParcelableException;
+
+        $r8 = new java.io.IOException;
+
+        $r9 = virtualinvoke $r6.<com.android.server.pm.Installer$InstallerException: java.lang.String getMessage()>();
+
+        specialinvoke $r8.<java.io.IOException: void <init>(java.lang.String)>($r9);
+
+        specialinvoke $r7.<android.os.ParcelableException: void <init>(java.lang.Throwable)>($r8);
+
+        throw $r7;
+
+        catch com.android.server.pm.Installer$InstallerException from label1 to label2 with label3;
+    }
+
+    private int[] getAppIds(int)
+    {
+        com.android.server.usage.StorageStatsService r0;
+        java.util.Iterator r1;
+        android.content.pm.PackageManager $r2;
+        java.util.List $r3;
+        boolean $z0, $z1;
+        java.lang.Object $r4;
+        android.content.pm.ApplicationInfo $r5;
+        int $i0, i1, i2;
+        int[] r6, r7;
+
+        r0 := @this: com.android.server.usage.StorageStatsService;
+
+        i1 := @parameter0: int;
+
+        r6 = null;
+
+        $r2 = r0.<com.android.server.usage.StorageStatsService: android.content.pm.PackageManager mPackage>;
+
+        $r3 = virtualinvoke $r2.<android.content.pm.PackageManager: java.util.List getInstalledApplicationsAsUser(int,int)>(8192, i1);
+
+        r1 = interfaceinvoke $r3.<java.util.List: java.util.Iterator iterator()>();
+
+     label1:
+        $z0 = interfaceinvoke r1.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label3;
+
+        $r4 = interfaceinvoke r1.<java.util.Iterator: java.lang.Object next()>();
+
+        $r5 = (android.content.pm.ApplicationInfo) $r4;
+
+        $i0 = $r5.<android.content.pm.ApplicationInfo: int uid>;
+
+        i2 = staticinvoke <android.os.UserHandle: int getAppId(int)>($i0);
+
+        r7 = r6;
+
+        $z1 = staticinvoke <com.android.internal.util.ArrayUtils: boolean contains(int[],int)>(r6, i2);
+
+        if $z1 != 0 goto label2;
+
+        r7 = staticinvoke <com.android.internal.util.ArrayUtils: int[] appendInt(int[],int)>(r6, i2);
+
+     label2:
+        r6 = r7;
+
+        goto label1;
+
+     label3:
+        return r6;
+    }
+
+    private static int getDefaultFlags()
+    {
+        boolean $z0;
+
+        $z0 = staticinvoke <android.os.SystemProperties: boolean getBoolean(java.lang.String,boolean)>("fw.disable_quota", 0);
+
+        if $z0 == 0 goto label1;
+
+        return 0;
+
+     label1:
+        return 4096;
+    }
+
+    private void invalidateMounts()
+    {
+        com.android.server.usage.StorageStatsService r0;
+        com.android.server.pm.Installer $r2;
+        com.android.server.pm.Installer$InstallerException $r3;
+
+        r0 := @this: com.android.server.usage.StorageStatsService;
+
+     label1:
+        $r2 = r0.<com.android.server.usage.StorageStatsService: com.android.server.pm.Installer mInstaller>;
+
+        virtualinvoke $r2.<com.android.server.pm.Installer: void invalidateMounts()>();
+
+     label2:
+        goto label4;
+
+     label3:
+        $r3 := @caughtexception;
+
+        staticinvoke <android.util.Slog: int wtf(java.lang.String,java.lang.String,java.lang.Throwable)>("StorageStatsService", "Failed to invalidate mounts", $r3);
+
+     label4:
+        return;
+
+        catch com.android.server.pm.Installer$InstallerException from label1 to label2 with label3;
+    }
+
+    static boolean isCacheQuotaCalculationsEnabled(android.content.ContentResolver)
+    {
+        android.content.ContentResolver r0;
+        int $i0;
+        boolean z0;
+
+        r0 := @parameter0: android.content.ContentResolver;
+
+        z0 = 1;
+
+        $i0 = staticinvoke <android.provider.Settings$Global: int getInt(android.content.ContentResolver,java.lang.String,int)>(r0, "enable_cache_quota_calculation", 1);
+
+        if $i0 == 0 goto label1;
+
+        goto label2;
+
+     label1:
+        z0 = 0;
+
+     label2:
+        return z0;
+    }
+
+    static void lambda$queryStatsForPackage$0(android.content.pm.PackageStats, java.lang.String, int, boolean, com.android.server.usage.StorageStatsManagerInternal$StorageStatsAugmenter)
+    {
+        android.content.pm.PackageStats r0;
+        java.lang.String r1;
+        int i0;
+        boolean z0;
+        com.android.server.usage.StorageStatsManagerInternal$StorageStatsAugmenter r2;
+
+        r0 := @parameter0: android.content.pm.PackageStats;
+
+        r1 := @parameter1: java.lang.String;
+
+        i0 := @parameter2: int;
+
+        z0 := @parameter3: boolean;
+
+        r2 := @parameter4: com.android.server.usage.StorageStatsManagerInternal$StorageStatsAugmenter;
+
+        interfaceinvoke r2.<com.android.server.usage.StorageStatsManagerInternal$StorageStatsAugmenter: void augmentStatsForPackage(android.content.pm.PackageStats,java.lang.String,int,boolean)>(r0, r1, i0, z0);
+
+        return;
+    }
+
+    static void lambda$queryStatsForUid$1(android.content.pm.PackageStats, int, boolean, com.android.server.usage.StorageStatsManagerInternal$StorageStatsAugmenter)
+    {
+        android.content.pm.PackageStats r0;
+        int i0;
+        boolean z0;
+        com.android.server.usage.StorageStatsManagerInternal$StorageStatsAugmenter r1;
+
+        r0 := @parameter0: android.content.pm.PackageStats;
+
+        i0 := @parameter1: int;
+
+        z0 := @parameter2: boolean;
+
+        r1 := @parameter3: com.android.server.usage.StorageStatsManagerInternal$StorageStatsAugmenter;
+
+        interfaceinvoke r1.<com.android.server.usage.StorageStatsManagerInternal$StorageStatsAugmenter: void augmentStatsForUid(android.content.pm.PackageStats,int,boolean)>(r0, i0, z0);
+
+        return;
+    }
+
+    private static android.app.usage.StorageStats translate(android.content.pm.PackageStats)
+    {
+        android.content.pm.PackageStats r0;
+        android.app.usage.StorageStats $r2;
+        long $l0, $l1, $l2, $l3, $l4, $l5, $l6, $l7, $l8;
+
+        r0 := @parameter0: android.content.pm.PackageStats;
+
+        $r2 = new android.app.usage.StorageStats;
+
+        specialinvoke $r2.<android.app.usage.StorageStats: void <init>()>();
+
+        $l1 = r0.<android.content.pm.PackageStats: long codeSize>;
+
+        $l0 = r0.<android.content.pm.PackageStats: long externalCodeSize>;
+
+        $l2 = $l1 + $l0;
+
+        $r2.<android.app.usage.StorageStats: long codeBytes> = $l2;
+
+        $l4 = r0.<android.content.pm.PackageStats: long dataSize>;
+
+        $l3 = r0.<android.content.pm.PackageStats: long externalDataSize>;
+
+        $l5 = $l4 + $l3;
+
+        $r2.<android.app.usage.StorageStats: long dataBytes> = $l5;
+
+        $l7 = r0.<android.content.pm.PackageStats: long cacheSize>;
+
+        $l6 = r0.<android.content.pm.PackageStats: long externalCacheSize>;
+
+        $l8 = $l7 + $l6;
+
+        $r2.<android.app.usage.StorageStats: long cacheBytes> = $l8;
+
+        return $r2;
+    }
+
+    void forEachStorageStatsAugmenter(java.util.function.Consumer, java.lang.String)
+    {
+        com.android.server.usage.StorageStatsService r0;
+        java.lang.String r1, r2, $r13;
+        int i0, i1;
+        com.android.server.usage.StorageStatsManagerInternal$StorageStatsAugmenter r3;
+        java.util.concurrent.CopyOnWriteArrayList $r4, $r5;
+        java.lang.Object $r6, $r7, $r8;
+        java.lang.StringBuilder $r9;
+        java.lang.Throwable $r14;
+        java.util.function.Consumer r15;
+        android.util.Pair r16;
+
+        r0 := @this: com.android.server.usage.StorageStatsService;
+
+        r15 := @parameter0: java.util.function.Consumer;
+
+        r1 := @parameter1: java.lang.String;
+
+        i1 = 0;
+
+        $r4 = r0.<com.android.server.usage.StorageStatsService: java.util.concurrent.CopyOnWriteArrayList mStorageStatsAugmenters>;
+
+        i0 = virtualinvoke $r4.<java.util.concurrent.CopyOnWriteArrayList: int size()>();
+
+     label1:
+        if i1 >= i0 goto label5;
+
+        $r5 = r0.<com.android.server.usage.StorageStatsService: java.util.concurrent.CopyOnWriteArrayList mStorageStatsAugmenters>;
+
+        $r6 = virtualinvoke $r5.<java.util.concurrent.CopyOnWriteArrayList: java.lang.Object get(int)>(i1);
+
+        r16 = (android.util.Pair) $r6;
+
+        $r7 = r16.<android.util.Pair: java.lang.Object first>;
+
+        r2 = (java.lang.String) $r7;
+
+        $r8 = r16.<android.util.Pair: java.lang.Object second>;
+
+        r3 = (com.android.server.usage.StorageStatsManagerInternal$StorageStatsAugmenter) $r8;
+
+        $r9 = new java.lang.StringBuilder;
+
+        specialinvoke $r9.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(":");
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r2);
+
+        $r13 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.os.Trace: void traceBegin(long,java.lang.String)>(524288L, $r13);
+
+     label2:
+        interfaceinvoke r15.<java.util.function.Consumer: void accept(java.lang.Object)>(r3);
+
+     label3:
+        staticinvoke <android.os.Trace: void traceEnd(long)>(524288L);
+
+        i1 = i1 + 1;
+
+        goto label1;
+
+     label4:
+        $r14 := @caughtexception;
+
+        staticinvoke <android.os.Trace: void traceEnd(long)>(524288L);
+
+        throw $r14;
+
+     label5:
+        return;
+
+        catch java.lang.Throwable from label2 to label3 with label4;
+    }
+
+    public long getCacheBytes(java.lang.String, java.lang.String)
+    {
+        com.android.server.usage.StorageStatsService r0;
+        java.lang.String r1, r7;
+        int $i0, $i1;
+        android.os.UserManager $r2;
+        java.util.List $r3;
+        boolean $z0;
+        java.lang.Object $r4;
+        android.content.pm.UserInfo $r5;
+        android.app.usage.StorageStats $r6;
+        long $l2, l3;
+        java.util.Iterator r8;
+
+        r0 := @this: com.android.server.usage.StorageStatsService;
+
+        r1 := @parameter0: java.lang.String;
+
+        r7 := @parameter1: java.lang.String;
+
+        $i0 = staticinvoke <android.os.Binder: int getCallingUid()>();
+
+        specialinvoke r0.<com.android.server.usage.StorageStatsService: void enforceStatsPermission(int,java.lang.String)>($i0, r7);
+
+        l3 = 0L;
+
+        $r2 = r0.<com.android.server.usage.StorageStatsService: android.os.UserManager mUser>;
+
+        $r3 = virtualinvoke $r2.<android.os.UserManager: java.util.List getUsers()>();
+
+        r8 = interfaceinvoke $r3.<java.util.List: java.util.Iterator iterator()>();
+
+     label1:
+        $z0 = interfaceinvoke r8.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label2;
+
+        $r4 = interfaceinvoke r8.<java.util.Iterator: java.lang.Object next()>();
+
+        $r5 = (android.content.pm.UserInfo) $r4;
+
+        $i1 = $r5.<android.content.pm.UserInfo: int id>;
+
+        $r6 = virtualinvoke r0.<com.android.server.usage.StorageStatsService: android.app.usage.StorageStats queryStatsForUser(java.lang.String,int,java.lang.String)>(r1, $i1, null);
+
+        $l2 = $r6.<android.app.usage.StorageStats: long cacheBytes>;
+
+        l3 = l3 + $l2;
+
+        goto label1;
+
+     label2:
+        return l3;
+    }
+
+    public long getCacheQuotaBytes(java.lang.String, int, java.lang.String)
+    {
+        com.android.server.usage.StorageStatsService r0;
+        java.lang.String r1, r2;
+        int i0, $i1;
+        android.util.ArrayMap $r3, $r4;
+        boolean $z0;
+        long $l2, $l3, $l4;
+        java.lang.Object $r5;
+        android.util.SparseLongArray $r6;
+
+        r0 := @this: com.android.server.usage.StorageStatsService;
+
+        r1 := @parameter0: java.lang.String;
+
+        i0 := @parameter1: int;
+
+        r2 := @parameter2: java.lang.String;
+
+        $i1 = staticinvoke <android.os.Binder: int getCallingUid()>();
+
+        specialinvoke r0.<com.android.server.usage.StorageStatsService: void enforceStatsPermission(int,java.lang.String)>($i1, r2);
+
+        $r3 = r0.<com.android.server.usage.StorageStatsService: android.util.ArrayMap mCacheQuotas>;
+
+        $z0 = virtualinvoke $r3.<android.util.ArrayMap: boolean containsKey(java.lang.Object)>(r1);
+
+        if $z0 == 0 goto label1;
+
+        $r4 = r0.<com.android.server.usage.StorageStatsService: android.util.ArrayMap mCacheQuotas>;
+
+        $r5 = virtualinvoke $r4.<android.util.ArrayMap: java.lang.Object get(java.lang.Object)>(r1);
+
+        $r6 = (android.util.SparseLongArray) $r5;
+
+        $l3 = <com.android.server.usage.StorageStatsService: long DEFAULT_QUOTA>;
+
+        $l4 = virtualinvoke $r6.<android.util.SparseLongArray: long get(int,long)>(i0, $l3);
+
+        return $l4;
+
+     label1:
+        $l2 = <com.android.server.usage.StorageStatsService: long DEFAULT_QUOTA>;
+
+        return $l2;
+    }
+
+    public long getFreeBytes(java.lang.String, java.lang.String)
+    {
+        com.android.server.usage.StorageStatsService r0;
+        long l0, l1, $l2, $l3, $l4, $l5, l6, l7;
+        android.os.storage.StorageManager $r1, $r2;
+        boolean $z0;
+        java.lang.Throwable $r3, $r4;
+        java.lang.String r5, r6;
+        java.io.File r7;
+        android.os.ParcelableException r10;
+
+        r0 := @this: com.android.server.usage.StorageStatsService;
+
+        r5 := @parameter0: java.lang.String;
+
+        r6 := @parameter1: java.lang.String;
+
+        l0 = staticinvoke <android.os.Binder: long clearCallingIdentity()>();
+
+     label1:
+        $r1 = r0.<com.android.server.usage.StorageStatsService: android.os.storage.StorageManager mStorage>;
+
+        r7 = virtualinvoke $r1.<android.os.storage.StorageManager: java.io.File findPathForUuid(java.lang.String)>(r5);
+
+     label2:
+        $z0 = virtualinvoke r0.<com.android.server.usage.StorageStatsService: boolean isQuotaSupported(java.lang.String,java.lang.String)>(r5, "android");
+
+        if $z0 == 0 goto label4;
+
+        $l2 = virtualinvoke r0.<com.android.server.usage.StorageStatsService: long getCacheBytes(java.lang.String,java.lang.String)>(r5, "android");
+
+        $r2 = r0.<com.android.server.usage.StorageStatsService: android.os.storage.StorageManager mStorage>;
+
+        $l3 = virtualinvoke $r2.<android.os.storage.StorageManager: long getStorageCacheBytes(java.io.File,int)>(r7, 0);
+
+        $l4 = $l2 - $l3;
+
+        l1 = staticinvoke <java.lang.Math: long max(long,long)>(0L, $l4);
+
+        l6 = virtualinvoke r7.<java.io.File: long getUsableSpace()>();
+
+     label3:
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l0);
+
+        $l5 = l6 + l1;
+
+        return $l5;
+
+     label4:
+        l7 = virtualinvoke r7.<java.io.File: long getUsableSpace()>();
+
+     label5:
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l0);
+
+        return l7;
+
+     label6:
+        $r3 := @caughtexception;
+
+        goto label9;
+
+     label7:
+        $r4 := @caughtexception;
+
+     label8:
+        r10 = new android.os.ParcelableException;
+
+        specialinvoke r10.<android.os.ParcelableException: void <init>(java.lang.Throwable)>($r4);
+
+        throw r10;
+
+     label9:
+        staticinvoke <android.os.Binder: void restoreCallingIdentity(long)>(l0);
+
+        throw $r3;
+
+        catch java.io.FileNotFoundException from label1 to label2 with label7;
+        catch java.lang.Throwable from label1 to label2 with label6;
+        catch java.lang.Throwable from label2 to label3 with label6;
+        catch java.lang.Throwable from label4 to label5 with label6;
+        catch java.lang.Throwable from label8 to label9 with label6;
+    }
+
+    public long getTotalBytes(java.lang.String, java.lang.String)
+    {
+        com.android.server.usage.StorageStatsService r0;
+        java.lang.String r1, $r2, $r9, r12;
+        android.os.storage.StorageManager $r3, $r11;
+        java.lang.StringBuilder $r4;
+        android.os.ParcelableException $r7;
+        java.io.IOException $r8;
+        android.os.storage.DiskInfo $r10;
+        long $l0, $l1, $l2, $l3;
+        android.os.storage.VolumeInfo r13;
+
+        r0 := @this: com.android.server.usage.StorageStatsService;
+
+        r1 := @parameter0: java.lang.String;
+
+        r12 := @parameter1: java.lang.String;
+
+        $r2 = <android.os.storage.StorageManager: java.lang.String UUID_PRIVATE_INTERNAL>;
+
+        if r1 != $r2 goto label1;
+
+        $r11 = r0.<com.android.server.usage.StorageStatsService: android.os.storage.StorageManager mStorage>;
+
+        $l2 = virtualinvoke $r11.<android.os.storage.StorageManager: long getPrimaryStorageSize()>();
+
+        $l3 = staticinvoke <android.os.FileUtils: long roundStorageSize(long)>($l2);
+
+        return $l3;
+
+     label1:
+        $r3 = r0.<com.android.server.usage.StorageStatsService: android.os.storage.StorageManager mStorage>;
+
+        r13 = virtualinvoke $r3.<android.os.storage.StorageManager: android.os.storage.VolumeInfo findVolumeByUuid(java.lang.String)>(r1);
+
+        if r13 == null goto label2;
+
+        $r10 = r13.<android.os.storage.VolumeInfo: android.os.storage.DiskInfo disk>;
+
+        $l0 = $r10.<android.os.storage.DiskInfo: long size>;
+
+        $l1 = staticinvoke <android.os.FileUtils: long roundStorageSize(long)>($l0);
+
+        return $l1;
+
+     label2:
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Failed to find storage device for UUID ");
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r7 = new android.os.ParcelableException;
+
+        $r8 = new java.io.IOException;
+
+        $r9 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r8.<java.io.IOException: void <init>(java.lang.String)>($r9);
+
+        specialinvoke $r7.<android.os.ParcelableException: void <init>(java.lang.Throwable)>($r8);
+
+        throw $r7;
+    }
+
+    public boolean isQuotaSupported(java.lang.String, java.lang.String)
+    {
+        com.android.server.usage.StorageStatsService r0;
+        java.lang.String r1, $r6, r7;
+        boolean z0;
+        com.android.server.pm.Installer $r2;
+        com.android.server.pm.Installer$InstallerException $r3;
+        android.os.ParcelableException $r4;
+        java.io.IOException $r5;
+
+        r0 := @this: com.android.server.usage.StorageStatsService;
+
+        r7 := @parameter0: java.lang.String;
+
+        r1 := @parameter1: java.lang.String;
+
+     label1:
+        $r2 = r0.<com.android.server.usage.StorageStatsService: com.android.server.pm.Installer mInstaller>;
+
+        z0 = virtualinvoke $r2.<com.android.server.pm.Installer: boolean isQuotaSupported(java.lang.String)>(r7);
+
+     label2:
+        return z0;
+
+     label3:
+        $r3 := @caughtexception;
+
+        $r4 = new android.os.ParcelableException;
+
+        $r5 = new java.io.IOException;
+
+        $r6 = virtualinvoke $r3.<com.android.server.pm.Installer$InstallerException: java.lang.String getMessage()>();
+
+        specialinvoke $r5.<java.io.IOException: void <init>(java.lang.String)>($r6);
+
+        specialinvoke $r4.<android.os.ParcelableException: void <init>(java.lang.Throwable)>($r5);
+
+        throw $r4;
+
+        catch com.android.server.pm.Installer$InstallerException from label1 to label2 with label3;
+    }
+
+    public boolean isReservedSupported(java.lang.String, java.lang.String)
+    {
+        com.android.server.usage.StorageStatsService r0;
+        java.lang.String r1, r2, r3;
+        boolean $z0, $z1, z2;
+
+        r0 := @this: com.android.server.usage.StorageStatsService;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 := @parameter1: java.lang.String;
+
+        r3 = <android.os.storage.StorageManager: java.lang.String UUID_PRIVATE_INTERNAL>;
+
+        z2 = 0;
+
+        if r1 != r3 goto label3;
+
+        $z0 = staticinvoke <android.os.SystemProperties: boolean getBoolean(java.lang.String,boolean)>("vold.has_reserved", 0);
+
+        if $z0 != 0 goto label1;
+
+        $z1 = <android.os.Build: boolean IS_CONTAINER>;
+
+        if $z1 == 0 goto label2;
+
+     label1:
+        z2 = 1;
+
+     label2:
+        return z2;
+
+     label3:
+        return 0;
+    }
+
+    void notifySignificantDelta()
+    {
+        com.android.server.usage.StorageStatsService r0;
+        android.content.Context $r1;
+        android.content.ContentResolver $r2;
+        android.net.Uri $r3;
+
+        r0 := @this: com.android.server.usage.StorageStatsService;
+
+        $r1 = r0.<com.android.server.usage.StorageStatsService: android.content.Context mContext>;
+
+        $r2 = virtualinvoke $r1.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        $r3 = staticinvoke <android.net.Uri: android.net.Uri parse(java.lang.String)>("content://com.android.externalstorage.documents/");
+
+        virtualinvoke $r2.<android.content.ContentResolver: void notifyChange(android.net.Uri,android.database.ContentObserver,boolean)>($r3, null, 0);
+
+        return;
+    }
+
+    public android.content.pm.ParceledListSlice queryCratesForPackage(java.lang.String, java.lang.String, int, java.lang.String)
+    {
+        com.android.server.usage.StorageStatsService r0;
+        java.lang.String r1, r2, r10;
+        int i0, $i1, $i2, $i3, $i4;
+        android.content.pm.ApplicationInfo r3;
+        android.content.pm.PackageManager $r4;
+        java.lang.String[] $r5;
+        android.content.pm.ParceledListSlice $r6;
+        android.content.Context $r7;
+        android.content.pm.PackageManager$NameNotFoundException $r8;
+        android.os.ParcelableException $r9;
+
+        r0 := @this: com.android.server.usage.StorageStatsService;
+
+        r10 := @parameter0: java.lang.String;
+
+        r1 := @parameter1: java.lang.String;
+
+        i0 := @parameter2: int;
+
+        r2 := @parameter3: java.lang.String;
+
+        staticinvoke <com.android.server.usage.StorageStatsService: void checkCratesEnable()>();
+
+        $i1 = staticinvoke <android.os.UserHandle: int getCallingUserId()>();
+
+        if i0 == $i1 goto label1;
+
+        $r7 = r0.<com.android.server.usage.StorageStatsService: android.content.Context mContext>;
+
+        virtualinvoke $r7.<android.content.Context: void enforceCallingOrSelfPermission(java.lang.String,java.lang.String)>("android.permission.INTERACT_ACROSS_USERS", "StorageStatsService");
+
+     label1:
+        $r4 = r0.<com.android.server.usage.StorageStatsService: android.content.pm.PackageManager mPackage>;
+
+        r3 = virtualinvoke $r4.<android.content.pm.PackageManager: android.content.pm.ApplicationInfo getApplicationInfoAsUser(java.lang.String,int,int)>(r1, 8192, i0);
+
+     label2:
+        $i2 = staticinvoke <android.os.Binder: int getCallingUid()>();
+
+        $i3 = r3.<android.content.pm.ApplicationInfo: int uid>;
+
+        if $i2 != $i3 goto label3;
+
+        goto label4;
+
+     label3:
+        $i4 = staticinvoke <android.os.Binder: int getCallingUid()>();
+
+        specialinvoke r0.<com.android.server.usage.StorageStatsService: void enforceCratesPermission(int,java.lang.String)>($i4, r2);
+
+     label4:
+        $r5 = newarray (java.lang.String)[1];
+
+        $r5[0] = r1;
+
+        $r6 = specialinvoke r0.<com.android.server.usage.StorageStatsService: android.content.pm.ParceledListSlice getAppCrates(java.lang.String,java.lang.String[],int)>(r10, $r5, i0);
+
+        return $r6;
+
+     label5:
+        $r8 := @caughtexception;
+
+        $r9 = new android.os.ParcelableException;
+
+        specialinvoke $r9.<android.os.ParcelableException: void <init>(java.lang.Throwable)>($r8);
+
+        throw $r9;
+
+        catch android.content.pm.PackageManager$NameNotFoundException from label1 to label2 with label5;
+    }
+
+    public android.content.pm.ParceledListSlice queryCratesForUid(java.lang.String, int, java.lang.String)
+    {
+        com.android.server.usage.StorageStatsService r0;
+        int i0, i1, $i2, $i3, $i4, i5, i6;
+        java.lang.String[] r1, $r4, r14;
+        java.lang.String r2, r12, r13;
+        android.content.pm.PackageManager $r3, $r6;
+        android.content.pm.ParceledListSlice $r5;
+        boolean $z0;
+        android.content.pm.ApplicationInfo $r7;
+        java.lang.Object[] $r8;
+        android.content.Context $r9;
+        android.content.pm.PackageManager$NameNotFoundException $r10;
+        android.os.ParcelableException $r11;
+
+        r0 := @this: com.android.server.usage.StorageStatsService;
+
+        r12 := @parameter0: java.lang.String;
+
+        i5 := @parameter1: int;
+
+        r13 := @parameter2: java.lang.String;
+
+        staticinvoke <com.android.server.usage.StorageStatsService: void checkCratesEnable()>();
+
+        i0 = staticinvoke <android.os.UserHandle: int getUserId(int)>(i5);
+
+        $i2 = staticinvoke <android.os.UserHandle: int getCallingUserId()>();
+
+        if i0 == $i2 goto label01;
+
+        $r9 = r0.<com.android.server.usage.StorageStatsService: android.content.Context mContext>;
+
+        virtualinvoke $r9.<android.content.Context: void enforceCallingOrSelfPermission(java.lang.String,java.lang.String)>("android.permission.INTERACT_ACROSS_USERS", "StorageStatsService");
+
+     label01:
+        $i3 = staticinvoke <android.os.Binder: int getCallingUid()>();
+
+        if $i3 != i5 goto label02;
+
+        goto label03;
+
+     label02:
+        $i4 = staticinvoke <android.os.Binder: int getCallingUid()>();
+
+        specialinvoke r0.<com.android.server.usage.StorageStatsService: void enforceCratesPermission(int,java.lang.String)>($i4, r13);
+
+     label03:
+        $r3 = r0.<com.android.server.usage.StorageStatsService: android.content.pm.PackageManager mPackage>;
+
+        $r4 = virtualinvoke $r3.<android.content.pm.PackageManager: java.lang.String[] getPackagesForUid(int)>(i5);
+
+        r1 = staticinvoke <com.android.internal.util.ArrayUtils: java.lang.String[] defeatNullable(java.lang.String[])>($r4);
+
+        i6 = 0;
+
+        r14 = newarray (java.lang.String)[0];
+
+        i1 = lengthof r1;
+
+     label04:
+        if i6 >= i1 goto label10;
+
+        r2 = r1[i6];
+
+        $z0 = staticinvoke <android.text.TextUtils: boolean isEmpty(java.lang.CharSequence)>(r2);
+
+        if $z0 == 0 goto label05;
+
+        goto label08;
+
+     label05:
+        $r6 = r0.<com.android.server.usage.StorageStatsService: android.content.pm.PackageManager mPackage>;
+
+        $r7 = virtualinvoke $r6.<android.content.pm.PackageManager: android.content.pm.ApplicationInfo getApplicationInfoAsUser(java.lang.String,int,int)>(r2, 8192, i0);
+
+        if $r7 != null goto label07;
+
+     label06:
+        goto label08;
+
+     label07:
+        $r8 = staticinvoke <com.android.internal.util.ArrayUtils: java.lang.Object[] appendElement(java.lang.Class,java.lang.Object[],java.lang.Object)>(class "Ljava/lang/String;", r14, r2);
+
+        r14 = (java.lang.String[]) $r8;
+
+     label08:
+        i6 = i6 + 1;
+
+        goto label04;
+
+     label09:
+        $r10 := @caughtexception;
+
+        $r11 = new android.os.ParcelableException;
+
+        specialinvoke $r11.<android.os.ParcelableException: void <init>(java.lang.Throwable)>($r10);
+
+        throw $r11;
+
+     label10:
+        $r5 = specialinvoke r0.<com.android.server.usage.StorageStatsService: android.content.pm.ParceledListSlice getAppCrates(java.lang.String,java.lang.String[],int)>(r12, r14, i0);
+
+        return $r5;
+
+        catch android.content.pm.PackageManager$NameNotFoundException from label05 to label06 with label09;
+        catch android.content.pm.PackageManager$NameNotFoundException from label07 to label08 with label09;
+    }
+
+    public android.content.pm.ParceledListSlice queryCratesForUser(java.lang.String, int, java.lang.String)
+    {
+        com.android.server.usage.StorageStatsService r0;
+        int i0, $i1, $i2;
+        java.lang.String r1, $r10, r11;
+        android.content.pm.ParceledListSlice $r2;
+        com.android.server.pm.Installer $r3;
+        android.os.storage.CrateMetadata[] $r4;
+        java.util.List $r5;
+        android.content.Context $r6;
+        com.android.server.pm.Installer$InstallerException $r7;
+        android.os.ParcelableException $r8;
+        java.io.IOException $r9;
+
+        r0 := @this: com.android.server.usage.StorageStatsService;
+
+        r11 := @parameter0: java.lang.String;
+
+        i0 := @parameter1: int;
+
+        r1 := @parameter2: java.lang.String;
+
+        staticinvoke <com.android.server.usage.StorageStatsService: void checkCratesEnable()>();
+
+        $i1 = staticinvoke <android.os.UserHandle: int getCallingUserId()>();
+
+        if i0 == $i1 goto label1;
+
+        $r6 = r0.<com.android.server.usage.StorageStatsService: android.content.Context mContext>;
+
+        virtualinvoke $r6.<android.content.Context: void enforceCallingOrSelfPermission(java.lang.String,java.lang.String)>("android.permission.INTERACT_ACROSS_USERS", "StorageStatsService");
+
+     label1:
+        $i2 = staticinvoke <android.os.Binder: int getCallingUid()>();
+
+        specialinvoke r0.<com.android.server.usage.StorageStatsService: void enforceCratesPermission(int,java.lang.String)>($i2, r1);
+
+     label2:
+        $r2 = new android.content.pm.ParceledListSlice;
+
+        $r3 = r0.<com.android.server.usage.StorageStatsService: com.android.server.pm.Installer mInstaller>;
+
+        $r4 = virtualinvoke $r3.<com.android.server.pm.Installer: android.os.storage.CrateMetadata[] getUserCrates(java.lang.String,int)>(r11, i0);
+
+        $r5 = staticinvoke <com.android.server.usage.StorageStatsService: java.util.List convertCrateInfoFrom(android.os.storage.CrateMetadata[])>($r4);
+
+        specialinvoke $r2.<android.content.pm.ParceledListSlice: void <init>(java.util.List)>($r5);
+
+     label3:
+        return $r2;
+
+     label4:
+        $r7 := @caughtexception;
+
+        $r8 = new android.os.ParcelableException;
+
+        $r9 = new java.io.IOException;
+
+        $r10 = virtualinvoke $r7.<com.android.server.pm.Installer$InstallerException: java.lang.String getMessage()>();
+
+        specialinvoke $r9.<java.io.IOException: void <init>(java.lang.String)>($r10);
+
+        specialinvoke $r8.<android.os.ParcelableException: void <init>(java.lang.Throwable)>($r9);
+
+        throw $r8;
+
+        catch com.android.server.pm.Installer$InstallerException from label2 to label3 with label4;
+    }
+
+    public android.app.usage.ExternalStorageStats queryExternalStatsForUser(java.lang.String, int, java.lang.String)
+    {
+        com.android.server.usage.StorageStatsService r0;
+        int i0, $i1, $i2, $i3;
+        com.android.server.pm.Installer $r1, $r3;
+        boolean $z0;
+        android.app.usage.ExternalStorageStats $r2;
+        long $l4, $l5, $l6, $l7, $l8, $l9;
+        java.lang.String $r6, $r11, r12, r13;
+        android.content.Context $r7;
+        com.android.server.pm.Installer$InstallerException $r8;
+        android.os.ParcelableException $r9;
+        java.io.IOException $r10;
+        int[] r14;
+        long[] r15, r16;
+        java.lang.StringBuilder r17;
+
+        r0 := @this: com.android.server.usage.StorageStatsService;
+
+        r12 := @parameter0: java.lang.String;
+
+        i0 := @parameter1: int;
+
+        r13 := @parameter2: java.lang.String;
+
+        $i1 = staticinvoke <android.os.UserHandle: int getCallingUserId()>();
+
+        if i0 == $i1 goto label1;
+
+        $r7 = r0.<com.android.server.usage.StorageStatsService: android.content.Context mContext>;
+
+        virtualinvoke $r7.<android.content.Context: void enforceCallingOrSelfPermission(java.lang.String,java.lang.String)>("android.permission.INTERACT_ACROSS_USERS", "StorageStatsService");
+
+     label1:
+        $i2 = staticinvoke <android.os.Binder: int getCallingUid()>();
+
+        specialinvoke r0.<com.android.server.usage.StorageStatsService: void enforceStatsPermission(int,java.lang.String)>($i2, r13);
+
+        r14 = specialinvoke r0.<com.android.server.usage.StorageStatsService: int[] getAppIds(int)>(i0);
+
+     label2:
+        $r1 = r0.<com.android.server.usage.StorageStatsService: com.android.server.pm.Installer mInstaller>;
+
+        $i3 = staticinvoke <com.android.server.usage.StorageStatsService: int getDefaultFlags()>();
+
+        r15 = virtualinvoke $r1.<com.android.server.pm.Installer: long[] getExternalSize(java.lang.String,int,int,int[])>(r12, i0, $i3, r14);
+
+        $z0 = staticinvoke <android.os.SystemProperties: boolean getBoolean(java.lang.String,boolean)>("fw.verify_storage", 0);
+
+        if $z0 == 0 goto label3;
+
+        $r3 = r0.<com.android.server.usage.StorageStatsService: com.android.server.pm.Installer mInstaller>;
+
+        r16 = virtualinvoke $r3.<com.android.server.pm.Installer: long[] getExternalSize(java.lang.String,int,int,int[])>(r12, i0, 0, r14);
+
+        r17 = new java.lang.StringBuilder;
+
+        specialinvoke r17.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r17.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("External ");
+
+        virtualinvoke r17.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r6 = virtualinvoke r17.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.server.usage.StorageStatsService: void checkEquals(java.lang.String,long[],long[])>($r6, r16, r15);
+
+     label3:
+        $r2 = new android.app.usage.ExternalStorageStats;
+
+        specialinvoke $r2.<android.app.usage.ExternalStorageStats: void <init>()>();
+
+        $l4 = r15[0];
+
+        $r2.<android.app.usage.ExternalStorageStats: long totalBytes> = $l4;
+
+        $l5 = r15[1];
+
+        $r2.<android.app.usage.ExternalStorageStats: long audioBytes> = $l5;
+
+        $l6 = r15[2];
+
+        $r2.<android.app.usage.ExternalStorageStats: long videoBytes> = $l6;
+
+        $l7 = r15[3];
+
+        $r2.<android.app.usage.ExternalStorageStats: long imageBytes> = $l7;
+
+        $l8 = r15[4];
+
+        $r2.<android.app.usage.ExternalStorageStats: long appBytes> = $l8;
+
+        $l9 = r15[5];
+
+        $r2.<android.app.usage.ExternalStorageStats: long obbBytes> = $l9;
+
+        return $r2;
+
+     label4:
+        $r8 := @caughtexception;
+
+        $r9 = new android.os.ParcelableException;
+
+        $r10 = new java.io.IOException;
+
+        $r11 = virtualinvoke $r8.<com.android.server.pm.Installer$InstallerException: java.lang.String getMessage()>();
+
+        specialinvoke $r10.<java.io.IOException: void <init>(java.lang.String)>($r11);
+
+        specialinvoke $r9.<android.os.ParcelableException: void <init>(java.lang.Throwable)>($r10);
+
+        throw $r9;
+
+        catch com.android.server.pm.Installer$InstallerException from label2 to label3 with label4;
+    }
+
+    public android.app.usage.StorageStats queryStatsForPackage(java.lang.String, java.lang.String, int, java.lang.String)
+    {
+        com.android.server.usage.StorageStatsService r0;
+        java.lang.String r1, $r8, $r13, $r18, r22, r23, $r29;
+        int i0, i1, $i2, $i3, $i4, $i5, $i6, $i7, $i8, $i9, $i10;
+        long[] r2;
+        com.android.server.pm.Installer r3;
+        android.content.pm.PackageManager $r4, $r5;
+        java.lang.String[] $r6, $r7, r25, $r28;
+        boolean $z0, $z1, z2;
+        java.lang.Object[] $r9;
+        android.app.usage.StorageStats $r10, $r12;
+        com.android.server.usage._$$Lambda$StorageStatsService$wNCqEjBUk3qs1tuYbJHOuDgJ8rk $r11;
+        android.content.Context $r14;
+        com.android.server.pm.Installer$InstallerException $r15, $r21, r30;
+        android.os.ParcelableException $r16, $r20;
+        java.io.IOException $r17;
+        android.content.pm.PackageManager$NameNotFoundException $r19;
+        android.content.pm.ApplicationInfo r24;
+        android.content.pm.PackageStats $r26;
+
+        r0 := @this: com.android.server.usage.StorageStatsService;
+
+        r22 := @parameter0: java.lang.String;
+
+        r1 := @parameter1: java.lang.String;
+
+        i0 := @parameter2: int;
+
+        r23 := @parameter3: java.lang.String;
+
+        $i2 = staticinvoke <android.os.UserHandle: int getCallingUserId()>();
+
+        if i0 == $i2 goto label01;
+
+        $r14 = r0.<com.android.server.usage.StorageStatsService: android.content.Context mContext>;
+
+        virtualinvoke $r14.<android.content.Context: void enforceCallingOrSelfPermission(java.lang.String,java.lang.String)>("android.permission.INTERACT_ACROSS_USERS", "StorageStatsService");
+
+     label01:
+        $r4 = r0.<com.android.server.usage.StorageStatsService: android.content.pm.PackageManager mPackage>;
+
+        r24 = virtualinvoke $r4.<android.content.pm.PackageManager: android.content.pm.ApplicationInfo getApplicationInfoAsUser(java.lang.String,int,int)>(r1, 8192, i0);
+
+     label02:
+        $i3 = staticinvoke <android.os.Binder: int getCallingUid()>();
+
+        $i4 = r24.<android.content.pm.ApplicationInfo: int uid>;
+
+        if $i3 != $i4 goto label05;
+
+        $i10 = staticinvoke <android.os.Binder: int getCallingUid()>();
+
+        $r13 = specialinvoke r0.<com.android.server.usage.StorageStatsService: java.lang.String checkStatsPermission(int,java.lang.String,boolean)>($i10, r23, 0);
+
+        if $r13 != null goto label03;
+
+        z2 = 1;
+
+        goto label04;
+
+     label03:
+        z2 = 0;
+
+     label04:
+        goto label06;
+
+     label05:
+        $i5 = staticinvoke <android.os.Binder: int getCallingUid()>();
+
+        specialinvoke r0.<com.android.server.usage.StorageStatsService: void enforceStatsPermission(int,java.lang.String)>($i5, r23);
+
+        z2 = 1;
+
+     label06:
+        $r5 = r0.<com.android.server.usage.StorageStatsService: android.content.pm.PackageManager mPackage>;
+
+        $i6 = r24.<android.content.pm.ApplicationInfo: int uid>;
+
+        $r6 = virtualinvoke $r5.<android.content.pm.PackageManager: java.lang.String[] getPackagesForUid(int)>($i6);
+
+        $r7 = staticinvoke <com.android.internal.util.ArrayUtils: java.lang.String[] defeatNullable(java.lang.String[])>($r6);
+
+        $i7 = lengthof $r7;
+
+        if $i7 != 1 goto label07;
+
+        $i9 = r24.<android.content.pm.ApplicationInfo: int uid>;
+
+        $r12 = virtualinvoke r0.<com.android.server.usage.StorageStatsService: android.app.usage.StorageStats queryStatsForUid(java.lang.String,int,java.lang.String)>(r22, $i9, r23);
+
+        return $r12;
+
+     label07:
+        $i8 = r24.<android.content.pm.ApplicationInfo: int uid>;
+
+        i1 = staticinvoke <android.os.UserHandle: int getUserId(int)>($i8);
+
+        r2 = newarray (long)[1];
+
+        r25 = newarray (java.lang.String)[0];
+
+        $z0 = virtualinvoke r24.<android.content.pm.ApplicationInfo: boolean isSystemApp()>();
+
+        if $z0 == 0 goto label08;
+
+        $z1 = virtualinvoke r24.<android.content.pm.ApplicationInfo: boolean isUpdatedSystemApp()>();
+
+        if $z1 != 0 goto label08;
+
+        goto label09;
+
+     label08:
+        $r8 = virtualinvoke r24.<android.content.pm.ApplicationInfo: java.lang.String getCodePath()>();
+
+        $r9 = staticinvoke <com.android.internal.util.ArrayUtils: java.lang.Object[] appendElement(java.lang.Class,java.lang.Object[],java.lang.Object)>(class "Ljava/lang/String;", r25, $r8);
+
+        r25 = (java.lang.String[]) $r9;
+
+     label09:
+        $r26 = new android.content.pm.PackageStats;
+
+        specialinvoke $r26.<android.content.pm.PackageStats: void <init>(java.lang.String)>("StorageStatsService");
+
+     label10:
+        r3 = r0.<com.android.server.usage.StorageStatsService: com.android.server.pm.Installer mInstaller>;
+
+     label11:
+        $r28 = newarray (java.lang.String)[1];
+
+        $r28[0] = r1;
+
+        virtualinvoke r3.<com.android.server.pm.Installer: void getAppSize(java.lang.String,java.lang.String[],int,int,int,long[],java.lang.String[],android.content.pm.PackageStats)>(r22, $r28, i0, 0, i1, r2, r25, $r26);
+
+     label12:
+        $r29 = <android.os.storage.StorageManager: java.lang.String UUID_PRIVATE_INTERNAL>;
+
+        if r22 != $r29 goto label13;
+
+        $r11 = new com.android.server.usage._$$Lambda$StorageStatsService$wNCqEjBUk3qs1tuYbJHOuDgJ8rk;
+
+        specialinvoke $r11.<com.android.server.usage._$$Lambda$StorageStatsService$wNCqEjBUk3qs1tuYbJHOuDgJ8rk: void <init>(android.content.pm.PackageStats,java.lang.String,int,boolean)>($r26, r1, i0, z2);
+
+        virtualinvoke r0.<com.android.server.usage.StorageStatsService: void forEachStorageStatsAugmenter(java.util.function.Consumer,java.lang.String)>($r11, "queryStatsForPackage");
+
+        goto label13;
+
+     label13:
+        $r10 = staticinvoke <com.android.server.usage.StorageStatsService: android.app.usage.StorageStats translate(android.content.pm.PackageStats)>($r26);
+
+        return $r10;
+
+     label14:
+        $r21 := @caughtexception;
+
+        r30 = $r21;
+
+        goto label16;
+
+     label15:
+        $r15 := @caughtexception;
+
+        r30 = $r15;
+
+     label16:
+        $r16 = new android.os.ParcelableException;
+
+        $r17 = new java.io.IOException;
+
+        $r18 = virtualinvoke r30.<com.android.server.pm.Installer$InstallerException: java.lang.String getMessage()>();
+
+        specialinvoke $r17.<java.io.IOException: void <init>(java.lang.String)>($r18);
+
+        specialinvoke $r16.<android.os.ParcelableException: void <init>(java.lang.Throwable)>($r17);
+
+        throw $r16;
+
+     label17:
+        $r19 := @caughtexception;
+
+        $r20 = new android.os.ParcelableException;
+
+        specialinvoke $r20.<android.os.ParcelableException: void <init>(java.lang.Throwable)>($r19);
+
+        throw $r20;
+
+        catch android.content.pm.PackageManager$NameNotFoundException from label01 to label02 with label17;
+        catch com.android.server.pm.Installer$InstallerException from label10 to label11 with label15;
+        catch com.android.server.pm.Installer$InstallerException from label11 to label12 with label14;
+    }
+
+    public android.app.usage.StorageStats queryStatsForUid(java.lang.String, int, java.lang.String)
+    {
+        com.android.server.usage.StorageStatsService r0;
+        int i0, i1, i2, $i3, $i4, $i5, $i6, $i7, i8, $i9, i10;
+        java.lang.String[] r1, $r4, r26;
+        long[] r2;
+        boolean z0, $z1, $z2, z3;
+        android.content.pm.PackageManager $r3, $r13;
+        android.content.pm.PackageStats $r5, r31;
+        java.lang.String $r6, $r12, $r14, $r16, r24, r25, r33, $r37;
+        android.app.usage.StorageStats $r7;
+        com.android.server.usage._$$Lambda$StorageStatsService$tgQ1n6Nzx2HUgCixFqiqtHCcsAo $r8;
+        com.android.server.pm.Installer $r9, r30;
+        java.lang.Object[] $r15;
+        android.content.Context $r17;
+        com.android.server.pm.Installer$InstallerException $r18, $r19, $r20, $r23, r34;
+        android.content.pm.PackageManager$NameNotFoundException $r21;
+        android.os.ParcelableException $r22, $r35;
+        android.content.pm.ApplicationInfo r27;
+        java.lang.StringBuilder r32;
+        java.io.IOException $r36;
+
+        r0 := @this: com.android.server.usage.StorageStatsService;
+
+        r24 := @parameter0: java.lang.String;
+
+        i0 := @parameter1: int;
+
+        r25 := @parameter2: java.lang.String;
+
+        i1 = staticinvoke <android.os.UserHandle: int getUserId(int)>(i0);
+
+        i2 = staticinvoke <android.os.UserHandle: int getAppId(int)>(i0);
+
+        $i3 = staticinvoke <android.os.UserHandle: int getCallingUserId()>();
+
+        if i1 == $i3 goto label01;
+
+        $r17 = r0.<com.android.server.usage.StorageStatsService: android.content.Context mContext>;
+
+        virtualinvoke $r17.<android.content.Context: void enforceCallingOrSelfPermission(java.lang.String,java.lang.String)>("android.permission.INTERACT_ACROSS_USERS", "StorageStatsService");
+
+     label01:
+        $i4 = staticinvoke <android.os.Binder: int getCallingUid()>();
+
+        if $i4 != i0 goto label04;
+
+        $i7 = staticinvoke <android.os.Binder: int getCallingUid()>();
+
+        $r16 = specialinvoke r0.<com.android.server.usage.StorageStatsService: java.lang.String checkStatsPermission(int,java.lang.String,boolean)>($i7, r25, 0);
+
+        if $r16 != null goto label02;
+
+        z3 = 1;
+
+        goto label03;
+
+     label02:
+        z3 = 0;
+
+     label03:
+        goto label05;
+
+     label04:
+        $i5 = staticinvoke <android.os.Binder: int getCallingUid()>();
+
+        specialinvoke r0.<com.android.server.usage.StorageStatsService: void enforceStatsPermission(int,java.lang.String)>($i5, r25);
+
+        z3 = 1;
+
+     label05:
+        $r3 = r0.<com.android.server.usage.StorageStatsService: android.content.pm.PackageManager mPackage>;
+
+        $r4 = virtualinvoke $r3.<android.content.pm.PackageManager: java.lang.String[] getPackagesForUid(int)>(i0);
+
+        r1 = staticinvoke <com.android.internal.util.ArrayUtils: java.lang.String[] defeatNullable(java.lang.String[])>($r4);
+
+        $i6 = lengthof r1;
+
+        r2 = newarray (long)[$i6];
+
+        i8 = 0;
+
+        r26 = newarray (java.lang.String)[0];
+
+     label06:
+        $i9 = lengthof r1;
+
+        if i8 >= $i9 goto label12;
+
+     label07:
+        $r13 = r0.<com.android.server.usage.StorageStatsService: android.content.pm.PackageManager mPackage>;
+
+        $r12 = r1[i8];
+
+        r27 = virtualinvoke $r13.<android.content.pm.PackageManager: android.content.pm.ApplicationInfo getApplicationInfoAsUser(java.lang.String,int,int)>($r12, 8192, i1);
+
+        $z1 = virtualinvoke r27.<android.content.pm.ApplicationInfo: boolean isSystemApp()>();
+
+        if $z1 == 0 goto label09;
+
+        $z2 = virtualinvoke r27.<android.content.pm.ApplicationInfo: boolean isUpdatedSystemApp()>();
+
+        if $z2 != 0 goto label09;
+
+     label08:
+        goto label10;
+
+     label09:
+        $r14 = virtualinvoke r27.<android.content.pm.ApplicationInfo: java.lang.String getCodePath()>();
+
+        $r15 = staticinvoke <com.android.internal.util.ArrayUtils: java.lang.Object[] appendElement(java.lang.Class,java.lang.Object[],java.lang.Object)>(class "Ljava/lang/String;", r26, $r14);
+
+        r26 = (java.lang.String[]) $r15;
+
+     label10:
+        i8 = i8 + 1;
+
+        goto label06;
+
+     label11:
+        $r21 := @caughtexception;
+
+        $r22 = new android.os.ParcelableException;
+
+        specialinvoke $r22.<android.os.ParcelableException: void <init>(java.lang.Throwable)>($r21);
+
+        throw $r22;
+
+     label12:
+        $r5 = new android.content.pm.PackageStats;
+
+        specialinvoke $r5.<android.content.pm.PackageStats: void <init>(java.lang.String)>("StorageStatsService");
+
+     label13:
+        r30 = r0.<com.android.server.usage.StorageStatsService: com.android.server.pm.Installer mInstaller>;
+
+        i10 = staticinvoke <com.android.server.usage.StorageStatsService: int getDefaultFlags()>();
+
+     label14:
+        virtualinvoke r30.<com.android.server.pm.Installer: void getAppSize(java.lang.String,java.lang.String[],int,int,int,long[],java.lang.String[],android.content.pm.PackageStats)>(r24, r1, i1, i10, i2, r2, r26, $r5);
+
+        z0 = staticinvoke <android.os.SystemProperties: boolean getBoolean(java.lang.String,boolean)>("fw.verify_storage", 0);
+
+     label15:
+        if z0 == 0 goto label21;
+
+     label16:
+        r31 = new android.content.pm.PackageStats;
+
+        specialinvoke r31.<android.content.pm.PackageStats: void <init>(java.lang.String)>("StorageStatsService");
+
+        $r9 = r0.<com.android.server.usage.StorageStatsService: com.android.server.pm.Installer mInstaller>;
+
+        virtualinvoke $r9.<com.android.server.pm.Installer: void getAppSize(java.lang.String,java.lang.String[],int,int,int,long[],java.lang.String[],android.content.pm.PackageStats)>(r24, r1, i1, 0, i2, r2, r26, r31);
+
+        r32 = new java.lang.StringBuilder;
+
+        specialinvoke r32.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r32.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("UID ");
+
+        virtualinvoke r32.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        r33 = virtualinvoke r32.<java.lang.StringBuilder: java.lang.String toString()>();
+
+     label17:
+        staticinvoke <com.android.server.usage.StorageStatsService: void checkEquals(java.lang.String,android.content.pm.PackageStats,android.content.pm.PackageStats)>(r33, r31, $r5);
+
+     label18:
+        goto label21;
+
+     label19:
+        $r18 := @caughtexception;
+
+        r34 = $r18;
+
+        goto label26;
+
+     label20:
+        $r23 := @caughtexception;
+
+        r34 = $r23;
+
+        goto label24;
+
+     label21:
+        $r6 = <android.os.storage.StorageManager: java.lang.String UUID_PRIVATE_INTERNAL>;
+
+        if r24 != $r6 goto label22;
+
+        $r8 = new com.android.server.usage._$$Lambda$StorageStatsService$tgQ1n6Nzx2HUgCixFqiqtHCcsAo;
+
+        specialinvoke $r8.<com.android.server.usage._$$Lambda$StorageStatsService$tgQ1n6Nzx2HUgCixFqiqtHCcsAo: void <init>(android.content.pm.PackageStats,int,boolean)>($r5, i0, z3);
+
+        virtualinvoke r0.<com.android.server.usage.StorageStatsService: void forEachStorageStatsAugmenter(java.util.function.Consumer,java.lang.String)>($r8, "queryStatsForUid");
+
+     label22:
+        $r7 = staticinvoke <com.android.server.usage.StorageStatsService: android.app.usage.StorageStats translate(android.content.pm.PackageStats)>($r5);
+
+        return $r7;
+
+     label23:
+        $r20 := @caughtexception;
+
+        r34 = $r20;
+
+     label24:
+        goto label26;
+
+     label25:
+        $r19 := @caughtexception;
+
+        r34 = $r19;
+
+     label26:
+        $r35 = new android.os.ParcelableException;
+
+        $r36 = new java.io.IOException;
+
+        $r37 = virtualinvoke r34.<com.android.server.pm.Installer$InstallerException: java.lang.String getMessage()>();
+
+        specialinvoke $r36.<java.io.IOException: void <init>(java.lang.String)>($r37);
+
+        specialinvoke $r35.<android.os.ParcelableException: void <init>(java.lang.Throwable)>($r36);
+
+        throw $r35;
+
+        catch android.content.pm.PackageManager$NameNotFoundException from label07 to label08 with label11;
+        catch android.content.pm.PackageManager$NameNotFoundException from label09 to label10 with label11;
+        catch com.android.server.pm.Installer$InstallerException from label13 to label14 with label25;
+        catch com.android.server.pm.Installer$InstallerException from label14 to label15 with label23;
+        catch com.android.server.pm.Installer$InstallerException from label16 to label17 with label20;
+        catch com.android.server.pm.Installer$InstallerException from label17 to label18 with label19;
+    }
+
+    public android.app.usage.StorageStats queryStatsForUser(java.lang.String, int, java.lang.String)
+    {
+        com.android.server.usage.StorageStatsService r0;
+        int i0, $i1, $i2, $i3;
+        int[] r1;
+        android.content.pm.PackageStats r2, $r3;
+        com.android.server.pm.Installer $r4, $r6;
+        boolean $z0;
+        android.app.usage.StorageStats $r5;
+        java.lang.String $r9, $r14, r15, r16;
+        android.content.Context $r10;
+        com.android.server.pm.Installer$InstallerException $r11;
+        android.os.ParcelableException $r12;
+        java.io.IOException $r13;
+        java.lang.StringBuilder r18;
+
+        r0 := @this: com.android.server.usage.StorageStatsService;
+
+        r15 := @parameter0: java.lang.String;
+
+        i0 := @parameter1: int;
+
+        r16 := @parameter2: java.lang.String;
+
+        $i1 = staticinvoke <android.os.UserHandle: int getCallingUserId()>();
+
+        if i0 == $i1 goto label1;
+
+        $r10 = r0.<com.android.server.usage.StorageStatsService: android.content.Context mContext>;
+
+        virtualinvoke $r10.<android.content.Context: void enforceCallingOrSelfPermission(java.lang.String,java.lang.String)>("android.permission.INTERACT_ACROSS_USERS", "StorageStatsService");
+
+     label1:
+        $i2 = staticinvoke <android.os.Binder: int getCallingUid()>();
+
+        specialinvoke r0.<com.android.server.usage.StorageStatsService: void enforceStatsPermission(int,java.lang.String)>($i2, r16);
+
+        r1 = specialinvoke r0.<com.android.server.usage.StorageStatsService: int[] getAppIds(int)>(i0);
+
+        $r3 = new android.content.pm.PackageStats;
+
+        specialinvoke $r3.<android.content.pm.PackageStats: void <init>(java.lang.String)>("StorageStatsService");
+
+     label2:
+        $r4 = r0.<com.android.server.usage.StorageStatsService: com.android.server.pm.Installer mInstaller>;
+
+        $i3 = staticinvoke <com.android.server.usage.StorageStatsService: int getDefaultFlags()>();
+
+        virtualinvoke $r4.<com.android.server.pm.Installer: void getUserSize(java.lang.String,int,int,int[],android.content.pm.PackageStats)>(r15, i0, $i3, r1, $r3);
+
+        $z0 = staticinvoke <android.os.SystemProperties: boolean getBoolean(java.lang.String,boolean)>("fw.verify_storage", 0);
+
+        if $z0 == 0 goto label3;
+
+        r2 = new android.content.pm.PackageStats;
+
+        specialinvoke r2.<android.content.pm.PackageStats: void <init>(java.lang.String)>("StorageStatsService");
+
+        $r6 = r0.<com.android.server.usage.StorageStatsService: com.android.server.pm.Installer mInstaller>;
+
+        virtualinvoke $r6.<com.android.server.pm.Installer: void getUserSize(java.lang.String,int,int,int[],android.content.pm.PackageStats)>(r15, i0, 0, r1, r2);
+
+        r18 = new java.lang.StringBuilder;
+
+        specialinvoke r18.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r18.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("User ");
+
+        virtualinvoke r18.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r9 = virtualinvoke r18.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.server.usage.StorageStatsService: void checkEquals(java.lang.String,android.content.pm.PackageStats,android.content.pm.PackageStats)>($r9, r2, $r3);
+
+     label3:
+        $r5 = staticinvoke <com.android.server.usage.StorageStatsService: android.app.usage.StorageStats translate(android.content.pm.PackageStats)>($r3);
+
+        return $r5;
+
+     label4:
+        $r11 := @caughtexception;
+
+        $r12 = new android.os.ParcelableException;
+
+        $r13 = new java.io.IOException;
+
+        $r14 = virtualinvoke $r11.<com.android.server.pm.Installer$InstallerException: java.lang.String getMessage()>();
+
+        specialinvoke $r13.<java.io.IOException: void <init>(java.lang.String)>($r14);
+
+        specialinvoke $r12.<android.os.ParcelableException: void <init>(java.lang.Throwable)>($r13);
+
+        throw $r12;
+
+        catch com.android.server.pm.Installer$InstallerException from label2 to label3 with label4;
+    }
+}

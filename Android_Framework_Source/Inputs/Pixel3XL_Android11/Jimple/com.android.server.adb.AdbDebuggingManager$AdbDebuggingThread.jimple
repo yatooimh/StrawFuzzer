@@ -1,0 +1,812 @@
+class com.android.server.adb.AdbDebuggingManager$AdbDebuggingThread extends java.lang.Thread
+{
+    private java.io.InputStream mInputStream;
+    private java.io.OutputStream mOutputStream;
+    private android.net.LocalSocket mSocket;
+    private boolean mStopped;
+    final com.android.server.adb.AdbDebuggingManager this$0;
+
+    void <init>(com.android.server.adb.AdbDebuggingManager)
+    {
+        com.android.server.adb.AdbDebuggingManager$AdbDebuggingThread r0;
+        com.android.server.adb.AdbDebuggingManager r1;
+
+        r0 := @this: com.android.server.adb.AdbDebuggingManager$AdbDebuggingThread;
+
+        r1 := @parameter0: com.android.server.adb.AdbDebuggingManager;
+
+        r0.<com.android.server.adb.AdbDebuggingManager$AdbDebuggingThread: com.android.server.adb.AdbDebuggingManager this$0> = r1;
+
+        specialinvoke r0.<java.lang.Thread: void <init>(java.lang.String)>("AdbDebuggingManager");
+
+        return;
+    }
+
+    private void closeSocketLocked()
+    {
+        com.android.server.adb.AdbDebuggingManager$AdbDebuggingThread r0;
+        java.io.OutputStream $r1, $r6;
+        android.net.LocalSocket $r2, $r5;
+        com.android.server.adb.AdbDebuggingManager $r3;
+        android.os.Handler $r4;
+        java.lang.Throwable $r7, $r12;
+        java.lang.StringBuilder $r8, $r13;
+        java.lang.String $r11, $r16;
+
+        r0 := @this: com.android.server.adb.AdbDebuggingManager$AdbDebuggingThread;
+
+     label1:
+        $r1 = r0.<com.android.server.adb.AdbDebuggingManager$AdbDebuggingThread: java.io.OutputStream mOutputStream>;
+
+        if $r1 == null goto label2;
+
+        $r6 = r0.<com.android.server.adb.AdbDebuggingManager$AdbDebuggingThread: java.io.OutputStream mOutputStream>;
+
+        virtualinvoke $r6.<java.io.OutputStream: void close()>();
+
+        r0.<com.android.server.adb.AdbDebuggingManager$AdbDebuggingThread: java.io.OutputStream mOutputStream> = null;
+
+     label2:
+        goto label4;
+
+     label3:
+        $r12 := @caughtexception;
+
+        $r13 = new java.lang.StringBuilder;
+
+        specialinvoke $r13.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Failed closing output stream: ");
+
+        virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r12);
+
+        $r16 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("AdbDebuggingManager", $r16);
+
+     label4:
+        $r2 = r0.<com.android.server.adb.AdbDebuggingManager$AdbDebuggingThread: android.net.LocalSocket mSocket>;
+
+        if $r2 == null goto label5;
+
+        $r5 = r0.<com.android.server.adb.AdbDebuggingManager$AdbDebuggingThread: android.net.LocalSocket mSocket>;
+
+        virtualinvoke $r5.<android.net.LocalSocket: void close()>();
+
+        r0.<com.android.server.adb.AdbDebuggingManager$AdbDebuggingThread: android.net.LocalSocket mSocket> = null;
+
+     label5:
+        goto label7;
+
+     label6:
+        $r7 := @caughtexception;
+
+        $r8 = new java.lang.StringBuilder;
+
+        specialinvoke $r8.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Failed closing socket: ");
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r7);
+
+        $r11 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("AdbDebuggingManager", $r11);
+
+     label7:
+        $r3 = r0.<com.android.server.adb.AdbDebuggingManager$AdbDebuggingThread: com.android.server.adb.AdbDebuggingManager this$0>;
+
+        $r4 = staticinvoke <com.android.server.adb.AdbDebuggingManager: android.os.Handler access$100(com.android.server.adb.AdbDebuggingManager)>($r3);
+
+        virtualinvoke $r4.<android.os.Handler: boolean sendEmptyMessage(int)>(27);
+
+        return;
+
+        catch java.io.IOException from label1 to label2 with label3;
+        catch java.io.IOException from label4 to label5 with label6;
+    }
+
+    private void listenToSocket() throws java.io.IOException
+    {
+        com.android.server.adb.AdbDebuggingManager$AdbDebuggingThread r0;
+        int i0;
+        java.io.InputStream $r1;
+        byte $b1, $b2, $b3, $b4, $b5, $b7, $b11, $b15, $b17, $b19, b22, b23;
+        byte[] $r3, $r6, $r25, $r44, $r52, $r60, r74;
+        java.lang.String $r5, $r10, $r13, $r20, $r29, $r32, $r39, $r47, $r55, $r63, $r70, r76, r79, r82, r85, r91, r98;
+        com.android.server.adb.AdbDebuggingManager $r14, $r16, $r21, $r23, $r33, $r35, $r40, $r42, $r48, $r50, $r56, $r58, $r64, $r66;
+        android.os.Handler $r15, $r17, $r22, $r24, $r34, $r36, $r41, $r43, $r49, $r51, $r57, $r59, $r65, $r67;
+        java.lang.Throwable $r71, $r72, $r73;
+        java.lang.StringBuilder r75, r77, r80, r83, r86, r88, r90, r92, r94, r96, r97;
+        android.os.Message r78, r81, r84, r87, r89, r93, r95;
+
+        r0 := @this: com.android.server.adb.AdbDebuggingManager$AdbDebuggingThread;
+
+     label01:
+        r74 = newarray (byte)[65536];
+
+     label02:
+        $r1 = r0.<com.android.server.adb.AdbDebuggingManager$AdbDebuggingThread: java.io.InputStream mInputStream>;
+
+        i0 = virtualinvoke $r1.<java.io.InputStream: int read(byte[])>(r74);
+
+     label03:
+        if i0 >= 2 goto label06;
+
+     label04:
+        r75 = new java.lang.StringBuilder;
+
+        specialinvoke r75.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r75.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Read failed with count ");
+
+        virtualinvoke r75.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r70 = virtualinvoke r75.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("AdbDebuggingManager", $r70);
+
+     label05:
+        goto label36;
+
+     label06:
+        $b1 = r74[0];
+
+        if $b1 != 80 goto label09;
+
+        $b19 = r74[1];
+
+        if $b19 != 75 goto label09;
+
+     label07:
+        r76 = new java.lang.String;
+
+        $r60 = staticinvoke <java.util.Arrays: byte[] copyOfRange(byte[],int,int)>(r74, 2, i0);
+
+        specialinvoke r76.<java.lang.String: void <init>(byte[])>($r60);
+
+        r77 = new java.lang.StringBuilder;
+
+        specialinvoke r77.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r77.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Received public key: ");
+
+        virtualinvoke r77.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r76);
+
+        $r63 = virtualinvoke r77.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("AdbDebuggingManager", $r63);
+
+        $r64 = r0.<com.android.server.adb.AdbDebuggingManager$AdbDebuggingThread: com.android.server.adb.AdbDebuggingManager this$0>;
+
+        $r65 = staticinvoke <com.android.server.adb.AdbDebuggingManager: android.os.Handler access$100(com.android.server.adb.AdbDebuggingManager)>($r64);
+
+        r78 = virtualinvoke $r65.<android.os.Handler: android.os.Message obtainMessage(int)>(5);
+
+        r78.<android.os.Message: java.lang.Object obj> = r76;
+
+        $r66 = r0.<com.android.server.adb.AdbDebuggingManager$AdbDebuggingThread: com.android.server.adb.AdbDebuggingManager this$0>;
+
+        $r67 = staticinvoke <com.android.server.adb.AdbDebuggingManager: android.os.Handler access$100(com.android.server.adb.AdbDebuggingManager)>($r66);
+
+        virtualinvoke $r67.<android.os.Handler: boolean sendMessage(android.os.Message)>(r78);
+
+     label08:
+        goto label34;
+
+     label09:
+        $b2 = r74[0];
+
+        if $b2 != 68 goto label12;
+
+        $b17 = r74[1];
+
+        if $b17 != 67 goto label12;
+
+     label10:
+        r79 = new java.lang.String;
+
+        $r52 = staticinvoke <java.util.Arrays: byte[] copyOfRange(byte[],int,int)>(r74, 2, i0);
+
+        specialinvoke r79.<java.lang.String: void <init>(byte[])>($r52);
+
+        r80 = new java.lang.StringBuilder;
+
+        specialinvoke r80.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r80.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Received disconnected message: ");
+
+        virtualinvoke r80.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r79);
+
+        $r55 = virtualinvoke r80.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("AdbDebuggingManager", $r55);
+
+        $r56 = r0.<com.android.server.adb.AdbDebuggingManager$AdbDebuggingThread: com.android.server.adb.AdbDebuggingManager this$0>;
+
+        $r57 = staticinvoke <com.android.server.adb.AdbDebuggingManager: android.os.Handler access$100(com.android.server.adb.AdbDebuggingManager)>($r56);
+
+        r81 = virtualinvoke $r57.<android.os.Handler: android.os.Message obtainMessage(int)>(7);
+
+        r81.<android.os.Message: java.lang.Object obj> = r79;
+
+        $r58 = r0.<com.android.server.adb.AdbDebuggingManager$AdbDebuggingThread: com.android.server.adb.AdbDebuggingManager this$0>;
+
+        $r59 = staticinvoke <com.android.server.adb.AdbDebuggingManager: android.os.Handler access$100(com.android.server.adb.AdbDebuggingManager)>($r58);
+
+        virtualinvoke $r59.<android.os.Handler: boolean sendMessage(android.os.Message)>(r81);
+
+     label11:
+        goto label34;
+
+     label12:
+        $b3 = r74[0];
+
+        if $b3 != 67 goto label15;
+
+        $b15 = r74[1];
+
+        if $b15 != 75 goto label15;
+
+     label13:
+        r82 = new java.lang.String;
+
+        $r44 = staticinvoke <java.util.Arrays: byte[] copyOfRange(byte[],int,int)>(r74, 2, i0);
+
+        specialinvoke r82.<java.lang.String: void <init>(byte[])>($r44);
+
+        r83 = new java.lang.StringBuilder;
+
+        specialinvoke r83.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r83.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Received connected key message: ");
+
+        virtualinvoke r83.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r82);
+
+        $r47 = virtualinvoke r83.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("AdbDebuggingManager", $r47);
+
+        $r48 = r0.<com.android.server.adb.AdbDebuggingManager$AdbDebuggingThread: com.android.server.adb.AdbDebuggingManager this$0>;
+
+        $r49 = staticinvoke <com.android.server.adb.AdbDebuggingManager: android.os.Handler access$100(com.android.server.adb.AdbDebuggingManager)>($r48);
+
+        r84 = virtualinvoke $r49.<android.os.Handler: android.os.Message obtainMessage(int)>(10);
+
+        r84.<android.os.Message: java.lang.Object obj> = r82;
+
+        $r50 = r0.<com.android.server.adb.AdbDebuggingManager$AdbDebuggingThread: com.android.server.adb.AdbDebuggingManager this$0>;
+
+        $r51 = staticinvoke <com.android.server.adb.AdbDebuggingManager: android.os.Handler access$100(com.android.server.adb.AdbDebuggingManager)>($r50);
+
+        virtualinvoke $r51.<android.os.Handler: boolean sendMessage(android.os.Message)>(r84);
+
+     label14:
+        goto label34;
+
+     label15:
+        $b4 = r74[0];
+
+        if $b4 != 87 goto label25;
+
+        $b11 = r74[1];
+
+        if $b11 != 69 goto label25;
+
+        b22 = r74[2];
+
+     label16:
+        r85 = new java.lang.String;
+
+        $r25 = staticinvoke <java.util.Arrays: byte[] copyOfRange(byte[],int,int)>(r74, 3, i0);
+
+        specialinvoke r85.<java.lang.String: void <init>(byte[])>($r25);
+
+     label17:
+        if b22 != 0 goto label20;
+
+     label18:
+        r86 = new java.lang.StringBuilder;
+
+        specialinvoke r86.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r86.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Received USB TLS connected key message: ");
+
+        virtualinvoke r86.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r85);
+
+        $r39 = virtualinvoke r86.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("AdbDebuggingManager", $r39);
+
+        $r40 = r0.<com.android.server.adb.AdbDebuggingManager$AdbDebuggingThread: com.android.server.adb.AdbDebuggingManager this$0>;
+
+        $r41 = staticinvoke <com.android.server.adb.AdbDebuggingManager: android.os.Handler access$100(com.android.server.adb.AdbDebuggingManager)>($r40);
+
+        r87 = virtualinvoke $r41.<android.os.Handler: android.os.Message obtainMessage(int)>(10);
+
+        r87.<android.os.Message: java.lang.Object obj> = r85;
+
+        $r42 = r0.<com.android.server.adb.AdbDebuggingManager$AdbDebuggingThread: com.android.server.adb.AdbDebuggingManager this$0>;
+
+        $r43 = staticinvoke <com.android.server.adb.AdbDebuggingManager: android.os.Handler access$100(com.android.server.adb.AdbDebuggingManager)>($r42);
+
+        virtualinvoke $r43.<android.os.Handler: boolean sendMessage(android.os.Message)>(r87);
+
+     label19:
+        goto label24;
+
+     label20:
+        if b22 != 1 goto label23;
+
+     label21:
+        r88 = new java.lang.StringBuilder;
+
+        specialinvoke r88.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r88.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Received WIFI TLS connected key message: ");
+
+        virtualinvoke r88.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r85);
+
+        $r32 = virtualinvoke r88.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("AdbDebuggingManager", $r32);
+
+        $r33 = r0.<com.android.server.adb.AdbDebuggingManager$AdbDebuggingThread: com.android.server.adb.AdbDebuggingManager this$0>;
+
+        $r34 = staticinvoke <com.android.server.adb.AdbDebuggingManager: android.os.Handler access$100(com.android.server.adb.AdbDebuggingManager)>($r33);
+
+        r89 = virtualinvoke $r34.<android.os.Handler: android.os.Message obtainMessage(int)>(22);
+
+        r89.<android.os.Message: java.lang.Object obj> = r85;
+
+        $r35 = r0.<com.android.server.adb.AdbDebuggingManager$AdbDebuggingThread: com.android.server.adb.AdbDebuggingManager this$0>;
+
+        $r36 = staticinvoke <com.android.server.adb.AdbDebuggingManager: android.os.Handler access$100(com.android.server.adb.AdbDebuggingManager)>($r35);
+
+        virtualinvoke $r36.<android.os.Handler: boolean sendMessage(android.os.Message)>(r89);
+
+     label22:
+        goto label24;
+
+     label23:
+        r90 = new java.lang.StringBuilder;
+
+        specialinvoke r90.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r90.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Got unknown transport type from adbd (");
+
+        virtualinvoke r90.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(b22);
+
+        virtualinvoke r90.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(")");
+
+        $r29 = virtualinvoke r90.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("AdbDebuggingManager", $r29);
+
+     label24:
+        goto label34;
+
+     label25:
+        $b5 = r74[0];
+
+        if $b5 != 87 goto label35;
+
+        $b7 = r74[1];
+
+        if $b7 != 70 goto label35;
+
+        b23 = r74[2];
+
+     label26:
+        r91 = new java.lang.String;
+
+        $r6 = staticinvoke <java.util.Arrays: byte[] copyOfRange(byte[],int,int)>(r74, 3, i0);
+
+        specialinvoke r91.<java.lang.String: void <init>(byte[])>($r6);
+
+     label27:
+        if b23 != 0 goto label30;
+
+     label28:
+        r92 = new java.lang.StringBuilder;
+
+        specialinvoke r92.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r92.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Received USB TLS disconnect message: ");
+
+        virtualinvoke r92.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r91);
+
+        $r20 = virtualinvoke r92.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("AdbDebuggingManager", $r20);
+
+        $r21 = r0.<com.android.server.adb.AdbDebuggingManager$AdbDebuggingThread: com.android.server.adb.AdbDebuggingManager this$0>;
+
+        $r22 = staticinvoke <com.android.server.adb.AdbDebuggingManager: android.os.Handler access$100(com.android.server.adb.AdbDebuggingManager)>($r21);
+
+        r93 = virtualinvoke $r22.<android.os.Handler: android.os.Message obtainMessage(int)>(7);
+
+        r93.<android.os.Message: java.lang.Object obj> = r91;
+
+        $r23 = r0.<com.android.server.adb.AdbDebuggingManager$AdbDebuggingThread: com.android.server.adb.AdbDebuggingManager this$0>;
+
+        $r24 = staticinvoke <com.android.server.adb.AdbDebuggingManager: android.os.Handler access$100(com.android.server.adb.AdbDebuggingManager)>($r23);
+
+        virtualinvoke $r24.<android.os.Handler: boolean sendMessage(android.os.Message)>(r93);
+
+     label29:
+        goto label34;
+
+     label30:
+        if b23 != 1 goto label33;
+
+     label31:
+        r94 = new java.lang.StringBuilder;
+
+        specialinvoke r94.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r94.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Received WIFI TLS disconnect key message: ");
+
+        virtualinvoke r94.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r91);
+
+        $r13 = virtualinvoke r94.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("AdbDebuggingManager", $r13);
+
+        $r14 = r0.<com.android.server.adb.AdbDebuggingManager$AdbDebuggingThread: com.android.server.adb.AdbDebuggingManager this$0>;
+
+        $r15 = staticinvoke <com.android.server.adb.AdbDebuggingManager: android.os.Handler access$100(com.android.server.adb.AdbDebuggingManager)>($r14);
+
+        r95 = virtualinvoke $r15.<android.os.Handler: android.os.Message obtainMessage(int)>(23);
+
+        r95.<android.os.Message: java.lang.Object obj> = r91;
+
+        $r16 = r0.<com.android.server.adb.AdbDebuggingManager$AdbDebuggingThread: com.android.server.adb.AdbDebuggingManager this$0>;
+
+        $r17 = staticinvoke <com.android.server.adb.AdbDebuggingManager: android.os.Handler access$100(com.android.server.adb.AdbDebuggingManager)>($r16);
+
+        virtualinvoke $r17.<android.os.Handler: boolean sendMessage(android.os.Message)>(r95);
+
+     label32:
+        goto label34;
+
+     label33:
+        r96 = new java.lang.StringBuilder;
+
+        specialinvoke r96.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r96.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Got unknown transport type from adbd (");
+
+        virtualinvoke r96.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(b23);
+
+        virtualinvoke r96.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(")");
+
+        $r10 = virtualinvoke r96.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("AdbDebuggingManager", $r10);
+
+     label34:
+        goto label02;
+
+     label35:
+        r97 = new java.lang.StringBuilder;
+
+        specialinvoke r97.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r97.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Wrong message: ");
+
+        r98 = new java.lang.String;
+
+        $r3 = staticinvoke <java.util.Arrays: byte[] copyOfRange(byte[],int,int)>(r74, 0, 2);
+
+        specialinvoke r98.<java.lang.String: void <init>(byte[])>($r3);
+
+        virtualinvoke r97.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r98);
+
+        $r5 = virtualinvoke r97.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("AdbDebuggingManager", $r5);
+
+     label36:
+        entermonitor r0;
+
+     label37:
+        specialinvoke r0.<com.android.server.adb.AdbDebuggingManager$AdbDebuggingThread: void closeSocketLocked()>();
+
+        exitmonitor r0;
+
+     label38:
+        return;
+
+     label39:
+        $r73 := @caughtexception;
+
+     label40:
+        exitmonitor r0;
+
+     label41:
+        throw $r73;
+
+     label42:
+        $r71 := @caughtexception;
+
+        entermonitor r0;
+
+     label43:
+        specialinvoke r0.<com.android.server.adb.AdbDebuggingManager$AdbDebuggingThread: void closeSocketLocked()>();
+
+        exitmonitor r0;
+
+     label44:
+        throw $r71;
+
+     label45:
+        $r72 := @caughtexception;
+
+     label46:
+        exitmonitor r0;
+
+     label47:
+        throw $r72;
+
+        catch java.lang.Throwable from label01 to label02 with label42;
+        catch java.lang.Throwable from label02 to label03 with label42;
+        catch java.lang.Throwable from label04 to label05 with label42;
+        catch java.lang.Throwable from label07 to label08 with label42;
+        catch java.lang.Throwable from label10 to label11 with label42;
+        catch java.lang.Throwable from label13 to label14 with label42;
+        catch java.lang.Throwable from label16 to label17 with label42;
+        catch java.lang.Throwable from label18 to label19 with label42;
+        catch java.lang.Throwable from label21 to label22 with label42;
+        catch java.lang.Throwable from label23 to label24 with label42;
+        catch java.lang.Throwable from label26 to label27 with label42;
+        catch java.lang.Throwable from label28 to label29 with label42;
+        catch java.lang.Throwable from label31 to label32 with label42;
+        catch java.lang.Throwable from label33 to label34 with label42;
+        catch java.lang.Throwable from label35 to label36 with label42;
+        catch java.lang.Throwable from label37 to label38 with label39;
+        catch java.lang.Throwable from label40 to label41 with label39;
+        catch java.lang.Throwable from label43 to label44 with label45;
+        catch java.lang.Throwable from label46 to label47 with label45;
+    }
+
+    private void openSocketLocked() throws java.io.IOException
+    {
+        com.android.server.adb.AdbDebuggingManager$AdbDebuggingThread r0;
+        android.net.LocalSocketAddress$Namespace $r1;
+        android.net.LocalSocket $r2, $r4, r14;
+        java.io.OutputStream $r3;
+        java.io.InputStream $r5;
+        com.android.server.adb.AdbDebuggingManager $r6;
+        android.os.Handler $r7;
+        java.lang.Throwable $r8;
+        java.lang.StringBuilder $r9;
+        java.lang.String $r12;
+        android.net.LocalSocketAddress r13;
+
+        r0 := @this: com.android.server.adb.AdbDebuggingManager$AdbDebuggingThread;
+
+     label1:
+        r13 = new android.net.LocalSocketAddress;
+
+        $r1 = <android.net.LocalSocketAddress$Namespace: android.net.LocalSocketAddress$Namespace RESERVED>;
+
+        specialinvoke r13.<android.net.LocalSocketAddress: void <init>(java.lang.String,android.net.LocalSocketAddress$Namespace)>("adbd", $r1);
+
+        r0.<com.android.server.adb.AdbDebuggingManager$AdbDebuggingThread: java.io.InputStream mInputStream> = null;
+
+        r14 = new android.net.LocalSocket;
+
+        specialinvoke r14.<android.net.LocalSocket: void <init>(int)>(3);
+
+        r0.<com.android.server.adb.AdbDebuggingManager$AdbDebuggingThread: android.net.LocalSocket mSocket> = r14;
+
+        virtualinvoke r14.<android.net.LocalSocket: void connect(android.net.LocalSocketAddress)>(r13);
+
+        $r2 = r0.<com.android.server.adb.AdbDebuggingManager$AdbDebuggingThread: android.net.LocalSocket mSocket>;
+
+        $r3 = virtualinvoke $r2.<android.net.LocalSocket: java.io.OutputStream getOutputStream()>();
+
+        r0.<com.android.server.adb.AdbDebuggingManager$AdbDebuggingThread: java.io.OutputStream mOutputStream> = $r3;
+
+        $r4 = r0.<com.android.server.adb.AdbDebuggingManager$AdbDebuggingThread: android.net.LocalSocket mSocket>;
+
+        $r5 = virtualinvoke $r4.<android.net.LocalSocket: java.io.InputStream getInputStream()>();
+
+        r0.<com.android.server.adb.AdbDebuggingManager$AdbDebuggingThread: java.io.InputStream mInputStream> = $r5;
+
+        $r6 = r0.<com.android.server.adb.AdbDebuggingManager$AdbDebuggingThread: com.android.server.adb.AdbDebuggingManager this$0>;
+
+        $r7 = staticinvoke <com.android.server.adb.AdbDebuggingManager: android.os.Handler access$100(com.android.server.adb.AdbDebuggingManager)>($r6);
+
+        virtualinvoke $r7.<android.os.Handler: boolean sendEmptyMessage(int)>(26);
+
+     label2:
+        return;
+
+     label3:
+        $r8 := @caughtexception;
+
+        $r9 = new java.lang.StringBuilder;
+
+        specialinvoke $r9.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Caught an exception opening the socket: ");
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r8);
+
+        $r12 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("AdbDebuggingManager", $r12);
+
+        specialinvoke r0.<com.android.server.adb.AdbDebuggingManager$AdbDebuggingThread: void closeSocketLocked()>();
+
+        throw $r8;
+
+        catch java.io.IOException from label1 to label2 with label3;
+    }
+
+    public void run()
+    {
+        com.android.server.adb.AdbDebuggingManager$AdbDebuggingThread r0;
+        boolean $z0;
+        java.lang.Exception $r1, $r2;
+        java.lang.Throwable $r3;
+
+        r0 := @this: com.android.server.adb.AdbDebuggingManager$AdbDebuggingThread;
+
+     label01:
+        entermonitor r0;
+
+     label02:
+        $z0 = r0.<com.android.server.adb.AdbDebuggingManager$AdbDebuggingThread: boolean mStopped>;
+
+        if $z0 == 0 goto label04;
+
+        exitmonitor r0;
+
+     label03:
+        return;
+
+     label04:
+        specialinvoke r0.<com.android.server.adb.AdbDebuggingManager$AdbDebuggingThread: void openSocketLocked()>();
+
+     label05:
+        goto label08;
+
+     label06:
+        $r2 := @caughtexception;
+
+     label07:
+        staticinvoke <android.os.SystemClock: void sleep(long)>(1000L);
+
+     label08:
+        exitmonitor r0;
+
+     label09:
+        specialinvoke r0.<com.android.server.adb.AdbDebuggingManager$AdbDebuggingThread: void listenToSocket()>();
+
+     label10:
+        goto label01;
+
+     label11:
+        $r1 := @caughtexception;
+
+        staticinvoke <android.os.SystemClock: void sleep(long)>(1000L);
+
+        goto label10;
+
+     label12:
+        $r3 := @caughtexception;
+
+     label13:
+        exitmonitor r0;
+
+     label14:
+        throw $r3;
+
+        catch java.lang.Throwable from label02 to label03 with label12;
+        catch java.lang.Exception from label04 to label05 with label06;
+        catch java.lang.Throwable from label04 to label05 with label12;
+        catch java.lang.Throwable from label07 to label08 with label12;
+        catch java.lang.Throwable from label08 to label09 with label12;
+        catch java.lang.Exception from label09 to label10 with label11;
+        catch java.lang.Throwable from label13 to label14 with label12;
+    }
+
+    void sendResponse(java.lang.String)
+    {
+        com.android.server.adb.AdbDebuggingManager$AdbDebuggingThread r0;
+        java.io.OutputStream r1, $r2;
+        boolean $z0;
+        byte[] $r3;
+        java.lang.Throwable $r4, $r5;
+        java.lang.String r6;
+
+        r0 := @this: com.android.server.adb.AdbDebuggingManager$AdbDebuggingThread;
+
+        r6 := @parameter0: java.lang.String;
+
+        entermonitor r0;
+
+     label01:
+        $z0 = r0.<com.android.server.adb.AdbDebuggingManager$AdbDebuggingThread: boolean mStopped>;
+
+        if $z0 != 0 goto label07;
+
+        r1 = r0.<com.android.server.adb.AdbDebuggingManager$AdbDebuggingThread: java.io.OutputStream mOutputStream>;
+
+     label02:
+        if r1 == null goto label07;
+
+     label03:
+        $r2 = r0.<com.android.server.adb.AdbDebuggingManager$AdbDebuggingThread: java.io.OutputStream mOutputStream>;
+
+        $r3 = virtualinvoke r6.<java.lang.String: byte[] getBytes()>();
+
+        virtualinvoke $r2.<java.io.OutputStream: void write(byte[])>($r3);
+
+     label04:
+        goto label07;
+
+     label05:
+        $r4 := @caughtexception;
+
+     label06:
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("AdbDebuggingManager", "Failed to write response:", $r4);
+
+     label07:
+        exitmonitor r0;
+
+     label08:
+        return;
+
+     label09:
+        $r5 := @caughtexception;
+
+     label10:
+        exitmonitor r0;
+
+     label11:
+        throw $r5;
+
+        catch java.lang.Throwable from label01 to label02 with label09;
+        catch java.io.IOException from label03 to label04 with label05;
+        catch java.lang.Throwable from label03 to label04 with label09;
+        catch java.lang.Throwable from label06 to label07 with label09;
+        catch java.lang.Throwable from label07 to label08 with label09;
+        catch java.lang.Throwable from label10 to label11 with label09;
+    }
+
+    void stopListening()
+    {
+        com.android.server.adb.AdbDebuggingManager$AdbDebuggingThread r0;
+        java.lang.Throwable $r2;
+
+        r0 := @this: com.android.server.adb.AdbDebuggingManager$AdbDebuggingThread;
+
+        entermonitor r0;
+
+     label1:
+        r0.<com.android.server.adb.AdbDebuggingManager$AdbDebuggingThread: boolean mStopped> = 1;
+
+        specialinvoke r0.<com.android.server.adb.AdbDebuggingManager$AdbDebuggingThread: void closeSocketLocked()>();
+
+        exitmonitor r0;
+
+     label2:
+        return;
+
+     label3:
+        $r2 := @caughtexception;
+
+     label4:
+        exitmonitor r0;
+
+     label5:
+        throw $r2;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+}

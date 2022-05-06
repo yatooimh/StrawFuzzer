@@ -1,0 +1,1428 @@
+class com.android.server.accessibility.gestures.MultiFingerSwipe extends com.android.server.accessibility.gestures.GestureMatcher
+{
+    public static final int DOWN;
+    public static final int LEFT;
+    private static final float MIN_CM_BETWEEN_SAMPLES;
+    public static final int RIGHT;
+    public static final int UP;
+    private android.graphics.PointF[] mBase;
+    private int mCurrentFingerCount;
+    private int mDirection;
+    private final float mGestureDetectionThresholdPixels;
+    private final float mMinPixelsBetweenSamplesX;
+    private final float mMinPixelsBetweenSamplesY;
+    private int[] mPointerIds;
+    private android.graphics.PointF[] mPreviousGesturePoint;
+    private final java.util.ArrayList[] mStrokeBuffers;
+    private int mTargetFingerCount;
+    private boolean mTargetFingerCountReached;
+    private int mTouchSlop;
+
+    void <init>(android.content.Context, int, int, int, com.android.server.accessibility.gestures.GestureMatcher$StateChangeListener)
+    {
+        com.android.server.accessibility.gestures.MultiFingerSwipe r0;
+        android.content.Context r1;
+        int i0, i1, i2, $i3, $i4;
+        float f0, f1, $f2, $f3, $f4, $f5, $f6, $f7, $f8, $f9, $f10;
+        android.os.Handler $r2;
+        android.os.Looper $r3;
+        int[] $r4;
+        android.graphics.PointF[] $r5, $r6;
+        java.util.ArrayList[] $r7;
+        android.content.res.Resources $r8;
+        android.view.ViewConfiguration $r9;
+        com.android.server.accessibility.gestures.GestureMatcher$StateChangeListener r10;
+        android.util.DisplayMetrics r11;
+
+        r0 := @this: com.android.server.accessibility.gestures.MultiFingerSwipe;
+
+        r1 := @parameter0: android.content.Context;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        i2 := @parameter3: int;
+
+        r10 := @parameter4: com.android.server.accessibility.gestures.GestureMatcher$StateChangeListener;
+
+        $r2 = new android.os.Handler;
+
+        $r3 = virtualinvoke r1.<android.content.Context: android.os.Looper getMainLooper()>();
+
+        specialinvoke $r2.<android.os.Handler: void <init>(android.os.Looper)>($r3);
+
+        specialinvoke r0.<com.android.server.accessibility.gestures.GestureMatcher: void <init>(int,android.os.Handler,com.android.server.accessibility.gestures.GestureMatcher$StateChangeListener)>(i2, $r2, r10);
+
+        r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: boolean mTargetFingerCountReached> = 0;
+
+        r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: int mTargetFingerCount> = i0;
+
+        $r4 = newarray (int)[i0];
+
+        r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: int[] mPointerIds> = $r4;
+
+        $r5 = newarray (android.graphics.PointF)[i0];
+
+        r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: android.graphics.PointF[] mBase> = $r5;
+
+        $r6 = newarray (android.graphics.PointF)[i0];
+
+        r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: android.graphics.PointF[] mPreviousGesturePoint> = $r6;
+
+        $r7 = newarray (java.util.ArrayList)[i0];
+
+        r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: java.util.ArrayList[] mStrokeBuffers> = $r7;
+
+        r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: int mDirection> = i1;
+
+        $r8 = virtualinvoke r1.<android.content.Context: android.content.res.Resources getResources()>();
+
+        r11 = virtualinvoke $r8.<android.content.res.Resources: android.util.DisplayMetrics getDisplayMetrics()>();
+
+        $i3 = <com.android.server.accessibility.gestures.GestureUtils: int MM_PER_CM>;
+
+        $f2 = (float) $i3;
+
+        $f3 = staticinvoke <android.util.TypedValue: float applyDimension(int,float,android.util.DisplayMetrics)>(5, $f2, r11);
+
+        $f4 = $f3 * 1.0F;
+
+        r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: float mGestureDetectionThresholdPixels> = $f4;
+
+        $f6 = r11.<android.util.DisplayMetrics: float xdpi>;
+
+        $f5 = <com.android.server.accessibility.gestures.GestureUtils: float CM_PER_INCH>;
+
+        f0 = $f6 / $f5;
+
+        $f8 = r11.<android.util.DisplayMetrics: float ydpi>;
+
+        $f7 = <com.android.server.accessibility.gestures.GestureUtils: float CM_PER_INCH>;
+
+        f1 = $f8 / $f7;
+
+        $f9 = f0 * 0.25F;
+
+        r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: float mMinPixelsBetweenSamplesX> = $f9;
+
+        $f10 = 0.25F * f1;
+
+        r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: float mMinPixelsBetweenSamplesY> = $f10;
+
+        $r9 = staticinvoke <android.view.ViewConfiguration: android.view.ViewConfiguration get(android.content.Context)>(r1);
+
+        $i4 = virtualinvoke $r9.<android.view.ViewConfiguration: int getScaledTouchSlop()>();
+
+        r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: int mTouchSlop> = $i4;
+
+        virtualinvoke r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: void clear()>();
+
+        return;
+    }
+
+    private void cancelAfterPauseThreshold(android.view.MotionEvent, android.view.MotionEvent, int)
+    {
+        com.android.server.accessibility.gestures.MultiFingerSwipe r0;
+        android.view.MotionEvent r1, r2;
+        int i0, i1;
+
+        r0 := @this: com.android.server.accessibility.gestures.MultiFingerSwipe;
+
+        r1 := @parameter0: android.view.MotionEvent;
+
+        r2 := @parameter1: android.view.MotionEvent;
+
+        i0 := @parameter2: int;
+
+        virtualinvoke r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: void cancelPendingTransitions()>();
+
+        i1 = virtualinvoke r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: int getState()>();
+
+        if i1 == 0 goto label2;
+
+        if i1 == 1 goto label1;
+
+        goto label3;
+
+     label1:
+        virtualinvoke r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: void cancelAfter(long,android.view.MotionEvent,android.view.MotionEvent,int)>(350L, r1, r2, i0);
+
+        goto label3;
+
+     label2:
+        virtualinvoke r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: void cancelAfter(long,android.view.MotionEvent,android.view.MotionEvent,int)>(150L, r1, r2, i0);
+
+     label3:
+        return;
+    }
+
+    public static java.lang.String directionToString(int)
+    {
+        int i0;
+
+        i0 := @parameter0: int;
+
+        if i0 == 0 goto label4;
+
+        if i0 == 1 goto label3;
+
+        if i0 == 2 goto label2;
+
+        if i0 == 3 goto label1;
+
+        return "Unknown Direction";
+
+     label1:
+        return "down";
+
+     label2:
+        return "up";
+
+     label3:
+        return "right";
+
+     label4:
+        return "left";
+    }
+
+    private void recognizeGesture(android.view.MotionEvent, android.view.MotionEvent, int)
+    {
+        com.android.server.accessibility.gestures.MultiFingerSwipe r0;
+        android.view.MotionEvent r1, r2;
+        int i0, $i1, $i2, i4;
+        java.util.ArrayList[] $r3, $r5;
+        java.util.ArrayList $r4, $r6;
+        boolean $z0;
+        java.lang.String $r7;
+
+        r0 := @this: com.android.server.accessibility.gestures.MultiFingerSwipe;
+
+        r1 := @parameter0: android.view.MotionEvent;
+
+        r2 := @parameter1: android.view.MotionEvent;
+
+        i0 := @parameter2: int;
+
+        i4 = 0;
+
+     label1:
+        $i1 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: int mTargetFingerCount>;
+
+        if i4 >= $i1 goto label4;
+
+        $r3 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: java.util.ArrayList[] mStrokeBuffers>;
+
+        $r4 = $r3[i4];
+
+        $i2 = virtualinvoke $r4.<java.util.ArrayList: int size()>();
+
+        if $i2 >= 2 goto label2;
+
+        $r7 = virtualinvoke r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: java.lang.String getGestureName()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>($r7, "Too few points.");
+
+        virtualinvoke r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: void cancelGesture(android.view.MotionEvent,android.view.MotionEvent,int)>(r1, r2, i0);
+
+        return;
+
+     label2:
+        $r5 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: java.util.ArrayList[] mStrokeBuffers>;
+
+        $r6 = $r5[i4];
+
+        $z0 = specialinvoke r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: boolean recognizeGesturePath(android.view.MotionEvent,android.view.MotionEvent,int,java.util.ArrayList)>(r1, r2, i0, $r6);
+
+        if $z0 != 0 goto label3;
+
+        virtualinvoke r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: void cancelGesture(android.view.MotionEvent,android.view.MotionEvent,int)>(r1, r2, i0);
+
+        return;
+
+     label3:
+        i4 = i4 + 1;
+
+        goto label1;
+
+     label4:
+        virtualinvoke r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: void completeGesture(android.view.MotionEvent,android.view.MotionEvent,int)>(r1, r2, i0);
+
+        return;
+    }
+
+    private boolean recognizeGesturePath(android.view.MotionEvent, android.view.MotionEvent, int, java.util.ArrayList)
+    {
+        com.android.server.accessibility.gestures.MultiFingerSwipe r0;
+        java.util.ArrayList r1;
+        int $i1, $i2, $i3, $i4, $i5, i6, i7;
+        java.lang.Object $r2, $r3;
+        float $f0, $f1, $f2, $f3, $f4, $f5;
+        android.view.MotionEvent r4, r5;
+        android.graphics.PointF r6, r7;
+
+        r0 := @this: com.android.server.accessibility.gestures.MultiFingerSwipe;
+
+        r4 := @parameter0: android.view.MotionEvent;
+
+        r5 := @parameter1: android.view.MotionEvent;
+
+        i6 := @parameter2: int;
+
+        r1 := @parameter3: java.util.ArrayList;
+
+        virtualinvoke r4.<android.view.MotionEvent: int getDisplayId()>();
+
+        i7 = 0;
+
+     label1:
+        $i1 = virtualinvoke r1.<java.util.ArrayList: int size()>();
+
+        $i2 = $i1 - 1;
+
+        if i7 >= $i2 goto label3;
+
+        $r2 = virtualinvoke r1.<java.util.ArrayList: java.lang.Object get(int)>(i7);
+
+        r6 = (android.graphics.PointF) $r2;
+
+        $i3 = i7 + 1;
+
+        $r3 = virtualinvoke r1.<java.util.ArrayList: java.lang.Object get(int)>($i3);
+
+        r7 = (android.graphics.PointF) $r3;
+
+        $f1 = r7.<android.graphics.PointF: float x>;
+
+        $f0 = r6.<android.graphics.PointF: float x>;
+
+        $f5 = $f1 - $f0;
+
+        $f3 = r7.<android.graphics.PointF: float y>;
+
+        $f2 = r6.<android.graphics.PointF: float y>;
+
+        $f4 = $f3 - $f2;
+
+        $i4 = staticinvoke <com.android.server.accessibility.gestures.MultiFingerSwipe: int toDirection(float,float)>($f5, $f4);
+
+        $i5 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: int mDirection>;
+
+        if $i4 == $i5 goto label2;
+
+        return 0;
+
+     label2:
+        i7 = i7 + 1;
+
+        goto label1;
+
+     label3:
+        return 1;
+    }
+
+    private static int toDirection(float, float)
+    {
+        float f0, f1, $f2, $f3;
+        byte $b0, $b1, $b2, b3, b4;
+
+        f0 := @parameter0: float;
+
+        f1 := @parameter1: float;
+
+        $f2 = staticinvoke <java.lang.Math: float abs(float)>(f0);
+
+        $f3 = staticinvoke <java.lang.Math: float abs(float)>(f1);
+
+        $b0 = $f2 cmpl $f3;
+
+        if $b0 <= 0 goto label3;
+
+        $b2 = f0 cmpg 0.0F;
+
+        if $b2 >= 0 goto label1;
+
+        b3 = 0;
+
+        goto label2;
+
+     label1:
+        b3 = 1;
+
+     label2:
+        return b3;
+
+     label3:
+        $b1 = f1 cmpg 0.0F;
+
+        if $b1 >= 0 goto label4;
+
+        b4 = 2;
+
+        goto label5;
+
+     label4:
+        b4 = 3;
+
+     label5:
+        return b4;
+    }
+
+    protected void clear()
+    {
+        com.android.server.accessibility.gestures.MultiFingerSwipe r0;
+        int $i0, i1;
+        int[] $r1;
+        android.graphics.PointF $r2, $r4, $r6, $r7, $r9, $r11, $r16, $r17;
+        android.graphics.PointF[] $r3, $r5, $r8, $r10, r18, r19;
+        java.util.ArrayList $r12, $r14, $r15;
+        java.util.ArrayList[] $r13, r20;
+
+        r0 := @this: com.android.server.accessibility.gestures.MultiFingerSwipe;
+
+        r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: boolean mTargetFingerCountReached> = 0;
+
+        r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: int mCurrentFingerCount> = 0;
+
+        i1 = 0;
+
+     label1:
+        $i0 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: int mTargetFingerCount>;
+
+        if i1 >= $i0 goto label5;
+
+        $r1 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: int[] mPointerIds>;
+
+        $r1[i1] = -1;
+
+        r18 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: android.graphics.PointF[] mBase>;
+
+        $r2 = r18[i1];
+
+        if $r2 != null goto label2;
+
+        $r17 = new android.graphics.PointF;
+
+        specialinvoke $r17.<android.graphics.PointF: void <init>()>();
+
+        r18[i1] = $r17;
+
+     label2:
+        $r3 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: android.graphics.PointF[] mBase>;
+
+        $r4 = $r3[i1];
+
+        $r4.<android.graphics.PointF: float x> = #NaNF;
+
+        $r5 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: android.graphics.PointF[] mBase>;
+
+        $r6 = $r5[i1];
+
+        $r6.<android.graphics.PointF: float y> = #NaNF;
+
+        r19 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: android.graphics.PointF[] mPreviousGesturePoint>;
+
+        $r7 = r19[i1];
+
+        if $r7 != null goto label3;
+
+        $r16 = new android.graphics.PointF;
+
+        specialinvoke $r16.<android.graphics.PointF: void <init>()>();
+
+        r19[i1] = $r16;
+
+     label3:
+        $r8 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: android.graphics.PointF[] mPreviousGesturePoint>;
+
+        $r9 = $r8[i1];
+
+        $r9.<android.graphics.PointF: float x> = #NaNF;
+
+        $r10 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: android.graphics.PointF[] mPreviousGesturePoint>;
+
+        $r11 = $r10[i1];
+
+        $r11.<android.graphics.PointF: float y> = #NaNF;
+
+        r20 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: java.util.ArrayList[] mStrokeBuffers>;
+
+        $r12 = r20[i1];
+
+        if $r12 != null goto label4;
+
+        $r15 = new java.util.ArrayList;
+
+        specialinvoke $r15.<java.util.ArrayList: void <init>(int)>(100);
+
+        r20[i1] = $r15;
+
+     label4:
+        $r13 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: java.util.ArrayList[] mStrokeBuffers>;
+
+        $r14 = $r13[i1];
+
+        virtualinvoke $r14.<java.util.ArrayList: void clear()>();
+
+        i1 = i1 + 1;
+
+        goto label1;
+
+     label5:
+        specialinvoke r0.<com.android.server.accessibility.gestures.GestureMatcher: void clear()>();
+
+        return;
+    }
+
+    java.lang.String getGestureName()
+    {
+        com.android.server.accessibility.gestures.MultiFingerSwipe r0;
+        java.lang.StringBuilder $r2;
+        int $i0, $i1;
+        java.lang.String $r6, $r8;
+
+        r0 := @this: com.android.server.accessibility.gestures.MultiFingerSwipe;
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        $i0 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: int mTargetFingerCount>;
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i0);
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("-finger ");
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Swipe ");
+
+        $i1 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: int mDirection>;
+
+        $r6 = staticinvoke <com.android.server.accessibility.gestures.MultiFingerSwipe: java.lang.String directionToString(int)>($i1);
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r6);
+
+        $r8 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        return $r8;
+    }
+
+    protected void onDown(android.view.MotionEvent, android.view.MotionEvent, int)
+    {
+        com.android.server.accessibility.gestures.MultiFingerSwipe r0;
+        android.view.MotionEvent r1, r2;
+        int i0, i1, i2, i3, $i4, $i5, $i6;
+        int[] r3;
+        float f0, f1, $f2, $f3;
+        android.graphics.PointF[] $r4, $r6, $r8, $r10, $r12, $r14;
+        android.graphics.PointF $r5, $r7, $r9, $r11, $r13, $r15;
+        boolean $z0, $z1;
+        byte $b7, $b8;
+
+        r0 := @this: com.android.server.accessibility.gestures.MultiFingerSwipe;
+
+        r1 := @parameter0: android.view.MotionEvent;
+
+        r2 := @parameter1: android.view.MotionEvent;
+
+        i0 := @parameter2: int;
+
+        $i4 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: int mCurrentFingerCount>;
+
+        if $i4 <= 0 goto label1;
+
+        virtualinvoke r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: void cancelGesture(android.view.MotionEvent,android.view.MotionEvent,int)>(r1, r2, i0);
+
+        return;
+
+     label1:
+        r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: int mCurrentFingerCount> = 1;
+
+        i1 = staticinvoke <com.android.server.accessibility.gestures.GestureUtils: int getActionIndex(android.view.MotionEvent)>(r2);
+
+        i2 = virtualinvoke r2.<android.view.MotionEvent: int getPointerId(int)>(i1);
+
+        $i5 = virtualinvoke r2.<android.view.MotionEvent: int getPointerCount()>();
+
+        i3 = $i5 - 1;
+
+        if i2 >= 0 goto label2;
+
+        virtualinvoke r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: void cancelGesture(android.view.MotionEvent,android.view.MotionEvent,int)>(r1, r2, i0);
+
+        return;
+
+     label2:
+        r3 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: int[] mPointerIds>;
+
+        $i6 = r3[i3];
+
+        if $i6 == -1 goto label3;
+
+        virtualinvoke r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: void cancelGesture(android.view.MotionEvent,android.view.MotionEvent,int)>(r1, r2, i0);
+
+        return;
+
+     label3:
+        r3[i3] = i2;
+
+        specialinvoke r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: void cancelAfterPauseThreshold(android.view.MotionEvent,android.view.MotionEvent,int)>(r1, r2, i0);
+
+        $r4 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: android.graphics.PointF[] mBase>;
+
+        $r5 = $r4[i3];
+
+        $f2 = $r5.<android.graphics.PointF: float x>;
+
+        $z0 = staticinvoke <java.lang.Float: boolean isNaN(float)>($f2);
+
+        if $z0 == 0 goto label6;
+
+        $r6 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: android.graphics.PointF[] mBase>;
+
+        $r7 = $r6[i3];
+
+        $f3 = $r7.<android.graphics.PointF: float y>;
+
+        $z1 = staticinvoke <java.lang.Float: boolean isNaN(float)>($f3);
+
+        if $z1 == 0 goto label6;
+
+        f0 = virtualinvoke r2.<android.view.MotionEvent: float getX(int)>(i1);
+
+        f1 = virtualinvoke r2.<android.view.MotionEvent: float getY(int)>(i1);
+
+        $b7 = f0 cmpg 0.0F;
+
+        if $b7 < 0 goto label5;
+
+        $b8 = f1 cmpg 0.0F;
+
+        if $b8 >= 0 goto label4;
+
+        goto label5;
+
+     label4:
+        $r8 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: android.graphics.PointF[] mBase>;
+
+        $r9 = $r8[i3];
+
+        $r9.<android.graphics.PointF: float x> = f0;
+
+        $r10 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: android.graphics.PointF[] mBase>;
+
+        $r11 = $r10[i3];
+
+        $r11.<android.graphics.PointF: float y> = f1;
+
+        $r12 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: android.graphics.PointF[] mPreviousGesturePoint>;
+
+        $r13 = $r12[i3];
+
+        $r13.<android.graphics.PointF: float x> = f0;
+
+        $r14 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: android.graphics.PointF[] mPreviousGesturePoint>;
+
+        $r15 = $r14[i3];
+
+        $r15.<android.graphics.PointF: float y> = f1;
+
+        return;
+
+     label5:
+        virtualinvoke r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: void cancelGesture(android.view.MotionEvent,android.view.MotionEvent,int)>(r1, r2, i0);
+
+        return;
+
+     label6:
+        virtualinvoke r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: void cancelGesture(android.view.MotionEvent,android.view.MotionEvent,int)>(r1, r2, i0);
+
+        return;
+    }
+
+    protected void onMove(android.view.MotionEvent, android.view.MotionEvent, int)
+    {
+        com.android.server.accessibility.gestures.MultiFingerSwipe r0;
+        android.view.MotionEvent r1, r2;
+        int i0, $i1, $i2, $i3, $i6, $i9, $i11, $i13, $i14, $i15, $i16, $i17, $i18, $i19, $i20, i21, i22, i23, $i24;
+        int[] r3;
+        float f0, f1, f2, f3, $f4, $f5, $f6, $f7, $f8, $f9, $f10, $f11, $f12, $f13, $f14, $f15, $f16, $f17, $f18, $f19, $f20, $f21, $f22, $f23, $f24;
+        double d0, $d1, $d2, $d3, $d4;
+        byte $b4, $b5, $b7, $b8, $b10, $b12;
+        android.graphics.PointF[] $r4, $r6, $r8, $r10, $r12, $r14, $r21, $r23, $r25, $r27, $r29, $r31, $r33, $r35, $r39;
+        android.graphics.PointF $r5, $r7, $r9, $r11, $r13, $r15, $r17, $r22, $r24, $r26, $r28, $r30, $r32, $r34, $r36, $r38, $r40;
+        java.util.ArrayList[] $r16, $r19, $r37;
+        java.util.ArrayList $r18, $r20, $r41;
+
+        r0 := @this: com.android.server.accessibility.gestures.MultiFingerSwipe;
+
+        r1 := @parameter0: android.view.MotionEvent;
+
+        r2 := @parameter1: android.view.MotionEvent;
+
+        i0 := @parameter2: int;
+
+        i21 = 0;
+
+     label01:
+        $i1 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: int mTargetFingerCount>;
+
+        if i21 >= $i1 goto label15;
+
+        r3 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: int[] mPointerIds>;
+
+        $i2 = r3[i21];
+
+        if $i2 != -1 goto label02;
+
+        goto label13;
+
+     label02:
+        $i3 = r3[i21];
+
+        i22 = virtualinvoke r2.<android.view.MotionEvent: int findPointerIndex(int)>($i3);
+
+        if i22 >= 0 goto label03;
+
+        goto label13;
+
+     label03:
+        f0 = virtualinvoke r2.<android.view.MotionEvent: float getX(int)>(i22);
+
+        f1 = virtualinvoke r2.<android.view.MotionEvent: float getY(int)>(i22);
+
+        $b4 = f0 cmpg 0.0F;
+
+        if $b4 < 0 goto label14;
+
+        $b5 = f1 cmpg 0.0F;
+
+        if $b5 >= 0 goto label04;
+
+        goto label14;
+
+     label04:
+        $r4 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: android.graphics.PointF[] mPreviousGesturePoint>;
+
+        $r5 = $r4[i21];
+
+        $f4 = $r5.<android.graphics.PointF: float x>;
+
+        $f5 = f0 - $f4;
+
+        f2 = staticinvoke <java.lang.Math: float abs(float)>($f5);
+
+        $r6 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: android.graphics.PointF[] mPreviousGesturePoint>;
+
+        $r7 = $r6[i21];
+
+        $f6 = $r7.<android.graphics.PointF: float y>;
+
+        $f7 = f1 - $f6;
+
+        f3 = staticinvoke <java.lang.Math: float abs(float)>($f7);
+
+        $r8 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: android.graphics.PointF[] mBase>;
+
+        $r9 = $r8[i21];
+
+        $f8 = $r9.<android.graphics.PointF: float x>;
+
+        $f9 = f0 - $f8;
+
+        $f10 = staticinvoke <java.lang.Math: float abs(float)>($f9);
+
+        $d1 = (double) $f10;
+
+        $r10 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: android.graphics.PointF[] mBase>;
+
+        $r11 = $r10[i21];
+
+        $f11 = $r11.<android.graphics.PointF: float y>;
+
+        $f12 = f1 - $f11;
+
+        $f13 = staticinvoke <java.lang.Math: float abs(float)>($f12);
+
+        $d2 = (double) $f13;
+
+        d0 = staticinvoke <java.lang.Math: double hypot(double,double)>($d1, $d2);
+
+        $i6 = virtualinvoke r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: int getState()>();
+
+        if $i6 != 0 goto label11;
+
+        $i9 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: int mTouchSlop>;
+
+        $d3 = (double) $i9;
+
+        $b10 = d0 cmpg $d3;
+
+        if $b10 >= 0 goto label05;
+
+        goto label13;
+
+     label05:
+        $r19 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: java.util.ArrayList[] mStrokeBuffers>;
+
+        $r20 = $r19[i21];
+
+        $i11 = virtualinvoke $r20.<java.util.ArrayList: int size()>();
+
+        if $i11 != 0 goto label09;
+
+        $i17 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: int mCurrentFingerCount>;
+
+        $i16 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: int mTargetFingerCount>;
+
+        if $i17 == $i16 goto label06;
+
+        virtualinvoke r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: void cancelGesture(android.view.MotionEvent,android.view.MotionEvent,int)>(r1, r2, i0);
+
+        return;
+
+     label06:
+        $r33 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: android.graphics.PointF[] mBase>;
+
+        $r34 = $r33[i21];
+
+        $f21 = $r34.<android.graphics.PointF: float x>;
+
+        $f24 = f0 - $f21;
+
+        $r35 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: android.graphics.PointF[] mBase>;
+
+        $r36 = $r35[i21];
+
+        $f22 = $r36.<android.graphics.PointF: float y>;
+
+        $f23 = f1 - $f22;
+
+        $i18 = staticinvoke <com.android.server.accessibility.gestures.MultiFingerSwipe: int toDirection(float,float)>($f24, $f23);
+
+        $i19 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: int mDirection>;
+
+        if $i18 == $i19 goto label07;
+
+        virtualinvoke r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: void cancelGesture(android.view.MotionEvent,android.view.MotionEvent,int)>(r1, r2, i0);
+
+        return;
+
+     label07:
+        specialinvoke r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: void cancelAfterPauseThreshold(android.view.MotionEvent,android.view.MotionEvent,int)>(r1, r2, i0);
+
+        i23 = 0;
+
+     label08:
+        $i20 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: int mTargetFingerCount>;
+
+        if i23 >= $i20 goto label09;
+
+        $r37 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: java.util.ArrayList[] mStrokeBuffers>;
+
+        $r41 = $r37[i23];
+
+        $r38 = new android.graphics.PointF;
+
+        $r39 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: android.graphics.PointF[] mBase>;
+
+        $r40 = $r39[i23];
+
+        specialinvoke $r38.<android.graphics.PointF: void <init>(android.graphics.PointF)>($r40);
+
+        virtualinvoke $r41.<java.util.ArrayList: boolean add(java.lang.Object)>($r38);
+
+        i23 = i23 + 1;
+
+        goto label08;
+
+     label09:
+        $f16 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: float mGestureDetectionThresholdPixels>;
+
+        $d4 = (double) $f16;
+
+        $b12 = d0 cmpl $d4;
+
+        if $b12 <= 0 goto label11;
+
+        $r21 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: android.graphics.PointF[] mBase>;
+
+        $r22 = $r21[i21];
+
+        $f17 = $r22.<android.graphics.PointF: float x>;
+
+        $f20 = f0 - $f17;
+
+        $r23 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: android.graphics.PointF[] mBase>;
+
+        $r24 = $r23[i21];
+
+        $f18 = $r24.<android.graphics.PointF: float y>;
+
+        $f19 = f1 - $f18;
+
+        $i13 = staticinvoke <com.android.server.accessibility.gestures.MultiFingerSwipe: int toDirection(float,float)>($f20, $f19);
+
+        $i14 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: int mDirection>;
+
+        if $i13 == $i14 goto label10;
+
+        virtualinvoke r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: void cancelGesture(android.view.MotionEvent,android.view.MotionEvent,int)>(r1, r2, i0);
+
+        return;
+
+     label10:
+        $r25 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: android.graphics.PointF[] mBase>;
+
+        $r26 = $r25[i21];
+
+        $r26.<android.graphics.PointF: float x> = f0;
+
+        $r27 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: android.graphics.PointF[] mBase>;
+
+        $r28 = $r27[i21];
+
+        $r28.<android.graphics.PointF: float y> = f1;
+
+        $r29 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: android.graphics.PointF[] mPreviousGesturePoint>;
+
+        $r30 = $r29[i21];
+
+        $r30.<android.graphics.PointF: float x> = f0;
+
+        $r31 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: android.graphics.PointF[] mPreviousGesturePoint>;
+
+        $r32 = $r31[i21];
+
+        $r32.<android.graphics.PointF: float y> = f1;
+
+        $i15 = virtualinvoke r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: int getState()>();
+
+        if $i15 != 0 goto label11;
+
+        virtualinvoke r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: void startGesture(android.view.MotionEvent,android.view.MotionEvent,int)>(r1, r2, i0);
+
+        specialinvoke r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: void cancelAfterPauseThreshold(android.view.MotionEvent,android.view.MotionEvent,int)>(r1, r2, i0);
+
+     label11:
+        $i24 = virtualinvoke r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: int getState()>();
+
+        if $i24 != 1 goto label13;
+
+        $f14 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: float mMinPixelsBetweenSamplesX>;
+
+        $b7 = f2 cmpl $f14;
+
+        if $b7 >= 0 goto label12;
+
+        $f15 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: float mMinPixelsBetweenSamplesY>;
+
+        $b8 = f3 cmpl $f15;
+
+        if $b8 < 0 goto label13;
+
+     label12:
+        $r12 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: android.graphics.PointF[] mPreviousGesturePoint>;
+
+        $r13 = $r12[i21];
+
+        $r13.<android.graphics.PointF: float x> = f0;
+
+        $r14 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: android.graphics.PointF[] mPreviousGesturePoint>;
+
+        $r15 = $r14[i21];
+
+        $r15.<android.graphics.PointF: float y> = f1;
+
+        $r16 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: java.util.ArrayList[] mStrokeBuffers>;
+
+        $r18 = $r16[i21];
+
+        $r17 = new android.graphics.PointF;
+
+        specialinvoke $r17.<android.graphics.PointF: void <init>(float,float)>(f0, f1);
+
+        virtualinvoke $r18.<java.util.ArrayList: boolean add(java.lang.Object)>($r17);
+
+        specialinvoke r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: void cancelAfterPauseThreshold(android.view.MotionEvent,android.view.MotionEvent,int)>(r1, r2, i0);
+
+     label13:
+        i21 = i21 + 1;
+
+        goto label01;
+
+     label14:
+        virtualinvoke r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: void cancelGesture(android.view.MotionEvent,android.view.MotionEvent,int)>(r1, r2, i0);
+
+        return;
+
+     label15:
+        return;
+    }
+
+    protected void onPointerDown(android.view.MotionEvent, android.view.MotionEvent, int)
+    {
+        com.android.server.accessibility.gestures.MultiFingerSwipe r0;
+        android.view.MotionEvent r1, r2;
+        int i0, i1, i2, $i3, $i4, $i5, $i6, $i7, $i8, $i9, $i10, i13, i14;
+        int[] r3;
+        float f0, f1, $f2, $f3;
+        android.graphics.PointF[] $r4, $r6, $r8, $r10, $r12, $r14;
+        android.graphics.PointF $r5, $r7, $r9, $r11, $r13, $r15;
+        boolean $z0, $z1;
+        byte $b11, $b12;
+
+        r0 := @this: com.android.server.accessibility.gestures.MultiFingerSwipe;
+
+        r1 := @parameter0: android.view.MotionEvent;
+
+        r2 := @parameter1: android.view.MotionEvent;
+
+        i0 := @parameter2: int;
+
+        $i3 = virtualinvoke r1.<android.view.MotionEvent: int getPointerCount()>();
+
+        $i4 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: int mTargetFingerCount>;
+
+        if $i3 <= $i4 goto label1;
+
+        virtualinvoke r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: void cancelGesture(android.view.MotionEvent,android.view.MotionEvent,int)>(r1, r2, i0);
+
+        return;
+
+     label1:
+        $i5 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: int mCurrentFingerCount>;
+
+        i13 = $i5 + 1;
+
+        r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: int mCurrentFingerCount> = i13;
+
+        $i6 = virtualinvoke r2.<android.view.MotionEvent: int getPointerCount()>();
+
+        if i13 == $i6 goto label2;
+
+        virtualinvoke r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: void cancelGesture(android.view.MotionEvent,android.view.MotionEvent,int)>(r1, r2, i0);
+
+        return;
+
+     label2:
+        $i8 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: int mCurrentFingerCount>;
+
+        $i7 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: int mTargetFingerCount>;
+
+        if $i8 != $i7 goto label3;
+
+        r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: boolean mTargetFingerCountReached> = 1;
+
+     label3:
+        i1 = staticinvoke <com.android.server.accessibility.gestures.GestureUtils: int getActionIndex(android.view.MotionEvent)>(r2);
+
+        i14 = virtualinvoke r2.<android.view.MotionEvent: int getPointerId(int)>(i1);
+
+        if i14 >= 0 goto label4;
+
+        virtualinvoke r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: void cancelGesture(android.view.MotionEvent,android.view.MotionEvent,int)>(r1, r2, i0);
+
+        return;
+
+     label4:
+        $i9 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: int mCurrentFingerCount>;
+
+        i2 = $i9 - 1;
+
+        r3 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: int[] mPointerIds>;
+
+        $i10 = r3[i2];
+
+        if $i10 == -1 goto label5;
+
+        virtualinvoke r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: void cancelGesture(android.view.MotionEvent,android.view.MotionEvent,int)>(r1, r2, i0);
+
+        return;
+
+     label5:
+        r3[i2] = i14;
+
+        specialinvoke r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: void cancelAfterPauseThreshold(android.view.MotionEvent,android.view.MotionEvent,int)>(r1, r2, i0);
+
+        $r4 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: android.graphics.PointF[] mBase>;
+
+        $r5 = $r4[i2];
+
+        $f2 = $r5.<android.graphics.PointF: float x>;
+
+        $z0 = staticinvoke <java.lang.Float: boolean isNaN(float)>($f2);
+
+        if $z0 == 0 goto label8;
+
+        $r6 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: android.graphics.PointF[] mBase>;
+
+        $r7 = $r6[i2];
+
+        $f3 = $r7.<android.graphics.PointF: float y>;
+
+        $z1 = staticinvoke <java.lang.Float: boolean isNaN(float)>($f3);
+
+        if $z1 == 0 goto label8;
+
+        f0 = virtualinvoke r2.<android.view.MotionEvent: float getX(int)>(i1);
+
+        f1 = virtualinvoke r2.<android.view.MotionEvent: float getY(int)>(i1);
+
+        $b11 = f0 cmpg 0.0F;
+
+        if $b11 < 0 goto label7;
+
+        $b12 = f1 cmpg 0.0F;
+
+        if $b12 >= 0 goto label6;
+
+        goto label7;
+
+     label6:
+        $r8 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: android.graphics.PointF[] mBase>;
+
+        $r9 = $r8[i2];
+
+        $r9.<android.graphics.PointF: float x> = f0;
+
+        $r10 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: android.graphics.PointF[] mBase>;
+
+        $r11 = $r10[i2];
+
+        $r11.<android.graphics.PointF: float y> = f1;
+
+        $r12 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: android.graphics.PointF[] mPreviousGesturePoint>;
+
+        $r13 = $r12[i2];
+
+        $r13.<android.graphics.PointF: float x> = f0;
+
+        $r14 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: android.graphics.PointF[] mPreviousGesturePoint>;
+
+        $r15 = $r14[i2];
+
+        $r15.<android.graphics.PointF: float y> = f1;
+
+        return;
+
+     label7:
+        virtualinvoke r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: void cancelGesture(android.view.MotionEvent,android.view.MotionEvent,int)>(r1, r2, i0);
+
+        return;
+
+     label8:
+        virtualinvoke r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: void cancelGesture(android.view.MotionEvent,android.view.MotionEvent,int)>(r1, r2, i0);
+
+        return;
+    }
+
+    protected void onPointerUp(android.view.MotionEvent, android.view.MotionEvent, int)
+    {
+        com.android.server.accessibility.gestures.MultiFingerSwipe r0;
+        android.view.MotionEvent r1, r2;
+        int i0, i1, $i2, $i3, i8, i9;
+        float f0, f1, f2, f3, $f4, $f5, $f6, $f7, $f8, $f9;
+        boolean $z0;
+        int[] $r3;
+        byte $b4, $b5, $b6, $b7;
+        android.graphics.PointF[] $r4, $r6;
+        android.graphics.PointF $r5, $r7, $r9;
+        java.util.ArrayList[] $r8;
+        java.util.ArrayList $r10;
+
+        r0 := @this: com.android.server.accessibility.gestures.MultiFingerSwipe;
+
+        r1 := @parameter0: android.view.MotionEvent;
+
+        r2 := @parameter1: android.view.MotionEvent;
+
+        i0 := @parameter2: int;
+
+        $z0 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: boolean mTargetFingerCountReached>;
+
+        if $z0 != 0 goto label1;
+
+        virtualinvoke r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: void cancelGesture(android.view.MotionEvent,android.view.MotionEvent,int)>(r1, r2, i0);
+
+        return;
+
+     label1:
+        $i2 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: int mCurrentFingerCount>;
+
+        $i3 = $i2 - 1;
+
+        r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: int mCurrentFingerCount> = $i3;
+
+        i1 = staticinvoke <com.android.server.accessibility.gestures.GestureUtils: int getActionIndex(android.view.MotionEvent)>(r1);
+
+        i8 = virtualinvoke r1.<android.view.MotionEvent: int getPointerId(int)>(i1);
+
+        if i8 >= 0 goto label2;
+
+        virtualinvoke r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: void cancelGesture(android.view.MotionEvent,android.view.MotionEvent,int)>(r1, r2, i0);
+
+        return;
+
+     label2:
+        $r3 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: int[] mPointerIds>;
+
+        i9 = staticinvoke <java.util.Arrays: int binarySearch(int[],int)>($r3, i8);
+
+        if i9 >= 0 goto label3;
+
+        virtualinvoke r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: void cancelGesture(android.view.MotionEvent,android.view.MotionEvent,int)>(r1, r2, i0);
+
+        return;
+
+     label3:
+        f0 = virtualinvoke r2.<android.view.MotionEvent: float getX(int)>(i1);
+
+        f1 = virtualinvoke r2.<android.view.MotionEvent: float getY(int)>(i1);
+
+        $b4 = f0 cmpg 0.0F;
+
+        if $b4 < 0 goto label7;
+
+        $b5 = f1 cmpg 0.0F;
+
+        if $b5 >= 0 goto label4;
+
+        goto label7;
+
+     label4:
+        $r4 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: android.graphics.PointF[] mPreviousGesturePoint>;
+
+        $r5 = $r4[i9];
+
+        $f4 = $r5.<android.graphics.PointF: float x>;
+
+        $f5 = f0 - $f4;
+
+        f2 = staticinvoke <java.lang.Math: float abs(float)>($f5);
+
+        $r6 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: android.graphics.PointF[] mPreviousGesturePoint>;
+
+        $r7 = $r6[i9];
+
+        $f6 = $r7.<android.graphics.PointF: float y>;
+
+        $f7 = f1 - $f6;
+
+        f3 = staticinvoke <java.lang.Math: float abs(float)>($f7);
+
+        $f8 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: float mMinPixelsBetweenSamplesX>;
+
+        $b6 = f2 cmpl $f8;
+
+        if $b6 >= 0 goto label5;
+
+        $f9 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: float mMinPixelsBetweenSamplesY>;
+
+        $b7 = f3 cmpl $f9;
+
+        if $b7 < 0 goto label6;
+
+     label5:
+        $r8 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: java.util.ArrayList[] mStrokeBuffers>;
+
+        $r10 = $r8[i9];
+
+        $r9 = new android.graphics.PointF;
+
+        specialinvoke $r9.<android.graphics.PointF: void <init>(float,float)>(f0, f1);
+
+        virtualinvoke $r10.<java.util.ArrayList: boolean add(java.lang.Object)>($r9);
+
+     label6:
+        return;
+
+     label7:
+        virtualinvoke r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: void cancelGesture(android.view.MotionEvent,android.view.MotionEvent,int)>(r1, r2, i0);
+
+        return;
+    }
+
+    protected void onUp(android.view.MotionEvent, android.view.MotionEvent, int)
+    {
+        com.android.server.accessibility.gestures.MultiFingerSwipe r0;
+        android.view.MotionEvent r1, r2;
+        int i0, i1, $i2, i7, i8;
+        float f0, f1, f2, f3, $f4, $f5, $f6, $f7, $f8, $f9;
+        int[] $r3;
+        byte $b3, $b4, $b5, $b6;
+        android.graphics.PointF[] $r4, $r6;
+        android.graphics.PointF $r5, $r7, $r9;
+        java.util.ArrayList[] $r8;
+        java.util.ArrayList $r10;
+
+        r0 := @this: com.android.server.accessibility.gestures.MultiFingerSwipe;
+
+        r1 := @parameter0: android.view.MotionEvent;
+
+        r2 := @parameter1: android.view.MotionEvent;
+
+        i0 := @parameter2: int;
+
+        $i2 = virtualinvoke r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: int getState()>();
+
+        if $i2 == 1 goto label1;
+
+        virtualinvoke r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: void cancelGesture(android.view.MotionEvent,android.view.MotionEvent,int)>(r1, r2, i0);
+
+        return;
+
+     label1:
+        r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: int mCurrentFingerCount> = 0;
+
+        i1 = staticinvoke <com.android.server.accessibility.gestures.GestureUtils: int getActionIndex(android.view.MotionEvent)>(r1);
+
+        i7 = virtualinvoke r1.<android.view.MotionEvent: int getPointerId(int)>(i1);
+
+        $r3 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: int[] mPointerIds>;
+
+        i8 = staticinvoke <java.util.Arrays: int binarySearch(int[],int)>($r3, i7);
+
+        if i8 >= 0 goto label2;
+
+        virtualinvoke r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: void cancelGesture(android.view.MotionEvent,android.view.MotionEvent,int)>(r1, r2, i0);
+
+        return;
+
+     label2:
+        f0 = virtualinvoke r2.<android.view.MotionEvent: float getX(int)>(i1);
+
+        f1 = virtualinvoke r2.<android.view.MotionEvent: float getY(int)>(i1);
+
+        $b3 = f0 cmpg 0.0F;
+
+        if $b3 < 0 goto label6;
+
+        $b4 = f1 cmpg 0.0F;
+
+        if $b4 >= 0 goto label3;
+
+        goto label6;
+
+     label3:
+        $r4 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: android.graphics.PointF[] mPreviousGesturePoint>;
+
+        $r5 = $r4[i8];
+
+        $f4 = $r5.<android.graphics.PointF: float x>;
+
+        $f5 = f0 - $f4;
+
+        f2 = staticinvoke <java.lang.Math: float abs(float)>($f5);
+
+        $r6 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: android.graphics.PointF[] mPreviousGesturePoint>;
+
+        $r7 = $r6[i8];
+
+        $f6 = $r7.<android.graphics.PointF: float y>;
+
+        $f7 = f1 - $f6;
+
+        f3 = staticinvoke <java.lang.Math: float abs(float)>($f7);
+
+        $f8 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: float mMinPixelsBetweenSamplesX>;
+
+        $b5 = f2 cmpl $f8;
+
+        if $b5 >= 0 goto label4;
+
+        $f9 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: float mMinPixelsBetweenSamplesY>;
+
+        $b6 = f3 cmpl $f9;
+
+        if $b6 < 0 goto label5;
+
+     label4:
+        $r8 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: java.util.ArrayList[] mStrokeBuffers>;
+
+        $r10 = $r8[i8];
+
+        $r9 = new android.graphics.PointF;
+
+        specialinvoke $r9.<android.graphics.PointF: void <init>(float,float)>(f0, f1);
+
+        virtualinvoke $r10.<java.util.ArrayList: boolean add(java.lang.Object)>($r9);
+
+     label5:
+        specialinvoke r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: void recognizeGesture(android.view.MotionEvent,android.view.MotionEvent,int)>(r1, r2, i0);
+
+        return;
+
+     label6:
+        virtualinvoke r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: void cancelGesture(android.view.MotionEvent,android.view.MotionEvent,int)>(r1, r2, i0);
+
+        return;
+    }
+
+    public java.lang.String toString()
+    {
+        com.android.server.accessibility.gestures.MultiFingerSwipe r0;
+        java.lang.StringBuilder $r2;
+        java.lang.String $r3, $r4, $r7;
+        int $i0;
+        android.graphics.PointF[] $r6;
+        float $f0, $f1, $f2;
+
+        r0 := @this: com.android.server.accessibility.gestures.MultiFingerSwipe;
+
+        $r2 = new java.lang.StringBuilder;
+
+        $r3 = specialinvoke r0.<com.android.server.accessibility.gestures.GestureMatcher: java.lang.String toString()>();
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>(java.lang.String)>($r3);
+
+        $i0 = virtualinvoke r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: int getState()>();
+
+        if $i0 == 3 goto label1;
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", mBase: ");
+
+        $r6 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: android.graphics.PointF[] mBase>;
+
+        $r7 = virtualinvoke $r6.<java.lang.Object: java.lang.String toString()>();
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r7);
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", mGestureDetectionThreshold:");
+
+        $f0 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: float mGestureDetectionThresholdPixels>;
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(float)>($f0);
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", mMinPixelsBetweenSamplesX:");
+
+        $f1 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: float mMinPixelsBetweenSamplesX>;
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(float)>($f1);
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", mMinPixelsBetweenSamplesY:");
+
+        $f2 = r0.<com.android.server.accessibility.gestures.MultiFingerSwipe: float mMinPixelsBetweenSamplesY>;
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(float)>($f2);
+
+     label1:
+        $r4 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        return $r4;
+    }
+
+    public static void <clinit>()
+    {
+        <com.android.server.accessibility.gestures.MultiFingerSwipe: int UP> = 2;
+
+        <com.android.server.accessibility.gestures.MultiFingerSwipe: int RIGHT> = 1;
+
+        <com.android.server.accessibility.gestures.MultiFingerSwipe: float MIN_CM_BETWEEN_SAMPLES> = 0.25F;
+
+        <com.android.server.accessibility.gestures.MultiFingerSwipe: int LEFT> = 0;
+
+        <com.android.server.accessibility.gestures.MultiFingerSwipe: int DOWN> = 3;
+
+        return;
+    }
+}

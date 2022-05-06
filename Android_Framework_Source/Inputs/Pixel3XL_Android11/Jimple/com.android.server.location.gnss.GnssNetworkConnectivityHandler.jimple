@@ -1,0 +1,1730 @@
+class com.android.server.location.gnss.GnssNetworkConnectivityHandler extends java.lang.Object
+{
+    private static final int AGNSS_NET_CAPABILITY_NOT_METERED;
+    private static final int AGNSS_NET_CAPABILITY_NOT_ROAMING;
+    private static final int AGPS_DATA_CONNECTION_CLOSED;
+    private static final int AGPS_DATA_CONNECTION_OPEN;
+    private static final int AGPS_DATA_CONNECTION_OPENING;
+    public static final int AGPS_TYPE_C2K;
+    private static final int AGPS_TYPE_EIMS;
+    private static final int AGPS_TYPE_IMS;
+    public static final int AGPS_TYPE_SUPL;
+    private static final int APN_INVALID;
+    private static final int APN_IPV4;
+    private static final int APN_IPV4V6;
+    private static final int APN_IPV6;
+    private static final boolean DEBUG;
+    private static final int GPS_AGPS_DATA_CONNECTED;
+    private static final int GPS_AGPS_DATA_CONN_DONE;
+    private static final int GPS_AGPS_DATA_CONN_FAILED;
+    private static final int GPS_RELEASE_AGPS_DATA_CONN;
+    private static final int GPS_REQUEST_AGPS_DATA_CONN;
+    private static final int HASH_MAP_INITIAL_CAPACITY_TO_TRACK_CONNECTED_NETWORKS;
+    private static final int SUPL_NETWORK_REQUEST_TIMEOUT_MILLIS;
+    static final java.lang.String TAG;
+    private static final boolean VERBOSE;
+    private static final java.lang.String WAKELOCK_KEY;
+    private static final long WAKELOCK_TIMEOUT_MILLIS;
+    private java.net.InetAddress mAGpsDataConnectionIpAddr;
+    private int mAGpsDataConnectionState;
+    private int mAGpsType;
+    private int mActiveSubId;
+    private java.util.HashMap mAvailableNetworkAttributes;
+    private final android.net.ConnectivityManager mConnMgr;
+    private final android.content.Context mContext;
+    private final com.android.server.location.gnss.GnssNetworkConnectivityHandler$GnssNetworkListener mGnssNetworkListener;
+    private final android.os.Handler mHandler;
+    private android.net.ConnectivityManager$NetworkCallback mNetworkConnectivityCallback;
+    private final com.android.internal.location.GpsNetInitiatedHandler mNiHandler;
+    private final android.telephony.SubscriptionManager$OnSubscriptionsChangedListener mOnSubscriptionsChangeListener;
+    private java.util.HashMap mPhoneStateListeners;
+    private android.net.ConnectivityManager$NetworkCallback mSuplConnectivityCallback;
+    private final android.os.PowerManager$WakeLock mWakeLock;
+
+    static void <clinit>()
+    {
+        boolean $z0, $z1;
+
+        <com.android.server.location.gnss.GnssNetworkConnectivityHandler: long WAKELOCK_TIMEOUT_MILLIS> = 60000L;
+
+        <com.android.server.location.gnss.GnssNetworkConnectivityHandler: java.lang.String WAKELOCK_KEY> = "GnssNetworkConnectivityHandler";
+
+        <com.android.server.location.gnss.GnssNetworkConnectivityHandler: java.lang.String TAG> = "GnssNetworkConnectivityHandler";
+
+        <com.android.server.location.gnss.GnssNetworkConnectivityHandler: int SUPL_NETWORK_REQUEST_TIMEOUT_MILLIS> = 10000;
+
+        <com.android.server.location.gnss.GnssNetworkConnectivityHandler: int HASH_MAP_INITIAL_CAPACITY_TO_TRACK_CONNECTED_NETWORKS> = 5;
+
+        <com.android.server.location.gnss.GnssNetworkConnectivityHandler: int GPS_REQUEST_AGPS_DATA_CONN> = 1;
+
+        <com.android.server.location.gnss.GnssNetworkConnectivityHandler: int GPS_RELEASE_AGPS_DATA_CONN> = 2;
+
+        <com.android.server.location.gnss.GnssNetworkConnectivityHandler: int GPS_AGPS_DATA_CONN_FAILED> = 5;
+
+        <com.android.server.location.gnss.GnssNetworkConnectivityHandler: int GPS_AGPS_DATA_CONN_DONE> = 4;
+
+        <com.android.server.location.gnss.GnssNetworkConnectivityHandler: int GPS_AGPS_DATA_CONNECTED> = 3;
+
+        <com.android.server.location.gnss.GnssNetworkConnectivityHandler: int APN_IPV6> = 2;
+
+        <com.android.server.location.gnss.GnssNetworkConnectivityHandler: int APN_IPV4V6> = 3;
+
+        <com.android.server.location.gnss.GnssNetworkConnectivityHandler: int APN_IPV4> = 1;
+
+        <com.android.server.location.gnss.GnssNetworkConnectivityHandler: int APN_INVALID> = 0;
+
+        <com.android.server.location.gnss.GnssNetworkConnectivityHandler: int AGPS_TYPE_SUPL> = 1;
+
+        <com.android.server.location.gnss.GnssNetworkConnectivityHandler: int AGPS_TYPE_IMS> = 4;
+
+        <com.android.server.location.gnss.GnssNetworkConnectivityHandler: int AGPS_TYPE_EIMS> = 3;
+
+        <com.android.server.location.gnss.GnssNetworkConnectivityHandler: int AGPS_TYPE_C2K> = 2;
+
+        <com.android.server.location.gnss.GnssNetworkConnectivityHandler: int AGPS_DATA_CONNECTION_OPENING> = 1;
+
+        <com.android.server.location.gnss.GnssNetworkConnectivityHandler: int AGPS_DATA_CONNECTION_OPEN> = 2;
+
+        <com.android.server.location.gnss.GnssNetworkConnectivityHandler: int AGPS_DATA_CONNECTION_CLOSED> = 0;
+
+        <com.android.server.location.gnss.GnssNetworkConnectivityHandler: int AGNSS_NET_CAPABILITY_NOT_ROAMING> = 2;
+
+        <com.android.server.location.gnss.GnssNetworkConnectivityHandler: int AGNSS_NET_CAPABILITY_NOT_METERED> = 1;
+
+        $z0 = staticinvoke <android.util.Log: boolean isLoggable(java.lang.String,int)>("GnssNetworkConnectivityHandler", 3);
+
+        <com.android.server.location.gnss.GnssNetworkConnectivityHandler: boolean DEBUG> = $z0;
+
+        $z1 = staticinvoke <android.util.Log: boolean isLoggable(java.lang.String,int)>("GnssNetworkConnectivityHandler", 2);
+
+        <com.android.server.location.gnss.GnssNetworkConnectivityHandler: boolean VERBOSE> = $z1;
+
+        return;
+    }
+
+    void <init>(android.content.Context, com.android.server.location.gnss.GnssNetworkConnectivityHandler$GnssNetworkListener, android.os.Looper, com.android.internal.location.GpsNetInitiatedHandler)
+    {
+        com.android.server.location.gnss.GnssNetworkConnectivityHandler r0;
+        android.content.Context r1, $r11;
+        android.os.Looper r2;
+        com.android.internal.location.GpsNetInitiatedHandler r3;
+        java.util.HashMap $r4;
+        com.android.server.location.gnss.GnssNetworkConnectivityHandler$1 $r5;
+        java.lang.Object $r6, $r7, $r12;
+        android.os.PowerManager $r8;
+        android.os.PowerManager$WakeLock $r9;
+        android.os.Handler $r10;
+        android.net.ConnectivityManager $r13;
+        android.net.ConnectivityManager$NetworkCallback $r14;
+        android.telephony.SubscriptionManager$OnSubscriptionsChangedListener $r15;
+        com.android.server.location.gnss.GnssNetworkConnectivityHandler$GnssNetworkListener r16;
+        android.telephony.SubscriptionManager r17;
+
+        r0 := @this: com.android.server.location.gnss.GnssNetworkConnectivityHandler;
+
+        r1 := @parameter0: android.content.Context;
+
+        r16 := @parameter1: com.android.server.location.gnss.GnssNetworkConnectivityHandler$GnssNetworkListener;
+
+        r2 := @parameter2: android.os.Looper;
+
+        r3 := @parameter3: com.android.internal.location.GpsNetInitiatedHandler;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        $r4 = new java.util.HashMap;
+
+        specialinvoke $r4.<java.util.HashMap: void <init>(int)>(5);
+
+        r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: java.util.HashMap mAvailableNetworkAttributes> = $r4;
+
+        r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: int mActiveSubId> = -1;
+
+        $r5 = new com.android.server.location.gnss.GnssNetworkConnectivityHandler$1;
+
+        specialinvoke $r5.<com.android.server.location.gnss.GnssNetworkConnectivityHandler$1: void <init>(com.android.server.location.gnss.GnssNetworkConnectivityHandler)>(r0);
+
+        r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: android.telephony.SubscriptionManager$OnSubscriptionsChangedListener mOnSubscriptionsChangeListener> = $r5;
+
+        r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: android.content.Context mContext> = r1;
+
+        r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: com.android.server.location.gnss.GnssNetworkConnectivityHandler$GnssNetworkListener mGnssNetworkListener> = r16;
+
+        $r6 = virtualinvoke r1.<android.content.Context: java.lang.Object getSystemService(java.lang.Class)>(class "Landroid/telephony/SubscriptionManager;");
+
+        r17 = (android.telephony.SubscriptionManager) $r6;
+
+        if r17 == null goto label1;
+
+        $r15 = r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: android.telephony.SubscriptionManager$OnSubscriptionsChangedListener mOnSubscriptionsChangeListener>;
+
+        virtualinvoke r17.<android.telephony.SubscriptionManager: void addOnSubscriptionsChangedListener(android.telephony.SubscriptionManager$OnSubscriptionsChangedListener)>($r15);
+
+     label1:
+        $r7 = virtualinvoke r1.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("power");
+
+        $r8 = (android.os.PowerManager) $r7;
+
+        $r9 = virtualinvoke $r8.<android.os.PowerManager: android.os.PowerManager$WakeLock newWakeLock(int,java.lang.String)>(1, "GnssNetworkConnectivityHandler");
+
+        r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: android.os.PowerManager$WakeLock mWakeLock> = $r9;
+
+        $r10 = new android.os.Handler;
+
+        specialinvoke $r10.<android.os.Handler: void <init>(android.os.Looper)>(r2);
+
+        r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: android.os.Handler mHandler> = $r10;
+
+        r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: com.android.internal.location.GpsNetInitiatedHandler mNiHandler> = r3;
+
+        $r11 = r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: android.content.Context mContext>;
+
+        $r12 = virtualinvoke $r11.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("connectivity");
+
+        $r13 = (android.net.ConnectivityManager) $r12;
+
+        r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: android.net.ConnectivityManager mConnMgr> = $r13;
+
+        $r14 = specialinvoke r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: android.net.ConnectivityManager$NetworkCallback createSuplConnectivityCallback()>();
+
+        r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: android.net.ConnectivityManager$NetworkCallback mSuplConnectivityCallback> = $r14;
+
+        return;
+    }
+
+    static int access$000(com.android.server.location.gnss.GnssNetworkConnectivityHandler)
+    {
+        com.android.server.location.gnss.GnssNetworkConnectivityHandler r0;
+        int $i0;
+
+        r0 := @parameter0: com.android.server.location.gnss.GnssNetworkConnectivityHandler;
+
+        $i0 = r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: int mActiveSubId>;
+
+        return $i0;
+    }
+
+    static int access$002(com.android.server.location.gnss.GnssNetworkConnectivityHandler, int)
+    {
+        com.android.server.location.gnss.GnssNetworkConnectivityHandler r0;
+        int i0;
+
+        r0 := @parameter0: com.android.server.location.gnss.GnssNetworkConnectivityHandler;
+
+        i0 := @parameter1: int;
+
+        r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: int mActiveSubId> = i0;
+
+        return i0;
+    }
+
+    static boolean access$100()
+    {
+        boolean $z0;
+
+        $z0 = <com.android.server.location.gnss.GnssNetworkConnectivityHandler: boolean DEBUG>;
+
+        return $z0;
+    }
+
+    static java.util.HashMap access$200(com.android.server.location.gnss.GnssNetworkConnectivityHandler)
+    {
+        com.android.server.location.gnss.GnssNetworkConnectivityHandler r0;
+        java.util.HashMap $r1;
+
+        r0 := @parameter0: com.android.server.location.gnss.GnssNetworkConnectivityHandler;
+
+        $r1 = r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: java.util.HashMap mPhoneStateListeners>;
+
+        return $r1;
+    }
+
+    static java.util.HashMap access$202(com.android.server.location.gnss.GnssNetworkConnectivityHandler, java.util.HashMap)
+    {
+        com.android.server.location.gnss.GnssNetworkConnectivityHandler r0;
+        java.util.HashMap r1;
+
+        r0 := @parameter0: com.android.server.location.gnss.GnssNetworkConnectivityHandler;
+
+        r1 := @parameter1: java.util.HashMap;
+
+        r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: java.util.HashMap mPhoneStateListeners> = r1;
+
+        return r1;
+    }
+
+    static android.content.Context access$300(com.android.server.location.gnss.GnssNetworkConnectivityHandler)
+    {
+        com.android.server.location.gnss.GnssNetworkConnectivityHandler r0;
+        android.content.Context $r1;
+
+        r0 := @parameter0: com.android.server.location.gnss.GnssNetworkConnectivityHandler;
+
+        $r1 = r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: android.content.Context mContext>;
+
+        return $r1;
+    }
+
+    static boolean access$500()
+    {
+        boolean $z0;
+
+        $z0 = <com.android.server.location.gnss.GnssNetworkConnectivityHandler: boolean VERBOSE>;
+
+        return $z0;
+    }
+
+    static com.android.server.location.gnss.GnssNetworkConnectivityHandler$GnssNetworkListener access$600(com.android.server.location.gnss.GnssNetworkConnectivityHandler)
+    {
+        com.android.server.location.gnss.GnssNetworkConnectivityHandler r0;
+        com.android.server.location.gnss.GnssNetworkConnectivityHandler$GnssNetworkListener $r1;
+
+        r0 := @parameter0: com.android.server.location.gnss.GnssNetworkConnectivityHandler;
+
+        $r1 = r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: com.android.server.location.gnss.GnssNetworkConnectivityHandler$GnssNetworkListener mGnssNetworkListener>;
+
+        return $r1;
+    }
+
+    static void access$700(com.android.server.location.gnss.GnssNetworkConnectivityHandler, android.net.Network, boolean, android.net.NetworkCapabilities)
+    {
+        com.android.server.location.gnss.GnssNetworkConnectivityHandler r0;
+        android.net.Network r1;
+        boolean z0;
+        android.net.NetworkCapabilities r2;
+
+        r0 := @parameter0: com.android.server.location.gnss.GnssNetworkConnectivityHandler;
+
+        r1 := @parameter1: android.net.Network;
+
+        z0 := @parameter2: boolean;
+
+        r2 := @parameter3: android.net.NetworkCapabilities;
+
+        specialinvoke r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: void handleUpdateNetworkState(android.net.Network,boolean,android.net.NetworkCapabilities)>(r1, z0, r2);
+
+        return;
+    }
+
+    static void access$800(com.android.server.location.gnss.GnssNetworkConnectivityHandler, android.net.Network)
+    {
+        com.android.server.location.gnss.GnssNetworkConnectivityHandler r0;
+        android.net.Network r1;
+
+        r0 := @parameter0: com.android.server.location.gnss.GnssNetworkConnectivityHandler;
+
+        r1 := @parameter1: android.net.Network;
+
+        specialinvoke r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: void handleSuplConnectionAvailable(android.net.Network)>(r1);
+
+        return;
+    }
+
+    static void access$900(com.android.server.location.gnss.GnssNetworkConnectivityHandler, int)
+    {
+        com.android.server.location.gnss.GnssNetworkConnectivityHandler r0;
+        int i0;
+
+        r0 := @parameter0: com.android.server.location.gnss.GnssNetworkConnectivityHandler;
+
+        i0 := @parameter1: int;
+
+        specialinvoke r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: void handleReleaseSuplConnection(int)>(i0);
+
+        return;
+    }
+
+    private java.lang.String agpsDataConnStateAsString()
+    {
+        com.android.server.location.gnss.GnssNetworkConnectivityHandler r0;
+        int i0, $i1;
+        java.lang.StringBuilder $r2;
+        java.lang.String $r6;
+
+        r0 := @this: com.android.server.location.gnss.GnssNetworkConnectivityHandler;
+
+        i0 = r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: int mAGpsDataConnectionState>;
+
+        if i0 == 0 goto label3;
+
+        if i0 == 1 goto label2;
+
+        if i0 == 2 goto label1;
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("<Unknown>(");
+
+        $i1 = r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: int mAGpsDataConnectionState>;
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i1);
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(")");
+
+        $r6 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        return $r6;
+
+     label1:
+        return "OPEN";
+
+     label2:
+        return "OPENING";
+
+     label3:
+        return "CLOSED";
+    }
+
+    private java.lang.String agpsDataConnStatusAsString(int)
+    {
+        com.android.server.location.gnss.GnssNetworkConnectivityHandler r0;
+        int i0;
+        java.lang.StringBuilder $r2;
+        java.lang.String $r6;
+
+        r0 := @this: com.android.server.location.gnss.GnssNetworkConnectivityHandler;
+
+        i0 := @parameter0: int;
+
+        if i0 == 1 goto label5;
+
+        if i0 == 2 goto label4;
+
+        if i0 == 3 goto label3;
+
+        if i0 == 4 goto label2;
+
+        if i0 == 5 goto label1;
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("<Unknown>(");
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(")");
+
+        $r6 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        return $r6;
+
+     label1:
+        return "FAILED";
+
+     label2:
+        return "DONE";
+
+     label3:
+        return "CONNECTED";
+
+     label4:
+        return "RELEASE";
+
+     label5:
+        return "REQUEST";
+    }
+
+    private java.lang.String agpsTypeAsString(int)
+    {
+        com.android.server.location.gnss.GnssNetworkConnectivityHandler r0;
+        int i0;
+        java.lang.StringBuilder $r2;
+        java.lang.String $r6;
+
+        r0 := @this: com.android.server.location.gnss.GnssNetworkConnectivityHandler;
+
+        i0 := @parameter0: int;
+
+        if i0 == 1 goto label4;
+
+        if i0 == 2 goto label3;
+
+        if i0 == 3 goto label2;
+
+        if i0 == 4 goto label1;
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("<Unknown>(");
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(")");
+
+        $r6 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        return $r6;
+
+     label1:
+        return "IMS";
+
+     label2:
+        return "EIMS";
+
+     label3:
+        return "C2K";
+
+     label4:
+        return "SUPL";
+    }
+
+    private android.net.ConnectivityManager$NetworkCallback createNetworkConnectivityCallback()
+    {
+        com.android.server.location.gnss.GnssNetworkConnectivityHandler r0;
+        com.android.server.location.gnss.GnssNetworkConnectivityHandler$2 $r1;
+
+        r0 := @this: com.android.server.location.gnss.GnssNetworkConnectivityHandler;
+
+        $r1 = new com.android.server.location.gnss.GnssNetworkConnectivityHandler$2;
+
+        specialinvoke $r1.<com.android.server.location.gnss.GnssNetworkConnectivityHandler$2: void <init>(com.android.server.location.gnss.GnssNetworkConnectivityHandler)>(r0);
+
+        return $r1;
+    }
+
+    private android.net.ConnectivityManager$NetworkCallback createSuplConnectivityCallback()
+    {
+        com.android.server.location.gnss.GnssNetworkConnectivityHandler r0;
+        com.android.server.location.gnss.GnssNetworkConnectivityHandler$3 $r1;
+
+        r0 := @this: com.android.server.location.gnss.GnssNetworkConnectivityHandler;
+
+        $r1 = new com.android.server.location.gnss.GnssNetworkConnectivityHandler$3;
+
+        specialinvoke $r1.<com.android.server.location.gnss.GnssNetworkConnectivityHandler$3: void <init>(com.android.server.location.gnss.GnssNetworkConnectivityHandler)>(r0);
+
+        return $r1;
+    }
+
+    private void ensureInHandlerThread()
+    {
+        com.android.server.location.gnss.GnssNetworkConnectivityHandler r0;
+        android.os.Handler $r1, $r4;
+        java.lang.IllegalStateException $r2;
+        android.os.Looper $r3, $r5;
+
+        r0 := @this: com.android.server.location.gnss.GnssNetworkConnectivityHandler;
+
+        $r1 = r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: android.os.Handler mHandler>;
+
+        if $r1 == null goto label1;
+
+        $r3 = staticinvoke <android.os.Looper: android.os.Looper myLooper()>();
+
+        $r4 = r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: android.os.Handler mHandler>;
+
+        $r5 = virtualinvoke $r4.<android.os.Handler: android.os.Looper getLooper()>();
+
+        if $r3 != $r5 goto label1;
+
+        return;
+
+     label1:
+        $r2 = new java.lang.IllegalStateException;
+
+        specialinvoke $r2.<java.lang.IllegalStateException: void <init>(java.lang.String)>("This method must run on the Handler thread.");
+
+        throw $r2;
+    }
+
+    private int getApnIpType(java.lang.String)
+    {
+        com.android.server.location.gnss.GnssNetworkConnectivityHandler r0;
+        java.lang.String r1, $r9, $r10, $r16, r22, r23;
+        android.telephony.TelephonyManager r2, r19, r20;
+        android.content.Context $r3, $r24;
+        java.lang.Object $r4;
+        com.android.internal.location.GpsNetInitiatedHandler $r5;
+        boolean $z0, $z1, $z2;
+        java.lang.Object[] $r6, $r11;
+        int $i1, i3, $i4, i5;
+        java.lang.Exception $r12;
+        java.lang.StringBuilder $r13, r30;
+        java.lang.Throwable $r17, $r18;
+        android.telephony.ServiceState r21;
+        android.content.ContentResolver $r25;
+        android.net.Uri $r26;
+        java.lang.String[] $r27;
+        android.database.Cursor r28;
+
+        r0 := @this: com.android.server.location.gnss.GnssNetworkConnectivityHandler;
+
+        r1 := @parameter0: java.lang.String;
+
+        specialinvoke r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: void ensureInHandlerThread()>();
+
+        if r1 != null goto label01;
+
+        return 0;
+
+     label01:
+        $r3 = r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: android.content.Context mContext>;
+
+        $r4 = virtualinvoke $r3.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("phone");
+
+        r2 = (android.telephony.TelephonyManager) $r4;
+
+        r19 = r2;
+
+        $r5 = r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: com.android.internal.location.GpsNetInitiatedHandler mNiHandler>;
+
+        $z0 = virtualinvoke $r5.<com.android.internal.location.GpsNetInitiatedHandler: boolean getInEmergency()>();
+
+        if $z0 == 0 goto label02;
+
+        i3 = r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: int mActiveSubId>;
+
+        r19 = r2;
+
+        if i3 < 0 goto label02;
+
+        r20 = virtualinvoke r2.<android.telephony.TelephonyManager: android.telephony.TelephonyManager createForSubscriptionId(int)>(i3);
+
+        r19 = r2;
+
+        if r20 == null goto label02;
+
+        r19 = r20;
+
+     label02:
+        r21 = virtualinvoke r19.<android.telephony.TelephonyManager: android.telephony.ServiceState getServiceState()>();
+
+        if r21 == null goto label03;
+
+        $z2 = virtualinvoke r21.<android.telephony.ServiceState: boolean getDataRoamingFromRegistration()>();
+
+        if $z2 == 0 goto label03;
+
+        r22 = "roaming_protocol";
+
+        goto label04;
+
+     label03:
+        r22 = "protocol";
+
+     label04:
+        $i4 = virtualinvoke r19.<android.telephony.TelephonyManager: int getNetworkType()>();
+
+        if $i4 != 0 goto label05;
+
+        $i1 = r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: int mAGpsType>;
+
+        if 3 != $i1 goto label05;
+
+        $r11 = newarray (java.lang.Object)[1];
+
+        $r11[0] = r1;
+
+        r23 = staticinvoke <java.lang.String: java.lang.String format(java.lang.String,java.lang.Object[])>("type like \'%%emergency%%\' and apn = \'%s\' and carrier_enabled = 1", $r11);
+
+        goto label06;
+
+     label05:
+        $r6 = newarray (java.lang.Object)[1];
+
+        $r6[0] = r1;
+
+        r23 = staticinvoke <java.lang.String: java.lang.String format(java.lang.String,java.lang.Object[])>("current = 1 and apn = \'%s\' and carrier_enabled = 1", $r6);
+
+     label06:
+        $r24 = r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: android.content.Context mContext>;
+
+        $r25 = virtualinvoke $r24.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        $r26 = <android.provider.Telephony$Carriers: android.net.Uri CONTENT_URI>;
+
+        $r27 = newarray (java.lang.String)[1];
+
+        $r27[0] = r22;
+
+        r28 = virtualinvoke $r25.<android.content.ContentResolver: android.database.Cursor query(android.net.Uri,java.lang.String[],java.lang.String,java.lang.String[],java.lang.String)>($r26, $r27, r23, null, "name ASC");
+
+     label07:
+        if r28 == null goto label13;
+
+     label08:
+        $z1 = interfaceinvoke r28.<android.database.Cursor: boolean moveToFirst()>();
+
+        if $z1 == 0 goto label13;
+
+        $r10 = interfaceinvoke r28.<android.database.Cursor: java.lang.String getString(int)>(0);
+
+        i5 = specialinvoke r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: int translateToApnIpType(java.lang.String,java.lang.String)>($r10, r1);
+
+     label09:
+        if r28 == null goto label11;
+
+     label10:
+        interfaceinvoke r28.<android.database.Cursor: void close()>();
+
+     label11:
+        return i5;
+
+     label12:
+        $r18 := @caughtexception;
+
+        goto label17;
+
+     label13:
+        r30 = new java.lang.StringBuilder;
+
+        specialinvoke r30.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r30.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("No entry found in query for APN: ");
+
+        virtualinvoke r30.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r9 = virtualinvoke r30.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>("GnssNetworkConnectivityHandler", $r9);
+
+     label14:
+        if r28 == null goto label16;
+
+     label15:
+        interfaceinvoke r28.<android.database.Cursor: void close()>();
+
+     label16:
+        goto label24;
+
+     label17:
+        if r28 == null goto label22;
+
+     label18:
+        interfaceinvoke r28.<android.database.Cursor: void close()>();
+
+     label19:
+        goto label22;
+
+     label20:
+        $r17 := @caughtexception;
+
+     label21:
+        virtualinvoke $r18.<java.lang.Throwable: void addSuppressed(java.lang.Throwable)>($r17);
+
+     label22:
+        throw $r18;
+
+     label23:
+        $r12 := @caughtexception;
+
+        $r13 = new java.lang.StringBuilder;
+
+        specialinvoke $r13.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Error encountered on APN query for: ");
+
+        virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r16 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("GnssNetworkConnectivityHandler", $r16, $r12);
+
+     label24:
+        return 3;
+
+        catch java.lang.Exception from label06 to label07 with label23;
+        catch java.lang.Throwable from label08 to label09 with label12;
+        catch java.lang.Exception from label10 to label11 with label23;
+        catch java.lang.Throwable from label13 to label14 with label12;
+        catch java.lang.Exception from label15 to label16 with label23;
+        catch java.lang.Throwable from label18 to label19 with label20;
+        catch java.lang.Exception from label21 to label22 with label23;
+        catch java.lang.Exception from label22 to label23 with label23;
+    }
+
+    private int getNetworkCapability(int)
+    {
+        com.android.server.location.gnss.GnssNetworkConnectivityHandler r0;
+        int i0;
+        java.lang.StringBuilder $r2;
+        java.lang.IllegalArgumentException $r5;
+        java.lang.String $r6;
+
+        r0 := @this: com.android.server.location.gnss.GnssNetworkConnectivityHandler;
+
+        i0 := @parameter0: int;
+
+        if i0 == 1 goto label3;
+
+        if i0 == 2 goto label3;
+
+        if i0 == 3 goto label2;
+
+        if i0 != 4 goto label1;
+
+        return 4;
+
+     label1:
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("agpsType: ");
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r5 = new java.lang.IllegalArgumentException;
+
+        $r6 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r5.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>($r6);
+
+        throw $r5;
+
+     label2:
+        return 10;
+
+     label3:
+        return 1;
+    }
+
+    private void handleReleaseSuplConnection(int)
+    {
+        com.android.server.location.gnss.GnssNetworkConnectivityHandler r0;
+        int i0, $i1;
+        boolean $z0;
+        android.net.ConnectivityManager$NetworkCallback $r2;
+        android.net.ConnectivityManager $r3;
+        java.lang.StringBuilder $r4;
+        java.lang.String $r7, $r9, $r10, $r11;
+        java.lang.Object[] $r8;
+
+        r0 := @this: com.android.server.location.gnss.GnssNetworkConnectivityHandler;
+
+        i0 := @parameter0: int;
+
+        $z0 = <com.android.server.location.gnss.GnssNetworkConnectivityHandler: boolean DEBUG>;
+
+        if $z0 == 0 goto label1;
+
+        $r8 = newarray (java.lang.Object)[2];
+
+        $r9 = specialinvoke r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: java.lang.String agpsDataConnStateAsString()>();
+
+        $r8[0] = $r9;
+
+        $r10 = specialinvoke r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: java.lang.String agpsDataConnStatusAsString(int)>(i0);
+
+        $r8[1] = $r10;
+
+        $r11 = staticinvoke <java.lang.String: java.lang.String format(java.lang.String,java.lang.Object[])>("releaseSuplConnection, state=%s, status=%s", $r8);
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("GnssNetworkConnectivityHandler", $r11);
+
+     label1:
+        $i1 = r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: int mAGpsDataConnectionState>;
+
+        if $i1 != 0 goto label2;
+
+        return;
+
+     label2:
+        r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: int mAGpsDataConnectionState> = 0;
+
+        $r3 = r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: android.net.ConnectivityManager mConnMgr>;
+
+        $r2 = r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: android.net.ConnectivityManager$NetworkCallback mSuplConnectivityCallback>;
+
+        virtualinvoke $r3.<android.net.ConnectivityManager: void unregisterNetworkCallback(android.net.ConnectivityManager$NetworkCallback)>($r2);
+
+        if i0 == 2 goto label4;
+
+        if i0 == 5 goto label3;
+
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Invalid status to release SUPL connection: ");
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        $r7 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>("GnssNetworkConnectivityHandler", $r7);
+
+        goto label5;
+
+     label3:
+        specialinvoke r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: void native_agps_data_conn_failed()>();
+
+        goto label5;
+
+     label4:
+        specialinvoke r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: void native_agps_data_conn_closed()>();
+
+     label5:
+        return;
+    }
+
+    private void handleRequestSuplConnection(int, byte[])
+    {
+        com.android.server.location.gnss.GnssNetworkConnectivityHandler r0;
+        int i0, $i1, $i2, $i3, $i4, $i5, $i6;
+        android.net.NetworkRequest$Builder $r2;
+        com.android.internal.location.GpsNetInitiatedHandler $r5;
+        boolean $z0, $z1, $z2, $z3, $z4;
+        java.lang.String $r6, $r10, $r12, $r14, $r15, $r17, $r22, $r25, $r27, $r32;
+        java.lang.StringBuilder $r8, $r23, $r29, r35;
+        java.lang.Object[] $r13;
+        java.net.InetAddress $r16, $r18, $r20;
+        java.lang.Throwable $r28;
+        byte[] r33;
+        android.net.NetworkRequest r39;
+        android.net.ConnectivityManager $r40;
+        android.net.ConnectivityManager$NetworkCallback $r41;
+        android.os.Handler $r42;
+
+        r0 := @this: com.android.server.location.gnss.GnssNetworkConnectivityHandler;
+
+        i0 := @parameter0: int;
+
+        r33 := @parameter1: byte[];
+
+        r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: java.net.InetAddress mAGpsDataConnectionIpAddr> = null;
+
+        r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: int mAGpsType> = i0;
+
+        if r33 == null goto label4;
+
+        $z2 = <com.android.server.location.gnss.GnssNetworkConnectivityHandler: boolean VERBOSE>;
+
+        if $z2 == 0 goto label1;
+
+        $r23 = new java.lang.StringBuilder;
+
+        specialinvoke $r23.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r23.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Received SUPL IP addr[]: ");
+
+        $r25 = staticinvoke <java.util.Arrays: java.lang.String toString(byte[])>(r33);
+
+        virtualinvoke $r23.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r25);
+
+        $r27 = virtualinvoke $r23.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int v(java.lang.String,java.lang.String)>("GnssNetworkConnectivityHandler", $r27);
+
+     label1:
+        $r18 = staticinvoke <java.net.InetAddress: java.net.InetAddress getByAddress(byte[])>(r33);
+
+        r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: java.net.InetAddress mAGpsDataConnectionIpAddr> = $r18;
+
+        $z3 = <com.android.server.location.gnss.GnssNetworkConnectivityHandler: boolean DEBUG>;
+
+        if $z3 == 0 goto label2;
+
+        r35 = new java.lang.StringBuilder;
+
+        specialinvoke r35.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r35.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("IP address converted to: ");
+
+        $r20 = r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: java.net.InetAddress mAGpsDataConnectionIpAddr>;
+
+        virtualinvoke r35.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r20);
+
+        $r22 = virtualinvoke r35.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("GnssNetworkConnectivityHandler", $r22);
+
+     label2:
+        goto label4;
+
+     label3:
+        $r28 := @caughtexception;
+
+        $r29 = new java.lang.StringBuilder;
+
+        specialinvoke $r29.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r29.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Bad IP Address: ");
+
+        virtualinvoke $r29.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r33);
+
+        $r32 = virtualinvoke $r29.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("GnssNetworkConnectivityHandler", $r32, $r28);
+
+     label4:
+        $z4 = <com.android.server.location.gnss.GnssNetworkConnectivityHandler: boolean DEBUG>;
+
+        if $z4 == 0 goto label5;
+
+        $r13 = newarray (java.lang.Object)[3];
+
+        $r14 = specialinvoke r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: java.lang.String agpsDataConnStateAsString()>();
+
+        $r13[0] = $r14;
+
+        $r15 = specialinvoke r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: java.lang.String agpsTypeAsString(int)>(i0);
+
+        $r13[1] = $r15;
+
+        $r16 = r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: java.net.InetAddress mAGpsDataConnectionIpAddr>;
+
+        $r13[2] = $r16;
+
+        $r17 = staticinvoke <java.lang.String: java.lang.String format(java.lang.String,java.lang.Object[])>("requestSuplConnection, state=%s, agpsType=%s, address=%s", $r13);
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("GnssNetworkConnectivityHandler", $r17);
+
+     label5:
+        $i1 = r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: int mAGpsDataConnectionState>;
+
+        if $i1 == 0 goto label6;
+
+        return;
+
+     label6:
+        r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: int mAGpsDataConnectionState> = 1;
+
+        $r2 = new android.net.NetworkRequest$Builder;
+
+        specialinvoke $r2.<android.net.NetworkRequest$Builder: void <init>()>();
+
+        $i2 = r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: int mAGpsType>;
+
+        $i3 = specialinvoke r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: int getNetworkCapability(int)>($i2);
+
+        virtualinvoke $r2.<android.net.NetworkRequest$Builder: android.net.NetworkRequest$Builder addCapability(int)>($i3);
+
+        virtualinvoke $r2.<android.net.NetworkRequest$Builder: android.net.NetworkRequest$Builder addTransportType(int)>(0);
+
+        $r5 = r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: com.android.internal.location.GpsNetInitiatedHandler mNiHandler>;
+
+        $z0 = virtualinvoke $r5.<com.android.internal.location.GpsNetInitiatedHandler: boolean getInEmergency()>();
+
+        if $z0 == 0 goto label8;
+
+        $i4 = r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: int mActiveSubId>;
+
+        if $i4 < 0 goto label8;
+
+        $z1 = <com.android.server.location.gnss.GnssNetworkConnectivityHandler: boolean DEBUG>;
+
+        if $z1 == 0 goto label7;
+
+        $r8 = new java.lang.StringBuilder;
+
+        specialinvoke $r8.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Adding Network Specifier: ");
+
+        $i6 = r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: int mActiveSubId>;
+
+        $r10 = staticinvoke <java.lang.Integer: java.lang.String toString(int)>($i6);
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r10);
+
+        $r12 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("GnssNetworkConnectivityHandler", $r12);
+
+     label7:
+        $i5 = r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: int mActiveSubId>;
+
+        $r6 = staticinvoke <java.lang.Integer: java.lang.String toString(int)>($i5);
+
+        virtualinvoke $r2.<android.net.NetworkRequest$Builder: android.net.NetworkRequest$Builder setNetworkSpecifier(java.lang.String)>($r6);
+
+     label8:
+        r39 = virtualinvoke $r2.<android.net.NetworkRequest$Builder: android.net.NetworkRequest build()>();
+
+        $r40 = r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: android.net.ConnectivityManager mConnMgr>;
+
+        $r41 = r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: android.net.ConnectivityManager$NetworkCallback mSuplConnectivityCallback>;
+
+        $r42 = r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: android.os.Handler mHandler>;
+
+        virtualinvoke $r40.<android.net.ConnectivityManager: void requestNetwork(android.net.NetworkRequest,android.net.ConnectivityManager$NetworkCallback,android.os.Handler,int)>(r39, $r41, $r42, 10000);
+
+        return;
+
+        catch java.net.UnknownHostException from label1 to label2 with label3;
+    }
+
+    private void handleSuplConnectionAvailable(android.net.Network)
+    {
+        com.android.server.location.gnss.GnssNetworkConnectivityHandler r0;
+        android.net.Network r1;
+        int i0, $i1;
+        android.net.ConnectivityManager $r2;
+        boolean $z0, $z1;
+        java.net.InetAddress $r3;
+        long $l2;
+        java.lang.Object[] $r4, $r7;
+        java.lang.Integer $r5;
+        java.lang.String $r6, $r8, $r9, r11, r12;
+        android.net.NetworkInfo r10;
+
+        r0 := @this: com.android.server.location.gnss.GnssNetworkConnectivityHandler;
+
+        r1 := @parameter0: android.net.Network;
+
+        $r2 = r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: android.net.ConnectivityManager mConnMgr>;
+
+        r10 = virtualinvoke $r2.<android.net.ConnectivityManager: android.net.NetworkInfo getNetworkInfo(android.net.Network)>(r1);
+
+        r11 = null;
+
+        if r10 == null goto label1;
+
+        r11 = virtualinvoke r10.<android.net.NetworkInfo: java.lang.String getExtraInfo()>();
+
+     label1:
+        $z0 = <com.android.server.location.gnss.GnssNetworkConnectivityHandler: boolean DEBUG>;
+
+        if $z0 == 0 goto label2;
+
+        $r7 = newarray (java.lang.Object)[3];
+
+        $r8 = specialinvoke r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: java.lang.String agpsDataConnStateAsString()>();
+
+        $r7[0] = $r8;
+
+        $r7[1] = r1;
+
+        $r7[2] = r10;
+
+        $r9 = staticinvoke <java.lang.String: java.lang.String format(java.lang.String,java.lang.Object[])>("handleSuplConnectionAvailable: state=%s, suplNetwork=%s, info=%s", $r7);
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("GnssNetworkConnectivityHandler", $r9);
+
+     label2:
+        $i1 = r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: int mAGpsDataConnectionState>;
+
+        if $i1 != 1 goto label6;
+
+        r12 = r11;
+
+        if r11 != null goto label3;
+
+        r12 = "dummy-apn";
+
+     label3:
+        $r3 = r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: java.net.InetAddress mAGpsDataConnectionIpAddr>;
+
+        if $r3 == null goto label4;
+
+        specialinvoke r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: void setRouting()>();
+
+     label4:
+        i0 = specialinvoke r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: int getApnIpType(java.lang.String)>(r12);
+
+        $z1 = <com.android.server.location.gnss.GnssNetworkConnectivityHandler: boolean DEBUG>;
+
+        if $z1 == 0 goto label5;
+
+        $r4 = newarray (java.lang.Object)[2];
+
+        $r4[0] = r12;
+
+        $r5 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(i0);
+
+        $r4[1] = $r5;
+
+        $r6 = staticinvoke <java.lang.String: java.lang.String format(java.lang.String,java.lang.Object[])>("native_agps_data_conn_open: mAgpsApn=%s, mApnIpType=%s", $r4);
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("GnssNetworkConnectivityHandler", $r6);
+
+     label5:
+        $l2 = virtualinvoke r1.<android.net.Network: long getNetworkHandle()>();
+
+        specialinvoke r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: void native_agps_data_conn_open(long,java.lang.String,int)>($l2, r12, i0);
+
+        r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: int mAGpsDataConnectionState> = 2;
+
+     label6:
+        return;
+    }
+
+    private void handleUpdateNetworkState(android.net.Network, boolean, android.net.NetworkCapabilities)
+    {
+        com.android.server.location.gnss.GnssNetworkConnectivityHandler r0;
+        android.net.Network r1;
+        boolean z0, z1, $z2, $z3, $z4, $z5, z6;
+        int i0, $i1;
+        android.content.Context $r2;
+        java.lang.Object $r3;
+        java.lang.Object[] $r4;
+        java.lang.String $r5, $r9, r13;
+        java.lang.Boolean $r6;
+        java.util.HashMap $r7;
+        java.lang.Integer $r8;
+        long $l4;
+        short $s5;
+        android.net.NetworkCapabilities r10, r14;
+        android.telephony.TelephonyManager r11;
+        com.android.server.location.gnss.GnssNetworkConnectivityHandler$NetworkAttributes r12;
+
+        r0 := @this: com.android.server.location.gnss.GnssNetworkConnectivityHandler;
+
+        r1 := @parameter0: android.net.Network;
+
+        z0 := @parameter1: boolean;
+
+        r10 := @parameter2: android.net.NetworkCapabilities;
+
+        $r2 = r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: android.content.Context mContext>;
+
+        $r3 = virtualinvoke $r2.<android.content.Context: java.lang.Object getSystemService(java.lang.Class)>(class "Landroid/telephony/TelephonyManager;");
+
+        r11 = (android.telephony.TelephonyManager) $r3;
+
+        if r11 == null goto label3;
+
+        if z0 == 0 goto label1;
+
+        $z5 = virtualinvoke r11.<android.telephony.TelephonyManager: boolean getDataEnabled()>();
+
+        if $z5 == 0 goto label1;
+
+        z6 = 1;
+
+        goto label2;
+
+     label1:
+        z6 = 0;
+
+     label2:
+        goto label4;
+
+     label3:
+        z6 = 0;
+
+     label4:
+        r12 = specialinvoke r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: com.android.server.location.gnss.GnssNetworkConnectivityHandler$NetworkAttributes updateTrackedNetworksState(boolean,android.net.Network,android.net.NetworkCapabilities)>(z0, r1, r10);
+
+        r13 = staticinvoke <com.android.server.location.gnss.GnssNetworkConnectivityHandler$NetworkAttributes: java.lang.String access$1000(com.android.server.location.gnss.GnssNetworkConnectivityHandler$NetworkAttributes)>(r12);
+
+        i0 = staticinvoke <com.android.server.location.gnss.GnssNetworkConnectivityHandler$NetworkAttributes: int access$1100(com.android.server.location.gnss.GnssNetworkConnectivityHandler$NetworkAttributes)>(r12);
+
+        r14 = staticinvoke <com.android.server.location.gnss.GnssNetworkConnectivityHandler$NetworkAttributes: android.net.NetworkCapabilities access$1200(com.android.server.location.gnss.GnssNetworkConnectivityHandler$NetworkAttributes)>(r12);
+
+        $r4 = newarray (java.lang.Object)[6];
+
+        $r5 = specialinvoke r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: java.lang.String agpsDataConnStateAsString()>();
+
+        $r4[0] = $r5;
+
+        $r6 = staticinvoke <java.lang.Boolean: java.lang.Boolean valueOf(boolean)>(z0);
+
+        $r4[1] = $r6;
+
+        $r4[2] = r1;
+
+        $r4[3] = r14;
+
+        $r4[4] = r13;
+
+        $r7 = r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: java.util.HashMap mAvailableNetworkAttributes>;
+
+        $i1 = virtualinvoke $r7.<java.util.HashMap: int size()>();
+
+        $r8 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i1);
+
+        $r4[5] = $r8;
+
+        $r9 = staticinvoke <java.lang.String: java.lang.String format(java.lang.String,java.lang.Object[])>("updateNetworkState, state=%s, connected=%s, network=%s, capabilities=%s, apn: %s, availableNetworkCount: %d", $r4);
+
+        staticinvoke <android.util.Log: int i(java.lang.String,java.lang.String)>("GnssNetworkConnectivityHandler", $r9);
+
+        $z2 = staticinvoke <com.android.server.location.gnss.GnssNetworkConnectivityHandler: boolean native_is_agps_ril_supported()>();
+
+        if $z2 == 0 goto label7;
+
+        z1 = virtualinvoke r14.<android.net.NetworkCapabilities: boolean hasTransport(int)>(18);
+
+        if r13 == null goto label5;
+
+        goto label6;
+
+     label5:
+        r13 = "";
+
+     label6:
+        $z4 = z1 ^ 1;
+
+        $l4 = virtualinvoke r1.<android.net.Network: long getNetworkHandle()>();
+
+        $s5 = staticinvoke <com.android.server.location.gnss.GnssNetworkConnectivityHandler$NetworkAttributes: short access$1300(android.net.NetworkCapabilities)>(r14);
+
+        specialinvoke r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: void native_update_network_state(boolean,int,boolean,boolean,java.lang.String,long,short)>(z0, i0, $z4, z6, r13, $l4, $s5);
+
+        goto label8;
+
+     label7:
+        $z3 = <com.android.server.location.gnss.GnssNetworkConnectivityHandler: boolean DEBUG>;
+
+        if $z3 == 0 goto label8;
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("GnssNetworkConnectivityHandler", "Skipped network state update because GPS HAL AGPS-RIL is not  supported");
+
+     label8:
+        return;
+    }
+
+    private native void native_agps_data_conn_closed();
+
+    private native void native_agps_data_conn_failed();
+
+    private native void native_agps_data_conn_open(long, java.lang.String, int);
+
+    private static native boolean native_is_agps_ril_supported();
+
+    private native void native_update_network_state(boolean, int, boolean, boolean, java.lang.String, long, short);
+
+    private java.lang.Runnable runEventAndReleaseWakeLock(java.lang.Runnable)
+    {
+        com.android.server.location.gnss.GnssNetworkConnectivityHandler r0;
+        java.lang.Runnable r1;
+        com.android.server.location.gnss._$$Lambda$GnssNetworkConnectivityHandler$ezDFQHbzZ9WnxJSpYWB6YP4YDQM $r2;
+
+        r0 := @this: com.android.server.location.gnss.GnssNetworkConnectivityHandler;
+
+        r1 := @parameter0: java.lang.Runnable;
+
+        $r2 = new com.android.server.location.gnss._$$Lambda$GnssNetworkConnectivityHandler$ezDFQHbzZ9WnxJSpYWB6YP4YDQM;
+
+        specialinvoke $r2.<com.android.server.location.gnss._$$Lambda$GnssNetworkConnectivityHandler$ezDFQHbzZ9WnxJSpYWB6YP4YDQM: void <init>(com.android.server.location.gnss.GnssNetworkConnectivityHandler,java.lang.Runnable)>(r0, r1);
+
+        return $r2;
+    }
+
+    private void runOnHandler(java.lang.Runnable)
+    {
+        com.android.server.location.gnss.GnssNetworkConnectivityHandler r0;
+        java.lang.Runnable r1, $r4;
+        android.os.PowerManager$WakeLock $r2, $r5;
+        android.os.Handler $r3;
+        boolean $z0;
+
+        r0 := @this: com.android.server.location.gnss.GnssNetworkConnectivityHandler;
+
+        r1 := @parameter0: java.lang.Runnable;
+
+        $r2 = r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: android.os.PowerManager$WakeLock mWakeLock>;
+
+        virtualinvoke $r2.<android.os.PowerManager$WakeLock: void acquire(long)>(60000L);
+
+        $r3 = r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: android.os.Handler mHandler>;
+
+        $r4 = specialinvoke r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: java.lang.Runnable runEventAndReleaseWakeLock(java.lang.Runnable)>(r1);
+
+        $z0 = virtualinvoke $r3.<android.os.Handler: boolean post(java.lang.Runnable)>($r4);
+
+        if $z0 != 0 goto label1;
+
+        $r5 = r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: android.os.PowerManager$WakeLock mWakeLock>;
+
+        virtualinvoke $r5.<android.os.PowerManager$WakeLock: void release()>();
+
+     label1:
+        return;
+    }
+
+    private void setRouting()
+    {
+        com.android.server.location.gnss.GnssNetworkConnectivityHandler r0;
+        java.net.InetAddress $r1, $r5, $r10;
+        android.net.ConnectivityManager $r2;
+        boolean $z0, $z1;
+        java.lang.StringBuilder $r3, $r8;
+        java.lang.String $r7, $r12;
+
+        r0 := @this: com.android.server.location.gnss.GnssNetworkConnectivityHandler;
+
+        $r2 = r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: android.net.ConnectivityManager mConnMgr>;
+
+        $r1 = r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: java.net.InetAddress mAGpsDataConnectionIpAddr>;
+
+        $z0 = virtualinvoke $r2.<android.net.ConnectivityManager: boolean requestRouteToHostAddress(int,java.net.InetAddress)>(3, $r1);
+
+        if $z0 != 0 goto label1;
+
+        $r8 = new java.lang.StringBuilder;
+
+        specialinvoke $r8.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Error requesting route to host: ");
+
+        $r10 = r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: java.net.InetAddress mAGpsDataConnectionIpAddr>;
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r10);
+
+        $r12 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>("GnssNetworkConnectivityHandler", $r12);
+
+        goto label2;
+
+     label1:
+        $z1 = <com.android.server.location.gnss.GnssNetworkConnectivityHandler: boolean DEBUG>;
+
+        if $z1 == 0 goto label2;
+
+        $r3 = new java.lang.StringBuilder;
+
+        specialinvoke $r3.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Successfully requested route to host: ");
+
+        $r5 = r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: java.net.InetAddress mAGpsDataConnectionIpAddr>;
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r5);
+
+        $r7 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("GnssNetworkConnectivityHandler", $r7);
+
+     label2:
+        return;
+    }
+
+    private int translateToApnIpType(java.lang.String, java.lang.String)
+    {
+        com.android.server.location.gnss.GnssNetworkConnectivityHandler r0;
+        java.lang.String r1, r2, $r3, $r4, $r5, $r7;
+        boolean $z0, $z1, $z2;
+        java.lang.Object[] $r6;
+
+        r0 := @this: com.android.server.location.gnss.GnssNetworkConnectivityHandler;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 := @parameter1: java.lang.String;
+
+        $r3 = "IP";
+
+        $z0 = virtualinvoke $r3.<java.lang.String: boolean equals(java.lang.Object)>(r1);
+
+        if $z0 == 0 goto label1;
+
+        return 1;
+
+     label1:
+        $r4 = "IPV6";
+
+        $z1 = virtualinvoke $r4.<java.lang.String: boolean equals(java.lang.Object)>(r1);
+
+        if $z1 == 0 goto label2;
+
+        return 2;
+
+     label2:
+        $r5 = "IPV4V6";
+
+        $z2 = virtualinvoke $r5.<java.lang.String: boolean equals(java.lang.Object)>(r1);
+
+        if $z2 == 0 goto label3;
+
+        return 3;
+
+     label3:
+        $r6 = newarray (java.lang.Object)[2];
+
+        $r6[0] = r1;
+
+        $r6[1] = r2;
+
+        $r7 = staticinvoke <java.lang.String: java.lang.String format(java.lang.String,java.lang.Object[])>("Unknown IP Protocol: %s, for APN: %s", $r6);
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>("GnssNetworkConnectivityHandler", $r7);
+
+        return 3;
+    }
+
+    private com.android.server.location.gnss.GnssNetworkConnectivityHandler$NetworkAttributes updateTrackedNetworksState(boolean, android.net.Network, android.net.NetworkCapabilities)
+    {
+        com.android.server.location.gnss.GnssNetworkConnectivityHandler r0;
+        boolean z0;
+        android.net.Network r1;
+        java.util.HashMap $r2, $r7, $r12;
+        java.lang.Object $r3, $r13;
+        com.android.server.location.gnss.GnssNetworkConnectivityHandler$NetworkAttributes $r4, $r14, r16;
+        android.net.ConnectivityManager $r6;
+        java.lang.String $r9;
+        int $i0;
+        android.net.NetworkCapabilities r15;
+        android.net.NetworkInfo r18;
+
+        r0 := @this: com.android.server.location.gnss.GnssNetworkConnectivityHandler;
+
+        z0 := @parameter0: boolean;
+
+        r1 := @parameter1: android.net.Network;
+
+        r15 := @parameter2: android.net.NetworkCapabilities;
+
+        if z0 != 0 goto label1;
+
+        $r12 = r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: java.util.HashMap mAvailableNetworkAttributes>;
+
+        $r13 = virtualinvoke $r12.<java.util.HashMap: java.lang.Object remove(java.lang.Object)>(r1);
+
+        $r14 = (com.android.server.location.gnss.GnssNetworkConnectivityHandler$NetworkAttributes) $r13;
+
+        return $r14;
+
+     label1:
+        $r2 = r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: java.util.HashMap mAvailableNetworkAttributes>;
+
+        $r3 = virtualinvoke $r2.<java.util.HashMap: java.lang.Object get(java.lang.Object)>(r1);
+
+        r16 = (com.android.server.location.gnss.GnssNetworkConnectivityHandler$NetworkAttributes) $r3;
+
+        if r16 == null goto label2;
+
+        staticinvoke <com.android.server.location.gnss.GnssNetworkConnectivityHandler$NetworkAttributes: android.net.NetworkCapabilities access$1202(com.android.server.location.gnss.GnssNetworkConnectivityHandler$NetworkAttributes,android.net.NetworkCapabilities)>(r16, r15);
+
+        return r16;
+
+     label2:
+        $r4 = new com.android.server.location.gnss.GnssNetworkConnectivityHandler$NetworkAttributes;
+
+        specialinvoke $r4.<com.android.server.location.gnss.GnssNetworkConnectivityHandler$NetworkAttributes: void <init>(com.android.server.location.gnss.GnssNetworkConnectivityHandler$1)>(null);
+
+        staticinvoke <com.android.server.location.gnss.GnssNetworkConnectivityHandler$NetworkAttributes: android.net.NetworkCapabilities access$1202(com.android.server.location.gnss.GnssNetworkConnectivityHandler$NetworkAttributes,android.net.NetworkCapabilities)>($r4, r15);
+
+        $r6 = r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: android.net.ConnectivityManager mConnMgr>;
+
+        r18 = virtualinvoke $r6.<android.net.ConnectivityManager: android.net.NetworkInfo getNetworkInfo(android.net.Network)>(r1);
+
+        if r18 == null goto label3;
+
+        $r9 = virtualinvoke r18.<android.net.NetworkInfo: java.lang.String getExtraInfo()>();
+
+        staticinvoke <com.android.server.location.gnss.GnssNetworkConnectivityHandler$NetworkAttributes: java.lang.String access$1002(com.android.server.location.gnss.GnssNetworkConnectivityHandler$NetworkAttributes,java.lang.String)>($r4, $r9);
+
+        $i0 = virtualinvoke r18.<android.net.NetworkInfo: int getType()>();
+
+        staticinvoke <com.android.server.location.gnss.GnssNetworkConnectivityHandler$NetworkAttributes: int access$1102(com.android.server.location.gnss.GnssNetworkConnectivityHandler$NetworkAttributes,int)>($r4, $i0);
+
+     label3:
+        $r7 = r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: java.util.HashMap mAvailableNetworkAttributes>;
+
+        virtualinvoke $r7.<java.util.HashMap: java.lang.Object put(java.lang.Object,java.lang.Object)>(r1, $r4);
+
+        return $r4;
+    }
+
+    boolean isDataNetworkConnected()
+    {
+        com.android.server.location.gnss.GnssNetworkConnectivityHandler r0;
+        android.net.NetworkInfo r1;
+        android.net.ConnectivityManager $r2;
+        boolean $z0, z1;
+
+        r0 := @this: com.android.server.location.gnss.GnssNetworkConnectivityHandler;
+
+        $r2 = r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: android.net.ConnectivityManager mConnMgr>;
+
+        r1 = virtualinvoke $r2.<android.net.ConnectivityManager: android.net.NetworkInfo getActiveNetworkInfo()>();
+
+        if r1 == null goto label1;
+
+        $z0 = virtualinvoke r1.<android.net.NetworkInfo: boolean isConnected()>();
+
+        if $z0 == 0 goto label1;
+
+        z1 = 1;
+
+        goto label2;
+
+     label1:
+        z1 = 0;
+
+     label2:
+        return z1;
+    }
+
+    public void lambda$onReportAGpsStatus$0$GnssNetworkConnectivityHandler(int, byte[])
+    {
+        com.android.server.location.gnss.GnssNetworkConnectivityHandler r0;
+        int i0;
+        byte[] r1;
+
+        r0 := @this: com.android.server.location.gnss.GnssNetworkConnectivityHandler;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: byte[];
+
+        specialinvoke r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: void handleRequestSuplConnection(int,byte[])>(i0, r1);
+
+        return;
+    }
+
+    public void lambda$onReportAGpsStatus$1$GnssNetworkConnectivityHandler()
+    {
+        com.android.server.location.gnss.GnssNetworkConnectivityHandler r0;
+
+        r0 := @this: com.android.server.location.gnss.GnssNetworkConnectivityHandler;
+
+        specialinvoke r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: void handleReleaseSuplConnection(int)>(2);
+
+        return;
+    }
+
+    public void lambda$runEventAndReleaseWakeLock$2$GnssNetworkConnectivityHandler(java.lang.Runnable)
+    {
+        com.android.server.location.gnss.GnssNetworkConnectivityHandler r0;
+        android.os.PowerManager$WakeLock $r1, $r3;
+        java.lang.Throwable $r2;
+        java.lang.Runnable r4;
+
+        r0 := @this: com.android.server.location.gnss.GnssNetworkConnectivityHandler;
+
+        r4 := @parameter0: java.lang.Runnable;
+
+     label1:
+        interfaceinvoke r4.<java.lang.Runnable: void run()>();
+
+     label2:
+        $r1 = r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: android.os.PowerManager$WakeLock mWakeLock>;
+
+        virtualinvoke $r1.<android.os.PowerManager$WakeLock: void release()>();
+
+        return;
+
+     label3:
+        $r2 := @caughtexception;
+
+        $r3 = r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: android.os.PowerManager$WakeLock mWakeLock>;
+
+        virtualinvoke $r3.<android.os.PowerManager$WakeLock: void release()>();
+
+        throw $r2;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+    }
+
+    void onReportAGpsStatus(int, int, byte[])
+    {
+        com.android.server.location.gnss.GnssNetworkConnectivityHandler r0;
+        int i0, i1;
+        boolean $z0;
+        com.android.server.location.gnss._$$Lambda$GnssNetworkConnectivityHandler$bnc6RM72T8jpSxM08ugCgEMySwo $r2;
+        com.android.server.location.gnss._$$Lambda$GnssNetworkConnectivityHandler$M5xHE3b_460ydxe6w6OcvDX9Kx8 $r3;
+        java.lang.StringBuilder $r4, $r8;
+        java.lang.String $r7, $r10, $r12;
+        byte[] r13;
+
+        r0 := @this: com.android.server.location.gnss.GnssNetworkConnectivityHandler;
+
+        i0 := @parameter0: int;
+
+        i1 := @parameter1: int;
+
+        r13 := @parameter2: byte[];
+
+        $z0 = <com.android.server.location.gnss.GnssNetworkConnectivityHandler: boolean DEBUG>;
+
+        if $z0 == 0 goto label1;
+
+        $r8 = new java.lang.StringBuilder;
+
+        specialinvoke $r8.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("AGPS_DATA_CONNECTION: ");
+
+        $r10 = specialinvoke r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: java.lang.String agpsDataConnStatusAsString(int)>(i1);
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r10);
+
+        $r12 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("GnssNetworkConnectivityHandler", $r12);
+
+     label1:
+        if i1 == 1 goto label4;
+
+        if i1 == 2 goto label3;
+
+        if i1 == 3 goto label2;
+
+        if i1 == 4 goto label2;
+
+        if i1 == 5 goto label2;
+
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Received unknown AGPS status: ");
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i1);
+
+        $r7 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("GnssNetworkConnectivityHandler", $r7);
+
+        goto label5;
+
+     label2:
+        goto label5;
+
+     label3:
+        $r3 = new com.android.server.location.gnss._$$Lambda$GnssNetworkConnectivityHandler$M5xHE3b_460ydxe6w6OcvDX9Kx8;
+
+        specialinvoke $r3.<com.android.server.location.gnss._$$Lambda$GnssNetworkConnectivityHandler$M5xHE3b_460ydxe6w6OcvDX9Kx8: void <init>(com.android.server.location.gnss.GnssNetworkConnectivityHandler)>(r0);
+
+        specialinvoke r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: void runOnHandler(java.lang.Runnable)>($r3);
+
+        goto label5;
+
+     label4:
+        $r2 = new com.android.server.location.gnss._$$Lambda$GnssNetworkConnectivityHandler$bnc6RM72T8jpSxM08ugCgEMySwo;
+
+        specialinvoke $r2.<com.android.server.location.gnss._$$Lambda$GnssNetworkConnectivityHandler$bnc6RM72T8jpSxM08ugCgEMySwo: void <init>(com.android.server.location.gnss.GnssNetworkConnectivityHandler,int,byte[])>(r0, i0, r13);
+
+        specialinvoke r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: void runOnHandler(java.lang.Runnable)>($r2);
+
+     label5:
+        return;
+    }
+
+    void registerNetworkCallbacks()
+    {
+        com.android.server.location.gnss.GnssNetworkConnectivityHandler r0;
+        android.net.NetworkRequest r1;
+        android.net.NetworkRequest$Builder $r2;
+        android.os.Handler $r6;
+        android.net.ConnectivityManager $r7;
+        android.net.ConnectivityManager$NetworkCallback r9;
+
+        r0 := @this: com.android.server.location.gnss.GnssNetworkConnectivityHandler;
+
+        $r2 = new android.net.NetworkRequest$Builder;
+
+        specialinvoke $r2.<android.net.NetworkRequest$Builder: void <init>()>();
+
+        virtualinvoke $r2.<android.net.NetworkRequest$Builder: android.net.NetworkRequest$Builder addCapability(int)>(12);
+
+        virtualinvoke $r2.<android.net.NetworkRequest$Builder: android.net.NetworkRequest$Builder addCapability(int)>(16);
+
+        virtualinvoke $r2.<android.net.NetworkRequest$Builder: android.net.NetworkRequest$Builder removeCapability(int)>(15);
+
+        r1 = virtualinvoke $r2.<android.net.NetworkRequest$Builder: android.net.NetworkRequest build()>();
+
+        r9 = specialinvoke r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: android.net.ConnectivityManager$NetworkCallback createNetworkConnectivityCallback()>();
+
+        r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: android.net.ConnectivityManager$NetworkCallback mNetworkConnectivityCallback> = r9;
+
+        $r7 = r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: android.net.ConnectivityManager mConnMgr>;
+
+        $r6 = r0.<com.android.server.location.gnss.GnssNetworkConnectivityHandler: android.os.Handler mHandler>;
+
+        virtualinvoke $r7.<android.net.ConnectivityManager: void registerNetworkCallback(android.net.NetworkRequest,android.net.ConnectivityManager$NetworkCallback,android.os.Handler)>(r1, r9, $r6);
+
+        return;
+    }
+}

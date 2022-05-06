@@ -1,0 +1,378 @@
+public class android.net.netlink.NetlinkSocket extends java.lang.Object
+{
+    public static final int DEFAULT_RECV_BUFSIZE;
+    public static final int SOCKET_RECV_BUFSIZE;
+    private static final java.lang.String TAG;
+
+    public void <init>()
+    {
+        android.net.netlink.NetlinkSocket r0;
+
+        r0 := @this: android.net.netlink.NetlinkSocket;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        return;
+    }
+
+    private static void checkTimeout(long)
+    {
+        long l0;
+        byte $b1;
+        java.lang.IllegalArgumentException $r0;
+
+        l0 := @parameter0: long;
+
+        $b1 = l0 cmp 0L;
+
+        if $b1 < 0 goto label1;
+
+        return;
+
+     label1:
+        $r0 = new java.lang.IllegalArgumentException;
+
+        specialinvoke $r0.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>("Negative timeouts not permitted");
+
+        throw $r0;
+    }
+
+    public static void connectToKernel(java.io.FileDescriptor) throws android.system.ErrnoException, java.net.SocketException
+    {
+        java.io.FileDescriptor r0;
+        java.net.SocketAddress $r1;
+
+        r0 := @parameter0: java.io.FileDescriptor;
+
+        $r1 = staticinvoke <android.net.util.SocketUtils: java.net.SocketAddress makeNetlinkSocketAddress(int,int)>(0, 0);
+
+        staticinvoke <android.system.Os: void connect(java.io.FileDescriptor,java.net.SocketAddress)>(r0, $r1);
+
+        return;
+    }
+
+    public static java.io.FileDescriptor forProto(int) throws android.system.ErrnoException
+    {
+        int i0, $i1, $i2, $i3, $i4;
+        java.io.FileDescriptor r0;
+
+        i0 := @parameter0: int;
+
+        $i2 = <android.system.OsConstants: int AF_NETLINK>;
+
+        $i1 = <android.system.OsConstants: int SOCK_DGRAM>;
+
+        r0 = staticinvoke <android.system.Os: java.io.FileDescriptor socket(int,int,int)>($i2, $i1, i0);
+
+        $i4 = <android.system.OsConstants: int SOL_SOCKET>;
+
+        $i3 = <android.system.OsConstants: int SO_RCVBUF>;
+
+        staticinvoke <android.system.Os: void setsockoptInt(java.io.FileDescriptor,int,int,int)>(r0, $i4, $i3, 65536);
+
+        return r0;
+    }
+
+    public static java.nio.ByteBuffer recvMessage(java.io.FileDescriptor, int, long) throws android.system.ErrnoException, java.lang.IllegalArgumentException, java.io.InterruptedIOException
+    {
+        java.io.FileDescriptor r0;
+        int i0, i2, $i3, $i4;
+        long l1;
+        java.nio.ByteBuffer r1;
+        android.system.StructTimeval $r2;
+        java.nio.ByteOrder $r5;
+
+        r0 := @parameter0: java.io.FileDescriptor;
+
+        i0 := @parameter1: int;
+
+        l1 := @parameter2: long;
+
+        staticinvoke <android.net.netlink.NetlinkSocket: void checkTimeout(long)>(l1);
+
+        $i3 = <android.system.OsConstants: int SOL_SOCKET>;
+
+        $i4 = <android.system.OsConstants: int SO_RCVTIMEO>;
+
+        $r2 = staticinvoke <android.system.StructTimeval: android.system.StructTimeval fromMillis(long)>(l1);
+
+        staticinvoke <android.system.Os: void setsockoptTimeval(java.io.FileDescriptor,int,int,android.system.StructTimeval)>(r0, $i3, $i4, $r2);
+
+        r1 = staticinvoke <java.nio.ByteBuffer: java.nio.ByteBuffer allocate(int)>(i0);
+
+        i2 = staticinvoke <android.system.Os: int read(java.io.FileDescriptor,java.nio.ByteBuffer)>(r0, r1);
+
+        if i2 != i0 goto label1;
+
+        staticinvoke <android.util.Log: int w(java.lang.String,java.lang.String)>("NetlinkSocket", "maximum read");
+
+     label1:
+        virtualinvoke r1.<java.nio.ByteBuffer: java.nio.Buffer position(int)>(0);
+
+        virtualinvoke r1.<java.nio.ByteBuffer: java.nio.Buffer limit(int)>(i2);
+
+        $r5 = staticinvoke <java.nio.ByteOrder: java.nio.ByteOrder nativeOrder()>();
+
+        virtualinvoke r1.<java.nio.ByteBuffer: java.nio.ByteBuffer order(java.nio.ByteOrder)>($r5);
+
+        return r1;
+    }
+
+    public static int sendMessage(java.io.FileDescriptor, byte[], int, int, long) throws android.system.ErrnoException, java.lang.IllegalArgumentException, java.io.InterruptedIOException
+    {
+        java.io.FileDescriptor r0;
+        byte[] r1;
+        int i0, i1, $i3, $i4, $i5;
+        long l2;
+        android.system.StructTimeval $r2;
+
+        r0 := @parameter0: java.io.FileDescriptor;
+
+        r1 := @parameter1: byte[];
+
+        i0 := @parameter2: int;
+
+        i1 := @parameter3: int;
+
+        l2 := @parameter4: long;
+
+        staticinvoke <android.net.netlink.NetlinkSocket: void checkTimeout(long)>(l2);
+
+        $i3 = <android.system.OsConstants: int SOL_SOCKET>;
+
+        $i4 = <android.system.OsConstants: int SO_SNDTIMEO>;
+
+        $r2 = staticinvoke <android.system.StructTimeval: android.system.StructTimeval fromMillis(long)>(l2);
+
+        staticinvoke <android.system.Os: void setsockoptTimeval(java.io.FileDescriptor,int,int,android.system.StructTimeval)>(r0, $i3, $i4, $r2);
+
+        $i5 = staticinvoke <android.system.Os: int write(java.io.FileDescriptor,byte[],int,int)>(r0, r1, i0, i1);
+
+        return $i5;
+    }
+
+    public static void sendOneShotKernelMessage(int, byte[]) throws android.system.ErrnoException
+    {
+        int $i0, $i3, $i5, $i7, $i9, i10, i11;
+        java.lang.String $r2, $r5, $r12, $r14, $r15, r29;
+        boolean $z0;
+        android.net.netlink.NetlinkErrorMessage $r7, $r9;
+        android.net.netlink.StructNlMsgErr $r8, $r10;
+        java.lang.Throwable $r16, $r17, $r18, $r19, $r20, r45, r46, r47, r48;
+        byte[] r21;
+        java.io.FileDescriptor r22;
+        java.nio.ByteBuffer r23;
+        android.net.netlink.NetlinkMessage r24;
+        java.lang.StringBuilder r38, r40, r41;
+        android.system.ErrnoException r39, r42, r43, r44;
+
+        i10 := @parameter0: int;
+
+        r21 := @parameter1: byte[];
+
+        r22 = staticinvoke <android.net.netlink.NetlinkSocket: java.io.FileDescriptor forProto(int)>(i10);
+
+     label01:
+        staticinvoke <android.net.netlink.NetlinkSocket: void connectToKernel(java.io.FileDescriptor)>(r22);
+
+        $i0 = lengthof r21;
+
+        staticinvoke <android.net.netlink.NetlinkSocket: int sendMessage(java.io.FileDescriptor,byte[],int,int,long)>(r22, r21, 0, $i0, 300L);
+
+        r23 = staticinvoke <android.net.netlink.NetlinkSocket: java.nio.ByteBuffer recvMessage(java.io.FileDescriptor,int,long)>(r22, 8192, 300L);
+
+        r24 = staticinvoke <android.net.netlink.NetlinkMessage: android.net.netlink.NetlinkMessage parse(java.nio.ByteBuffer)>(r23);
+
+     label02:
+        if r24 == null goto label10;
+
+     label03:
+        $z0 = r24 instanceof android.net.netlink.NetlinkErrorMessage;
+
+        if $z0 == 0 goto label10;
+
+        $r7 = (android.net.netlink.NetlinkErrorMessage) r24;
+
+        $r8 = virtualinvoke $r7.<android.net.netlink.NetlinkErrorMessage: android.net.netlink.StructNlMsgErr getNlMsgError()>();
+
+        if $r8 == null goto label10;
+
+        $r9 = (android.net.netlink.NetlinkErrorMessage) r24;
+
+        $r10 = virtualinvoke $r9.<android.net.netlink.NetlinkErrorMessage: android.net.netlink.StructNlMsgErr getNlMsgError()>();
+
+        i11 = $r10.<android.net.netlink.StructNlMsgErr: int error>;
+
+     label04:
+        if i11 != 0 goto label09;
+
+     label05:
+        staticinvoke <android.net.util.SocketUtils: void closeSocket(java.io.FileDescriptor)>(r22);
+
+     label06:
+        goto label08;
+
+     label07:
+        $r20 := @caughtexception;
+
+     label08:
+        return;
+
+     label09:
+        r38 = new java.lang.StringBuilder;
+
+        specialinvoke r38.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r38.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Error in NetlinkSocket.sendOneShotKernelMessage, errmsg=");
+
+        $r12 = virtualinvoke r24.<android.net.netlink.NetlinkMessage: java.lang.String toString()>();
+
+        virtualinvoke r38.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r12);
+
+        $r14 = virtualinvoke r38.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>("NetlinkSocket", $r14);
+
+        r39 = new android.system.ErrnoException;
+
+        $r15 = virtualinvoke r24.<android.net.netlink.NetlinkMessage: java.lang.String toString()>();
+
+        $i5 = staticinvoke <java.lang.Math: int abs(int)>(i11);
+
+        specialinvoke r39.<android.system.ErrnoException: void <init>(java.lang.String,int)>($r15, $i5);
+
+        r45 = (java.lang.Throwable) r39;
+
+        throw r45;
+
+     label10:
+        if r24 != null goto label13;
+
+     label11:
+        virtualinvoke r23.<java.nio.ByteBuffer: java.nio.Buffer position(int)>(0);
+
+        r40 = new java.lang.StringBuilder;
+
+        specialinvoke r40.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r40.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("raw bytes: ");
+
+        $r5 = staticinvoke <android.net.netlink.NetlinkConstants: java.lang.String hexify(java.nio.ByteBuffer)>(r23);
+
+        virtualinvoke r40.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r5);
+
+        r29 = virtualinvoke r40.<java.lang.StringBuilder: java.lang.String toString()>();
+
+     label12:
+        goto label14;
+
+     label13:
+        r29 = virtualinvoke r24.<android.net.netlink.NetlinkMessage: java.lang.String toString()>();
+
+     label14:
+        r41 = new java.lang.StringBuilder;
+
+        specialinvoke r41.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r41.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Error in NetlinkSocket.sendOneShotKernelMessage, errmsg=");
+
+        virtualinvoke r41.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r29);
+
+        $r2 = virtualinvoke r41.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String)>("NetlinkSocket", $r2);
+
+        r42 = new android.system.ErrnoException;
+
+        $i3 = <android.system.OsConstants: int EPROTO>;
+
+        specialinvoke r42.<android.system.ErrnoException: void <init>(java.lang.String,int)>(r29, $i3);
+
+        r46 = (java.lang.Throwable) r42;
+
+        throw r46;
+
+     label15:
+        $r18 := @caughtexception;
+
+        goto label20;
+
+     label16:
+        $r19 := @caughtexception;
+
+     label17:
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("NetlinkSocket", "Error in NetlinkSocket.sendOneShotKernelMessage", $r19);
+
+        r43 = new android.system.ErrnoException;
+
+        $i9 = <android.system.OsConstants: int EIO>;
+
+        specialinvoke r43.<android.system.ErrnoException: void <init>(java.lang.String,int,java.lang.Throwable)>("Error in NetlinkSocket.sendOneShotKernelMessage", $i9, $r19);
+
+        r47 = (java.lang.Throwable) r43;
+
+        throw r47;
+
+     label18:
+        $r17 := @caughtexception;
+
+     label19:
+        staticinvoke <android.util.Log: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("NetlinkSocket", "Error in NetlinkSocket.sendOneShotKernelMessage", $r17);
+
+        r44 = new android.system.ErrnoException;
+
+        $i7 = <android.system.OsConstants: int ETIMEDOUT>;
+
+        specialinvoke r44.<android.system.ErrnoException: void <init>(java.lang.String,int,java.lang.Throwable)>("Error in NetlinkSocket.sendOneShotKernelMessage", $i7, $r17);
+
+        r48 = (java.lang.Throwable) r44;
+
+        throw r48;
+
+     label20:
+        staticinvoke <android.net.util.SocketUtils: void closeSocket(java.io.FileDescriptor)>(r22);
+
+     label21:
+        goto label23;
+
+     label22:
+        $r16 := @caughtexception;
+
+     label23:
+        throw $r18;
+
+        catch java.io.InterruptedIOException from label01 to label02 with label18;
+        catch java.net.SocketException from label01 to label02 with label16;
+        catch java.lang.Throwable from label01 to label02 with label15;
+        catch java.io.InterruptedIOException from label03 to label04 with label18;
+        catch java.net.SocketException from label03 to label04 with label16;
+        catch java.lang.Throwable from label03 to label04 with label15;
+        catch java.io.IOException from label05 to label06 with label07;
+        catch java.io.InterruptedIOException from label09 to label10 with label18;
+        catch java.net.SocketException from label09 to label10 with label16;
+        catch java.lang.Throwable from label09 to label10 with label15;
+        catch java.io.InterruptedIOException from label11 to label12 with label18;
+        catch java.net.SocketException from label11 to label12 with label16;
+        catch java.lang.Throwable from label11 to label12 with label15;
+        catch java.io.InterruptedIOException from label13 to label14 with label18;
+        catch java.net.SocketException from label13 to label14 with label16;
+        catch java.lang.Throwable from label13 to label14 with label15;
+        catch java.io.InterruptedIOException from label14 to label15 with label18;
+        catch java.net.SocketException from label14 to label15 with label16;
+        catch java.lang.Throwable from label14 to label15 with label15;
+        catch java.lang.Throwable from label17 to label18 with label15;
+        catch java.lang.Throwable from label19 to label20 with label15;
+        catch java.io.IOException from label20 to label21 with label22;
+    }
+
+    public static void <clinit>()
+    {
+        <android.net.netlink.NetlinkSocket: java.lang.String TAG> = "NetlinkSocket";
+
+        <android.net.netlink.NetlinkSocket: int SOCKET_RECV_BUFSIZE> = 65536;
+
+        <android.net.netlink.NetlinkSocket: int DEFAULT_RECV_BUFSIZE> = 8192;
+
+        return;
+    }
+}

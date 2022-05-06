@@ -1,0 +1,305 @@
+public class com.android.server.security.FileIntegrityService extends com.android.server.SystemService
+{
+    private static final java.lang.String TAG;
+    private static java.security.cert.CertificateFactory sCertFactory;
+    private final android.os.IBinder mService;
+    private java.util.Collection mTrustedCertificates;
+
+    public void <init>(android.content.Context)
+    {
+        com.android.server.security.FileIntegrityService r0;
+        java.util.ArrayList $r1;
+        com.android.server.security.FileIntegrityService$1 $r2;
+        java.security.cert.CertificateFactory $r3;
+        java.lang.Throwable $r4;
+        android.content.Context r5;
+
+        r0 := @this: com.android.server.security.FileIntegrityService;
+
+        r5 := @parameter0: android.content.Context;
+
+        specialinvoke r0.<com.android.server.SystemService: void <init>(android.content.Context)>(r5);
+
+        $r1 = new java.util.ArrayList;
+
+        specialinvoke $r1.<java.util.ArrayList: void <init>()>();
+
+        r0.<com.android.server.security.FileIntegrityService: java.util.Collection mTrustedCertificates> = $r1;
+
+        $r2 = new com.android.server.security.FileIntegrityService$1;
+
+        specialinvoke $r2.<com.android.server.security.FileIntegrityService$1: void <init>(com.android.server.security.FileIntegrityService)>(r0);
+
+        r0.<com.android.server.security.FileIntegrityService: android.os.IBinder mService> = $r2;
+
+     label1:
+        $r3 = staticinvoke <java.security.cert.CertificateFactory: java.security.cert.CertificateFactory getInstance(java.lang.String)>("X.509");
+
+        <com.android.server.security.FileIntegrityService: java.security.cert.CertificateFactory sCertFactory> = $r3;
+
+     label2:
+        goto label4;
+
+     label3:
+        $r4 := @caughtexception;
+
+        staticinvoke <android.util.Slog: int wtf(java.lang.String,java.lang.String)>("FileIntegrityService", "Cannot get an instance of X.509 certificate factory");
+
+     label4:
+        return;
+
+        catch java.security.cert.CertificateException from label1 to label2 with label3;
+    }
+
+    static java.security.cert.X509Certificate access$000(byte[]) throws java.security.cert.CertificateException
+    {
+        byte[] r0;
+        java.security.cert.X509Certificate $r1;
+
+        r0 := @parameter0: byte[];
+
+        $r1 = staticinvoke <com.android.server.security.FileIntegrityService: java.security.cert.X509Certificate toCertificate(byte[])>(r0);
+
+        return $r1;
+    }
+
+    static java.util.Collection access$100(com.android.server.security.FileIntegrityService)
+    {
+        com.android.server.security.FileIntegrityService r0;
+        java.util.Collection $r1;
+
+        r0 := @parameter0: com.android.server.security.FileIntegrityService;
+
+        $r1 = r0.<com.android.server.security.FileIntegrityService: java.util.Collection mTrustedCertificates>;
+
+        return $r1;
+    }
+
+    private void collectCertificate(byte[])
+    {
+        com.android.server.security.FileIntegrityService r0;
+        java.util.Collection $r2;
+        java.security.cert.X509Certificate $r3;
+        java.lang.Throwable $r4;
+        java.lang.StringBuilder $r5;
+        java.lang.String $r8;
+        byte[] r9;
+
+        r0 := @this: com.android.server.security.FileIntegrityService;
+
+        r9 := @parameter0: byte[];
+
+     label1:
+        $r2 = r0.<com.android.server.security.FileIntegrityService: java.util.Collection mTrustedCertificates>;
+
+        $r3 = staticinvoke <com.android.server.security.FileIntegrityService: java.security.cert.X509Certificate toCertificate(byte[])>(r9);
+
+        interfaceinvoke $r2.<java.util.Collection: boolean add(java.lang.Object)>($r3);
+
+     label2:
+        goto label4;
+
+     label3:
+        $r4 := @caughtexception;
+
+        $r5 = new java.lang.StringBuilder;
+
+        specialinvoke $r5.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Invalid certificate, ignored: ");
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r4);
+
+        $r8 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("FileIntegrityService", $r8);
+
+     label4:
+        return;
+
+        catch java.security.cert.CertificateException from label1 to label2 with label3;
+    }
+
+    private void loadAllCertificates()
+    {
+        com.android.server.security.FileIntegrityService r0;
+        java.io.File $r1, $r4;
+        java.nio.file.Path $r2, $r3, $r5, $r6;
+
+        r0 := @this: com.android.server.security.FileIntegrityService;
+
+        $r1 = staticinvoke <android.os.Environment: java.io.File getRootDirectory()>();
+
+        $r2 = virtualinvoke $r1.<java.io.File: java.nio.file.Path toPath()>();
+
+        $r3 = interfaceinvoke $r2.<java.nio.file.Path: java.nio.file.Path resolve(java.lang.String)>("etc/security/fsverity");
+
+        specialinvoke r0.<com.android.server.security.FileIntegrityService: void loadCertificatesFromDirectory(java.nio.file.Path)>($r3);
+
+        $r4 = staticinvoke <android.os.Environment: java.io.File getProductDirectory()>();
+
+        $r5 = virtualinvoke $r4.<java.io.File: java.nio.file.Path toPath()>();
+
+        $r6 = interfaceinvoke $r5.<java.nio.file.Path: java.nio.file.Path resolve(java.lang.String)>("etc/security/fsverity");
+
+        specialinvoke r0.<com.android.server.security.FileIntegrityService: void loadCertificatesFromDirectory(java.nio.file.Path)>($r6);
+
+        return;
+    }
+
+    private void loadCertificatesFromDirectory(java.nio.file.Path)
+    {
+        com.android.server.security.FileIntegrityService r0;
+        java.nio.file.Path r1, $r3;
+        int i0, i3;
+        java.io.File $r2, r13;
+        java.lang.String $r6, $r11;
+        java.lang.Throwable $r7;
+        java.lang.StringBuilder $r8, r15;
+        java.io.File[] r12;
+        byte[] r14;
+
+        r0 := @this: com.android.server.security.FileIntegrityService;
+
+        r1 := @parameter0: java.nio.file.Path;
+
+     label01:
+        $r2 = interfaceinvoke r1.<java.nio.file.Path: java.io.File toFile()>();
+
+        r12 = virtualinvoke $r2.<java.io.File: java.io.File[] listFiles()>();
+
+     label02:
+        if r12 != null goto label03;
+
+        return;
+
+     label03:
+        i0 = lengthof r12;
+
+     label04:
+        i3 = 0;
+
+     label05:
+        if i3 >= i0 goto label12;
+
+        r13 = r12[i3];
+
+     label06:
+        $r3 = virtualinvoke r13.<java.io.File: java.nio.file.Path toPath()>();
+
+        r14 = staticinvoke <java.nio.file.Files: byte[] readAllBytes(java.nio.file.Path)>($r3);
+
+     label07:
+        if r14 != null goto label10;
+
+     label08:
+        r15 = new java.lang.StringBuilder;
+
+        specialinvoke r15.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r15.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("The certificate file is empty, ignoring ");
+
+        virtualinvoke r15.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r13);
+
+        $r6 = virtualinvoke r15.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("FileIntegrityService", $r6);
+
+     label09:
+        goto label11;
+
+     label10:
+        specialinvoke r0.<com.android.server.security.FileIntegrityService: void collectCertificate(byte[])>(r14);
+
+     label11:
+        i3 = i3 + 1;
+
+        goto label05;
+
+     label12:
+        goto label14;
+
+     label13:
+        $r7 := @caughtexception;
+
+        $r8 = new java.lang.StringBuilder;
+
+        specialinvoke $r8.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Failed to load fs-verity certificate from ");
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r1);
+
+        $r11 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int wtf(java.lang.String,java.lang.String,java.lang.Throwable)>("FileIntegrityService", $r11, $r7);
+
+     label14:
+        return;
+
+        catch java.io.IOException from label01 to label02 with label13;
+        catch java.io.IOException from label03 to label04 with label13;
+        catch java.io.IOException from label06 to label07 with label13;
+        catch java.io.IOException from label08 to label09 with label13;
+        catch java.io.IOException from label10 to label11 with label13;
+    }
+
+    private static java.security.cert.X509Certificate toCertificate(byte[]) throws java.security.cert.CertificateException
+    {
+        java.io.ByteArrayInputStream $r0;
+        java.security.cert.CertificateFactory $r1;
+        boolean $z0;
+        java.security.cert.CertificateException $r2;
+        java.security.cert.X509Certificate $r3;
+        byte[] r4;
+        java.security.cert.Certificate r5;
+
+        r4 := @parameter0: byte[];
+
+        $r1 = <com.android.server.security.FileIntegrityService: java.security.cert.CertificateFactory sCertFactory>;
+
+        $r0 = new java.io.ByteArrayInputStream;
+
+        specialinvoke $r0.<java.io.ByteArrayInputStream: void <init>(byte[])>(r4);
+
+        r5 = virtualinvoke $r1.<java.security.cert.CertificateFactory: java.security.cert.Certificate generateCertificate(java.io.InputStream)>($r0);
+
+        $z0 = r5 instanceof java.security.cert.X509Certificate;
+
+        if $z0 == 0 goto label1;
+
+        $r3 = (java.security.cert.X509Certificate) r5;
+
+        return $r3;
+
+     label1:
+        $r2 = new java.security.cert.CertificateException;
+
+        specialinvoke $r2.<java.security.cert.CertificateException: void <init>(java.lang.String)>("Expected to contain an X.509 certificate");
+
+        throw $r2;
+    }
+
+    public void onStart()
+    {
+        com.android.server.security.FileIntegrityService r0;
+        android.os.IBinder $r1;
+
+        r0 := @this: com.android.server.security.FileIntegrityService;
+
+        specialinvoke r0.<com.android.server.security.FileIntegrityService: void loadAllCertificates()>();
+
+        $r1 = r0.<com.android.server.security.FileIntegrityService: android.os.IBinder mService>;
+
+        virtualinvoke r0.<com.android.server.security.FileIntegrityService: void publishBinderService(java.lang.String,android.os.IBinder)>("file_integrity", $r1);
+
+        return;
+    }
+
+    public static void <clinit>()
+    {
+        <com.android.server.security.FileIntegrityService: java.lang.String TAG> = "FileIntegrityService";
+
+        return;
+    }
+}

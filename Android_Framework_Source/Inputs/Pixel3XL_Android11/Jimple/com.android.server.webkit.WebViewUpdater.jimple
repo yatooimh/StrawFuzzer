@@ -1,0 +1,1855 @@
+class com.android.server.webkit.WebViewUpdater extends java.lang.Object
+{
+    private static final java.lang.String TAG;
+    private static final int VALIDITY_INCORRECT_SDK_VERSION;
+    private static final int VALIDITY_INCORRECT_SIGNATURE;
+    private static final int VALIDITY_INCORRECT_VERSION_CODE;
+    private static final int VALIDITY_NO_LIBRARY_FLAG;
+    private static final int VALIDITY_OK;
+    private static final int WAIT_TIMEOUT_MS;
+    private int NUMBER_OF_RELROS_UNKNOWN;
+    private boolean mAnyWebViewInstalled;
+    private android.content.Context mContext;
+    private android.content.pm.PackageInfo mCurrentWebViewPackage;
+    private final java.lang.Object mLock;
+    private long mMinimumVersionCode;
+    private int mNumRelroCreationsFinished;
+    private int mNumRelroCreationsStarted;
+    private com.android.server.webkit.SystemInterface mSystemInterface;
+    private boolean mWebViewPackageDirty;
+
+    static void <clinit>()
+    {
+        java.lang.Class $r0;
+        java.lang.String $r1;
+
+        <com.android.server.webkit.WebViewUpdater: int WAIT_TIMEOUT_MS> = 1000;
+
+        <com.android.server.webkit.WebViewUpdater: int VALIDITY_OK> = 0;
+
+        <com.android.server.webkit.WebViewUpdater: int VALIDITY_NO_LIBRARY_FLAG> = 4;
+
+        <com.android.server.webkit.WebViewUpdater: int VALIDITY_INCORRECT_VERSION_CODE> = 2;
+
+        <com.android.server.webkit.WebViewUpdater: int VALIDITY_INCORRECT_SIGNATURE> = 3;
+
+        <com.android.server.webkit.WebViewUpdater: int VALIDITY_INCORRECT_SDK_VERSION> = 1;
+
+        $r0 = class "Lcom/android/server/webkit/WebViewUpdater;";
+
+        $r1 = virtualinvoke $r0.<java.lang.Class: java.lang.String getSimpleName()>();
+
+        <com.android.server.webkit.WebViewUpdater: java.lang.String TAG> = $r1;
+
+        return;
+    }
+
+    void <init>(android.content.Context, com.android.server.webkit.SystemInterface)
+    {
+        com.android.server.webkit.WebViewUpdater r0;
+        android.content.Context r1;
+        com.android.server.webkit.SystemInterface r2;
+        java.lang.Object $r3;
+
+        r0 := @this: com.android.server.webkit.WebViewUpdater;
+
+        r1 := @parameter0: android.content.Context;
+
+        r2 := @parameter1: com.android.server.webkit.SystemInterface;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        r0.<com.android.server.webkit.WebViewUpdater: long mMinimumVersionCode> = -1L;
+
+        r0.<com.android.server.webkit.WebViewUpdater: int mNumRelroCreationsStarted> = 0;
+
+        r0.<com.android.server.webkit.WebViewUpdater: int mNumRelroCreationsFinished> = 0;
+
+        r0.<com.android.server.webkit.WebViewUpdater: boolean mWebViewPackageDirty> = 0;
+
+        r0.<com.android.server.webkit.WebViewUpdater: boolean mAnyWebViewInstalled> = 0;
+
+        r0.<com.android.server.webkit.WebViewUpdater: int NUMBER_OF_RELROS_UNKNOWN> = 2147483647;
+
+        r0.<com.android.server.webkit.WebViewUpdater: android.content.pm.PackageInfo mCurrentWebViewPackage> = null;
+
+        $r3 = new java.lang.Object;
+
+        specialinvoke $r3.<java.lang.Object: void <init>()>();
+
+        r0.<com.android.server.webkit.WebViewUpdater: java.lang.Object mLock> = $r3;
+
+        r0.<com.android.server.webkit.WebViewUpdater: android.content.Context mContext> = r1;
+
+        r0.<com.android.server.webkit.WebViewUpdater: com.android.server.webkit.SystemInterface mSystemInterface> = r2;
+
+        return;
+    }
+
+    private void checkIfRelrosDoneLocked()
+    {
+        com.android.server.webkit.WebViewUpdater r0;
+        int $i0, $i1;
+        boolean $z0;
+        java.lang.Object $r2;
+        android.content.pm.PackageInfo $r3;
+        com.android.server.webkit.WebViewUpdater$WebViewPackageMissingException $r4;
+
+        r0 := @this: com.android.server.webkit.WebViewUpdater;
+
+        $i1 = r0.<com.android.server.webkit.WebViewUpdater: int mNumRelroCreationsStarted>;
+
+        $i0 = r0.<com.android.server.webkit.WebViewUpdater: int mNumRelroCreationsFinished>;
+
+        if $i1 != $i0 goto label6;
+
+        $z0 = r0.<com.android.server.webkit.WebViewUpdater: boolean mWebViewPackageDirty>;
+
+        if $z0 == 0 goto label5;
+
+        r0.<com.android.server.webkit.WebViewUpdater: boolean mWebViewPackageDirty> = 0;
+
+     label1:
+        $r3 = specialinvoke r0.<com.android.server.webkit.WebViewUpdater: android.content.pm.PackageInfo findPreferredWebViewPackage()>();
+
+        specialinvoke r0.<com.android.server.webkit.WebViewUpdater: void onWebViewProviderChanged(android.content.pm.PackageInfo)>($r3);
+
+     label2:
+        goto label4;
+
+     label3:
+        $r4 := @caughtexception;
+
+        r0.<com.android.server.webkit.WebViewUpdater: android.content.pm.PackageInfo mCurrentWebViewPackage> = null;
+
+     label4:
+        goto label6;
+
+     label5:
+        $r2 = r0.<com.android.server.webkit.WebViewUpdater: java.lang.Object mLock>;
+
+        virtualinvoke $r2.<java.lang.Object: void notifyAll()>();
+
+     label6:
+        return;
+
+        catch com.android.server.webkit.WebViewUpdater$WebViewPackageMissingException from label1 to label2 with label3;
+    }
+
+    private void dumpAllPackageInformationLocked(java.io.PrintWriter)
+    {
+        com.android.server.webkit.WebViewUpdater r0;
+        java.io.PrintWriter r1;
+        android.webkit.WebViewProviderInfo[] r2;
+        int i0, i1, $i3, i4;
+        boolean z0;
+        com.android.server.webkit.SystemInterface $r3, $r5, $r18;
+        android.content.Context $r4, $r17;
+        java.lang.Object $r6;
+        android.webkit.UserPackage $r7;
+        java.lang.Object[] $r8, $r13, $r20, $r22;
+        java.lang.String $r9, $r14, $r15, $r16, $r21, $r23, $r24, r28, r29, r30;
+        long $l2;
+        java.lang.Long $r10;
+        android.content.pm.ApplicationInfo $r11;
+        java.lang.Integer $r12;
+        java.util.List $r19, r26;
+        android.webkit.WebViewProviderInfo r25;
+        android.content.pm.PackageInfo r27;
+
+        r0 := @this: com.android.server.webkit.WebViewUpdater;
+
+        r1 := @parameter0: java.io.PrintWriter;
+
+        $r3 = r0.<com.android.server.webkit.WebViewUpdater: com.android.server.webkit.SystemInterface mSystemInterface>;
+
+        r2 = interfaceinvoke $r3.<com.android.server.webkit.SystemInterface: android.webkit.WebViewProviderInfo[] getWebViewPackages()>();
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>("  WebView packages:");
+
+        i0 = lengthof r2;
+
+        i4 = 0;
+
+     label1:
+        if i4 >= i0 goto label7;
+
+        r25 = r2[i4];
+
+        $r5 = r0.<com.android.server.webkit.WebViewUpdater: com.android.server.webkit.SystemInterface mSystemInterface>;
+
+        $r4 = r0.<com.android.server.webkit.WebViewUpdater: android.content.Context mContext>;
+
+        r26 = interfaceinvoke $r5.<com.android.server.webkit.SystemInterface: java.util.List getPackageInfoForProviderAllUsers(android.content.Context,android.webkit.WebViewProviderInfo)>($r4, r25);
+
+        $r6 = interfaceinvoke r26.<java.util.List: java.lang.Object get(int)>(0);
+
+        $r7 = (android.webkit.UserPackage) $r6;
+
+        r27 = virtualinvoke $r7.<android.webkit.UserPackage: android.content.pm.PackageInfo getPackageInfo()>();
+
+        if r27 != null goto label2;
+
+        $r22 = newarray (java.lang.Object)[1];
+
+        $r23 = r25.<android.webkit.WebViewProviderInfo: java.lang.String packageName>;
+
+        $r22[0] = $r23;
+
+        $r24 = staticinvoke <java.lang.String: java.lang.String format(java.lang.String,java.lang.Object[])>("    %s is NOT installed.", $r22);
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r24);
+
+        goto label6;
+
+     label2:
+        i1 = specialinvoke r0.<com.android.server.webkit.WebViewUpdater: int validityResult(android.webkit.WebViewProviderInfo,android.content.pm.PackageInfo)>(r25, r27);
+
+        $r8 = newarray (java.lang.Object)[3];
+
+        $r9 = r27.<android.content.pm.PackageInfo: java.lang.String versionName>;
+
+        $r8[0] = $r9;
+
+        $l2 = virtualinvoke r27.<android.content.pm.PackageInfo: long getLongVersionCode()>();
+
+        $r10 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l2);
+
+        $r8[1] = $r10;
+
+        $r11 = r27.<android.content.pm.PackageInfo: android.content.pm.ApplicationInfo applicationInfo>;
+
+        $i3 = $r11.<android.content.pm.ApplicationInfo: int targetSdkVersion>;
+
+        $r12 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i3);
+
+        $r8[2] = $r12;
+
+        r28 = staticinvoke <java.lang.String: java.lang.String format(java.lang.String,java.lang.Object[])>("versionName: %s, versionCode: %d, targetSdkVersion: %d", $r8);
+
+        if i1 != 0 goto label5;
+
+        $r18 = r0.<com.android.server.webkit.WebViewUpdater: com.android.server.webkit.SystemInterface mSystemInterface>;
+
+        $r17 = r0.<com.android.server.webkit.WebViewUpdater: android.content.Context mContext>;
+
+        $r19 = interfaceinvoke $r18.<com.android.server.webkit.SystemInterface: java.util.List getPackageInfoForProviderAllUsers(android.content.Context,android.webkit.WebViewProviderInfo)>($r17, r25);
+
+        z0 = staticinvoke <com.android.server.webkit.WebViewUpdater: boolean isInstalledAndEnabledForAllUsers(java.util.List)>($r19);
+
+        r29 = r27.<android.content.pm.PackageInfo: java.lang.String packageName>;
+
+        if z0 == 0 goto label3;
+
+        r30 = "";
+
+        goto label4;
+
+     label3:
+        r30 = "NOT";
+
+     label4:
+        $r20 = newarray (java.lang.Object)[3];
+
+        $r20[0] = r29;
+
+        $r20[1] = r28;
+
+        $r20[2] = r30;
+
+        $r21 = staticinvoke <java.lang.String: java.lang.String format(java.lang.String,java.lang.Object[])>("    Valid package %s (%s) is %s installed/enabled for all users", $r20);
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r21);
+
+        goto label6;
+
+     label5:
+        $r13 = newarray (java.lang.Object)[3];
+
+        $r14 = r27.<android.content.pm.PackageInfo: java.lang.String packageName>;
+
+        $r13[0] = $r14;
+
+        $r13[1] = r28;
+
+        $r15 = staticinvoke <com.android.server.webkit.WebViewUpdater: java.lang.String getInvalidityReason(int)>(i1);
+
+        $r13[2] = $r15;
+
+        $r16 = staticinvoke <java.lang.String: java.lang.String format(java.lang.String,java.lang.Object[])>("    Invalid package %s (%s), reason: %s", $r13);
+
+        virtualinvoke r1.<java.io.PrintWriter: void println(java.lang.String)>($r16);
+
+     label6:
+        i4 = i4 + 1;
+
+        goto label1;
+
+     label7:
+        return;
+    }
+
+    private android.content.pm.PackageInfo findPreferredWebViewPackage() throws com.android.server.webkit.WebViewUpdater$WebViewPackageMissingException
+    {
+        com.android.server.webkit.WebViewUpdater r0;
+        com.android.server.webkit.WebViewUpdater$ProviderAndPackageInfo[] r1;
+        java.lang.String r2, $r13;
+        android.content.Context $r3, $r8, $r15;
+        com.android.server.webkit.SystemInterface $r4, $r9, $r16;
+        com.android.server.webkit.WebViewUpdater$WebViewPackageMissingException $r5;
+        android.webkit.WebViewProviderInfo $r6, $r7, $r12, $r14;
+        boolean $z0, $z1, $z2, $z3;
+        java.util.List $r10, $r17;
+        android.content.pm.PackageInfo $r11, $r18;
+        int i0, i1, i2, i3;
+        com.android.server.webkit.WebViewUpdater$ProviderAndPackageInfo r19, r20;
+
+        r0 := @this: com.android.server.webkit.WebViewUpdater;
+
+        r1 = specialinvoke r0.<com.android.server.webkit.WebViewUpdater: com.android.server.webkit.WebViewUpdater$ProviderAndPackageInfo[] getValidWebViewPackagesAndInfos()>();
+
+        $r4 = r0.<com.android.server.webkit.WebViewUpdater: com.android.server.webkit.SystemInterface mSystemInterface>;
+
+        $r3 = r0.<com.android.server.webkit.WebViewUpdater: android.content.Context mContext>;
+
+        r2 = interfaceinvoke $r4.<com.android.server.webkit.SystemInterface: java.lang.String getUserChosenWebViewProvider(android.content.Context)>($r3);
+
+        i0 = lengthof r1;
+
+        i1 = 0;
+
+     label1:
+        if i1 >= i0 goto label3;
+
+        r19 = r1[i1];
+
+        $r12 = r19.<com.android.server.webkit.WebViewUpdater$ProviderAndPackageInfo: android.webkit.WebViewProviderInfo provider>;
+
+        $r13 = $r12.<android.webkit.WebViewProviderInfo: java.lang.String packageName>;
+
+        $z2 = virtualinvoke $r13.<java.lang.String: boolean equals(java.lang.Object)>(r2);
+
+        if $z2 == 0 goto label2;
+
+        $r16 = r0.<com.android.server.webkit.WebViewUpdater: com.android.server.webkit.SystemInterface mSystemInterface>;
+
+        $r15 = r0.<com.android.server.webkit.WebViewUpdater: android.content.Context mContext>;
+
+        $r14 = r19.<com.android.server.webkit.WebViewUpdater$ProviderAndPackageInfo: android.webkit.WebViewProviderInfo provider>;
+
+        $r17 = interfaceinvoke $r16.<com.android.server.webkit.SystemInterface: java.util.List getPackageInfoForProviderAllUsers(android.content.Context,android.webkit.WebViewProviderInfo)>($r15, $r14);
+
+        $z3 = staticinvoke <com.android.server.webkit.WebViewUpdater: boolean isInstalledAndEnabledForAllUsers(java.util.List)>($r17);
+
+        if $z3 == 0 goto label2;
+
+        $r18 = r19.<com.android.server.webkit.WebViewUpdater$ProviderAndPackageInfo: android.content.pm.PackageInfo packageInfo>;
+
+        return $r18;
+
+     label2:
+        i1 = i1 + 1;
+
+        goto label1;
+
+     label3:
+        i2 = lengthof r1;
+
+        i3 = 0;
+
+     label4:
+        if i3 >= i2 goto label6;
+
+        r20 = r1[i3];
+
+        $r6 = r20.<com.android.server.webkit.WebViewUpdater$ProviderAndPackageInfo: android.webkit.WebViewProviderInfo provider>;
+
+        $z0 = $r6.<android.webkit.WebViewProviderInfo: boolean availableByDefault>;
+
+        if $z0 == 0 goto label5;
+
+        $r9 = r0.<com.android.server.webkit.WebViewUpdater: com.android.server.webkit.SystemInterface mSystemInterface>;
+
+        $r8 = r0.<com.android.server.webkit.WebViewUpdater: android.content.Context mContext>;
+
+        $r7 = r20.<com.android.server.webkit.WebViewUpdater$ProviderAndPackageInfo: android.webkit.WebViewProviderInfo provider>;
+
+        $r10 = interfaceinvoke $r9.<com.android.server.webkit.SystemInterface: java.util.List getPackageInfoForProviderAllUsers(android.content.Context,android.webkit.WebViewProviderInfo)>($r8, $r7);
+
+        $z1 = staticinvoke <com.android.server.webkit.WebViewUpdater: boolean isInstalledAndEnabledForAllUsers(java.util.List)>($r10);
+
+        if $z1 == 0 goto label5;
+
+        $r11 = r20.<com.android.server.webkit.WebViewUpdater$ProviderAndPackageInfo: android.content.pm.PackageInfo packageInfo>;
+
+        return $r11;
+
+     label5:
+        i3 = i3 + 1;
+
+        goto label4;
+
+     label6:
+        r0.<com.android.server.webkit.WebViewUpdater: boolean mAnyWebViewInstalled> = 0;
+
+        $r5 = new com.android.server.webkit.WebViewUpdater$WebViewPackageMissingException;
+
+        specialinvoke $r5.<com.android.server.webkit.WebViewUpdater$WebViewPackageMissingException: void <init>(java.lang.String)>("Could not find a loadable WebView package");
+
+        throw $r5;
+    }
+
+    private static java.lang.String getInvalidityReason(int)
+    {
+        int i0;
+
+        i0 := @parameter0: int;
+
+        if i0 == 1 goto label4;
+
+        if i0 == 2 goto label3;
+
+        if i0 == 3 goto label2;
+
+        if i0 == 4 goto label1;
+
+        return "Unexcepted validity-reason";
+
+     label1:
+        return "No WebView-library manifest flag";
+
+     label2:
+        return "Incorrect signature";
+
+     label3:
+        return "Version code too low";
+
+     label4:
+        return "SDK version too low";
+    }
+
+    private long getMinimumVersionCode()
+    {
+        com.android.server.webkit.WebViewUpdater r0;
+        android.webkit.WebViewProviderInfo[] r1;
+        int i0, i7;
+        long l1, l5, l6, l8;
+        byte $b2, $b3, $b4;
+        com.android.server.webkit.SystemInterface $r2, $r4;
+        boolean $z0;
+        java.lang.String $r3;
+        android.content.pm.PackageManager$NameNotFoundException $r5;
+        android.webkit.WebViewProviderInfo r6;
+
+        r0 := @this: com.android.server.webkit.WebViewUpdater;
+
+        l5 = r0.<com.android.server.webkit.WebViewUpdater: long mMinimumVersionCode>;
+
+        $b2 = l5 cmp 0L;
+
+        if $b2 <= 0 goto label1;
+
+        return l5;
+
+     label1:
+        l6 = -1L;
+
+        $r2 = r0.<com.android.server.webkit.WebViewUpdater: com.android.server.webkit.SystemInterface mSystemInterface>;
+
+        r1 = interfaceinvoke $r2.<com.android.server.webkit.SystemInterface: android.webkit.WebViewProviderInfo[] getWebViewPackages()>();
+
+        i0 = lengthof r1;
+
+        i7 = 0;
+
+     label2:
+        if i7 >= i0 goto label9;
+
+        r6 = r1[i7];
+
+        l8 = l6;
+
+        $z0 = r6.<android.webkit.WebViewProviderInfo: boolean availableByDefault>;
+
+        if $z0 == 0 goto label8;
+
+     label3:
+        $r4 = r0.<com.android.server.webkit.WebViewUpdater: com.android.server.webkit.SystemInterface mSystemInterface>;
+
+        $r3 = r6.<android.webkit.WebViewProviderInfo: java.lang.String packageName>;
+
+        l1 = interfaceinvoke $r4.<com.android.server.webkit.SystemInterface: long getFactoryPackageVersion(java.lang.String)>($r3);
+
+     label4:
+        $b3 = l6 cmp 0L;
+
+        if $b3 < 0 goto label5;
+
+        l8 = l6;
+
+        $b4 = l1 cmp l6;
+
+        if $b4 >= 0 goto label6;
+
+     label5:
+        l8 = l1;
+
+     label6:
+        goto label8;
+
+     label7:
+        $r5 := @caughtexception;
+
+        l8 = l6;
+
+     label8:
+        i7 = i7 + 1;
+
+        l6 = l8;
+
+        goto label2;
+
+     label9:
+        r0.<com.android.server.webkit.WebViewUpdater: long mMinimumVersionCode> = l6;
+
+        return l6;
+
+        catch android.content.pm.PackageManager$NameNotFoundException from label3 to label4 with label7;
+    }
+
+    private com.android.server.webkit.WebViewUpdater$ProviderAndPackageInfo[] getValidWebViewPackagesAndInfos()
+    {
+        com.android.server.webkit.WebViewUpdater r0;
+        android.webkit.WebViewProviderInfo[] r1;
+        com.android.server.webkit.WebViewUpdater$ProviderAndPackageInfo r3;
+        com.android.server.webkit.SystemInterface $r4, $r10;
+        java.util.ArrayList $r5;
+        int $i0, $i1, i2;
+        com.android.server.webkit.WebViewUpdater$ProviderAndPackageInfo[] $r6, $r8;
+        java.lang.Object[] $r7;
+        android.webkit.WebViewProviderInfo $r9, $r11, $r12;
+        boolean $z0;
+        android.content.pm.PackageManager$NameNotFoundException $r13;
+        android.content.pm.PackageInfo r14;
+
+        r0 := @this: com.android.server.webkit.WebViewUpdater;
+
+        $r4 = r0.<com.android.server.webkit.WebViewUpdater: com.android.server.webkit.SystemInterface mSystemInterface>;
+
+        r1 = interfaceinvoke $r4.<com.android.server.webkit.SystemInterface: android.webkit.WebViewProviderInfo[] getWebViewPackages()>();
+
+        $r5 = new java.util.ArrayList;
+
+        specialinvoke $r5.<java.util.ArrayList: void <init>()>();
+
+        i2 = 0;
+
+     label1:
+        $i0 = lengthof r1;
+
+        if i2 >= $i0 goto label6;
+
+     label2:
+        $r10 = r0.<com.android.server.webkit.WebViewUpdater: com.android.server.webkit.SystemInterface mSystemInterface>;
+
+        $r9 = r1[i2];
+
+        r14 = interfaceinvoke $r10.<com.android.server.webkit.SystemInterface: android.content.pm.PackageInfo getPackageInfoForProvider(android.webkit.WebViewProviderInfo)>($r9);
+
+        $r11 = r1[i2];
+
+        $z0 = virtualinvoke r0.<com.android.server.webkit.WebViewUpdater: boolean isValidProvider(android.webkit.WebViewProviderInfo,android.content.pm.PackageInfo)>($r11, r14);
+
+        if $z0 == 0 goto label3;
+
+        r3 = new com.android.server.webkit.WebViewUpdater$ProviderAndPackageInfo;
+
+        $r12 = r1[i2];
+
+        specialinvoke r3.<com.android.server.webkit.WebViewUpdater$ProviderAndPackageInfo: void <init>(android.webkit.WebViewProviderInfo,android.content.pm.PackageInfo)>($r12, r14);
+
+        interfaceinvoke $r5.<java.util.List: boolean add(java.lang.Object)>(r3);
+
+     label3:
+        goto label5;
+
+     label4:
+        $r13 := @caughtexception;
+
+     label5:
+        i2 = i2 + 1;
+
+        goto label1;
+
+     label6:
+        $i1 = interfaceinvoke $r5.<java.util.List: int size()>();
+
+        $r6 = newarray (com.android.server.webkit.WebViewUpdater$ProviderAndPackageInfo)[$i1];
+
+        $r7 = interfaceinvoke $r5.<java.util.List: java.lang.Object[] toArray(java.lang.Object[])>($r6);
+
+        $r8 = (com.android.server.webkit.WebViewUpdater$ProviderAndPackageInfo[]) $r7;
+
+        return $r8;
+
+        catch android.content.pm.PackageManager$NameNotFoundException from label2 to label3 with label4;
+    }
+
+    static boolean isInstalledAndEnabledForAllUsers(java.util.List)
+    {
+        java.util.Iterator r0;
+        boolean $z0, $z1, $z2;
+        java.lang.Object $r1;
+        java.util.List r2;
+        android.webkit.UserPackage r3;
+
+        r2 := @parameter0: java.util.List;
+
+        r0 = interfaceinvoke r2.<java.util.List: java.util.Iterator iterator()>();
+
+     label1:
+        $z0 = interfaceinvoke r0.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label4;
+
+        $r1 = interfaceinvoke r0.<java.util.Iterator: java.lang.Object next()>();
+
+        r3 = (android.webkit.UserPackage) $r1;
+
+        $z1 = virtualinvoke r3.<android.webkit.UserPackage: boolean isInstalledPackage()>();
+
+        if $z1 == 0 goto label3;
+
+        $z2 = virtualinvoke r3.<android.webkit.UserPackage: boolean isEnabledPackage()>();
+
+        if $z2 != 0 goto label2;
+
+        goto label3;
+
+     label2:
+        goto label1;
+
+     label3:
+        return 0;
+
+     label4:
+        return 1;
+    }
+
+    private void onWebViewProviderChanged(android.content.pm.PackageInfo)
+    {
+        com.android.server.webkit.WebViewUpdater r0;
+        java.lang.Object r1;
+        int $i0, $i1, $i2, $i3;
+        com.android.server.webkit.SystemInterface $r2;
+        java.lang.Throwable $r3;
+        android.content.pm.PackageInfo r4;
+
+        r0 := @this: com.android.server.webkit.WebViewUpdater;
+
+        r4 := @parameter0: android.content.pm.PackageInfo;
+
+        r1 = r0.<com.android.server.webkit.WebViewUpdater: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        r0.<com.android.server.webkit.WebViewUpdater: boolean mAnyWebViewInstalled> = 1;
+
+        $i1 = r0.<com.android.server.webkit.WebViewUpdater: int mNumRelroCreationsStarted>;
+
+        $i0 = r0.<com.android.server.webkit.WebViewUpdater: int mNumRelroCreationsFinished>;
+
+        if $i1 != $i0 goto label3;
+
+        r0.<com.android.server.webkit.WebViewUpdater: android.content.pm.PackageInfo mCurrentWebViewPackage> = r4;
+
+        $i2 = r0.<com.android.server.webkit.WebViewUpdater: int NUMBER_OF_RELROS_UNKNOWN>;
+
+        r0.<com.android.server.webkit.WebViewUpdater: int mNumRelroCreationsStarted> = $i2;
+
+        r0.<com.android.server.webkit.WebViewUpdater: int mNumRelroCreationsFinished> = 0;
+
+        $r2 = r0.<com.android.server.webkit.WebViewUpdater: com.android.server.webkit.SystemInterface mSystemInterface>;
+
+        $i3 = interfaceinvoke $r2.<com.android.server.webkit.SystemInterface: int onWebViewProviderChanged(android.content.pm.PackageInfo)>(r4);
+
+        r0.<com.android.server.webkit.WebViewUpdater: int mNumRelroCreationsStarted> = $i3;
+
+        specialinvoke r0.<com.android.server.webkit.WebViewUpdater: void checkIfRelrosDoneLocked()>();
+
+     label2:
+        goto label4;
+
+     label3:
+        r0.<com.android.server.webkit.WebViewUpdater: boolean mWebViewPackageDirty> = 1;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        return;
+
+     label6:
+        $r3 := @caughtexception;
+
+     label7:
+        exitmonitor r1;
+
+     label8:
+        throw $r3;
+
+        catch java.lang.Throwable from label1 to label2 with label6;
+        catch java.lang.Throwable from label3 to label4 with label6;
+        catch java.lang.Throwable from label4 to label5 with label6;
+        catch java.lang.Throwable from label7 to label8 with label6;
+    }
+
+    private static boolean providerHasValidSignature(android.webkit.WebViewProviderInfo, android.content.pm.PackageInfo, com.android.server.webkit.SystemInterface)
+    {
+        android.content.pm.PackageInfo r0;
+        com.android.server.webkit.SystemInterface r1;
+        int i0, $i1, i2;
+        boolean $z0, $z1, $z2;
+        android.content.pm.ApplicationInfo $r2;
+        android.content.pm.Signature[] $r3, $r4, r8;
+        android.content.pm.Signature $r5, $r6;
+        android.webkit.WebViewProviderInfo r7;
+
+        r7 := @parameter0: android.webkit.WebViewProviderInfo;
+
+        r0 := @parameter1: android.content.pm.PackageInfo;
+
+        r1 := @parameter2: com.android.server.webkit.SystemInterface;
+
+        $z0 = interfaceinvoke r1.<com.android.server.webkit.SystemInterface: boolean systemIsDebuggable()>();
+
+        if $z0 == 0 goto label1;
+
+        return 1;
+
+     label1:
+        $r2 = r0.<android.content.pm.PackageInfo: android.content.pm.ApplicationInfo applicationInfo>;
+
+        $z1 = virtualinvoke $r2.<android.content.pm.ApplicationInfo: boolean isSystemApp()>();
+
+        if $z1 == 0 goto label2;
+
+        return 1;
+
+     label2:
+        $r3 = r0.<android.content.pm.PackageInfo: android.content.pm.Signature[] signatures>;
+
+        $i1 = lengthof $r3;
+
+        if $i1 == 1 goto label3;
+
+        return 0;
+
+     label3:
+        r8 = r7.<android.webkit.WebViewProviderInfo: android.content.pm.Signature[] signatures>;
+
+        i0 = lengthof r8;
+
+        i2 = 0;
+
+     label4:
+        if i2 >= i0 goto label6;
+
+        $r6 = r8[i2];
+
+        $r4 = r0.<android.content.pm.PackageInfo: android.content.pm.Signature[] signatures>;
+
+        $r5 = $r4[0];
+
+        $z2 = virtualinvoke $r6.<android.content.pm.Signature: boolean equals(java.lang.Object)>($r5);
+
+        if $z2 == 0 goto label5;
+
+        return 1;
+
+     label5:
+        i2 = i2 + 1;
+
+        goto label4;
+
+     label6:
+        return 0;
+    }
+
+    private int validityResult(android.webkit.WebViewProviderInfo, android.content.pm.PackageInfo)
+    {
+        com.android.server.webkit.WebViewUpdater r0;
+        android.webkit.WebViewProviderInfo r1;
+        android.content.pm.PackageInfo r2;
+        boolean $z0, $z1, $z2, $z3;
+        long $l0, $l1;
+        com.android.server.webkit.SystemInterface $r3, $r6;
+        android.content.pm.ApplicationInfo $r4;
+        java.lang.String $r5;
+
+        r0 := @this: com.android.server.webkit.WebViewUpdater;
+
+        r1 := @parameter0: android.webkit.WebViewProviderInfo;
+
+        r2 := @parameter1: android.content.pm.PackageInfo;
+
+        $z0 = staticinvoke <android.webkit.UserPackage: boolean hasCorrectTargetSdkVersion(android.content.pm.PackageInfo)>(r2);
+
+        if $z0 != 0 goto label1;
+
+        return 1;
+
+     label1:
+        $l0 = virtualinvoke r2.<android.content.pm.PackageInfo: long getLongVersionCode()>();
+
+        $l1 = specialinvoke r0.<com.android.server.webkit.WebViewUpdater: long getMinimumVersionCode()>();
+
+        $z1 = staticinvoke <com.android.server.webkit.WebViewUpdater: boolean versionCodeGE(long,long)>($l0, $l1);
+
+        if $z1 != 0 goto label2;
+
+        $r6 = r0.<com.android.server.webkit.WebViewUpdater: com.android.server.webkit.SystemInterface mSystemInterface>;
+
+        $z3 = interfaceinvoke $r6.<com.android.server.webkit.SystemInterface: boolean systemIsDebuggable()>();
+
+        if $z3 != 0 goto label2;
+
+        return 2;
+
+     label2:
+        $r3 = r0.<com.android.server.webkit.WebViewUpdater: com.android.server.webkit.SystemInterface mSystemInterface>;
+
+        $z2 = staticinvoke <com.android.server.webkit.WebViewUpdater: boolean providerHasValidSignature(android.webkit.WebViewProviderInfo,android.content.pm.PackageInfo,com.android.server.webkit.SystemInterface)>(r1, r2, $r3);
+
+        if $z2 != 0 goto label3;
+
+        return 3;
+
+     label3:
+        $r4 = r2.<android.content.pm.PackageInfo: android.content.pm.ApplicationInfo applicationInfo>;
+
+        $r5 = staticinvoke <android.webkit.WebViewFactory: java.lang.String getWebViewLibrary(android.content.pm.ApplicationInfo)>($r4);
+
+        if $r5 != null goto label4;
+
+        return 4;
+
+     label4:
+        return 0;
+    }
+
+    private static boolean versionCodeGE(long, long)
+    {
+        long l0, l1, $l2, $l3;
+        byte $b4;
+        boolean z0;
+
+        l0 := @parameter0: long;
+
+        l1 := @parameter1: long;
+
+        $l3 = l0 / 100000L;
+
+        $l2 = l1 / 100000L;
+
+        $b4 = $l3 cmp $l2;
+
+        if $b4 < 0 goto label1;
+
+        z0 = 1;
+
+        goto label2;
+
+     label1:
+        z0 = 0;
+
+     label2:
+        return z0;
+    }
+
+    private boolean webViewIsReadyLocked()
+    {
+        com.android.server.webkit.WebViewUpdater r0;
+        boolean $z0, $z1, z2;
+        int $i0, $i1;
+
+        r0 := @this: com.android.server.webkit.WebViewUpdater;
+
+        $z0 = r0.<com.android.server.webkit.WebViewUpdater: boolean mWebViewPackageDirty>;
+
+        if $z0 != 0 goto label1;
+
+        $i1 = r0.<com.android.server.webkit.WebViewUpdater: int mNumRelroCreationsStarted>;
+
+        $i0 = r0.<com.android.server.webkit.WebViewUpdater: int mNumRelroCreationsFinished>;
+
+        if $i1 != $i0 goto label1;
+
+        $z1 = r0.<com.android.server.webkit.WebViewUpdater: boolean mAnyWebViewInstalled>;
+
+        if $z1 == 0 goto label1;
+
+        z2 = 1;
+
+        goto label2;
+
+     label1:
+        z2 = 0;
+
+     label2:
+        return z2;
+    }
+
+    java.lang.String changeProviderAndSetting(java.lang.String)
+    {
+        com.android.server.webkit.WebViewUpdater r0;
+        java.lang.String $r1, r2;
+        android.content.pm.PackageInfo r3;
+
+        r0 := @this: com.android.server.webkit.WebViewUpdater;
+
+        r2 := @parameter0: java.lang.String;
+
+        r3 = virtualinvoke r0.<com.android.server.webkit.WebViewUpdater: android.content.pm.PackageInfo updateCurrentWebViewPackage(java.lang.String)>(r2);
+
+        if r3 != null goto label1;
+
+        return "";
+
+     label1:
+        $r1 = r3.<android.content.pm.PackageInfo: java.lang.String packageName>;
+
+        return $r1;
+    }
+
+    void dumpState(java.io.PrintWriter)
+    {
+        com.android.server.webkit.WebViewUpdater r0;
+        java.lang.Object r1;
+        android.content.pm.PackageInfo $r2, $r4, $r6, r36;
+        java.lang.Object[] $r3, $r9, $r12, $r15, $r18, $r21, $r24, $r27, $r33;
+        java.lang.String $r5, $r7, $r8, $r11, $r14, $r17, $r20, $r23, $r26, $r28, $r29, $r30, $r34;
+        java.lang.Integer $r10, $r16, $r19;
+        long $l0;
+        java.lang.Long $r13;
+        int $i1, $i2;
+        boolean $z0, $z1;
+        java.lang.Boolean $r22, $r25;
+        java.lang.Throwable $r31;
+        com.android.server.webkit.WebViewUpdater$WebViewPackageMissingException $r32;
+        java.io.PrintWriter r35;
+
+        r0 := @this: com.android.server.webkit.WebViewUpdater;
+
+        r35 := @parameter0: java.io.PrintWriter;
+
+        r1 = r0.<com.android.server.webkit.WebViewUpdater: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label01:
+        $r2 = r0.<com.android.server.webkit.WebViewUpdater: android.content.pm.PackageInfo mCurrentWebViewPackage>;
+
+        if $r2 != null goto label03;
+
+        virtualinvoke r35.<java.io.PrintWriter: void println(java.lang.String)>("  Current WebView package is null");
+
+     label02:
+        goto label04;
+
+     label03:
+        $r3 = newarray (java.lang.Object)[2];
+
+        $r4 = r0.<com.android.server.webkit.WebViewUpdater: android.content.pm.PackageInfo mCurrentWebViewPackage>;
+
+        $r5 = $r4.<android.content.pm.PackageInfo: java.lang.String packageName>;
+
+        $r3[0] = $r5;
+
+        $r6 = r0.<com.android.server.webkit.WebViewUpdater: android.content.pm.PackageInfo mCurrentWebViewPackage>;
+
+        $r7 = $r6.<android.content.pm.PackageInfo: java.lang.String versionName>;
+
+        $r3[1] = $r7;
+
+        $r8 = staticinvoke <java.lang.String: java.lang.String format(java.lang.String,java.lang.Object[])>("  Current WebView package (name, version): (%s, %s)", $r3);
+
+        virtualinvoke r35.<java.io.PrintWriter: void println(java.lang.String)>($r8);
+
+     label04:
+        $r9 = newarray (java.lang.Object)[1];
+
+        $r10 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>(30);
+
+        $r9[0] = $r10;
+
+        $r11 = staticinvoke <java.lang.String: java.lang.String format(java.lang.String,java.lang.Object[])>("  Minimum targetSdkVersion: %d", $r9);
+
+        virtualinvoke r35.<java.io.PrintWriter: void println(java.lang.String)>($r11);
+
+        $r12 = newarray (java.lang.Object)[1];
+
+        $l0 = r0.<com.android.server.webkit.WebViewUpdater: long mMinimumVersionCode>;
+
+        $r13 = staticinvoke <java.lang.Long: java.lang.Long valueOf(long)>($l0);
+
+        $r12[0] = $r13;
+
+        $r14 = staticinvoke <java.lang.String: java.lang.String format(java.lang.String,java.lang.Object[])>("  Minimum WebView version code: %d", $r12);
+
+        virtualinvoke r35.<java.io.PrintWriter: void println(java.lang.String)>($r14);
+
+        $r15 = newarray (java.lang.Object)[1];
+
+        $i1 = r0.<com.android.server.webkit.WebViewUpdater: int mNumRelroCreationsStarted>;
+
+        $r16 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i1);
+
+        $r15[0] = $r16;
+
+        $r17 = staticinvoke <java.lang.String: java.lang.String format(java.lang.String,java.lang.Object[])>("  Number of relros started: %d", $r15);
+
+        virtualinvoke r35.<java.io.PrintWriter: void println(java.lang.String)>($r17);
+
+        $r18 = newarray (java.lang.Object)[1];
+
+        $i2 = r0.<com.android.server.webkit.WebViewUpdater: int mNumRelroCreationsFinished>;
+
+        $r19 = staticinvoke <java.lang.Integer: java.lang.Integer valueOf(int)>($i2);
+
+        $r18[0] = $r19;
+
+        $r20 = staticinvoke <java.lang.String: java.lang.String format(java.lang.String,java.lang.Object[])>("  Number of relros finished: %d", $r18);
+
+        virtualinvoke r35.<java.io.PrintWriter: void println(java.lang.String)>($r20);
+
+        $r21 = newarray (java.lang.Object)[1];
+
+        $z0 = r0.<com.android.server.webkit.WebViewUpdater: boolean mWebViewPackageDirty>;
+
+        $r22 = staticinvoke <java.lang.Boolean: java.lang.Boolean valueOf(boolean)>($z0);
+
+        $r21[0] = $r22;
+
+        $r23 = staticinvoke <java.lang.String: java.lang.String format(java.lang.String,java.lang.Object[])>("  WebView package dirty: %b", $r21);
+
+        virtualinvoke r35.<java.io.PrintWriter: void println(java.lang.String)>($r23);
+
+        $r24 = newarray (java.lang.Object)[1];
+
+        $z1 = r0.<com.android.server.webkit.WebViewUpdater: boolean mAnyWebViewInstalled>;
+
+        $r25 = staticinvoke <java.lang.Boolean: java.lang.Boolean valueOf(boolean)>($z1);
+
+        $r24[0] = $r25;
+
+        $r26 = staticinvoke <java.lang.String: java.lang.String format(java.lang.String,java.lang.Object[])>("  Any WebView package installed: %b", $r24);
+
+        virtualinvoke r35.<java.io.PrintWriter: void println(java.lang.String)>($r26);
+
+     label05:
+        r36 = specialinvoke r0.<com.android.server.webkit.WebViewUpdater: android.content.pm.PackageInfo findPreferredWebViewPackage()>();
+
+        $r27 = newarray (java.lang.Object)[2];
+
+        $r28 = r36.<android.content.pm.PackageInfo: java.lang.String packageName>;
+
+        $r27[0] = $r28;
+
+        $r29 = r36.<android.content.pm.PackageInfo: java.lang.String versionName>;
+
+        $r27[1] = $r29;
+
+        $r30 = staticinvoke <java.lang.String: java.lang.String format(java.lang.String,java.lang.Object[])>("  Preferred WebView package (name, version): (%s, %s)", $r27);
+
+        virtualinvoke r35.<java.io.PrintWriter: void println(java.lang.String)>($r30);
+
+     label06:
+        goto label09;
+
+     label07:
+        $r32 := @caughtexception;
+
+     label08:
+        $r33 = newarray (java.lang.Object)[0];
+
+        $r34 = staticinvoke <java.lang.String: java.lang.String format(java.lang.String,java.lang.Object[])>("  Preferred WebView package: none", $r33);
+
+        virtualinvoke r35.<java.io.PrintWriter: void println(java.lang.String)>($r34);
+
+     label09:
+        specialinvoke r0.<com.android.server.webkit.WebViewUpdater: void dumpAllPackageInformationLocked(java.io.PrintWriter)>(r35);
+
+        exitmonitor r1;
+
+     label10:
+        return;
+
+     label11:
+        $r31 := @caughtexception;
+
+     label12:
+        exitmonitor r1;
+
+     label13:
+        throw $r31;
+
+        catch java.lang.Throwable from label01 to label02 with label11;
+        catch java.lang.Throwable from label03 to label04 with label11;
+        catch java.lang.Throwable from label04 to label05 with label11;
+        catch com.android.server.webkit.WebViewUpdater$WebViewPackageMissingException from label05 to label06 with label07;
+        catch java.lang.Throwable from label05 to label06 with label11;
+        catch java.lang.Throwable from label08 to label09 with label11;
+        catch java.lang.Throwable from label09 to label10 with label11;
+        catch java.lang.Throwable from label12 to label13 with label11;
+    }
+
+    android.content.pm.PackageInfo getCurrentWebViewPackage()
+    {
+        com.android.server.webkit.WebViewUpdater r0;
+        java.lang.Object r1;
+        java.lang.Throwable $r2;
+        android.content.pm.PackageInfo r3;
+
+        r0 := @this: com.android.server.webkit.WebViewUpdater;
+
+        r1 = r0.<com.android.server.webkit.WebViewUpdater: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        r3 = r0.<com.android.server.webkit.WebViewUpdater: android.content.pm.PackageInfo mCurrentWebViewPackage>;
+
+        exitmonitor r1;
+
+     label2:
+        return r3;
+
+     label3:
+        $r2 := @caughtexception;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        throw $r2;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    android.webkit.WebViewProviderInfo[] getValidWebViewPackages()
+    {
+        com.android.server.webkit.WebViewUpdater r0;
+        com.android.server.webkit.WebViewUpdater$ProviderAndPackageInfo[] r1;
+        android.webkit.WebViewProviderInfo[] r2;
+        int $i0, $i1, i2;
+        com.android.server.webkit.WebViewUpdater$ProviderAndPackageInfo $r3;
+        android.webkit.WebViewProviderInfo $r4;
+
+        r0 := @this: com.android.server.webkit.WebViewUpdater;
+
+        r1 = specialinvoke r0.<com.android.server.webkit.WebViewUpdater: com.android.server.webkit.WebViewUpdater$ProviderAndPackageInfo[] getValidWebViewPackagesAndInfos()>();
+
+        $i0 = lengthof r1;
+
+        r2 = newarray (android.webkit.WebViewProviderInfo)[$i0];
+
+        i2 = 0;
+
+     label1:
+        $i1 = lengthof r1;
+
+        if i2 >= $i1 goto label2;
+
+        $r3 = r1[i2];
+
+        $r4 = $r3.<com.android.server.webkit.WebViewUpdater$ProviderAndPackageInfo: android.webkit.WebViewProviderInfo provider>;
+
+        r2[i2] = $r4;
+
+        i2 = i2 + 1;
+
+        goto label1;
+
+     label2:
+        return r2;
+    }
+
+    boolean isValidProvider(android.webkit.WebViewProviderInfo, android.content.pm.PackageInfo)
+    {
+        com.android.server.webkit.WebViewUpdater r0;
+        android.webkit.WebViewProviderInfo r1;
+        android.content.pm.PackageInfo r2;
+        int $i0;
+        boolean z0;
+
+        r0 := @this: com.android.server.webkit.WebViewUpdater;
+
+        r1 := @parameter0: android.webkit.WebViewProviderInfo;
+
+        r2 := @parameter1: android.content.pm.PackageInfo;
+
+        $i0 = specialinvoke r0.<com.android.server.webkit.WebViewUpdater: int validityResult(android.webkit.WebViewProviderInfo,android.content.pm.PackageInfo)>(r1, r2);
+
+        if $i0 != 0 goto label1;
+
+        z0 = 1;
+
+        goto label2;
+
+     label1:
+        z0 = 0;
+
+     label2:
+        return z0;
+    }
+
+    void notifyRelroCreationCompleted()
+    {
+        com.android.server.webkit.WebViewUpdater r0;
+        java.lang.Object r1;
+        int $i0, $i1;
+        java.lang.Throwable $r3;
+
+        r0 := @this: com.android.server.webkit.WebViewUpdater;
+
+        r1 = r0.<com.android.server.webkit.WebViewUpdater: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label1:
+        $i0 = r0.<com.android.server.webkit.WebViewUpdater: int mNumRelroCreationsFinished>;
+
+        $i1 = $i0 + 1;
+
+        r0.<com.android.server.webkit.WebViewUpdater: int mNumRelroCreationsFinished> = $i1;
+
+        specialinvoke r0.<com.android.server.webkit.WebViewUpdater: void checkIfRelrosDoneLocked()>();
+
+        exitmonitor r1;
+
+     label2:
+        return;
+
+     label3:
+        $r3 := @caughtexception;
+
+     label4:
+        exitmonitor r1;
+
+     label5:
+        throw $r3;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+        catch java.lang.Throwable from label4 to label5 with label3;
+    }
+
+    void packageStateChanged(java.lang.String, int)
+    {
+        com.android.server.webkit.WebViewUpdater r0;
+        java.lang.Object r1;
+        android.content.pm.PackageInfo r2, $r5, $r10, $r11;
+        com.android.server.webkit.SystemInterface $r3, $r8;
+        java.lang.String $r4, $r6, $r7, $r9, $r14, r15, r18, r19, $r20, r23;
+        boolean $z0, $z1, $z2, z3, z4, z5, z6;
+        java.lang.Throwable $r12;
+        com.android.server.webkit.WebViewUpdater$WebViewPackageMissingException $r13;
+        int i0, i1, i2;
+        android.webkit.WebViewProviderInfo[] r16;
+        android.webkit.WebViewProviderInfo r17;
+        java.lang.StringBuilder r24;
+
+        r0 := @this: com.android.server.webkit.WebViewUpdater;
+
+        r15 := @parameter0: java.lang.String;
+
+        i0 := @parameter1: int;
+
+        $r3 = r0.<com.android.server.webkit.WebViewUpdater: com.android.server.webkit.SystemInterface mSystemInterface>;
+
+        r16 = interfaceinvoke $r3.<com.android.server.webkit.SystemInterface: android.webkit.WebViewProviderInfo[] getWebViewPackages()>();
+
+        i1 = lengthof r16;
+
+        z3 = 0;
+
+        i2 = 0;
+
+     label01:
+        if i2 >= i1 goto label29;
+
+        r17 = r16[i2];
+
+        $r4 = r17.<android.webkit.WebViewProviderInfo: java.lang.String packageName>;
+
+        $z0 = virtualinvoke $r4.<java.lang.String: boolean equals(java.lang.Object)>(r15);
+
+        if $z0 == 0 goto label28;
+
+        r18 = null;
+
+        r1 = r0.<com.android.server.webkit.WebViewUpdater: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+        z4 = 0;
+
+        z5 = 0;
+
+        r19 = null;
+
+     label02:
+        r2 = specialinvoke r0.<com.android.server.webkit.WebViewUpdater: android.content.pm.PackageInfo findPreferredWebViewPackage()>();
+
+     label03:
+        z4 = 0;
+
+        z5 = 0;
+
+        r19 = null;
+
+     label04:
+        $r5 = r0.<com.android.server.webkit.WebViewUpdater: android.content.pm.PackageInfo mCurrentWebViewPackage>;
+
+        if $r5 == null goto label07;
+
+     label05:
+        z4 = 0;
+
+        z5 = 0;
+
+        r19 = null;
+
+     label06:
+        $r11 = r0.<com.android.server.webkit.WebViewUpdater: android.content.pm.PackageInfo mCurrentWebViewPackage>;
+
+        r18 = $r11.<android.content.pm.PackageInfo: java.lang.String packageName>;
+
+     label07:
+        z4 = 0;
+
+        z5 = 0;
+
+        r19 = r18;
+
+     label08:
+        $r7 = r17.<android.webkit.WebViewProviderInfo: java.lang.String packageName>;
+
+        $r6 = r2.<android.content.pm.PackageInfo: java.lang.String packageName>;
+
+        $z1 = virtualinvoke $r7.<java.lang.String: boolean equals(java.lang.Object)>($r6);
+
+        if $z1 != 0 goto label13;
+
+     label09:
+        z4 = 0;
+
+        z5 = 0;
+
+        r19 = r18;
+
+     label10:
+        $r9 = r17.<android.webkit.WebViewProviderInfo: java.lang.String packageName>;
+
+        $z2 = virtualinvoke $r9.<java.lang.String: boolean equals(java.lang.Object)>(r18);
+
+        if $z2 != 0 goto label13;
+
+     label11:
+        z4 = 0;
+
+        z5 = 0;
+
+        r19 = r18;
+
+     label12:
+        $r10 = r0.<com.android.server.webkit.WebViewUpdater: android.content.pm.PackageInfo mCurrentWebViewPackage>;
+
+        if $r10 != null goto label14;
+
+     label13:
+        z3 = 1;
+
+     label14:
+        z4 = z3;
+
+        z5 = 0;
+
+        r19 = r18;
+
+     label15:
+        $r20 = r17.<android.webkit.WebViewProviderInfo: java.lang.String packageName>;
+
+        z6 = virtualinvoke $r20.<java.lang.String: boolean equals(java.lang.Object)>(r18);
+
+     label16:
+        if z3 == 0 goto label18;
+
+        z4 = z3;
+
+        z5 = z6;
+
+        r19 = r18;
+
+     label17:
+        specialinvoke r0.<com.android.server.webkit.WebViewUpdater: void onWebViewProviderChanged(android.content.pm.PackageInfo)>(r2);
+
+     label18:
+        z4 = z3;
+
+        z5 = z6;
+
+        goto label23;
+
+     label19:
+        $r12 := @caughtexception;
+
+        goto label26;
+
+     label20:
+        $r13 := @caughtexception;
+
+     label21:
+        r0.<com.android.server.webkit.WebViewUpdater: android.content.pm.PackageInfo mCurrentWebViewPackage> = null;
+
+        r23 = <com.android.server.webkit.WebViewUpdater: java.lang.String TAG>;
+
+        r24 = new java.lang.StringBuilder;
+
+        specialinvoke r24.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r24.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Could not find valid WebView package to create relro with ");
+
+        virtualinvoke r24.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r13);
+
+        $r14 = virtualinvoke r24.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>(r23, $r14);
+
+     label22:
+        r18 = r19;
+
+     label23:
+        exitmonitor r1;
+
+     label24:
+        if z4 == 0 goto label25;
+
+        if z5 != 0 goto label25;
+
+        if r18 == null goto label25;
+
+        $r8 = r0.<com.android.server.webkit.WebViewUpdater: com.android.server.webkit.SystemInterface mSystemInterface>;
+
+        interfaceinvoke $r8.<com.android.server.webkit.SystemInterface: void killPackageDependents(java.lang.String)>(r18);
+
+     label25:
+        return;
+
+     label26:
+        exitmonitor r1;
+
+     label27:
+        throw $r12;
+
+     label28:
+        i2 = i2 + 1;
+
+        goto label01;
+
+     label29:
+        return;
+
+        catch com.android.server.webkit.WebViewUpdater$WebViewPackageMissingException from label02 to label03 with label20;
+        catch java.lang.Throwable from label02 to label03 with label19;
+        catch com.android.server.webkit.WebViewUpdater$WebViewPackageMissingException from label04 to label05 with label20;
+        catch java.lang.Throwable from label04 to label05 with label19;
+        catch com.android.server.webkit.WebViewUpdater$WebViewPackageMissingException from label06 to label07 with label20;
+        catch java.lang.Throwable from label06 to label07 with label19;
+        catch com.android.server.webkit.WebViewUpdater$WebViewPackageMissingException from label08 to label09 with label20;
+        catch java.lang.Throwable from label08 to label09 with label19;
+        catch com.android.server.webkit.WebViewUpdater$WebViewPackageMissingException from label10 to label11 with label20;
+        catch java.lang.Throwable from label10 to label11 with label19;
+        catch com.android.server.webkit.WebViewUpdater$WebViewPackageMissingException from label12 to label13 with label20;
+        catch java.lang.Throwable from label12 to label13 with label19;
+        catch com.android.server.webkit.WebViewUpdater$WebViewPackageMissingException from label15 to label16 with label20;
+        catch java.lang.Throwable from label15 to label16 with label19;
+        catch com.android.server.webkit.WebViewUpdater$WebViewPackageMissingException from label17 to label18 with label20;
+        catch java.lang.Throwable from label17 to label18 with label19;
+        catch java.lang.Throwable from label21 to label22 with label19;
+        catch java.lang.Throwable from label23 to label24 with label19;
+        catch java.lang.Throwable from label26 to label27 with label19;
+    }
+
+    void prepareWebViewInSystemServer()
+    {
+        com.android.server.webkit.WebViewUpdater r0;
+        android.content.pm.PackageInfo $r1, $r4, $r6, $r15;
+        android.content.Context $r2, $r8;
+        com.android.server.webkit.SystemInterface $r3, $r9;
+        java.lang.String $r5, $r7, $r12, r14;
+        boolean $z0;
+        java.lang.Throwable $r10, $r11;
+        java.lang.Object r13;
+
+        r0 := @this: com.android.server.webkit.WebViewUpdater;
+
+     label01:
+        r13 = r0.<com.android.server.webkit.WebViewUpdater: java.lang.Object mLock>;
+
+        entermonitor r13;
+
+     label02:
+        $r1 = specialinvoke r0.<com.android.server.webkit.WebViewUpdater: android.content.pm.PackageInfo findPreferredWebViewPackage()>();
+
+        r0.<com.android.server.webkit.WebViewUpdater: android.content.pm.PackageInfo mCurrentWebViewPackage> = $r1;
+
+        $r3 = r0.<com.android.server.webkit.WebViewUpdater: com.android.server.webkit.SystemInterface mSystemInterface>;
+
+        $r2 = r0.<com.android.server.webkit.WebViewUpdater: android.content.Context mContext>;
+
+        r14 = interfaceinvoke $r3.<com.android.server.webkit.SystemInterface: java.lang.String getUserChosenWebViewProvider(android.content.Context)>($r2);
+
+     label03:
+        if r14 == null goto label05;
+
+     label04:
+        $r4 = r0.<com.android.server.webkit.WebViewUpdater: android.content.pm.PackageInfo mCurrentWebViewPackage>;
+
+        $r5 = $r4.<android.content.pm.PackageInfo: java.lang.String packageName>;
+
+        $z0 = virtualinvoke r14.<java.lang.String: boolean equals(java.lang.Object)>($r5);
+
+        if $z0 != 0 goto label05;
+
+        $r9 = r0.<com.android.server.webkit.WebViewUpdater: com.android.server.webkit.SystemInterface mSystemInterface>;
+
+        $r8 = r0.<com.android.server.webkit.WebViewUpdater: android.content.Context mContext>;
+
+        $r6 = r0.<com.android.server.webkit.WebViewUpdater: android.content.pm.PackageInfo mCurrentWebViewPackage>;
+
+        $r7 = $r6.<android.content.pm.PackageInfo: java.lang.String packageName>;
+
+        interfaceinvoke $r9.<com.android.server.webkit.SystemInterface: void updateUserSetting(android.content.Context,java.lang.String)>($r8, $r7);
+
+     label05:
+        $r15 = r0.<com.android.server.webkit.WebViewUpdater: android.content.pm.PackageInfo mCurrentWebViewPackage>;
+
+        specialinvoke r0.<com.android.server.webkit.WebViewUpdater: void onWebViewProviderChanged(android.content.pm.PackageInfo)>($r15);
+
+        exitmonitor r13;
+
+     label06:
+        goto label11;
+
+     label07:
+        $r10 := @caughtexception;
+
+     label08:
+        exitmonitor r13;
+
+     label09:
+        throw $r10;
+
+     label10:
+        $r11 := @caughtexception;
+
+        $r12 = <com.android.server.webkit.WebViewUpdater: java.lang.String TAG>;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>($r12, "error preparing webview provider from system server", $r11);
+
+     label11:
+        return;
+
+        catch java.lang.Throwable from label01 to label02 with label10;
+        catch java.lang.Throwable from label02 to label03 with label07;
+        catch java.lang.Throwable from label04 to label05 with label07;
+        catch java.lang.Throwable from label05 to label06 with label07;
+        catch java.lang.Throwable from label08 to label09 with label07;
+        catch java.lang.Throwable from label09 to label10 with label10;
+    }
+
+    android.content.pm.PackageInfo updateCurrentWebViewPackage(java.lang.String)
+    {
+        com.android.server.webkit.WebViewUpdater r0;
+        java.lang.Object r1;
+        boolean z0, z1;
+        java.lang.StringBuilder r2;
+        java.lang.String $r3, $r5, $r6, $r13, r14, r18;
+        com.android.server.webkit.SystemInterface $r4, $r8;
+        android.content.Context $r7;
+        java.lang.Throwable $r9;
+        com.android.server.webkit.WebViewUpdater$WebViewPackageMissingException $r10;
+        android.content.pm.PackageInfo r15, r16;
+
+        r0 := @this: com.android.server.webkit.WebViewUpdater;
+
+        r14 := @parameter0: java.lang.String;
+
+        r1 = r0.<com.android.server.webkit.WebViewUpdater: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label01:
+        r15 = r0.<com.android.server.webkit.WebViewUpdater: android.content.pm.PackageInfo mCurrentWebViewPackage>;
+
+     label02:
+        if r14 == null goto label04;
+
+     label03:
+        $r8 = r0.<com.android.server.webkit.WebViewUpdater: com.android.server.webkit.SystemInterface mSystemInterface>;
+
+        $r7 = r0.<com.android.server.webkit.WebViewUpdater: android.content.Context mContext>;
+
+        interfaceinvoke $r8.<com.android.server.webkit.SystemInterface: void updateUserSetting(android.content.Context,java.lang.String)>($r7, r14);
+
+     label04:
+        r16 = specialinvoke r0.<com.android.server.webkit.WebViewUpdater: android.content.pm.PackageInfo findPreferredWebViewPackage()>();
+
+     label05:
+        if r15 == null goto label09;
+
+     label06:
+        $r6 = r16.<android.content.pm.PackageInfo: java.lang.String packageName>;
+
+        $r5 = r15.<android.content.pm.PackageInfo: java.lang.String packageName>;
+
+        z0 = virtualinvoke $r6.<java.lang.String: boolean equals(java.lang.Object)>($r5);
+
+     label07:
+        if z0 != 0 goto label08;
+
+        goto label09;
+
+     label08:
+        z1 = 0;
+
+        goto label10;
+
+     label09:
+        z1 = 1;
+
+     label10:
+        if z1 == 0 goto label12;
+
+     label11:
+        specialinvoke r0.<com.android.server.webkit.WebViewUpdater: void onWebViewProviderChanged(android.content.pm.PackageInfo)>(r16);
+
+     label12:
+        exitmonitor r1;
+
+     label13:
+        if z1 == 0 goto label14;
+
+        if r15 == null goto label14;
+
+        $r4 = r0.<com.android.server.webkit.WebViewUpdater: com.android.server.webkit.SystemInterface mSystemInterface>;
+
+        $r3 = r15.<android.content.pm.PackageInfo: java.lang.String packageName>;
+
+        interfaceinvoke $r4.<com.android.server.webkit.SystemInterface: void killPackageDependents(java.lang.String)>($r3);
+
+     label14:
+        return r16;
+
+     label15:
+        $r10 := @caughtexception;
+
+     label16:
+        r0.<com.android.server.webkit.WebViewUpdater: android.content.pm.PackageInfo mCurrentWebViewPackage> = null;
+
+        r18 = <com.android.server.webkit.WebViewUpdater: java.lang.String TAG>;
+
+        r2 = new java.lang.StringBuilder;
+
+        specialinvoke r2.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Couldn\'t find WebView package to use ");
+
+        virtualinvoke r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r10);
+
+        $r13 = virtualinvoke r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>(r18, $r13);
+
+        exitmonitor r1;
+
+     label17:
+        return null;
+
+     label18:
+        $r9 := @caughtexception;
+
+     label19:
+        exitmonitor r1;
+
+     label20:
+        throw $r9;
+
+        catch java.lang.Throwable from label01 to label02 with label18;
+        catch java.lang.Throwable from label03 to label04 with label18;
+        catch com.android.server.webkit.WebViewUpdater$WebViewPackageMissingException from label04 to label05 with label15;
+        catch java.lang.Throwable from label04 to label05 with label18;
+        catch com.android.server.webkit.WebViewUpdater$WebViewPackageMissingException from label06 to label07 with label15;
+        catch java.lang.Throwable from label06 to label07 with label18;
+        catch java.lang.Throwable from label11 to label12 with label18;
+        catch java.lang.Throwable from label12 to label13 with label18;
+        catch java.lang.Throwable from label16 to label17 with label18;
+        catch java.lang.Throwable from label19 to label20 with label18;
+    }
+
+    android.webkit.WebViewProviderResponse waitForAndGetProvider()
+    {
+        com.android.server.webkit.WebViewUpdater r0;
+        long l0, l1, $l2, $l3, $l8, $l10;
+        java.lang.Object r1, $r13;
+        java.lang.String r2, $r10, $r12;
+        java.lang.StringBuilder r3;
+        boolean $z0, $z1, z2;
+        int $i4, $i5;
+        android.webkit.WebViewProviderResponse $r11;
+        byte $b9, b11;
+        java.lang.Throwable $r14, $r15;
+        android.content.pm.PackageInfo r17;
+
+        r0 := @this: com.android.server.webkit.WebViewUpdater;
+
+        $l2 = staticinvoke <java.lang.System: long nanoTime()>();
+
+        $l3 = $l2 / 1000000L;
+
+        l0 = $l3 + 1000L;
+
+        b11 = 0;
+
+        r1 = r0.<com.android.server.webkit.WebViewUpdater: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label01:
+        z2 = specialinvoke r0.<com.android.server.webkit.WebViewUpdater: boolean webViewIsReadyLocked()>();
+
+     label02:
+        if z2 != 0 goto label10;
+
+     label03:
+        $l8 = staticinvoke <java.lang.System: long nanoTime()>();
+
+        l1 = $l8 / 1000000L;
+
+     label04:
+        $b9 = l1 cmp l0;
+
+        if $b9 < 0 goto label05;
+
+        goto label10;
+
+     label05:
+        $r13 = r0.<com.android.server.webkit.WebViewUpdater: java.lang.Object mLock>;
+
+        $l10 = l0 - l1;
+
+        virtualinvoke $r13.<java.lang.Object: void wait(long)>($l10);
+
+     label06:
+        goto label08;
+
+     label07:
+        $r14 := @caughtexception;
+
+     label08:
+        z2 = specialinvoke r0.<com.android.server.webkit.WebViewUpdater: boolean webViewIsReadyLocked()>();
+
+     label09:
+        goto label02;
+
+     label10:
+        r17 = r0.<com.android.server.webkit.WebViewUpdater: android.content.pm.PackageInfo mCurrentWebViewPackage>;
+
+     label11:
+        if z2 == 0 goto label12;
+
+        goto label16;
+
+     label12:
+        $z0 = r0.<com.android.server.webkit.WebViewUpdater: boolean mAnyWebViewInstalled>;
+
+        if $z0 != 0 goto label14;
+
+     label13:
+        b11 = 4;
+
+        goto label16;
+
+     label14:
+        b11 = 3;
+
+     label15:
+        r2 = <com.android.server.webkit.WebViewUpdater: java.lang.String TAG>;
+
+        r3 = new java.lang.StringBuilder;
+
+        specialinvoke r3.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Timed out waiting for relro creation, relros started ");
+
+        $i4 = r0.<com.android.server.webkit.WebViewUpdater: int mNumRelroCreationsStarted>;
+
+        virtualinvoke r3.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i4);
+
+        virtualinvoke r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" relros finished ");
+
+        $i5 = r0.<com.android.server.webkit.WebViewUpdater: int mNumRelroCreationsFinished>;
+
+        virtualinvoke r3.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i5);
+
+        virtualinvoke r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" package dirty? ");
+
+        $z1 = r0.<com.android.server.webkit.WebViewUpdater: boolean mWebViewPackageDirty>;
+
+        virtualinvoke r3.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>($z1);
+
+        $r10 = virtualinvoke r3.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>(r2, $r10);
+
+     label16:
+        exitmonitor r1;
+
+     label17:
+        if z2 != 0 goto label18;
+
+        $r12 = <com.android.server.webkit.WebViewUpdater: java.lang.String TAG>;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>($r12, "creating relro file timed out");
+
+     label18:
+        $r11 = new android.webkit.WebViewProviderResponse;
+
+        specialinvoke $r11.<android.webkit.WebViewProviderResponse: void <init>(android.content.pm.PackageInfo,int)>(r17, b11);
+
+        return $r11;
+
+     label19:
+        $r15 := @caughtexception;
+
+     label20:
+        exitmonitor r1;
+
+     label21:
+        throw $r15;
+
+        catch java.lang.Throwable from label01 to label02 with label19;
+        catch java.lang.Throwable from label03 to label04 with label19;
+        catch java.lang.InterruptedException from label05 to label06 with label07;
+        catch java.lang.Throwable from label05 to label06 with label19;
+        catch java.lang.Throwable from label08 to label09 with label19;
+        catch java.lang.Throwable from label10 to label11 with label19;
+        catch java.lang.Throwable from label12 to label13 with label19;
+        catch java.lang.Throwable from label15 to label16 with label19;
+        catch java.lang.Throwable from label16 to label17 with label19;
+        catch java.lang.Throwable from label20 to label21 with label19;
+    }
+}

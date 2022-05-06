@@ -1,0 +1,1320 @@
+public class com.android.server.firewall.IntentFirewall extends java.lang.Object
+{
+    private static final int LOG_PACKAGES_MAX_LENGTH;
+    private static final int LOG_PACKAGES_SUFFICIENT_LENGTH;
+    private static final java.io.File RULES_DIR;
+    static final java.lang.String TAG;
+    private static final java.lang.String TAG_ACTIVITY;
+    private static final java.lang.String TAG_BROADCAST;
+    private static final java.lang.String TAG_RULES;
+    private static final java.lang.String TAG_SERVICE;
+    private static final int TYPE_ACTIVITY;
+    private static final int TYPE_BROADCAST;
+    private static final int TYPE_SERVICE;
+    private static final java.util.HashMap factoryMap;
+    private com.android.server.firewall.IntentFirewall$FirewallIntentResolver mActivityResolver;
+    private final com.android.server.firewall.IntentFirewall$AMSInterface mAms;
+    private com.android.server.firewall.IntentFirewall$FirewallIntentResolver mBroadcastResolver;
+    final com.android.server.firewall.IntentFirewall$FirewallHandler mHandler;
+    private final com.android.server.firewall.IntentFirewall$RuleObserver mObserver;
+    private com.android.server.firewall.IntentFirewall$FirewallIntentResolver mServiceResolver;
+
+    static void <clinit>()
+    {
+        com.android.server.firewall.FilterFactory[] r0;
+        com.android.server.firewall.FilterFactory r1, $r4, $r5, $r6, $r7, $r17, $r18, $r19, $r20, $r21;
+        java.io.File $r2, $r3;
+        com.android.server.firewall.StringFilter$ValueProvider $r8, $r9, $r10, $r11, $r12, $r13, $r14, $r15, $r16;
+        java.util.HashMap $r22, $r23;
+        int $i0, $i1, $i2, $i3, i4;
+        java.lang.String $r24;
+
+        <com.android.server.firewall.IntentFirewall: int TYPE_SERVICE> = 2;
+
+        <com.android.server.firewall.IntentFirewall: int TYPE_BROADCAST> = 1;
+
+        <com.android.server.firewall.IntentFirewall: int TYPE_ACTIVITY> = 0;
+
+        <com.android.server.firewall.IntentFirewall: java.lang.String TAG_SERVICE> = "service";
+
+        <com.android.server.firewall.IntentFirewall: java.lang.String TAG_RULES> = "rules";
+
+        <com.android.server.firewall.IntentFirewall: java.lang.String TAG_BROADCAST> = "broadcast";
+
+        <com.android.server.firewall.IntentFirewall: java.lang.String TAG_ACTIVITY> = "activity";
+
+        <com.android.server.firewall.IntentFirewall: java.lang.String TAG> = "IntentFirewall";
+
+        <com.android.server.firewall.IntentFirewall: int LOG_PACKAGES_SUFFICIENT_LENGTH> = 125;
+
+        <com.android.server.firewall.IntentFirewall: int LOG_PACKAGES_MAX_LENGTH> = 150;
+
+        $r2 = new java.io.File;
+
+        $r3 = staticinvoke <android.os.Environment: java.io.File getDataSystemDirectory()>();
+
+        specialinvoke $r2.<java.io.File: void <init>(java.io.File,java.lang.String)>($r3, "ifw");
+
+        <com.android.server.firewall.IntentFirewall: java.io.File RULES_DIR> = $r2;
+
+        r0 = newarray (com.android.server.firewall.FilterFactory)[18];
+
+        $r4 = <com.android.server.firewall.AndFilter: com.android.server.firewall.FilterFactory FACTORY>;
+
+        r0[0] = $r4;
+
+        $r5 = <com.android.server.firewall.OrFilter: com.android.server.firewall.FilterFactory FACTORY>;
+
+        r0[1] = $r5;
+
+        $r6 = <com.android.server.firewall.NotFilter: com.android.server.firewall.FilterFactory FACTORY>;
+
+        r0[2] = $r6;
+
+        $r7 = <com.android.server.firewall.StringFilter: com.android.server.firewall.FilterFactory ACTION>;
+
+        r0[3] = $r7;
+
+        $r8 = <com.android.server.firewall.StringFilter: com.android.server.firewall.StringFilter$ValueProvider COMPONENT>;
+
+        r0[4] = $r8;
+
+        $r9 = <com.android.server.firewall.StringFilter: com.android.server.firewall.StringFilter$ValueProvider COMPONENT_NAME>;
+
+        r0[5] = $r9;
+
+        $r10 = <com.android.server.firewall.StringFilter: com.android.server.firewall.StringFilter$ValueProvider COMPONENT_PACKAGE>;
+
+        r0[6] = $r10;
+
+        $r11 = <com.android.server.firewall.StringFilter: com.android.server.firewall.StringFilter$ValueProvider DATA>;
+
+        r0[7] = $r11;
+
+        $r12 = <com.android.server.firewall.StringFilter: com.android.server.firewall.StringFilter$ValueProvider HOST>;
+
+        r0[8] = $r12;
+
+        $r13 = <com.android.server.firewall.StringFilter: com.android.server.firewall.StringFilter$ValueProvider MIME_TYPE>;
+
+        r0[9] = $r13;
+
+        $r14 = <com.android.server.firewall.StringFilter: com.android.server.firewall.StringFilter$ValueProvider SCHEME>;
+
+        r0[10] = $r14;
+
+        $r15 = <com.android.server.firewall.StringFilter: com.android.server.firewall.StringFilter$ValueProvider PATH>;
+
+        r0[11] = $r15;
+
+        $r16 = <com.android.server.firewall.StringFilter: com.android.server.firewall.StringFilter$ValueProvider SSP>;
+
+        r0[12] = $r16;
+
+        $r17 = <com.android.server.firewall.CategoryFilter: com.android.server.firewall.FilterFactory FACTORY>;
+
+        r0[13] = $r17;
+
+        $r18 = <com.android.server.firewall.SenderFilter: com.android.server.firewall.FilterFactory FACTORY>;
+
+        r0[14] = $r18;
+
+        $r19 = <com.android.server.firewall.SenderPackageFilter: com.android.server.firewall.FilterFactory FACTORY>;
+
+        r0[15] = $r19;
+
+        $r20 = <com.android.server.firewall.SenderPermissionFilter: com.android.server.firewall.FilterFactory FACTORY>;
+
+        r0[16] = $r20;
+
+        $r21 = <com.android.server.firewall.PortFilter: com.android.server.firewall.FilterFactory FACTORY>;
+
+        r0[17] = $r21;
+
+        $r22 = new java.util.HashMap;
+
+        $i0 = lengthof r0;
+
+        $i1 = $i0 * 4;
+
+        $i2 = $i1 / 3;
+
+        specialinvoke $r22.<java.util.HashMap: void <init>(int)>($i2);
+
+        <com.android.server.firewall.IntentFirewall: java.util.HashMap factoryMap> = $r22;
+
+        i4 = 0;
+
+     label1:
+        $i3 = lengthof r0;
+
+        if i4 >= $i3 goto label2;
+
+        r1 = r0[i4];
+
+        $r23 = <com.android.server.firewall.IntentFirewall: java.util.HashMap factoryMap>;
+
+        $r24 = virtualinvoke r1.<com.android.server.firewall.FilterFactory: java.lang.String getTagName()>();
+
+        virtualinvoke $r23.<java.util.HashMap: java.lang.Object put(java.lang.Object,java.lang.Object)>($r24, r1);
+
+        i4 = i4 + 1;
+
+        goto label1;
+
+     label2:
+        return;
+    }
+
+    public void <init>(com.android.server.firewall.IntentFirewall$AMSInterface, android.os.Handler)
+    {
+        com.android.server.firewall.IntentFirewall r0;
+        android.os.Handler r1;
+        com.android.server.firewall.IntentFirewall$FirewallIntentResolver $r2, $r3, $r4;
+        com.android.server.firewall.IntentFirewall$FirewallHandler $r5;
+        android.os.Looper $r6;
+        com.android.server.firewall.IntentFirewall$RuleObserver $r7;
+        com.android.server.firewall.IntentFirewall$AMSInterface r8;
+        java.io.File r9;
+
+        r0 := @this: com.android.server.firewall.IntentFirewall;
+
+        r8 := @parameter0: com.android.server.firewall.IntentFirewall$AMSInterface;
+
+        r1 := @parameter1: android.os.Handler;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        $r2 = new com.android.server.firewall.IntentFirewall$FirewallIntentResolver;
+
+        specialinvoke $r2.<com.android.server.firewall.IntentFirewall$FirewallIntentResolver: void <init>(com.android.server.firewall.IntentFirewall$1)>(null);
+
+        r0.<com.android.server.firewall.IntentFirewall: com.android.server.firewall.IntentFirewall$FirewallIntentResolver mActivityResolver> = $r2;
+
+        $r3 = new com.android.server.firewall.IntentFirewall$FirewallIntentResolver;
+
+        specialinvoke $r3.<com.android.server.firewall.IntentFirewall$FirewallIntentResolver: void <init>(com.android.server.firewall.IntentFirewall$1)>(null);
+
+        r0.<com.android.server.firewall.IntentFirewall: com.android.server.firewall.IntentFirewall$FirewallIntentResolver mBroadcastResolver> = $r3;
+
+        $r4 = new com.android.server.firewall.IntentFirewall$FirewallIntentResolver;
+
+        specialinvoke $r4.<com.android.server.firewall.IntentFirewall$FirewallIntentResolver: void <init>(com.android.server.firewall.IntentFirewall$1)>(null);
+
+        r0.<com.android.server.firewall.IntentFirewall: com.android.server.firewall.IntentFirewall$FirewallIntentResolver mServiceResolver> = $r4;
+
+        r0.<com.android.server.firewall.IntentFirewall: com.android.server.firewall.IntentFirewall$AMSInterface mAms> = r8;
+
+        $r5 = new com.android.server.firewall.IntentFirewall$FirewallHandler;
+
+        $r6 = virtualinvoke r1.<android.os.Handler: android.os.Looper getLooper()>();
+
+        specialinvoke $r5.<com.android.server.firewall.IntentFirewall$FirewallHandler: void <init>(com.android.server.firewall.IntentFirewall,android.os.Looper)>(r0, $r6);
+
+        r0.<com.android.server.firewall.IntentFirewall: com.android.server.firewall.IntentFirewall$FirewallHandler mHandler> = $r5;
+
+        r9 = staticinvoke <com.android.server.firewall.IntentFirewall: java.io.File getRulesDir()>();
+
+        virtualinvoke r9.<java.io.File: boolean mkdirs()>();
+
+        specialinvoke r0.<com.android.server.firewall.IntentFirewall: void readRulesDir(java.io.File)>(r9);
+
+        $r7 = new com.android.server.firewall.IntentFirewall$RuleObserver;
+
+        specialinvoke $r7.<com.android.server.firewall.IntentFirewall$RuleObserver: void <init>(com.android.server.firewall.IntentFirewall,java.io.File)>(r0, r9);
+
+        r0.<com.android.server.firewall.IntentFirewall: com.android.server.firewall.IntentFirewall$RuleObserver mObserver> = $r7;
+
+        virtualinvoke $r7.<com.android.server.firewall.IntentFirewall$RuleObserver: void startWatching()>();
+
+        return;
+    }
+
+    static void access$300(com.android.server.firewall.IntentFirewall, java.io.File)
+    {
+        com.android.server.firewall.IntentFirewall r0;
+        java.io.File r1;
+
+        r0 := @parameter0: com.android.server.firewall.IntentFirewall;
+
+        r1 := @parameter1: java.io.File;
+
+        specialinvoke r0.<com.android.server.firewall.IntentFirewall: void readRulesDir(java.io.File)>(r1);
+
+        return;
+    }
+
+    public static java.io.File getRulesDir()
+    {
+        java.io.File $r0;
+
+        $r0 = <com.android.server.firewall.IntentFirewall: java.io.File RULES_DIR>;
+
+        return $r0;
+    }
+
+    private static java.lang.String joinPackages(java.lang.String[])
+    {
+        java.lang.StringBuilder $r1, $r2;
+        int $i0, $i1, $i2, $i3, $i4, $i5, $i6, $i7, $i8, $i9, $i10, i11;
+        java.lang.String $r3, $r6, $r7, r11, r12;
+        java.lang.String[] r10;
+        boolean z0;
+
+        r10 := @parameter0: java.lang.String[];
+
+        z0 = 1;
+
+        $r1 = new java.lang.StringBuilder;
+
+        specialinvoke $r1.<java.lang.StringBuilder: void <init>()>();
+
+        i11 = 0;
+
+     label1:
+        $i0 = lengthof r10;
+
+        if i11 >= $i0 goto label6;
+
+        r11 = r10[i11];
+
+        $i6 = virtualinvoke $r1.<java.lang.StringBuilder: int length()>();
+
+        $i7 = virtualinvoke r11.<java.lang.String: int length()>();
+
+        $i8 = $i6 + $i7;
+
+        $i9 = $i8 + 1;
+
+        if $i9 >= 150 goto label4;
+
+        if z0 != 0 goto label2;
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(char)>(44);
+
+        goto label3;
+
+     label2:
+        z0 = 0;
+
+     label3:
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r11);
+
+        goto label5;
+
+     label4:
+        $i10 = virtualinvoke $r1.<java.lang.StringBuilder: int length()>();
+
+        if $i10 < 125 goto label5;
+
+        $r7 = virtualinvoke $r1.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        return $r7;
+
+     label5:
+        i11 = i11 + 1;
+
+        goto label1;
+
+     label6:
+        $i1 = virtualinvoke $r1.<java.lang.StringBuilder: int length()>();
+
+        if $i1 != 0 goto label7;
+
+        $i2 = lengthof r10;
+
+        if $i2 <= 0 goto label7;
+
+        r12 = r10[0];
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        $i3 = virtualinvoke r12.<java.lang.String: int length()>();
+
+        $i4 = $i3 - 150;
+
+        $i5 = $i4 + 1;
+
+        $r3 = virtualinvoke r12.<java.lang.String: java.lang.String substring(int)>($i5);
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r3);
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(char)>(45);
+
+        $r6 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        return $r6;
+
+     label7:
+        return null;
+    }
+
+    private static void logIntent(int, android.content.Intent, int, java.lang.String)
+    {
+        int i0, i1, i5, i6, $i7;
+        android.content.Intent r0;
+        java.lang.String r1, r4, r5, $r9, $r10;
+        android.os.RemoteException $r2;
+        android.content.ComponentName r3;
+        android.content.pm.IPackageManager r6;
+        java.lang.String[] r7;
+
+        i0 := @parameter0: int;
+
+        r0 := @parameter1: android.content.Intent;
+
+        i1 := @parameter2: int;
+
+        r1 := @parameter3: java.lang.String;
+
+        r3 = virtualinvoke r0.<android.content.Intent: android.content.ComponentName getComponent()>();
+
+        if r3 == null goto label01;
+
+        r4 = virtualinvoke r3.<android.content.ComponentName: java.lang.String flattenToShortString()>();
+
+        goto label02;
+
+     label01:
+        r4 = null;
+
+     label02:
+        r5 = null;
+
+        r6 = staticinvoke <android.app.AppGlobals: android.content.pm.IPackageManager getPackageManager()>();
+
+        if r6 == null goto label11;
+
+        i5 = 0;
+
+     label03:
+        r7 = interfaceinvoke r6.<android.content.pm.IPackageManager: java.lang.String[] getPackagesForUid(int)>(i1);
+
+     label04:
+        i5 = 0;
+
+        if r7 == null goto label09;
+
+        i5 = 0;
+
+     label05:
+        i6 = lengthof r7;
+
+     label06:
+        i5 = i6;
+
+     label07:
+        r5 = staticinvoke <com.android.server.firewall.IntentFirewall: java.lang.String joinPackages(java.lang.String[])>(r7);
+
+     label08:
+        i5 = i6;
+
+     label09:
+        goto label12;
+
+     label10:
+        $r2 := @caughtexception;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("IntentFirewall", "Remote exception while retrieving packages", $r2);
+
+        r5 = null;
+
+        goto label12;
+
+     label11:
+        r5 = null;
+
+        i5 = 0;
+
+     label12:
+        $r9 = virtualinvoke r0.<android.content.Intent: java.lang.String getAction()>();
+
+        $r10 = virtualinvoke r0.<android.content.Intent: java.lang.String getDataString()>();
+
+        $i7 = virtualinvoke r0.<android.content.Intent: int getFlags()>();
+
+        staticinvoke <com.android.server.EventLogTags: void writeIfwIntentMatched(int,java.lang.String,int,int,java.lang.String,java.lang.String,java.lang.String,java.lang.String,int)>(i0, r4, i1, i5, r5, $r9, r1, $r10, $i7);
+
+        return;
+
+        catch android.os.RemoteException from label03 to label04 with label10;
+        catch android.os.RemoteException from label05 to label06 with label10;
+        catch android.os.RemoteException from label07 to label08 with label10;
+    }
+
+    static com.android.server.firewall.Filter parseFilter(org.xmlpull.v1.XmlPullParser) throws java.io.IOException, org.xmlpull.v1.XmlPullParserException
+    {
+        java.lang.String r0, $r8;
+        com.android.server.firewall.FilterFactory r1;
+        java.util.HashMap $r2;
+        java.lang.Object $r3;
+        com.android.server.firewall.Filter $r9;
+        org.xmlpull.v1.XmlPullParser r10;
+        java.lang.StringBuilder r12;
+        org.xmlpull.v1.XmlPullParserException r13;
+        java.lang.Throwable r14;
+
+        r10 := @parameter0: org.xmlpull.v1.XmlPullParser;
+
+        r0 = interfaceinvoke r10.<org.xmlpull.v1.XmlPullParser: java.lang.String getName()>();
+
+        $r2 = <com.android.server.firewall.IntentFirewall: java.util.HashMap factoryMap>;
+
+        $r3 = virtualinvoke $r2.<java.util.HashMap: java.lang.Object get(java.lang.Object)>(r0);
+
+        r1 = (com.android.server.firewall.FilterFactory) $r3;
+
+        if r1 == null goto label1;
+
+        $r9 = virtualinvoke r1.<com.android.server.firewall.FilterFactory: com.android.server.firewall.Filter newFilter(org.xmlpull.v1.XmlPullParser)>(r10);
+
+        return $r9;
+
+     label1:
+        r12 = new java.lang.StringBuilder;
+
+        specialinvoke r12.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Unknown element in filter list: ");
+
+        virtualinvoke r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r0);
+
+        r13 = new org.xmlpull.v1.XmlPullParserException;
+
+        $r8 = virtualinvoke r12.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke r13.<org.xmlpull.v1.XmlPullParserException: void <init>(java.lang.String)>($r8);
+
+        r14 = (java.lang.Throwable) r13;
+
+        throw r14;
+    }
+
+    private void readRules(java.io.File, com.android.server.firewall.IntentFirewall$FirewallIntentResolver[])
+    {
+        com.android.server.firewall.IntentFirewall r0;
+        java.util.ArrayList $r1, $r9;
+        java.io.FileInputStream $r2;
+        java.lang.Object $r3, $r4, $r7;
+        int $i0, $i1, $i2, i10, i11, i13, $i14, i15, i16, i17;
+        android.content.ComponentName $r5;
+        com.android.server.firewall.IntentFirewall$FirewallIntentFilter $r6;
+        boolean $z0, $z1, $z2, $z5;
+        java.lang.Throwable $r10, $r15, $r16, $r20, $r21, $r25, $r29, $r34, $r39;
+        java.lang.StringBuilder $r11, $r30, $r35, $r40, r53, r61, r65;
+        java.lang.String $r14, $r19, $r24, $r28, $r33, $r38, $r43, r49;
+        java.io.File r44;
+        com.android.server.firewall.IntentFirewall$FirewallIntentResolver[] r45;
+        org.xmlpull.v1.XmlPullParser r48;
+        byte b12;
+        com.android.server.firewall.IntentFirewall$Rule r50, r58;
+        java.util.List r51, r56;
+        com.android.server.firewall.IntentFirewall$FirewallIntentResolver r57;
+
+        r0 := @this: com.android.server.firewall.IntentFirewall;
+
+        r44 := @parameter0: java.io.File;
+
+        r45 := @parameter1: com.android.server.firewall.IntentFirewall$FirewallIntentResolver[];
+
+        $r1 = new java.util.ArrayList;
+
+        specialinvoke $r1.<java.util.ArrayList: void <init>(int)>(3);
+
+        i10 = 0;
+
+     label01:
+        if i10 >= 3 goto label02;
+
+        $r9 = new java.util.ArrayList;
+
+        specialinvoke $r9.<java.util.ArrayList: void <init>()>();
+
+        interfaceinvoke $r1.<java.util.List: boolean add(java.lang.Object)>($r9);
+
+        i10 = i10 + 1;
+
+        goto label01;
+
+     label02:
+        $r2 = new java.io.FileInputStream;
+
+        specialinvoke $r2.<java.io.FileInputStream: void <init>(java.io.File)>(r44);
+
+     label03:
+        r48 = staticinvoke <android.util.Xml: org.xmlpull.v1.XmlPullParser newPullParser()>();
+
+        interfaceinvoke r48.<org.xmlpull.v1.XmlPullParser: void setInput(java.io.InputStream,java.lang.String)>($r2, null);
+
+        staticinvoke <com.android.internal.util.XmlUtils: void beginDocument(org.xmlpull.v1.XmlPullParser,java.lang.String)>(r48, "rules");
+
+        i11 = interfaceinvoke r48.<org.xmlpull.v1.XmlPullParser: int getDepth()>();
+
+     label04:
+        $z5 = staticinvoke <com.android.internal.util.XmlUtils: boolean nextElementWithin(org.xmlpull.v1.XmlPullParser,int)>(r48, i11);
+
+        if $z5 == 0 goto label20;
+
+        r49 = interfaceinvoke r48.<org.xmlpull.v1.XmlPullParser: java.lang.String getName()>();
+
+        $z0 = virtualinvoke r49.<java.lang.String: boolean equals(java.lang.Object)>("activity");
+
+        if $z0 == 0 goto label06;
+
+     label05:
+        b12 = 0;
+
+        goto label11;
+
+     label06:
+        $z1 = virtualinvoke r49.<java.lang.String: boolean equals(java.lang.Object)>("broadcast");
+
+        if $z1 == 0 goto label08;
+
+     label07:
+        b12 = 1;
+
+        goto label11;
+
+     label08:
+        $z2 = virtualinvoke r49.<java.lang.String: boolean equals(java.lang.Object)>("service");
+
+        if $z2 == 0 goto label10;
+
+     label09:
+        b12 = 2;
+
+        goto label11;
+
+     label10:
+        b12 = -1;
+
+     label11:
+        if b12 == -1 goto label19;
+
+     label12:
+        r50 = new com.android.server.firewall.IntentFirewall$Rule;
+
+        specialinvoke r50.<com.android.server.firewall.IntentFirewall$Rule: void <init>(com.android.server.firewall.IntentFirewall$1)>(null);
+
+        $r7 = interfaceinvoke $r1.<java.util.List: java.lang.Object get(int)>(b12);
+
+        r51 = (java.util.List) $r7;
+
+     label13:
+        virtualinvoke r50.<com.android.server.firewall.IntentFirewall$Rule: com.android.server.firewall.IntentFirewall$Rule readFromXml(org.xmlpull.v1.XmlPullParser)>(r48);
+
+     label14:
+        interfaceinvoke r51.<java.util.List: boolean add(java.lang.Object)>(r50);
+
+     label15:
+        goto label19;
+
+     label16:
+        $r21 := @caughtexception;
+
+     label17:
+        r53 = new java.lang.StringBuilder;
+
+        specialinvoke r53.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r53.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Error reading an intent firewall rule from ");
+
+        virtualinvoke r53.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r44);
+
+        $r24 = virtualinvoke r53.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("IntentFirewall", $r24, $r21);
+
+     label18:
+        goto label04;
+
+     label19:
+        goto label04;
+
+     label20:
+        virtualinvoke $r2.<java.io.FileInputStream: void close()>();
+
+     label21:
+        goto label23;
+
+     label22:
+        $r29 := @caughtexception;
+
+        $r30 = new java.lang.StringBuilder;
+
+        specialinvoke $r30.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r30.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Error while closing ");
+
+        virtualinvoke $r30.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r44);
+
+        $r33 = virtualinvoke $r30.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("IntentFirewall", $r33, $r29);
+
+     label23:
+        i13 = 0;
+
+     label24:
+        $i14 = interfaceinvoke $r1.<java.util.List: int size()>();
+
+        if i13 >= $i14 goto label31;
+
+        $r3 = interfaceinvoke $r1.<java.util.List: java.lang.Object get(int)>(i13);
+
+        r56 = (java.util.List) $r3;
+
+        r57 = r45[i13];
+
+        i15 = 0;
+
+     label25:
+        $i0 = interfaceinvoke r56.<java.util.List: int size()>();
+
+        if i15 >= $i0 goto label30;
+
+        $r4 = interfaceinvoke r56.<java.util.List: java.lang.Object get(int)>(i15);
+
+        r58 = (com.android.server.firewall.IntentFirewall$Rule) $r4;
+
+        i16 = 0;
+
+     label26:
+        $i1 = virtualinvoke r58.<com.android.server.firewall.IntentFirewall$Rule: int getIntentFilterCount()>();
+
+        if i16 >= $i1 goto label27;
+
+        $r6 = virtualinvoke r58.<com.android.server.firewall.IntentFirewall$Rule: com.android.server.firewall.IntentFirewall$FirewallIntentFilter getIntentFilter(int)>(i16);
+
+        virtualinvoke r57.<com.android.server.firewall.IntentFirewall$FirewallIntentResolver: void addFilter(java.lang.Object)>($r6);
+
+        i16 = i16 + 1;
+
+        goto label26;
+
+     label27:
+        i17 = 0;
+
+     label28:
+        $i2 = virtualinvoke r58.<com.android.server.firewall.IntentFirewall$Rule: int getComponentFilterCount()>();
+
+        if i17 >= $i2 goto label29;
+
+        $r5 = virtualinvoke r58.<com.android.server.firewall.IntentFirewall$Rule: android.content.ComponentName getComponentFilter(int)>(i17);
+
+        virtualinvoke r57.<com.android.server.firewall.IntentFirewall$FirewallIntentResolver: void addComponentFilter(android.content.ComponentName,com.android.server.firewall.IntentFirewall$Rule)>($r5, r58);
+
+        i17 = i17 + 1;
+
+        goto label28;
+
+     label29:
+        i15 = i15 + 1;
+
+        goto label25;
+
+     label30:
+        i13 = i13 + 1;
+
+        goto label24;
+
+     label31:
+        return;
+
+     label32:
+        $r15 := @caughtexception;
+
+        goto label45;
+
+     label33:
+        $r25 := @caughtexception;
+
+     label34:
+        r61 = new java.lang.StringBuilder;
+
+        specialinvoke r61.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r61.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Error reading intent firewall rules from ");
+
+        virtualinvoke r61.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r44);
+
+        $r28 = virtualinvoke r61.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("IntentFirewall", $r28, $r25);
+
+     label35:
+        virtualinvoke $r2.<java.io.FileInputStream: void close()>();
+
+     label36:
+        goto label38;
+
+     label37:
+        $r34 := @caughtexception;
+
+        $r35 = new java.lang.StringBuilder;
+
+        specialinvoke $r35.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r35.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Error while closing ");
+
+        virtualinvoke $r35.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r44);
+
+        $r38 = virtualinvoke $r35.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("IntentFirewall", $r38, $r34);
+
+     label38:
+        return;
+
+     label39:
+        $r16 := @caughtexception;
+
+     label40:
+        r65 = new java.lang.StringBuilder;
+
+        specialinvoke r65.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r65.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Error reading intent firewall rules from ");
+
+        virtualinvoke r65.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r44);
+
+        $r19 = virtualinvoke r65.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("IntentFirewall", $r19, $r16);
+
+     label41:
+        virtualinvoke $r2.<java.io.FileInputStream: void close()>();
+
+     label42:
+        goto label44;
+
+     label43:
+        $r10 := @caughtexception;
+
+        $r11 = new java.lang.StringBuilder;
+
+        specialinvoke $r11.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Error while closing ");
+
+        virtualinvoke $r11.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r44);
+
+        $r14 = virtualinvoke $r11.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("IntentFirewall", $r14, $r10);
+
+     label44:
+        return;
+
+     label45:
+        virtualinvoke $r2.<java.io.FileInputStream: void close()>();
+
+     label46:
+        goto label48;
+
+     label47:
+        $r39 := @caughtexception;
+
+        $r40 = new java.lang.StringBuilder;
+
+        specialinvoke $r40.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r40.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Error while closing ");
+
+        virtualinvoke $r40.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r44);
+
+        $r43 = virtualinvoke $r40.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("IntentFirewall", $r43, $r39);
+
+     label48:
+        throw $r15;
+
+     label49:
+        $r20 := @caughtexception;
+
+        return;
+
+        catch java.io.FileNotFoundException from label02 to label03 with label49;
+        catch org.xmlpull.v1.XmlPullParserException from label03 to label04 with label39;
+        catch java.io.IOException from label03 to label04 with label33;
+        catch java.lang.Throwable from label03 to label04 with label32;
+        catch org.xmlpull.v1.XmlPullParserException from label04 to label05 with label39;
+        catch java.io.IOException from label04 to label05 with label33;
+        catch java.lang.Throwable from label04 to label05 with label32;
+        catch org.xmlpull.v1.XmlPullParserException from label06 to label07 with label39;
+        catch java.io.IOException from label06 to label07 with label33;
+        catch java.lang.Throwable from label06 to label07 with label32;
+        catch org.xmlpull.v1.XmlPullParserException from label08 to label09 with label39;
+        catch java.io.IOException from label08 to label09 with label33;
+        catch java.lang.Throwable from label08 to label09 with label32;
+        catch org.xmlpull.v1.XmlPullParserException from label12 to label13 with label39;
+        catch java.io.IOException from label12 to label13 with label33;
+        catch java.lang.Throwable from label12 to label13 with label32;
+        catch org.xmlpull.v1.XmlPullParserException from label13 to label14 with label16;
+        catch java.io.IOException from label13 to label14 with label33;
+        catch java.lang.Throwable from label13 to label14 with label32;
+        catch org.xmlpull.v1.XmlPullParserException from label14 to label15 with label39;
+        catch java.io.IOException from label14 to label15 with label33;
+        catch java.lang.Throwable from label14 to label15 with label32;
+        catch org.xmlpull.v1.XmlPullParserException from label17 to label18 with label39;
+        catch java.io.IOException from label17 to label18 with label33;
+        catch java.lang.Throwable from label17 to label18 with label32;
+        catch java.io.IOException from label20 to label21 with label22;
+        catch java.lang.Throwable from label34 to label35 with label32;
+        catch java.io.IOException from label35 to label36 with label37;
+        catch java.lang.Throwable from label40 to label41 with label32;
+        catch java.io.IOException from label41 to label42 with label43;
+        catch java.io.IOException from label45 to label46 with label47;
+    }
+
+    private void readRulesDir(java.io.File)
+    {
+        com.android.server.firewall.IntentFirewall r0;
+        java.io.File r1, r24;
+        int $i0, $i1, $i2, $i3, $i5, i6, i7;
+        java.lang.StringBuilder $r2;
+        com.android.server.firewall.IntentFirewall$FirewallIntentResolver $r4, $r8, $r12, $r18, $r19, $r20, $r22;
+        java.util.Set $r5, $r9, $r13;
+        java.lang.String $r16, $r21;
+        com.android.server.firewall.IntentFirewall$AMSInterface $r17;
+        boolean $z0;
+        java.lang.Throwable $r23;
+        com.android.server.firewall.IntentFirewall$FirewallIntentResolver[] r25;
+        java.io.File[] r26;
+        java.lang.Object r28;
+
+        r0 := @this: com.android.server.firewall.IntentFirewall;
+
+        r24 := @parameter0: java.io.File;
+
+        r25 = newarray (com.android.server.firewall.IntentFirewall$FirewallIntentResolver)[3];
+
+        i6 = 0;
+
+     label01:
+        $i0 = lengthof r25;
+
+        if i6 >= $i0 goto label02;
+
+        $r22 = new com.android.server.firewall.IntentFirewall$FirewallIntentResolver;
+
+        specialinvoke $r22.<com.android.server.firewall.IntentFirewall$FirewallIntentResolver: void <init>(com.android.server.firewall.IntentFirewall$1)>(null);
+
+        r25[i6] = $r22;
+
+        i6 = i6 + 1;
+
+        goto label01;
+
+     label02:
+        r26 = virtualinvoke r24.<java.io.File: java.io.File[] listFiles()>();
+
+        if r26 == null goto label05;
+
+        i7 = 0;
+
+     label03:
+        $i5 = lengthof r26;
+
+        if i7 >= $i5 goto label05;
+
+        r1 = r26[i7];
+
+        $r21 = virtualinvoke r1.<java.io.File: java.lang.String getName()>();
+
+        $z0 = virtualinvoke $r21.<java.lang.String: boolean endsWith(java.lang.String)>(".xml");
+
+        if $z0 == 0 goto label04;
+
+        specialinvoke r0.<com.android.server.firewall.IntentFirewall: void readRules(java.io.File,com.android.server.firewall.IntentFirewall$FirewallIntentResolver[])>(r1, r25);
+
+     label04:
+        i7 = i7 + 1;
+
+        goto label03;
+
+     label05:
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Read new rules (A:");
+
+        $r4 = r25[0];
+
+        $r5 = virtualinvoke $r4.<com.android.server.firewall.IntentFirewall$FirewallIntentResolver: java.util.Set filterSet()>();
+
+        $i1 = interfaceinvoke $r5.<java.util.Set: int size()>();
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i1);
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" B:");
+
+        $r8 = r25[1];
+
+        $r9 = virtualinvoke $r8.<com.android.server.firewall.IntentFirewall$FirewallIntentResolver: java.util.Set filterSet()>();
+
+        $i2 = interfaceinvoke $r9.<java.util.Set: int size()>();
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i2);
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" S:");
+
+        $r12 = r25[2];
+
+        $r13 = virtualinvoke $r12.<com.android.server.firewall.IntentFirewall$FirewallIntentResolver: java.util.Set filterSet()>();
+
+        $i3 = interfaceinvoke $r13.<java.util.Set: int size()>();
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i3);
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(")");
+
+        $r16 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("IntentFirewall", $r16);
+
+        $r17 = r0.<com.android.server.firewall.IntentFirewall: com.android.server.firewall.IntentFirewall$AMSInterface mAms>;
+
+        r28 = interfaceinvoke $r17.<com.android.server.firewall.IntentFirewall$AMSInterface: java.lang.Object getAMSLock()>();
+
+        entermonitor r28;
+
+     label06:
+        $r18 = r25[0];
+
+        r0.<com.android.server.firewall.IntentFirewall: com.android.server.firewall.IntentFirewall$FirewallIntentResolver mActivityResolver> = $r18;
+
+        $r19 = r25[1];
+
+        r0.<com.android.server.firewall.IntentFirewall: com.android.server.firewall.IntentFirewall$FirewallIntentResolver mBroadcastResolver> = $r19;
+
+        $r20 = r25[2];
+
+        r0.<com.android.server.firewall.IntentFirewall: com.android.server.firewall.IntentFirewall$FirewallIntentResolver mServiceResolver> = $r20;
+
+        exitmonitor r28;
+
+     label07:
+        return;
+
+     label08:
+        $r23 := @caughtexception;
+
+     label09:
+        exitmonitor r28;
+
+     label10:
+        throw $r23;
+
+        catch java.lang.Throwable from label06 to label07 with label08;
+        catch java.lang.Throwable from label09 to label10 with label08;
+    }
+
+    public boolean checkBroadcast(android.content.Intent, int, int, java.lang.String, int)
+    {
+        com.android.server.firewall.IntentFirewall r0;
+        android.content.Intent r1;
+        int i0, i1, i2;
+        java.lang.String r2;
+        com.android.server.firewall.IntentFirewall$FirewallIntentResolver $r3;
+        android.content.ComponentName $r4;
+        boolean $z0;
+
+        r0 := @this: com.android.server.firewall.IntentFirewall;
+
+        r1 := @parameter0: android.content.Intent;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        r2 := @parameter3: java.lang.String;
+
+        i2 := @parameter4: int;
+
+        $r3 = r0.<com.android.server.firewall.IntentFirewall: com.android.server.firewall.IntentFirewall$FirewallIntentResolver mBroadcastResolver>;
+
+        $r4 = virtualinvoke r1.<android.content.Intent: android.content.ComponentName getComponent()>();
+
+        $z0 = virtualinvoke r0.<com.android.server.firewall.IntentFirewall: boolean checkIntent(com.android.server.firewall.IntentFirewall$FirewallIntentResolver,android.content.ComponentName,int,android.content.Intent,int,int,java.lang.String,int)>($r3, $r4, 1, r1, i0, i1, r2, i2);
+
+        return $z0;
+    }
+
+    boolean checkComponentPermission(java.lang.String, int, int, int, boolean)
+    {
+        com.android.server.firewall.IntentFirewall r0;
+        java.lang.String r1;
+        int i0, i1, i2, $i3;
+        com.android.server.firewall.IntentFirewall$AMSInterface $r2;
+        boolean z0, z1;
+
+        r0 := @this: com.android.server.firewall.IntentFirewall;
+
+        r1 := @parameter0: java.lang.String;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        i2 := @parameter3: int;
+
+        z0 := @parameter4: boolean;
+
+        $r2 = r0.<com.android.server.firewall.IntentFirewall: com.android.server.firewall.IntentFirewall$AMSInterface mAms>;
+
+        $i3 = interfaceinvoke $r2.<com.android.server.firewall.IntentFirewall$AMSInterface: int checkComponentPermission(java.lang.String,int,int,int,boolean)>(r1, i0, i1, i2, z0);
+
+        if $i3 != 0 goto label1;
+
+        z1 = 1;
+
+        goto label2;
+
+     label1:
+        z1 = 0;
+
+     label2:
+        return z1;
+    }
+
+    public boolean checkIntent(com.android.server.firewall.IntentFirewall$FirewallIntentResolver, android.content.ComponentName, int, android.content.Intent, int, int, java.lang.String, int)
+    {
+        com.android.server.firewall.IntentFirewall r0;
+        android.content.ComponentName r1;
+        int i0, i1, i2, i3, i4, $i5;
+        android.content.Intent r2;
+        java.lang.String r3;
+        boolean $z0, $z1, $z2, $z3, z4, z5, z6, z7, z8, z9, z10, z11;
+        java.lang.Object $r4, r7;
+        com.android.server.firewall.IntentFirewall$FirewallIntentResolver r6;
+        com.android.server.firewall.IntentFirewall$Rule r8;
+        java.util.ArrayList r9;
+        java.util.List r10, r11, r12;
+
+        r0 := @this: com.android.server.firewall.IntentFirewall;
+
+        r6 := @parameter0: com.android.server.firewall.IntentFirewall$FirewallIntentResolver;
+
+        r1 := @parameter1: android.content.ComponentName;
+
+        i0 := @parameter2: int;
+
+        r2 := @parameter3: android.content.Intent;
+
+        i1 := @parameter4: int;
+
+        i2 := @parameter5: int;
+
+        r3 := @parameter6: java.lang.String;
+
+        i3 := @parameter7: int;
+
+        r7 = virtualinvoke r6.<com.android.server.firewall.IntentFirewall$FirewallIntentResolver: java.util.List queryIntent(android.content.Intent,java.lang.String,boolean,int)>(r2, r3, 0, 0);
+
+        if r7 != null goto label1;
+
+        r9 = new java.util.ArrayList;
+
+        specialinvoke r9.<java.util.ArrayList: void <init>()>();
+
+        r7 = r9;
+
+        goto label1;
+
+     label1:
+        r10 = (java.util.List) r7;
+
+        virtualinvoke r6.<com.android.server.firewall.IntentFirewall$FirewallIntentResolver: void queryByComponent(android.content.ComponentName,java.util.List)>(r1, r10);
+
+        z4 = 0;
+
+        z5 = 0;
+
+        i4 = 0;
+
+     label2:
+        z6 = z4;
+
+        z7 = z5;
+
+        r11 = (java.util.List) r7;
+
+        $i5 = interfaceinvoke r11.<java.util.List: int size()>();
+
+        if i4 >= $i5 goto label4;
+
+        r12 = (java.util.List) r7;
+
+        $r4 = interfaceinvoke r12.<java.util.List: java.lang.Object get(int)>(i4);
+
+        r8 = (com.android.server.firewall.IntentFirewall$Rule) $r4;
+
+        z8 = z4;
+
+        z9 = z5;
+
+        $z1 = virtualinvoke r8.<com.android.server.firewall.IntentFirewall$Rule: boolean matches(com.android.server.firewall.IntentFirewall,android.content.ComponentName,android.content.Intent,int,int,java.lang.String,int)>(r0, r1, r2, i1, i2, r3, i3);
+
+        if $z1 == 0 goto label3;
+
+        $z2 = virtualinvoke r8.<com.android.server.firewall.IntentFirewall$Rule: boolean getBlock()>();
+
+        z10 = z5 | $z2;
+
+        $z3 = virtualinvoke r8.<com.android.server.firewall.IntentFirewall$Rule: boolean getLog()>();
+
+        z11 = z4 | $z3;
+
+        z8 = z11;
+
+        z9 = z10;
+
+        if z10 == 0 goto label3;
+
+        z8 = z11;
+
+        z9 = z10;
+
+        if z11 == 0 goto label3;
+
+        z6 = z11;
+
+        z7 = z10;
+
+        goto label4;
+
+     label3:
+        i4 = i4 + 1;
+
+        z4 = z8;
+
+        z5 = z9;
+
+        goto label2;
+
+     label4:
+        if z6 == 0 goto label5;
+
+        staticinvoke <com.android.server.firewall.IntentFirewall: void logIntent(int,android.content.Intent,int,java.lang.String)>(i0, r2, i1, r3);
+
+        goto label5;
+
+     label5:
+        $z0 = z7 ^ 1;
+
+        return $z0;
+    }
+
+    public boolean checkService(android.content.ComponentName, android.content.Intent, int, int, java.lang.String, android.content.pm.ApplicationInfo)
+    {
+        com.android.server.firewall.IntentFirewall r0;
+        android.content.ComponentName r1;
+        android.content.Intent r2;
+        int i0, i1, $i2;
+        java.lang.String r3;
+        android.content.pm.ApplicationInfo r4;
+        com.android.server.firewall.IntentFirewall$FirewallIntentResolver $r5;
+        boolean $z0;
+
+        r0 := @this: com.android.server.firewall.IntentFirewall;
+
+        r1 := @parameter0: android.content.ComponentName;
+
+        r2 := @parameter1: android.content.Intent;
+
+        i0 := @parameter2: int;
+
+        i1 := @parameter3: int;
+
+        r3 := @parameter4: java.lang.String;
+
+        r4 := @parameter5: android.content.pm.ApplicationInfo;
+
+        $r5 = r0.<com.android.server.firewall.IntentFirewall: com.android.server.firewall.IntentFirewall$FirewallIntentResolver mServiceResolver>;
+
+        $i2 = r4.<android.content.pm.ApplicationInfo: int uid>;
+
+        $z0 = virtualinvoke r0.<com.android.server.firewall.IntentFirewall: boolean checkIntent(com.android.server.firewall.IntentFirewall$FirewallIntentResolver,android.content.ComponentName,int,android.content.Intent,int,int,java.lang.String,int)>($r5, r1, 2, r2, i0, i1, r3, $i2);
+
+        return $z0;
+    }
+
+    public boolean checkStartActivity(android.content.Intent, int, int, java.lang.String, android.content.pm.ApplicationInfo)
+    {
+        com.android.server.firewall.IntentFirewall r0;
+        android.content.Intent r1;
+        int i0, i1, $i2;
+        java.lang.String r2;
+        android.content.pm.ApplicationInfo r3;
+        com.android.server.firewall.IntentFirewall$FirewallIntentResolver $r4;
+        android.content.ComponentName $r5;
+        boolean $z0;
+
+        r0 := @this: com.android.server.firewall.IntentFirewall;
+
+        r1 := @parameter0: android.content.Intent;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        r2 := @parameter3: java.lang.String;
+
+        r3 := @parameter4: android.content.pm.ApplicationInfo;
+
+        $r4 = r0.<com.android.server.firewall.IntentFirewall: com.android.server.firewall.IntentFirewall$FirewallIntentResolver mActivityResolver>;
+
+        $r5 = virtualinvoke r1.<android.content.Intent: android.content.ComponentName getComponent()>();
+
+        $i2 = r3.<android.content.pm.ApplicationInfo: int uid>;
+
+        $z0 = virtualinvoke r0.<com.android.server.firewall.IntentFirewall: boolean checkIntent(com.android.server.firewall.IntentFirewall$FirewallIntentResolver,android.content.ComponentName,int,android.content.Intent,int,int,java.lang.String,int)>($r4, $r5, 0, r1, i0, i1, r2, $i2);
+
+        return $z0;
+    }
+
+    boolean signaturesMatch(int, int)
+    {
+        com.android.server.firewall.IntentFirewall r0;
+        int i0, i2, i3;
+        android.content.pm.IPackageManager $r2;
+        android.os.RemoteException $r3;
+        boolean z0;
+
+        r0 := @this: com.android.server.firewall.IntentFirewall;
+
+        i2 := @parameter0: int;
+
+        i0 := @parameter1: int;
+
+        z0 = 0;
+
+     label1:
+        $r2 = staticinvoke <android.app.AppGlobals: android.content.pm.IPackageManager getPackageManager()>();
+
+        i3 = interfaceinvoke $r2.<android.content.pm.IPackageManager: int checkUidSignatures(int,int)>(i2, i0);
+
+     label2:
+        if i3 != 0 goto label3;
+
+        z0 = 1;
+
+     label3:
+        return z0;
+
+     label4:
+        $r3 := @caughtexception;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String,java.lang.Throwable)>("IntentFirewall", "Remote exception while checking signatures", $r3);
+
+        return 0;
+
+        catch android.os.RemoteException from label1 to label2 with label4;
+    }
+}

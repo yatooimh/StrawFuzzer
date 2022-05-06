@@ -1,0 +1,2420 @@
+public class com.android.server.pm.PackageDexOptimizer extends java.lang.Object
+{
+    public static final int DEX_OPT_FAILED;
+    public static final int DEX_OPT_PERFORMED;
+    public static final int DEX_OPT_SKIPPED;
+    static final java.lang.String OAT_DIR_NAME;
+    private static final java.lang.String TAG;
+    private static final long WAKELOCK_TIMEOUT_MS;
+    private final android.os.PowerManager$WakeLock mDexoptWakeLock;
+    private final java.lang.Object mInstallLock;
+    private final com.android.server.pm.Installer mInstaller;
+    private volatile boolean mSystemReady;
+
+    void <init>(com.android.server.pm.Installer, java.lang.Object, android.content.Context, java.lang.String)
+    {
+        com.android.server.pm.PackageDexOptimizer r0;
+        com.android.server.pm.Installer r1;
+        java.lang.Object r2, $r5;
+        android.content.Context r3;
+        java.lang.String r4;
+        android.os.PowerManager $r6;
+        android.os.PowerManager$WakeLock $r7;
+
+        r0 := @this: com.android.server.pm.PackageDexOptimizer;
+
+        r1 := @parameter0: com.android.server.pm.Installer;
+
+        r2 := @parameter1: java.lang.Object;
+
+        r3 := @parameter2: android.content.Context;
+
+        r4 := @parameter3: java.lang.String;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        r0.<com.android.server.pm.PackageDexOptimizer: com.android.server.pm.Installer mInstaller> = r1;
+
+        r0.<com.android.server.pm.PackageDexOptimizer: java.lang.Object mInstallLock> = r2;
+
+        $r5 = virtualinvoke r3.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("power");
+
+        $r6 = (android.os.PowerManager) $r5;
+
+        $r7 = virtualinvoke $r6.<android.os.PowerManager: android.os.PowerManager$WakeLock newWakeLock(int,java.lang.String)>(1, r4);
+
+        r0.<com.android.server.pm.PackageDexOptimizer: android.os.PowerManager$WakeLock mDexoptWakeLock> = $r7;
+
+        return;
+    }
+
+    protected void <init>(com.android.server.pm.PackageDexOptimizer)
+    {
+        com.android.server.pm.PackageDexOptimizer r0, r1;
+        com.android.server.pm.Installer $r2;
+        java.lang.Object $r3;
+        android.os.PowerManager$WakeLock $r4;
+        boolean $z0;
+
+        r0 := @this: com.android.server.pm.PackageDexOptimizer;
+
+        r1 := @parameter0: com.android.server.pm.PackageDexOptimizer;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        $r2 = r1.<com.android.server.pm.PackageDexOptimizer: com.android.server.pm.Installer mInstaller>;
+
+        r0.<com.android.server.pm.PackageDexOptimizer: com.android.server.pm.Installer mInstaller> = $r2;
+
+        $r3 = r1.<com.android.server.pm.PackageDexOptimizer: java.lang.Object mInstallLock>;
+
+        r0.<com.android.server.pm.PackageDexOptimizer: java.lang.Object mInstallLock> = $r3;
+
+        $r4 = r1.<com.android.server.pm.PackageDexOptimizer: android.os.PowerManager$WakeLock mDexoptWakeLock>;
+
+        r0.<com.android.server.pm.PackageDexOptimizer: android.os.PowerManager$WakeLock mDexoptWakeLock> = $r4;
+
+        $z0 = r1.<com.android.server.pm.PackageDexOptimizer: boolean mSystemReady>;
+
+        r0.<com.android.server.pm.PackageDexOptimizer: boolean mSystemReady> = $z0;
+
+        return;
+    }
+
+    private long acquireWakeLockLI(int)
+    {
+        com.android.server.pm.PackageDexOptimizer r0;
+        int i0;
+        boolean $z0;
+        android.os.WorkSource $r1;
+        android.os.PowerManager$WakeLock $r2, $r3;
+        long $l1;
+
+        r0 := @this: com.android.server.pm.PackageDexOptimizer;
+
+        i0 := @parameter0: int;
+
+        $z0 = r0.<com.android.server.pm.PackageDexOptimizer: boolean mSystemReady>;
+
+        if $z0 != 0 goto label1;
+
+        return -1L;
+
+     label1:
+        $r2 = r0.<com.android.server.pm.PackageDexOptimizer: android.os.PowerManager$WakeLock mDexoptWakeLock>;
+
+        $r1 = new android.os.WorkSource;
+
+        specialinvoke $r1.<android.os.WorkSource: void <init>(int)>(i0);
+
+        virtualinvoke $r2.<android.os.PowerManager$WakeLock: void setWorkSource(android.os.WorkSource)>($r1);
+
+        $r3 = r0.<com.android.server.pm.PackageDexOptimizer: android.os.PowerManager$WakeLock mDexoptWakeLock>;
+
+        virtualinvoke $r3.<android.os.PowerManager$WakeLock: void acquire(long)>(660000L);
+
+        $l1 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        return $l1;
+    }
+
+    static boolean canOptimizePackage(com.android.server.pm.parsing.pkg.AndroidPackage)
+    {
+        com.android.server.pm.parsing.pkg.AndroidPackage r0;
+        java.lang.String $r1, $r2;
+        boolean $z0, $z1;
+
+        r0 := @parameter0: com.android.server.pm.parsing.pkg.AndroidPackage;
+
+        $r1 = "android";
+
+        $r2 = interfaceinvoke r0.<com.android.server.pm.parsing.pkg.AndroidPackage: java.lang.String getPackageName()>();
+
+        $z0 = virtualinvoke $r1.<java.lang.String: boolean equals(java.lang.Object)>($r2);
+
+        if $z0 != 0 goto label1;
+
+        $z1 = interfaceinvoke r0.<com.android.server.pm.parsing.pkg.AndroidPackage: boolean isHasCode()>();
+
+        if $z1 != 0 goto label1;
+
+        return 0;
+
+     label1:
+        return 1;
+    }
+
+    private int dexOptPath(com.android.server.pm.parsing.pkg.AndroidPackage, com.android.server.pm.PackageSetting, java.lang.String, java.lang.String, java.lang.String, boolean, java.lang.String, int, int, com.android.server.pm.CompilerStats$PackageStats, boolean, java.lang.String, java.lang.String, int)
+    {
+        com.android.server.pm.PackageDexOptimizer r0;
+        java.lang.String r1, r2, r3, r4, r6, r7, r8, r9, r10, $r18, $r23, $r31, r37, r39;
+        int i0, i1, i2, i3, $i8, i11, i12;
+        com.android.server.pm.CompilerStats$PackageStats r5;
+        boolean z0, $z1, z2, z3;
+        long l4, $l6, $l7, $l9;
+        com.android.server.pm.pkg.PackageStateUnserialized $r11;
+        java.lang.StringBuilder $r12;
+        com.android.server.pm.Installer$InstallerException $r32, $r33, r40;
+        com.android.server.pm.parsing.pkg.AndroidPackage r34;
+        com.android.server.pm.PackageSetting r35;
+        com.android.server.pm.Installer r38;
+
+        r0 := @this: com.android.server.pm.PackageDexOptimizer;
+
+        r34 := @parameter0: com.android.server.pm.parsing.pkg.AndroidPackage;
+
+        r35 := @parameter1: com.android.server.pm.PackageSetting;
+
+        r1 := @parameter2: java.lang.String;
+
+        r2 := @parameter3: java.lang.String;
+
+        r3 := @parameter4: java.lang.String;
+
+        z2 := @parameter5: boolean;
+
+        r4 := @parameter6: java.lang.String;
+
+        i0 := @parameter7: int;
+
+        i1 := @parameter8: int;
+
+        r5 := @parameter9: com.android.server.pm.CompilerStats$PackageStats;
+
+        z0 := @parameter10: boolean;
+
+        r6 := @parameter11: java.lang.String;
+
+        r7 := @parameter12: java.lang.String;
+
+        i2 := @parameter13: int;
+
+        i3 = specialinvoke r0.<com.android.server.pm.PackageDexOptimizer: int getDexoptNeeded(java.lang.String,java.lang.String,java.lang.String,java.lang.String,boolean,boolean)>(r1, r2, r3, r4, z2, z0);
+
+        i11 = staticinvoke <java.lang.Math: int abs(int)>(i3);
+
+        z3 = 0;
+
+        if i11 != 0 goto label01;
+
+        return 0;
+
+     label01:
+        $r11 = virtualinvoke r35.<com.android.server.pm.PackageSetting: com.android.server.pm.pkg.PackageStateUnserialized getPkgState()>();
+
+        $z1 = virtualinvoke $r11.<com.android.server.pm.pkg.PackageStateUnserialized: boolean isUpdatedSystemApp()>();
+
+        r8 = specialinvoke r0.<com.android.server.pm.PackageDexOptimizer: java.lang.String getPackageOatDirIfSupported(com.android.server.pm.parsing.pkg.AndroidPackage,boolean)>(r34, $z1);
+
+        $r12 = new java.lang.StringBuilder;
+
+        specialinvoke $r12.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Running dexopt (dexoptNeeded=");
+
+        virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i3);
+
+        virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(") on: ");
+
+        virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" pkg=");
+
+        $r18 = interfaceinvoke r34.<com.android.server.pm.parsing.pkg.AndroidPackage: java.lang.String getPackageName()>();
+
+        virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r18);
+
+        virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" isa=");
+
+        virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r2);
+
+        virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" dexoptFlags=");
+
+        $r23 = specialinvoke r0.<com.android.server.pm.PackageDexOptimizer: java.lang.String printDexoptFlags(int)>(i0);
+
+        virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r23);
+
+        virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" targetFilter=");
+
+        virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r3);
+
+        virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" oatDir=");
+
+        virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r8);
+
+        virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" classLoaderContext=");
+
+        virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r4);
+
+        $r31 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int i(java.lang.String,java.lang.String)>("PackageDexOptimizer", $r31);
+
+     label02:
+        l4 = staticinvoke <java.lang.System: long currentTimeMillis()>();
+
+        r37 = staticinvoke <com.android.server.pm.parsing.pkg.AndroidPackageUtils: java.lang.String getSeInfo(com.android.server.pm.parsing.pkg.AndroidPackage,com.android.server.pm.PackageSetting)>(r34, r35);
+
+        r38 = r0.<com.android.server.pm.PackageDexOptimizer: com.android.server.pm.Installer mInstaller>;
+
+        r9 = interfaceinvoke r34.<com.android.server.pm.parsing.pkg.AndroidPackage: java.lang.String getPackageName()>();
+
+        r10 = interfaceinvoke r34.<com.android.server.pm.parsing.pkg.AndroidPackage: java.lang.String getVolumeUuid()>();
+
+        i12 = interfaceinvoke r34.<com.android.server.pm.parsing.pkg.AndroidPackage: int getTargetSdkVersion()>();
+
+     label03:
+        if r7 == null goto label04;
+
+        z3 = 1;
+
+     label04:
+        r39 = specialinvoke r0.<com.android.server.pm.PackageDexOptimizer: java.lang.String getAugmentedReasonName(int,boolean)>(i2, z3);
+
+     label05:
+        virtualinvoke r38.<com.android.server.pm.Installer: void dexopt(java.lang.String,int,java.lang.String,java.lang.String,int,java.lang.String,int,java.lang.String,java.lang.String,java.lang.String,java.lang.String,boolean,int,java.lang.String,java.lang.String,java.lang.String)>(r1, i1, r9, r2, i3, r8, i0, r3, r10, r4, r37, 0, i12, r6, r7, r39);
+
+     label06:
+        if r5 == null goto label08;
+
+     label07:
+        $l6 = staticinvoke <java.lang.System: long currentTimeMillis()>();
+
+        $l7 = $l6 - l4;
+
+        $i8 = (int) $l7;
+
+        $l9 = (long) $i8;
+
+        virtualinvoke r5.<com.android.server.pm.CompilerStats$PackageStats: void setCompileTime(java.lang.String,long)>(r1, $l9);
+
+     label08:
+        return 1;
+
+     label09:
+        $r33 := @caughtexception;
+
+        r40 = $r33;
+
+        goto label11;
+
+     label10:
+        $r32 := @caughtexception;
+
+        r40 = $r32;
+
+     label11:
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String,java.lang.Throwable)>("PackageDexOptimizer", "Failed to dexopt", r40);
+
+        return -1;
+
+        catch com.android.server.pm.Installer$InstallerException from label02 to label03 with label10;
+        catch com.android.server.pm.Installer$InstallerException from label04 to label05 with label10;
+        catch com.android.server.pm.Installer$InstallerException from label05 to label06 with label09;
+        catch com.android.server.pm.Installer$InstallerException from label07 to label08 with label09;
+    }
+
+    private int dexOptSecondaryDexPathLI(android.content.pm.ApplicationInfo, java.lang.String, com.android.server.pm.dex.PackageDexUsage$DexUseInfo, com.android.server.pm.dex.DexoptOptions)
+    {
+        com.android.server.pm.PackageDexOptimizer r0;
+        com.android.server.pm.dex.DexoptOptions r1;
+        int i0, i1, i2, $i3, i7, i8;
+        java.util.Iterator r2;
+        java.lang.String r3, r5, r6, r7, $r8, $r9, $r12, $r14, $r15, $r31, r35, r37, r38, r40, $r43, $r45, $r46, $r47, r65;
+        com.android.server.pm.Installer r4;
+        boolean z0, $z1, $z2, $z3, $z4, $z5, $z6, $z7, $z8;
+        java.lang.StringBuilder $r10, $r41;
+        java.lang.Object $r30;
+        com.android.server.pm.Installer$InstallerException $r32, $r33, r74;
+        android.content.pm.ApplicationInfo r34;
+        com.android.server.pm.dex.PackageDexUsage$DexUseInfo r36;
+        java.util.Set $r44, $r51;
+
+        r0 := @this: com.android.server.pm.PackageDexOptimizer;
+
+        r34 := @parameter0: android.content.pm.ApplicationInfo;
+
+        r35 := @parameter1: java.lang.String;
+
+        r36 := @parameter2: com.android.server.pm.dex.PackageDexUsage$DexUseInfo;
+
+        r1 := @parameter3: com.android.server.pm.dex.DexoptOptions;
+
+        $z1 = virtualinvoke r1.<com.android.server.pm.dex.DexoptOptions: boolean isDexoptOnlySharedDex()>();
+
+        if $z1 == 0 goto label01;
+
+        $z7 = virtualinvoke r36.<com.android.server.pm.dex.PackageDexUsage$DexUseInfo: boolean isUsedByOtherApps()>();
+
+        if $z7 != 0 goto label01;
+
+        return 0;
+
+     label01:
+        $r8 = virtualinvoke r1.<com.android.server.pm.dex.DexoptOptions: java.lang.String getCompilerFilter()>();
+
+        $z2 = virtualinvoke r36.<com.android.server.pm.dex.PackageDexUsage$DexUseInfo: boolean isUsedByOtherApps()>();
+
+        r37 = specialinvoke r0.<com.android.server.pm.PackageDexOptimizer: java.lang.String getRealCompilerFilter(android.content.pm.ApplicationInfo,java.lang.String,boolean)>(r34, $r8, $z2);
+
+        $i3 = specialinvoke r0.<com.android.server.pm.PackageDexOptimizer: int getDexFlags(android.content.pm.ApplicationInfo,java.lang.String,com.android.server.pm.dex.DexoptOptions)>(r34, r37, r1);
+
+        i7 = $i3 | 32;
+
+        r38 = r34.<android.content.pm.ApplicationInfo: java.lang.String deviceProtectedDataDir>;
+
+        if r38 == null goto label02;
+
+        $r31 = r34.<android.content.pm.ApplicationInfo: java.lang.String deviceProtectedDataDir>;
+
+        $z6 = staticinvoke <android.os.FileUtils: boolean contains(java.lang.String,java.lang.String)>($r31, r35);
+
+        if $z6 == 0 goto label02;
+
+        i8 = i7 | 256;
+
+        goto label03;
+
+     label02:
+        $r9 = r34.<android.content.pm.ApplicationInfo: java.lang.String credentialProtectedDataDir>;
+
+        if $r9 == null goto label25;
+
+        $r15 = r34.<android.content.pm.ApplicationInfo: java.lang.String credentialProtectedDataDir>;
+
+        $z3 = staticinvoke <android.os.FileUtils: boolean contains(java.lang.String,java.lang.String)>($r15, r35);
+
+        if $z3 == 0 goto label24;
+
+        i8 = i7 | 128;
+
+     label03:
+        $z4 = virtualinvoke r36.<com.android.server.pm.dex.PackageDexUsage$DexUseInfo: boolean isUnsupportedClassLoaderContext()>();
+
+        if $z4 != 0 goto label05;
+
+        $z5 = virtualinvoke r36.<com.android.server.pm.dex.PackageDexUsage$DexUseInfo: boolean isVariableClassLoaderContext()>();
+
+        if $z5 == 0 goto label04;
+
+        goto label05;
+
+     label04:
+        r40 = virtualinvoke r36.<com.android.server.pm.dex.PackageDexUsage$DexUseInfo: java.lang.String getClassLoaderContext()>();
+
+        goto label06;
+
+     label05:
+        r37 = "extract";
+
+        r40 = null;
+
+     label06:
+        i0 = virtualinvoke r1.<com.android.server.pm.dex.DexoptOptions: int getCompilationReason()>();
+
+        $r41 = new java.lang.StringBuilder;
+
+        specialinvoke $r41.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r41.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Running dexopt on: ");
+
+        virtualinvoke $r41.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r35);
+
+        virtualinvoke $r41.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" pkg=");
+
+        $r43 = r34.<android.content.pm.ApplicationInfo: java.lang.String packageName>;
+
+        virtualinvoke $r41.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r43);
+
+        virtualinvoke $r41.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" isa=");
+
+        $r44 = virtualinvoke r36.<com.android.server.pm.dex.PackageDexUsage$DexUseInfo: java.util.Set getLoaderIsas()>();
+
+        virtualinvoke $r41.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r44);
+
+        virtualinvoke $r41.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" reason=");
+
+        $r45 = staticinvoke <com.android.server.pm.PackageManagerServiceCompilerMapping: java.lang.String getReasonName(int)>(i0);
+
+        virtualinvoke $r41.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r45);
+
+        virtualinvoke $r41.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" dexoptFlags=");
+
+        $r46 = specialinvoke r0.<com.android.server.pm.PackageDexOptimizer: java.lang.String printDexoptFlags(int)>(i8);
+
+        virtualinvoke $r41.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r46);
+
+        virtualinvoke $r41.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" target-filter=");
+
+        virtualinvoke $r41.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r37);
+
+        virtualinvoke $r41.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" class-loader-context=");
+
+        virtualinvoke $r41.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r40);
+
+        $r47 = virtualinvoke $r41.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Log: int d(java.lang.String,java.lang.String)>("PackageDexOptimizer", $r47);
+
+     label07:
+        $r51 = virtualinvoke r36.<com.android.server.pm.dex.PackageDexUsage$DexUseInfo: java.util.Set getLoaderIsas()>();
+
+        r2 = interfaceinvoke $r51.<java.util.Set: java.util.Iterator iterator()>();
+
+     label08:
+        $z8 = interfaceinvoke r2.<java.util.Iterator: boolean hasNext()>();
+
+        if $z8 == 0 goto label21;
+
+     label09:
+        $r30 = interfaceinvoke r2.<java.util.Iterator: java.lang.Object next()>();
+
+        r3 = (java.lang.String) $r30;
+
+     label10:
+        r4 = r0.<com.android.server.pm.PackageDexOptimizer: com.android.server.pm.Installer mInstaller>;
+
+     label11:
+        i1 = r34.<android.content.pm.ApplicationInfo: int uid>;
+
+     label12:
+        r5 = r34.<android.content.pm.ApplicationInfo: java.lang.String packageName>;
+
+     label13:
+        r65 = r34.<android.content.pm.ApplicationInfo: java.lang.String volumeUuid>;
+
+     label14:
+        r6 = r34.<android.content.pm.ApplicationInfo: java.lang.String seInfo>;
+
+     label15:
+        z0 = virtualinvoke r1.<com.android.server.pm.dex.DexoptOptions: boolean isDowngrade()>();
+
+     label16:
+        i2 = r34.<android.content.pm.ApplicationInfo: int targetSdkVersion>;
+
+     label17:
+        r7 = staticinvoke <com.android.server.pm.PackageManagerServiceCompilerMapping: java.lang.String getReasonName(int)>(i0);
+
+     label18:
+        virtualinvoke r4.<com.android.server.pm.Installer: void dexopt(java.lang.String,int,java.lang.String,java.lang.String,int,java.lang.String,int,java.lang.String,java.lang.String,java.lang.String,java.lang.String,boolean,int,java.lang.String,java.lang.String,java.lang.String)>(r35, i1, r5, r3, 0, null, i8, r37, r65, r40, r6, z0, i2, null, null, r7);
+
+     label19:
+        goto label08;
+
+     label20:
+        $r33 := @caughtexception;
+
+        r74 = $r33;
+
+        goto label23;
+
+     label21:
+        return 1;
+
+     label22:
+        $r32 := @caughtexception;
+
+        r74 = $r32;
+
+     label23:
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String,java.lang.Throwable)>("PackageDexOptimizer", "Failed to dexopt", r74);
+
+        return -1;
+
+     label24:
+        goto label25;
+
+     label25:
+        $r10 = new java.lang.StringBuilder;
+
+        specialinvoke $r10.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Could not infer CE/DE storage for package ");
+
+        $r12 = r34.<android.content.pm.ApplicationInfo: java.lang.String packageName>;
+
+        virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r12);
+
+        $r14 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>("PackageDexOptimizer", $r14);
+
+        return -1;
+
+        catch com.android.server.pm.Installer$InstallerException from label07 to label08 with label22;
+        catch com.android.server.pm.Installer$InstallerException from label08 to label09 with label22;
+        catch com.android.server.pm.Installer$InstallerException from label09 to label10 with label22;
+        catch com.android.server.pm.Installer$InstallerException from label10 to label11 with label22;
+        catch com.android.server.pm.Installer$InstallerException from label11 to label12 with label22;
+        catch com.android.server.pm.Installer$InstallerException from label12 to label13 with label22;
+        catch com.android.server.pm.Installer$InstallerException from label13 to label14 with label22;
+        catch com.android.server.pm.Installer$InstallerException from label14 to label15 with label22;
+        catch com.android.server.pm.Installer$InstallerException from label15 to label16 with label22;
+        catch com.android.server.pm.Installer$InstallerException from label16 to label17 with label22;
+        catch com.android.server.pm.Installer$InstallerException from label17 to label18 with label22;
+        catch com.android.server.pm.Installer$InstallerException from label18 to label19 with label20;
+    }
+
+    private java.lang.String getAugmentedReasonName(int, boolean)
+    {
+        com.android.server.pm.PackageDexOptimizer r0;
+        int i0;
+        boolean z0;
+        java.lang.StringBuilder $r2;
+        java.lang.String $r3, $r6, r7;
+
+        r0 := @this: com.android.server.pm.PackageDexOptimizer;
+
+        i0 := @parameter0: int;
+
+        z0 := @parameter1: boolean;
+
+        if z0 == 0 goto label1;
+
+        r7 = "-dm";
+
+        goto label2;
+
+     label1:
+        r7 = "";
+
+     label2:
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        $r3 = staticinvoke <com.android.server.pm.PackageManagerServiceCompilerMapping: java.lang.String getReasonName(int)>(i0);
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r3);
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r7);
+
+        $r6 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        return $r6;
+    }
+
+    private int getDexFlags(android.content.pm.ApplicationInfo, java.lang.String, com.android.server.pm.dex.DexoptOptions)
+    {
+        com.android.server.pm.PackageDexOptimizer r0;
+        android.content.pm.ApplicationInfo r1;
+        java.lang.String r2;
+        com.android.server.pm.dex.DexoptOptions r3;
+        int $i0, $i1, $i2, $i3;
+        android.util.SparseArray $r4;
+        boolean $z0, z1;
+
+        r0 := @this: com.android.server.pm.PackageDexOptimizer;
+
+        r1 := @parameter0: android.content.pm.ApplicationInfo;
+
+        r2 := @parameter1: java.lang.String;
+
+        r3 := @parameter2: com.android.server.pm.dex.DexoptOptions;
+
+        $i0 = r1.<android.content.pm.ApplicationInfo: int flags>;
+
+        $i1 = $i0 & 2;
+
+        if $i1 == 0 goto label1;
+
+        z1 = 1;
+
+        goto label2;
+
+     label1:
+        z1 = 0;
+
+     label2:
+        $i2 = virtualinvoke r1.<android.content.pm.ApplicationInfo: int getHiddenApiEnforcementPolicy()>();
+
+        $r4 = r1.<android.content.pm.ApplicationInfo: android.util.SparseArray splitDependencies>;
+
+        $z0 = virtualinvoke r1.<android.content.pm.ApplicationInfo: boolean requestsIsolatedSplitLoading()>();
+
+        $i3 = specialinvoke r0.<com.android.server.pm.PackageDexOptimizer: int getDexFlags(boolean,int,android.util.SparseArray,boolean,java.lang.String,com.android.server.pm.dex.DexoptOptions)>(z1, $i2, $r4, $z0, r2, r3);
+
+        return $i3;
+    }
+
+    private int getDexFlags(com.android.server.pm.parsing.pkg.AndroidPackage, com.android.server.pm.PackageSetting, java.lang.String, com.android.server.pm.dex.DexoptOptions)
+    {
+        com.android.server.pm.PackageDexOptimizer r0;
+        com.android.server.pm.parsing.pkg.AndroidPackage r1;
+        com.android.server.pm.PackageSetting r2;
+        java.lang.String r3;
+        com.android.server.pm.dex.DexoptOptions r4;
+        boolean $z0, $z1;
+        int $i0, $i1;
+        android.util.SparseArray $r5;
+
+        r0 := @this: com.android.server.pm.PackageDexOptimizer;
+
+        r1 := @parameter0: com.android.server.pm.parsing.pkg.AndroidPackage;
+
+        r2 := @parameter1: com.android.server.pm.PackageSetting;
+
+        r3 := @parameter2: java.lang.String;
+
+        r4 := @parameter3: com.android.server.pm.dex.DexoptOptions;
+
+        $z0 = interfaceinvoke r1.<com.android.server.pm.parsing.pkg.AndroidPackage: boolean isDebuggable()>();
+
+        $i0 = staticinvoke <com.android.server.pm.parsing.pkg.AndroidPackageUtils: int getHiddenApiEnforcementPolicy(com.android.server.pm.parsing.pkg.AndroidPackage,com.android.server.pm.PackageSetting)>(r1, r2);
+
+        $r5 = interfaceinvoke r1.<com.android.server.pm.parsing.pkg.AndroidPackage: android.util.SparseArray getSplitDependencies()>();
+
+        $z1 = interfaceinvoke r1.<com.android.server.pm.parsing.pkg.AndroidPackage: boolean isIsolatedSplitLoading()>();
+
+        $i1 = specialinvoke r0.<com.android.server.pm.PackageDexOptimizer: int getDexFlags(boolean,int,android.util.SparseArray,boolean,java.lang.String,com.android.server.pm.dex.DexoptOptions)>($z0, $i0, $r5, $z1, r3, r4);
+
+        return $i1;
+    }
+
+    private int getDexFlags(boolean, int, android.util.SparseArray, boolean, java.lang.String, com.android.server.pm.dex.DexoptOptions)
+    {
+        com.android.server.pm.PackageDexOptimizer r0;
+        boolean z0, z1, z2, $z3, $z4, $z5, $z6, $z7, z8, z9, z10;
+        android.util.SparseArray r1;
+        java.lang.String r2;
+        com.android.server.pm.dex.DexoptOptions r3;
+        short $s0, $s1, $s2, $s3, $s4, $s5, $s6, $s7, s10, s11, s12, s15, s16, s17, s18, s19, s20;
+        int $i8, i9, i13;
+
+        r0 := @this: com.android.server.pm.PackageDexOptimizer;
+
+        z0 := @parameter0: boolean;
+
+        i9 := @parameter1: int;
+
+        r1 := @parameter2: android.util.SparseArray;
+
+        z1 := @parameter3: boolean;
+
+        r2 := @parameter4: java.lang.String;
+
+        r3 := @parameter5: com.android.server.pm.dex.DexoptOptions;
+
+        z2 = staticinvoke <dalvik.system.DexFile: boolean isProfileGuidedCompilerFilter(java.lang.String)>(r2);
+
+        z8 = 1;
+
+        s10 = 0;
+
+        if z2 == 0 goto label02;
+
+        $z7 = virtualinvoke r3.<com.android.server.pm.dex.DexoptOptions: boolean isDexoptInstallWithDexMetadata()>();
+
+        if $z7 == 0 goto label01;
+
+        goto label02;
+
+     label01:
+        z9 = 0;
+
+        goto label03;
+
+     label02:
+        z9 = 1;
+
+     label03:
+        if z2 == 0 goto label04;
+
+        s11 = 16;
+
+        goto label05;
+
+     label04:
+        s11 = 0;
+
+     label05:
+        if i9 != 0 goto label06;
+
+        s12 = 0;
+
+        goto label07;
+
+     label06:
+        s12 = 1024;
+
+     label07:
+        i13 = virtualinvoke r3.<com.android.server.pm.dex.DexoptOptions: int getCompilationReason()>();
+
+        z10 = 1;
+
+        if i13 == 0 goto label08;
+
+        if i13 == 1 goto label08;
+
+        if i13 == 2 goto label08;
+
+        goto label09;
+
+     label08:
+        z10 = 0;
+
+     label09:
+        if z2 == 0 goto label11;
+
+        if r1 == null goto label10;
+
+        if z1 != 0 goto label11;
+
+     label10:
+        $z6 = specialinvoke r0.<com.android.server.pm.PackageDexOptimizer: boolean isAppImageEnabled()>();
+
+        if $z6 == 0 goto label11;
+
+        goto label12;
+
+     label11:
+        z8 = 0;
+
+     label12:
+        if z9 == 0 goto label13;
+
+        s15 = 2;
+
+        goto label14;
+
+     label13:
+        s15 = 0;
+
+     label14:
+        if z0 == 0 goto label15;
+
+        s16 = 4;
+
+        goto label16;
+
+     label15:
+        s16 = 0;
+
+     label16:
+        $z3 = virtualinvoke r3.<com.android.server.pm.dex.DexoptOptions: boolean isBootComplete()>();
+
+        if $z3 == 0 goto label17;
+
+        s17 = 8;
+
+        goto label18;
+
+     label17:
+        s17 = 0;
+
+     label18:
+        $z4 = virtualinvoke r3.<com.android.server.pm.dex.DexoptOptions: boolean isDexoptIdleBackgroundJob()>();
+
+        if $z4 == 0 goto label19;
+
+        s18 = 512;
+
+        goto label20;
+
+     label19:
+        s18 = 0;
+
+     label20:
+        if z10 == 0 goto label21;
+
+        s19 = 2048;
+
+        goto label22;
+
+     label21:
+        s19 = 0;
+
+     label22:
+        if z8 == 0 goto label23;
+
+        s20 = 4096;
+
+        goto label24;
+
+     label23:
+        s20 = 0;
+
+     label24:
+        $z5 = virtualinvoke r3.<com.android.server.pm.dex.DexoptOptions: boolean isDexoptInstallForRestore()>();
+
+        if $z5 == 0 goto label25;
+
+        s10 = 8192;
+
+     label25:
+        $s0 = s15 | s16;
+
+        $s1 = $s0 | s11;
+
+        $s2 = $s1 | s17;
+
+        $s3 = $s2 | s18;
+
+        $s4 = $s3 | s19;
+
+        $s5 = $s4 | s20;
+
+        $s6 = s10 | $s5;
+
+        $s7 = $s6 | s12;
+
+        $i8 = virtualinvoke r0.<com.android.server.pm.PackageDexOptimizer: int adjustDexoptFlags(int)>($s7);
+
+        return $i8;
+    }
+
+    private int getDexoptNeeded(java.lang.String, java.lang.String, java.lang.String, java.lang.String, boolean, boolean)
+    {
+        com.android.server.pm.PackageDexOptimizer r0;
+        java.lang.String r1, r2, $r7, $r12, r13, r14;
+        boolean z0, z1;
+        int i0, $i1;
+        java.lang.Exception $r3;
+        java.lang.StringBuilder $r4, $r9;
+        java.lang.Throwable $r8;
+
+        r0 := @this: com.android.server.pm.PackageDexOptimizer;
+
+        r1 := @parameter0: java.lang.String;
+
+        r13 := @parameter1: java.lang.String;
+
+        r14 := @parameter2: java.lang.String;
+
+        r2 := @parameter3: java.lang.String;
+
+        z0 := @parameter4: boolean;
+
+        z1 := @parameter5: boolean;
+
+     label1:
+        i0 = staticinvoke <dalvik.system.DexFile: int getDexOptNeeded(java.lang.String,java.lang.String,java.lang.String,java.lang.String,boolean,boolean)>(r1, r13, r14, r2, z0, z1);
+
+     label2:
+        $i1 = virtualinvoke r0.<com.android.server.pm.PackageDexOptimizer: int adjustDexoptNeeded(int)>(i0);
+
+        return $i1;
+
+     label3:
+        $r3 := @caughtexception;
+
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Unexpected exception when calling dexoptNeeded on ");
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r7 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int wtf(java.lang.String,java.lang.String,java.lang.Throwable)>("PackageDexOptimizer", $r7, $r3);
+
+        return -1;
+
+     label4:
+        $r8 := @caughtexception;
+
+        $r9 = new java.lang.StringBuilder;
+
+        specialinvoke $r9.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("IOException reading apk: ");
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r12 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String,java.lang.Throwable)>("PackageDexOptimizer", $r12, $r8);
+
+        return -1;
+
+        catch java.io.IOException from label1 to label2 with label4;
+        catch java.lang.Exception from label1 to label2 with label3;
+    }
+
+    static java.io.File getOatDir(java.io.File)
+    {
+        java.io.File r0, $r1;
+
+        r0 := @parameter0: java.io.File;
+
+        $r1 = new java.io.File;
+
+        specialinvoke $r1.<java.io.File: void <init>(java.io.File,java.lang.String)>(r0, "oat");
+
+        return $r1;
+    }
+
+    private java.lang.String getPackageOatDirIfSupported(com.android.server.pm.parsing.pkg.AndroidPackage, boolean)
+    {
+        com.android.server.pm.PackageDexOptimizer r0;
+        boolean z0, $z1, $z2;
+        java.io.File $r1, $r3;
+        java.lang.String $r2, $r4;
+        com.android.server.pm.parsing.pkg.AndroidPackage r5;
+
+        r0 := @this: com.android.server.pm.PackageDexOptimizer;
+
+        r5 := @parameter0: com.android.server.pm.parsing.pkg.AndroidPackage;
+
+        z0 := @parameter1: boolean;
+
+        $z1 = staticinvoke <com.android.server.pm.parsing.pkg.AndroidPackageUtils: boolean canHaveOatDir(com.android.server.pm.parsing.pkg.AndroidPackage,boolean)>(r5, z0);
+
+        if $z1 != 0 goto label1;
+
+        return null;
+
+     label1:
+        $r1 = new java.io.File;
+
+        $r2 = interfaceinvoke r5.<com.android.server.pm.parsing.pkg.AndroidPackage: java.lang.String getCodePath()>();
+
+        specialinvoke $r1.<java.io.File: void <init>(java.lang.String)>($r2);
+
+        $z2 = virtualinvoke $r1.<java.io.File: boolean isDirectory()>();
+
+        if $z2 != 0 goto label2;
+
+        return null;
+
+     label2:
+        $r3 = staticinvoke <com.android.server.pm.PackageDexOptimizer: java.io.File getOatDir(java.io.File)>($r1);
+
+        $r4 = virtualinvoke $r3.<java.io.File: java.lang.String getAbsolutePath()>();
+
+        return $r4;
+    }
+
+    private java.lang.String getRealCompilerFilter(android.content.pm.ApplicationInfo, java.lang.String, boolean)
+    {
+        com.android.server.pm.PackageDexOptimizer r0;
+        android.content.pm.ApplicationInfo r1;
+        java.lang.String r2, $r3, $r4, $r5;
+        boolean z0, $z1, $z2, $z3, $z4, z5;
+        int $i0, $i1, $i2, $i3;
+
+        r0 := @this: com.android.server.pm.PackageDexOptimizer;
+
+        r1 := @parameter0: android.content.pm.ApplicationInfo;
+
+        r2 := @parameter1: java.lang.String;
+
+        z0 := @parameter2: boolean;
+
+        $z1 = virtualinvoke r1.<android.content.pm.ApplicationInfo: boolean isEmbeddedDexUsed()>();
+
+        if $z1 != 0 goto label7;
+
+        $z2 = virtualinvoke r1.<android.content.pm.ApplicationInfo: boolean isPrivilegedApp()>();
+
+        if $z2 == 0 goto label1;
+
+        $r5 = r1.<android.content.pm.ApplicationInfo: java.lang.String packageName>;
+
+        $z4 = staticinvoke <com.android.server.pm.dex.DexManager: boolean isPackageSelectedToRunOob(java.lang.String)>($r5);
+
+        if $z4 == 0 goto label1;
+
+        goto label7;
+
+     label1:
+        $i0 = r1.<android.content.pm.ApplicationInfo: int flags>;
+
+        $i1 = $i0 & 16384;
+
+        if $i1 != 0 goto label3;
+
+        $i2 = r1.<android.content.pm.ApplicationInfo: int flags>;
+
+        $i3 = $i2 & 2;
+
+        if $i3 == 0 goto label2;
+
+        goto label3;
+
+     label2:
+        z5 = 0;
+
+        goto label4;
+
+     label3:
+        z5 = 1;
+
+     label4:
+        if z5 == 0 goto label5;
+
+        $r4 = staticinvoke <dalvik.system.DexFile: java.lang.String getSafeModeCompilerFilter(java.lang.String)>(r2);
+
+        return $r4;
+
+     label5:
+        $z3 = staticinvoke <dalvik.system.DexFile: boolean isProfileGuidedCompilerFilter(java.lang.String)>(r2);
+
+        if $z3 == 0 goto label6;
+
+        if z0 == 0 goto label6;
+
+        $r3 = staticinvoke <com.android.server.pm.PackageManagerServiceCompilerMapping: java.lang.String getCompilerFilterForReason(int)>(6);
+
+        return $r3;
+
+     label6:
+        return r2;
+
+     label7:
+        return "verify";
+    }
+
+    private java.lang.String getRealCompilerFilter(com.android.server.pm.parsing.pkg.AndroidPackage, java.lang.String, boolean)
+    {
+        com.android.server.pm.PackageDexOptimizer r0;
+        com.android.server.pm.parsing.pkg.AndroidPackage r1;
+        java.lang.String r2, $r3, $r4, $r5;
+        boolean z0, $z1, $z2, $z3, $z4, $z5, $z6, z7;
+
+        r0 := @this: com.android.server.pm.PackageDexOptimizer;
+
+        r1 := @parameter0: com.android.server.pm.parsing.pkg.AndroidPackage;
+
+        r2 := @parameter1: java.lang.String;
+
+        z0 := @parameter2: boolean;
+
+        $z1 = interfaceinvoke r1.<com.android.server.pm.parsing.pkg.AndroidPackage: boolean isUseEmbeddedDex()>();
+
+        if $z1 != 0 goto label7;
+
+        $z2 = interfaceinvoke r1.<com.android.server.pm.parsing.pkg.AndroidPackage: boolean isPrivileged()>();
+
+        if $z2 == 0 goto label1;
+
+        $r5 = interfaceinvoke r1.<com.android.server.pm.parsing.pkg.AndroidPackage: java.lang.String getPackageName()>();
+
+        $z6 = staticinvoke <com.android.server.pm.dex.DexManager: boolean isPackageSelectedToRunOob(java.lang.String)>($r5);
+
+        if $z6 == 0 goto label1;
+
+        goto label7;
+
+     label1:
+        $z3 = interfaceinvoke r1.<com.android.server.pm.parsing.pkg.AndroidPackage: boolean isVmSafeMode()>();
+
+        if $z3 != 0 goto label3;
+
+        $z5 = interfaceinvoke r1.<com.android.server.pm.parsing.pkg.AndroidPackage: boolean isDebuggable()>();
+
+        if $z5 == 0 goto label2;
+
+        goto label3;
+
+     label2:
+        z7 = 0;
+
+        goto label4;
+
+     label3:
+        z7 = 1;
+
+     label4:
+        if z7 == 0 goto label5;
+
+        $r4 = staticinvoke <dalvik.system.DexFile: java.lang.String getSafeModeCompilerFilter(java.lang.String)>(r2);
+
+        return $r4;
+
+     label5:
+        $z4 = staticinvoke <dalvik.system.DexFile: boolean isProfileGuidedCompilerFilter(java.lang.String)>(r2);
+
+        if $z4 == 0 goto label6;
+
+        if z0 == 0 goto label6;
+
+        $r3 = staticinvoke <com.android.server.pm.PackageManagerServiceCompilerMapping: java.lang.String getCompilerFilterForReason(int)>(6);
+
+        return $r3;
+
+     label6:
+        return r2;
+
+     label7:
+        return "verify";
+    }
+
+    private boolean isAppImageEnabled()
+    {
+        com.android.server.pm.PackageDexOptimizer r0;
+        java.lang.String $r1;
+        int $i0;
+        boolean z0;
+
+        r0 := @this: com.android.server.pm.PackageDexOptimizer;
+
+        $r1 = staticinvoke <android.os.SystemProperties: java.lang.String get(java.lang.String,java.lang.String)>("dalvik.vm.appimageformat", "");
+
+        $i0 = virtualinvoke $r1.<java.lang.String: int length()>();
+
+        if $i0 <= 0 goto label1;
+
+        z0 = 1;
+
+        goto label2;
+
+     label1:
+        z0 = 0;
+
+     label2:
+        return z0;
+    }
+
+    private boolean isProfileUpdated(com.android.server.pm.parsing.pkg.AndroidPackage, int, java.lang.String, java.lang.String)
+    {
+        com.android.server.pm.PackageDexOptimizer r0;
+        int i0;
+        java.lang.String r1, r2, $r4;
+        boolean z0, $z1;
+        com.android.server.pm.Installer $r3;
+        com.android.server.pm.Installer$InstallerException $r5;
+        com.android.server.pm.parsing.pkg.AndroidPackage r6;
+
+        r0 := @this: com.android.server.pm.PackageDexOptimizer;
+
+        r6 := @parameter0: com.android.server.pm.parsing.pkg.AndroidPackage;
+
+        i0 := @parameter1: int;
+
+        r1 := @parameter2: java.lang.String;
+
+        r2 := @parameter3: java.lang.String;
+
+        $z1 = staticinvoke <dalvik.system.DexFile: boolean isProfileGuidedCompilerFilter(java.lang.String)>(r2);
+
+        if $z1 != 0 goto label1;
+
+        return 0;
+
+     label1:
+        $r3 = r0.<com.android.server.pm.PackageDexOptimizer: com.android.server.pm.Installer mInstaller>;
+
+        $r4 = interfaceinvoke r6.<com.android.server.pm.parsing.pkg.AndroidPackage: java.lang.String getPackageName()>();
+
+        z0 = virtualinvoke $r3.<com.android.server.pm.Installer: boolean mergeProfiles(int,java.lang.String,java.lang.String)>(i0, $r4, r1);
+
+     label2:
+        return z0;
+
+     label3:
+        $r5 := @caughtexception;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String,java.lang.Throwable)>("PackageDexOptimizer", "Failed to merge profiles", $r5);
+
+        return 0;
+
+        catch com.android.server.pm.Installer$InstallerException from label1 to label2 with label3;
+    }
+
+    private int performDexOptLI(com.android.server.pm.parsing.pkg.AndroidPackage, com.android.server.pm.PackageSetting, java.lang.String[], com.android.server.pm.CompilerStats$PackageStats, com.android.server.pm.dex.PackageDexUsage$PackageUseInfo, com.android.server.pm.dex.DexoptOptions)
+    {
+        com.android.server.pm.PackageDexOptimizer r0;
+        com.android.server.pm.CompilerStats$PackageStats r1;
+        com.android.server.pm.dex.PackageDexUsage$PackageUseInfo r2;
+        com.android.server.pm.dex.DexoptOptions r3;
+        java.util.List r4, r41, r49;
+        boolean[] r5;
+        java.lang.String r8, r9, $r11, $r12, $r13, $r16, $r18, $r20, $r22, $r23, $r25, $r27, $r29, $r31, $r34, $r35, r46, r50, r52, $r53, r54;
+        int i0, i1, $i2, $i3, $i4, $i5, $i6, $i7, $i8, $i9, $i10, $i11, $i12, i13, i14, i15, i16, i17, i18, i19, i20, i21, i22;
+        com.android.server.pm.pkg.PackageStateUnserialized $r10;
+        boolean $z0, $z1, $z2, $z3, $z4, $z5, $z6, $z7, z8, z9, $z10, z11;
+        java.lang.StringBuilder $r14, $r28, $r33;
+        java.lang.Object $r15, $r19;
+        java.lang.IllegalStateException $r17, $r30;
+        java.lang.String[] $r21, r39, r40, r43, r44, r48;
+        java.io.File $r24, $r26, r51;
+        int[] $r32;
+        java.lang.Throwable $r36;
+        com.android.server.pm.parsing.pkg.AndroidPackage r37;
+        com.android.server.pm.PackageSetting r38;
+
+        r0 := @this: com.android.server.pm.PackageDexOptimizer;
+
+        r37 := @parameter0: com.android.server.pm.parsing.pkg.AndroidPackage;
+
+        r38 := @parameter1: com.android.server.pm.PackageSetting;
+
+        r39 := @parameter2: java.lang.String[];
+
+        r1 := @parameter3: com.android.server.pm.CompilerStats$PackageStats;
+
+        r2 := @parameter4: com.android.server.pm.dex.PackageDexUsage$PackageUseInfo;
+
+        r3 := @parameter5: com.android.server.pm.dex.DexoptOptions;
+
+        $r10 = virtualinvoke r38.<com.android.server.pm.PackageSetting: com.android.server.pm.pkg.PackageStateUnserialized getPkgState()>();
+
+        r4 = virtualinvoke $r10.<com.android.server.pm.pkg.PackageStateUnserialized: java.util.List getUsesLibraryInfos()>();
+
+        if r39 == null goto label01;
+
+        goto label02;
+
+     label01:
+        $r11 = staticinvoke <com.android.server.pm.parsing.pkg.AndroidPackageUtils: java.lang.String getPrimaryCpuAbi(com.android.server.pm.parsing.pkg.AndroidPackage,com.android.server.pm.PackageSetting)>(r37, r38);
+
+        $r12 = staticinvoke <com.android.server.pm.parsing.pkg.AndroidPackageUtils: java.lang.String getSecondaryCpuAbi(com.android.server.pm.parsing.pkg.AndroidPackage,com.android.server.pm.PackageSetting)>(r37, r38);
+
+        r39 = staticinvoke <com.android.server.pm.InstructionSets: java.lang.String[] getAppDexInstructionSets(java.lang.String,java.lang.String)>($r11, $r12);
+
+     label02:
+        r40 = staticinvoke <com.android.server.pm.InstructionSets: java.lang.String[] getDexCodeInstructionSets(java.lang.String[])>(r39);
+
+        r41 = staticinvoke <com.android.server.pm.parsing.pkg.AndroidPackageUtils: java.util.List getAllCodePaths(com.android.server.pm.parsing.pkg.AndroidPackage)>(r37);
+
+        $i2 = interfaceinvoke r37.<com.android.server.pm.parsing.pkg.AndroidPackage: int getUid()>();
+
+        i13 = staticinvoke <android.os.UserHandle: int getSharedAppGid(int)>($i2);
+
+        if i13 != -1 goto label03;
+
+        $r33 = new java.lang.StringBuilder;
+
+        specialinvoke $r33.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r33.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Well this is awkward; package ");
+
+        $r34 = interfaceinvoke r37.<com.android.server.pm.parsing.pkg.AndroidPackage: java.lang.String getPackageName()>();
+
+        virtualinvoke $r33.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r34);
+
+        virtualinvoke $r33.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" had UID ");
+
+        $i12 = interfaceinvoke r37.<com.android.server.pm.parsing.pkg.AndroidPackage: int getUid()>();
+
+        virtualinvoke $r33.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i12);
+
+        $r35 = virtualinvoke $r33.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $r36 = new java.lang.Throwable;
+
+        specialinvoke $r36.<java.lang.Throwable: void <init>()>();
+
+        staticinvoke <android.util.Slog: int wtf(java.lang.String,java.lang.String,java.lang.Throwable)>("PackageDexOptimizer", $r35, $r36);
+
+        i13 = 9999;
+
+        goto label03;
+
+     label03:
+        $i3 = interfaceinvoke r41.<java.util.List: int size()>();
+
+        r5 = newarray (boolean)[$i3];
+
+        $z0 = interfaceinvoke r37.<com.android.server.pm.parsing.pkg.AndroidPackage: boolean isHasCode()>();
+
+        r5[0] = $z0;
+
+        i14 = 1;
+
+     label04:
+        i15 = interfaceinvoke r41.<java.util.List: int size()>();
+
+        z8 = 1;
+
+        if i14 >= i15 goto label07;
+
+        $r32 = interfaceinvoke r37.<com.android.server.pm.parsing.pkg.AndroidPackage: int[] getSplitFlags()>();
+
+        $i9 = i14 - 1;
+
+        $i10 = $r32[$i9];
+
+        $i11 = $i10 & 4;
+
+        if $i11 == 0 goto label05;
+
+        goto label06;
+
+     label05:
+        z8 = 0;
+
+     label06:
+        r5[i14] = z8;
+
+        i14 = i14 + 1;
+
+        goto label04;
+
+     label07:
+        r43 = staticinvoke <com.android.server.pm.dex.DexoptUtils: java.lang.String[] getClassLoaderContexts(com.android.server.pm.parsing.pkg.AndroidPackage,java.util.List,boolean[])>(r37, r4, r5);
+
+        $i4 = interfaceinvoke r41.<java.util.List: int size()>();
+
+        $i5 = lengthof r43;
+
+        if $i4 == $i5 goto label10;
+
+        r44 = interfaceinvoke r37.<com.android.server.pm.parsing.pkg.AndroidPackage: java.lang.String[] getSplitCodePaths()>();
+
+        $r28 = new java.lang.StringBuilder;
+
+        specialinvoke $r28.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r28.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Inconsistent information between PackageParser.Package and its ApplicationInfo. pkg.getAllCodePaths=");
+
+        virtualinvoke $r28.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r41);
+
+        virtualinvoke $r28.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" pkg.getBaseCodePath=");
+
+        $r29 = interfaceinvoke r37.<com.android.server.pm.parsing.pkg.AndroidPackage: java.lang.String getBaseCodePath()>();
+
+        virtualinvoke $r28.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r29);
+
+        virtualinvoke $r28.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" pkg.getSplitCodePaths=");
+
+        if r44 != null goto label08;
+
+        r46 = "null";
+
+        goto label09;
+
+     label08:
+        r46 = staticinvoke <java.util.Arrays: java.lang.String toString(java.lang.Object[])>(r44);
+
+     label09:
+        virtualinvoke $r28.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r46);
+
+        $r30 = new java.lang.IllegalStateException;
+
+        $r31 = virtualinvoke $r28.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r30.<java.lang.IllegalStateException: void <init>(java.lang.String)>($r31);
+
+        throw $r30;
+
+     label10:
+        i16 = 0;
+
+        i17 = 0;
+
+     label11:
+        $i6 = interfaceinvoke r41.<java.util.List: int size()>();
+
+        if i17 >= $i6 goto label31;
+
+        $z1 = r5[i17];
+
+        if $z1 != 0 goto label12;
+
+        goto label13;
+
+     label12:
+        $r13 = r43[i17];
+
+        if $r13 == null goto label30;
+
+        $r19 = interfaceinvoke r41.<java.util.List: java.lang.Object get(int)>(i17);
+
+        r8 = (java.lang.String) $r19;
+
+        $r20 = virtualinvoke r3.<com.android.server.pm.dex.DexoptOptions: java.lang.String getSplitName()>();
+
+        if $r20 == null goto label14;
+
+        $r25 = virtualinvoke r3.<com.android.server.pm.dex.DexoptOptions: java.lang.String getSplitName()>();
+
+        $r26 = new java.io.File;
+
+        specialinvoke $r26.<java.io.File: void <init>(java.lang.String)>(r8);
+
+        $r27 = virtualinvoke $r26.<java.io.File: java.lang.String getName()>();
+
+        $z7 = virtualinvoke $r25.<java.lang.String: boolean equals(java.lang.Object)>($r27);
+
+        if $z7 != 0 goto label14;
+
+     label13:
+        i18 = i17;
+
+        i19 = i16;
+
+        r48 = r40;
+
+        r49 = r41;
+
+        goto label29;
+
+     label14:
+        if i17 != 0 goto label15;
+
+        r50 = null;
+
+        goto label16;
+
+     label15:
+        $r21 = interfaceinvoke r37.<com.android.server.pm.parsing.pkg.AndroidPackage: java.lang.String[] getSplitNames()>();
+
+        $i7 = i17 - 1;
+
+        r50 = $r21[$i7];
+
+     label16:
+        r9 = staticinvoke <android.content.pm.dex.ArtManager: java.lang.String getProfileName(java.lang.String)>(r50);
+
+        $z2 = virtualinvoke r3.<com.android.server.pm.dex.DexoptOptions: boolean isDexoptInstallWithDexMetadata()>();
+
+        if $z2 == 0 goto label19;
+
+        $r24 = new java.io.File;
+
+        specialinvoke $r24.<java.io.File: void <init>(java.lang.String)>(r8);
+
+        r51 = staticinvoke <android.content.pm.dex.DexMetadataHelper: java.io.File findDexMetadataForFile(java.io.File)>($r24);
+
+        if r51 != null goto label17;
+
+        r52 = null;
+
+        goto label18;
+
+     label17:
+        r52 = virtualinvoke r51.<java.io.File: java.lang.String getAbsolutePath()>();
+
+     label18:
+        goto label20;
+
+     label19:
+        r52 = null;
+
+     label20:
+        $z3 = virtualinvoke r3.<com.android.server.pm.dex.DexoptOptions: boolean isDexoptAsSharedLibrary()>();
+
+        if $z3 != 0 goto label22;
+
+        $z6 = virtualinvoke r2.<com.android.server.pm.dex.PackageDexUsage$PackageUseInfo: boolean isUsedByOtherApps(java.lang.String)>(r8);
+
+        if $z6 == 0 goto label21;
+
+        goto label22;
+
+     label21:
+        z9 = 0;
+
+        goto label23;
+
+     label22:
+        z9 = 1;
+
+     label23:
+        $r53 = virtualinvoke r3.<com.android.server.pm.dex.DexoptOptions: java.lang.String getCompilerFilter()>();
+
+        r54 = specialinvoke r0.<com.android.server.pm.PackageDexOptimizer: java.lang.String getRealCompilerFilter(com.android.server.pm.parsing.pkg.AndroidPackage,java.lang.String,boolean)>(r37, $r53, z9);
+
+        $z10 = virtualinvoke r3.<com.android.server.pm.dex.DexoptOptions: boolean isCheckForProfileUpdates()>();
+
+        if $z10 == 0 goto label24;
+
+        $z5 = specialinvoke r0.<com.android.server.pm.PackageDexOptimizer: boolean isProfileUpdated(com.android.server.pm.parsing.pkg.AndroidPackage,int,java.lang.String,java.lang.String)>(r37, i13, r9, r54);
+
+        if $z5 == 0 goto label24;
+
+        z11 = 1;
+
+        goto label25;
+
+     label24:
+        z11 = 0;
+
+     label25:
+        i0 = specialinvoke r0.<com.android.server.pm.PackageDexOptimizer: int getDexFlags(com.android.server.pm.parsing.pkg.AndroidPackage,com.android.server.pm.PackageSetting,java.lang.String,com.android.server.pm.dex.DexoptOptions)>(r37, r38, r54, r3);
+
+        i1 = lengthof r40;
+
+        i20 = 0;
+
+        i18 = i17;
+
+        i19 = i16;
+
+     label26:
+        if i20 >= i1 goto label28;
+
+        $r22 = r40[i20];
+
+        $r23 = r43[i18];
+
+        $z4 = virtualinvoke r3.<com.android.server.pm.dex.DexoptOptions: boolean isDowngrade()>();
+
+        $i8 = virtualinvoke r3.<com.android.server.pm.dex.DexoptOptions: int getCompilationReason()>();
+
+        i21 = specialinvoke r0.<com.android.server.pm.PackageDexOptimizer: int dexOptPath(com.android.server.pm.parsing.pkg.AndroidPackage,com.android.server.pm.PackageSetting,java.lang.String,java.lang.String,java.lang.String,boolean,java.lang.String,int,int,com.android.server.pm.CompilerStats$PackageStats,boolean,java.lang.String,java.lang.String,int)>(r37, r38, r8, $r22, r54, z11, $r23, i0, i13, r1, $z4, r9, r52, $i8);
+
+        if i19 == -1 goto label27;
+
+        if i21 == 0 goto label27;
+
+        i19 = i21;
+
+        goto label27;
+
+     label27:
+        i20 = i20 + 1;
+
+        goto label26;
+
+     label28:
+        r48 = r40;
+
+        r49 = r41;
+
+     label29:
+        i22 = i18 + 1;
+
+        i16 = i19;
+
+        i17 = i22;
+
+        r41 = r49;
+
+        r40 = r48;
+
+        goto label11;
+
+     label30:
+        $r14 = new java.lang.StringBuilder;
+
+        specialinvoke $r14.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r14.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Inconsistent information in the package structure. A split is marked to contain code but has no dependency listed. Index=");
+
+        virtualinvoke $r14.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i17);
+
+        virtualinvoke $r14.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" path=");
+
+        $r15 = interfaceinvoke r41.<java.util.List: java.lang.Object get(int)>(i17);
+
+        $r16 = (java.lang.String) $r15;
+
+        virtualinvoke $r14.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r16);
+
+        $r17 = new java.lang.IllegalStateException;
+
+        $r18 = virtualinvoke $r14.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r17.<java.lang.IllegalStateException: void <init>(java.lang.String)>($r18);
+
+        throw $r17;
+
+     label31:
+        return i16;
+    }
+
+    private java.lang.String printDexoptFlags(int)
+    {
+        com.android.server.pm.PackageDexOptimizer r0;
+        int i0, $i1, $i2, $i3, $i4, $i5, $i6, $i7, $i8, $i9, $i10;
+        java.util.ArrayList $r2;
+        java.lang.String $r3;
+
+        r0 := @this: com.android.server.pm.PackageDexOptimizer;
+
+        i0 := @parameter0: int;
+
+        $r2 = new java.util.ArrayList;
+
+        specialinvoke $r2.<java.util.ArrayList: void <init>()>();
+
+        $i1 = i0 & 8;
+
+        if $i1 != 8 goto label01;
+
+        virtualinvoke $r2.<java.util.ArrayList: boolean add(java.lang.Object)>("boot_complete");
+
+     label01:
+        $i2 = i0 & 4;
+
+        if $i2 != 4 goto label02;
+
+        virtualinvoke $r2.<java.util.ArrayList: boolean add(java.lang.Object)>("debuggable");
+
+     label02:
+        $i3 = i0 & 16;
+
+        if $i3 != 16 goto label03;
+
+        virtualinvoke $r2.<java.util.ArrayList: boolean add(java.lang.Object)>("profile_guided");
+
+     label03:
+        $i4 = i0 & 2;
+
+        if $i4 != 2 goto label04;
+
+        virtualinvoke $r2.<java.util.ArrayList: boolean add(java.lang.Object)>("public");
+
+     label04:
+        $i5 = i0 & 32;
+
+        if $i5 != 32 goto label05;
+
+        virtualinvoke $r2.<java.util.ArrayList: boolean add(java.lang.Object)>("secondary");
+
+     label05:
+        $i6 = i0 & 64;
+
+        if $i6 != 64 goto label06;
+
+        virtualinvoke $r2.<java.util.ArrayList: boolean add(java.lang.Object)>("force");
+
+     label06:
+        $i7 = i0 & 128;
+
+        if $i7 != 128 goto label07;
+
+        virtualinvoke $r2.<java.util.ArrayList: boolean add(java.lang.Object)>("storage_ce");
+
+     label07:
+        $i8 = i0 & 256;
+
+        if $i8 != 256 goto label08;
+
+        virtualinvoke $r2.<java.util.ArrayList: boolean add(java.lang.Object)>("storage_de");
+
+     label08:
+        $i9 = i0 & 512;
+
+        if $i9 != 512 goto label09;
+
+        virtualinvoke $r2.<java.util.ArrayList: boolean add(java.lang.Object)>("idle_background_job");
+
+     label09:
+        $i10 = i0 & 1024;
+
+        if $i10 != 1024 goto label10;
+
+        virtualinvoke $r2.<java.util.ArrayList: boolean add(java.lang.Object)>("enable_hidden_api_checks");
+
+     label10:
+        $r3 = staticinvoke <java.lang.String: java.lang.String join(java.lang.CharSequence,java.lang.Iterable)>(",", $r2);
+
+        return $r3;
+    }
+
+    private void releaseWakeLockLI(long)
+    {
+        com.android.server.pm.PackageDexOptimizer r0;
+        byte $b0, $b2;
+        android.os.PowerManager$WakeLock $r2, $r4, $r14, $r18;
+        boolean $z0;
+        long $l1, l5, l6;
+        java.lang.String $r5, $r11, $r13, $r19, $r22;
+        java.lang.Thread $r10;
+        java.lang.Exception $r15;
+        java.lang.StringBuilder $r16, r23;
+
+        r0 := @this: com.android.server.pm.PackageDexOptimizer;
+
+        l5 := @parameter0: long;
+
+        $b0 = l5 cmp 0L;
+
+        if $b0 >= 0 goto label1;
+
+        return;
+
+     label1:
+        $r2 = r0.<com.android.server.pm.PackageDexOptimizer: android.os.PowerManager$WakeLock mDexoptWakeLock>;
+
+        $z0 = virtualinvoke $r2.<android.os.PowerManager$WakeLock: boolean isHeld()>();
+
+        if $z0 == 0 goto label2;
+
+        $r14 = r0.<com.android.server.pm.PackageDexOptimizer: android.os.PowerManager$WakeLock mDexoptWakeLock>;
+
+        virtualinvoke $r14.<android.os.PowerManager$WakeLock: void release()>();
+
+     label2:
+        $l1 = staticinvoke <android.os.SystemClock: long elapsedRealtime()>();
+
+        l6 = $l1 - l5;
+
+     label3:
+        $b2 = l6 cmp 660000L;
+
+        if $b2 < 0 goto label5;
+
+     label4:
+        r23 = new java.lang.StringBuilder;
+
+        specialinvoke r23.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r23.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("WakeLock ");
+
+        $r4 = r0.<com.android.server.pm.PackageDexOptimizer: android.os.PowerManager$WakeLock mDexoptWakeLock>;
+
+        $r5 = virtualinvoke $r4.<android.os.PowerManager$WakeLock: java.lang.String getTag()>();
+
+        virtualinvoke r23.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r5);
+
+        virtualinvoke r23.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" time out. Operation took ");
+
+        virtualinvoke r23.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>(l6);
+
+        virtualinvoke r23.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" ms. Thread: ");
+
+        $r10 = staticinvoke <java.lang.Thread: java.lang.Thread currentThread()>();
+
+        $r11 = virtualinvoke $r10.<java.lang.Thread: java.lang.String getName()>();
+
+        virtualinvoke r23.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r11);
+
+        $r13 = virtualinvoke r23.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int wtf(java.lang.String,java.lang.String)>("PackageDexOptimizer", $r13);
+
+     label5:
+        goto label7;
+
+     label6:
+        $r15 := @caughtexception;
+
+        $r16 = new java.lang.StringBuilder;
+
+        specialinvoke $r16.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r16.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Error while releasing ");
+
+        $r18 = r0.<com.android.server.pm.PackageDexOptimizer: android.os.PowerManager$WakeLock mDexoptWakeLock>;
+
+        $r19 = virtualinvoke $r18.<android.os.PowerManager$WakeLock: java.lang.String getTag()>();
+
+        virtualinvoke $r16.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r19);
+
+        virtualinvoke $r16.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" lock");
+
+        $r22 = virtualinvoke $r16.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int wtf(java.lang.String,java.lang.String,java.lang.Throwable)>("PackageDexOptimizer", $r22, $r15);
+
+     label7:
+        return;
+
+        catch java.lang.Exception from label1 to label2 with label6;
+        catch java.lang.Exception from label2 to label3 with label6;
+        catch java.lang.Exception from label4 to label5 with label6;
+    }
+
+    protected int adjustDexoptFlags(int)
+    {
+        com.android.server.pm.PackageDexOptimizer r0;
+        int i0;
+
+        r0 := @this: com.android.server.pm.PackageDexOptimizer;
+
+        i0 := @parameter0: int;
+
+        return i0;
+    }
+
+    protected int adjustDexoptNeeded(int)
+    {
+        com.android.server.pm.PackageDexOptimizer r0;
+        int i0;
+
+        r0 := @this: com.android.server.pm.PackageDexOptimizer;
+
+        i0 := @parameter0: int;
+
+        return i0;
+    }
+
+    public int dexOptSecondaryDexPath(android.content.pm.ApplicationInfo, java.lang.String, com.android.server.pm.dex.PackageDexUsage$DexUseInfo, com.android.server.pm.dex.DexoptOptions)
+    {
+        com.android.server.pm.PackageDexOptimizer r0;
+        java.lang.String r1, $r10;
+        com.android.server.pm.dex.PackageDexUsage$DexUseInfo r2;
+        com.android.server.pm.dex.DexoptOptions r3;
+        java.lang.Object r4;
+        long l0;
+        int i1, $i2, $i3;
+        java.lang.StringBuilder $r5;
+        java.lang.IllegalArgumentException $r9;
+        java.lang.Throwable $r11, $r12;
+        android.content.pm.ApplicationInfo r13;
+
+        r0 := @this: com.android.server.pm.PackageDexOptimizer;
+
+        r13 := @parameter0: android.content.pm.ApplicationInfo;
+
+        r1 := @parameter1: java.lang.String;
+
+        r2 := @parameter2: com.android.server.pm.dex.PackageDexUsage$DexUseInfo;
+
+        r3 := @parameter3: com.android.server.pm.dex.DexoptOptions;
+
+        $i2 = r13.<android.content.pm.ApplicationInfo: int uid>;
+
+        if $i2 == -1 goto label11;
+
+        r4 = r0.<com.android.server.pm.PackageDexOptimizer: java.lang.Object mInstallLock>;
+
+        entermonitor r4;
+
+     label01:
+        $i3 = r13.<android.content.pm.ApplicationInfo: int uid>;
+
+        l0 = specialinvoke r0.<com.android.server.pm.PackageDexOptimizer: long acquireWakeLockLI(int)>($i3);
+
+     label02:
+        i1 = specialinvoke r0.<com.android.server.pm.PackageDexOptimizer: int dexOptSecondaryDexPathLI(android.content.pm.ApplicationInfo,java.lang.String,com.android.server.pm.dex.PackageDexUsage$DexUseInfo,com.android.server.pm.dex.DexoptOptions)>(r13, r1, r2, r3);
+
+     label03:
+        specialinvoke r0.<com.android.server.pm.PackageDexOptimizer: void releaseWakeLockLI(long)>(l0);
+
+        exitmonitor r4;
+
+     label04:
+        return i1;
+
+     label05:
+        $r11 := @caughtexception;
+
+     label06:
+        specialinvoke r0.<com.android.server.pm.PackageDexOptimizer: void releaseWakeLockLI(long)>(l0);
+
+     label07:
+        throw $r11;
+
+     label08:
+        $r12 := @caughtexception;
+
+     label09:
+        exitmonitor r4;
+
+     label10:
+        throw $r12;
+
+     label11:
+        $r5 = new java.lang.StringBuilder;
+
+        specialinvoke $r5.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Dexopt for path ");
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" has invalid uid.");
+
+        $r9 = new java.lang.IllegalArgumentException;
+
+        $r10 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r9.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>($r10);
+
+        throw $r9;
+
+        catch java.lang.Throwable from label01 to label02 with label08;
+        catch java.lang.Throwable from label02 to label03 with label05;
+        catch java.lang.Throwable from label03 to label04 with label08;
+        catch java.lang.Throwable from label06 to label07 with label08;
+        catch java.lang.Throwable from label07 to label08 with label08;
+        catch java.lang.Throwable from label09 to label10 with label08;
+    }
+
+    public int dexoptSystemServerPath(java.lang.String, com.android.server.pm.dex.PackageDexUsage$DexUseInfo, com.android.server.pm.dex.DexoptOptions)
+    {
+        com.android.server.pm.PackageDexOptimizer r0;
+        com.android.server.pm.dex.PackageDexUsage$DexUseInfo r1;
+        com.android.server.pm.dex.DexoptOptions r2;
+        boolean z0, $z1, $z2;
+        java.util.Iterator r3;
+        java.lang.String r4, $r7, $r8, $r10, $r11, $r12, $r13, r15;
+        int i0, $i3;
+        java.util.Set $r5;
+        java.lang.Object $r6;
+        short $s1, $s2, s5, s6;
+        com.android.server.pm.Installer $r9;
+        com.android.server.pm.Installer$InstallerException $r14;
+        byte b7;
+
+        r0 := @this: com.android.server.pm.PackageDexOptimizer;
+
+        r15 := @parameter0: java.lang.String;
+
+        r1 := @parameter1: com.android.server.pm.dex.PackageDexUsage$DexUseInfo;
+
+        r2 := @parameter2: com.android.server.pm.dex.DexoptOptions;
+
+        z0 = virtualinvoke r2.<com.android.server.pm.dex.DexoptOptions: boolean isBootComplete()>();
+
+        s5 = 0;
+
+        if z0 == 0 goto label1;
+
+        s6 = 8;
+
+        goto label2;
+
+     label1:
+        s6 = 0;
+
+     label2:
+        $z1 = virtualinvoke r2.<com.android.server.pm.dex.DexoptOptions: boolean isDexoptIdleBackgroundJob()>();
+
+        if $z1 == 0 goto label3;
+
+        s5 = 512;
+
+     label3:
+        $r5 = virtualinvoke r1.<com.android.server.pm.dex.PackageDexUsage$DexUseInfo: java.util.Set getLoaderIsas()>();
+
+        r3 = interfaceinvoke $r5.<java.util.Set: java.util.Iterator iterator()>();
+
+        b7 = 0;
+
+     label4:
+        $z2 = interfaceinvoke r3.<java.util.Iterator: boolean hasNext()>();
+
+        if $z2 == 0 goto label8;
+
+        $r6 = interfaceinvoke r3.<java.util.Iterator: java.lang.Object next()>();
+
+        r4 = (java.lang.String) $r6;
+
+        $r7 = virtualinvoke r2.<com.android.server.pm.dex.DexoptOptions: java.lang.String getCompilerFilter()>();
+
+        $r8 = virtualinvoke r1.<com.android.server.pm.dex.PackageDexUsage$DexUseInfo: java.lang.String getClassLoaderContext()>();
+
+        i0 = specialinvoke r0.<com.android.server.pm.PackageDexOptimizer: int getDexoptNeeded(java.lang.String,java.lang.String,java.lang.String,java.lang.String,boolean,boolean)>(r15, r4, $r7, $r8, 0, 0);
+
+        if i0 != 0 goto label5;
+
+        goto label4;
+
+     label5:
+        $r9 = r0.<com.android.server.pm.PackageDexOptimizer: com.android.server.pm.Installer mInstaller>;
+
+        $s1 = s6 | 2;
+
+        $s2 = s5 | $s1;
+
+        $r10 = virtualinvoke r2.<com.android.server.pm.dex.DexoptOptions: java.lang.String getCompilerFilter()>();
+
+        $r11 = <android.os.storage.StorageManager: java.lang.String UUID_PRIVATE_INTERNAL>;
+
+        $r12 = virtualinvoke r1.<com.android.server.pm.dex.PackageDexUsage$DexUseInfo: java.lang.String getClassLoaderContext()>();
+
+        $i3 = virtualinvoke r2.<com.android.server.pm.dex.DexoptOptions: int getCompilationReason()>();
+
+        $r13 = staticinvoke <com.android.server.pm.PackageManagerServiceCompilerMapping: java.lang.String getReasonName(int)>($i3);
+
+        virtualinvoke $r9.<com.android.server.pm.Installer: void dexopt(java.lang.String,int,java.lang.String,java.lang.String,int,java.lang.String,int,java.lang.String,java.lang.String,java.lang.String,java.lang.String,boolean,int,java.lang.String,java.lang.String,java.lang.String)>(r15, 1000, "android", r4, i0, null, $s2, $r10, $r11, $r12, null, 0, 0, null, null, $r13);
+
+     label6:
+        b7 = 1;
+
+        goto label4;
+
+     label7:
+        $r14 := @caughtexception;
+
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String,java.lang.Throwable)>("PackageDexOptimizer", "Failed to dexopt", $r14);
+
+        return -1;
+
+     label8:
+        return b7;
+
+        catch com.android.server.pm.Installer$InstallerException from label5 to label6 with label7;
+    }
+
+    void dumpDexoptState(com.android.internal.util.IndentingPrintWriter, com.android.server.pm.parsing.pkg.AndroidPackage, com.android.server.pm.PackageSetting, com.android.server.pm.dex.PackageDexUsage$PackageUseInfo)
+    {
+        com.android.server.pm.PackageDexOptimizer r0;
+        com.android.internal.util.IndentingPrintWriter r1;
+        com.android.server.pm.dex.PackageDexUsage$PackageUseInfo r2;
+        int i0, i1;
+        java.lang.String $r3, $r4, $r11, $r23, $r25, $r31, $r36, $r39, $r42, $r45, $r50, $r52, r57, r59, r68;
+        java.lang.String[] $r5, r55;
+        java.util.List $r6;
+        boolean $z0, $z1, $z2, $z3, $z4;
+        java.lang.Object $r7, $r17, $r18, $r19;
+        java.util.Set $r15, $r29, $r34;
+        java.lang.Throwable $r46;
+        com.android.server.pm.parsing.pkg.AndroidPackage r53;
+        com.android.server.pm.PackageSetting r54;
+        java.util.Iterator r56, r66;
+        dalvik.system.DexFile$OptimizationInfo r60;
+        java.util.Map r65;
+        java.util.Map$Entry r67;
+        com.android.server.pm.dex.PackageDexUsage$DexUseInfo r69;
+        java.lang.StringBuilder r72, r73, r74, r75, r76, r77;
+        java.io.IOException r78;
+
+        r0 := @this: com.android.server.pm.PackageDexOptimizer;
+
+        r1 := @parameter0: com.android.internal.util.IndentingPrintWriter;
+
+        r53 := @parameter1: com.android.server.pm.parsing.pkg.AndroidPackage;
+
+        r54 := @parameter2: com.android.server.pm.PackageSetting;
+
+        r2 := @parameter3: com.android.server.pm.dex.PackageDexUsage$PackageUseInfo;
+
+        $r3 = staticinvoke <com.android.server.pm.parsing.pkg.AndroidPackageUtils: java.lang.String getPrimaryCpuAbi(com.android.server.pm.parsing.pkg.AndroidPackage,com.android.server.pm.PackageSetting)>(r53, r54);
+
+        $r4 = staticinvoke <com.android.server.pm.parsing.pkg.AndroidPackageUtils: java.lang.String getSecondaryCpuAbi(com.android.server.pm.parsing.pkg.AndroidPackage,com.android.server.pm.PackageSetting)>(r53, r54);
+
+        $r5 = staticinvoke <com.android.server.pm.InstructionSets: java.lang.String[] getAppDexInstructionSets(java.lang.String,java.lang.String)>($r3, $r4);
+
+        r55 = staticinvoke <com.android.server.pm.InstructionSets: java.lang.String[] getDexCodeInstructionSets(java.lang.String[])>($r5);
+
+        $r6 = staticinvoke <com.android.server.pm.parsing.pkg.AndroidPackageUtils: java.util.List getAllCodePathsExcludingResourceOnly(com.android.server.pm.parsing.pkg.AndroidPackage)>(r53);
+
+        r56 = interfaceinvoke $r6.<java.util.List: java.util.Iterator iterator()>();
+
+     label01:
+        $z0 = interfaceinvoke r56.<java.util.Iterator: boolean hasNext()>();
+
+        if $z0 == 0 goto label13;
+
+        $r7 = interfaceinvoke r56.<java.util.Iterator: java.lang.Object next()>();
+
+        r57 = (java.lang.String) $r7;
+
+        r72 = new java.lang.StringBuilder;
+
+        specialinvoke r72.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r72.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("path: ");
+
+        virtualinvoke r72.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r57);
+
+        $r11 = virtualinvoke r72.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<com.android.internal.util.IndentingPrintWriter: void println(java.lang.String)>($r11);
+
+        virtualinvoke r1.<com.android.internal.util.IndentingPrintWriter: com.android.internal.util.IndentingPrintWriter increaseIndent()>();
+
+        i0 = lengthof r55;
+
+        i1 = 0;
+
+     label02:
+        if i1 >= i0 goto label07;
+
+        r59 = r55[i1];
+
+     label03:
+        r60 = staticinvoke <dalvik.system.DexFile: dalvik.system.DexFile$OptimizationInfo getDexFileOptimizationInfo(java.lang.String,java.lang.String)>(r57, r59);
+
+        r73 = new java.lang.StringBuilder;
+
+        specialinvoke r73.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r73.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r59);
+
+        virtualinvoke r73.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(": [status=");
+
+        $r39 = virtualinvoke r60.<dalvik.system.DexFile$OptimizationInfo: java.lang.String getStatus()>();
+
+        virtualinvoke r73.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r39);
+
+        virtualinvoke r73.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("] [reason=");
+
+        $r42 = virtualinvoke r60.<dalvik.system.DexFile$OptimizationInfo: java.lang.String getReason()>();
+
+        virtualinvoke r73.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r42);
+
+        virtualinvoke r73.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("]");
+
+        $r45 = virtualinvoke r73.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<com.android.internal.util.IndentingPrintWriter: void println(java.lang.String)>($r45);
+
+     label04:
+        goto label06;
+
+     label05:
+        $r46 := @caughtexception;
+
+        r74 = new java.lang.StringBuilder;
+
+        specialinvoke r74.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r74.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r59);
+
+        virtualinvoke r74.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(": [Exception]: ");
+
+        r78 = (java.io.IOException) $r46;
+
+        $r50 = virtualinvoke r78.<java.io.IOException: java.lang.String getMessage()>();
+
+        virtualinvoke r74.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r50);
+
+        $r52 = virtualinvoke r74.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<com.android.internal.util.IndentingPrintWriter: void println(java.lang.String)>($r52);
+
+     label06:
+        i1 = i1 + 1;
+
+        goto label02;
+
+     label07:
+        $z1 = virtualinvoke r2.<com.android.server.pm.dex.PackageDexUsage$PackageUseInfo: boolean isUsedByOtherApps(java.lang.String)>(r57);
+
+        if $z1 == 0 goto label08;
+
+        r75 = new java.lang.StringBuilder;
+
+        specialinvoke r75.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r75.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("used by other apps: ");
+
+        $r34 = virtualinvoke r2.<com.android.server.pm.dex.PackageDexUsage$PackageUseInfo: java.util.Set getLoadingPackages(java.lang.String)>(r57);
+
+        virtualinvoke r75.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r34);
+
+        $r36 = virtualinvoke r75.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<com.android.internal.util.IndentingPrintWriter: void println(java.lang.String)>($r36);
+
+     label08:
+        r65 = virtualinvoke r2.<com.android.server.pm.dex.PackageDexUsage$PackageUseInfo: java.util.Map getDexUseInfoMap()>();
+
+        $z2 = interfaceinvoke r65.<java.util.Map: boolean isEmpty()>();
+
+        if $z2 != 0 goto label12;
+
+        virtualinvoke r1.<com.android.internal.util.IndentingPrintWriter: void println(java.lang.String)>("known secondary dex files:");
+
+        virtualinvoke r1.<com.android.internal.util.IndentingPrintWriter: com.android.internal.util.IndentingPrintWriter increaseIndent()>();
+
+        $r15 = interfaceinvoke r65.<java.util.Map: java.util.Set entrySet()>();
+
+        r66 = interfaceinvoke $r15.<java.util.Set: java.util.Iterator iterator()>();
+
+     label09:
+        $z3 = interfaceinvoke r66.<java.util.Iterator: boolean hasNext()>();
+
+        if $z3 == 0 goto label11;
+
+        $r17 = interfaceinvoke r66.<java.util.Iterator: java.lang.Object next()>();
+
+        r67 = (java.util.Map$Entry) $r17;
+
+        $r18 = interfaceinvoke r67.<java.util.Map$Entry: java.lang.Object getKey()>();
+
+        r68 = (java.lang.String) $r18;
+
+        $r19 = interfaceinvoke r67.<java.util.Map$Entry: java.lang.Object getValue()>();
+
+        r69 = (com.android.server.pm.dex.PackageDexUsage$DexUseInfo) $r19;
+
+        virtualinvoke r1.<com.android.internal.util.IndentingPrintWriter: void println(java.lang.String)>(r68);
+
+        virtualinvoke r1.<com.android.internal.util.IndentingPrintWriter: com.android.internal.util.IndentingPrintWriter increaseIndent()>();
+
+        r76 = new java.lang.StringBuilder;
+
+        specialinvoke r76.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r76.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("class loader context: ");
+
+        $r23 = virtualinvoke r69.<com.android.server.pm.dex.PackageDexUsage$DexUseInfo: java.lang.String getClassLoaderContext()>();
+
+        virtualinvoke r76.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r23);
+
+        $r25 = virtualinvoke r76.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<com.android.internal.util.IndentingPrintWriter: void println(java.lang.String)>($r25);
+
+        $z4 = virtualinvoke r69.<com.android.server.pm.dex.PackageDexUsage$DexUseInfo: boolean isUsedByOtherApps()>();
+
+        if $z4 == 0 goto label10;
+
+        r77 = new java.lang.StringBuilder;
+
+        specialinvoke r77.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r77.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("used by other apps: ");
+
+        $r29 = virtualinvoke r69.<com.android.server.pm.dex.PackageDexUsage$DexUseInfo: java.util.Set getLoadingPackages()>();
+
+        virtualinvoke r77.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r29);
+
+        $r31 = virtualinvoke r77.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<com.android.internal.util.IndentingPrintWriter: void println(java.lang.String)>($r31);
+
+     label10:
+        virtualinvoke r1.<com.android.internal.util.IndentingPrintWriter: com.android.internal.util.IndentingPrintWriter decreaseIndent()>();
+
+        goto label09;
+
+     label11:
+        virtualinvoke r1.<com.android.internal.util.IndentingPrintWriter: com.android.internal.util.IndentingPrintWriter decreaseIndent()>();
+
+     label12:
+        virtualinvoke r1.<com.android.internal.util.IndentingPrintWriter: com.android.internal.util.IndentingPrintWriter decreaseIndent()>();
+
+        goto label01;
+
+     label13:
+        return;
+
+        catch java.io.IOException from label03 to label04 with label05;
+    }
+
+    int performDexOpt(com.android.server.pm.parsing.pkg.AndroidPackage, com.android.server.pm.PackageSetting, java.lang.String[], com.android.server.pm.CompilerStats$PackageStats, com.android.server.pm.dex.PackageDexUsage$PackageUseInfo, com.android.server.pm.dex.DexoptOptions)
+    {
+        com.android.server.pm.PackageDexOptimizer r0;
+        java.lang.String[] r1;
+        com.android.server.pm.CompilerStats$PackageStats r2;
+        com.android.server.pm.dex.PackageDexUsage$PackageUseInfo r3;
+        com.android.server.pm.dex.DexoptOptions r4;
+        java.lang.Object r5;
+        long l0;
+        int i1, $i2, $i3;
+        java.lang.String $r6, $r7, $r11, $r15;
+        boolean $z0, $z1;
+        java.lang.IllegalArgumentException $r8, $r14;
+        java.lang.StringBuilder $r9;
+        java.lang.Throwable $r16, $r17;
+        com.android.server.pm.parsing.pkg.AndroidPackage r18;
+        com.android.server.pm.PackageSetting r19;
+
+        r0 := @this: com.android.server.pm.PackageDexOptimizer;
+
+        r18 := @parameter0: com.android.server.pm.parsing.pkg.AndroidPackage;
+
+        r19 := @parameter1: com.android.server.pm.PackageSetting;
+
+        r1 := @parameter2: java.lang.String[];
+
+        r2 := @parameter3: com.android.server.pm.CompilerStats$PackageStats;
+
+        r3 := @parameter4: com.android.server.pm.dex.PackageDexUsage$PackageUseInfo;
+
+        r4 := @parameter5: com.android.server.pm.dex.DexoptOptions;
+
+        $r6 = "android";
+
+        $r7 = interfaceinvoke r18.<com.android.server.pm.parsing.pkg.AndroidPackage: java.lang.String getPackageName()>();
+
+        $z0 = virtualinvoke $r6.<java.lang.String: boolean equals(java.lang.Object)>($r7);
+
+        if $z0 != 0 goto label13;
+
+        $i2 = interfaceinvoke r18.<com.android.server.pm.parsing.pkg.AndroidPackage: int getUid()>();
+
+        if $i2 == -1 goto label12;
+
+        $z1 = staticinvoke <com.android.server.pm.PackageDexOptimizer: boolean canOptimizePackage(com.android.server.pm.parsing.pkg.AndroidPackage)>(r18);
+
+        if $z1 != 0 goto label01;
+
+        return 0;
+
+     label01:
+        r5 = r0.<com.android.server.pm.PackageDexOptimizer: java.lang.Object mInstallLock>;
+
+        entermonitor r5;
+
+     label02:
+        $i3 = interfaceinvoke r18.<com.android.server.pm.parsing.pkg.AndroidPackage: int getUid()>();
+
+        l0 = specialinvoke r0.<com.android.server.pm.PackageDexOptimizer: long acquireWakeLockLI(int)>($i3);
+
+     label03:
+        i1 = specialinvoke r0.<com.android.server.pm.PackageDexOptimizer: int performDexOptLI(com.android.server.pm.parsing.pkg.AndroidPackage,com.android.server.pm.PackageSetting,java.lang.String[],com.android.server.pm.CompilerStats$PackageStats,com.android.server.pm.dex.PackageDexUsage$PackageUseInfo,com.android.server.pm.dex.DexoptOptions)>(r18, r19, r1, r2, r3, r4);
+
+     label04:
+        specialinvoke r0.<com.android.server.pm.PackageDexOptimizer: void releaseWakeLockLI(long)>(l0);
+
+        exitmonitor r5;
+
+     label05:
+        return i1;
+
+     label06:
+        $r16 := @caughtexception;
+
+     label07:
+        specialinvoke r0.<com.android.server.pm.PackageDexOptimizer: void releaseWakeLockLI(long)>(l0);
+
+     label08:
+        throw $r16;
+
+     label09:
+        $r17 := @caughtexception;
+
+     label10:
+        exitmonitor r5;
+
+     label11:
+        throw $r17;
+
+     label12:
+        $r9 = new java.lang.StringBuilder;
+
+        specialinvoke $r9.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Dexopt for ");
+
+        $r11 = interfaceinvoke r18.<com.android.server.pm.parsing.pkg.AndroidPackage: java.lang.String getPackageName()>();
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r11);
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" has invalid uid.");
+
+        $r14 = new java.lang.IllegalArgumentException;
+
+        $r15 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r14.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>($r15);
+
+        throw $r14;
+
+     label13:
+        $r8 = new java.lang.IllegalArgumentException;
+
+        specialinvoke $r8.<java.lang.IllegalArgumentException: void <init>(java.lang.String)>("System server dexopting should be done via  DexManager and PackageDexOptimizer#dexoptSystemServerPath");
+
+        throw $r8;
+
+        catch java.lang.Throwable from label02 to label03 with label09;
+        catch java.lang.Throwable from label03 to label04 with label06;
+        catch java.lang.Throwable from label04 to label05 with label09;
+        catch java.lang.Throwable from label07 to label08 with label09;
+        catch java.lang.Throwable from label08 to label09 with label09;
+        catch java.lang.Throwable from label10 to label11 with label09;
+    }
+
+    void systemReady()
+    {
+        com.android.server.pm.PackageDexOptimizer r0;
+
+        r0 := @this: com.android.server.pm.PackageDexOptimizer;
+
+        r0.<com.android.server.pm.PackageDexOptimizer: boolean mSystemReady> = 1;
+
+        return;
+    }
+
+    public static void <clinit>()
+    {
+        <com.android.server.pm.PackageDexOptimizer: long WAKELOCK_TIMEOUT_MS> = 660000L;
+
+        <com.android.server.pm.PackageDexOptimizer: java.lang.String TAG> = "PackageDexOptimizer";
+
+        <com.android.server.pm.PackageDexOptimizer: java.lang.String OAT_DIR_NAME> = "oat";
+
+        <com.android.server.pm.PackageDexOptimizer: int DEX_OPT_SKIPPED> = 0;
+
+        <com.android.server.pm.PackageDexOptimizer: int DEX_OPT_PERFORMED> = 1;
+
+        <com.android.server.pm.PackageDexOptimizer: int DEX_OPT_FAILED> = -1;
+
+        return;
+    }
+}

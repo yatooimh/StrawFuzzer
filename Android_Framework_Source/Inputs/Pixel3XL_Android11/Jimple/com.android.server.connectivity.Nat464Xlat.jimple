@@ -1,0 +1,1601 @@
+public class com.android.server.connectivity.Nat464Xlat extends com.android.server.net.BaseNetworkObserver
+{
+    private static final java.lang.String CLAT_PREFIX;
+    private static final android.net.NetworkInfo$State[] NETWORK_STATES;
+    private static final int[] NETWORK_TYPES;
+    private static final java.lang.String TAG;
+    private java.lang.String mBaseIface;
+    private final android.net.IDnsResolver mDnsResolver;
+    private java.net.Inet6Address mIPv6Address;
+    private java.lang.String mIface;
+    private final android.os.INetworkManagementService mNMService;
+    private android.net.IpPrefix mNat64PrefixFromDns;
+    private android.net.IpPrefix mNat64PrefixFromRa;
+    private android.net.IpPrefix mNat64PrefixInUse;
+    private final android.net.INetd mNetd;
+    private final com.android.server.connectivity.NetworkAgentInfo mNetwork;
+    private boolean mPrefixDiscoveryRunning;
+    private com.android.server.connectivity.Nat464Xlat$State mState;
+
+    static void <clinit>()
+    {
+        java.lang.Class $r0;
+        java.lang.String $r1;
+        int[] $r2;
+        android.net.NetworkInfo$State[] $r3;
+        android.net.NetworkInfo$State $r4, $r5;
+
+        <com.android.server.connectivity.Nat464Xlat: java.lang.String CLAT_PREFIX> = "v4-";
+
+        $r0 = class "Lcom/android/server/connectivity/Nat464Xlat;";
+
+        $r1 = virtualinvoke $r0.<java.lang.Class: java.lang.String getSimpleName()>();
+
+        <com.android.server.connectivity.Nat464Xlat: java.lang.String TAG> = $r1;
+
+        $r2 = newarray (int)[3];
+
+        $r2[0] = 0;
+
+        $r2[1] = 1;
+
+        $r2[2] = 9;
+
+        <com.android.server.connectivity.Nat464Xlat: int[] NETWORK_TYPES> = $r2;
+
+        $r3 = newarray (android.net.NetworkInfo$State)[2];
+
+        $r4 = <android.net.NetworkInfo$State: android.net.NetworkInfo$State CONNECTED>;
+
+        $r3[0] = $r4;
+
+        $r5 = <android.net.NetworkInfo$State: android.net.NetworkInfo$State SUSPENDED>;
+
+        $r3[1] = $r5;
+
+        <com.android.server.connectivity.Nat464Xlat: android.net.NetworkInfo$State[] NETWORK_STATES> = $r3;
+
+        return;
+    }
+
+    public void <init>(com.android.server.connectivity.NetworkAgentInfo, android.net.INetd, android.net.IDnsResolver, android.os.INetworkManagementService)
+    {
+        com.android.server.connectivity.Nat464Xlat r0;
+        com.android.server.connectivity.NetworkAgentInfo r1;
+        android.net.INetd r2;
+        android.net.IDnsResolver r3;
+        android.os.INetworkManagementService r4;
+        com.android.server.connectivity.Nat464Xlat$State $r5;
+
+        r0 := @this: com.android.server.connectivity.Nat464Xlat;
+
+        r1 := @parameter0: com.android.server.connectivity.NetworkAgentInfo;
+
+        r2 := @parameter1: android.net.INetd;
+
+        r3 := @parameter2: android.net.IDnsResolver;
+
+        r4 := @parameter3: android.os.INetworkManagementService;
+
+        specialinvoke r0.<com.android.server.net.BaseNetworkObserver: void <init>()>();
+
+        $r5 = <com.android.server.connectivity.Nat464Xlat$State: com.android.server.connectivity.Nat464Xlat$State IDLE>;
+
+        r0.<com.android.server.connectivity.Nat464Xlat: com.android.server.connectivity.Nat464Xlat$State mState> = $r5;
+
+        r0.<com.android.server.connectivity.Nat464Xlat: android.net.IDnsResolver mDnsResolver> = r3;
+
+        r0.<com.android.server.connectivity.Nat464Xlat: android.net.INetd mNetd> = r2;
+
+        r0.<com.android.server.connectivity.Nat464Xlat: android.os.INetworkManagementService mNMService> = r4;
+
+        r0.<com.android.server.connectivity.Nat464Xlat: com.android.server.connectivity.NetworkAgentInfo mNetwork> = r1;
+
+        return;
+    }
+
+    private void enterRunningState()
+    {
+        com.android.server.connectivity.Nat464Xlat r0;
+        com.android.server.connectivity.Nat464Xlat$State $r1;
+
+        r0 := @this: com.android.server.connectivity.Nat464Xlat;
+
+        $r1 = <com.android.server.connectivity.Nat464Xlat$State: com.android.server.connectivity.Nat464Xlat$State RUNNING>;
+
+        r0.<com.android.server.connectivity.Nat464Xlat: com.android.server.connectivity.Nat464Xlat$State mState> = $r1;
+
+        return;
+    }
+
+    private void enterStartingState(java.lang.String)
+    {
+        com.android.server.connectivity.Nat464Xlat r0;
+        java.lang.String r1, $r5, $r9, $r18, $r25, $r30, $r32, r33, r35, r36, r40, r43;
+        android.os.INetworkManagementService $r3;
+        android.net.INetd $r4;
+        java.lang.StringBuilder $r6, $r15, $r20, $r27;
+        com.android.server.connectivity.Nat464Xlat$State $r10;
+        java.net.InetAddress $r11;
+        java.net.Inet6Address $r12;
+        boolean $z0, $z1, $z2;
+        android.net.IpPrefix $r13, r34;
+        java.lang.Throwable $r14;
+        java.lang.Exception $r19;
+        android.os.RemoteException $r26;
+        com.android.server.connectivity.NetworkAgentInfo $r29;
+
+        r0 := @this: com.android.server.connectivity.Nat464Xlat;
+
+        r33 := @parameter0: java.lang.String;
+
+     label01:
+        $r3 = r0.<com.android.server.connectivity.Nat464Xlat: android.os.INetworkManagementService mNMService>;
+
+        interfaceinvoke $r3.<android.os.INetworkManagementService: void registerObserver(android.net.INetworkManagementEventObserver)>(r0);
+
+     label02:
+        r34 = specialinvoke r0.<com.android.server.connectivity.Nat464Xlat: android.net.IpPrefix selectNat64Prefix()>();
+
+        r0.<com.android.server.connectivity.Nat464Xlat: android.net.IpPrefix mNat64PrefixInUse> = r34;
+
+        r35 = null;
+
+     label03:
+        $r4 = r0.<com.android.server.connectivity.Nat464Xlat: android.net.INetd mNetd>;
+
+        $r5 = virtualinvoke r34.<android.net.IpPrefix: java.lang.String toString()>();
+
+        r36 = interfaceinvoke $r4.<android.net.INetd: java.lang.String clatdStart(java.lang.String,java.lang.String)>(r33, $r5);
+
+     label04:
+        r35 = r36;
+
+        goto label06;
+
+     label05:
+        $r19 := @caughtexception;
+
+        r1 = <com.android.server.connectivity.Nat464Xlat: java.lang.String TAG>;
+
+        $r20 = new java.lang.StringBuilder;
+
+        specialinvoke $r20.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r20.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Error starting clatd on ");
+
+        virtualinvoke $r20.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r33);
+
+        virtualinvoke $r20.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(": ");
+
+        virtualinvoke $r20.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r19);
+
+        $r25 = virtualinvoke $r20.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>(r1, $r25);
+
+     label06:
+        $r6 = new java.lang.StringBuilder;
+
+        specialinvoke $r6.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("v4-");
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r33);
+
+        $r9 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        r0.<com.android.server.connectivity.Nat464Xlat: java.lang.String mIface> = $r9;
+
+        r0.<com.android.server.connectivity.Nat464Xlat: java.lang.String mBaseIface> = r33;
+
+        $r10 = <com.android.server.connectivity.Nat464Xlat$State: com.android.server.connectivity.Nat464Xlat$State STARTING>;
+
+        r0.<com.android.server.connectivity.Nat464Xlat: com.android.server.connectivity.Nat464Xlat$State mState> = $r10;
+
+     label07:
+        $r11 = staticinvoke <android.net.InetAddresses: java.net.InetAddress parseNumericAddress(java.lang.String)>(r35);
+
+        $r12 = (java.net.Inet6Address) $r11;
+
+        r0.<com.android.server.connectivity.Nat464Xlat: java.net.Inet6Address mIPv6Address> = $r12;
+
+     label08:
+        goto label10;
+
+     label09:
+        $r14 := @caughtexception;
+
+        r40 = <com.android.server.connectivity.Nat464Xlat: java.lang.String TAG>;
+
+        $r15 = new java.lang.StringBuilder;
+
+        specialinvoke $r15.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r15.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Invalid IPv6 address ");
+
+        virtualinvoke $r15.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r35);
+
+        $r18 = virtualinvoke $r15.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>(r40, $r18);
+
+     label10:
+        $z0 = r0.<com.android.server.connectivity.Nat464Xlat: boolean mPrefixDiscoveryRunning>;
+
+        if $z0 == 0 goto label11;
+
+        $z1 = specialinvoke r0.<com.android.server.connectivity.Nat464Xlat: boolean isPrefixDiscoveryNeeded()>();
+
+        if $z1 != 0 goto label11;
+
+        specialinvoke r0.<com.android.server.connectivity.Nat464Xlat: void stopPrefixDiscovery()>();
+
+     label11:
+        $z2 = r0.<com.android.server.connectivity.Nat464Xlat: boolean mPrefixDiscoveryRunning>;
+
+        if $z2 != 0 goto label12;
+
+        $r13 = r0.<com.android.server.connectivity.Nat464Xlat: android.net.IpPrefix mNat64PrefixInUse>;
+
+        specialinvoke r0.<com.android.server.connectivity.Nat464Xlat: void setPrefix64(android.net.IpPrefix)>($r13);
+
+     label12:
+        return;
+
+     label13:
+        $r26 := @caughtexception;
+
+        r43 = <com.android.server.connectivity.Nat464Xlat: java.lang.String TAG>;
+
+        $r27 = new java.lang.StringBuilder;
+
+        specialinvoke $r27.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r27.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Can\'t register iface observer for clat on ");
+
+        $r29 = r0.<com.android.server.connectivity.Nat464Xlat: com.android.server.connectivity.NetworkAgentInfo mNetwork>;
+
+        $r30 = virtualinvoke $r29.<com.android.server.connectivity.NetworkAgentInfo: java.lang.String toShortString()>();
+
+        virtualinvoke $r27.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r30);
+
+        $r32 = virtualinvoke $r27.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>(r43, $r32);
+
+        return;
+
+        catch android.os.RemoteException from label01 to label02 with label13;
+        catch android.os.RemoteException from label03 to label04 with label05;
+        catch android.os.ServiceSpecificException from label03 to label04 with label05;
+        catch java.lang.ClassCastException from label07 to label08 with label09;
+        catch java.lang.IllegalArgumentException from label07 to label08 with label09;
+        catch java.lang.NullPointerException from label07 to label08 with label09;
+    }
+
+    private android.net.LinkAddress getLinkAddress(java.lang.String)
+    {
+        com.android.server.connectivity.Nat464Xlat r0;
+        java.lang.String r1, $r9, r10;
+        android.os.INetworkManagementService $r3;
+        android.net.InterfaceConfiguration $r4;
+        java.lang.Throwable $r5;
+        java.lang.StringBuilder $r6;
+        android.net.LinkAddress r11;
+
+        r0 := @this: com.android.server.connectivity.Nat464Xlat;
+
+        r10 := @parameter0: java.lang.String;
+
+     label1:
+        $r3 = r0.<com.android.server.connectivity.Nat464Xlat: android.os.INetworkManagementService mNMService>;
+
+        $r4 = interfaceinvoke $r3.<android.os.INetworkManagementService: android.net.InterfaceConfiguration getInterfaceConfig(java.lang.String)>(r10);
+
+        r11 = virtualinvoke $r4.<android.net.InterfaceConfiguration: android.net.LinkAddress getLinkAddress()>();
+
+     label2:
+        return r11;
+
+     label3:
+        $r5 := @caughtexception;
+
+        r1 = <com.android.server.connectivity.Nat464Xlat: java.lang.String TAG>;
+
+        $r6 = new java.lang.StringBuilder;
+
+        specialinvoke $r6.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Error getting link properties: ");
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r5);
+
+        $r9 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>(r1, $r9);
+
+        return null;
+
+        catch android.os.RemoteException from label1 to label2 with label3;
+        catch java.lang.IllegalStateException from label1 to label2 with label3;
+    }
+
+    private void handleInterfaceLinkStateChanged(java.lang.String, boolean)
+    {
+        com.android.server.connectivity.Nat464Xlat r0;
+        boolean z0, $z1, $z2;
+        java.lang.String $r1, $r3, $r4, $r15, r16, r18, r20, r21;
+        java.lang.Object[] $r2;
+        android.net.LinkProperties $r5, $r7, $r8;
+        com.android.server.connectivity.NetworkAgentInfo $r6, $r9, $r11;
+        com.android.server.ConnectivityService $r10;
+        java.lang.StringBuilder $r12;
+        android.net.LinkAddress r17;
+
+        r0 := @this: com.android.server.connectivity.Nat464Xlat;
+
+        r16 := @parameter0: java.lang.String;
+
+        z0 := @parameter1: boolean;
+
+        $z1 = virtualinvoke r0.<com.android.server.connectivity.Nat464Xlat: boolean isStarting()>();
+
+        if $z1 == 0 goto label3;
+
+        if z0 == 0 goto label3;
+
+        $r1 = r0.<com.android.server.connectivity.Nat464Xlat: java.lang.String mIface>;
+
+        $z2 = staticinvoke <java.util.Objects: boolean equals(java.lang.Object,java.lang.Object)>($r1, r16);
+
+        if $z2 != 0 goto label1;
+
+        goto label3;
+
+     label1:
+        r17 = specialinvoke r0.<com.android.server.connectivity.Nat464Xlat: android.net.LinkAddress getLinkAddress(java.lang.String)>(r16);
+
+        if r17 != null goto label2;
+
+        r18 = <com.android.server.connectivity.Nat464Xlat: java.lang.String TAG>;
+
+        $r12 = new java.lang.StringBuilder;
+
+        specialinvoke $r12.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("clatAddress was null for stacked iface ");
+
+        virtualinvoke $r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r16);
+
+        $r15 = virtualinvoke $r12.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>(r18, $r15);
+
+        return;
+
+     label2:
+        r20 = <com.android.server.connectivity.Nat464Xlat: java.lang.String TAG>;
+
+        r21 = r0.<com.android.server.connectivity.Nat464Xlat: java.lang.String mIface>;
+
+        $r2 = newarray (java.lang.Object)[3];
+
+        $r2[0] = r21;
+
+        $r2[1] = r21;
+
+        $r3 = r0.<com.android.server.connectivity.Nat464Xlat: java.lang.String mBaseIface>;
+
+        $r2[2] = $r3;
+
+        $r4 = staticinvoke <java.lang.String: java.lang.String format(java.lang.String,java.lang.Object[])>("interface %s is up, adding stacked link %s on top of %s", $r2);
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>(r20, $r4);
+
+        specialinvoke r0.<com.android.server.connectivity.Nat464Xlat: void enterRunningState()>();
+
+        $r5 = new android.net.LinkProperties;
+
+        $r6 = r0.<com.android.server.connectivity.Nat464Xlat: com.android.server.connectivity.NetworkAgentInfo mNetwork>;
+
+        $r7 = $r6.<com.android.server.connectivity.NetworkAgentInfo: android.net.LinkProperties linkProperties>;
+
+        specialinvoke $r5.<android.net.LinkProperties: void <init>(android.net.LinkProperties)>($r7);
+
+        $r8 = specialinvoke r0.<com.android.server.connectivity.Nat464Xlat: android.net.LinkProperties makeLinkProperties(android.net.LinkAddress)>(r17);
+
+        virtualinvoke $r5.<android.net.LinkProperties: boolean addStackedLink(android.net.LinkProperties)>($r8);
+
+        $r9 = r0.<com.android.server.connectivity.Nat464Xlat: com.android.server.connectivity.NetworkAgentInfo mNetwork>;
+
+        $r10 = virtualinvoke $r9.<com.android.server.connectivity.NetworkAgentInfo: com.android.server.ConnectivityService connService()>();
+
+        $r11 = r0.<com.android.server.connectivity.Nat464Xlat: com.android.server.connectivity.NetworkAgentInfo mNetwork>;
+
+        virtualinvoke $r10.<com.android.server.ConnectivityService: void handleUpdateLinkProperties(com.android.server.connectivity.NetworkAgentInfo,android.net.LinkProperties)>($r11, $r5);
+
+        return;
+
+     label3:
+        return;
+    }
+
+    private void handleInterfaceRemoved(java.lang.String)
+    {
+        com.android.server.connectivity.Nat464Xlat r0;
+        java.lang.String r1, r2, $r4, $r9;
+        boolean $z0, $z1;
+        java.lang.StringBuilder $r5;
+
+        r0 := @this: com.android.server.connectivity.Nat464Xlat;
+
+        r1 := @parameter0: java.lang.String;
+
+        $r4 = r0.<com.android.server.connectivity.Nat464Xlat: java.lang.String mIface>;
+
+        $z0 = staticinvoke <java.util.Objects: boolean equals(java.lang.Object,java.lang.Object)>($r4, r1);
+
+        if $z0 != 0 goto label1;
+
+        return;
+
+     label1:
+        $z1 = virtualinvoke r0.<com.android.server.connectivity.Nat464Xlat: boolean isRunning()>();
+
+        if $z1 != 0 goto label2;
+
+        return;
+
+     label2:
+        r2 = <com.android.server.connectivity.Nat464Xlat: java.lang.String TAG>;
+
+        $r5 = new java.lang.StringBuilder;
+
+        specialinvoke $r5.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("interface ");
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" removed");
+
+        $r9 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>(r2, $r9);
+
+        virtualinvoke r0.<com.android.server.connectivity.Nat464Xlat: void stop()>();
+
+        return;
+    }
+
+    private boolean isPrefixDiscoveryNeeded()
+    {
+        com.android.server.connectivity.Nat464Xlat r0;
+        com.android.server.connectivity.NetworkAgentInfo $r1;
+        boolean $z0, z1;
+        android.net.IpPrefix $r2;
+
+        r0 := @this: com.android.server.connectivity.Nat464Xlat;
+
+        $r1 = r0.<com.android.server.connectivity.Nat464Xlat: com.android.server.connectivity.NetworkAgentInfo mNetwork>;
+
+        $z0 = staticinvoke <com.android.server.connectivity.Nat464Xlat: boolean requiresClat(com.android.server.connectivity.NetworkAgentInfo)>($r1);
+
+        if $z0 == 0 goto label1;
+
+        $r2 = r0.<com.android.server.connectivity.Nat464Xlat: android.net.IpPrefix mNat64PrefixFromRa>;
+
+        if $r2 != null goto label1;
+
+        z1 = 1;
+
+        goto label2;
+
+     label1:
+        z1 = 0;
+
+     label2:
+        return z1;
+    }
+
+    private void leaveStartedState()
+    {
+        com.android.server.connectivity.Nat464Xlat r0;
+        java.lang.String r2, $r10, $r14;
+        android.os.INetworkManagementService $r4;
+        boolean $z0, $z1, $z2;
+        com.android.server.connectivity.Nat464Xlat$State $r5, $r6;
+        java.lang.Throwable $r7;
+        java.lang.StringBuilder $r8;
+
+        r0 := @this: com.android.server.connectivity.Nat464Xlat;
+
+     label1:
+        $r4 = r0.<com.android.server.connectivity.Nat464Xlat: android.os.INetworkManagementService mNMService>;
+
+        interfaceinvoke $r4.<android.os.INetworkManagementService: void unregisterObserver(android.net.INetworkManagementEventObserver)>(r0);
+
+     label2:
+        goto label4;
+
+     label3:
+        $r7 := @caughtexception;
+
+        r2 = <com.android.server.connectivity.Nat464Xlat: java.lang.String TAG>;
+
+        $r8 = new java.lang.StringBuilder;
+
+        specialinvoke $r8.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Error unregistering clatd observer on ");
+
+        $r10 = r0.<com.android.server.connectivity.Nat464Xlat: java.lang.String mBaseIface>;
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r10);
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(": ");
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r7);
+
+        $r14 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>(r2, $r14);
+
+     label4:
+        r0.<com.android.server.connectivity.Nat464Xlat: android.net.IpPrefix mNat64PrefixInUse> = null;
+
+        r0.<com.android.server.connectivity.Nat464Xlat: java.lang.String mIface> = null;
+
+        r0.<com.android.server.connectivity.Nat464Xlat: java.lang.String mBaseIface> = null;
+
+        $z0 = r0.<com.android.server.connectivity.Nat464Xlat: boolean mPrefixDiscoveryRunning>;
+
+        if $z0 != 0 goto label5;
+
+        specialinvoke r0.<com.android.server.connectivity.Nat464Xlat: void setPrefix64(android.net.IpPrefix)>(null);
+
+     label5:
+        $z1 = specialinvoke r0.<com.android.server.connectivity.Nat464Xlat: boolean isPrefixDiscoveryNeeded()>();
+
+        if $z1 == 0 goto label7;
+
+        $z2 = r0.<com.android.server.connectivity.Nat464Xlat: boolean mPrefixDiscoveryRunning>;
+
+        if $z2 != 0 goto label6;
+
+        specialinvoke r0.<com.android.server.connectivity.Nat464Xlat: void startPrefixDiscovery()>();
+
+     label6:
+        $r6 = <com.android.server.connectivity.Nat464Xlat$State: com.android.server.connectivity.Nat464Xlat$State DISCOVERING>;
+
+        r0.<com.android.server.connectivity.Nat464Xlat: com.android.server.connectivity.Nat464Xlat$State mState> = $r6;
+
+        goto label8;
+
+     label7:
+        specialinvoke r0.<com.android.server.connectivity.Nat464Xlat: void stopPrefixDiscovery()>();
+
+        $r5 = <com.android.server.connectivity.Nat464Xlat$State: com.android.server.connectivity.Nat464Xlat$State IDLE>;
+
+        r0.<com.android.server.connectivity.Nat464Xlat: com.android.server.connectivity.Nat464Xlat$State mState> = $r5;
+
+     label8:
+        return;
+
+        catch android.os.RemoteException from label1 to label2 with label3;
+        catch java.lang.IllegalStateException from label1 to label2 with label3;
+    }
+
+    private android.net.LinkProperties makeLinkProperties(android.net.LinkAddress)
+    {
+        com.android.server.connectivity.Nat464Xlat r0;
+        android.net.LinkAddress r1, $r6;
+        android.net.LinkProperties $r3;
+        java.lang.String $r4, $r9;
+        android.net.RouteInfo $r5;
+        java.net.InetAddress $r7, $r8;
+
+        r0 := @this: com.android.server.connectivity.Nat464Xlat;
+
+        r1 := @parameter0: android.net.LinkAddress;
+
+        $r3 = new android.net.LinkProperties;
+
+        specialinvoke $r3.<android.net.LinkProperties: void <init>()>();
+
+        $r4 = r0.<com.android.server.connectivity.Nat464Xlat: java.lang.String mIface>;
+
+        virtualinvoke $r3.<android.net.LinkProperties: void setInterfaceName(java.lang.String)>($r4);
+
+        $r5 = new android.net.RouteInfo;
+
+        $r6 = new android.net.LinkAddress;
+
+        $r7 = <java.net.Inet4Address: java.net.InetAddress ANY>;
+
+        specialinvoke $r6.<android.net.LinkAddress: void <init>(java.net.InetAddress,int)>($r7, 0);
+
+        $r8 = virtualinvoke r1.<android.net.LinkAddress: java.net.InetAddress getAddress()>();
+
+        $r9 = r0.<com.android.server.connectivity.Nat464Xlat: java.lang.String mIface>;
+
+        specialinvoke $r5.<android.net.RouteInfo: void <init>(android.net.LinkAddress,java.net.InetAddress,java.lang.String)>($r6, $r8, $r9);
+
+        virtualinvoke $r3.<android.net.LinkProperties: boolean addRoute(android.net.RouteInfo)>($r5);
+
+        virtualinvoke $r3.<android.net.LinkProperties: boolean addLinkAddress(android.net.LinkAddress)>(r1);
+
+        return $r3;
+    }
+
+    private void maybeHandleNat64PrefixChange()
+    {
+        com.android.server.connectivity.Nat464Xlat r0;
+        android.net.IpPrefix r1, $r4, $r7;
+        java.lang.String r2, $r11;
+        boolean $z0;
+        java.lang.StringBuilder $r5;
+
+        r0 := @this: com.android.server.connectivity.Nat464Xlat;
+
+        r1 = specialinvoke r0.<com.android.server.connectivity.Nat464Xlat: android.net.IpPrefix selectNat64Prefix()>();
+
+        $r4 = r0.<com.android.server.connectivity.Nat464Xlat: android.net.IpPrefix mNat64PrefixInUse>;
+
+        $z0 = staticinvoke <java.util.Objects: boolean equals(java.lang.Object,java.lang.Object)>($r4, r1);
+
+        if $z0 != 0 goto label1;
+
+        r2 = <com.android.server.connectivity.Nat464Xlat: java.lang.String TAG>;
+
+        $r5 = new java.lang.StringBuilder;
+
+        specialinvoke $r5.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("NAT64 prefix changed from ");
+
+        $r7 = r0.<com.android.server.connectivity.Nat464Xlat: android.net.IpPrefix mNat64PrefixInUse>;
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r7);
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" to ");
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r1);
+
+        $r11 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>(r2, $r11);
+
+        virtualinvoke r0.<com.android.server.connectivity.Nat464Xlat: void stop()>();
+
+        virtualinvoke r0.<com.android.server.connectivity.Nat464Xlat: void update()>();
+
+     label1:
+        return;
+    }
+
+    protected static boolean requiresClat(com.android.server.connectivity.NetworkAgentInfo)
+    {
+        com.android.server.connectivity.NetworkAgentInfo r0;
+        boolean z0, z1, $z2, $z3, $z4, z5, z6, z7;
+        android.net.LinkProperties r1;
+        android.net.NetworkInfo $r2, $r4;
+        int[] $r3;
+        int $i0;
+        android.net.NetworkInfo$State[] $r5;
+        android.net.NetworkInfo$State $r6;
+        android.net.NetworkAgentConfig $r7, $r8;
+
+        r0 := @parameter0: com.android.server.connectivity.NetworkAgentInfo;
+
+        $r3 = <com.android.server.connectivity.Nat464Xlat: int[] NETWORK_TYPES>;
+
+        $r2 = r0.<com.android.server.connectivity.NetworkAgentInfo: android.net.NetworkInfo networkInfo>;
+
+        $i0 = virtualinvoke $r2.<android.net.NetworkInfo: int getType()>();
+
+        z0 = staticinvoke <com.android.internal.util.ArrayUtils: boolean contains(int[],int)>($r3, $i0);
+
+        $r5 = <com.android.server.connectivity.Nat464Xlat: android.net.NetworkInfo$State[] NETWORK_STATES>;
+
+        $r4 = r0.<com.android.server.connectivity.NetworkAgentInfo: android.net.NetworkInfo networkInfo>;
+
+        $r6 = virtualinvoke $r4.<android.net.NetworkInfo: android.net.NetworkInfo$State getState()>();
+
+        z1 = staticinvoke <com.android.internal.util.ArrayUtils: boolean contains(java.lang.Object[],java.lang.Object)>($r5, $r6);
+
+        r1 = r0.<com.android.server.connectivity.NetworkAgentInfo: android.net.LinkProperties linkProperties>;
+
+        z5 = 1;
+
+        if r1 == null goto label1;
+
+        $z3 = virtualinvoke r1.<android.net.LinkProperties: boolean hasGlobalIpv6Address()>();
+
+        if $z3 == 0 goto label1;
+
+        $z4 = virtualinvoke r1.<android.net.LinkProperties: boolean hasIpv4Address()>();
+
+        if $z4 != 0 goto label1;
+
+        z6 = 1;
+
+        goto label2;
+
+     label1:
+        z6 = 0;
+
+     label2:
+        $r8 = virtualinvoke r0.<com.android.server.connectivity.NetworkAgentInfo: android.net.NetworkAgentConfig netAgentConfig()>();
+
+        if $r8 == null goto label3;
+
+        $r7 = virtualinvoke r0.<com.android.server.connectivity.NetworkAgentInfo: android.net.NetworkAgentConfig netAgentConfig()>();
+
+        $z2 = $r7.<android.net.NetworkAgentConfig: boolean skip464xlat>;
+
+        if $z2 == 0 goto label3;
+
+        z7 = 1;
+
+        goto label4;
+
+     label3:
+        z7 = 0;
+
+     label4:
+        if z0 == 0 goto label5;
+
+        if z1 == 0 goto label5;
+
+        if z6 == 0 goto label5;
+
+        if z7 != 0 goto label5;
+
+        goto label6;
+
+     label5:
+        z5 = 0;
+
+     label6:
+        return z5;
+    }
+
+    private android.net.IpPrefix selectNat64Prefix()
+    {
+        com.android.server.connectivity.Nat464Xlat r0;
+        android.net.IpPrefix r1;
+
+        r0 := @this: com.android.server.connectivity.Nat464Xlat;
+
+        r1 = r0.<com.android.server.connectivity.Nat464Xlat: android.net.IpPrefix mNat64PrefixFromRa>;
+
+        if r1 == null goto label1;
+
+        goto label2;
+
+     label1:
+        r1 = r0.<com.android.server.connectivity.Nat464Xlat: android.net.IpPrefix mNat64PrefixFromDns>;
+
+     label2:
+        return r1;
+    }
+
+    private void setPrefix64(android.net.IpPrefix)
+    {
+        com.android.server.connectivity.Nat464Xlat r0;
+        android.net.IpPrefix r1;
+        java.lang.String r2, $r13, r14;
+        android.net.IDnsResolver $r4;
+        int $i0, $i1;
+        java.lang.Exception $r5;
+        java.lang.StringBuilder $r6;
+
+        r0 := @this: com.android.server.connectivity.Nat464Xlat;
+
+        r1 := @parameter0: android.net.IpPrefix;
+
+        if r1 == null goto label1;
+
+        r14 = virtualinvoke r1.<android.net.IpPrefix: java.lang.String toString()>();
+
+        goto label2;
+
+     label1:
+        r14 = "";
+
+     label2:
+        $r4 = r0.<com.android.server.connectivity.Nat464Xlat: android.net.IDnsResolver mDnsResolver>;
+
+        $i0 = virtualinvoke r0.<com.android.server.connectivity.Nat464Xlat: int getNetId()>();
+
+        interfaceinvoke $r4.<android.net.IDnsResolver: void setPrefix64(int,java.lang.String)>($i0, r14);
+
+     label3:
+        goto label5;
+
+     label4:
+        $r5 := @caughtexception;
+
+        r2 = <com.android.server.connectivity.Nat464Xlat: java.lang.String TAG>;
+
+        $r6 = new java.lang.StringBuilder;
+
+        specialinvoke $r6.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Error setting NAT64 prefix on netId ");
+
+        $i1 = virtualinvoke r0.<com.android.server.connectivity.Nat464Xlat: int getNetId()>();
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i1);
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" to ");
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r1);
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(": ");
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r5);
+
+        $r13 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>(r2, $r13);
+
+     label5:
+        return;
+
+        catch android.os.RemoteException from label2 to label3 with label4;
+        catch android.os.ServiceSpecificException from label2 to label3 with label4;
+    }
+
+    protected static boolean shouldStartClat(com.android.server.connectivity.NetworkAgentInfo)
+    {
+        com.android.server.connectivity.NetworkAgentInfo r0;
+        android.net.LinkProperties r1;
+        boolean $z0, z1;
+        android.net.IpPrefix $r2;
+
+        r0 := @parameter0: com.android.server.connectivity.NetworkAgentInfo;
+
+        r1 = r0.<com.android.server.connectivity.NetworkAgentInfo: android.net.LinkProperties linkProperties>;
+
+        $z0 = staticinvoke <com.android.server.connectivity.Nat464Xlat: boolean requiresClat(com.android.server.connectivity.NetworkAgentInfo)>(r0);
+
+        if $z0 == 0 goto label1;
+
+        if r1 == null goto label1;
+
+        $r2 = virtualinvoke r1.<android.net.LinkProperties: android.net.IpPrefix getNat64Prefix()>();
+
+        if $r2 == null goto label1;
+
+        z1 = 1;
+
+        goto label2;
+
+     label1:
+        z1 = 0;
+
+     label2:
+        return z1;
+    }
+
+    private void startPrefixDiscovery()
+    {
+        com.android.server.connectivity.Nat464Xlat r0;
+        java.lang.String r2, $r11;
+        android.net.IDnsResolver $r4;
+        int $i0, $i1;
+        java.lang.Exception $r5;
+        java.lang.StringBuilder $r6;
+
+        r0 := @this: com.android.server.connectivity.Nat464Xlat;
+
+     label1:
+        $r4 = r0.<com.android.server.connectivity.Nat464Xlat: android.net.IDnsResolver mDnsResolver>;
+
+        $i0 = virtualinvoke r0.<com.android.server.connectivity.Nat464Xlat: int getNetId()>();
+
+        interfaceinvoke $r4.<android.net.IDnsResolver: void startPrefix64Discovery(int)>($i0);
+
+     label2:
+        goto label4;
+
+     label3:
+        $r5 := @caughtexception;
+
+        r2 = <com.android.server.connectivity.Nat464Xlat: java.lang.String TAG>;
+
+        $r6 = new java.lang.StringBuilder;
+
+        specialinvoke $r6.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Error starting prefix discovery on netId ");
+
+        $i1 = virtualinvoke r0.<com.android.server.connectivity.Nat464Xlat: int getNetId()>();
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i1);
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(": ");
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r5);
+
+        $r11 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>(r2, $r11);
+
+     label4:
+        r0.<com.android.server.connectivity.Nat464Xlat: boolean mPrefixDiscoveryRunning> = 1;
+
+        return;
+
+        catch android.os.RemoteException from label1 to label2 with label3;
+        catch android.os.ServiceSpecificException from label1 to label2 with label3;
+    }
+
+    private void stopPrefixDiscovery()
+    {
+        com.android.server.connectivity.Nat464Xlat r0;
+        java.lang.String r2, $r11;
+        android.net.IDnsResolver $r4;
+        int $i0, $i1;
+        java.lang.Exception $r5;
+        java.lang.StringBuilder $r6;
+
+        r0 := @this: com.android.server.connectivity.Nat464Xlat;
+
+     label1:
+        $r4 = r0.<com.android.server.connectivity.Nat464Xlat: android.net.IDnsResolver mDnsResolver>;
+
+        $i0 = virtualinvoke r0.<com.android.server.connectivity.Nat464Xlat: int getNetId()>();
+
+        interfaceinvoke $r4.<android.net.IDnsResolver: void stopPrefix64Discovery(int)>($i0);
+
+     label2:
+        goto label4;
+
+     label3:
+        $r5 := @caughtexception;
+
+        r2 = <com.android.server.connectivity.Nat464Xlat: java.lang.String TAG>;
+
+        $r6 = new java.lang.StringBuilder;
+
+        specialinvoke $r6.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Error stopping prefix discovery on netId ");
+
+        $i1 = virtualinvoke r0.<com.android.server.connectivity.Nat464Xlat: int getNetId()>();
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i1);
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(": ");
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r5);
+
+        $r11 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>(r2, $r11);
+
+     label4:
+        r0.<com.android.server.connectivity.Nat464Xlat: boolean mPrefixDiscoveryRunning> = 0;
+
+        return;
+
+        catch android.os.RemoteException from label1 to label2 with label3;
+        catch android.os.ServiceSpecificException from label1 to label2 with label3;
+    }
+
+    public void fixupLinkProperties(android.net.LinkProperties, android.net.LinkProperties)
+    {
+        com.android.server.connectivity.Nat464Xlat r0;
+        android.net.LinkProperties r1, r15, r18;
+        java.lang.String r2, $r5, $r8, $r10, $r13, $r14;
+        android.net.IpPrefix $r3;
+        boolean $z0, $z1, $z2, $z3;
+        java.util.List $r4, $r11;
+        java.lang.StringBuilder $r6;
+        java.lang.Object $r12;
+        java.util.Iterator r17;
+
+        r0 := @this: com.android.server.connectivity.Nat464Xlat;
+
+        r15 := @parameter0: android.net.LinkProperties;
+
+        r1 := @parameter1: android.net.LinkProperties;
+
+        $r3 = specialinvoke r0.<com.android.server.connectivity.Nat464Xlat: android.net.IpPrefix selectNat64Prefix()>();
+
+        virtualinvoke r1.<android.net.LinkProperties: void setNat64Prefix(android.net.IpPrefix)>($r3);
+
+        $z0 = virtualinvoke r0.<com.android.server.connectivity.Nat464Xlat: boolean isRunning()>();
+
+        if $z0 != 0 goto label1;
+
+        return;
+
+     label1:
+        $r4 = virtualinvoke r1.<android.net.LinkProperties: java.util.List getAllInterfaceNames()>();
+
+        $r5 = r0.<com.android.server.connectivity.Nat464Xlat: java.lang.String mIface>;
+
+        $z1 = interfaceinvoke $r4.<java.util.List: boolean contains(java.lang.Object)>($r5);
+
+        if $z1 == 0 goto label2;
+
+        return;
+
+     label2:
+        r2 = <com.android.server.connectivity.Nat464Xlat: java.lang.String TAG>;
+
+        $r6 = new java.lang.StringBuilder;
+
+        specialinvoke $r6.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("clatd running, updating NAI for ");
+
+        $r8 = r0.<com.android.server.connectivity.Nat464Xlat: java.lang.String mIface>;
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r8);
+
+        $r10 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>(r2, $r10);
+
+        $r11 = virtualinvoke r15.<android.net.LinkProperties: java.util.List getStackedLinks()>();
+
+        r17 = interfaceinvoke $r11.<java.util.List: java.util.Iterator iterator()>();
+
+     label3:
+        $z2 = interfaceinvoke r17.<java.util.Iterator: boolean hasNext()>();
+
+        if $z2 == 0 goto label5;
+
+        $r12 = interfaceinvoke r17.<java.util.Iterator: java.lang.Object next()>();
+
+        r18 = (android.net.LinkProperties) $r12;
+
+        $r13 = r0.<com.android.server.connectivity.Nat464Xlat: java.lang.String mIface>;
+
+        $r14 = virtualinvoke r18.<android.net.LinkProperties: java.lang.String getInterfaceName()>();
+
+        $z3 = staticinvoke <java.util.Objects: boolean equals(java.lang.Object,java.lang.Object)>($r13, $r14);
+
+        if $z3 == 0 goto label4;
+
+        virtualinvoke r1.<android.net.LinkProperties: boolean addStackedLink(android.net.LinkProperties)>(r18);
+
+        return;
+
+     label4:
+        goto label3;
+
+     label5:
+        return;
+    }
+
+    protected int getNetId()
+    {
+        com.android.server.connectivity.Nat464Xlat r0;
+        com.android.server.connectivity.NetworkAgentInfo $r1;
+        android.net.Network $r2;
+        int $i0;
+
+        r0 := @this: com.android.server.connectivity.Nat464Xlat;
+
+        $r1 = r0.<com.android.server.connectivity.Nat464Xlat: com.android.server.connectivity.NetworkAgentInfo mNetwork>;
+
+        $r2 = $r1.<com.android.server.connectivity.NetworkAgentInfo: android.net.Network network>;
+
+        $i0 = $r2.<android.net.Network: int netId>;
+
+        return $i0;
+    }
+
+    public void interfaceLinkStateChanged(java.lang.String, boolean)
+    {
+        com.android.server.connectivity.Nat464Xlat r0;
+        java.lang.String r1;
+        boolean z0;
+        com.android.server.connectivity.NetworkAgentInfo $r2;
+        android.os.Handler $r3;
+        com.android.server.connectivity._$$Lambda$Nat464Xlat$40jKHQd7R0zgcegyEyc9zPHKXVA $r4;
+
+        r0 := @this: com.android.server.connectivity.Nat464Xlat;
+
+        r1 := @parameter0: java.lang.String;
+
+        z0 := @parameter1: boolean;
+
+        $r2 = r0.<com.android.server.connectivity.Nat464Xlat: com.android.server.connectivity.NetworkAgentInfo mNetwork>;
+
+        $r3 = virtualinvoke $r2.<com.android.server.connectivity.NetworkAgentInfo: android.os.Handler handler()>();
+
+        $r4 = new com.android.server.connectivity._$$Lambda$Nat464Xlat$40jKHQd7R0zgcegyEyc9zPHKXVA;
+
+        specialinvoke $r4.<com.android.server.connectivity._$$Lambda$Nat464Xlat$40jKHQd7R0zgcegyEyc9zPHKXVA: void <init>(com.android.server.connectivity.Nat464Xlat,java.lang.String,boolean)>(r0, r1, z0);
+
+        virtualinvoke $r3.<android.os.Handler: boolean post(java.lang.Runnable)>($r4);
+
+        return;
+    }
+
+    public void interfaceRemoved(java.lang.String)
+    {
+        com.android.server.connectivity.Nat464Xlat r0;
+        java.lang.String r1;
+        com.android.server.connectivity.NetworkAgentInfo $r2;
+        android.os.Handler $r3;
+        com.android.server.connectivity._$$Lambda$Nat464Xlat$PACHOP9HoYvr_jzHtIwFDy31Ud4 $r4;
+
+        r0 := @this: com.android.server.connectivity.Nat464Xlat;
+
+        r1 := @parameter0: java.lang.String;
+
+        $r2 = r0.<com.android.server.connectivity.Nat464Xlat: com.android.server.connectivity.NetworkAgentInfo mNetwork>;
+
+        $r3 = virtualinvoke $r2.<com.android.server.connectivity.NetworkAgentInfo: android.os.Handler handler()>();
+
+        $r4 = new com.android.server.connectivity._$$Lambda$Nat464Xlat$PACHOP9HoYvr_jzHtIwFDy31Ud4;
+
+        specialinvoke $r4.<com.android.server.connectivity._$$Lambda$Nat464Xlat$PACHOP9HoYvr_jzHtIwFDy31Ud4: void <init>(com.android.server.connectivity.Nat464Xlat,java.lang.String)>(r0, r1);
+
+        virtualinvoke $r3.<android.os.Handler: boolean post(java.lang.Runnable)>($r4);
+
+        return;
+    }
+
+    public boolean isRunning()
+    {
+        com.android.server.connectivity.Nat464Xlat r0;
+        com.android.server.connectivity.Nat464Xlat$State $r1, $r2;
+        boolean z0;
+
+        r0 := @this: com.android.server.connectivity.Nat464Xlat;
+
+        $r2 = r0.<com.android.server.connectivity.Nat464Xlat: com.android.server.connectivity.Nat464Xlat$State mState>;
+
+        $r1 = <com.android.server.connectivity.Nat464Xlat$State: com.android.server.connectivity.Nat464Xlat$State RUNNING>;
+
+        if $r2 != $r1 goto label1;
+
+        z0 = 1;
+
+        goto label2;
+
+     label1:
+        z0 = 0;
+
+     label2:
+        return z0;
+    }
+
+    public boolean isStarted()
+    {
+        com.android.server.connectivity.Nat464Xlat r0;
+        com.android.server.connectivity.Nat464Xlat$State $r1, $r2, $r3, $r4;
+        boolean z0;
+
+        r0 := @this: com.android.server.connectivity.Nat464Xlat;
+
+        $r2 = r0.<com.android.server.connectivity.Nat464Xlat: com.android.server.connectivity.Nat464Xlat$State mState>;
+
+        $r1 = <com.android.server.connectivity.Nat464Xlat$State: com.android.server.connectivity.Nat464Xlat$State STARTING>;
+
+        if $r2 == $r1 goto label2;
+
+        $r4 = r0.<com.android.server.connectivity.Nat464Xlat: com.android.server.connectivity.Nat464Xlat$State mState>;
+
+        $r3 = <com.android.server.connectivity.Nat464Xlat$State: com.android.server.connectivity.Nat464Xlat$State RUNNING>;
+
+        if $r4 != $r3 goto label1;
+
+        goto label2;
+
+     label1:
+        z0 = 0;
+
+        goto label3;
+
+     label2:
+        z0 = 1;
+
+     label3:
+        return z0;
+    }
+
+    public boolean isStarting()
+    {
+        com.android.server.connectivity.Nat464Xlat r0;
+        com.android.server.connectivity.Nat464Xlat$State $r1, $r2;
+        boolean z0;
+
+        r0 := @this: com.android.server.connectivity.Nat464Xlat;
+
+        $r2 = r0.<com.android.server.connectivity.Nat464Xlat: com.android.server.connectivity.Nat464Xlat$State mState>;
+
+        $r1 = <com.android.server.connectivity.Nat464Xlat$State: com.android.server.connectivity.Nat464Xlat$State STARTING>;
+
+        if $r2 != $r1 goto label1;
+
+        z0 = 1;
+
+        goto label2;
+
+     label1:
+        z0 = 0;
+
+     label2:
+        return z0;
+    }
+
+    public void lambda$interfaceLinkStateChanged$0$Nat464Xlat(java.lang.String, boolean)
+    {
+        com.android.server.connectivity.Nat464Xlat r0;
+        java.lang.String r1;
+        boolean z0;
+
+        r0 := @this: com.android.server.connectivity.Nat464Xlat;
+
+        r1 := @parameter0: java.lang.String;
+
+        z0 := @parameter1: boolean;
+
+        specialinvoke r0.<com.android.server.connectivity.Nat464Xlat: void handleInterfaceLinkStateChanged(java.lang.String,boolean)>(r1, z0);
+
+        return;
+    }
+
+    public void lambda$interfaceRemoved$1$Nat464Xlat(java.lang.String)
+    {
+        com.android.server.connectivity.Nat464Xlat r0;
+        java.lang.String r1;
+
+        r0 := @this: com.android.server.connectivity.Nat464Xlat;
+
+        r1 := @parameter0: java.lang.String;
+
+        specialinvoke r0.<com.android.server.connectivity.Nat464Xlat: void handleInterfaceRemoved(java.lang.String)>(r1);
+
+        return;
+    }
+
+    public void setNat64PrefixFromDns(android.net.IpPrefix)
+    {
+        com.android.server.connectivity.Nat464Xlat r0;
+        android.net.IpPrefix r1;
+
+        r0 := @this: com.android.server.connectivity.Nat464Xlat;
+
+        r1 := @parameter0: android.net.IpPrefix;
+
+        r0.<com.android.server.connectivity.Nat464Xlat: android.net.IpPrefix mNat64PrefixFromDns> = r1;
+
+        return;
+    }
+
+    public void setNat64PrefixFromRa(android.net.IpPrefix)
+    {
+        com.android.server.connectivity.Nat464Xlat r0;
+        android.net.IpPrefix r1;
+
+        r0 := @this: com.android.server.connectivity.Nat464Xlat;
+
+        r1 := @parameter0: android.net.IpPrefix;
+
+        r0.<com.android.server.connectivity.Nat464Xlat: android.net.IpPrefix mNat64PrefixFromRa> = r1;
+
+        return;
+    }
+
+    protected void start()
+    {
+        com.android.server.connectivity.Nat464Xlat r0;
+        java.lang.String r1, r2, $r11, $r12, $r13, $r14;
+        boolean $z0;
+        com.android.server.connectivity.NetworkAgentInfo $r4, $r6;
+        android.net.LinkProperties $r5, $r7;
+        java.lang.StringBuilder $r8;
+
+        r0 := @this: com.android.server.connectivity.Nat464Xlat;
+
+        $z0 = virtualinvoke r0.<com.android.server.connectivity.Nat464Xlat: boolean isStarted()>();
+
+        if $z0 == 0 goto label1;
+
+        $r14 = <com.android.server.connectivity.Nat464Xlat: java.lang.String TAG>;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>($r14, "startClat: already started");
+
+        return;
+
+     label1:
+        $r4 = r0.<com.android.server.connectivity.Nat464Xlat: com.android.server.connectivity.NetworkAgentInfo mNetwork>;
+
+        $r5 = $r4.<com.android.server.connectivity.NetworkAgentInfo: android.net.LinkProperties linkProperties>;
+
+        if $r5 != null goto label2;
+
+        $r13 = <com.android.server.connectivity.Nat464Xlat: java.lang.String TAG>;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>($r13, "startClat: Can\'t start clat with null LinkProperties");
+
+        return;
+
+     label2:
+        $r6 = r0.<com.android.server.connectivity.Nat464Xlat: com.android.server.connectivity.NetworkAgentInfo mNetwork>;
+
+        $r7 = $r6.<com.android.server.connectivity.NetworkAgentInfo: android.net.LinkProperties linkProperties>;
+
+        r1 = virtualinvoke $r7.<android.net.LinkProperties: java.lang.String getInterfaceName()>();
+
+        if r1 != null goto label3;
+
+        $r12 = <com.android.server.connectivity.Nat464Xlat: java.lang.String TAG>;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>($r12, "startClat: Can\'t start clat on null interface");
+
+        return;
+
+     label3:
+        r2 = <com.android.server.connectivity.Nat464Xlat: java.lang.String TAG>;
+
+        $r8 = new java.lang.StringBuilder;
+
+        specialinvoke $r8.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Starting clatd on ");
+
+        virtualinvoke $r8.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r11 = virtualinvoke $r8.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>(r2, $r11);
+
+        specialinvoke r0.<com.android.server.connectivity.Nat464Xlat: void enterStartingState(java.lang.String)>(r1);
+
+        return;
+    }
+
+    protected void stop()
+    {
+        com.android.server.connectivity.Nat464Xlat r0;
+        java.lang.String r1, $r4, $r6, $r7, $r15, $r19, $r23, r24, r28;
+        boolean z0, $z1;
+        java.lang.StringBuilder $r2, $r17;
+        android.net.INetd $r8;
+        android.net.LinkProperties $r9, $r11;
+        com.android.server.connectivity.NetworkAgentInfo $r10, $r12, $r14;
+        com.android.server.ConnectivityService $r13;
+        java.lang.Exception $r16;
+
+        r0 := @this: com.android.server.connectivity.Nat464Xlat;
+
+        $z1 = virtualinvoke r0.<com.android.server.connectivity.Nat464Xlat: boolean isStarted()>();
+
+        if $z1 != 0 goto label1;
+
+        $r15 = <com.android.server.connectivity.Nat464Xlat: java.lang.String TAG>;
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>($r15, "stopClat: already stopped");
+
+        return;
+
+     label1:
+        r24 = <com.android.server.connectivity.Nat464Xlat: java.lang.String TAG>;
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Stopping clatd on ");
+
+        $r4 = r0.<com.android.server.connectivity.Nat464Xlat: java.lang.String mBaseIface>;
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r4);
+
+        $r6 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>(r24, $r6);
+
+     label2:
+        $r8 = r0.<com.android.server.connectivity.Nat464Xlat: android.net.INetd mNetd>;
+
+        $r7 = r0.<com.android.server.connectivity.Nat464Xlat: java.lang.String mBaseIface>;
+
+        interfaceinvoke $r8.<android.net.INetd: void clatdStop(java.lang.String)>($r7);
+
+     label3:
+        goto label5;
+
+     label4:
+        $r16 := @caughtexception;
+
+        r1 = <com.android.server.connectivity.Nat464Xlat: java.lang.String TAG>;
+
+        $r17 = new java.lang.StringBuilder;
+
+        specialinvoke $r17.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r17.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Error stopping clatd on ");
+
+        $r19 = r0.<com.android.server.connectivity.Nat464Xlat: java.lang.String mBaseIface>;
+
+        virtualinvoke $r17.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r19);
+
+        virtualinvoke $r17.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(": ");
+
+        virtualinvoke $r17.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r16);
+
+        $r23 = virtualinvoke $r17.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int e(java.lang.String,java.lang.String)>(r1, $r23);
+
+     label5:
+        r28 = r0.<com.android.server.connectivity.Nat464Xlat: java.lang.String mIface>;
+
+        z0 = virtualinvoke r0.<com.android.server.connectivity.Nat464Xlat: boolean isRunning()>();
+
+        specialinvoke r0.<com.android.server.connectivity.Nat464Xlat: void leaveStartedState()>();
+
+        if z0 == 0 goto label6;
+
+        $r9 = new android.net.LinkProperties;
+
+        $r10 = r0.<com.android.server.connectivity.Nat464Xlat: com.android.server.connectivity.NetworkAgentInfo mNetwork>;
+
+        $r11 = $r10.<com.android.server.connectivity.NetworkAgentInfo: android.net.LinkProperties linkProperties>;
+
+        specialinvoke $r9.<android.net.LinkProperties: void <init>(android.net.LinkProperties)>($r11);
+
+        virtualinvoke $r9.<android.net.LinkProperties: boolean removeStackedLink(java.lang.String)>(r28);
+
+        $r12 = r0.<com.android.server.connectivity.Nat464Xlat: com.android.server.connectivity.NetworkAgentInfo mNetwork>;
+
+        $r13 = virtualinvoke $r12.<com.android.server.connectivity.NetworkAgentInfo: com.android.server.ConnectivityService connService()>();
+
+        $r14 = r0.<com.android.server.connectivity.Nat464Xlat: com.android.server.connectivity.NetworkAgentInfo mNetwork>;
+
+        virtualinvoke $r13.<com.android.server.ConnectivityService: void handleUpdateLinkProperties(com.android.server.connectivity.NetworkAgentInfo,android.net.LinkProperties)>($r14, $r9);
+
+     label6:
+        return;
+
+        catch android.os.RemoteException from label2 to label3 with label4;
+        catch android.os.ServiceSpecificException from label2 to label3 with label4;
+    }
+
+    public java.lang.String toString()
+    {
+        com.android.server.connectivity.Nat464Xlat r0;
+        java.lang.StringBuilder $r2;
+        java.lang.String $r4, $r7, $r12;
+        com.android.server.connectivity.Nat464Xlat$State $r10;
+
+        r0 := @this: com.android.server.connectivity.Nat464Xlat;
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("mBaseIface: ");
+
+        $r4 = r0.<com.android.server.connectivity.Nat464Xlat: java.lang.String mBaseIface>;
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r4);
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", mIface: ");
+
+        $r7 = r0.<com.android.server.connectivity.Nat464Xlat: java.lang.String mIface>;
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r7);
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(", mState: ");
+
+        $r10 = r0.<com.android.server.connectivity.Nat464Xlat: com.android.server.connectivity.Nat464Xlat$State mState>;
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r10);
+
+        $r12 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        return $r12;
+    }
+
+    public void update()
+    {
+        com.android.server.connectivity.Nat464Xlat r0;
+        int i0, $i1;
+        com.android.server.connectivity.Nat464Xlat$State $r1, $r4, $r7;
+        int[] $r2;
+        boolean $z0, $z1, $z2, $z3, $z4;
+        com.android.server.connectivity.NetworkAgentInfo $r3, $r5, $r6, $r8;
+
+        r0 := @this: com.android.server.connectivity.Nat464Xlat;
+
+        $r2 = <com.android.server.connectivity.Nat464Xlat$1: int[] $SwitchMap$com$android$server$connectivity$Nat464Xlat$State>;
+
+        $r1 = r0.<com.android.server.connectivity.Nat464Xlat: com.android.server.connectivity.Nat464Xlat$State mState>;
+
+        $i1 = virtualinvoke $r1.<com.android.server.connectivity.Nat464Xlat$State: int ordinal()>();
+
+        i0 = $r2[$i1];
+
+        if i0 == 1 goto label5;
+
+        if i0 == 2 goto label3;
+
+        if i0 == 3 goto label1;
+
+        if i0 == 4 goto label1;
+
+        goto label7;
+
+     label1:
+        $r8 = r0.<com.android.server.connectivity.Nat464Xlat: com.android.server.connectivity.NetworkAgentInfo mNetwork>;
+
+        $z4 = staticinvoke <com.android.server.connectivity.Nat464Xlat: boolean shouldStartClat(com.android.server.connectivity.NetworkAgentInfo)>($r8);
+
+        if $z4 != 0 goto label2;
+
+        virtualinvoke r0.<com.android.server.connectivity.Nat464Xlat: void stop()>();
+
+        goto label7;
+
+     label2:
+        specialinvoke r0.<com.android.server.connectivity.Nat464Xlat: void maybeHandleNat64PrefixChange()>();
+
+        goto label7;
+
+     label3:
+        $r5 = r0.<com.android.server.connectivity.Nat464Xlat: com.android.server.connectivity.NetworkAgentInfo mNetwork>;
+
+        $z2 = staticinvoke <com.android.server.connectivity.Nat464Xlat: boolean shouldStartClat(com.android.server.connectivity.NetworkAgentInfo)>($r5);
+
+        if $z2 == 0 goto label4;
+
+        virtualinvoke r0.<com.android.server.connectivity.Nat464Xlat: void start()>();
+
+        return;
+
+     label4:
+        $r6 = r0.<com.android.server.connectivity.Nat464Xlat: com.android.server.connectivity.NetworkAgentInfo mNetwork>;
+
+        $z3 = staticinvoke <com.android.server.connectivity.Nat464Xlat: boolean requiresClat(com.android.server.connectivity.NetworkAgentInfo)>($r6);
+
+        if $z3 != 0 goto label7;
+
+        specialinvoke r0.<com.android.server.connectivity.Nat464Xlat: void stopPrefixDiscovery()>();
+
+        $r7 = <com.android.server.connectivity.Nat464Xlat$State: com.android.server.connectivity.Nat464Xlat$State IDLE>;
+
+        r0.<com.android.server.connectivity.Nat464Xlat: com.android.server.connectivity.Nat464Xlat$State mState> = $r7;
+
+        return;
+
+     label5:
+        $z0 = specialinvoke r0.<com.android.server.connectivity.Nat464Xlat: boolean isPrefixDiscoveryNeeded()>();
+
+        if $z0 == 0 goto label6;
+
+        specialinvoke r0.<com.android.server.connectivity.Nat464Xlat: void startPrefixDiscovery()>();
+
+        $r4 = <com.android.server.connectivity.Nat464Xlat$State: com.android.server.connectivity.Nat464Xlat$State DISCOVERING>;
+
+        r0.<com.android.server.connectivity.Nat464Xlat: com.android.server.connectivity.Nat464Xlat$State mState> = $r4;
+
+        goto label7;
+
+     label6:
+        $r3 = r0.<com.android.server.connectivity.Nat464Xlat: com.android.server.connectivity.NetworkAgentInfo mNetwork>;
+
+        $z1 = staticinvoke <com.android.server.connectivity.Nat464Xlat: boolean requiresClat(com.android.server.connectivity.NetworkAgentInfo)>($r3);
+
+        if $z1 == 0 goto label7;
+
+        virtualinvoke r0.<com.android.server.connectivity.Nat464Xlat: void start()>();
+
+     label7:
+        return;
+    }
+}

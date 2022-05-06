@@ -1,0 +1,1475 @@
+public final class com.android.server.job.controllers.TimeController extends com.android.server.job.controllers.StateController
+{
+    private static final boolean DEBUG;
+    private static final java.lang.String TAG;
+    private final java.lang.String DEADLINE_TAG;
+    private final java.lang.String DELAY_TAG;
+    private android.app.AlarmManager mAlarmService;
+    private final boolean mChainedAttributionEnabled;
+    private final android.app.AlarmManager$OnAlarmListener mDeadlineExpiredListener;
+    private final android.os.Handler mHandler;
+    private long mNextDelayExpiredElapsedMillis;
+    private final android.app.AlarmManager$OnAlarmListener mNextDelayExpiredListener;
+    private long mNextJobExpiredElapsedMillis;
+    private final com.android.server.job.controllers.TimeController$TcConstants mTcConstants;
+    private final java.util.List mTrackedJobs;
+
+    static void <clinit>()
+    {
+        boolean $z0, $z1, z2;
+
+        <com.android.server.job.controllers.TimeController: java.lang.String TAG> = "JobScheduler.Time";
+
+        $z0 = <com.android.server.job.JobSchedulerService: boolean DEBUG>;
+
+        if $z0 != 0 goto label2;
+
+        $z1 = staticinvoke <android.util.Log: boolean isLoggable(java.lang.String,int)>("JobScheduler.Time", 3);
+
+        if $z1 == 0 goto label1;
+
+        goto label2;
+
+     label1:
+        z2 = 0;
+
+        goto label3;
+
+     label2:
+        z2 = 1;
+
+     label3:
+        <com.android.server.job.controllers.TimeController: boolean DEBUG> = z2;
+
+        return;
+    }
+
+    public void <init>(com.android.server.job.JobSchedulerService)
+    {
+        com.android.server.job.controllers.TimeController r0;
+        com.android.server.job.JobSchedulerService r1, $r5;
+        java.util.LinkedList $r2;
+        com.android.server.job.controllers.TimeController$1 $r3;
+        com.android.server.job.controllers.TimeController$2 $r4;
+        boolean $z0;
+        android.os.Handler $r6, $r10;
+        android.content.Context $r7;
+        android.os.Looper $r8;
+        com.android.server.job.controllers.TimeController$TcConstants $r9;
+
+        r0 := @this: com.android.server.job.controllers.TimeController;
+
+        r1 := @parameter0: com.android.server.job.JobSchedulerService;
+
+        specialinvoke r0.<com.android.server.job.controllers.StateController: void <init>(com.android.server.job.JobSchedulerService)>(r1);
+
+        r0.<com.android.server.job.controllers.TimeController: java.lang.String DEADLINE_TAG> = "*job.deadline*";
+
+        r0.<com.android.server.job.controllers.TimeController: java.lang.String DELAY_TAG> = "*job.delay*";
+
+        r0.<com.android.server.job.controllers.TimeController: android.app.AlarmManager mAlarmService> = null;
+
+        $r2 = new java.util.LinkedList;
+
+        specialinvoke $r2.<java.util.LinkedList: void <init>()>();
+
+        r0.<com.android.server.job.controllers.TimeController: java.util.List mTrackedJobs> = $r2;
+
+        $r3 = new com.android.server.job.controllers.TimeController$1;
+
+        specialinvoke $r3.<com.android.server.job.controllers.TimeController$1: void <init>(com.android.server.job.controllers.TimeController)>(r0);
+
+        r0.<com.android.server.job.controllers.TimeController: android.app.AlarmManager$OnAlarmListener mDeadlineExpiredListener> = $r3;
+
+        $r4 = new com.android.server.job.controllers.TimeController$2;
+
+        specialinvoke $r4.<com.android.server.job.controllers.TimeController$2: void <init>(com.android.server.job.controllers.TimeController)>(r0);
+
+        r0.<com.android.server.job.controllers.TimeController: android.app.AlarmManager$OnAlarmListener mNextDelayExpiredListener> = $r4;
+
+        r0.<com.android.server.job.controllers.TimeController: long mNextJobExpiredElapsedMillis> = 9223372036854775807L;
+
+        r0.<com.android.server.job.controllers.TimeController: long mNextDelayExpiredElapsedMillis> = 9223372036854775807L;
+
+        $r5 = r0.<com.android.server.job.controllers.TimeController: com.android.server.job.JobSchedulerService mService>;
+
+        $z0 = virtualinvoke $r5.<com.android.server.job.JobSchedulerService: boolean isChainedAttributionEnabled()>();
+
+        r0.<com.android.server.job.controllers.TimeController: boolean mChainedAttributionEnabled> = $z0;
+
+        $r6 = new android.os.Handler;
+
+        $r7 = r0.<com.android.server.job.controllers.TimeController: android.content.Context mContext>;
+
+        $r8 = virtualinvoke $r7.<android.content.Context: android.os.Looper getMainLooper()>();
+
+        specialinvoke $r6.<android.os.Handler: void <init>(android.os.Looper)>($r8);
+
+        r0.<com.android.server.job.controllers.TimeController: android.os.Handler mHandler> = $r6;
+
+        $r9 = new com.android.server.job.controllers.TimeController$TcConstants;
+
+        $r10 = r0.<com.android.server.job.controllers.TimeController: android.os.Handler mHandler>;
+
+        specialinvoke $r9.<com.android.server.job.controllers.TimeController$TcConstants: void <init>(com.android.server.job.controllers.TimeController,android.os.Handler)>(r0, $r10);
+
+        r0.<com.android.server.job.controllers.TimeController: com.android.server.job.controllers.TimeController$TcConstants mTcConstants> = $r9;
+
+        return;
+    }
+
+    static boolean access$100()
+    {
+        boolean $z0;
+
+        $z0 = <com.android.server.job.controllers.TimeController: boolean DEBUG>;
+
+        return $z0;
+    }
+
+    private boolean canStopTrackingJobLocked(com.android.server.job.controllers.JobStatus)
+    {
+        com.android.server.job.controllers.TimeController r0;
+        com.android.server.job.controllers.JobStatus r1;
+        boolean $z0, $z1, $z2, $z3, z4;
+
+        r0 := @this: com.android.server.job.controllers.TimeController;
+
+        r1 := @parameter0: com.android.server.job.controllers.JobStatus;
+
+        $z0 = virtualinvoke r1.<com.android.server.job.controllers.JobStatus: boolean hasTimingDelayConstraint()>();
+
+        if $z0 == 0 goto label1;
+
+        $z3 = virtualinvoke r1.<com.android.server.job.controllers.JobStatus: boolean isConstraintSatisfied(int)>(-2147483648);
+
+        if $z3 == 0 goto label2;
+
+     label1:
+        $z1 = virtualinvoke r1.<com.android.server.job.controllers.JobStatus: boolean hasDeadlineConstraint()>();
+
+        if $z1 == 0 goto label3;
+
+        $z2 = virtualinvoke r1.<com.android.server.job.controllers.JobStatus: boolean isConstraintSatisfied(int)>(1073741824);
+
+        if $z2 == 0 goto label2;
+
+        goto label3;
+
+     label2:
+        z4 = 0;
+
+        goto label4;
+
+     label3:
+        z4 = 1;
+
+     label4:
+        return z4;
+    }
+
+    private android.os.WorkSource deriveWorkSource(int, java.lang.String)
+    {
+        com.android.server.job.controllers.TimeController r0;
+        int i0;
+        java.lang.String r1;
+        boolean $z0;
+        android.os.WorkSource $r2, r7;
+        android.os.WorkSource$WorkChain $r3, $r4;
+
+        r0 := @this: com.android.server.job.controllers.TimeController;
+
+        i0 := @parameter0: int;
+
+        r1 := @parameter1: java.lang.String;
+
+        $z0 = r0.<com.android.server.job.controllers.TimeController: boolean mChainedAttributionEnabled>;
+
+        if $z0 == 0 goto label1;
+
+        $r2 = new android.os.WorkSource;
+
+        specialinvoke $r2.<android.os.WorkSource: void <init>()>();
+
+        $r3 = virtualinvoke $r2.<android.os.WorkSource: android.os.WorkSource$WorkChain createWorkChain()>();
+
+        $r4 = virtualinvoke $r3.<android.os.WorkSource$WorkChain: android.os.WorkSource$WorkChain addNode(int,java.lang.String)>(i0, r1);
+
+        virtualinvoke $r4.<android.os.WorkSource$WorkChain: android.os.WorkSource$WorkChain addNode(int,java.lang.String)>(1000, "JobScheduler");
+
+        return $r2;
+
+     label1:
+        r7 = new android.os.WorkSource;
+
+        if r1 != null goto label2;
+
+        specialinvoke r7.<android.os.WorkSource: void <init>(int)>(i0);
+
+        goto label3;
+
+     label2:
+        specialinvoke r7.<android.os.WorkSource: void <init>(int,java.lang.String)>(i0, r1);
+
+     label3:
+        return r7;
+    }
+
+    private void ensureAlarmServiceLocked()
+    {
+        com.android.server.job.controllers.TimeController r0;
+        android.app.AlarmManager $r1, $r4;
+        android.content.Context $r2;
+        java.lang.Object $r3;
+
+        r0 := @this: com.android.server.job.controllers.TimeController;
+
+        $r1 = r0.<com.android.server.job.controllers.TimeController: android.app.AlarmManager mAlarmService>;
+
+        if $r1 != null goto label1;
+
+        $r2 = r0.<com.android.server.job.controllers.TimeController: android.content.Context mContext>;
+
+        $r3 = virtualinvoke $r2.<android.content.Context: java.lang.Object getSystemService(java.lang.String)>("alarm");
+
+        $r4 = (android.app.AlarmManager) $r3;
+
+        r0.<com.android.server.job.controllers.TimeController: android.app.AlarmManager mAlarmService> = $r4;
+
+     label1:
+        return;
+    }
+
+    private boolean evaluateDeadlineConstraint(com.android.server.job.controllers.JobStatus, long)
+    {
+        com.android.server.job.controllers.TimeController r0;
+        com.android.server.job.controllers.JobStatus r1;
+        long l0, $l1;
+        byte $b2;
+        boolean $z0;
+
+        r0 := @this: com.android.server.job.controllers.TimeController;
+
+        r1 := @parameter0: com.android.server.job.controllers.JobStatus;
+
+        l0 := @parameter1: long;
+
+        $l1 = virtualinvoke r1.<com.android.server.job.controllers.JobStatus: long getLatestRunTimeElapsed()>();
+
+        $b2 = $l1 cmp l0;
+
+        if $b2 > 0 goto label2;
+
+        $z0 = virtualinvoke r1.<com.android.server.job.controllers.JobStatus: boolean hasTimingDelayConstraint()>();
+
+        if $z0 == 0 goto label1;
+
+        virtualinvoke r1.<com.android.server.job.controllers.JobStatus: boolean setTimingDelayConstraintSatisfied(boolean)>(1);
+
+     label1:
+        virtualinvoke r1.<com.android.server.job.controllers.JobStatus: boolean setDeadlineConstraintSatisfied(boolean)>(1);
+
+        return 1;
+
+     label2:
+        return 0;
+    }
+
+    private boolean evaluateTimingDelayConstraint(com.android.server.job.controllers.JobStatus, long)
+    {
+        com.android.server.job.controllers.TimeController r0;
+        com.android.server.job.controllers.JobStatus r1;
+        long l0, $l1;
+        byte $b2;
+
+        r0 := @this: com.android.server.job.controllers.TimeController;
+
+        r1 := @parameter0: com.android.server.job.controllers.JobStatus;
+
+        l0 := @parameter1: long;
+
+        $l1 = virtualinvoke r1.<com.android.server.job.controllers.JobStatus: long getEarliestRunTime()>();
+
+        $b2 = $l1 cmp l0;
+
+        if $b2 > 0 goto label1;
+
+        virtualinvoke r1.<com.android.server.job.controllers.JobStatus: boolean setTimingDelayConstraintSatisfied(boolean)>(1);
+
+        return 1;
+
+     label1:
+        return 0;
+    }
+
+    private long maybeAdjustAlarmTime(long)
+    {
+        com.android.server.job.controllers.TimeController r0;
+        long l0, $l1, $l2;
+        java.time.Clock $r1;
+
+        r0 := @this: com.android.server.job.controllers.TimeController;
+
+        l0 := @parameter0: long;
+
+        $r1 = <com.android.server.job.JobSchedulerService: java.time.Clock sElapsedRealtimeClock>;
+
+        $l1 = virtualinvoke $r1.<java.time.Clock: long millis()>();
+
+        $l2 = staticinvoke <java.lang.Math: long max(long,long)>(l0, $l1);
+
+        return $l2;
+    }
+
+    private void maybeUpdateDeadlineAlarmLocked(long, android.os.WorkSource)
+    {
+        com.android.server.job.controllers.TimeController r0;
+        long l0, $l1;
+        android.os.WorkSource r1;
+        byte $b2;
+
+        r0 := @this: com.android.server.job.controllers.TimeController;
+
+        l0 := @parameter0: long;
+
+        r1 := @parameter1: android.os.WorkSource;
+
+        $l1 = r0.<com.android.server.job.controllers.TimeController: long mNextJobExpiredElapsedMillis>;
+
+        $b2 = l0 cmp $l1;
+
+        if $b2 >= 0 goto label1;
+
+        specialinvoke r0.<com.android.server.job.controllers.TimeController: void setDeadlineExpiredAlarmLocked(long,android.os.WorkSource)>(l0, r1);
+
+     label1:
+        return;
+    }
+
+    private void maybeUpdateDelayAlarmLocked(long, android.os.WorkSource)
+    {
+        com.android.server.job.controllers.TimeController r0;
+        long l0, $l1;
+        android.os.WorkSource r1;
+        byte $b2;
+
+        r0 := @this: com.android.server.job.controllers.TimeController;
+
+        l0 := @parameter0: long;
+
+        r1 := @parameter1: android.os.WorkSource;
+
+        $l1 = r0.<com.android.server.job.controllers.TimeController: long mNextDelayExpiredElapsedMillis>;
+
+        $b2 = l0 cmp $l1;
+
+        if $b2 >= 0 goto label1;
+
+        specialinvoke r0.<com.android.server.job.controllers.TimeController: void setDelayExpiredAlarmLocked(long,android.os.WorkSource)>(l0, r1);
+
+     label1:
+        return;
+    }
+
+    private void setDeadlineExpiredAlarmLocked(long, android.os.WorkSource)
+    {
+        com.android.server.job.controllers.TimeController r0;
+        android.os.WorkSource r1;
+        long $l0, l2, l3;
+        byte $b1;
+        android.app.AlarmManager$OnAlarmListener $r2;
+
+        r0 := @this: com.android.server.job.controllers.TimeController;
+
+        l2 := @parameter0: long;
+
+        r1 := @parameter1: android.os.WorkSource;
+
+        l3 = specialinvoke r0.<com.android.server.job.controllers.TimeController: long maybeAdjustAlarmTime(long)>(l2);
+
+        $l0 = r0.<com.android.server.job.controllers.TimeController: long mNextJobExpiredElapsedMillis>;
+
+        $b1 = $l0 cmp l3;
+
+        if $b1 != 0 goto label1;
+
+        return;
+
+     label1:
+        r0.<com.android.server.job.controllers.TimeController: long mNextJobExpiredElapsedMillis> = l3;
+
+        $r2 = r0.<com.android.server.job.controllers.TimeController: android.app.AlarmManager$OnAlarmListener mDeadlineExpiredListener>;
+
+        specialinvoke r0.<com.android.server.job.controllers.TimeController: void updateAlarmWithListenerLocked(java.lang.String,int,android.app.AlarmManager$OnAlarmListener,long,android.os.WorkSource)>("*job.deadline*", 2, $r2, l3, r1);
+
+        return;
+    }
+
+    private void setDelayExpiredAlarmLocked(long, android.os.WorkSource)
+    {
+        com.android.server.job.controllers.TimeController r0;
+        android.os.WorkSource r1;
+        long $l0, $l2, l3, l4;
+        byte $b1, b5;
+        com.android.server.job.controllers.TimeController$TcConstants $r2;
+        boolean $z0;
+        android.app.AlarmManager$OnAlarmListener $r3;
+
+        r0 := @this: com.android.server.job.controllers.TimeController;
+
+        l3 := @parameter0: long;
+
+        r1 := @parameter1: android.os.WorkSource;
+
+        l4 = specialinvoke r0.<com.android.server.job.controllers.TimeController: long maybeAdjustAlarmTime(long)>(l3);
+
+        $l0 = r0.<com.android.server.job.controllers.TimeController: long mNextDelayExpiredElapsedMillis>;
+
+        $b1 = $l0 cmp l4;
+
+        if $b1 != 0 goto label1;
+
+        return;
+
+     label1:
+        r0.<com.android.server.job.controllers.TimeController: long mNextDelayExpiredElapsedMillis> = l4;
+
+        $r2 = r0.<com.android.server.job.controllers.TimeController: com.android.server.job.controllers.TimeController$TcConstants mTcConstants>;
+
+        $z0 = $r2.<com.android.server.job.controllers.TimeController$TcConstants: boolean USE_NON_WAKEUP_ALARM_FOR_DELAY>;
+
+        if $z0 == 0 goto label2;
+
+        b5 = 3;
+
+        goto label3;
+
+     label2:
+        b5 = 2;
+
+     label3:
+        $r3 = r0.<com.android.server.job.controllers.TimeController: android.app.AlarmManager$OnAlarmListener mNextDelayExpiredListener>;
+
+        $l2 = r0.<com.android.server.job.controllers.TimeController: long mNextDelayExpiredElapsedMillis>;
+
+        specialinvoke r0.<com.android.server.job.controllers.TimeController: void updateAlarmWithListenerLocked(java.lang.String,int,android.app.AlarmManager$OnAlarmListener,long,android.os.WorkSource)>("*job.delay*", b5, $r3, $l2, r1);
+
+        return;
+    }
+
+    private void updateAlarmWithListenerLocked(java.lang.String, int, android.app.AlarmManager$OnAlarmListener, long, android.os.WorkSource)
+    {
+        com.android.server.job.controllers.TimeController r0;
+        java.lang.String r1, $r11;
+        int i0;
+        android.app.AlarmManager$OnAlarmListener r2;
+        long l1;
+        android.os.WorkSource r3;
+        byte $b2;
+        boolean $z0;
+        android.app.AlarmManager $r5, $r12;
+        java.lang.StringBuilder $r6;
+
+        r0 := @this: com.android.server.job.controllers.TimeController;
+
+        r1 := @parameter0: java.lang.String;
+
+        i0 := @parameter1: int;
+
+        r2 := @parameter2: android.app.AlarmManager$OnAlarmListener;
+
+        l1 := @parameter3: long;
+
+        r3 := @parameter4: android.os.WorkSource;
+
+        specialinvoke r0.<com.android.server.job.controllers.TimeController: void ensureAlarmServiceLocked()>();
+
+        $b2 = l1 cmp 9223372036854775807L;
+
+        if $b2 != 0 goto label1;
+
+        $r12 = r0.<com.android.server.job.controllers.TimeController: android.app.AlarmManager mAlarmService>;
+
+        virtualinvoke $r12.<android.app.AlarmManager: void cancel(android.app.AlarmManager$OnAlarmListener)>(r2);
+
+        goto label3;
+
+     label1:
+        $z0 = <com.android.server.job.controllers.TimeController: boolean DEBUG>;
+
+        if $z0 == 0 goto label2;
+
+        $r6 = new java.lang.StringBuilder;
+
+        specialinvoke $r6.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Setting ");
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" for: ");
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>(l1);
+
+        $r11 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int d(java.lang.String,java.lang.String)>("JobScheduler.Time", $r11);
+
+        goto label2;
+
+     label2:
+        $r5 = r0.<com.android.server.job.controllers.TimeController: android.app.AlarmManager mAlarmService>;
+
+        virtualinvoke $r5.<android.app.AlarmManager: void set(int,long,long,long,java.lang.String,android.app.AlarmManager$OnAlarmListener,android.os.Handler,android.os.WorkSource)>(i0, l1, -1L, 0L, r1, r2, null, r3);
+
+     label3:
+        return;
+    }
+
+    void checkExpiredDeadlinesAndResetAlarm()
+    {
+        com.android.server.job.controllers.TimeController r0;
+        java.lang.Object r1, $r7;
+        long l0, l1;
+        java.util.ListIterator r2;
+        com.android.server.job.controllers.JobStatus r3;
+        java.time.Clock $r4;
+        java.util.List $r5;
+        android.os.WorkSource $r6;
+        boolean $z0, $z1, $z2, $z3, $z4, $z5;
+        java.lang.String $r8, r11;
+        com.android.server.job.StateChangedListener $r9;
+        java.lang.Throwable $r10;
+        int i2;
+        java.lang.StringBuilder r12;
+
+        r0 := @this: com.android.server.job.controllers.TimeController;
+
+        r1 = r0.<com.android.server.job.controllers.TimeController: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label01:
+        $r4 = <com.android.server.job.JobSchedulerService: java.time.Clock sElapsedRealtimeClock>;
+
+        l0 = virtualinvoke $r4.<java.time.Clock: long millis()>();
+
+        $r5 = r0.<com.android.server.job.controllers.TimeController: java.util.List mTrackedJobs>;
+
+        r2 = interfaceinvoke $r5.<java.util.List: java.util.ListIterator listIterator()>();
+
+     label02:
+        l1 = 9223372036854775807L;
+
+        i2 = 0;
+
+        r11 = null;
+
+     label03:
+        $z5 = interfaceinvoke r2.<java.util.ListIterator: boolean hasNext()>();
+
+        if $z5 == 0 goto label11;
+
+        $r7 = interfaceinvoke r2.<java.util.ListIterator: java.lang.Object next()>();
+
+        r3 = (com.android.server.job.controllers.JobStatus) $r7;
+
+        $z0 = virtualinvoke r3.<com.android.server.job.controllers.JobStatus: boolean hasDeadlineConstraint()>();
+
+        if $z0 != 0 goto label05;
+
+     label04:
+        goto label02;
+
+     label05:
+        $z1 = specialinvoke r0.<com.android.server.job.controllers.TimeController: boolean evaluateDeadlineConstraint(com.android.server.job.controllers.JobStatus,long)>(r3, l0);
+
+        if $z1 == 0 goto label08;
+
+        $z4 = virtualinvoke r3.<com.android.server.job.controllers.JobStatus: boolean isReady()>();
+
+        if $z4 == 0 goto label06;
+
+        $r9 = r0.<com.android.server.job.controllers.TimeController: com.android.server.job.StateChangedListener mStateChangedListener>;
+
+        interfaceinvoke $r9.<com.android.server.job.StateChangedListener: void onRunJobNow(com.android.server.job.controllers.JobStatus)>(r3);
+
+     label06:
+        interfaceinvoke r2.<java.util.ListIterator: void remove()>();
+
+     label07:
+        goto label02;
+
+     label08:
+        $z2 = virtualinvoke r0.<com.android.server.job.controllers.TimeController: boolean wouldBeReadyWithConstraintLocked(com.android.server.job.controllers.JobStatus,int)>(r3, 1073741824);
+
+        if $z2 != 0 goto label10;
+
+        $z3 = <com.android.server.job.controllers.TimeController: boolean DEBUG>;
+
+        if $z3 == 0 goto label02;
+
+        r12 = new java.lang.StringBuilder;
+
+        specialinvoke r12.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Skipping ");
+
+        virtualinvoke r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r3);
+
+        virtualinvoke r12.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" because deadline won\'t make it ready.");
+
+        $r8 = virtualinvoke r12.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("JobScheduler.Time", $r8);
+
+     label09:
+        goto label02;
+
+     label10:
+        l1 = virtualinvoke r3.<com.android.server.job.controllers.JobStatus: long getLatestRunTimeElapsed()>();
+
+        i2 = virtualinvoke r3.<com.android.server.job.controllers.JobStatus: int getSourceUid()>();
+
+        r11 = virtualinvoke r3.<com.android.server.job.controllers.JobStatus: java.lang.String getSourcePackageName()>();
+
+     label11:
+        $r6 = specialinvoke r0.<com.android.server.job.controllers.TimeController: android.os.WorkSource deriveWorkSource(int,java.lang.String)>(i2, r11);
+
+        specialinvoke r0.<com.android.server.job.controllers.TimeController: void setDeadlineExpiredAlarmLocked(long,android.os.WorkSource)>(l1, $r6);
+
+        exitmonitor r1;
+
+     label12:
+        return;
+
+     label13:
+        $r10 := @caughtexception;
+
+     label14:
+        exitmonitor r1;
+
+     label15:
+        throw $r10;
+
+        catch java.lang.Throwable from label01 to label02 with label13;
+        catch java.lang.Throwable from label03 to label04 with label13;
+        catch java.lang.Throwable from label05 to label06 with label13;
+        catch java.lang.Throwable from label06 to label07 with label13;
+        catch java.lang.Throwable from label08 to label09 with label13;
+        catch java.lang.Throwable from label10 to label11 with label13;
+        catch java.lang.Throwable from label11 to label12 with label13;
+        catch java.lang.Throwable from label14 to label15 with label13;
+    }
+
+    void checkExpiredDelaysAndResetAlarm()
+    {
+        com.android.server.job.controllers.TimeController r0;
+        java.lang.Object r1, $r8;
+        long l0, l1, l4, l6;
+        java.util.Iterator r2;
+        com.android.server.job.controllers.JobStatus r3;
+        java.time.Clock $r4;
+        java.util.List $r5;
+        android.os.WorkSource $r6;
+        com.android.server.job.StateChangedListener $r7;
+        boolean $z0, $z1, $z2, $z3, $z4, $z5, z6, $z7, z8;
+        byte $b2;
+        java.lang.String $r12, r14, r15;
+        java.lang.Throwable $r13;
+        int i5, i7;
+        java.lang.StringBuilder r16;
+
+        r0 := @this: com.android.server.job.controllers.TimeController;
+
+        r1 = r0.<com.android.server.job.controllers.TimeController: java.lang.Object mLock>;
+
+        entermonitor r1;
+
+     label01:
+        $r4 = <com.android.server.job.JobSchedulerService: java.time.Clock sElapsedRealtimeClock>;
+
+        l0 = virtualinvoke $r4.<java.time.Clock: long millis()>();
+
+     label02:
+        l4 = 9223372036854775807L;
+
+        i5 = 0;
+
+        r14 = null;
+
+        z6 = 0;
+
+     label03:
+        $r5 = r0.<com.android.server.job.controllers.TimeController: java.util.List mTrackedJobs>;
+
+        r2 = interfaceinvoke $r5.<java.util.List: java.util.Iterator iterator()>();
+
+     label04:
+        $z7 = interfaceinvoke r2.<java.util.Iterator: boolean hasNext()>();
+
+        if $z7 == 0 goto label17;
+
+        $r8 = interfaceinvoke r2.<java.util.Iterator: java.lang.Object next()>();
+
+        r3 = (com.android.server.job.controllers.JobStatus) $r8;
+
+        $z0 = virtualinvoke r3.<com.android.server.job.controllers.JobStatus: boolean hasTimingDelayConstraint()>();
+
+        if $z0 != 0 goto label06;
+
+     label05:
+        goto label04;
+
+     label06:
+        $z1 = specialinvoke r0.<com.android.server.job.controllers.TimeController: boolean evaluateTimingDelayConstraint(com.android.server.job.controllers.JobStatus,long)>(r3, l0);
+
+        if $z1 == 0 goto label10;
+
+        $z4 = specialinvoke r0.<com.android.server.job.controllers.TimeController: boolean canStopTrackingJobLocked(com.android.server.job.controllers.JobStatus)>(r3);
+
+        if $z4 == 0 goto label07;
+
+        interfaceinvoke r2.<java.util.Iterator: void remove()>();
+
+     label07:
+        l6 = l4;
+
+        i7 = i5;
+
+        r15 = r14;
+
+        z8 = z6;
+
+     label08:
+        $z5 = virtualinvoke r3.<com.android.server.job.controllers.JobStatus: boolean isReady()>();
+
+        if $z5 == 0 goto label16;
+
+     label09:
+        z8 = 1;
+
+        l6 = l4;
+
+        i7 = i5;
+
+        r15 = r14;
+
+        goto label16;
+
+     label10:
+        $z2 = virtualinvoke r0.<com.android.server.job.controllers.TimeController: boolean wouldBeReadyWithConstraintLocked(com.android.server.job.controllers.JobStatus,int)>(r3, -2147483648);
+
+        if $z2 != 0 goto label12;
+
+        $z3 = <com.android.server.job.controllers.TimeController: boolean DEBUG>;
+
+        if $z3 == 0 goto label04;
+
+        r16 = new java.lang.StringBuilder;
+
+        specialinvoke r16.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r16.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Skipping ");
+
+        virtualinvoke r16.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r3);
+
+        virtualinvoke r16.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" because delay won\'t make it ready.");
+
+        $r12 = virtualinvoke r16.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("JobScheduler.Time", $r12);
+
+     label11:
+        goto label04;
+
+     label12:
+        l1 = virtualinvoke r3.<com.android.server.job.controllers.JobStatus: long getEarliestRunTime()>();
+
+     label13:
+        l6 = l4;
+
+        i7 = i5;
+
+        r15 = r14;
+
+        z8 = z6;
+
+        $b2 = l4 cmp l1;
+
+        if $b2 <= 0 goto label16;
+
+        l6 = l1;
+
+     label14:
+        i7 = virtualinvoke r3.<com.android.server.job.controllers.JobStatus: int getSourceUid()>();
+
+        r15 = virtualinvoke r3.<com.android.server.job.controllers.JobStatus: java.lang.String getSourcePackageName()>();
+
+     label15:
+        z8 = z6;
+
+     label16:
+        l4 = l6;
+
+        i5 = i7;
+
+        r14 = r15;
+
+        z6 = z8;
+
+        goto label04;
+
+     label17:
+        if z6 == 0 goto label19;
+
+     label18:
+        $r7 = r0.<com.android.server.job.controllers.TimeController: com.android.server.job.StateChangedListener mStateChangedListener>;
+
+        interfaceinvoke $r7.<com.android.server.job.StateChangedListener: void onControllerStateChanged()>();
+
+     label19:
+        $r6 = specialinvoke r0.<com.android.server.job.controllers.TimeController: android.os.WorkSource deriveWorkSource(int,java.lang.String)>(i5, r14);
+
+        specialinvoke r0.<com.android.server.job.controllers.TimeController: void setDelayExpiredAlarmLocked(long,android.os.WorkSource)>(l4, $r6);
+
+        exitmonitor r1;
+
+     label20:
+        return;
+
+     label21:
+        $r13 := @caughtexception;
+
+     label22:
+        exitmonitor r1;
+
+     label23:
+        throw $r13;
+
+        catch java.lang.Throwable from label01 to label02 with label21;
+        catch java.lang.Throwable from label03 to label04 with label21;
+        catch java.lang.Throwable from label04 to label05 with label21;
+        catch java.lang.Throwable from label06 to label07 with label21;
+        catch java.lang.Throwable from label08 to label09 with label21;
+        catch java.lang.Throwable from label10 to label11 with label21;
+        catch java.lang.Throwable from label12 to label13 with label21;
+        catch java.lang.Throwable from label14 to label15 with label21;
+        catch java.lang.Throwable from label18 to label19 with label21;
+        catch java.lang.Throwable from label19 to label20 with label21;
+        catch java.lang.Throwable from label22 to label23 with label21;
+    }
+
+    public void dumpConstants(android.util.proto.ProtoOutputStream)
+    {
+        com.android.server.job.controllers.TimeController r0;
+        android.util.proto.ProtoOutputStream r1;
+        com.android.server.job.controllers.TimeController$TcConstants $r2;
+
+        r0 := @this: com.android.server.job.controllers.TimeController;
+
+        r1 := @parameter0: android.util.proto.ProtoOutputStream;
+
+        $r2 = r0.<com.android.server.job.controllers.TimeController: com.android.server.job.controllers.TimeController$TcConstants mTcConstants>;
+
+        staticinvoke <com.android.server.job.controllers.TimeController$TcConstants: void access$300(com.android.server.job.controllers.TimeController$TcConstants,android.util.proto.ProtoOutputStream)>($r2, r1);
+
+        return;
+    }
+
+    public void dumpConstants(com.android.internal.util.IndentingPrintWriter)
+    {
+        com.android.server.job.controllers.TimeController r0;
+        com.android.internal.util.IndentingPrintWriter r1;
+        com.android.server.job.controllers.TimeController$TcConstants $r2;
+
+        r0 := @this: com.android.server.job.controllers.TimeController;
+
+        r1 := @parameter0: com.android.internal.util.IndentingPrintWriter;
+
+        $r2 = r0.<com.android.server.job.controllers.TimeController: com.android.server.job.controllers.TimeController$TcConstants mTcConstants>;
+
+        staticinvoke <com.android.server.job.controllers.TimeController$TcConstants: void access$200(com.android.server.job.controllers.TimeController$TcConstants,com.android.internal.util.IndentingPrintWriter)>($r2, r1);
+
+        return;
+    }
+
+    public void dumpControllerStateLocked(android.util.proto.ProtoOutputStream, long, java.util.function.Predicate)
+    {
+        com.android.server.job.controllers.TimeController r0;
+        android.util.proto.ProtoOutputStream r1;
+        java.util.function.Predicate r2;
+        long l0, l1, l2, $l3, $l4, $l5, $l6, $l7, $l8, $l9, $l10, l11, l12;
+        java.util.Iterator r3;
+        com.android.server.job.controllers.JobStatus r4;
+        java.time.Clock $r5;
+        java.util.List $r6;
+        java.lang.Object $r7;
+        boolean $z0, $z1, $z2, $z3;
+
+        r0 := @this: com.android.server.job.controllers.TimeController;
+
+        r1 := @parameter0: android.util.proto.ProtoOutputStream;
+
+        l11 := @parameter1: long;
+
+        r2 := @parameter2: java.util.function.Predicate;
+
+        l12 = virtualinvoke r1.<android.util.proto.ProtoOutputStream: long start(long)>(l11);
+
+        l0 = virtualinvoke r1.<android.util.proto.ProtoOutputStream: long start(long)>(1146756268040L);
+
+        $r5 = <com.android.server.job.JobSchedulerService: java.time.Clock sElapsedRealtimeClock>;
+
+        l1 = virtualinvoke $r5.<java.time.Clock: long millis()>();
+
+        virtualinvoke r1.<android.util.proto.ProtoOutputStream: void write(long,long)>(1112396529665L, l1);
+
+        $l3 = r0.<com.android.server.job.controllers.TimeController: long mNextDelayExpiredElapsedMillis>;
+
+        $l4 = $l3 - l1;
+
+        virtualinvoke r1.<android.util.proto.ProtoOutputStream: void write(long,long)>(1112396529666L, $l4);
+
+        $l5 = r0.<com.android.server.job.controllers.TimeController: long mNextJobExpiredElapsedMillis>;
+
+        $l6 = $l5 - l1;
+
+        virtualinvoke r1.<android.util.proto.ProtoOutputStream: void write(long,long)>(1112396529667L, $l6);
+
+        $r6 = r0.<com.android.server.job.controllers.TimeController: java.util.List mTrackedJobs>;
+
+        r3 = interfaceinvoke $r6.<java.util.List: java.util.Iterator iterator()>();
+
+     label1:
+        $z3 = interfaceinvoke r3.<java.util.Iterator: boolean hasNext()>();
+
+        if $z3 == 0 goto label3;
+
+        $r7 = interfaceinvoke r3.<java.util.Iterator: java.lang.Object next()>();
+
+        r4 = (com.android.server.job.controllers.JobStatus) $r7;
+
+        $z0 = interfaceinvoke r2.<java.util.function.Predicate: boolean test(java.lang.Object)>(r4);
+
+        if $z0 != 0 goto label2;
+
+        goto label1;
+
+     label2:
+        l2 = virtualinvoke r1.<android.util.proto.ProtoOutputStream: long start(long)>(2246267895812L);
+
+        virtualinvoke r4.<com.android.server.job.controllers.JobStatus: void writeToShortProto(android.util.proto.ProtoOutputStream,long)>(r1, 1146756268033L);
+
+        $z1 = virtualinvoke r4.<com.android.server.job.controllers.JobStatus: boolean hasTimingDelayConstraint()>();
+
+        virtualinvoke r1.<android.util.proto.ProtoOutputStream: void write(long,boolean)>(1133871366147L, $z1);
+
+        $l7 = virtualinvoke r4.<com.android.server.job.controllers.JobStatus: long getEarliestRunTime()>();
+
+        $l8 = $l7 - l1;
+
+        virtualinvoke r1.<android.util.proto.ProtoOutputStream: void write(long,long)>(1112396529668L, $l8);
+
+        $z2 = virtualinvoke r4.<com.android.server.job.controllers.JobStatus: boolean hasDeadlineConstraint()>();
+
+        virtualinvoke r1.<android.util.proto.ProtoOutputStream: void write(long,boolean)>(1133871366149L, $z2);
+
+        $l9 = virtualinvoke r4.<com.android.server.job.controllers.JobStatus: long getLatestRunTimeElapsed()>();
+
+        $l10 = $l9 - l1;
+
+        virtualinvoke r1.<android.util.proto.ProtoOutputStream: void write(long,long)>(1112396529670L, $l10);
+
+        virtualinvoke r1.<android.util.proto.ProtoOutputStream: void end(long)>(l2);
+
+        goto label1;
+
+     label3:
+        virtualinvoke r1.<android.util.proto.ProtoOutputStream: void end(long)>(l0);
+
+        virtualinvoke r1.<android.util.proto.ProtoOutputStream: void end(long)>(l12);
+
+        return;
+    }
+
+    public void dumpControllerStateLocked(com.android.internal.util.IndentingPrintWriter, java.util.function.Predicate)
+    {
+        com.android.server.job.controllers.TimeController r0;
+        com.android.internal.util.IndentingPrintWriter r1;
+        java.util.function.Predicate r2;
+        long l0, $l1, $l2, $l4, $l5;
+        java.util.Iterator r3;
+        java.time.Clock $r4;
+        java.lang.StringBuilder $r5;
+        java.lang.String $r8;
+        java.util.List $r9;
+        java.lang.Object $r10;
+        boolean $z0, $z1, $z2, $z3;
+        int $i3;
+        com.android.server.job.controllers.JobStatus r12;
+
+        r0 := @this: com.android.server.job.controllers.TimeController;
+
+        r1 := @parameter0: com.android.internal.util.IndentingPrintWriter;
+
+        r2 := @parameter1: java.util.function.Predicate;
+
+        $r4 = <com.android.server.job.JobSchedulerService: java.time.Clock sElapsedRealtimeClock>;
+
+        l0 = virtualinvoke $r4.<java.time.Clock: long millis()>();
+
+        $r5 = new java.lang.StringBuilder;
+
+        specialinvoke $r5.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Elapsed clock: ");
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(long)>(l0);
+
+        $r8 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        virtualinvoke r1.<com.android.internal.util.IndentingPrintWriter: void println(java.lang.String)>($r8);
+
+        virtualinvoke r1.<com.android.internal.util.IndentingPrintWriter: void print(java.lang.String)>("Next delay alarm in ");
+
+        $l1 = r0.<com.android.server.job.controllers.TimeController: long mNextDelayExpiredElapsedMillis>;
+
+        staticinvoke <android.util.TimeUtils: void formatDuration(long,long,java.io.PrintWriter)>($l1, l0, r1);
+
+        virtualinvoke r1.<com.android.internal.util.IndentingPrintWriter: void println()>();
+
+        virtualinvoke r1.<com.android.internal.util.IndentingPrintWriter: void print(java.lang.String)>("Next deadline alarm in ");
+
+        $l2 = r0.<com.android.server.job.controllers.TimeController: long mNextJobExpiredElapsedMillis>;
+
+        staticinvoke <android.util.TimeUtils: void formatDuration(long,long,java.io.PrintWriter)>($l2, l0, r1);
+
+        virtualinvoke r1.<com.android.internal.util.IndentingPrintWriter: void println()>();
+
+        virtualinvoke r1.<com.android.internal.util.IndentingPrintWriter: void println()>();
+
+        $r9 = r0.<com.android.server.job.controllers.TimeController: java.util.List mTrackedJobs>;
+
+        r3 = interfaceinvoke $r9.<java.util.List: java.util.Iterator iterator()>();
+
+     label1:
+        $z3 = interfaceinvoke r3.<java.util.Iterator: boolean hasNext()>();
+
+        if $z3 == 0 goto label7;
+
+        $r10 = interfaceinvoke r3.<java.util.Iterator: java.lang.Object next()>();
+
+        r12 = (com.android.server.job.controllers.JobStatus) $r10;
+
+        $z0 = interfaceinvoke r2.<java.util.function.Predicate: boolean test(java.lang.Object)>(r12);
+
+        if $z0 != 0 goto label2;
+
+        goto label1;
+
+     label2:
+        virtualinvoke r1.<com.android.internal.util.IndentingPrintWriter: void print(java.lang.String)>("#");
+
+        virtualinvoke r12.<com.android.server.job.controllers.JobStatus: void printUniqueId(java.io.PrintWriter)>(r1);
+
+        virtualinvoke r1.<com.android.internal.util.IndentingPrintWriter: void print(java.lang.String)>(" from ");
+
+        $i3 = virtualinvoke r12.<com.android.server.job.controllers.JobStatus: int getSourceUid()>();
+
+        staticinvoke <android.os.UserHandle: void formatUid(java.io.PrintWriter,int)>(r1, $i3);
+
+        virtualinvoke r1.<com.android.internal.util.IndentingPrintWriter: void print(java.lang.String)>(": Delay=");
+
+        $z1 = virtualinvoke r12.<com.android.server.job.controllers.JobStatus: boolean hasTimingDelayConstraint()>();
+
+        if $z1 == 0 goto label3;
+
+        $l5 = virtualinvoke r12.<com.android.server.job.controllers.JobStatus: long getEarliestRunTime()>();
+
+        staticinvoke <android.util.TimeUtils: void formatDuration(long,long,java.io.PrintWriter)>($l5, l0, r1);
+
+        goto label4;
+
+     label3:
+        virtualinvoke r1.<com.android.internal.util.IndentingPrintWriter: void print(java.lang.String)>("N/A");
+
+     label4:
+        virtualinvoke r1.<com.android.internal.util.IndentingPrintWriter: void print(java.lang.String)>(", Deadline=");
+
+        $z2 = virtualinvoke r12.<com.android.server.job.controllers.JobStatus: boolean hasDeadlineConstraint()>();
+
+        if $z2 == 0 goto label5;
+
+        $l4 = virtualinvoke r12.<com.android.server.job.controllers.JobStatus: long getLatestRunTimeElapsed()>();
+
+        staticinvoke <android.util.TimeUtils: void formatDuration(long,long,java.io.PrintWriter)>($l4, l0, r1);
+
+        goto label6;
+
+     label5:
+        virtualinvoke r1.<com.android.internal.util.IndentingPrintWriter: void print(java.lang.String)>("N/A");
+
+     label6:
+        virtualinvoke r1.<com.android.internal.util.IndentingPrintWriter: void println()>();
+
+        goto label1;
+
+     label7:
+        return;
+    }
+
+    public void evaluateStateLocked(com.android.server.job.controllers.JobStatus)
+    {
+        com.android.server.job.controllers.TimeController r0;
+        com.android.server.job.controllers.JobStatus r1;
+        long l0, $l1, $l2, $l4, $l5, $l7, $l8, $l10, $l11;
+        java.time.Clock $r2;
+        boolean $z1, $z2, $z3, $z4, z5, z6, z7, $z8, z9, z10;
+        byte $b3, $b6, $b9, $b12;
+
+        r0 := @this: com.android.server.job.controllers.TimeController;
+
+        r1 := @parameter0: com.android.server.job.controllers.JobStatus;
+
+        $r2 = <com.android.server.job.JobSchedulerService: java.time.Clock sElapsedRealtimeClock>;
+
+        l0 = virtualinvoke $r2.<java.time.Clock: long millis()>();
+
+        z5 = virtualinvoke r1.<com.android.server.job.controllers.JobStatus: boolean hasDeadlineConstraint()>();
+
+        if z5 == 0 goto label06;
+
+        $z3 = virtualinvoke r1.<com.android.server.job.controllers.JobStatus: boolean isConstraintSatisfied(int)>(1073741824);
+
+        if $z3 != 0 goto label06;
+
+        $l7 = virtualinvoke r1.<com.android.server.job.controllers.JobStatus: long getLatestRunTimeElapsed()>();
+
+        $l8 = r0.<com.android.server.job.controllers.TimeController: long mNextJobExpiredElapsedMillis>;
+
+        $b9 = $l7 cmp $l8;
+
+        if $b9 > 0 goto label06;
+
+        $z4 = specialinvoke r0.<com.android.server.job.controllers.TimeController: boolean evaluateDeadlineConstraint(com.android.server.job.controllers.JobStatus,long)>(r1, l0);
+
+        if $z4 == 0 goto label01;
+
+        virtualinvoke r0.<com.android.server.job.controllers.TimeController: void checkExpiredDeadlinesAndResetAlarm()>();
+
+        virtualinvoke r0.<com.android.server.job.controllers.TimeController: void checkExpiredDelaysAndResetAlarm()>();
+
+        goto label06;
+
+     label01:
+        $l10 = virtualinvoke r1.<com.android.server.job.controllers.JobStatus: long getLatestRunTimeElapsed()>();
+
+        $l11 = r0.<com.android.server.job.controllers.TimeController: long mNextJobExpiredElapsedMillis>;
+
+        $b12 = $l10 cmp $l11;
+
+        if $b12 != 0 goto label02;
+
+        z6 = 1;
+
+        goto label03;
+
+     label02:
+        z6 = 0;
+
+     label03:
+        z7 = virtualinvoke r0.<com.android.server.job.controllers.TimeController: boolean wouldBeReadyWithConstraintLocked(com.android.server.job.controllers.JobStatus,int)>(r1, 1073741824);
+
+        if z6 == 0 goto label04;
+
+        if z7 == 0 goto label05;
+
+     label04:
+        if z6 != 0 goto label06;
+
+        if z7 == 0 goto label06;
+
+     label05:
+        virtualinvoke r0.<com.android.server.job.controllers.TimeController: void checkExpiredDeadlinesAndResetAlarm()>();
+
+     label06:
+        $z8 = virtualinvoke r1.<com.android.server.job.controllers.JobStatus: boolean hasTimingDelayConstraint()>();
+
+        if $z8 == 0 goto label12;
+
+        $z1 = virtualinvoke r1.<com.android.server.job.controllers.JobStatus: boolean isConstraintSatisfied(int)>(-2147483648);
+
+        if $z1 != 0 goto label12;
+
+        $l1 = virtualinvoke r1.<com.android.server.job.controllers.JobStatus: long getEarliestRunTime()>();
+
+        $l2 = r0.<com.android.server.job.controllers.TimeController: long mNextDelayExpiredElapsedMillis>;
+
+        $b3 = $l1 cmp $l2;
+
+        if $b3 > 0 goto label12;
+
+        $z2 = specialinvoke r0.<com.android.server.job.controllers.TimeController: boolean evaluateTimingDelayConstraint(com.android.server.job.controllers.JobStatus,long)>(r1, l0);
+
+        if $z2 == 0 goto label07;
+
+        virtualinvoke r0.<com.android.server.job.controllers.TimeController: void checkExpiredDelaysAndResetAlarm()>();
+
+        goto label12;
+
+     label07:
+        $l4 = virtualinvoke r1.<com.android.server.job.controllers.JobStatus: long getEarliestRunTime()>();
+
+        $l5 = r0.<com.android.server.job.controllers.TimeController: long mNextDelayExpiredElapsedMillis>;
+
+        $b6 = $l4 cmp $l5;
+
+        if $b6 != 0 goto label08;
+
+        z9 = 1;
+
+        goto label09;
+
+     label08:
+        z9 = 0;
+
+     label09:
+        z10 = virtualinvoke r0.<com.android.server.job.controllers.TimeController: boolean wouldBeReadyWithConstraintLocked(com.android.server.job.controllers.JobStatus,int)>(r1, -2147483648);
+
+        if z9 == 0 goto label10;
+
+        if z10 == 0 goto label11;
+
+     label10:
+        if z9 != 0 goto label12;
+
+        if z10 == 0 goto label12;
+
+     label11:
+        virtualinvoke r0.<com.android.server.job.controllers.TimeController: void checkExpiredDelaysAndResetAlarm()>();
+
+     label12:
+        return;
+    }
+
+    com.android.server.job.controllers.TimeController$TcConstants getTcConstants()
+    {
+        com.android.server.job.controllers.TimeController r0;
+        com.android.server.job.controllers.TimeController$TcConstants $r1;
+
+        r0 := @this: com.android.server.job.controllers.TimeController;
+
+        $r1 = r0.<com.android.server.job.controllers.TimeController: com.android.server.job.controllers.TimeController$TcConstants mTcConstants>;
+
+        return $r1;
+    }
+
+    public void maybeStartTrackingJobLocked(com.android.server.job.controllers.JobStatus, com.android.server.job.controllers.JobStatus)
+    {
+        com.android.server.job.controllers.TimeController r0;
+        com.android.server.job.controllers.JobStatus r1, $r6, r7;
+        long l0, $l2, $l3, $l4, $l5;
+        boolean $z1, $z2, $z3, $z4, $z5, $z6, $z7, $z8, $z9, $z10, z11, $z12, $z13;
+        java.time.Clock $r2;
+        int $i1, $i7;
+        java.lang.String $r3;
+        java.lang.Object $r5;
+        byte $b6;
+        java.util.List r8;
+        java.util.ListIterator r9;
+        android.os.WorkSource r10;
+
+        r0 := @this: com.android.server.job.controllers.TimeController;
+
+        r1 := @parameter0: com.android.server.job.controllers.JobStatus;
+
+        r7 := @parameter1: com.android.server.job.controllers.JobStatus;
+
+        $z1 = virtualinvoke r1.<com.android.server.job.controllers.JobStatus: boolean hasTimingDelayConstraint()>();
+
+        if $z1 != 0 goto label1;
+
+        $z10 = virtualinvoke r1.<com.android.server.job.controllers.JobStatus: boolean hasDeadlineConstraint()>();
+
+        if $z10 == 0 goto label9;
+
+     label1:
+        virtualinvoke r0.<com.android.server.job.controllers.TimeController: void maybeStopTrackingJobLocked(com.android.server.job.controllers.JobStatus,com.android.server.job.controllers.JobStatus,boolean)>(r1, null, 0);
+
+        $r2 = <com.android.server.job.JobSchedulerService: java.time.Clock sElapsedRealtimeClock>;
+
+        l0 = virtualinvoke $r2.<java.time.Clock: long millis()>();
+
+        $z2 = virtualinvoke r1.<com.android.server.job.controllers.JobStatus: boolean hasDeadlineConstraint()>();
+
+        if $z2 == 0 goto label2;
+
+        $z9 = specialinvoke r0.<com.android.server.job.controllers.TimeController: boolean evaluateDeadlineConstraint(com.android.server.job.controllers.JobStatus,long)>(r1, l0);
+
+        if $z9 == 0 goto label2;
+
+        return;
+
+     label2:
+        $z3 = virtualinvoke r1.<com.android.server.job.controllers.JobStatus: boolean hasTimingDelayConstraint()>();
+
+        if $z3 == 0 goto label3;
+
+        $z7 = specialinvoke r0.<com.android.server.job.controllers.TimeController: boolean evaluateTimingDelayConstraint(com.android.server.job.controllers.JobStatus,long)>(r1, l0);
+
+        if $z7 == 0 goto label3;
+
+        $z8 = virtualinvoke r1.<com.android.server.job.controllers.JobStatus: boolean hasDeadlineConstraint()>();
+
+        if $z8 != 0 goto label3;
+
+        return;
+
+     label3:
+        r8 = r0.<com.android.server.job.controllers.TimeController: java.util.List mTrackedJobs>;
+
+        $i7 = interfaceinvoke r8.<java.util.List: int size()>();
+
+        r9 = interfaceinvoke r8.<java.util.List: java.util.ListIterator listIterator(int)>($i7);
+
+     label4:
+        z11 = 0;
+
+        $z12 = interfaceinvoke r9.<java.util.ListIterator: boolean hasPrevious()>();
+
+        if $z12 == 0 goto label6;
+
+        $r5 = interfaceinvoke r9.<java.util.ListIterator: java.lang.Object previous()>();
+
+        $r6 = (com.android.server.job.controllers.JobStatus) $r5;
+
+        $l4 = virtualinvoke $r6.<com.android.server.job.controllers.JobStatus: long getLatestRunTimeElapsed()>();
+
+        $l5 = virtualinvoke r1.<com.android.server.job.controllers.JobStatus: long getLatestRunTimeElapsed()>();
+
+        $b6 = $l4 cmp $l5;
+
+        if $b6 >= 0 goto label5;
+
+        z11 = 1;
+
+        goto label6;
+
+     label5:
+        goto label4;
+
+     label6:
+        if z11 == 0 goto label7;
+
+        interfaceinvoke r9.<java.util.ListIterator: java.lang.Object next()>();
+
+     label7:
+        interfaceinvoke r9.<java.util.ListIterator: void add(java.lang.Object)>(r1);
+
+        virtualinvoke r1.<com.android.server.job.controllers.JobStatus: void setTrackingController(int)>(32);
+
+        $i1 = virtualinvoke r1.<com.android.server.job.controllers.JobStatus: int getSourceUid()>();
+
+        $r3 = virtualinvoke r1.<com.android.server.job.controllers.JobStatus: java.lang.String getSourcePackageName()>();
+
+        r10 = specialinvoke r0.<com.android.server.job.controllers.TimeController: android.os.WorkSource deriveWorkSource(int,java.lang.String)>($i1, $r3);
+
+        $z4 = virtualinvoke r1.<com.android.server.job.controllers.JobStatus: boolean hasTimingDelayConstraint()>();
+
+        if $z4 == 0 goto label8;
+
+        $z6 = virtualinvoke r0.<com.android.server.job.controllers.TimeController: boolean wouldBeReadyWithConstraintLocked(com.android.server.job.controllers.JobStatus,int)>(r1, -2147483648);
+
+        if $z6 == 0 goto label8;
+
+        $l3 = virtualinvoke r1.<com.android.server.job.controllers.JobStatus: long getEarliestRunTime()>();
+
+        specialinvoke r0.<com.android.server.job.controllers.TimeController: void maybeUpdateDelayAlarmLocked(long,android.os.WorkSource)>($l3, r10);
+
+     label8:
+        $z13 = virtualinvoke r1.<com.android.server.job.controllers.JobStatus: boolean hasDeadlineConstraint()>();
+
+        if $z13 == 0 goto label9;
+
+        $z5 = virtualinvoke r0.<com.android.server.job.controllers.TimeController: boolean wouldBeReadyWithConstraintLocked(com.android.server.job.controllers.JobStatus,int)>(r1, 1073741824);
+
+        if $z5 == 0 goto label9;
+
+        $l2 = virtualinvoke r1.<com.android.server.job.controllers.JobStatus: long getLatestRunTimeElapsed()>();
+
+        specialinvoke r0.<com.android.server.job.controllers.TimeController: void maybeUpdateDeadlineAlarmLocked(long,android.os.WorkSource)>($l2, r10);
+
+     label9:
+        return;
+    }
+
+    public void maybeStopTrackingJobLocked(com.android.server.job.controllers.JobStatus, com.android.server.job.controllers.JobStatus, boolean)
+    {
+        com.android.server.job.controllers.TimeController r0;
+        com.android.server.job.controllers.JobStatus r1, r2;
+        boolean z0, $z1, $z2;
+        java.util.List $r3;
+
+        r0 := @this: com.android.server.job.controllers.TimeController;
+
+        r1 := @parameter0: com.android.server.job.controllers.JobStatus;
+
+        r2 := @parameter1: com.android.server.job.controllers.JobStatus;
+
+        z0 := @parameter2: boolean;
+
+        $z1 = virtualinvoke r1.<com.android.server.job.controllers.JobStatus: boolean clearTrackingController(int)>(32);
+
+        if $z1 == 0 goto label1;
+
+        $r3 = r0.<com.android.server.job.controllers.TimeController: java.util.List mTrackedJobs>;
+
+        $z2 = interfaceinvoke $r3.<java.util.List: boolean remove(java.lang.Object)>(r1);
+
+        if $z2 == 0 goto label1;
+
+        virtualinvoke r0.<com.android.server.job.controllers.TimeController: void checkExpiredDelaysAndResetAlarm()>();
+
+        virtualinvoke r0.<com.android.server.job.controllers.TimeController: void checkExpiredDeadlinesAndResetAlarm()>();
+
+     label1:
+        return;
+    }
+
+    public void onSystemServicesReady()
+    {
+        com.android.server.job.controllers.TimeController r0;
+        android.content.Context $r1;
+        com.android.server.job.controllers.TimeController$TcConstants $r2;
+        android.content.ContentResolver $r3;
+
+        r0 := @this: com.android.server.job.controllers.TimeController;
+
+        $r2 = r0.<com.android.server.job.controllers.TimeController: com.android.server.job.controllers.TimeController$TcConstants mTcConstants>;
+
+        $r1 = r0.<com.android.server.job.controllers.TimeController: android.content.Context mContext>;
+
+        $r3 = virtualinvoke $r1.<android.content.Context: android.content.ContentResolver getContentResolver()>();
+
+        staticinvoke <com.android.server.job.controllers.TimeController$TcConstants: void access$000(com.android.server.job.controllers.TimeController$TcConstants,android.content.ContentResolver)>($r2, $r3);
+
+        return;
+    }
+
+    public void reevaluateStateLocked(int)
+    {
+        com.android.server.job.controllers.TimeController r0;
+        int i0;
+
+        r0 := @this: com.android.server.job.controllers.TimeController;
+
+        i0 := @parameter0: int;
+
+        virtualinvoke r0.<com.android.server.job.controllers.TimeController: void checkExpiredDeadlinesAndResetAlarm()>();
+
+        virtualinvoke r0.<com.android.server.job.controllers.TimeController: void checkExpiredDelaysAndResetAlarm()>();
+
+        return;
+    }
+}

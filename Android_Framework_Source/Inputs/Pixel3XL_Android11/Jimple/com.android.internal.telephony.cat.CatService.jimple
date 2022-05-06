@@ -1,0 +1,3195 @@
+public class com.android.internal.telephony.cat.CatService extends android.os.Handler implements com.android.internal.telephony.cat.AppInterface
+{
+    private static final boolean DBG;
+    private static final int DEV_ID_DISPLAY;
+    private static final int DEV_ID_KEYPAD;
+    private static final int DEV_ID_NETWORK;
+    private static final int DEV_ID_TERMINAL;
+    private static final int DEV_ID_UICC;
+    protected static final int MSG_ID_ALPHA_NOTIFY;
+    protected static final int MSG_ID_CALL_SETUP;
+    protected static final int MSG_ID_EVENT_NOTIFY;
+    protected static final int MSG_ID_ICC_CHANGED;
+    private static final int MSG_ID_ICC_RECORDS_LOADED;
+    private static final int MSG_ID_ICC_REFRESH;
+    protected static final int MSG_ID_PROACTIVE_COMMAND;
+    static final int MSG_ID_REFRESH;
+    static final int MSG_ID_RESPONSE;
+    static final int MSG_ID_RIL_MSG_DECODED;
+    protected static final int MSG_ID_SESSION_END;
+    static final int MSG_ID_SIM_READY;
+    static final java.lang.String STK_DEFAULT;
+    private static com.android.internal.telephony.uicc.IccRecords mIccRecords;
+    private static com.android.internal.telephony.uicc.UiccCardApplication mUiccApplication;
+    private static com.android.internal.telephony.cat.CatService[] sInstance;
+    private static final java.lang.Object sInstanceLock;
+    private com.android.internal.telephony.uicc.IccCardStatus$CardState mCardState;
+    private com.android.internal.telephony.CommandsInterface mCmdIf;
+    private android.content.Context mContext;
+    private com.android.internal.telephony.cat.CatCmdMessage mCurrntCmd;
+    private com.android.internal.telephony.cat.CatCmdMessage mMenuCmd;
+    private com.android.internal.telephony.cat.RilMessageDecoder mMsgDecoder;
+    private int mSlotId;
+    private boolean mStkAppInstalled;
+    private com.android.internal.telephony.uicc.UiccController mUiccController;
+
+    static void <clinit>()
+    {
+        java.lang.Object $r0;
+
+        <com.android.internal.telephony.cat.CatService: java.lang.String STK_DEFAULT> = "Default Message";
+
+        <com.android.internal.telephony.cat.CatService: int MSG_ID_SIM_READY> = 7;
+
+        <com.android.internal.telephony.cat.CatService: int MSG_ID_SESSION_END> = 1;
+
+        <com.android.internal.telephony.cat.CatService: int MSG_ID_RIL_MSG_DECODED> = 10;
+
+        <com.android.internal.telephony.cat.CatService: int MSG_ID_RESPONSE> = 6;
+
+        <com.android.internal.telephony.cat.CatService: int MSG_ID_REFRESH> = 5;
+
+        <com.android.internal.telephony.cat.CatService: int MSG_ID_PROACTIVE_COMMAND> = 2;
+
+        <com.android.internal.telephony.cat.CatService: int MSG_ID_ICC_REFRESH> = 30;
+
+        <com.android.internal.telephony.cat.CatService: int MSG_ID_ICC_RECORDS_LOADED> = 20;
+
+        <com.android.internal.telephony.cat.CatService: int MSG_ID_ICC_CHANGED> = 8;
+
+        <com.android.internal.telephony.cat.CatService: int MSG_ID_EVENT_NOTIFY> = 3;
+
+        <com.android.internal.telephony.cat.CatService: int MSG_ID_CALL_SETUP> = 4;
+
+        <com.android.internal.telephony.cat.CatService: int MSG_ID_ALPHA_NOTIFY> = 9;
+
+        <com.android.internal.telephony.cat.CatService: int DEV_ID_UICC> = 129;
+
+        <com.android.internal.telephony.cat.CatService: int DEV_ID_TERMINAL> = 130;
+
+        <com.android.internal.telephony.cat.CatService: int DEV_ID_NETWORK> = 131;
+
+        <com.android.internal.telephony.cat.CatService: int DEV_ID_KEYPAD> = 1;
+
+        <com.android.internal.telephony.cat.CatService: int DEV_ID_DISPLAY> = 2;
+
+        <com.android.internal.telephony.cat.CatService: boolean DBG> = 0;
+
+        $r0 = new java.lang.Object;
+
+        specialinvoke $r0.<java.lang.Object: void <init>()>();
+
+        <com.android.internal.telephony.cat.CatService: java.lang.Object sInstanceLock> = $r0;
+
+        <com.android.internal.telephony.cat.CatService: com.android.internal.telephony.cat.CatService[] sInstance> = null;
+
+        return;
+    }
+
+    private void <init>(com.android.internal.telephony.CommandsInterface, com.android.internal.telephony.uicc.UiccCardApplication, com.android.internal.telephony.uicc.IccRecords, android.content.Context, com.android.internal.telephony.uicc.IccFileHandler, com.android.internal.telephony.uicc.UiccProfile, int)
+    {
+        com.android.internal.telephony.cat.CatService r0;
+        com.android.internal.telephony.uicc.UiccCardApplication r1;
+        com.android.internal.telephony.uicc.IccRecords r2;
+        android.content.Context r3;
+        com.android.internal.telephony.uicc.IccFileHandler r4;
+        com.android.internal.telephony.uicc.UiccProfile r5;
+        int i0, $i1, $i2;
+        com.android.internal.telephony.uicc.IccCardStatus$CardState $r6;
+        com.android.internal.telephony.CommandsInterface $r7, $r8, $r9, $r10, $r11, $r12, r25;
+        java.lang.StringBuilder $r13, $r19;
+        java.lang.String $r18, $r24;
+        boolean $z0, $z1;
+        com.android.internal.telephony.cat.RilMessageDecoder r26;
+        com.android.internal.telephony.uicc.UiccController r28;
+        java.lang.NullPointerException $r30;
+
+        r0 := @this: com.android.internal.telephony.cat.CatService;
+
+        r25 := @parameter0: com.android.internal.telephony.CommandsInterface;
+
+        r1 := @parameter1: com.android.internal.telephony.uicc.UiccCardApplication;
+
+        r2 := @parameter2: com.android.internal.telephony.uicc.IccRecords;
+
+        r3 := @parameter3: android.content.Context;
+
+        r4 := @parameter4: com.android.internal.telephony.uicc.IccFileHandler;
+
+        r5 := @parameter5: com.android.internal.telephony.uicc.UiccProfile;
+
+        i0 := @parameter6: int;
+
+        specialinvoke r0.<android.os.Handler: void <init>()>();
+
+        r0.<com.android.internal.telephony.cat.CatService: com.android.internal.telephony.cat.CatCmdMessage mCurrntCmd> = null;
+
+        r0.<com.android.internal.telephony.cat.CatService: com.android.internal.telephony.cat.CatCmdMessage mMenuCmd> = null;
+
+        r0.<com.android.internal.telephony.cat.CatService: com.android.internal.telephony.cat.RilMessageDecoder mMsgDecoder> = null;
+
+        r0.<com.android.internal.telephony.cat.CatService: boolean mStkAppInstalled> = 0;
+
+        $r6 = <com.android.internal.telephony.uicc.IccCardStatus$CardState: com.android.internal.telephony.uicc.IccCardStatus$CardState CARDSTATE_ABSENT>;
+
+        r0.<com.android.internal.telephony.cat.CatService: com.android.internal.telephony.uicc.IccCardStatus$CardState mCardState> = $r6;
+
+        if r25 == null goto label2;
+
+        if r1 == null goto label2;
+
+        if r2 == null goto label2;
+
+        if r3 == null goto label2;
+
+        if r4 == null goto label2;
+
+        if r5 == null goto label2;
+
+        r0.<com.android.internal.telephony.cat.CatService: com.android.internal.telephony.CommandsInterface mCmdIf> = r25;
+
+        r0.<com.android.internal.telephony.cat.CatService: android.content.Context mContext> = r3;
+
+        r0.<com.android.internal.telephony.cat.CatService: int mSlotId> = i0;
+
+        r26 = staticinvoke <com.android.internal.telephony.cat.RilMessageDecoder: com.android.internal.telephony.cat.RilMessageDecoder getInstance(android.os.Handler,com.android.internal.telephony.uicc.IccFileHandler,android.content.Context,int)>(r0, r4, r3, i0);
+
+        r0.<com.android.internal.telephony.cat.CatService: com.android.internal.telephony.cat.RilMessageDecoder mMsgDecoder> = r26;
+
+        if r26 != null goto label1;
+
+        staticinvoke <com.android.internal.telephony.cat.CatLog: void d(java.lang.Object,java.lang.String)>(r0, "Null RilMessageDecoder instance");
+
+        return;
+
+     label1:
+        virtualinvoke r26.<com.android.internal.telephony.cat.RilMessageDecoder: void start()>();
+
+        $r7 = r0.<com.android.internal.telephony.cat.CatService: com.android.internal.telephony.CommandsInterface mCmdIf>;
+
+        interfaceinvoke $r7.<com.android.internal.telephony.CommandsInterface: void setOnCatSessionEnd(android.os.Handler,int,java.lang.Object)>(r0, 1, null);
+
+        $r8 = r0.<com.android.internal.telephony.cat.CatService: com.android.internal.telephony.CommandsInterface mCmdIf>;
+
+        interfaceinvoke $r8.<com.android.internal.telephony.CommandsInterface: void setOnCatProactiveCmd(android.os.Handler,int,java.lang.Object)>(r0, 2, null);
+
+        $r9 = r0.<com.android.internal.telephony.cat.CatService: com.android.internal.telephony.CommandsInterface mCmdIf>;
+
+        interfaceinvoke $r9.<com.android.internal.telephony.CommandsInterface: void setOnCatEvent(android.os.Handler,int,java.lang.Object)>(r0, 3, null);
+
+        $r10 = r0.<com.android.internal.telephony.cat.CatService: com.android.internal.telephony.CommandsInterface mCmdIf>;
+
+        interfaceinvoke $r10.<com.android.internal.telephony.CommandsInterface: void setOnCatCallSetUp(android.os.Handler,int,java.lang.Object)>(r0, 4, null);
+
+        $r11 = r0.<com.android.internal.telephony.cat.CatService: com.android.internal.telephony.CommandsInterface mCmdIf>;
+
+        interfaceinvoke $r11.<com.android.internal.telephony.CommandsInterface: void registerForIccRefresh(android.os.Handler,int,java.lang.Object)>(r0, 30, null);
+
+        $r12 = r0.<com.android.internal.telephony.cat.CatService: com.android.internal.telephony.CommandsInterface mCmdIf>;
+
+        interfaceinvoke $r12.<com.android.internal.telephony.CommandsInterface: void setOnCatCcAlphaNotify(android.os.Handler,int,java.lang.Object)>(r0, 9, null);
+
+        <com.android.internal.telephony.cat.CatService: com.android.internal.telephony.uicc.IccRecords mIccRecords> = r2;
+
+        <com.android.internal.telephony.cat.CatService: com.android.internal.telephony.uicc.UiccCardApplication mUiccApplication> = r1;
+
+        virtualinvoke r2.<com.android.internal.telephony.uicc.IccRecords: void registerForRecordsLoaded(android.os.Handler,int,java.lang.Object)>(r0, 20, null);
+
+        $r13 = new java.lang.StringBuilder;
+
+        specialinvoke $r13.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("registerForRecordsLoaded slotid=");
+
+        $i1 = r0.<com.android.internal.telephony.cat.CatService: int mSlotId>;
+
+        virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i1);
+
+        virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" instance:");
+
+        virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r0);
+
+        $r18 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.internal.telephony.cat.CatLog: void d(java.lang.Object,java.lang.String)>(r0, $r18);
+
+        r28 = staticinvoke <com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.uicc.UiccController getInstance()>();
+
+        r0.<com.android.internal.telephony.cat.CatService: com.android.internal.telephony.uicc.UiccController mUiccController> = r28;
+
+        virtualinvoke r28.<com.android.internal.telephony.uicc.UiccController: void registerForIccChanged(android.os.Handler,int,java.lang.Object)>(r0, 8, null);
+
+        $z0 = specialinvoke r0.<com.android.internal.telephony.cat.CatService: boolean isStkAppInstalled()>();
+
+        r0.<com.android.internal.telephony.cat.CatService: boolean mStkAppInstalled> = $z0;
+
+        $r19 = new java.lang.StringBuilder;
+
+        specialinvoke $r19.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Running CAT service on Slotid: ");
+
+        $i2 = r0.<com.android.internal.telephony.cat.CatService: int mSlotId>;
+
+        virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i2);
+
+        virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(". STK app installed:");
+
+        $z1 = r0.<com.android.internal.telephony.cat.CatService: boolean mStkAppInstalled>;
+
+        virtualinvoke $r19.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>($z1);
+
+        $r24 = virtualinvoke $r19.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.internal.telephony.cat.CatLog: void d(java.lang.Object,java.lang.String)>(r0, $r24);
+
+        return;
+
+     label2:
+        $r30 = new java.lang.NullPointerException;
+
+        specialinvoke $r30.<java.lang.NullPointerException: void <init>(java.lang.String)>("Service: Input parameters must not be null");
+
+        throw $r30;
+    }
+
+    private void broadcastAlphaMessage(java.lang.String)
+    {
+        com.android.internal.telephony.cat.CatService r0;
+        java.lang.String r1, $r5;
+        java.lang.StringBuilder $r2;
+        android.content.Intent $r6;
+        int $i0;
+        android.content.ComponentName $r10;
+        android.content.Context $r12;
+
+        r0 := @this: com.android.internal.telephony.cat.CatService;
+
+        r1 := @parameter0: java.lang.String;
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Broadcasting CAT Alpha message from card: ");
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r1);
+
+        $r5 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.internal.telephony.cat.CatLog: void d(java.lang.Object,java.lang.String)>(r0, $r5);
+
+        $r6 = new android.content.Intent;
+
+        specialinvoke $r6.<android.content.Intent: void <init>(java.lang.String)>("com.android.internal.stk.alpha_notify");
+
+        virtualinvoke $r6.<android.content.Intent: android.content.Intent addFlags(int)>(268435456);
+
+        virtualinvoke $r6.<android.content.Intent: android.content.Intent putExtra(java.lang.String,java.lang.String)>("alpha_string", r1);
+
+        $i0 = r0.<com.android.internal.telephony.cat.CatService: int mSlotId>;
+
+        virtualinvoke $r6.<android.content.Intent: android.content.Intent putExtra(java.lang.String,int)>("SLOT_ID", $i0);
+
+        $r10 = staticinvoke <com.android.internal.telephony.cat.AppInterface: android.content.ComponentName getDefaultSTKApplication()>();
+
+        virtualinvoke $r6.<android.content.Intent: android.content.Intent setComponent(android.content.ComponentName)>($r10);
+
+        $r12 = r0.<com.android.internal.telephony.cat.CatService: android.content.Context mContext>;
+
+        virtualinvoke $r12.<android.content.Context: void sendBroadcast(android.content.Intent,java.lang.String)>($r6, "android.permission.RECEIVE_STK_COMMANDS");
+
+        return;
+    }
+
+    private void broadcastCardStateAndIccRefreshResp(com.android.internal.telephony.uicc.IccCardStatus$CardState, com.android.internal.telephony.uicc.IccRefreshResponse)
+    {
+        com.android.internal.telephony.cat.CatService r0;
+        com.android.internal.telephony.uicc.IccCardStatus$CardState r1, $r5;
+        android.content.Intent $r4;
+        android.content.ComponentName $r7;
+        int $i0, $i1, $i2, $i3;
+        java.lang.StringBuilder $r10, $r20;
+        java.lang.String $r17, $r23;
+        android.content.Context $r18;
+        com.android.internal.telephony.uicc.IccRefreshResponse r24;
+        boolean z0;
+
+        r0 := @this: com.android.internal.telephony.cat.CatService;
+
+        r1 := @parameter0: com.android.internal.telephony.uicc.IccCardStatus$CardState;
+
+        r24 := @parameter1: com.android.internal.telephony.uicc.IccRefreshResponse;
+
+        $r4 = new android.content.Intent;
+
+        specialinvoke $r4.<android.content.Intent: void <init>(java.lang.String)>("com.android.internal.stk.icc_status_change");
+
+        $r5 = <com.android.internal.telephony.uicc.IccCardStatus$CardState: com.android.internal.telephony.uicc.IccCardStatus$CardState CARDSTATE_PRESENT>;
+
+        if r1 != $r5 goto label1;
+
+        z0 = 1;
+
+        goto label2;
+
+     label1:
+        z0 = 0;
+
+     label2:
+        if r24 == null goto label3;
+
+        $i2 = r24.<com.android.internal.telephony.uicc.IccRefreshResponse: int refreshResult>;
+
+        virtualinvoke $r4.<android.content.Intent: android.content.Intent putExtra(java.lang.String,int)>("refresh_result", $i2);
+
+        $r20 = new java.lang.StringBuilder;
+
+        specialinvoke $r20.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r20.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Sending IccResult with Result: ");
+
+        $i3 = r24.<com.android.internal.telephony.uicc.IccRefreshResponse: int refreshResult>;
+
+        virtualinvoke $r20.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i3);
+
+        $r23 = virtualinvoke $r20.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.internal.telephony.cat.CatLog: void d(java.lang.Object,java.lang.String)>(r0, $r23);
+
+     label3:
+        virtualinvoke $r4.<android.content.Intent: android.content.Intent putExtra(java.lang.String,boolean)>("card_status", z0);
+
+        $r7 = staticinvoke <com.android.internal.telephony.cat.AppInterface: android.content.ComponentName getDefaultSTKApplication()>();
+
+        virtualinvoke $r4.<android.content.Intent: android.content.Intent setComponent(android.content.ComponentName)>($r7);
+
+        $i0 = r0.<com.android.internal.telephony.cat.CatService: int mSlotId>;
+
+        virtualinvoke $r4.<android.content.Intent: android.content.Intent putExtra(java.lang.String,int)>("SLOT_ID", $i0);
+
+        $r10 = new java.lang.StringBuilder;
+
+        specialinvoke $r10.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Sending Card Status: ");
+
+        virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r1);
+
+        virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" cardPresent: ");
+
+        virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>(z0);
+
+        virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("SLOT_ID: ");
+
+        $i1 = r0.<com.android.internal.telephony.cat.CatService: int mSlotId>;
+
+        virtualinvoke $r10.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i1);
+
+        $r17 = virtualinvoke $r10.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.internal.telephony.cat.CatLog: void d(java.lang.Object,java.lang.String)>(r0, $r17);
+
+        $r18 = r0.<com.android.internal.telephony.cat.CatService: android.content.Context mContext>;
+
+        virtualinvoke $r18.<android.content.Context: void sendBroadcast(android.content.Intent,java.lang.String)>($r4, "android.permission.RECEIVE_STK_COMMANDS");
+
+        return;
+    }
+
+    private void broadcastCatCmdIntent(com.android.internal.telephony.cat.CatCmdMessage)
+    {
+        com.android.internal.telephony.cat.CatService r0;
+        com.android.internal.telephony.cat.CatCmdMessage r1;
+        android.content.Intent $r4;
+        int $i0, $i1;
+        android.content.ComponentName $r7;
+        java.lang.StringBuilder $r9;
+        java.lang.String $r14;
+        android.content.Context $r15;
+
+        r0 := @this: com.android.internal.telephony.cat.CatService;
+
+        r1 := @parameter0: com.android.internal.telephony.cat.CatCmdMessage;
+
+        $r4 = new android.content.Intent;
+
+        specialinvoke $r4.<android.content.Intent: void <init>(java.lang.String)>("com.android.internal.stk.command");
+
+        virtualinvoke $r4.<android.content.Intent: android.content.Intent putExtra(java.lang.String,android.os.Parcelable)>("STK CMD", r1);
+
+        $i0 = r0.<com.android.internal.telephony.cat.CatService: int mSlotId>;
+
+        virtualinvoke $r4.<android.content.Intent: android.content.Intent putExtra(java.lang.String,int)>("SLOT_ID", $i0);
+
+        $r7 = staticinvoke <com.android.internal.telephony.cat.AppInterface: android.content.ComponentName getDefaultSTKApplication()>();
+
+        virtualinvoke $r4.<android.content.Intent: android.content.Intent setComponent(android.content.ComponentName)>($r7);
+
+        $r9 = new java.lang.StringBuilder;
+
+        specialinvoke $r9.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Sending CmdMsg: ");
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r1);
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" on slotid:");
+
+        $i1 = r0.<com.android.internal.telephony.cat.CatService: int mSlotId>;
+
+        virtualinvoke $r9.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i1);
+
+        $r14 = virtualinvoke $r9.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.internal.telephony.cat.CatLog: void d(java.lang.Object,java.lang.String)>(r0, $r14);
+
+        $r15 = r0.<com.android.internal.telephony.cat.CatService: android.content.Context mContext>;
+
+        virtualinvoke $r15.<android.content.Context: void sendBroadcast(android.content.Intent,java.lang.String)>($r4, "android.permission.RECEIVE_STK_COMMANDS");
+
+        return;
+    }
+
+    private void changeLanguage(java.lang.String) throws android.os.RemoteException
+    {
+        com.android.internal.telephony.cat.CatService r0;
+        java.lang.String r1;
+        android.os.LocaleList r2, $r7;
+        java.util.Locale[] r3;
+        int $i0, $i1, $i2, $i3, i4;
+        java.util.Locale $r4, $r9;
+        android.content.Context $r5;
+        java.lang.Object $r6;
+        android.app.ActivityManager $r8;
+
+        r0 := @this: com.android.internal.telephony.cat.CatService;
+
+        r1 := @parameter0: java.lang.String;
+
+        r2 = staticinvoke <android.os.LocaleList: android.os.LocaleList getDefault()>();
+
+        $i0 = virtualinvoke r2.<android.os.LocaleList: int size()>();
+
+        $i1 = $i0 + 1;
+
+        r3 = newarray (java.util.Locale)[$i1];
+
+        $r4 = new java.util.Locale;
+
+        specialinvoke $r4.<java.util.Locale: void <init>(java.lang.String)>(r1);
+
+        r3[0] = $r4;
+
+        i4 = 0;
+
+     label1:
+        $i2 = virtualinvoke r2.<android.os.LocaleList: int size()>();
+
+        if i4 >= $i2 goto label2;
+
+        $i3 = i4 + 1;
+
+        $r9 = virtualinvoke r2.<android.os.LocaleList: java.util.Locale get(int)>(i4);
+
+        r3[$i3] = $r9;
+
+        i4 = i4 + 1;
+
+        goto label1;
+
+     label2:
+        $r5 = r0.<com.android.internal.telephony.cat.CatService: android.content.Context mContext>;
+
+        $r6 = virtualinvoke $r5.<android.content.Context: java.lang.Object getSystemService(java.lang.Class)>(class "Landroid/app/ActivityManager;");
+
+        $r8 = (android.app.ActivityManager) $r6;
+
+        $r7 = new android.os.LocaleList;
+
+        specialinvoke $r7.<android.os.LocaleList: void <init>(java.util.Locale[])>(r3);
+
+        virtualinvoke $r8.<android.app.ActivityManager: void setDeviceLocales(android.os.LocaleList)>($r7);
+
+        staticinvoke <android.app.backup.BackupManager: void dataChanged(java.lang.String)>("com.android.providers.settings");
+
+        return;
+    }
+
+    private void encodeOptionalTags(com.android.internal.telephony.cat.CommandDetails, com.android.internal.telephony.cat.ResultCode, com.android.internal.telephony.cat.Input, java.io.ByteArrayOutputStream)
+    {
+        com.android.internal.telephony.cat.CatService r0;
+        com.android.internal.telephony.cat.CommandDetails r1;
+        com.android.internal.telephony.cat.Input r2;
+        java.io.ByteArrayOutputStream r3;
+        com.android.internal.telephony.cat.AppInterface$CommandType r4;
+        int i0, $i1, $i2, $i3, $i4, $i5, $i6, $i7;
+        java.lang.StringBuilder $r5, $r13;
+        java.lang.String $r8, $r16;
+        int[] $r9;
+        com.android.internal.telephony.cat.ResultCode $r10, $r11, r17;
+        com.android.internal.telephony.cat.Duration $r12;
+
+        r0 := @this: com.android.internal.telephony.cat.CatService;
+
+        r1 := @parameter0: com.android.internal.telephony.cat.CommandDetails;
+
+        r17 := @parameter1: com.android.internal.telephony.cat.ResultCode;
+
+        r2 := @parameter2: com.android.internal.telephony.cat.Input;
+
+        r3 := @parameter3: java.io.ByteArrayOutputStream;
+
+        $i1 = r1.<com.android.internal.telephony.cat.CommandDetails: int typeOfCommand>;
+
+        r4 = staticinvoke <com.android.internal.telephony.cat.AppInterface$CommandType: com.android.internal.telephony.cat.AppInterface$CommandType fromInt(int)>($i1);
+
+        if r4 == null goto label3;
+
+        $r9 = <com.android.internal.telephony.cat.CatService$1: int[] $SwitchMap$com$android$internal$telephony$cat$AppInterface$CommandType>;
+
+        $i2 = virtualinvoke r4.<com.android.internal.telephony.cat.AppInterface$CommandType: int ordinal()>();
+
+        i0 = $r9[$i2];
+
+        if i0 == 5 goto label2;
+
+        if i0 == 8 goto label1;
+
+        if i0 == 9 goto label1;
+
+        $r13 = new java.lang.StringBuilder;
+
+        specialinvoke $r13.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("encodeOptionalTags() Unsupported Cmd details=");
+
+        virtualinvoke $r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r1);
+
+        $r16 = virtualinvoke $r13.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.internal.telephony.cat.CatLog: void d(java.lang.Object,java.lang.String)>(r0, $r16);
+
+        goto label4;
+
+     label1:
+        $i6 = virtualinvoke r17.<com.android.internal.telephony.cat.ResultCode: int value()>();
+
+        $r11 = <com.android.internal.telephony.cat.ResultCode: com.android.internal.telephony.cat.ResultCode NO_RESPONSE_FROM_USER>;
+
+        $i7 = virtualinvoke $r11.<com.android.internal.telephony.cat.ResultCode: int value()>();
+
+        if $i6 != $i7 goto label4;
+
+        if r2 == null goto label4;
+
+        $r12 = r2.<com.android.internal.telephony.cat.Input: com.android.internal.telephony.cat.Duration duration>;
+
+        if $r12 == null goto label4;
+
+        specialinvoke r0.<com.android.internal.telephony.cat.CatService: void getInKeyResponse(java.io.ByteArrayOutputStream,com.android.internal.telephony.cat.Input)>(r3, r2);
+
+        goto label4;
+
+     label2:
+        $i3 = r1.<com.android.internal.telephony.cat.CommandDetails: int commandQualifier>;
+
+        if $i3 != 4 goto label4;
+
+        $i4 = virtualinvoke r17.<com.android.internal.telephony.cat.ResultCode: int value()>();
+
+        $r10 = <com.android.internal.telephony.cat.ResultCode: com.android.internal.telephony.cat.ResultCode OK>;
+
+        $i5 = virtualinvoke $r10.<com.android.internal.telephony.cat.ResultCode: int value()>();
+
+        if $i4 != $i5 goto label4;
+
+        specialinvoke r0.<com.android.internal.telephony.cat.CatService: void getPliResponse(java.io.ByteArrayOutputStream)>(r3);
+
+        goto label4;
+
+     label3:
+        $r5 = new java.lang.StringBuilder;
+
+        specialinvoke $r5.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("encodeOptionalTags() bad Cmd details=");
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r1);
+
+        $r8 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.internal.telephony.cat.CatLog: void d(java.lang.Object,java.lang.String)>(r0, $r8);
+
+     label4:
+        return;
+    }
+
+    private void eventDownload(int, int, int, byte[], boolean)
+    {
+        com.android.internal.telephony.cat.CatService r0;
+        int i0, $i2, $i3, $i4, $i5, $i6, $i7, $i11, $i12, i13, i14, i15, i16;
+        boolean z0;
+        java.io.ByteArrayOutputStream $r1;
+        com.android.internal.telephony.cat.ComprehensionTlvTag $r2, $r3, $r11;
+        com.android.internal.telephony.cat.CatService[] $r4, $r10;
+        byte $b8, $b9, $b10;
+        java.lang.StringBuilder $r5;
+        java.lang.String $r8, r15;
+        com.android.internal.telephony.CommandsInterface $r9;
+        byte[] r12, r14;
+
+        r0 := @this: com.android.internal.telephony.cat.CatService;
+
+        i13 := @parameter0: int;
+
+        i14 := @parameter1: int;
+
+        i0 := @parameter2: int;
+
+        r12 := @parameter3: byte[];
+
+        z0 := @parameter4: boolean;
+
+        $r1 = new java.io.ByteArrayOutputStream;
+
+        specialinvoke $r1.<java.io.ByteArrayOutputStream: void <init>()>();
+
+        virtualinvoke $r1.<java.io.ByteArrayOutputStream: void write(int)>(214);
+
+        virtualinvoke $r1.<java.io.ByteArrayOutputStream: void write(int)>(0);
+
+        $r2 = <com.android.internal.telephony.cat.ComprehensionTlvTag: com.android.internal.telephony.cat.ComprehensionTlvTag EVENT_LIST>;
+
+        $i2 = virtualinvoke $r2.<com.android.internal.telephony.cat.ComprehensionTlvTag: int value()>();
+
+        $i3 = $i2 | 128;
+
+        virtualinvoke $r1.<java.io.ByteArrayOutputStream: void write(int)>($i3);
+
+        virtualinvoke $r1.<java.io.ByteArrayOutputStream: void write(int)>(1);
+
+        virtualinvoke $r1.<java.io.ByteArrayOutputStream: void write(int)>(i13);
+
+        $r3 = <com.android.internal.telephony.cat.ComprehensionTlvTag: com.android.internal.telephony.cat.ComprehensionTlvTag DEVICE_IDENTITIES>;
+
+        $i4 = virtualinvoke $r3.<com.android.internal.telephony.cat.ComprehensionTlvTag: int value()>();
+
+        $i5 = $i4 | 128;
+
+        virtualinvoke $r1.<java.io.ByteArrayOutputStream: void write(int)>($i5);
+
+        virtualinvoke $r1.<java.io.ByteArrayOutputStream: void write(int)>(2);
+
+        virtualinvoke $r1.<java.io.ByteArrayOutputStream: void write(int)>(i14);
+
+        virtualinvoke $r1.<java.io.ByteArrayOutputStream: void write(int)>(i0);
+
+        if i13 == 5 goto label2;
+
+        if i13 == 7 goto label1;
+
+        goto label3;
+
+     label1:
+        $r10 = <com.android.internal.telephony.cat.CatService: com.android.internal.telephony.cat.CatService[] sInstance>;
+
+        staticinvoke <com.android.internal.telephony.cat.CatLog: void d(java.lang.Object,java.lang.String)>($r10, " Sending Language Selection event download to ICC");
+
+        $r11 = <com.android.internal.telephony.cat.ComprehensionTlvTag: com.android.internal.telephony.cat.ComprehensionTlvTag LANGUAGE>;
+
+        $i11 = virtualinvoke $r11.<com.android.internal.telephony.cat.ComprehensionTlvTag: int value()>();
+
+        $i12 = $i11 | 128;
+
+        virtualinvoke $r1.<java.io.ByteArrayOutputStream: void write(int)>($i12);
+
+        virtualinvoke $r1.<java.io.ByteArrayOutputStream: void write(int)>(2);
+
+        goto label3;
+
+     label2:
+        $r4 = <com.android.internal.telephony.cat.CatService: com.android.internal.telephony.cat.CatService[] sInstance>;
+
+        staticinvoke <com.android.internal.telephony.cat.CatLog: void d(java.lang.Object,java.lang.String)>($r4, " Sending Idle Screen Available event download to ICC");
+
+     label3:
+        if r12 == null goto label5;
+
+        i15 = lengthof r12;
+
+        i16 = 0;
+
+     label4:
+        if i16 >= i15 goto label5;
+
+        $b10 = r12[i16];
+
+        virtualinvoke $r1.<java.io.ByteArrayOutputStream: void write(int)>($b10);
+
+        i16 = i16 + 1;
+
+        goto label4;
+
+     label5:
+        r14 = virtualinvoke $r1.<java.io.ByteArrayOutputStream: byte[] toByteArray()>();
+
+        $i6 = lengthof r14;
+
+        $i7 = $i6 - 2;
+
+        $b8 = (byte) $i7;
+
+        $b9 = (byte) $b8;
+
+        r14[1] = $b9;
+
+        r15 = staticinvoke <com.android.internal.telephony.uicc.IccUtils: java.lang.String bytesToHexString(byte[])>(r14);
+
+        $r5 = new java.lang.StringBuilder;
+
+        specialinvoke $r5.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("ENVELOPE COMMAND: ");
+
+        virtualinvoke $r5.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r15);
+
+        $r8 = virtualinvoke $r5.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.internal.telephony.cat.CatLog: void d(java.lang.Object,java.lang.String)>(r0, $r8);
+
+        $r9 = r0.<com.android.internal.telephony.cat.CatService: com.android.internal.telephony.CommandsInterface mCmdIf>;
+
+        interfaceinvoke $r9.<com.android.internal.telephony.CommandsInterface: void sendEnvelope(java.lang.String,android.os.Message)>(r15, null);
+
+        return;
+    }
+
+    private void getInKeyResponse(java.io.ByteArrayOutputStream, com.android.internal.telephony.cat.Input)
+    {
+        com.android.internal.telephony.cat.CatService r0;
+        java.io.ByteArrayOutputStream r1;
+        com.android.internal.telephony.cat.Input r2;
+        com.android.internal.telephony.cat.Duration$TimeUnit r3, $r6;
+        com.android.internal.telephony.cat.ComprehensionTlvTag $r4;
+        int $i0, $i1, $i2;
+        com.android.internal.telephony.cat.Duration $r5, $r7;
+
+        r0 := @this: com.android.internal.telephony.cat.CatService;
+
+        r1 := @parameter0: java.io.ByteArrayOutputStream;
+
+        r2 := @parameter1: com.android.internal.telephony.cat.Input;
+
+        $r4 = <com.android.internal.telephony.cat.ComprehensionTlvTag: com.android.internal.telephony.cat.ComprehensionTlvTag DURATION>;
+
+        $i0 = virtualinvoke $r4.<com.android.internal.telephony.cat.ComprehensionTlvTag: int value()>();
+
+        virtualinvoke r1.<java.io.ByteArrayOutputStream: void write(int)>($i0);
+
+        virtualinvoke r1.<java.io.ByteArrayOutputStream: void write(int)>(2);
+
+        $r5 = r2.<com.android.internal.telephony.cat.Input: com.android.internal.telephony.cat.Duration duration>;
+
+        r3 = $r5.<com.android.internal.telephony.cat.Duration: com.android.internal.telephony.cat.Duration$TimeUnit timeUnit>;
+
+        $r6 = <com.android.internal.telephony.cat.Duration$TimeUnit: com.android.internal.telephony.cat.Duration$TimeUnit SECOND>;
+
+        $i1 = virtualinvoke $r6.<com.android.internal.telephony.cat.Duration$TimeUnit: int value()>();
+
+        virtualinvoke r1.<java.io.ByteArrayOutputStream: void write(int)>($i1);
+
+        $r7 = r2.<com.android.internal.telephony.cat.Input: com.android.internal.telephony.cat.Duration duration>;
+
+        $i2 = $r7.<com.android.internal.telephony.cat.Duration: int timeInterval>;
+
+        virtualinvoke r1.<java.io.ByteArrayOutputStream: void write(int)>($i2);
+
+        return;
+    }
+
+    public static com.android.internal.telephony.cat.AppInterface getInstance()
+    {
+        com.android.internal.telephony.SubscriptionController r0;
+        com.android.internal.telephony.cat.CatService $r1;
+        int $i0, i1;
+
+        i1 = 0;
+
+        r0 = staticinvoke <com.android.internal.telephony.SubscriptionController: com.android.internal.telephony.SubscriptionController getInstance()>();
+
+        if r0 == null goto label1;
+
+        $i0 = virtualinvoke r0.<com.android.internal.telephony.SubscriptionController: int getDefaultSubId()>();
+
+        i1 = virtualinvoke r0.<com.android.internal.telephony.SubscriptionController: int getSlotIndex(int)>($i0);
+
+     label1:
+        $r1 = staticinvoke <com.android.internal.telephony.cat.CatService: com.android.internal.telephony.cat.CatService getInstance(com.android.internal.telephony.CommandsInterface,android.content.Context,com.android.internal.telephony.uicc.UiccProfile,int)>(null, null, null, i1);
+
+        return $r1;
+    }
+
+    public static com.android.internal.telephony.cat.AppInterface getInstance(int)
+    {
+        int i0;
+        com.android.internal.telephony.cat.CatService $r0;
+
+        i0 := @parameter0: int;
+
+        $r0 = staticinvoke <com.android.internal.telephony.cat.CatService: com.android.internal.telephony.cat.CatService getInstance(com.android.internal.telephony.CommandsInterface,android.content.Context,com.android.internal.telephony.uicc.UiccProfile,int)>(null, null, null, i0);
+
+        return $r0;
+    }
+
+    public static com.android.internal.telephony.cat.CatService getInstance(com.android.internal.telephony.CommandsInterface, android.content.Context, com.android.internal.telephony.uicc.UiccProfile, int)
+    {
+        com.android.internal.telephony.uicc.UiccProfile r0;
+        int i0, i1, i2;
+        java.lang.Object r1;
+        com.android.internal.telephony.cat.CatService[] r2, $r4, $r8, $r10, $r14, $r18, $r22, $r23, $r30, $r33;
+        com.android.internal.telephony.cat.CatService r3, $r5, $r9, $r15, $r19, r31, r34;
+        com.android.internal.telephony.uicc.IccRecords $r6, $r7, $r20, r29;
+        java.lang.String $r17;
+        android.telephony.TelephonyManager $r21;
+        java.lang.Throwable $r24;
+        com.android.internal.telephony.CommandsInterface r25;
+        android.content.Context r26;
+        com.android.internal.telephony.uicc.UiccCardApplication r27;
+        com.android.internal.telephony.uicc.IccFileHandler r28;
+        java.lang.StringBuilder r32;
+
+        r25 := @parameter0: com.android.internal.telephony.CommandsInterface;
+
+        r26 := @parameter1: android.content.Context;
+
+        r0 := @parameter2: com.android.internal.telephony.uicc.UiccProfile;
+
+        i0 := @parameter3: int;
+
+        if r0 == null goto label02;
+
+        r27 = virtualinvoke r0.<com.android.internal.telephony.uicc.UiccProfile: com.android.internal.telephony.uicc.UiccCardApplication getApplicationIndex(int)>(0);
+
+        if r27 == null goto label01;
+
+        r28 = virtualinvoke r27.<com.android.internal.telephony.uicc.UiccCardApplication: com.android.internal.telephony.uicc.IccFileHandler getIccFileHandler()>();
+
+        r29 = virtualinvoke r27.<com.android.internal.telephony.uicc.UiccCardApplication: com.android.internal.telephony.uicc.IccRecords getIccRecords()>();
+
+        goto label03;
+
+     label01:
+        r28 = null;
+
+        r29 = null;
+
+        goto label03;
+
+     label02:
+        r27 = null;
+
+        r28 = null;
+
+        r29 = null;
+
+     label03:
+        r1 = <com.android.internal.telephony.cat.CatService: java.lang.Object sInstanceLock>;
+
+        entermonitor r1;
+
+     label04:
+        $r30 = <com.android.internal.telephony.cat.CatService: com.android.internal.telephony.cat.CatService[] sInstance>;
+
+        if $r30 != null goto label09;
+
+        $r21 = staticinvoke <android.telephony.TelephonyManager: android.telephony.TelephonyManager getDefault()>();
+
+        i1 = virtualinvoke $r21.<android.telephony.TelephonyManager: int getSupportedModemCount()>();
+
+        $r22 = newarray (com.android.internal.telephony.cat.CatService)[i1];
+
+        <com.android.internal.telephony.cat.CatService: com.android.internal.telephony.cat.CatService[] sInstance> = $r22;
+
+     label05:
+        i2 = 0;
+
+     label06:
+        if i2 >= i1 goto label09;
+
+     label07:
+        $r23 = <com.android.internal.telephony.cat.CatService: com.android.internal.telephony.cat.CatService[] sInstance>;
+
+        $r23[i2] = null;
+
+     label08:
+        i2 = i2 + 1;
+
+        goto label06;
+
+     label09:
+        $r4 = <com.android.internal.telephony.cat.CatService: com.android.internal.telephony.cat.CatService[] sInstance>;
+
+        $r5 = $r4[i0];
+
+        if $r5 != null goto label15;
+
+     label10:
+        if r25 == null goto label13;
+
+        if r27 == null goto label13;
+
+        if r29 == null goto label13;
+
+        if r26 == null goto label13;
+
+        if r28 == null goto label13;
+
+        if r0 != null goto label11;
+
+        goto label13;
+
+     label11:
+        r2 = <com.android.internal.telephony.cat.CatService: com.android.internal.telephony.cat.CatService[] sInstance>;
+
+        r3 = new com.android.internal.telephony.cat.CatService;
+
+        specialinvoke r3.<com.android.internal.telephony.cat.CatService: void <init>(com.android.internal.telephony.CommandsInterface,com.android.internal.telephony.uicc.UiccCardApplication,com.android.internal.telephony.uicc.IccRecords,android.content.Context,com.android.internal.telephony.uicc.IccFileHandler,com.android.internal.telephony.uicc.UiccProfile,int)>(r25, r27, r29, r26, r28, r0, i0);
+
+     label12:
+        r2[i0] = r3;
+
+        goto label18;
+
+     label13:
+        exitmonitor r1;
+
+     label14:
+        return null;
+
+     label15:
+        if r29 == null goto label18;
+
+     label16:
+        $r6 = <com.android.internal.telephony.cat.CatService: com.android.internal.telephony.uicc.IccRecords mIccRecords>;
+
+        if $r6 == r29 goto label18;
+
+        $r7 = <com.android.internal.telephony.cat.CatService: com.android.internal.telephony.uicc.IccRecords mIccRecords>;
+
+        if $r7 == null goto label17;
+
+        $r20 = <com.android.internal.telephony.cat.CatService: com.android.internal.telephony.uicc.IccRecords mIccRecords>;
+
+        $r18 = <com.android.internal.telephony.cat.CatService: com.android.internal.telephony.cat.CatService[] sInstance>;
+
+        $r19 = $r18[i0];
+
+        virtualinvoke $r20.<com.android.internal.telephony.uicc.IccRecords: void unregisterForRecordsLoaded(android.os.Handler)>($r19);
+
+     label17:
+        <com.android.internal.telephony.cat.CatService: com.android.internal.telephony.uicc.IccRecords mIccRecords> = r29;
+
+        <com.android.internal.telephony.cat.CatService: com.android.internal.telephony.uicc.UiccCardApplication mUiccApplication> = r27;
+
+        $r8 = <com.android.internal.telephony.cat.CatService: com.android.internal.telephony.cat.CatService[] sInstance>;
+
+        $r9 = $r8[i0];
+
+        virtualinvoke r29.<com.android.internal.telephony.uicc.IccRecords: void registerForRecordsLoaded(android.os.Handler,int,java.lang.Object)>($r9, 20, null);
+
+        $r10 = <com.android.internal.telephony.cat.CatService: com.android.internal.telephony.cat.CatService[] sInstance>;
+
+        r31 = $r10[i0];
+
+        r32 = new java.lang.StringBuilder;
+
+        specialinvoke r32.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r32.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("registerForRecordsLoaded slotid=");
+
+        virtualinvoke r32.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i0);
+
+        virtualinvoke r32.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" instance:");
+
+        $r14 = <com.android.internal.telephony.cat.CatService: com.android.internal.telephony.cat.CatService[] sInstance>;
+
+        $r15 = $r14[i0];
+
+        virtualinvoke r32.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r15);
+
+        $r17 = virtualinvoke r32.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.internal.telephony.cat.CatLog: void d(java.lang.Object,java.lang.String)>(r31, $r17);
+
+     label18:
+        $r33 = <com.android.internal.telephony.cat.CatService: com.android.internal.telephony.cat.CatService[] sInstance>;
+
+        r34 = $r33[i0];
+
+        exitmonitor r1;
+
+     label19:
+        return r34;
+
+     label20:
+        $r24 := @caughtexception;
+
+     label21:
+        exitmonitor r1;
+
+     label22:
+        throw $r24;
+
+        catch java.lang.Throwable from label04 to label05 with label20;
+        catch java.lang.Throwable from label07 to label08 with label20;
+        catch java.lang.Throwable from label09 to label10 with label20;
+        catch java.lang.Throwable from label11 to label12 with label20;
+        catch java.lang.Throwable from label13 to label14 with label20;
+        catch java.lang.Throwable from label16 to label17 with label20;
+        catch java.lang.Throwable from label17 to label18 with label20;
+        catch java.lang.Throwable from label18 to label19 with label20;
+        catch java.lang.Throwable from label21 to label22 with label20;
+    }
+
+    private void getPliResponse(java.io.ByteArrayOutputStream)
+    {
+        com.android.internal.telephony.cat.CatService r0;
+        java.io.ByteArrayOutputStream r1;
+        java.lang.String r2;
+        java.util.Locale $r3;
+        com.android.internal.telephony.cat.ComprehensionTlvTag $r4;
+        int $i0, $i1, $i2;
+        byte[] $r5;
+
+        r0 := @this: com.android.internal.telephony.cat.CatService;
+
+        r1 := @parameter0: java.io.ByteArrayOutputStream;
+
+        $r3 = staticinvoke <java.util.Locale: java.util.Locale getDefault()>();
+
+        r2 = virtualinvoke $r3.<java.util.Locale: java.lang.String getLanguage()>();
+
+        if r2 == null goto label1;
+
+        $r4 = <com.android.internal.telephony.cat.ComprehensionTlvTag: com.android.internal.telephony.cat.ComprehensionTlvTag LANGUAGE>;
+
+        $i0 = virtualinvoke $r4.<com.android.internal.telephony.cat.ComprehensionTlvTag: int value()>();
+
+        virtualinvoke r1.<java.io.ByteArrayOutputStream: void write(int)>($i0);
+
+        $i1 = virtualinvoke r2.<java.lang.String: int length()>();
+
+        staticinvoke <com.android.internal.telephony.cat.ResponseData: void writeLength(java.io.ByteArrayOutputStream,int)>(r1, $i1);
+
+        $r5 = virtualinvoke r2.<java.lang.String: byte[] getBytes()>();
+
+        $i2 = virtualinvoke r2.<java.lang.String: int length()>();
+
+        virtualinvoke r1.<java.io.ByteArrayOutputStream: void write(byte[],int,int)>($r5, 0, $i2);
+
+     label1:
+        return;
+    }
+
+    private void handleCmdResponse(com.android.internal.telephony.cat.CatResponseMessage)
+    {
+        com.android.internal.telephony.cat.CatService r0;
+        com.android.internal.telephony.cat.CatResponseMessage r1;
+        com.android.internal.telephony.cat.CommandDetails r2;
+        int i0, $i1, $i2, $i3, $i4, $i5, $i6, $i7, $i8, i9, $i10;
+        boolean $z0, $z1, $z2, $z3, $z4, $z5, z6, z7, $z8;
+        com.android.internal.telephony.cat.ResultCode $r3, $r11, $r12, $r13, $r14, $r23, $r24, $r28;
+        int[] $r4, $r10;
+        com.android.internal.telephony.cat.AppInterface$CommandType $r5, $r7, $r9, r26;
+        com.android.internal.telephony.CommandsInterface $r6, $r8, $r17;
+        byte[] $r15, $r16;
+        com.android.internal.telephony.cat.CatCmdMessage $r18;
+        com.android.internal.telephony.cat.GetInkeyInputResponseData $r19, $r20;
+        java.lang.String $r21;
+        com.android.internal.telephony.cat.SelectItemResponseData $r22;
+        com.android.internal.telephony.cat.ResponseData r25;
+        com.android.internal.telephony.cat.Input r27;
+
+        r0 := @this: com.android.internal.telephony.cat.CatService;
+
+        r1 := @parameter0: com.android.internal.telephony.cat.CatResponseMessage;
+
+        $z0 = specialinvoke r0.<com.android.internal.telephony.cat.CatService: boolean validateResponse(com.android.internal.telephony.cat.CatResponseMessage)>(r1);
+
+        if $z0 != 0 goto label01;
+
+        return;
+
+     label01:
+        r25 = null;
+
+        r2 = virtualinvoke r1.<com.android.internal.telephony.cat.CatResponseMessage: com.android.internal.telephony.cat.CommandDetails getCmdDetails()>();
+
+        $i1 = r2.<com.android.internal.telephony.cat.CommandDetails: int typeOfCommand>;
+
+        r26 = staticinvoke <com.android.internal.telephony.cat.AppInterface$CommandType: com.android.internal.telephony.cat.AppInterface$CommandType fromInt(int)>($i1);
+
+        $r4 = <com.android.internal.telephony.cat.CatService$1: int[] $SwitchMap$com$android$internal$telephony$cat$ResultCode>;
+
+        $r3 = r1.<com.android.internal.telephony.cat.CatResponseMessage: com.android.internal.telephony.cat.ResultCode mResCode>;
+
+        $i2 = virtualinvoke $r3.<com.android.internal.telephony.cat.ResultCode: int ordinal()>();
+
+        i9 = $r4[$i2];
+
+        z6 = 0;
+
+        tableswitch(i9)
+        {
+            case 1: goto label09;
+            case 2: goto label08;
+            case 3: goto label08;
+            case 4: goto label08;
+            case 5: goto label08;
+            case 6: goto label08;
+            case 7: goto label08;
+            case 8: goto label08;
+            case 9: goto label08;
+            case 10: goto label08;
+            case 11: goto label08;
+            case 12: goto label08;
+            case 13: goto label08;
+            case 14: goto label05;
+            case 15: goto label05;
+            case 16: goto label03;
+            case 17: goto label04;
+            default: goto label02;
+        };
+
+     label02:
+        return;
+
+     label03:
+        $r5 = <com.android.internal.telephony.cat.AppInterface$CommandType: com.android.internal.telephony.cat.AppInterface$CommandType SET_UP_CALL>;
+
+        if r26 != $r5 goto label04;
+
+        $r6 = r0.<com.android.internal.telephony.cat.CatService: com.android.internal.telephony.CommandsInterface mCmdIf>;
+
+        interfaceinvoke $r6.<com.android.internal.telephony.CommandsInterface: void handleCallSetupRequestFromSim(boolean,android.os.Message)>(0, null);
+
+        r0.<com.android.internal.telephony.cat.CatService: com.android.internal.telephony.cat.CatCmdMessage mCurrntCmd> = null;
+
+        return;
+
+     label04:
+        r25 = null;
+
+        goto label23;
+
+     label05:
+        $r7 = <com.android.internal.telephony.cat.AppInterface$CommandType: com.android.internal.telephony.cat.AppInterface$CommandType SET_UP_CALL>;
+
+        if r26 == $r7 goto label07;
+
+        $r9 = <com.android.internal.telephony.cat.AppInterface$CommandType: com.android.internal.telephony.cat.AppInterface$CommandType OPEN_CHANNEL>;
+
+        if r26 != $r9 goto label06;
+
+        goto label07;
+
+     label06:
+        r25 = null;
+
+        goto label23;
+
+     label07:
+        $r8 = r0.<com.android.internal.telephony.cat.CatService: com.android.internal.telephony.CommandsInterface mCmdIf>;
+
+        interfaceinvoke $r8.<com.android.internal.telephony.CommandsInterface: void handleCallSetupRequestFromSim(boolean,android.os.Message)>(0, null);
+
+        r0.<com.android.internal.telephony.cat.CatService: com.android.internal.telephony.cat.CatCmdMessage mCurrntCmd> = null;
+
+        return;
+
+     label08:
+        z7 = 0;
+
+        goto label10;
+
+     label09:
+        z7 = 1;
+
+     label10:
+        $r10 = <com.android.internal.telephony.cat.CatService$1: int[] $SwitchMap$com$android$internal$telephony$cat$AppInterface$CommandType>;
+
+        $i3 = virtualinvoke r26.<com.android.internal.telephony.cat.AppInterface$CommandType: int ordinal()>();
+
+        i0 = $r10[$i3];
+
+        if i0 == 1 goto label24;
+
+        if i0 == 2 goto label21;
+
+        if i0 == 4 goto label18;
+
+        if i0 == 17 goto label17;
+
+        if i0 == 19 goto label17;
+
+        tableswitch(i0)
+        {
+            case 6: goto label15;
+            case 7: goto label14;
+            case 8: goto label12;
+            case 9: goto label12;
+            default: goto label11;
+        };
+
+     label11:
+        goto label23;
+
+     label12:
+        $r18 = r0.<com.android.internal.telephony.cat.CatService: com.android.internal.telephony.cat.CatCmdMessage mCurrntCmd>;
+
+        r27 = virtualinvoke $r18.<com.android.internal.telephony.cat.CatCmdMessage: com.android.internal.telephony.cat.Input geInput()>();
+
+        $z2 = r27.<com.android.internal.telephony.cat.Input: boolean yesNo>;
+
+        if $z2 != 0 goto label13;
+
+        if z7 != 0 goto label23;
+
+        $r20 = new com.android.internal.telephony.cat.GetInkeyInputResponseData;
+
+        $r21 = r1.<com.android.internal.telephony.cat.CatResponseMessage: java.lang.String mUsersInput>;
+
+        $z5 = r27.<com.android.internal.telephony.cat.Input: boolean ucs2>;
+
+        $z4 = r27.<com.android.internal.telephony.cat.Input: boolean packed>;
+
+        specialinvoke $r20.<com.android.internal.telephony.cat.GetInkeyInputResponseData: void <init>(java.lang.String,boolean,boolean)>($r21, $z5, $z4);
+
+        r25 = $r20;
+
+        goto label23;
+
+     label13:
+        $r19 = new com.android.internal.telephony.cat.GetInkeyInputResponseData;
+
+        $z3 = r1.<com.android.internal.telephony.cat.CatResponseMessage: boolean mUsersYesNoSelection>;
+
+        specialinvoke $r19.<com.android.internal.telephony.cat.GetInkeyInputResponseData: void <init>(boolean)>($z3);
+
+        r25 = $r19;
+
+        goto label23;
+
+     label14:
+        $r22 = new com.android.internal.telephony.cat.SelectItemResponseData;
+
+        $i8 = r1.<com.android.internal.telephony.cat.CatResponseMessage: int mUsersMenuSelection>;
+
+        specialinvoke $r22.<com.android.internal.telephony.cat.SelectItemResponseData: void <init>(int)>($i8);
+
+        r25 = $r22;
+
+        goto label23;
+
+     label15:
+        $r24 = r1.<com.android.internal.telephony.cat.CatResponseMessage: com.android.internal.telephony.cat.ResultCode mResCode>;
+
+        $r23 = <com.android.internal.telephony.cat.ResultCode: com.android.internal.telephony.cat.ResultCode LAUNCH_BROWSER_ERROR>;
+
+        if $r24 != $r23 goto label16;
+
+        virtualinvoke r1.<com.android.internal.telephony.cat.CatResponseMessage: void setAdditionalInfo(int)>(4);
+
+        goto label23;
+
+     label16:
+        r1.<com.android.internal.telephony.cat.CatResponseMessage: boolean mIncludeAdditionalInfo> = 0;
+
+        r1.<com.android.internal.telephony.cat.CatResponseMessage: int mAdditionalInfo> = 0;
+
+        goto label23;
+
+     label17:
+        $r17 = r0.<com.android.internal.telephony.cat.CatService: com.android.internal.telephony.CommandsInterface mCmdIf>;
+
+        $z1 = r1.<com.android.internal.telephony.cat.CatResponseMessage: boolean mUsersConfirm>;
+
+        interfaceinvoke $r17.<com.android.internal.telephony.CommandsInterface: void handleCallSetupRequestFromSim(boolean,android.os.Message)>($z1, null);
+
+        r0.<com.android.internal.telephony.cat.CatService: com.android.internal.telephony.cat.CatCmdMessage mCurrntCmd> = null;
+
+        return;
+
+     label18:
+        $i5 = r1.<com.android.internal.telephony.cat.CatResponseMessage: int mEventValue>;
+
+        if 5 != $i5 goto label19;
+
+        $i7 = r1.<com.android.internal.telephony.cat.CatResponseMessage: int mEventValue>;
+
+        $r16 = r1.<com.android.internal.telephony.cat.CatResponseMessage: byte[] mAddedInfo>;
+
+        specialinvoke r0.<com.android.internal.telephony.cat.CatService: void eventDownload(int,int,int,byte[],boolean)>($i7, 2, 129, $r16, 0);
+
+        goto label20;
+
+     label19:
+        $i6 = r1.<com.android.internal.telephony.cat.CatResponseMessage: int mEventValue>;
+
+        $r15 = r1.<com.android.internal.telephony.cat.CatResponseMessage: byte[] mAddedInfo>;
+
+        specialinvoke r0.<com.android.internal.telephony.cat.CatService: void eventDownload(int,int,int,byte[],boolean)>($i6, 130, 129, $r15, 0);
+
+     label20:
+        return;
+
+     label21:
+        $r14 = r1.<com.android.internal.telephony.cat.CatResponseMessage: com.android.internal.telephony.cat.ResultCode mResCode>;
+
+        $r13 = <com.android.internal.telephony.cat.ResultCode: com.android.internal.telephony.cat.ResultCode TERMINAL_CRNTLY_UNABLE_TO_PROCESS>;
+
+        if $r14 != $r13 goto label22;
+
+        virtualinvoke r1.<com.android.internal.telephony.cat.CatResponseMessage: void setAdditionalInfo(int)>(1);
+
+        goto label23;
+
+     label22:
+        r1.<com.android.internal.telephony.cat.CatResponseMessage: boolean mIncludeAdditionalInfo> = 0;
+
+        r1.<com.android.internal.telephony.cat.CatResponseMessage: int mAdditionalInfo> = 0;
+
+     label23:
+        $r28 = r1.<com.android.internal.telephony.cat.CatResponseMessage: com.android.internal.telephony.cat.ResultCode mResCode>;
+
+        $z8 = r1.<com.android.internal.telephony.cat.CatResponseMessage: boolean mIncludeAdditionalInfo>;
+
+        $i10 = r1.<com.android.internal.telephony.cat.CatResponseMessage: int mAdditionalInfo>;
+
+        specialinvoke r0.<com.android.internal.telephony.cat.CatService: void sendTerminalResponse(com.android.internal.telephony.cat.CommandDetails,com.android.internal.telephony.cat.ResultCode,boolean,int,com.android.internal.telephony.cat.ResponseData)>(r2, $r28, $z8, $i10, r25);
+
+        r0.<com.android.internal.telephony.cat.CatService: com.android.internal.telephony.cat.CatCmdMessage mCurrntCmd> = null;
+
+        return;
+
+     label24:
+        $r12 = r1.<com.android.internal.telephony.cat.CatResponseMessage: com.android.internal.telephony.cat.ResultCode mResCode>;
+
+        $r11 = <com.android.internal.telephony.cat.ResultCode: com.android.internal.telephony.cat.ResultCode HELP_INFO_REQUIRED>;
+
+        if $r12 != $r11 goto label25;
+
+        z6 = 1;
+
+     label25:
+        $i4 = r1.<com.android.internal.telephony.cat.CatResponseMessage: int mUsersMenuSelection>;
+
+        specialinvoke r0.<com.android.internal.telephony.cat.CatService: void sendMenuSelection(int,boolean)>($i4, z6);
+
+        return;
+    }
+
+    private void handleCommand(com.android.internal.telephony.cat.CommandParams, boolean)
+    {
+        com.android.internal.telephony.cat.CatService r0;
+        com.android.internal.telephony.cat.CommandParams r1;
+        boolean z0, $z1, $z2, $z3, $z4, $z5, $z6, $z7, $z8, $z9, $z10, z11;
+        int i0, $i1, $i2, $i3, $i4;
+        com.android.internal.telephony.cat.AppInterface$CommandType $r3, $r7, $r12, $r13, $r14, $r15, $r16, $r17, $r22, $r26, $r27;
+        java.lang.String $r4, $r11, $r25, $r34, $r37, $r41, $r44, $r47, $r51, $r54, $r55, $r60, $r63, $r67, $r74, $r91, r100;
+        com.android.internal.telephony.cat.CatCmdMessage $r5;
+        int[] $r6;
+        android.content.Context $r8, $r38, $r48, $r64;
+        android.content.res.Resources $r9;
+        com.android.internal.telephony.cat.TextMessage $r10, $r33, $r36, $r40, $r43, $r46, $r50, $r53, $r57, $r59, $r62, $r66;
+        com.android.internal.telephony.cat.ResultCode $r18, $r29, $r70, $r75, $r77, $r79, $r81, $r99, r101, r109, r110;
+        com.android.internal.telephony.cat.CommandDetails $r19, $r30, $r68, $r71, $r76, $r78, $r80, $r82, $r83, $r85, $r98, $r103;
+        java.lang.StringBuilder $r20, $r86;
+        com.android.internal.telephony.CommandsInterface $r28;
+        com.android.internal.telephony.cat.LanguageParams $r31;
+        com.android.internal.telephony.cat.CallSetupParams $r32, $r35, $r39;
+        com.android.internal.telephony.cat.DisplayTextParams $r42, $r45, $r49, $r52, $r56;
+        com.android.internal.telephony.cat.LaunchBrowserParams $r58, $r61, $r65;
+        com.android.internal.telephony.cat.DTTZResponseData $r69;
+        com.android.internal.telephony.cat.LanguageResponseData $r72;
+        java.util.Locale $r73;
+        com.android.internal.telephony.cat.Menu $r84;
+        android.os.RemoteException $r92;
+        android.content.res.Resources$NotFoundException $r93;
+        com.android.internal.telephony.cat.BIPClientParams r96;
+        java.lang.CharSequence r104, r105, r106;
+
+        r0 := @this: com.android.internal.telephony.cat.CatService;
+
+        r1 := @parameter0: com.android.internal.telephony.cat.CommandParams;
+
+        z0 := @parameter1: boolean;
+
+        $r3 = virtualinvoke r1.<com.android.internal.telephony.cat.CommandParams: com.android.internal.telephony.cat.AppInterface$CommandType getCommandType()>();
+
+        $r4 = virtualinvoke $r3.<com.android.internal.telephony.cat.AppInterface$CommandType: java.lang.String name()>();
+
+        staticinvoke <com.android.internal.telephony.cat.CatLog: void d(java.lang.Object,java.lang.String)>(r0, $r4);
+
+        if z0 == 0 goto label01;
+
+        $r86 = new java.lang.StringBuilder;
+
+        specialinvoke $r86.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r86.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("CatService[");
+
+        $i4 = r0.<com.android.internal.telephony.cat.CatService: int mSlotId>;
+
+        virtualinvoke $r86.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i4);
+
+        virtualinvoke $r86.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("]: ProactiveCommand  cmdParams=");
+
+        virtualinvoke $r86.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r1);
+
+        $r91 = virtualinvoke $r86.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.internal.telephony.uicc.UiccController: void addLocalLog(java.lang.String)>($r91);
+
+     label01:
+        $r5 = new com.android.internal.telephony.cat.CatCmdMessage;
+
+        specialinvoke $r5.<com.android.internal.telephony.cat.CatCmdMessage: void <init>(com.android.internal.telephony.cat.CommandParams)>(r1);
+
+        $r6 = <com.android.internal.telephony.cat.CatService$1: int[] $SwitchMap$com$android$internal$telephony$cat$AppInterface$CommandType>;
+
+        $r7 = virtualinvoke r1.<com.android.internal.telephony.cat.CommandParams: com.android.internal.telephony.cat.AppInterface$CommandType getCommandType()>();
+
+        $i1 = virtualinvoke $r7.<com.android.internal.telephony.cat.AppInterface$CommandType: int ordinal()>();
+
+        $i2 = $r6[$i1];
+
+        tableswitch($i2)
+        {
+            case 1: goto label35;
+            case 2: goto label34;
+            case 3: goto label31;
+            case 4: goto label29;
+            case 5: goto label25;
+            case 6: goto label24;
+            case 7: goto label23;
+            case 8: goto label23;
+            case 9: goto label23;
+            case 10: goto label22;
+            case 11: goto label22;
+            case 12: goto label21;
+            case 13: goto label21;
+            case 14: goto label21;
+            case 15: goto label21;
+            case 16: goto label20;
+            case 17: goto label19;
+            case 18: goto label14;
+            case 19: goto label03;
+            case 20: goto label03;
+            case 21: goto label03;
+            case 22: goto label03;
+            default: goto label02;
+        };
+
+     label02:
+        staticinvoke <com.android.internal.telephony.cat.CatLog: void d(java.lang.Object,java.lang.String)>(r0, "Unsupported command");
+
+        return;
+
+     label03:
+        r96 = (com.android.internal.telephony.cat.BIPClientParams) r1;
+
+     label04:
+        $r8 = r0.<com.android.internal.telephony.cat.CatService: android.content.Context mContext>;
+
+        $r9 = virtualinvoke $r8.<android.content.Context: android.content.res.Resources getResources()>();
+
+        z11 = virtualinvoke $r9.<android.content.res.Resources: boolean getBoolean(int)>(17891538);
+
+     label05:
+        goto label07;
+
+     label06:
+        $r93 := @caughtexception;
+
+        z11 = 0;
+
+     label07:
+        $r10 = r96.<com.android.internal.telephony.cat.BIPClientParams: com.android.internal.telephony.cat.TextMessage mTextMsg>;
+
+        $r11 = $r10.<com.android.internal.telephony.cat.TextMessage: java.lang.String text>;
+
+        if $r11 != null goto label11;
+
+        $z2 = r96.<com.android.internal.telephony.cat.BIPClientParams: boolean mHasAlphaId>;
+
+        if $z2 != 0 goto label08;
+
+        if z11 == 0 goto label11;
+
+     label08:
+        $r20 = new java.lang.StringBuilder;
+
+        specialinvoke $r20.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r20.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("cmd ");
+
+        $r22 = virtualinvoke r1.<com.android.internal.telephony.cat.CommandParams: com.android.internal.telephony.cat.AppInterface$CommandType getCommandType()>();
+
+        virtualinvoke $r20.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r22);
+
+        virtualinvoke $r20.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" with null alpha id");
+
+        $r25 = virtualinvoke $r20.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.internal.telephony.cat.CatLog: void d(java.lang.Object,java.lang.String)>(r0, $r25);
+
+        if z0 == 0 goto label09;
+
+        $r30 = r1.<com.android.internal.telephony.cat.CommandParams: com.android.internal.telephony.cat.CommandDetails mCmdDet>;
+
+        $r29 = <com.android.internal.telephony.cat.ResultCode: com.android.internal.telephony.cat.ResultCode OK>;
+
+        specialinvoke r0.<com.android.internal.telephony.cat.CatService: void sendTerminalResponse(com.android.internal.telephony.cat.CommandDetails,com.android.internal.telephony.cat.ResultCode,boolean,int,com.android.internal.telephony.cat.ResponseData)>($r30, $r29, 0, 0, null);
+
+        goto label10;
+
+     label09:
+        $r26 = virtualinvoke r1.<com.android.internal.telephony.cat.CommandParams: com.android.internal.telephony.cat.AppInterface$CommandType getCommandType()>();
+
+        $r27 = <com.android.internal.telephony.cat.AppInterface$CommandType: com.android.internal.telephony.cat.AppInterface$CommandType OPEN_CHANNEL>;
+
+        if $r26 != $r27 goto label10;
+
+        $r28 = r0.<com.android.internal.telephony.cat.CatService: com.android.internal.telephony.CommandsInterface mCmdIf>;
+
+        interfaceinvoke $r28.<com.android.internal.telephony.CommandsInterface: void handleCallSetupRequestFromSim(boolean,android.os.Message)>(1, null);
+
+     label10:
+        return;
+
+     label11:
+        $z1 = r0.<com.android.internal.telephony.cat.CatService: boolean mStkAppInstalled>;
+
+        if $z1 != 0 goto label12;
+
+        staticinvoke <com.android.internal.telephony.cat.CatLog: void d(java.lang.Object,java.lang.String)>(r0, "No STK application found.");
+
+        if z0 == 0 goto label12;
+
+        $r19 = r1.<com.android.internal.telephony.cat.CommandParams: com.android.internal.telephony.cat.CommandDetails mCmdDet>;
+
+        $r18 = <com.android.internal.telephony.cat.ResultCode: com.android.internal.telephony.cat.ResultCode BEYOND_TERMINAL_CAPABILITY>;
+
+        specialinvoke r0.<com.android.internal.telephony.cat.CatService: void sendTerminalResponse(com.android.internal.telephony.cat.CommandDetails,com.android.internal.telephony.cat.ResultCode,boolean,int,com.android.internal.telephony.cat.ResponseData)>($r19, $r18, 0, 0, null);
+
+        return;
+
+     label12:
+        if z0 == 0 goto label40;
+
+        $r12 = virtualinvoke r1.<com.android.internal.telephony.cat.CommandParams: com.android.internal.telephony.cat.AppInterface$CommandType getCommandType()>();
+
+        $r13 = <com.android.internal.telephony.cat.AppInterface$CommandType: com.android.internal.telephony.cat.AppInterface$CommandType CLOSE_CHANNEL>;
+
+        if $r12 == $r13 goto label13;
+
+        $r14 = virtualinvoke r1.<com.android.internal.telephony.cat.CommandParams: com.android.internal.telephony.cat.AppInterface$CommandType getCommandType()>();
+
+        $r15 = <com.android.internal.telephony.cat.AppInterface$CommandType: com.android.internal.telephony.cat.AppInterface$CommandType RECEIVE_DATA>;
+
+        if $r14 == $r15 goto label13;
+
+        $r16 = virtualinvoke r1.<com.android.internal.telephony.cat.CommandParams: com.android.internal.telephony.cat.AppInterface$CommandType getCommandType()>();
+
+        $r17 = <com.android.internal.telephony.cat.AppInterface$CommandType: com.android.internal.telephony.cat.AppInterface$CommandType SEND_DATA>;
+
+        if $r16 != $r17 goto label40;
+
+     label13:
+        $r98 = r1.<com.android.internal.telephony.cat.CommandParams: com.android.internal.telephony.cat.CommandDetails mCmdDet>;
+
+        $r99 = <com.android.internal.telephony.cat.ResultCode: com.android.internal.telephony.cat.ResultCode OK>;
+
+        specialinvoke r0.<com.android.internal.telephony.cat.CatService: void sendTerminalResponse(com.android.internal.telephony.cat.CommandDetails,com.android.internal.telephony.cat.ResultCode,boolean,int,com.android.internal.telephony.cat.ResponseData)>($r98, $r99, 0, 0, null);
+
+        goto label40;
+
+     label14:
+        $r31 = (com.android.internal.telephony.cat.LanguageParams) r1;
+
+        r100 = $r31.<com.android.internal.telephony.cat.LanguageParams: java.lang.String mLanguage>;
+
+        r101 = <com.android.internal.telephony.cat.ResultCode: com.android.internal.telephony.cat.ResultCode OK>;
+
+        if r100 == null goto label18;
+
+        $i3 = virtualinvoke r100.<java.lang.String: int length()>();
+
+        if $i3 <= 0 goto label18;
+
+     label15:
+        specialinvoke r0.<com.android.internal.telephony.cat.CatService: void changeLanguage(java.lang.String)>(r100);
+
+     label16:
+        goto label18;
+
+     label17:
+        $r92 := @caughtexception;
+
+        r101 = <com.android.internal.telephony.cat.ResultCode: com.android.internal.telephony.cat.ResultCode TERMINAL_CRNTLY_UNABLE_TO_PROCESS>;
+
+        goto label18;
+
+     label18:
+        $r103 = r1.<com.android.internal.telephony.cat.CommandParams: com.android.internal.telephony.cat.CommandDetails mCmdDet>;
+
+        specialinvoke r0.<com.android.internal.telephony.cat.CatService: void sendTerminalResponse(com.android.internal.telephony.cat.CommandDetails,com.android.internal.telephony.cat.ResultCode,boolean,int,com.android.internal.telephony.cat.ResponseData)>($r103, r101, 0, 0, null);
+
+        return;
+
+     label19:
+        $r32 = (com.android.internal.telephony.cat.CallSetupParams) r1;
+
+        $r33 = $r32.<com.android.internal.telephony.cat.CallSetupParams: com.android.internal.telephony.cat.TextMessage mConfirmMsg>;
+
+        $r34 = $r33.<com.android.internal.telephony.cat.TextMessage: java.lang.String text>;
+
+        if $r34 == null goto label40;
+
+        $r35 = (com.android.internal.telephony.cat.CallSetupParams) r1;
+
+        $r36 = $r35.<com.android.internal.telephony.cat.CallSetupParams: com.android.internal.telephony.cat.TextMessage mConfirmMsg>;
+
+        $r37 = $r36.<com.android.internal.telephony.cat.TextMessage: java.lang.String text>;
+
+        $z3 = virtualinvoke $r37.<java.lang.String: boolean equals(java.lang.Object)>("Default Message");
+
+        if $z3 == 0 goto label40;
+
+        $r38 = r0.<com.android.internal.telephony.cat.CatService: android.content.Context mContext>;
+
+        r104 = virtualinvoke $r38.<android.content.Context: java.lang.CharSequence getText(int)>(17039539);
+
+        $r39 = (com.android.internal.telephony.cat.CallSetupParams) r1;
+
+        $r40 = $r39.<com.android.internal.telephony.cat.CallSetupParams: com.android.internal.telephony.cat.TextMessage mConfirmMsg>;
+
+        $r41 = interfaceinvoke r104.<java.lang.CharSequence: java.lang.String toString()>();
+
+        $r40.<com.android.internal.telephony.cat.TextMessage: java.lang.String text> = $r41;
+
+        goto label40;
+
+     label20:
+        goto label40;
+
+     label21:
+        $r42 = (com.android.internal.telephony.cat.DisplayTextParams) r1;
+
+        $r43 = $r42.<com.android.internal.telephony.cat.DisplayTextParams: com.android.internal.telephony.cat.TextMessage mTextMsg>;
+
+        $r44 = $r43.<com.android.internal.telephony.cat.TextMessage: java.lang.String text>;
+
+        if $r44 == null goto label40;
+
+        $r45 = (com.android.internal.telephony.cat.DisplayTextParams) r1;
+
+        $r46 = $r45.<com.android.internal.telephony.cat.DisplayTextParams: com.android.internal.telephony.cat.TextMessage mTextMsg>;
+
+        $r47 = $r46.<com.android.internal.telephony.cat.TextMessage: java.lang.String text>;
+
+        $z4 = virtualinvoke $r47.<java.lang.String: boolean equals(java.lang.Object)>("Default Message");
+
+        if $z4 == 0 goto label40;
+
+        $r48 = r0.<com.android.internal.telephony.cat.CatService: android.content.Context mContext>;
+
+        r105 = virtualinvoke $r48.<android.content.Context: java.lang.CharSequence getText(int)>(17041209);
+
+        $r49 = (com.android.internal.telephony.cat.DisplayTextParams) r1;
+
+        $r50 = $r49.<com.android.internal.telephony.cat.DisplayTextParams: com.android.internal.telephony.cat.TextMessage mTextMsg>;
+
+        $r51 = interfaceinvoke r105.<java.lang.CharSequence: java.lang.String toString()>();
+
+        $r50.<com.android.internal.telephony.cat.TextMessage: java.lang.String text> = $r51;
+
+        goto label40;
+
+     label22:
+        $r55 = "Default Message";
+
+        $r52 = (com.android.internal.telephony.cat.DisplayTextParams) r1;
+
+        $r53 = $r52.<com.android.internal.telephony.cat.DisplayTextParams: com.android.internal.telephony.cat.TextMessage mTextMsg>;
+
+        $r54 = $r53.<com.android.internal.telephony.cat.TextMessage: java.lang.String text>;
+
+        $z5 = virtualinvoke $r55.<java.lang.String: boolean equals(java.lang.Object)>($r54);
+
+        if $z5 == 0 goto label40;
+
+        $r56 = (com.android.internal.telephony.cat.DisplayTextParams) r1;
+
+        $r57 = $r56.<com.android.internal.telephony.cat.DisplayTextParams: com.android.internal.telephony.cat.TextMessage mTextMsg>;
+
+        $r57.<com.android.internal.telephony.cat.TextMessage: java.lang.String text> = null;
+
+        goto label40;
+
+     label23:
+        goto label40;
+
+     label24:
+        $r58 = (com.android.internal.telephony.cat.LaunchBrowserParams) r1;
+
+        $r59 = $r58.<com.android.internal.telephony.cat.LaunchBrowserParams: com.android.internal.telephony.cat.TextMessage mConfirmMsg>;
+
+        $r60 = $r59.<com.android.internal.telephony.cat.TextMessage: java.lang.String text>;
+
+        if $r60 == null goto label40;
+
+        $r61 = (com.android.internal.telephony.cat.LaunchBrowserParams) r1;
+
+        $r62 = $r61.<com.android.internal.telephony.cat.LaunchBrowserParams: com.android.internal.telephony.cat.TextMessage mConfirmMsg>;
+
+        $r63 = $r62.<com.android.internal.telephony.cat.TextMessage: java.lang.String text>;
+
+        $z6 = virtualinvoke $r63.<java.lang.String: boolean equals(java.lang.Object)>("Default Message");
+
+        if $z6 == 0 goto label40;
+
+        $r64 = r0.<com.android.internal.telephony.cat.CatService: android.content.Context mContext>;
+
+        r106 = virtualinvoke $r64.<android.content.Context: java.lang.CharSequence getText(int)>(17040421);
+
+        $r65 = (com.android.internal.telephony.cat.LaunchBrowserParams) r1;
+
+        $r66 = $r65.<com.android.internal.telephony.cat.LaunchBrowserParams: com.android.internal.telephony.cat.TextMessage mConfirmMsg>;
+
+        $r67 = interfaceinvoke r106.<java.lang.CharSequence: java.lang.String toString()>();
+
+        $r66.<com.android.internal.telephony.cat.TextMessage: java.lang.String text> = $r67;
+
+        goto label40;
+
+     label25:
+        $r68 = r1.<com.android.internal.telephony.cat.CommandParams: com.android.internal.telephony.cat.CommandDetails mCmdDet>;
+
+        i0 = $r68.<com.android.internal.telephony.cat.CommandDetails: int commandQualifier>;
+
+        if i0 == 3 goto label27;
+
+        if i0 == 4 goto label26;
+
+        $r78 = r1.<com.android.internal.telephony.cat.CommandParams: com.android.internal.telephony.cat.CommandDetails mCmdDet>;
+
+        $r77 = <com.android.internal.telephony.cat.ResultCode: com.android.internal.telephony.cat.ResultCode OK>;
+
+        specialinvoke r0.<com.android.internal.telephony.cat.CatService: void sendTerminalResponse(com.android.internal.telephony.cat.CommandDetails,com.android.internal.telephony.cat.ResultCode,boolean,int,com.android.internal.telephony.cat.ResponseData)>($r78, $r77, 0, 0, null);
+
+        goto label28;
+
+     label26:
+        $r72 = new com.android.internal.telephony.cat.LanguageResponseData;
+
+        $r73 = staticinvoke <java.util.Locale: java.util.Locale getDefault()>();
+
+        $r74 = virtualinvoke $r73.<java.util.Locale: java.lang.String getLanguage()>();
+
+        specialinvoke $r72.<com.android.internal.telephony.cat.LanguageResponseData: void <init>(java.lang.String)>($r74);
+
+        $r76 = r1.<com.android.internal.telephony.cat.CommandParams: com.android.internal.telephony.cat.CommandDetails mCmdDet>;
+
+        $r75 = <com.android.internal.telephony.cat.ResultCode: com.android.internal.telephony.cat.ResultCode OK>;
+
+        specialinvoke r0.<com.android.internal.telephony.cat.CatService: void sendTerminalResponse(com.android.internal.telephony.cat.CommandDetails,com.android.internal.telephony.cat.ResultCode,boolean,int,com.android.internal.telephony.cat.ResponseData)>($r76, $r75, 0, 0, $r72);
+
+        goto label28;
+
+     label27:
+        $r69 = new com.android.internal.telephony.cat.DTTZResponseData;
+
+        specialinvoke $r69.<com.android.internal.telephony.cat.DTTZResponseData: void <init>(java.util.Calendar)>(null);
+
+        $r71 = r1.<com.android.internal.telephony.cat.CommandParams: com.android.internal.telephony.cat.CommandDetails mCmdDet>;
+
+        $r70 = <com.android.internal.telephony.cat.ResultCode: com.android.internal.telephony.cat.ResultCode OK>;
+
+        specialinvoke r0.<com.android.internal.telephony.cat.CatService: void sendTerminalResponse(com.android.internal.telephony.cat.CommandDetails,com.android.internal.telephony.cat.ResultCode,boolean,int,com.android.internal.telephony.cat.ResponseData)>($r71, $r70, 0, 0, $r69);
+
+     label28:
+        return;
+
+     label29:
+        $z7 = specialinvoke r0.<com.android.internal.telephony.cat.CatService: boolean isSupportedSetupEventCommand(com.android.internal.telephony.cat.CatCmdMessage)>($r5);
+
+        if $z7 == 0 goto label30;
+
+        $r82 = r1.<com.android.internal.telephony.cat.CommandParams: com.android.internal.telephony.cat.CommandDetails mCmdDet>;
+
+        $r81 = <com.android.internal.telephony.cat.ResultCode: com.android.internal.telephony.cat.ResultCode OK>;
+
+        specialinvoke r0.<com.android.internal.telephony.cat.CatService: void sendTerminalResponse(com.android.internal.telephony.cat.CommandDetails,com.android.internal.telephony.cat.ResultCode,boolean,int,com.android.internal.telephony.cat.ResponseData)>($r82, $r81, 0, 0, null);
+
+        goto label40;
+
+     label30:
+        $r80 = r1.<com.android.internal.telephony.cat.CommandParams: com.android.internal.telephony.cat.CommandDetails mCmdDet>;
+
+        $r79 = <com.android.internal.telephony.cat.ResultCode: com.android.internal.telephony.cat.ResultCode BEYOND_TERMINAL_CAPABILITY>;
+
+        specialinvoke r0.<com.android.internal.telephony.cat.CatService: void sendTerminalResponse(com.android.internal.telephony.cat.CommandDetails,com.android.internal.telephony.cat.ResultCode,boolean,int,com.android.internal.telephony.cat.ResponseData)>($r80, $r79, 0, 0, null);
+
+        goto label40;
+
+     label31:
+        $z8 = r1.<com.android.internal.telephony.cat.CommandParams: boolean mLoadIconFailed>;
+
+        if $z8 == 0 goto label32;
+
+        r109 = <com.android.internal.telephony.cat.ResultCode: com.android.internal.telephony.cat.ResultCode PRFRMD_ICON_NOT_DISPLAYED>;
+
+        goto label33;
+
+     label32:
+        r109 = <com.android.internal.telephony.cat.ResultCode: com.android.internal.telephony.cat.ResultCode OK>;
+
+     label33:
+        $r83 = r1.<com.android.internal.telephony.cat.CommandParams: com.android.internal.telephony.cat.CommandDetails mCmdDet>;
+
+        specialinvoke r0.<com.android.internal.telephony.cat.CatService: void sendTerminalResponse(com.android.internal.telephony.cat.CommandDetails,com.android.internal.telephony.cat.ResultCode,boolean,int,com.android.internal.telephony.cat.ResponseData)>($r83, r109, 0, 0, null);
+
+        goto label40;
+
+     label34:
+        goto label40;
+
+     label35:
+        $r84 = virtualinvoke $r5.<com.android.internal.telephony.cat.CatCmdMessage: com.android.internal.telephony.cat.Menu getMenu()>();
+
+        $z9 = specialinvoke r0.<com.android.internal.telephony.cat.CatService: boolean removeMenu(com.android.internal.telephony.cat.Menu)>($r84);
+
+        if $z9 == 0 goto label36;
+
+        r0.<com.android.internal.telephony.cat.CatService: com.android.internal.telephony.cat.CatCmdMessage mMenuCmd> = null;
+
+        goto label37;
+
+     label36:
+        r0.<com.android.internal.telephony.cat.CatService: com.android.internal.telephony.cat.CatCmdMessage mMenuCmd> = $r5;
+
+     label37:
+        $z10 = r1.<com.android.internal.telephony.cat.CommandParams: boolean mLoadIconFailed>;
+
+        if $z10 == 0 goto label38;
+
+        r110 = <com.android.internal.telephony.cat.ResultCode: com.android.internal.telephony.cat.ResultCode PRFRMD_ICON_NOT_DISPLAYED>;
+
+        goto label39;
+
+     label38:
+        r110 = <com.android.internal.telephony.cat.ResultCode: com.android.internal.telephony.cat.ResultCode OK>;
+
+     label39:
+        $r85 = r1.<com.android.internal.telephony.cat.CommandParams: com.android.internal.telephony.cat.CommandDetails mCmdDet>;
+
+        specialinvoke r0.<com.android.internal.telephony.cat.CatService: void sendTerminalResponse(com.android.internal.telephony.cat.CommandDetails,com.android.internal.telephony.cat.ResultCode,boolean,int,com.android.internal.telephony.cat.ResponseData)>($r85, r110, 0, 0, null);
+
+     label40:
+        r0.<com.android.internal.telephony.cat.CatService: com.android.internal.telephony.cat.CatCmdMessage mCurrntCmd> = $r5;
+
+        specialinvoke r0.<com.android.internal.telephony.cat.CatService: void broadcastCatCmdIntent(com.android.internal.telephony.cat.CatCmdMessage)>($r5);
+
+        return;
+
+        catch android.content.res.Resources$NotFoundException from label04 to label05 with label06;
+        catch android.os.RemoteException from label15 to label16 with label17;
+    }
+
+    private void handleRilMsg(com.android.internal.telephony.cat.RilMessage)
+    {
+        com.android.internal.telephony.cat.CatService r0;
+        int i0;
+        com.android.internal.telephony.cat.CommandParams r1, r15, r16;
+        java.lang.Object $r2, $r9, $r10;
+        com.android.internal.telephony.cat.ResultCode $r3, $r4, $r5, $r7, $r8, $r12;
+        com.android.internal.telephony.cat.CommandDetails $r6, $r13;
+        java.lang.ClassCastException $r11;
+        com.android.internal.telephony.cat.RilMessage r14;
+        com.android.internal.telephony.cat.CatCmdMessage r18;
+
+        r0 := @this: com.android.internal.telephony.cat.CatService;
+
+        r14 := @parameter0: com.android.internal.telephony.cat.RilMessage;
+
+        if r14 != null goto label01;
+
+        return;
+
+     label01:
+        i0 = r14.<com.android.internal.telephony.cat.RilMessage: int mId>;
+
+        if i0 == 1 goto label09;
+
+        if i0 == 2 goto label04;
+
+        if i0 == 3 goto label03;
+
+        if i0 == 5 goto label02;
+
+        goto label10;
+
+     label02:
+        $r10 = r14.<com.android.internal.telephony.cat.RilMessage: java.lang.Object mData>;
+
+        r15 = (com.android.internal.telephony.cat.CommandParams) $r10;
+
+        if r15 == null goto label10;
+
+        specialinvoke r0.<com.android.internal.telephony.cat.CatService: void handleCommand(com.android.internal.telephony.cat.CommandParams,boolean)>(r15, 0);
+
+        goto label10;
+
+     label03:
+        $r8 = r14.<com.android.internal.telephony.cat.RilMessage: com.android.internal.telephony.cat.ResultCode mResCode>;
+
+        $r7 = <com.android.internal.telephony.cat.ResultCode: com.android.internal.telephony.cat.ResultCode OK>;
+
+        if $r8 != $r7 goto label10;
+
+        $r9 = r14.<com.android.internal.telephony.cat.RilMessage: java.lang.Object mData>;
+
+        r16 = (com.android.internal.telephony.cat.CommandParams) $r9;
+
+        if r16 == null goto label10;
+
+        specialinvoke r0.<com.android.internal.telephony.cat.CatService: void handleCommand(com.android.internal.telephony.cat.CommandParams,boolean)>(r16, 0);
+
+        goto label10;
+
+     label04:
+        $r2 = r14.<com.android.internal.telephony.cat.RilMessage: java.lang.Object mData>;
+
+        r1 = (com.android.internal.telephony.cat.CommandParams) $r2;
+
+     label05:
+        if r1 == null goto label10;
+
+        $r4 = r14.<com.android.internal.telephony.cat.RilMessage: com.android.internal.telephony.cat.ResultCode mResCode>;
+
+        $r3 = <com.android.internal.telephony.cat.ResultCode: com.android.internal.telephony.cat.ResultCode OK>;
+
+        if $r4 != $r3 goto label06;
+
+        specialinvoke r0.<com.android.internal.telephony.cat.CatService: void handleCommand(com.android.internal.telephony.cat.CommandParams,boolean)>(r1, 1);
+
+        goto label10;
+
+     label06:
+        $r6 = r1.<com.android.internal.telephony.cat.CommandParams: com.android.internal.telephony.cat.CommandDetails mCmdDet>;
+
+        $r5 = r14.<com.android.internal.telephony.cat.RilMessage: com.android.internal.telephony.cat.ResultCode mResCode>;
+
+        specialinvoke r0.<com.android.internal.telephony.cat.CatService: void sendTerminalResponse(com.android.internal.telephony.cat.CommandDetails,com.android.internal.telephony.cat.ResultCode,boolean,int,com.android.internal.telephony.cat.ResponseData)>($r6, $r5, 0, 0, null);
+
+        goto label10;
+
+     label07:
+        $r11 := @caughtexception;
+
+        staticinvoke <com.android.internal.telephony.cat.CatLog: void d(java.lang.Object,java.lang.String)>(r0, "Fail to parse proactive command");
+
+        r18 = r0.<com.android.internal.telephony.cat.CatService: com.android.internal.telephony.cat.CatCmdMessage mCurrntCmd>;
+
+        if r18 == null goto label08;
+
+        $r13 = r18.<com.android.internal.telephony.cat.CatCmdMessage: com.android.internal.telephony.cat.CommandDetails mCmdDet>;
+
+        $r12 = <com.android.internal.telephony.cat.ResultCode: com.android.internal.telephony.cat.ResultCode CMD_DATA_NOT_UNDERSTOOD>;
+
+        specialinvoke r0.<com.android.internal.telephony.cat.CatService: void sendTerminalResponse(com.android.internal.telephony.cat.CommandDetails,com.android.internal.telephony.cat.ResultCode,boolean,int,com.android.internal.telephony.cat.ResponseData)>($r13, $r12, 0, 0, null);
+
+     label08:
+        goto label10;
+
+     label09:
+        specialinvoke r0.<com.android.internal.telephony.cat.CatService: void handleSessionEnd()>();
+
+     label10:
+        return;
+
+        catch java.lang.ClassCastException from label04 to label05 with label07;
+    }
+
+    private void handleSessionEnd()
+    {
+        com.android.internal.telephony.cat.CatService r0;
+        java.lang.StringBuilder $r1;
+        int $i0, $i1;
+        java.lang.String $r4;
+        com.android.internal.telephony.cat.CatCmdMessage $r5;
+        android.content.Intent $r6;
+        android.content.ComponentName $r8;
+        android.content.Context $r10;
+
+        r0 := @this: com.android.internal.telephony.cat.CatService;
+
+        $r1 = new java.lang.StringBuilder;
+
+        specialinvoke $r1.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("SESSION END on ");
+
+        $i0 = r0.<com.android.internal.telephony.cat.CatService: int mSlotId>;
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i0);
+
+        $r4 = virtualinvoke $r1.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.internal.telephony.cat.CatLog: void d(java.lang.Object,java.lang.String)>(r0, $r4);
+
+        $r5 = r0.<com.android.internal.telephony.cat.CatService: com.android.internal.telephony.cat.CatCmdMessage mMenuCmd>;
+
+        r0.<com.android.internal.telephony.cat.CatService: com.android.internal.telephony.cat.CatCmdMessage mCurrntCmd> = $r5;
+
+        $r6 = new android.content.Intent;
+
+        specialinvoke $r6.<android.content.Intent: void <init>(java.lang.String)>("com.android.internal.stk.session_end");
+
+        $i1 = r0.<com.android.internal.telephony.cat.CatService: int mSlotId>;
+
+        virtualinvoke $r6.<android.content.Intent: android.content.Intent putExtra(java.lang.String,int)>("SLOT_ID", $i1);
+
+        $r8 = staticinvoke <com.android.internal.telephony.cat.AppInterface: android.content.ComponentName getDefaultSTKApplication()>();
+
+        virtualinvoke $r6.<android.content.Intent: android.content.Intent setComponent(android.content.ComponentName)>($r8);
+
+        $r10 = r0.<com.android.internal.telephony.cat.CatService: android.content.Context mContext>;
+
+        virtualinvoke $r10.<android.content.Context: void sendBroadcast(android.content.Intent,java.lang.String)>($r6, "android.permission.RECEIVE_STK_COMMANDS");
+
+        return;
+    }
+
+    private boolean isStkAppInstalled()
+    {
+        com.android.internal.telephony.cat.CatService r0;
+        android.content.Intent $r2;
+        android.content.Context $r3;
+        android.content.pm.PackageManager r4;
+        java.util.List r5;
+        boolean z0;
+        int i0;
+
+        r0 := @this: com.android.internal.telephony.cat.CatService;
+
+        $r2 = new android.content.Intent;
+
+        specialinvoke $r2.<android.content.Intent: void <init>(java.lang.String)>("com.android.internal.stk.command");
+
+        $r3 = r0.<com.android.internal.telephony.cat.CatService: android.content.Context mContext>;
+
+        r4 = virtualinvoke $r3.<android.content.Context: android.content.pm.PackageManager getPackageManager()>();
+
+        r5 = virtualinvoke r4.<android.content.pm.PackageManager: java.util.List queryBroadcastReceivers(android.content.Intent,int)>($r2, 128);
+
+        z0 = 0;
+
+        if r5 != null goto label1;
+
+        i0 = 0;
+
+        goto label2;
+
+     label1:
+        i0 = interfaceinvoke r5.<java.util.List: int size()>();
+
+     label2:
+        if i0 <= 0 goto label3;
+
+        z0 = 1;
+
+     label3:
+        return z0;
+    }
+
+    private boolean isSupportedSetupEventCommand(com.android.internal.telephony.cat.CatCmdMessage)
+    {
+        com.android.internal.telephony.cat.CatService r0;
+        int[] r1;
+        int i0, i1, i2;
+        com.android.internal.telephony.cat.CatCmdMessage$SetupEventListSettings $r2;
+        java.lang.StringBuilder $r3;
+        java.lang.String $r6;
+        com.android.internal.telephony.cat.CatCmdMessage r7;
+        boolean z0;
+
+        r0 := @this: com.android.internal.telephony.cat.CatService;
+
+        r7 := @parameter0: com.android.internal.telephony.cat.CatCmdMessage;
+
+        z0 = 1;
+
+        $r2 = virtualinvoke r7.<com.android.internal.telephony.cat.CatCmdMessage: com.android.internal.telephony.cat.CatCmdMessage$SetupEventListSettings getSetEventList()>();
+
+        r1 = $r2.<com.android.internal.telephony.cat.CatCmdMessage$SetupEventListSettings: int[] eventList>;
+
+        i0 = lengthof r1;
+
+        i2 = 0;
+
+     label1:
+        if i2 >= i0 goto label3;
+
+        i1 = r1[i2];
+
+        $r3 = new java.lang.StringBuilder;
+
+        specialinvoke $r3.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Event: ");
+
+        virtualinvoke $r3.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>(i1);
+
+        $r6 = virtualinvoke $r3.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.internal.telephony.cat.CatLog: void d(java.lang.Object,java.lang.String)>(r0, $r6);
+
+        if i1 == 4 goto label2;
+
+        if i1 == 5 goto label2;
+
+        if i1 == 7 goto label2;
+
+        z0 = 0;
+
+        goto label2;
+
+     label2:
+        i2 = i2 + 1;
+
+        goto label1;
+
+     label3:
+        return z0;
+    }
+
+    private boolean removeMenu(com.android.internal.telephony.cat.Menu)
+    {
+        com.android.internal.telephony.cat.CatService r0;
+        java.util.List $r1, $r2;
+        int $i0;
+        java.lang.NullPointerException $r3;
+        com.android.internal.telephony.cat.Menu r4;
+        java.lang.Object r5;
+
+        r0 := @this: com.android.internal.telephony.cat.CatService;
+
+        r4 := @parameter0: com.android.internal.telephony.cat.Menu;
+
+     label1:
+        $r1 = r4.<com.android.internal.telephony.cat.Menu: java.util.List items>;
+
+        $i0 = interfaceinvoke $r1.<java.util.List: int size()>();
+
+        if $i0 != 1 goto label3;
+
+        $r2 = r4.<com.android.internal.telephony.cat.Menu: java.util.List items>;
+
+        r5 = interfaceinvoke $r2.<java.util.List: java.lang.Object get(int)>(0);
+
+     label2:
+        if r5 != null goto label3;
+
+        return 1;
+
+     label3:
+        return 0;
+
+     label4:
+        $r3 := @caughtexception;
+
+        staticinvoke <com.android.internal.telephony.cat.CatLog: void d(java.lang.Object,java.lang.String)>(r0, "Unable to get Menu\'s items size");
+
+        return 1;
+
+        catch java.lang.NullPointerException from label1 to label2 with label4;
+    }
+
+    private void sendMenuSelection(int, boolean)
+    {
+        com.android.internal.telephony.cat.CatService r0;
+        int i0, $i1, $i2, $i3, $i4, $i5, $i6, $i9;
+        boolean z0;
+        java.io.ByteArrayOutputStream $r1;
+        com.android.internal.telephony.cat.ComprehensionTlvTag $r2, $r3, $r5;
+        byte $b7, $b8;
+        com.android.internal.telephony.CommandsInterface $r4;
+        byte[] r7;
+        java.lang.String r8;
+
+        r0 := @this: com.android.internal.telephony.cat.CatService;
+
+        i0 := @parameter0: int;
+
+        z0 := @parameter1: boolean;
+
+        $r1 = new java.io.ByteArrayOutputStream;
+
+        specialinvoke $r1.<java.io.ByteArrayOutputStream: void <init>()>();
+
+        virtualinvoke $r1.<java.io.ByteArrayOutputStream: void write(int)>(211);
+
+        virtualinvoke $r1.<java.io.ByteArrayOutputStream: void write(int)>(0);
+
+        $r2 = <com.android.internal.telephony.cat.ComprehensionTlvTag: com.android.internal.telephony.cat.ComprehensionTlvTag DEVICE_IDENTITIES>;
+
+        $i1 = virtualinvoke $r2.<com.android.internal.telephony.cat.ComprehensionTlvTag: int value()>();
+
+        $i2 = $i1 | 128;
+
+        virtualinvoke $r1.<java.io.ByteArrayOutputStream: void write(int)>($i2);
+
+        virtualinvoke $r1.<java.io.ByteArrayOutputStream: void write(int)>(2);
+
+        virtualinvoke $r1.<java.io.ByteArrayOutputStream: void write(int)>(1);
+
+        virtualinvoke $r1.<java.io.ByteArrayOutputStream: void write(int)>(129);
+
+        $r3 = <com.android.internal.telephony.cat.ComprehensionTlvTag: com.android.internal.telephony.cat.ComprehensionTlvTag ITEM_ID>;
+
+        $i3 = virtualinvoke $r3.<com.android.internal.telephony.cat.ComprehensionTlvTag: int value()>();
+
+        $i4 = $i3 | 128;
+
+        virtualinvoke $r1.<java.io.ByteArrayOutputStream: void write(int)>($i4);
+
+        virtualinvoke $r1.<java.io.ByteArrayOutputStream: void write(int)>(1);
+
+        virtualinvoke $r1.<java.io.ByteArrayOutputStream: void write(int)>(i0);
+
+        if z0 == 0 goto label1;
+
+        $r5 = <com.android.internal.telephony.cat.ComprehensionTlvTag: com.android.internal.telephony.cat.ComprehensionTlvTag HELP_REQUEST>;
+
+        $i9 = virtualinvoke $r5.<com.android.internal.telephony.cat.ComprehensionTlvTag: int value()>();
+
+        virtualinvoke $r1.<java.io.ByteArrayOutputStream: void write(int)>($i9);
+
+        virtualinvoke $r1.<java.io.ByteArrayOutputStream: void write(int)>(0);
+
+     label1:
+        r7 = virtualinvoke $r1.<java.io.ByteArrayOutputStream: byte[] toByteArray()>();
+
+        $i5 = lengthof r7;
+
+        $i6 = $i5 - 2;
+
+        $b7 = (byte) $i6;
+
+        $b8 = (byte) $b7;
+
+        r7[1] = $b8;
+
+        r8 = staticinvoke <com.android.internal.telephony.uicc.IccUtils: java.lang.String bytesToHexString(byte[])>(r7);
+
+        $r4 = r0.<com.android.internal.telephony.cat.CatService: com.android.internal.telephony.CommandsInterface mCmdIf>;
+
+        interfaceinvoke $r4.<com.android.internal.telephony.CommandsInterface: void sendEnvelope(java.lang.String,android.os.Message)>(r8, null);
+
+        return;
+    }
+
+    private void sendTerminalResponse(com.android.internal.telephony.cat.CommandDetails, com.android.internal.telephony.cat.ResultCode, boolean, int, com.android.internal.telephony.cat.ResponseData)
+    {
+        com.android.internal.telephony.cat.CatService r0;
+        com.android.internal.telephony.cat.ResultCode r1;
+        boolean z0, $z1, $z2;
+        int i0, i1, $i2, $i3, $i4, $i5, $i6, i7, i8, i10;
+        com.android.internal.telephony.cat.ResponseData r2;
+        com.android.internal.telephony.cat.CatCmdMessage r4;
+        java.io.ByteArrayOutputStream $r5;
+        com.android.internal.telephony.cat.ComprehensionTlvTag $r6, $r7, $r8;
+        byte[] $r9;
+        com.android.internal.telephony.CommandsInterface $r10;
+        com.android.internal.telephony.cat.CommandDetails r11;
+        com.android.internal.telephony.cat.Input r12;
+        byte b11;
+        java.lang.String r13;
+
+        r0 := @this: com.android.internal.telephony.cat.CatService;
+
+        r11 := @parameter0: com.android.internal.telephony.cat.CommandDetails;
+
+        r1 := @parameter1: com.android.internal.telephony.cat.ResultCode;
+
+        z0 := @parameter2: boolean;
+
+        i0 := @parameter3: int;
+
+        r2 := @parameter4: com.android.internal.telephony.cat.ResponseData;
+
+        if r11 != null goto label1;
+
+        return;
+
+     label1:
+        $r5 = new java.io.ByteArrayOutputStream;
+
+        specialinvoke $r5.<java.io.ByteArrayOutputStream: void <init>()>();
+
+        r12 = null;
+
+        r4 = r0.<com.android.internal.telephony.cat.CatService: com.android.internal.telephony.cat.CatCmdMessage mCurrntCmd>;
+
+        if r4 == null goto label2;
+
+        r12 = virtualinvoke r4.<com.android.internal.telephony.cat.CatCmdMessage: com.android.internal.telephony.cat.Input geInput()>();
+
+     label2:
+        $r6 = <com.android.internal.telephony.cat.ComprehensionTlvTag: com.android.internal.telephony.cat.ComprehensionTlvTag COMMAND_DETAILS>;
+
+        i7 = virtualinvoke $r6.<com.android.internal.telephony.cat.ComprehensionTlvTag: int value()>();
+
+        i8 = i7;
+
+        $z1 = r11.<com.android.internal.telephony.cat.CommandDetails: boolean compRequired>;
+
+        if $z1 == 0 goto label3;
+
+        i8 = i7 | 128;
+
+     label3:
+        virtualinvoke $r5.<java.io.ByteArrayOutputStream: void write(int)>(i8);
+
+        virtualinvoke $r5.<java.io.ByteArrayOutputStream: void write(int)>(3);
+
+        $i2 = r11.<com.android.internal.telephony.cat.CommandDetails: int commandNumber>;
+
+        virtualinvoke $r5.<java.io.ByteArrayOutputStream: void write(int)>($i2);
+
+        $i3 = r11.<com.android.internal.telephony.cat.CommandDetails: int typeOfCommand>;
+
+        virtualinvoke $r5.<java.io.ByteArrayOutputStream: void write(int)>($i3);
+
+        $i4 = r11.<com.android.internal.telephony.cat.CommandDetails: int commandQualifier>;
+
+        virtualinvoke $r5.<java.io.ByteArrayOutputStream: void write(int)>($i4);
+
+        $r7 = <com.android.internal.telephony.cat.ComprehensionTlvTag: com.android.internal.telephony.cat.ComprehensionTlvTag DEVICE_IDENTITIES>;
+
+        $i5 = virtualinvoke $r7.<com.android.internal.telephony.cat.ComprehensionTlvTag: int value()>();
+
+        virtualinvoke $r5.<java.io.ByteArrayOutputStream: void write(int)>($i5);
+
+        virtualinvoke $r5.<java.io.ByteArrayOutputStream: void write(int)>(2);
+
+        virtualinvoke $r5.<java.io.ByteArrayOutputStream: void write(int)>(130);
+
+        virtualinvoke $r5.<java.io.ByteArrayOutputStream: void write(int)>(129);
+
+        $r8 = <com.android.internal.telephony.cat.ComprehensionTlvTag: com.android.internal.telephony.cat.ComprehensionTlvTag RESULT>;
+
+        i1 = virtualinvoke $r8.<com.android.internal.telephony.cat.ComprehensionTlvTag: int value()>();
+
+        i10 = i1;
+
+        $z2 = r11.<com.android.internal.telephony.cat.CommandDetails: boolean compRequired>;
+
+        if $z2 == 0 goto label4;
+
+        i10 = i1 | 128;
+
+     label4:
+        virtualinvoke $r5.<java.io.ByteArrayOutputStream: void write(int)>(i10);
+
+        if z0 == 0 goto label5;
+
+        b11 = 2;
+
+        goto label6;
+
+     label5:
+        b11 = 1;
+
+     label6:
+        virtualinvoke $r5.<java.io.ByteArrayOutputStream: void write(int)>(b11);
+
+        $i6 = virtualinvoke r1.<com.android.internal.telephony.cat.ResultCode: int value()>();
+
+        virtualinvoke $r5.<java.io.ByteArrayOutputStream: void write(int)>($i6);
+
+        if z0 == 0 goto label7;
+
+        virtualinvoke $r5.<java.io.ByteArrayOutputStream: void write(int)>(i0);
+
+     label7:
+        if r2 == null goto label8;
+
+        virtualinvoke r2.<com.android.internal.telephony.cat.ResponseData: void format(java.io.ByteArrayOutputStream)>($r5);
+
+        goto label9;
+
+     label8:
+        specialinvoke r0.<com.android.internal.telephony.cat.CatService: void encodeOptionalTags(com.android.internal.telephony.cat.CommandDetails,com.android.internal.telephony.cat.ResultCode,com.android.internal.telephony.cat.Input,java.io.ByteArrayOutputStream)>(r11, r1, r12, $r5);
+
+     label9:
+        $r9 = virtualinvoke $r5.<java.io.ByteArrayOutputStream: byte[] toByteArray()>();
+
+        r13 = staticinvoke <com.android.internal.telephony.uicc.IccUtils: java.lang.String bytesToHexString(byte[])>($r9);
+
+        $r10 = r0.<com.android.internal.telephony.cat.CatService: com.android.internal.telephony.CommandsInterface mCmdIf>;
+
+        interfaceinvoke $r10.<com.android.internal.telephony.CommandsInterface: void sendTerminalResponse(java.lang.String,android.os.Message)>(r13, null);
+
+        return;
+    }
+
+    private boolean validateResponse(com.android.internal.telephony.cat.CatResponseMessage)
+    {
+        com.android.internal.telephony.cat.CatService r0;
+        com.android.internal.telephony.cat.CommandDetails $r2, $r6, $r9, $r13, $r14;
+        com.android.internal.telephony.cat.AppInterface$CommandType $r3, $r10;
+        int $i0, $i1, $i2, $i3, $i4;
+        java.lang.StringBuilder $r4, $r15;
+        java.lang.String $r8, $r18;
+        com.android.internal.telephony.cat.CatCmdMessage $r11, $r12;
+        com.android.internal.telephony.cat.CatResponseMessage r19;
+        boolean z0;
+
+        r0 := @this: com.android.internal.telephony.cat.CatService;
+
+        r19 := @parameter0: com.android.internal.telephony.cat.CatResponseMessage;
+
+        z0 = 0;
+
+        $r2 = r19.<com.android.internal.telephony.cat.CatResponseMessage: com.android.internal.telephony.cat.CommandDetails mCmdDet>;
+
+        $i0 = $r2.<com.android.internal.telephony.cat.CommandDetails: int typeOfCommand>;
+
+        $r3 = <com.android.internal.telephony.cat.AppInterface$CommandType: com.android.internal.telephony.cat.AppInterface$CommandType SET_UP_EVENT_LIST>;
+
+        $i1 = virtualinvoke $r3.<com.android.internal.telephony.cat.AppInterface$CommandType: int value()>();
+
+        if $i0 == $i1 goto label2;
+
+        $r9 = r19.<com.android.internal.telephony.cat.CatResponseMessage: com.android.internal.telephony.cat.CommandDetails mCmdDet>;
+
+        $i3 = $r9.<com.android.internal.telephony.cat.CommandDetails: int typeOfCommand>;
+
+        $r10 = <com.android.internal.telephony.cat.AppInterface$CommandType: com.android.internal.telephony.cat.AppInterface$CommandType SET_UP_MENU>;
+
+        $i4 = virtualinvoke $r10.<com.android.internal.telephony.cat.AppInterface$CommandType: int value()>();
+
+        if $i3 != $i4 goto label1;
+
+        goto label2;
+
+     label1:
+        $r11 = r0.<com.android.internal.telephony.cat.CatService: com.android.internal.telephony.cat.CatCmdMessage mCurrntCmd>;
+
+        if $r11 == null goto label3;
+
+        $r14 = r19.<com.android.internal.telephony.cat.CatResponseMessage: com.android.internal.telephony.cat.CommandDetails mCmdDet>;
+
+        $r12 = r0.<com.android.internal.telephony.cat.CatService: com.android.internal.telephony.cat.CatCmdMessage mCurrntCmd>;
+
+        $r13 = $r12.<com.android.internal.telephony.cat.CatCmdMessage: com.android.internal.telephony.cat.CommandDetails mCmdDet>;
+
+        z0 = virtualinvoke $r14.<com.android.internal.telephony.cat.CommandDetails: boolean compareTo(com.android.internal.telephony.cat.CommandDetails)>($r13);
+
+        $r15 = new java.lang.StringBuilder;
+
+        specialinvoke $r15.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r15.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("isResponse for last valid cmd: ");
+
+        virtualinvoke $r15.<java.lang.StringBuilder: java.lang.StringBuilder append(boolean)>(z0);
+
+        $r18 = virtualinvoke $r15.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.internal.telephony.cat.CatLog: void d(java.lang.Object,java.lang.String)>(r0, $r18);
+
+        goto label3;
+
+     label2:
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("CmdType: ");
+
+        $r6 = r19.<com.android.internal.telephony.cat.CatResponseMessage: com.android.internal.telephony.cat.CommandDetails mCmdDet>;
+
+        $i2 = $r6.<com.android.internal.telephony.cat.CommandDetails: int typeOfCommand>;
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i2);
+
+        $r8 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.internal.telephony.cat.CatLog: void d(java.lang.Object,java.lang.String)>(r0, $r8);
+
+        z0 = 1;
+
+     label3:
+        return z0;
+    }
+
+    public void dispose()
+    {
+        com.android.internal.telephony.cat.CatService r0;
+        java.lang.Object r1;
+        com.android.internal.telephony.uicc.IccRecords $r2;
+        com.android.internal.telephony.uicc.IccCardStatus$CardState $r3;
+        com.android.internal.telephony.CommandsInterface $r4, $r5, $r6, $r7, $r8, $r9;
+        com.android.internal.telephony.uicc.UiccController $r10, $r19;
+        com.android.internal.telephony.cat.RilMessageDecoder $r11, $r18;
+        com.android.internal.telephony.cat.CatService[] $r12, $r16, $r17;
+        int $i0, $i1, $i2, $i3, $i4;
+        java.lang.String $r15;
+        java.lang.Throwable $r20;
+        java.lang.StringBuilder r21;
+
+        r0 := @this: com.android.internal.telephony.cat.CatService;
+
+        r1 = <com.android.internal.telephony.cat.CatService: java.lang.Object sInstanceLock>;
+
+        entermonitor r1;
+
+     label01:
+        staticinvoke <com.android.internal.telephony.cat.CatLog: void d(java.lang.Object,java.lang.String)>(r0, "Disposing CatService object");
+
+        $r2 = <com.android.internal.telephony.cat.CatService: com.android.internal.telephony.uicc.IccRecords mIccRecords>;
+
+        virtualinvoke $r2.<com.android.internal.telephony.uicc.IccRecords: void unregisterForRecordsLoaded(android.os.Handler)>(r0);
+
+        $r3 = <com.android.internal.telephony.uicc.IccCardStatus$CardState: com.android.internal.telephony.uicc.IccCardStatus$CardState CARDSTATE_ABSENT>;
+
+        specialinvoke r0.<com.android.internal.telephony.cat.CatService: void broadcastCardStateAndIccRefreshResp(com.android.internal.telephony.uicc.IccCardStatus$CardState,com.android.internal.telephony.uicc.IccRefreshResponse)>($r3, null);
+
+        $r4 = r0.<com.android.internal.telephony.cat.CatService: com.android.internal.telephony.CommandsInterface mCmdIf>;
+
+        interfaceinvoke $r4.<com.android.internal.telephony.CommandsInterface: void unSetOnCatSessionEnd(android.os.Handler)>(r0);
+
+        $r5 = r0.<com.android.internal.telephony.cat.CatService: com.android.internal.telephony.CommandsInterface mCmdIf>;
+
+        interfaceinvoke $r5.<com.android.internal.telephony.CommandsInterface: void unSetOnCatProactiveCmd(android.os.Handler)>(r0);
+
+        $r6 = r0.<com.android.internal.telephony.cat.CatService: com.android.internal.telephony.CommandsInterface mCmdIf>;
+
+        interfaceinvoke $r6.<com.android.internal.telephony.CommandsInterface: void unSetOnCatEvent(android.os.Handler)>(r0);
+
+        $r7 = r0.<com.android.internal.telephony.cat.CatService: com.android.internal.telephony.CommandsInterface mCmdIf>;
+
+        interfaceinvoke $r7.<com.android.internal.telephony.CommandsInterface: void unSetOnCatCallSetUp(android.os.Handler)>(r0);
+
+        $r8 = r0.<com.android.internal.telephony.cat.CatService: com.android.internal.telephony.CommandsInterface mCmdIf>;
+
+        interfaceinvoke $r8.<com.android.internal.telephony.CommandsInterface: void unSetOnCatCcAlphaNotify(android.os.Handler)>(r0);
+
+        $r9 = r0.<com.android.internal.telephony.cat.CatService: com.android.internal.telephony.CommandsInterface mCmdIf>;
+
+        interfaceinvoke $r9.<com.android.internal.telephony.CommandsInterface: void unregisterForIccRefresh(android.os.Handler)>(r0);
+
+        $r10 = r0.<com.android.internal.telephony.cat.CatService: com.android.internal.telephony.uicc.UiccController mUiccController>;
+
+        if $r10 == null goto label02;
+
+        $r19 = r0.<com.android.internal.telephony.cat.CatService: com.android.internal.telephony.uicc.UiccController mUiccController>;
+
+        virtualinvoke $r19.<com.android.internal.telephony.uicc.UiccController: void unregisterForIccChanged(android.os.Handler)>(r0);
+
+        r0.<com.android.internal.telephony.cat.CatService: com.android.internal.telephony.uicc.UiccController mUiccController> = null;
+
+     label02:
+        $r11 = r0.<com.android.internal.telephony.cat.CatService: com.android.internal.telephony.cat.RilMessageDecoder mMsgDecoder>;
+
+        if $r11 == null goto label03;
+
+        $r18 = r0.<com.android.internal.telephony.cat.CatService: com.android.internal.telephony.cat.RilMessageDecoder mMsgDecoder>;
+
+        virtualinvoke $r18.<com.android.internal.telephony.cat.RilMessageDecoder: void dispose()>();
+
+        r0.<com.android.internal.telephony.cat.CatService: com.android.internal.telephony.cat.RilMessageDecoder mMsgDecoder> = null;
+
+     label03:
+        virtualinvoke r0.<com.android.internal.telephony.cat.CatService: void removeCallbacksAndMessages(java.lang.Object)>(null);
+
+        $r12 = <com.android.internal.telephony.cat.CatService: com.android.internal.telephony.cat.CatService[] sInstance>;
+
+        if $r12 == null goto label06;
+
+        $i0 = r0.<com.android.internal.telephony.cat.CatService: int mSlotId>;
+
+        if $i0 < 0 goto label05;
+
+        $i3 = r0.<com.android.internal.telephony.cat.CatService: int mSlotId>;
+
+        $r16 = <com.android.internal.telephony.cat.CatService: com.android.internal.telephony.cat.CatService[] sInstance>;
+
+        $i2 = lengthof $r16;
+
+        if $i3 >= $i2 goto label05;
+
+        $r17 = <com.android.internal.telephony.cat.CatService: com.android.internal.telephony.cat.CatService[] sInstance>;
+
+        $i4 = r0.<com.android.internal.telephony.cat.CatService: int mSlotId>;
+
+        $r17[$i4] = null;
+
+     label04:
+        goto label06;
+
+     label05:
+        r21 = new java.lang.StringBuilder;
+
+        specialinvoke r21.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r21.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("error: invaild slot id: ");
+
+        $i1 = r0.<com.android.internal.telephony.cat.CatService: int mSlotId>;
+
+        virtualinvoke r21.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i1);
+
+        $r15 = virtualinvoke r21.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.internal.telephony.cat.CatLog: void d(java.lang.Object,java.lang.String)>(r0, $r15);
+
+     label06:
+        exitmonitor r1;
+
+     label07:
+        return;
+
+     label08:
+        $r20 := @caughtexception;
+
+     label09:
+        exitmonitor r1;
+
+     label10:
+        throw $r20;
+
+        catch java.lang.Throwable from label01 to label02 with label08;
+        catch java.lang.Throwable from label02 to label03 with label08;
+        catch java.lang.Throwable from label03 to label04 with label08;
+        catch java.lang.Throwable from label05 to label06 with label08;
+        catch java.lang.Throwable from label06 to label07 with label08;
+        catch java.lang.Throwable from label09 to label10 with label08;
+    }
+
+    protected void finalize()
+    {
+        com.android.internal.telephony.cat.CatService r0;
+
+        r0 := @this: com.android.internal.telephony.cat.CatService;
+
+        staticinvoke <com.android.internal.telephony.cat.CatLog: void d(java.lang.Object,java.lang.String)>(r0, "Service finalized");
+
+        return;
+    }
+
+    public void handleMessage(android.os.Message)
+    {
+        com.android.internal.telephony.cat.CatService r0;
+        int i0, $i1, $i2, $i3, $i4, $i5;
+        android.os.AsyncResult r1, r37, r42;
+        java.lang.StringBuilder $r2, $r6, $r17, $r30;
+        java.lang.String $r3, $r8, $r18, $r29, $r32, r39;
+        java.lang.Object $r4, $r5, $r9, $r10, $r13, $r19, $r20, $r21, $r22, $r23, $r25, $r26, $r27, $r28;
+        java.lang.Throwable $r7;
+        com.android.internal.telephony.uicc.IccRefreshResponse $r11;
+        com.android.internal.telephony.uicc.IccCardStatus$CardState $r12;
+        com.android.internal.telephony.cat.CatResponseMessage $r14;
+        com.android.internal.telephony.cat.RilMessage $r15, $r24, $r41;
+        com.android.internal.telephony.cat.RilMessageDecoder $r16, $r40;
+        java.lang.AssertionError $r31;
+        java.lang.ClassCastException $r33;
+        android.os.Message r34;
+
+        r0 := @this: com.android.internal.telephony.cat.CatService;
+
+        r34 := @parameter0: android.os.Message;
+
+        $r2 = new java.lang.StringBuilder;
+
+        specialinvoke $r2.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("handleMessage[");
+
+        $i1 = r34.<android.os.Message: int what>;
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i1);
+
+        virtualinvoke $r2.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("]");
+
+        $r3 = virtualinvoke $r2.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.internal.telephony.cat.CatLog: void d(java.lang.Object,java.lang.String)>(r0, $r3);
+
+        i0 = r34.<android.os.Message: int what>;
+
+        if i0 == 20 goto label20;
+
+        if i0 == 30 goto label16;
+
+        tableswitch(i0)
+        {
+            case 1: goto label11;
+            case 2: goto label11;
+            case 3: goto label11;
+            case 4: goto label10;
+            case 5: goto label11;
+            case 6: goto label09;
+            default: goto label01;
+        };
+
+     label01:
+        tableswitch(i0)
+        {
+            case 8: goto label08;
+            case 9: goto label04;
+            case 10: goto label03;
+            default: goto label02;
+        };
+
+     label02:
+        $r30 = new java.lang.StringBuilder;
+
+        specialinvoke $r30.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r30.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Unrecognized CAT command: ");
+
+        $i4 = r34.<android.os.Message: int what>;
+
+        virtualinvoke $r30.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i4);
+
+        $r31 = new java.lang.AssertionError;
+
+        $r32 = virtualinvoke $r30.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r31.<java.lang.AssertionError: void <init>(java.lang.Object)>($r32);
+
+        throw $r31;
+
+     label03:
+        $r23 = r34.<android.os.Message: java.lang.Object obj>;
+
+        $r24 = (com.android.internal.telephony.cat.RilMessage) $r23;
+
+        specialinvoke r0.<com.android.internal.telephony.cat.CatService: void handleRilMsg(com.android.internal.telephony.cat.RilMessage)>($r24);
+
+        goto label20;
+
+     label04:
+        staticinvoke <com.android.internal.telephony.cat.CatLog: void d(java.lang.Object,java.lang.String)>(r0, "Received CAT CC Alpha message from card");
+
+        $r25 = r34.<android.os.Message: java.lang.Object obj>;
+
+        if $r25 == null goto label07;
+
+        $r26 = r34.<android.os.Message: java.lang.Object obj>;
+
+        r37 = (android.os.AsyncResult) $r26;
+
+        if r37 == null goto label05;
+
+        $r27 = r37.<android.os.AsyncResult: java.lang.Object result>;
+
+        if $r27 == null goto label05;
+
+        $r28 = r37.<android.os.AsyncResult: java.lang.Object result>;
+
+        $r29 = (java.lang.String) $r28;
+
+        specialinvoke r0.<com.android.internal.telephony.cat.CatService: void broadcastAlphaMessage(java.lang.String)>($r29);
+
+        goto label06;
+
+     label05:
+        staticinvoke <com.android.internal.telephony.cat.CatLog: void d(java.lang.Object,java.lang.String)>(r0, "CAT Alpha message: ar.result is null");
+
+     label06:
+        goto label20;
+
+     label07:
+        staticinvoke <com.android.internal.telephony.cat.CatLog: void d(java.lang.Object,java.lang.String)>(r0, "CAT Alpha message: msg.obj is null");
+
+        goto label20;
+
+     label08:
+        staticinvoke <com.android.internal.telephony.cat.CatLog: void d(java.lang.Object,java.lang.String)>(r0, "MSG_ID_ICC_CHANGED");
+
+        virtualinvoke r0.<com.android.internal.telephony.cat.CatService: void updateIccAvailability()>();
+
+        goto label20;
+
+     label09:
+        $r13 = r34.<android.os.Message: java.lang.Object obj>;
+
+        $r14 = (com.android.internal.telephony.cat.CatResponseMessage) $r13;
+
+        specialinvoke r0.<com.android.internal.telephony.cat.CatService: void handleCmdResponse(com.android.internal.telephony.cat.CatResponseMessage)>($r14);
+
+        goto label20;
+
+     label10:
+        $r16 = r0.<com.android.internal.telephony.cat.CatService: com.android.internal.telephony.cat.RilMessageDecoder mMsgDecoder>;
+
+        $r15 = new com.android.internal.telephony.cat.RilMessage;
+
+        $i2 = r34.<android.os.Message: int what>;
+
+        specialinvoke $r15.<com.android.internal.telephony.cat.RilMessage: void <init>(int,java.lang.String)>($i2, null);
+
+        virtualinvoke $r16.<com.android.internal.telephony.cat.RilMessageDecoder: void sendStartDecodingMessageParams(com.android.internal.telephony.cat.RilMessage)>($r15);
+
+        goto label20;
+
+     label11:
+        $r17 = new java.lang.StringBuilder;
+
+        specialinvoke $r17.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r17.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("ril message arrived,slotid:");
+
+        $i3 = r0.<com.android.internal.telephony.cat.CatService: int mSlotId>;
+
+        virtualinvoke $r17.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i3);
+
+        $r18 = virtualinvoke $r17.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.internal.telephony.cat.CatLog: void d(java.lang.Object,java.lang.String)>(r0, $r18);
+
+        r39 = null;
+
+        $r19 = r34.<android.os.Message: java.lang.Object obj>;
+
+        if $r19 == null goto label15;
+
+        $r20 = r34.<android.os.Message: java.lang.Object obj>;
+
+        r1 = (android.os.AsyncResult) $r20;
+
+        r39 = null;
+
+        if r1 == null goto label15;
+
+        r39 = null;
+
+        $r21 = r1.<android.os.AsyncResult: java.lang.Object result>;
+
+        if $r21 == null goto label15;
+
+     label12:
+        $r22 = r1.<android.os.AsyncResult: java.lang.Object result>;
+
+        r39 = (java.lang.String) $r22;
+
+     label13:
+        goto label15;
+
+     label14:
+        $r33 := @caughtexception;
+
+        goto label20;
+
+     label15:
+        $r40 = r0.<com.android.internal.telephony.cat.CatService: com.android.internal.telephony.cat.RilMessageDecoder mMsgDecoder>;
+
+        $r41 = new com.android.internal.telephony.cat.RilMessage;
+
+        $i5 = r34.<android.os.Message: int what>;
+
+        specialinvoke $r41.<com.android.internal.telephony.cat.RilMessage: void <init>(int,java.lang.String)>($i5, r39);
+
+        virtualinvoke $r40.<com.android.internal.telephony.cat.RilMessageDecoder: void sendStartDecodingMessageParams(com.android.internal.telephony.cat.RilMessage)>($r41);
+
+        goto label20;
+
+     label16:
+        $r4 = r34.<android.os.Message: java.lang.Object obj>;
+
+        if $r4 == null goto label19;
+
+        $r5 = r34.<android.os.Message: java.lang.Object obj>;
+
+        r42 = (android.os.AsyncResult) $r5;
+
+        if r42 == null goto label17;
+
+        $r9 = r42.<android.os.AsyncResult: java.lang.Object result>;
+
+        if $r9 == null goto label17;
+
+        $r12 = <com.android.internal.telephony.uicc.IccCardStatus$CardState: com.android.internal.telephony.uicc.IccCardStatus$CardState CARDSTATE_PRESENT>;
+
+        $r10 = r42.<android.os.AsyncResult: java.lang.Object result>;
+
+        $r11 = (com.android.internal.telephony.uicc.IccRefreshResponse) $r10;
+
+        specialinvoke r0.<com.android.internal.telephony.cat.CatService: void broadcastCardStateAndIccRefreshResp(com.android.internal.telephony.uicc.IccCardStatus$CardState,com.android.internal.telephony.uicc.IccRefreshResponse)>($r12, $r11);
+
+        goto label18;
+
+     label17:
+        $r6 = new java.lang.StringBuilder;
+
+        specialinvoke $r6.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Icc REFRESH with exception: ");
+
+        $r7 = r42.<android.os.AsyncResult: java.lang.Throwable exception>;
+
+        virtualinvoke $r6.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>($r7);
+
+        $r8 = virtualinvoke $r6.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.internal.telephony.cat.CatLog: void d(java.lang.Object,java.lang.String)>(r0, $r8);
+
+     label18:
+        goto label20;
+
+     label19:
+        staticinvoke <com.android.internal.telephony.cat.CatLog: void d(java.lang.Object,java.lang.String)>(r0, "IccRefresh Message is null");
+
+        goto label20;
+
+     label20:
+        return;
+
+        catch java.lang.ClassCastException from label12 to label13 with label14;
+    }
+
+    public void onCmdResponse(com.android.internal.telephony.cat.CatResponseMessage)
+    {
+        com.android.internal.telephony.cat.CatService r0;
+        android.os.Message $r1;
+        java.lang.Throwable $r2;
+        com.android.internal.telephony.cat.CatResponseMessage r3;
+
+        r0 := @this: com.android.internal.telephony.cat.CatService;
+
+        r3 := @parameter0: com.android.internal.telephony.cat.CatResponseMessage;
+
+        entermonitor r0;
+
+        if r3 != null goto label1;
+
+        exitmonitor r0;
+
+        return;
+
+     label1:
+        $r1 = virtualinvoke r0.<com.android.internal.telephony.cat.CatService: android.os.Message obtainMessage(int,java.lang.Object)>(6, r3);
+
+        virtualinvoke $r1.<android.os.Message: void sendToTarget()>();
+
+     label2:
+        exitmonitor r0;
+
+        return;
+
+     label3:
+        $r2 := @caughtexception;
+
+        exitmonitor r0;
+
+        throw $r2;
+
+        catch java.lang.Throwable from label1 to label2 with label3;
+    }
+
+    public void update(com.android.internal.telephony.CommandsInterface, android.content.Context, com.android.internal.telephony.uicc.UiccProfile)
+    {
+        com.android.internal.telephony.cat.CatService r0;
+        com.android.internal.telephony.uicc.IccRecords $r1, $r2, $r4, r10;
+        int $i0;
+        java.lang.String $r3;
+        java.lang.Throwable $r5;
+        com.android.internal.telephony.CommandsInterface r6;
+        android.content.Context r7;
+        com.android.internal.telephony.uicc.UiccProfile r8;
+        com.android.internal.telephony.uicc.UiccCardApplication r9, r11;
+        java.lang.Object r12;
+        java.lang.StringBuilder r13;
+
+        r0 := @this: com.android.internal.telephony.cat.CatService;
+
+        r6 := @parameter0: com.android.internal.telephony.CommandsInterface;
+
+        r7 := @parameter1: android.content.Context;
+
+        r8 := @parameter2: com.android.internal.telephony.uicc.UiccProfile;
+
+        r9 = null;
+
+        r10 = null;
+
+        if r8 == null goto label1;
+
+        r11 = virtualinvoke r8.<com.android.internal.telephony.uicc.UiccProfile: com.android.internal.telephony.uicc.UiccCardApplication getApplicationIndex(int)>(0);
+
+        r9 = r11;
+
+        r10 = null;
+
+        if r11 == null goto label1;
+
+        r10 = virtualinvoke r11.<com.android.internal.telephony.uicc.UiccCardApplication: com.android.internal.telephony.uicc.IccRecords getIccRecords()>();
+
+        r9 = r11;
+
+     label1:
+        r12 = <com.android.internal.telephony.cat.CatService: java.lang.Object sInstanceLock>;
+
+        entermonitor r12;
+
+        if r10 == null goto label4;
+
+     label2:
+        $r1 = <com.android.internal.telephony.cat.CatService: com.android.internal.telephony.uicc.IccRecords mIccRecords>;
+
+        if $r1 == r10 goto label4;
+
+        $r2 = <com.android.internal.telephony.cat.CatService: com.android.internal.telephony.uicc.IccRecords mIccRecords>;
+
+        if $r2 == null goto label3;
+
+        $r4 = <com.android.internal.telephony.cat.CatService: com.android.internal.telephony.uicc.IccRecords mIccRecords>;
+
+        virtualinvoke $r4.<com.android.internal.telephony.uicc.IccRecords: void unregisterForRecordsLoaded(android.os.Handler)>(r0);
+
+     label3:
+        staticinvoke <com.android.internal.telephony.cat.CatLog: void d(java.lang.Object,java.lang.String)>(r0, "Reinitialize the Service with SIMRecords and UiccCardApplication");
+
+        <com.android.internal.telephony.cat.CatService: com.android.internal.telephony.uicc.IccRecords mIccRecords> = r10;
+
+        <com.android.internal.telephony.cat.CatService: com.android.internal.telephony.uicc.UiccCardApplication mUiccApplication> = r9;
+
+        virtualinvoke r10.<com.android.internal.telephony.uicc.IccRecords: void registerForRecordsLoaded(android.os.Handler,int,java.lang.Object)>(r0, 20, null);
+
+        r13 = new java.lang.StringBuilder;
+
+        specialinvoke r13.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("registerForRecordsLoaded slotid=");
+
+        $i0 = r0.<com.android.internal.telephony.cat.CatService: int mSlotId>;
+
+        virtualinvoke r13.<java.lang.StringBuilder: java.lang.StringBuilder append(int)>($i0);
+
+        virtualinvoke r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" instance:");
+
+        virtualinvoke r13.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r0);
+
+        $r3 = virtualinvoke r13.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.internal.telephony.cat.CatLog: void d(java.lang.Object,java.lang.String)>(r0, $r3);
+
+     label4:
+        exitmonitor r12;
+
+     label5:
+        return;
+
+     label6:
+        $r5 := @caughtexception;
+
+     label7:
+        exitmonitor r12;
+
+     label8:
+        throw $r5;
+
+        catch java.lang.Throwable from label2 to label3 with label6;
+        catch java.lang.Throwable from label3 to label4 with label6;
+        catch java.lang.Throwable from label4 to label5 with label6;
+        catch java.lang.Throwable from label7 to label8 with label6;
+    }
+
+    void updateIccAvailability()
+    {
+        com.android.internal.telephony.cat.CatService r0;
+        com.android.internal.telephony.uicc.IccCardStatus$CardState r1, $r10, $r11, $r12, $r14, r15;
+        com.android.internal.telephony.uicc.UiccController $r2, $r3;
+        int $i0;
+        java.lang.StringBuilder $r4;
+        java.lang.String $r9;
+        com.android.internal.telephony.CommandsInterface $r13;
+        com.android.internal.telephony.uicc.UiccCard r16;
+
+        r0 := @this: com.android.internal.telephony.cat.CatService;
+
+        $r2 = r0.<com.android.internal.telephony.cat.CatService: com.android.internal.telephony.uicc.UiccController mUiccController>;
+
+        if $r2 != null goto label1;
+
+        return;
+
+     label1:
+        r15 = <com.android.internal.telephony.uicc.IccCardStatus$CardState: com.android.internal.telephony.uicc.IccCardStatus$CardState CARDSTATE_ABSENT>;
+
+        $r3 = r0.<com.android.internal.telephony.cat.CatService: com.android.internal.telephony.uicc.UiccController mUiccController>;
+
+        $i0 = r0.<com.android.internal.telephony.cat.CatService: int mSlotId>;
+
+        r16 = virtualinvoke $r3.<com.android.internal.telephony.uicc.UiccController: com.android.internal.telephony.uicc.UiccCard getUiccCard(int)>($i0);
+
+        if r16 == null goto label2;
+
+        r15 = virtualinvoke r16.<com.android.internal.telephony.uicc.UiccCard: com.android.internal.telephony.uicc.IccCardStatus$CardState getCardState()>();
+
+     label2:
+        r1 = r0.<com.android.internal.telephony.cat.CatService: com.android.internal.telephony.uicc.IccCardStatus$CardState mCardState>;
+
+        r0.<com.android.internal.telephony.cat.CatService: com.android.internal.telephony.uicc.IccCardStatus$CardState mCardState> = r15;
+
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("New Card State = ");
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r15);
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" Old Card State = ");
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.Object)>(r1);
+
+        $r9 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        staticinvoke <com.android.internal.telephony.cat.CatLog: void d(java.lang.Object,java.lang.String)>(r0, $r9);
+
+        $r10 = <com.android.internal.telephony.uicc.IccCardStatus$CardState: com.android.internal.telephony.uicc.IccCardStatus$CardState CARDSTATE_PRESENT>;
+
+        if r1 != $r10 goto label3;
+
+        $r14 = <com.android.internal.telephony.uicc.IccCardStatus$CardState: com.android.internal.telephony.uicc.IccCardStatus$CardState CARDSTATE_PRESENT>;
+
+        if r15 == $r14 goto label3;
+
+        specialinvoke r0.<com.android.internal.telephony.cat.CatService: void broadcastCardStateAndIccRefreshResp(com.android.internal.telephony.uicc.IccCardStatus$CardState,com.android.internal.telephony.uicc.IccRefreshResponse)>(r15, null);
+
+        goto label4;
+
+     label3:
+        $r11 = <com.android.internal.telephony.uicc.IccCardStatus$CardState: com.android.internal.telephony.uicc.IccCardStatus$CardState CARDSTATE_PRESENT>;
+
+        if r1 == $r11 goto label4;
+
+        $r12 = <com.android.internal.telephony.uicc.IccCardStatus$CardState: com.android.internal.telephony.uicc.IccCardStatus$CardState CARDSTATE_PRESENT>;
+
+        if r15 != $r12 goto label4;
+
+        $r13 = r0.<com.android.internal.telephony.cat.CatService: com.android.internal.telephony.CommandsInterface mCmdIf>;
+
+        interfaceinvoke $r13.<com.android.internal.telephony.CommandsInterface: void reportStkServiceIsRunning(android.os.Message)>(null);
+
+     label4:
+        return;
+    }
+}

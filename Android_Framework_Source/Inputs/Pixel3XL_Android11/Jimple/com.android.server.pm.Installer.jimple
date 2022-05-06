@@ -1,0 +1,2722 @@
+public class com.android.server.pm.Installer extends com.android.server.SystemService
+{
+    public static final int DEXOPT_BOOTCOMPLETE;
+    public static final int DEXOPT_DEBUGGABLE;
+    public static final int DEXOPT_ENABLE_HIDDEN_API_CHECKS;
+    public static final int DEXOPT_FORCE;
+    public static final int DEXOPT_FOR_RESTORE;
+    public static final int DEXOPT_GENERATE_APP_IMAGE;
+    public static final int DEXOPT_GENERATE_COMPACT_DEX;
+    public static final int DEXOPT_IDLE_BACKGROUND_JOB;
+    public static final int DEXOPT_PROFILE_GUIDED;
+    public static final int DEXOPT_PUBLIC;
+    public static final int DEXOPT_SECONDARY_DEX;
+    public static final int DEXOPT_STORAGE_CE;
+    public static final int DEXOPT_STORAGE_DE;
+    public static final int FLAG_CLEAR_APP_DATA_KEEP_ART_PROFILES;
+    public static final int FLAG_CLEAR_CACHE_ONLY;
+    public static final int FLAG_CLEAR_CODE_CACHE_ONLY;
+    public static final int FLAG_FORCE;
+    public static final int FLAG_FREE_CACHE_NOOP;
+    public static final int FLAG_FREE_CACHE_V2;
+    public static final int FLAG_FREE_CACHE_V2_DEFY_QUOTA;
+    public static final int FLAG_STORAGE_CE;
+    public static final int FLAG_STORAGE_DE;
+    public static final int FLAG_STORAGE_EXTERNAL;
+    public static final int FLAG_USE_QUOTA;
+    private static final java.lang.String TAG;
+    private volatile android.os.IInstalld mInstalld;
+    private final boolean mIsolated;
+    private volatile java.lang.Object mWarnIfHeld;
+
+    public void <init>(android.content.Context)
+    {
+        com.android.server.pm.Installer r0;
+        android.content.Context r1;
+
+        r0 := @this: com.android.server.pm.Installer;
+
+        r1 := @parameter0: android.content.Context;
+
+        specialinvoke r0.<com.android.server.pm.Installer: void <init>(android.content.Context,boolean)>(r1, 0);
+
+        return;
+    }
+
+    public void <init>(android.content.Context, boolean)
+    {
+        com.android.server.pm.Installer r0;
+        android.content.Context r1;
+        boolean z0;
+
+        r0 := @this: com.android.server.pm.Installer;
+
+        r1 := @parameter0: android.content.Context;
+
+        z0 := @parameter1: boolean;
+
+        specialinvoke r0.<com.android.server.SystemService: void <init>(android.content.Context)>(r1);
+
+        r0.<com.android.server.pm.Installer: boolean mIsolated> = z0;
+
+        return;
+    }
+
+    static void access$000(com.android.server.pm.Installer)
+    {
+        com.android.server.pm.Installer r0;
+
+        r0 := @parameter0: com.android.server.pm.Installer;
+
+        specialinvoke r0.<com.android.server.pm.Installer: void connect()>();
+
+        return;
+    }
+
+    private static void assertValidInstructionSet(java.lang.String) throws com.android.server.pm.Installer$InstallerException
+    {
+        java.lang.String r0, $r5, $r6, $r7;
+        int i0, i1;
+        java.lang.StringBuilder $r1;
+        com.android.server.pm.Installer$InstallerException $r4;
+        boolean $z0;
+        java.lang.String[] r8;
+
+        r0 := @parameter0: java.lang.String;
+
+        r8 = <android.os.Build: java.lang.String[] SUPPORTED_ABIS>;
+
+        i0 = lengthof r8;
+
+        i1 = 0;
+
+     label1:
+        if i1 >= i0 goto label3;
+
+        $r6 = r8[i1];
+
+        $r7 = staticinvoke <dalvik.system.VMRuntime: java.lang.String getInstructionSet(java.lang.String)>($r6);
+
+        $z0 = virtualinvoke $r7.<java.lang.String: boolean equals(java.lang.Object)>(r0);
+
+        if $z0 == 0 goto label2;
+
+        return;
+
+     label2:
+        i1 = i1 + 1;
+
+        goto label1;
+
+     label3:
+        $r1 = new java.lang.StringBuilder;
+
+        specialinvoke $r1.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Invalid instruction set: ");
+
+        virtualinvoke $r1.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(r0);
+
+        $r4 = new com.android.server.pm.Installer$InstallerException;
+
+        $r5 = virtualinvoke $r1.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        specialinvoke $r4.<com.android.server.pm.Installer$InstallerException: void <init>(java.lang.String)>($r5);
+
+        throw $r4;
+    }
+
+    private boolean checkBeforeRemote()
+    {
+        com.android.server.pm.Installer r0;
+        java.lang.Object $r2, $r3, $r10;
+        boolean $z0, $z1;
+        java.lang.StringBuilder $r4;
+        java.lang.Thread $r6;
+        java.lang.String $r7, $r11, $r13;
+        int $i1;
+        java.lang.Throwable $r14;
+
+        r0 := @this: com.android.server.pm.Installer;
+
+        $r2 = r0.<com.android.server.pm.Installer: java.lang.Object mWarnIfHeld>;
+
+        if $r2 == null goto label1;
+
+        $r3 = r0.<com.android.server.pm.Installer: java.lang.Object mWarnIfHeld>;
+
+        $z0 = staticinvoke <java.lang.Thread: boolean holdsLock(java.lang.Object)>($r3);
+
+        if $z0 == 0 goto label1;
+
+        $r4 = new java.lang.StringBuilder;
+
+        specialinvoke $r4.<java.lang.StringBuilder: void <init>()>();
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>("Calling thread ");
+
+        $r6 = staticinvoke <java.lang.Thread: java.lang.Thread currentThread()>();
+
+        $r7 = virtualinvoke $r6.<java.lang.Thread: java.lang.String getName()>();
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r7);
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>(" is holding 0x");
+
+        $r10 = r0.<com.android.server.pm.Installer: java.lang.Object mWarnIfHeld>;
+
+        $i1 = staticinvoke <java.lang.System: int identityHashCode(java.lang.Object)>($r10);
+
+        $r11 = staticinvoke <java.lang.Integer: java.lang.String toHexString(int)>($i1);
+
+        virtualinvoke $r4.<java.lang.StringBuilder: java.lang.StringBuilder append(java.lang.String)>($r11);
+
+        $r13 = virtualinvoke $r4.<java.lang.StringBuilder: java.lang.String toString()>();
+
+        $r14 = new java.lang.Throwable;
+
+        specialinvoke $r14.<java.lang.Throwable: void <init>()>();
+
+        staticinvoke <android.util.Slog: int wtf(java.lang.String,java.lang.String,java.lang.Throwable)>("Installer", $r13, $r14);
+
+     label1:
+        $z1 = r0.<com.android.server.pm.Installer: boolean mIsolated>;
+
+        if $z1 == 0 goto label2;
+
+        staticinvoke <android.util.Slog: int i(java.lang.String,java.lang.String)>("Installer", "Ignoring request because this installer is isolated");
+
+        return 0;
+
+     label2:
+        return 1;
+    }
+
+    private void connect()
+    {
+        com.android.server.pm.Installer r0;
+        android.os.IBinder r1, r7;
+        android.os.Handler $r2;
+        com.android.server.pm._$$Lambda$Installer$SebeftIfAJ7KsTmM0tju6PfW4Pc $r3;
+        android.os.IInstalld $r4;
+        android.os.RemoteException $r5;
+        com.android.server.pm.Installer$InstallerException $r6;
+        com.android.server.pm.Installer$1 r8;
+
+        r0 := @this: com.android.server.pm.Installer;
+
+        r1 = staticinvoke <android.os.ServiceManager: android.os.IBinder getService(java.lang.String)>("installd");
+
+        r7 = r1;
+
+        if r1 == null goto label4;
+
+     label1:
+        r8 = new com.android.server.pm.Installer$1;
+
+        specialinvoke r8.<com.android.server.pm.Installer$1: void <init>(com.android.server.pm.Installer)>(r0);
+
+        interfaceinvoke r1.<android.os.IBinder: void linkToDeath(android.os.IBinder$DeathRecipient,int)>(r8, 0);
+
+     label2:
+        r7 = r1;
+
+        goto label4;
+
+     label3:
+        $r5 := @caughtexception;
+
+        r7 = null;
+
+     label4:
+        if r7 == null goto label8;
+
+        $r4 = staticinvoke <android.os.IInstalld$Stub: android.os.IInstalld asInterface(android.os.IBinder)>(r7);
+
+        r0.<com.android.server.pm.Installer: android.os.IInstalld mInstalld> = $r4;
+
+     label5:
+        virtualinvoke r0.<com.android.server.pm.Installer: void invalidateMounts()>();
+
+     label6:
+        goto label9;
+
+     label7:
+        $r6 := @caughtexception;
+
+        goto label6;
+
+     label8:
+        staticinvoke <android.util.Slog: int w(java.lang.String,java.lang.String)>("Installer", "installd not found; trying again");
+
+        $r2 = staticinvoke <com.android.internal.os.BackgroundThread: android.os.Handler getHandler()>();
+
+        $r3 = new com.android.server.pm._$$Lambda$Installer$SebeftIfAJ7KsTmM0tju6PfW4Pc;
+
+        specialinvoke $r3.<com.android.server.pm._$$Lambda$Installer$SebeftIfAJ7KsTmM0tju6PfW4Pc: void <init>(com.android.server.pm.Installer)>(r0);
+
+        virtualinvoke $r2.<android.os.Handler: boolean postDelayed(java.lang.Runnable,long)>($r3, 1000L);
+
+     label9:
+        return;
+
+        catch android.os.RemoteException from label1 to label2 with label3;
+        catch com.android.server.pm.Installer$InstallerException from label5 to label6 with label7;
+    }
+
+    public void assertFsverityRootHashMatches(java.lang.String, byte[]) throws com.android.server.pm.Installer$InstallerException
+    {
+        com.android.server.pm.Installer r0;
+        byte[] r1;
+        boolean $z0;
+        dalvik.system.BlockGuard$VmPolicy $r2;
+        android.os.IInstalld $r3;
+        java.lang.Exception $r4;
+        com.android.server.pm.Installer$InstallerException $r5;
+        java.lang.String r6;
+
+        r0 := @this: com.android.server.pm.Installer;
+
+        r6 := @parameter0: java.lang.String;
+
+        r1 := @parameter1: byte[];
+
+        $z0 = specialinvoke r0.<com.android.server.pm.Installer: boolean checkBeforeRemote()>();
+
+        if $z0 != 0 goto label1;
+
+        return;
+
+     label1:
+        $r2 = staticinvoke <dalvik.system.BlockGuard: dalvik.system.BlockGuard$VmPolicy getVmPolicy()>();
+
+        interfaceinvoke $r2.<dalvik.system.BlockGuard$VmPolicy: void onPathAccess(java.lang.String)>(r6);
+
+     label2:
+        $r3 = r0.<com.android.server.pm.Installer: android.os.IInstalld mInstalld>;
+
+        interfaceinvoke $r3.<android.os.IInstalld: void assertFsverityRootHashMatches(java.lang.String,byte[])>(r6, r1);
+
+     label3:
+        return;
+
+     label4:
+        $r4 := @caughtexception;
+
+        $r5 = staticinvoke <com.android.server.pm.Installer$InstallerException: com.android.server.pm.Installer$InstallerException 'from'(java.lang.Exception)>($r4);
+
+        throw $r5;
+
+        catch java.lang.Exception from label2 to label3 with label4;
+    }
+
+    public void clearAppData(java.lang.String, java.lang.String, int, int, long) throws com.android.server.pm.Installer$InstallerException
+    {
+        com.android.server.pm.Installer r0;
+        java.lang.String r1, r5;
+        int i0, i1;
+        long l2;
+        boolean $z0;
+        android.os.IInstalld $r2;
+        java.lang.Exception $r3;
+        com.android.server.pm.Installer$InstallerException $r4;
+
+        r0 := @this: com.android.server.pm.Installer;
+
+        r5 := @parameter0: java.lang.String;
+
+        r1 := @parameter1: java.lang.String;
+
+        i0 := @parameter2: int;
+
+        i1 := @parameter3: int;
+
+        l2 := @parameter4: long;
+
+        $z0 = specialinvoke r0.<com.android.server.pm.Installer: boolean checkBeforeRemote()>();
+
+        if $z0 != 0 goto label1;
+
+        return;
+
+     label1:
+        $r2 = r0.<com.android.server.pm.Installer: android.os.IInstalld mInstalld>;
+
+        interfaceinvoke $r2.<android.os.IInstalld: void clearAppData(java.lang.String,java.lang.String,int,int,long)>(r5, r1, i0, i1, l2);
+
+     label2:
+        return;
+
+     label3:
+        $r3 := @caughtexception;
+
+        $r4 = staticinvoke <com.android.server.pm.Installer$InstallerException: com.android.server.pm.Installer$InstallerException 'from'(java.lang.Exception)>($r3);
+
+        throw $r4;
+
+        catch java.lang.Exception from label1 to label2 with label3;
+    }
+
+    public void clearAppProfiles(java.lang.String, java.lang.String) throws com.android.server.pm.Installer$InstallerException
+    {
+        com.android.server.pm.Installer r0;
+        java.lang.String r1, r5;
+        boolean $z0;
+        android.os.IInstalld $r2;
+        java.lang.Exception $r3;
+        com.android.server.pm.Installer$InstallerException $r4;
+
+        r0 := @this: com.android.server.pm.Installer;
+
+        r5 := @parameter0: java.lang.String;
+
+        r1 := @parameter1: java.lang.String;
+
+        $z0 = specialinvoke r0.<com.android.server.pm.Installer: boolean checkBeforeRemote()>();
+
+        if $z0 != 0 goto label1;
+
+        return;
+
+     label1:
+        $r2 = r0.<com.android.server.pm.Installer: android.os.IInstalld mInstalld>;
+
+        interfaceinvoke $r2.<android.os.IInstalld: void clearAppProfiles(java.lang.String,java.lang.String)>(r5, r1);
+
+     label2:
+        return;
+
+     label3:
+        $r3 := @caughtexception;
+
+        $r4 = staticinvoke <com.android.server.pm.Installer$InstallerException: com.android.server.pm.Installer$InstallerException 'from'(java.lang.Exception)>($r3);
+
+        throw $r4;
+
+        catch java.lang.Exception from label1 to label2 with label3;
+    }
+
+    public boolean compileLayouts(java.lang.String, java.lang.String, java.lang.String, int)
+    {
+        com.android.server.pm.Installer r0;
+        java.lang.String r1, r2, r5;
+        int i0;
+        boolean z0;
+        android.os.IInstalld $r3;
+        android.os.RemoteException $r4;
+
+        r0 := @this: com.android.server.pm.Installer;
+
+        r5 := @parameter0: java.lang.String;
+
+        r1 := @parameter1: java.lang.String;
+
+        r2 := @parameter2: java.lang.String;
+
+        i0 := @parameter3: int;
+
+     label1:
+        $r3 = r0.<com.android.server.pm.Installer: android.os.IInstalld mInstalld>;
+
+        z0 = interfaceinvoke $r3.<android.os.IInstalld: boolean compileLayouts(java.lang.String,java.lang.String,java.lang.String,int)>(r5, r1, r2, i0);
+
+     label2:
+        return z0;
+
+     label3:
+        $r4 := @caughtexception;
+
+        return 0;
+
+        catch android.os.RemoteException from label1 to label2 with label3;
+    }
+
+    public boolean copySystemProfile(java.lang.String, int, java.lang.String, java.lang.String) throws com.android.server.pm.Installer$InstallerException
+    {
+        com.android.server.pm.Installer r0;
+        int i0;
+        java.lang.String r1, r2, r6;
+        boolean z0, $z1;
+        android.os.IInstalld $r3;
+        java.lang.Exception $r4;
+        com.android.server.pm.Installer$InstallerException $r5;
+
+        r0 := @this: com.android.server.pm.Installer;
+
+        r6 := @parameter0: java.lang.String;
+
+        i0 := @parameter1: int;
+
+        r1 := @parameter2: java.lang.String;
+
+        r2 := @parameter3: java.lang.String;
+
+        $z1 = specialinvoke r0.<com.android.server.pm.Installer: boolean checkBeforeRemote()>();
+
+        if $z1 != 0 goto label1;
+
+        return 0;
+
+     label1:
+        $r3 = r0.<com.android.server.pm.Installer: android.os.IInstalld mInstalld>;
+
+        z0 = interfaceinvoke $r3.<android.os.IInstalld: boolean copySystemProfile(java.lang.String,int,java.lang.String,java.lang.String)>(r6, i0, r1, r2);
+
+     label2:
+        return z0;
+
+     label3:
+        $r4 := @caughtexception;
+
+        $r5 = staticinvoke <com.android.server.pm.Installer$InstallerException: com.android.server.pm.Installer$InstallerException 'from'(java.lang.Exception)>($r4);
+
+        throw $r5;
+
+        catch java.lang.Exception from label1 to label2 with label3;
+    }
+
+    public long createAppData(java.lang.String, java.lang.String, int, int, int, java.lang.String, int) throws com.android.server.pm.Installer$InstallerException
+    {
+        com.android.server.pm.Installer r0;
+        java.lang.String r1, r2, r6;
+        int i0, i1, i2, i3;
+        long l4;
+        boolean $z0;
+        android.os.IInstalld $r3;
+        java.lang.Exception $r4;
+        com.android.server.pm.Installer$InstallerException $r5;
+
+        r0 := @this: com.android.server.pm.Installer;
+
+        r6 := @parameter0: java.lang.String;
+
+        r1 := @parameter1: java.lang.String;
+
+        i0 := @parameter2: int;
+
+        i1 := @parameter3: int;
+
+        i2 := @parameter4: int;
+
+        r2 := @parameter5: java.lang.String;
+
+        i3 := @parameter6: int;
+
+        $z0 = specialinvoke r0.<com.android.server.pm.Installer: boolean checkBeforeRemote()>();
+
+        if $z0 != 0 goto label1;
+
+        return -1L;
+
+     label1:
+        $r3 = r0.<com.android.server.pm.Installer: android.os.IInstalld mInstalld>;
+
+        l4 = interfaceinvoke $r3.<android.os.IInstalld: long createAppData(java.lang.String,java.lang.String,int,int,int,java.lang.String,int)>(r6, r1, i0, i1, i2, r2, i3);
+
+     label2:
+        return l4;
+
+     label3:
+        $r4 := @caughtexception;
+
+        $r5 = staticinvoke <com.android.server.pm.Installer$InstallerException: com.android.server.pm.Installer$InstallerException 'from'(java.lang.Exception)>($r4);
+
+        throw $r5;
+
+        catch java.lang.Exception from label1 to label2 with label3;
+    }
+
+    public void createAppDataBatched(java.lang.String[], java.lang.String[], int, int, int[], java.lang.String[], int[]) throws com.android.server.pm.Installer$InstallerException
+    {
+        com.android.server.pm.Installer r0;
+        java.lang.String[] r1, r3, r6, r7, $r12, r17;
+        int i0, i1, $i2, $i3, i5, i6;
+        int[] r2, r4, $r10, $r13;
+        android.os.IInstalld r5;
+        boolean $z0;
+        java.lang.Object[] $r8, $r9, $r11;
+        java.lang.Exception $r14, $r15, $r16, r18;
+        com.android.server.pm.Installer$InstallerException $r19;
+
+        r0 := @this: com.android.server.pm.Installer;
+
+        r17 := @parameter0: java.lang.String[];
+
+        r1 := @parameter1: java.lang.String[];
+
+        i0 := @parameter2: int;
+
+        i1 := @parameter3: int;
+
+        r2 := @parameter4: int[];
+
+        r3 := @parameter5: java.lang.String[];
+
+        r4 := @parameter6: int[];
+
+        $z0 = specialinvoke r0.<com.android.server.pm.Installer: boolean checkBeforeRemote()>();
+
+        if $z0 != 0 goto label01;
+
+        return;
+
+     label01:
+        i5 = 0;
+
+     label02:
+        $i2 = lengthof r17;
+
+        if i5 >= $i2 goto label11;
+
+        i6 = i5 + 256;
+
+        $i3 = lengthof r17;
+
+        if i6 <= $i3 goto label03;
+
+        i6 = lengthof r17;
+
+        goto label03;
+
+     label03:
+        r5 = r0.<com.android.server.pm.Installer: android.os.IInstalld mInstalld>;
+
+        $r8 = staticinvoke <java.util.Arrays: java.lang.Object[] copyOfRange(java.lang.Object[],int,int)>(r17, i5, i6);
+
+        r6 = (java.lang.String[]) $r8;
+
+     label04:
+        $r9 = staticinvoke <java.util.Arrays: java.lang.Object[] copyOfRange(java.lang.Object[],int,int)>(r1, i5, i6);
+
+        r7 = (java.lang.String[]) $r9;
+
+     label05:
+        $r10 = staticinvoke <java.util.Arrays: int[] copyOfRange(int[],int,int)>(r2, i5, i6);
+
+        $r11 = staticinvoke <java.util.Arrays: java.lang.Object[] copyOfRange(java.lang.Object[],int,int)>(r3, i5, i6);
+
+        $r12 = (java.lang.String[]) $r11;
+
+        $r13 = staticinvoke <java.util.Arrays: int[] copyOfRange(int[],int,int)>(r4, i5, i6);
+
+        interfaceinvoke r5.<android.os.IInstalld: long createAppDataBatched(java.lang.String[],java.lang.String[],int,int,int[],java.lang.String[],int[])>(r6, r7, i0, i1, $r10, $r12, $r13);
+
+     label06:
+        i5 = i5 + 256;
+
+        goto label02;
+
+     label07:
+        $r16 := @caughtexception;
+
+        r18 = $r16;
+
+        goto label10;
+
+     label08:
+        $r14 := @caughtexception;
+
+        r18 = $r14;
+
+        goto label10;
+
+     label09:
+        $r15 := @caughtexception;
+
+        r18 = $r15;
+
+     label10:
+        $r19 = staticinvoke <com.android.server.pm.Installer$InstallerException: com.android.server.pm.Installer$InstallerException 'from'(java.lang.Exception)>(r18);
+
+        throw $r19;
+
+     label11:
+        return;
+
+        catch java.lang.Exception from label03 to label04 with label09;
+        catch java.lang.Exception from label04 to label05 with label08;
+        catch java.lang.Exception from label05 to label06 with label07;
+    }
+
+    public void createOatDir(java.lang.String, java.lang.String) throws com.android.server.pm.Installer$InstallerException
+    {
+        com.android.server.pm.Installer r0;
+        java.lang.String r1, r5;
+        boolean $z0;
+        android.os.IInstalld $r2;
+        java.lang.Exception $r3;
+        com.android.server.pm.Installer$InstallerException $r4;
+
+        r0 := @this: com.android.server.pm.Installer;
+
+        r5 := @parameter0: java.lang.String;
+
+        r1 := @parameter1: java.lang.String;
+
+        $z0 = specialinvoke r0.<com.android.server.pm.Installer: boolean checkBeforeRemote()>();
+
+        if $z0 != 0 goto label1;
+
+        return;
+
+     label1:
+        $r2 = r0.<com.android.server.pm.Installer: android.os.IInstalld mInstalld>;
+
+        interfaceinvoke $r2.<android.os.IInstalld: void createOatDir(java.lang.String,java.lang.String)>(r5, r1);
+
+     label2:
+        return;
+
+     label3:
+        $r3 := @caughtexception;
+
+        $r4 = staticinvoke <com.android.server.pm.Installer$InstallerException: com.android.server.pm.Installer$InstallerException 'from'(java.lang.Exception)>($r3);
+
+        throw $r4;
+
+        catch java.lang.Exception from label1 to label2 with label3;
+    }
+
+    public boolean createProfileSnapshot(int, java.lang.String, java.lang.String, java.lang.String) throws com.android.server.pm.Installer$InstallerException
+    {
+        com.android.server.pm.Installer r0;
+        int i0;
+        java.lang.String r1, r2, r6;
+        boolean z0, $z1;
+        android.os.IInstalld $r3;
+        java.lang.Exception $r4;
+        com.android.server.pm.Installer$InstallerException $r5;
+
+        r0 := @this: com.android.server.pm.Installer;
+
+        i0 := @parameter0: int;
+
+        r6 := @parameter1: java.lang.String;
+
+        r1 := @parameter2: java.lang.String;
+
+        r2 := @parameter3: java.lang.String;
+
+        $z1 = specialinvoke r0.<com.android.server.pm.Installer: boolean checkBeforeRemote()>();
+
+        if $z1 != 0 goto label1;
+
+        return 0;
+
+     label1:
+        $r3 = r0.<com.android.server.pm.Installer: android.os.IInstalld mInstalld>;
+
+        z0 = interfaceinvoke $r3.<android.os.IInstalld: boolean createProfileSnapshot(int,java.lang.String,java.lang.String,java.lang.String)>(i0, r6, r1, r2);
+
+     label2:
+        return z0;
+
+     label3:
+        $r4 := @caughtexception;
+
+        $r5 = staticinvoke <com.android.server.pm.Installer$InstallerException: com.android.server.pm.Installer$InstallerException 'from'(java.lang.Exception)>($r4);
+
+        throw $r5;
+
+        catch java.lang.Exception from label1 to label2 with label3;
+    }
+
+    public void createUserData(java.lang.String, int, int, int) throws com.android.server.pm.Installer$InstallerException
+    {
+        com.android.server.pm.Installer r0;
+        int i0, i1, i2;
+        boolean $z0;
+        android.os.IInstalld $r1;
+        java.lang.Exception $r2;
+        com.android.server.pm.Installer$InstallerException $r3;
+        java.lang.String r4;
+
+        r0 := @this: com.android.server.pm.Installer;
+
+        r4 := @parameter0: java.lang.String;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        i2 := @parameter3: int;
+
+        $z0 = specialinvoke r0.<com.android.server.pm.Installer: boolean checkBeforeRemote()>();
+
+        if $z0 != 0 goto label1;
+
+        return;
+
+     label1:
+        $r1 = r0.<com.android.server.pm.Installer: android.os.IInstalld mInstalld>;
+
+        interfaceinvoke $r1.<android.os.IInstalld: void createUserData(java.lang.String,int,int,int)>(r4, i0, i1, i2);
+
+     label2:
+        return;
+
+     label3:
+        $r2 := @caughtexception;
+
+        $r3 = staticinvoke <com.android.server.pm.Installer$InstallerException: com.android.server.pm.Installer$InstallerException 'from'(java.lang.Exception)>($r2);
+
+        throw $r3;
+
+        catch java.lang.Exception from label1 to label2 with label3;
+    }
+
+    public void deleteOdex(java.lang.String, java.lang.String, java.lang.String) throws com.android.server.pm.Installer$InstallerException
+    {
+        com.android.server.pm.Installer r0;
+        java.lang.String r1, r2, r8;
+        boolean $z0;
+        dalvik.system.BlockGuard$VmPolicy $r3, $r4;
+        android.os.IInstalld $r5;
+        java.lang.Exception $r6;
+        com.android.server.pm.Installer$InstallerException $r7;
+
+        r0 := @this: com.android.server.pm.Installer;
+
+        r8 := @parameter0: java.lang.String;
+
+        r1 := @parameter1: java.lang.String;
+
+        r2 := @parameter2: java.lang.String;
+
+        $z0 = specialinvoke r0.<com.android.server.pm.Installer: boolean checkBeforeRemote()>();
+
+        if $z0 != 0 goto label1;
+
+        return;
+
+     label1:
+        $r3 = staticinvoke <dalvik.system.BlockGuard: dalvik.system.BlockGuard$VmPolicy getVmPolicy()>();
+
+        interfaceinvoke $r3.<dalvik.system.BlockGuard$VmPolicy: void onPathAccess(java.lang.String)>(r8);
+
+        $r4 = staticinvoke <dalvik.system.BlockGuard: dalvik.system.BlockGuard$VmPolicy getVmPolicy()>();
+
+        interfaceinvoke $r4.<dalvik.system.BlockGuard$VmPolicy: void onPathAccess(java.lang.String)>(r2);
+
+     label2:
+        $r5 = r0.<com.android.server.pm.Installer: android.os.IInstalld mInstalld>;
+
+        interfaceinvoke $r5.<android.os.IInstalld: void deleteOdex(java.lang.String,java.lang.String,java.lang.String)>(r8, r1, r2);
+
+     label3:
+        return;
+
+     label4:
+        $r6 := @caughtexception;
+
+        $r7 = staticinvoke <com.android.server.pm.Installer$InstallerException: com.android.server.pm.Installer$InstallerException 'from'(java.lang.Exception)>($r6);
+
+        throw $r7;
+
+        catch java.lang.Exception from label2 to label3 with label4;
+    }
+
+    public void destroyAppData(java.lang.String, java.lang.String, int, int, long) throws com.android.server.pm.Installer$InstallerException
+    {
+        com.android.server.pm.Installer r0;
+        java.lang.String r1, r5;
+        int i0, i1;
+        long l2;
+        boolean $z0;
+        android.os.IInstalld $r2;
+        java.lang.Exception $r3;
+        com.android.server.pm.Installer$InstallerException $r4;
+
+        r0 := @this: com.android.server.pm.Installer;
+
+        r5 := @parameter0: java.lang.String;
+
+        r1 := @parameter1: java.lang.String;
+
+        i0 := @parameter2: int;
+
+        i1 := @parameter3: int;
+
+        l2 := @parameter4: long;
+
+        $z0 = specialinvoke r0.<com.android.server.pm.Installer: boolean checkBeforeRemote()>();
+
+        if $z0 != 0 goto label1;
+
+        return;
+
+     label1:
+        $r2 = r0.<com.android.server.pm.Installer: android.os.IInstalld mInstalld>;
+
+        interfaceinvoke $r2.<android.os.IInstalld: void destroyAppData(java.lang.String,java.lang.String,int,int,long)>(r5, r1, i0, i1, l2);
+
+     label2:
+        return;
+
+     label3:
+        $r3 := @caughtexception;
+
+        $r4 = staticinvoke <com.android.server.pm.Installer$InstallerException: com.android.server.pm.Installer$InstallerException 'from'(java.lang.Exception)>($r3);
+
+        throw $r4;
+
+        catch java.lang.Exception from label1 to label2 with label3;
+    }
+
+    public boolean destroyAppDataSnapshot(java.lang.String, int, long, int, int) throws com.android.server.pm.Installer$InstallerException
+    {
+        com.android.server.pm.Installer r0;
+        int i0, i2, i3;
+        long l1;
+        boolean $z0;
+        android.os.IInstalld $r1;
+        java.lang.Exception $r2;
+        com.android.server.pm.Installer$InstallerException $r3;
+        java.lang.String r4;
+
+        r0 := @this: com.android.server.pm.Installer;
+
+        r4 := @parameter0: java.lang.String;
+
+        i0 := @parameter1: int;
+
+        l1 := @parameter2: long;
+
+        i2 := @parameter3: int;
+
+        i3 := @parameter4: int;
+
+        $z0 = specialinvoke r0.<com.android.server.pm.Installer: boolean checkBeforeRemote()>();
+
+        if $z0 != 0 goto label1;
+
+        return 0;
+
+     label1:
+        $r1 = r0.<com.android.server.pm.Installer: android.os.IInstalld mInstalld>;
+
+        interfaceinvoke $r1.<android.os.IInstalld: void destroyAppDataSnapshot(java.lang.String,java.lang.String,int,long,int,int)>(null, r4, i0, l1, i2, i3);
+
+     label2:
+        return 1;
+
+     label3:
+        $r2 := @caughtexception;
+
+        $r3 = staticinvoke <com.android.server.pm.Installer$InstallerException: com.android.server.pm.Installer$InstallerException 'from'(java.lang.Exception)>($r2);
+
+        throw $r3;
+
+        catch java.lang.Exception from label1 to label2 with label3;
+    }
+
+    public void destroyAppProfiles(java.lang.String) throws com.android.server.pm.Installer$InstallerException
+    {
+        com.android.server.pm.Installer r0;
+        boolean $z0;
+        android.os.IInstalld $r1;
+        java.lang.Exception $r2;
+        com.android.server.pm.Installer$InstallerException $r3;
+        java.lang.String r4;
+
+        r0 := @this: com.android.server.pm.Installer;
+
+        r4 := @parameter0: java.lang.String;
+
+        $z0 = specialinvoke r0.<com.android.server.pm.Installer: boolean checkBeforeRemote()>();
+
+        if $z0 != 0 goto label1;
+
+        return;
+
+     label1:
+        $r1 = r0.<com.android.server.pm.Installer: android.os.IInstalld mInstalld>;
+
+        interfaceinvoke $r1.<android.os.IInstalld: void destroyAppProfiles(java.lang.String)>(r4);
+
+     label2:
+        return;
+
+     label3:
+        $r2 := @caughtexception;
+
+        $r3 = staticinvoke <com.android.server.pm.Installer$InstallerException: com.android.server.pm.Installer$InstallerException 'from'(java.lang.Exception)>($r2);
+
+        throw $r3;
+
+        catch java.lang.Exception from label1 to label2 with label3;
+    }
+
+    public boolean destroyCeSnapshotsNotSpecified(int, int[]) throws com.android.server.pm.Installer$InstallerException
+    {
+        com.android.server.pm.Installer r0;
+        int i0;
+        boolean $z0;
+        android.os.IInstalld $r1;
+        java.lang.Exception $r2;
+        com.android.server.pm.Installer$InstallerException $r3;
+        int[] r4;
+
+        r0 := @this: com.android.server.pm.Installer;
+
+        i0 := @parameter0: int;
+
+        r4 := @parameter1: int[];
+
+        $z0 = specialinvoke r0.<com.android.server.pm.Installer: boolean checkBeforeRemote()>();
+
+        if $z0 != 0 goto label1;
+
+        return 0;
+
+     label1:
+        $r1 = r0.<com.android.server.pm.Installer: android.os.IInstalld mInstalld>;
+
+        interfaceinvoke $r1.<android.os.IInstalld: void destroyCeSnapshotsNotSpecified(java.lang.String,int,int[])>(null, i0, r4);
+
+     label2:
+        return 1;
+
+     label3:
+        $r2 := @caughtexception;
+
+        $r3 = staticinvoke <com.android.server.pm.Installer$InstallerException: com.android.server.pm.Installer$InstallerException 'from'(java.lang.Exception)>($r2);
+
+        throw $r3;
+
+        catch java.lang.Exception from label1 to label2 with label3;
+    }
+
+    public void destroyProfileSnapshot(java.lang.String, java.lang.String) throws com.android.server.pm.Installer$InstallerException
+    {
+        com.android.server.pm.Installer r0;
+        java.lang.String r1, r5;
+        boolean $z0;
+        android.os.IInstalld $r2;
+        java.lang.Exception $r3;
+        com.android.server.pm.Installer$InstallerException $r4;
+
+        r0 := @this: com.android.server.pm.Installer;
+
+        r5 := @parameter0: java.lang.String;
+
+        r1 := @parameter1: java.lang.String;
+
+        $z0 = specialinvoke r0.<com.android.server.pm.Installer: boolean checkBeforeRemote()>();
+
+        if $z0 != 0 goto label1;
+
+        return;
+
+     label1:
+        $r2 = r0.<com.android.server.pm.Installer: android.os.IInstalld mInstalld>;
+
+        interfaceinvoke $r2.<android.os.IInstalld: void destroyProfileSnapshot(java.lang.String,java.lang.String)>(r5, r1);
+
+     label2:
+        return;
+
+     label3:
+        $r3 := @caughtexception;
+
+        $r4 = staticinvoke <com.android.server.pm.Installer$InstallerException: com.android.server.pm.Installer$InstallerException 'from'(java.lang.Exception)>($r3);
+
+        throw $r4;
+
+        catch java.lang.Exception from label1 to label2 with label3;
+    }
+
+    public void destroyUserData(java.lang.String, int, int) throws com.android.server.pm.Installer$InstallerException
+    {
+        com.android.server.pm.Installer r0;
+        int i0, i1;
+        boolean $z0;
+        android.os.IInstalld $r1;
+        java.lang.Exception $r2;
+        com.android.server.pm.Installer$InstallerException $r3;
+        java.lang.String r4;
+
+        r0 := @this: com.android.server.pm.Installer;
+
+        r4 := @parameter0: java.lang.String;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        $z0 = specialinvoke r0.<com.android.server.pm.Installer: boolean checkBeforeRemote()>();
+
+        if $z0 != 0 goto label1;
+
+        return;
+
+     label1:
+        $r1 = r0.<com.android.server.pm.Installer: android.os.IInstalld mInstalld>;
+
+        interfaceinvoke $r1.<android.os.IInstalld: void destroyUserData(java.lang.String,int,int)>(r4, i0, i1);
+
+     label2:
+        return;
+
+     label3:
+        $r2 := @caughtexception;
+
+        $r3 = staticinvoke <com.android.server.pm.Installer$InstallerException: com.android.server.pm.Installer$InstallerException 'from'(java.lang.Exception)>($r2);
+
+        throw $r3;
+
+        catch java.lang.Exception from label1 to label2 with label3;
+    }
+
+    public void dexopt(java.lang.String, int, java.lang.String, java.lang.String, int, java.lang.String, int, java.lang.String, java.lang.String, java.lang.String, java.lang.String, boolean, int, java.lang.String, java.lang.String, java.lang.String) throws com.android.server.pm.Installer$InstallerException
+    {
+        com.android.server.pm.Installer r0;
+        int i0, i1, i2, i3;
+        java.lang.String r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r17;
+        boolean z0, $z1;
+        dalvik.system.BlockGuard$VmPolicy $r11, $r12, $r13;
+        android.os.IInstalld $r14;
+        java.lang.Exception $r15;
+        com.android.server.pm.Installer$InstallerException $r16;
+
+        r0 := @this: com.android.server.pm.Installer;
+
+        r17 := @parameter0: java.lang.String;
+
+        i0 := @parameter1: int;
+
+        r1 := @parameter2: java.lang.String;
+
+        r2 := @parameter3: java.lang.String;
+
+        i1 := @parameter4: int;
+
+        r3 := @parameter5: java.lang.String;
+
+        i2 := @parameter6: int;
+
+        r4 := @parameter7: java.lang.String;
+
+        r5 := @parameter8: java.lang.String;
+
+        r6 := @parameter9: java.lang.String;
+
+        r7 := @parameter10: java.lang.String;
+
+        z0 := @parameter11: boolean;
+
+        i3 := @parameter12: int;
+
+        r8 := @parameter13: java.lang.String;
+
+        r9 := @parameter14: java.lang.String;
+
+        r10 := @parameter15: java.lang.String;
+
+        staticinvoke <com.android.server.pm.Installer: void assertValidInstructionSet(java.lang.String)>(r2);
+
+        $r11 = staticinvoke <dalvik.system.BlockGuard: dalvik.system.BlockGuard$VmPolicy getVmPolicy()>();
+
+        interfaceinvoke $r11.<dalvik.system.BlockGuard$VmPolicy: void onPathAccess(java.lang.String)>(r17);
+
+        $r12 = staticinvoke <dalvik.system.BlockGuard: dalvik.system.BlockGuard$VmPolicy getVmPolicy()>();
+
+        interfaceinvoke $r12.<dalvik.system.BlockGuard$VmPolicy: void onPathAccess(java.lang.String)>(r3);
+
+        $r13 = staticinvoke <dalvik.system.BlockGuard: dalvik.system.BlockGuard$VmPolicy getVmPolicy()>();
+
+        interfaceinvoke $r13.<dalvik.system.BlockGuard$VmPolicy: void onPathAccess(java.lang.String)>(r9);
+
+        $z1 = specialinvoke r0.<com.android.server.pm.Installer: boolean checkBeforeRemote()>();
+
+        if $z1 != 0 goto label1;
+
+        return;
+
+     label1:
+        $r14 = r0.<com.android.server.pm.Installer: android.os.IInstalld mInstalld>;
+
+        interfaceinvoke $r14.<android.os.IInstalld: void dexopt(java.lang.String,int,java.lang.String,java.lang.String,int,java.lang.String,int,java.lang.String,java.lang.String,java.lang.String,java.lang.String,boolean,int,java.lang.String,java.lang.String,java.lang.String)>(r17, i0, r1, r2, i1, r3, i2, r4, r5, r6, r7, z0, i3, r8, r9, r10);
+
+     label2:
+        return;
+
+     label3:
+        $r15 := @caughtexception;
+
+        $r16 = staticinvoke <com.android.server.pm.Installer$InstallerException: com.android.server.pm.Installer$InstallerException 'from'(java.lang.Exception)>($r15);
+
+        throw $r16;
+
+        catch java.lang.Exception from label1 to label2 with label3;
+    }
+
+    public boolean dumpProfiles(int, java.lang.String, java.lang.String, java.lang.String) throws com.android.server.pm.Installer$InstallerException
+    {
+        com.android.server.pm.Installer r0;
+        int i0;
+        java.lang.String r1, r2, r7;
+        boolean z0, $z1;
+        dalvik.system.BlockGuard$VmPolicy $r3;
+        android.os.IInstalld $r4;
+        java.lang.Exception $r5;
+        com.android.server.pm.Installer$InstallerException $r6;
+
+        r0 := @this: com.android.server.pm.Installer;
+
+        i0 := @parameter0: int;
+
+        r7 := @parameter1: java.lang.String;
+
+        r1 := @parameter2: java.lang.String;
+
+        r2 := @parameter3: java.lang.String;
+
+        $z1 = specialinvoke r0.<com.android.server.pm.Installer: boolean checkBeforeRemote()>();
+
+        if $z1 != 0 goto label1;
+
+        return 0;
+
+     label1:
+        $r3 = staticinvoke <dalvik.system.BlockGuard: dalvik.system.BlockGuard$VmPolicy getVmPolicy()>();
+
+        interfaceinvoke $r3.<dalvik.system.BlockGuard$VmPolicy: void onPathAccess(java.lang.String)>(r2);
+
+     label2:
+        $r4 = r0.<com.android.server.pm.Installer: android.os.IInstalld mInstalld>;
+
+        z0 = interfaceinvoke $r4.<android.os.IInstalld: boolean dumpProfiles(int,java.lang.String,java.lang.String,java.lang.String)>(i0, r7, r1, r2);
+
+     label3:
+        return z0;
+
+     label4:
+        $r5 := @caughtexception;
+
+        $r6 = staticinvoke <com.android.server.pm.Installer$InstallerException: com.android.server.pm.Installer$InstallerException 'from'(java.lang.Exception)>($r5);
+
+        throw $r6;
+
+        catch java.lang.Exception from label2 to label3 with label4;
+    }
+
+    public void fixupAppData(java.lang.String, int) throws com.android.server.pm.Installer$InstallerException
+    {
+        com.android.server.pm.Installer r0;
+        int i0;
+        boolean $z0;
+        android.os.IInstalld $r1;
+        java.lang.Exception $r2;
+        com.android.server.pm.Installer$InstallerException $r3;
+        java.lang.String r4;
+
+        r0 := @this: com.android.server.pm.Installer;
+
+        r4 := @parameter0: java.lang.String;
+
+        i0 := @parameter1: int;
+
+        $z0 = specialinvoke r0.<com.android.server.pm.Installer: boolean checkBeforeRemote()>();
+
+        if $z0 != 0 goto label1;
+
+        return;
+
+     label1:
+        $r1 = r0.<com.android.server.pm.Installer: android.os.IInstalld mInstalld>;
+
+        interfaceinvoke $r1.<android.os.IInstalld: void fixupAppData(java.lang.String,int)>(r4, i0);
+
+     label2:
+        return;
+
+     label3:
+        $r2 := @caughtexception;
+
+        $r3 = staticinvoke <com.android.server.pm.Installer$InstallerException: com.android.server.pm.Installer$InstallerException 'from'(java.lang.Exception)>($r2);
+
+        throw $r3;
+
+        catch java.lang.Exception from label1 to label2 with label3;
+    }
+
+    public void freeCache(java.lang.String, long, long, int) throws com.android.server.pm.Installer$InstallerException
+    {
+        com.android.server.pm.Installer r0;
+        long l0, l1;
+        int i2;
+        boolean $z0;
+        android.os.IInstalld $r1;
+        java.lang.Exception $r2;
+        com.android.server.pm.Installer$InstallerException $r3;
+        java.lang.String r4;
+
+        r0 := @this: com.android.server.pm.Installer;
+
+        r4 := @parameter0: java.lang.String;
+
+        l0 := @parameter1: long;
+
+        l1 := @parameter2: long;
+
+        i2 := @parameter3: int;
+
+        $z0 = specialinvoke r0.<com.android.server.pm.Installer: boolean checkBeforeRemote()>();
+
+        if $z0 != 0 goto label1;
+
+        return;
+
+     label1:
+        $r1 = r0.<com.android.server.pm.Installer: android.os.IInstalld mInstalld>;
+
+        interfaceinvoke $r1.<android.os.IInstalld: void freeCache(java.lang.String,long,long,int)>(r4, l0, l1, i2);
+
+     label2:
+        return;
+
+     label3:
+        $r2 := @caughtexception;
+
+        $r3 = staticinvoke <com.android.server.pm.Installer$InstallerException: com.android.server.pm.Installer$InstallerException 'from'(java.lang.Exception)>($r2);
+
+        throw $r3;
+
+        catch java.lang.Exception from label1 to label2 with label3;
+    }
+
+    public android.os.storage.CrateMetadata[] getAppCrates(java.lang.String, java.lang.String[], int) throws com.android.server.pm.Installer$InstallerException
+    {
+        com.android.server.pm.Installer r0;
+        java.lang.String[] r1;
+        int i0;
+        boolean $z0;
+        android.os.IInstalld $r2;
+        java.lang.Exception $r3;
+        com.android.server.pm.Installer$InstallerException $r4;
+        java.lang.String r5;
+        android.os.storage.CrateMetadata[] r6;
+
+        r0 := @this: com.android.server.pm.Installer;
+
+        r5 := @parameter0: java.lang.String;
+
+        r1 := @parameter1: java.lang.String[];
+
+        i0 := @parameter2: int;
+
+        $z0 = specialinvoke r0.<com.android.server.pm.Installer: boolean checkBeforeRemote()>();
+
+        if $z0 != 0 goto label1;
+
+        return null;
+
+     label1:
+        $r2 = r0.<com.android.server.pm.Installer: android.os.IInstalld mInstalld>;
+
+        r6 = interfaceinvoke $r2.<android.os.IInstalld: android.os.storage.CrateMetadata[] getAppCrates(java.lang.String,java.lang.String[],int)>(r5, r1, i0);
+
+     label2:
+        return r6;
+
+     label3:
+        $r3 := @caughtexception;
+
+        $r4 = staticinvoke <com.android.server.pm.Installer$InstallerException: com.android.server.pm.Installer$InstallerException 'from'(java.lang.Exception)>($r3);
+
+        throw $r4;
+
+        catch java.lang.Exception from label1 to label2 with label3;
+    }
+
+    public void getAppSize(java.lang.String, java.lang.String[], int, int, int, long[], java.lang.String[], android.content.pm.PackageStats) throws com.android.server.pm.Installer$InstallerException
+    {
+        com.android.server.pm.Installer r0;
+        java.lang.String[] r1, r3;
+        int i0, i1, i2, i3, i22;
+        long[] r2, r11;
+        android.content.pm.PackageStats r4;
+        java.lang.String r5, r10;
+        boolean $z0;
+        android.os.IInstalld $r6;
+        long $l4, $l5, $l6, $l7, $l8, $l9, $l10, $l11, $l12, $l13, $l14, $l15, $l16, $l17, $l18, $l19, $l20, $l21;
+        dalvik.system.BlockGuard$VmPolicy $r7;
+        java.lang.Exception $r8;
+        com.android.server.pm.Installer$InstallerException $r9;
+
+        r0 := @this: com.android.server.pm.Installer;
+
+        r10 := @parameter0: java.lang.String;
+
+        r1 := @parameter1: java.lang.String[];
+
+        i0 := @parameter2: int;
+
+        i1 := @parameter3: int;
+
+        i2 := @parameter4: int;
+
+        r2 := @parameter5: long[];
+
+        r3 := @parameter6: java.lang.String[];
+
+        r4 := @parameter7: android.content.pm.PackageStats;
+
+        $z0 = specialinvoke r0.<com.android.server.pm.Installer: boolean checkBeforeRemote()>();
+
+        if $z0 != 0 goto label1;
+
+        return;
+
+     label1:
+        if r3 == null goto label3;
+
+        i3 = lengthof r3;
+
+        i22 = 0;
+
+     label2:
+        if i22 >= i3 goto label3;
+
+        r5 = r3[i22];
+
+        $r7 = staticinvoke <dalvik.system.BlockGuard: dalvik.system.BlockGuard$VmPolicy getVmPolicy()>();
+
+        interfaceinvoke $r7.<dalvik.system.BlockGuard$VmPolicy: void onPathAccess(java.lang.String)>(r5);
+
+        i22 = i22 + 1;
+
+        goto label2;
+
+     label3:
+        $r6 = r0.<com.android.server.pm.Installer: android.os.IInstalld mInstalld>;
+
+        r11 = interfaceinvoke $r6.<android.os.IInstalld: long[] getAppSize(java.lang.String,java.lang.String[],int,int,int,long[],java.lang.String[])>(r10, r1, i0, i1, i2, r2, r3);
+
+        $l5 = r4.<android.content.pm.PackageStats: long codeSize>;
+
+        $l4 = r11[0];
+
+        $l6 = $l5 + $l4;
+
+        r4.<android.content.pm.PackageStats: long codeSize> = $l6;
+
+        $l8 = r4.<android.content.pm.PackageStats: long dataSize>;
+
+        $l7 = r11[1];
+
+        $l9 = $l8 + $l7;
+
+        r4.<android.content.pm.PackageStats: long dataSize> = $l9;
+
+        $l11 = r4.<android.content.pm.PackageStats: long cacheSize>;
+
+        $l10 = r11[2];
+
+        $l12 = $l11 + $l10;
+
+        r4.<android.content.pm.PackageStats: long cacheSize> = $l12;
+
+        $l14 = r4.<android.content.pm.PackageStats: long externalCodeSize>;
+
+        $l13 = r11[3];
+
+        $l15 = $l14 + $l13;
+
+        r4.<android.content.pm.PackageStats: long externalCodeSize> = $l15;
+
+        $l17 = r4.<android.content.pm.PackageStats: long externalDataSize>;
+
+        $l16 = r11[4];
+
+        $l18 = $l17 + $l16;
+
+        r4.<android.content.pm.PackageStats: long externalDataSize> = $l18;
+
+        $l20 = r4.<android.content.pm.PackageStats: long externalCacheSize>;
+
+        $l19 = r11[5];
+
+        $l21 = $l20 + $l19;
+
+        r4.<android.content.pm.PackageStats: long externalCacheSize> = $l21;
+
+     label4:
+        return;
+
+     label5:
+        $r8 := @caughtexception;
+
+        $r9 = staticinvoke <com.android.server.pm.Installer$InstallerException: com.android.server.pm.Installer$InstallerException 'from'(java.lang.Exception)>($r8);
+
+        throw $r9;
+
+        catch java.lang.Exception from label3 to label4 with label5;
+    }
+
+    public long[] getExternalSize(java.lang.String, int, int, int[]) throws com.android.server.pm.Installer$InstallerException
+    {
+        com.android.server.pm.Installer r0;
+        int i0, i1;
+        int[] r1;
+        boolean $z0;
+        android.os.IInstalld $r2;
+        long[] $r3, r7;
+        java.lang.Exception $r4;
+        com.android.server.pm.Installer$InstallerException $r5;
+        java.lang.String r6;
+
+        r0 := @this: com.android.server.pm.Installer;
+
+        r6 := @parameter0: java.lang.String;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        r1 := @parameter3: int[];
+
+        $z0 = specialinvoke r0.<com.android.server.pm.Installer: boolean checkBeforeRemote()>();
+
+        if $z0 != 0 goto label1;
+
+        $r3 = newarray (long)[6];
+
+        return $r3;
+
+     label1:
+        $r2 = r0.<com.android.server.pm.Installer: android.os.IInstalld mInstalld>;
+
+        r7 = interfaceinvoke $r2.<android.os.IInstalld: long[] getExternalSize(java.lang.String,int,int,int[])>(r6, i0, i1, r1);
+
+     label2:
+        return r7;
+
+     label3:
+        $r4 := @caughtexception;
+
+        $r5 = staticinvoke <com.android.server.pm.Installer$InstallerException: com.android.server.pm.Installer$InstallerException 'from'(java.lang.Exception)>($r4);
+
+        throw $r5;
+
+        catch java.lang.Exception from label1 to label2 with label3;
+    }
+
+    public android.os.storage.CrateMetadata[] getUserCrates(java.lang.String, int) throws com.android.server.pm.Installer$InstallerException
+    {
+        com.android.server.pm.Installer r0;
+        int i0;
+        boolean $z0;
+        android.os.IInstalld $r1;
+        java.lang.Exception $r2;
+        com.android.server.pm.Installer$InstallerException $r3;
+        java.lang.String r4;
+        android.os.storage.CrateMetadata[] r5;
+
+        r0 := @this: com.android.server.pm.Installer;
+
+        r4 := @parameter0: java.lang.String;
+
+        i0 := @parameter1: int;
+
+        $z0 = specialinvoke r0.<com.android.server.pm.Installer: boolean checkBeforeRemote()>();
+
+        if $z0 != 0 goto label1;
+
+        return null;
+
+     label1:
+        $r1 = r0.<com.android.server.pm.Installer: android.os.IInstalld mInstalld>;
+
+        r5 = interfaceinvoke $r1.<android.os.IInstalld: android.os.storage.CrateMetadata[] getUserCrates(java.lang.String,int)>(r4, i0);
+
+     label2:
+        return r5;
+
+     label3:
+        $r2 := @caughtexception;
+
+        $r3 = staticinvoke <com.android.server.pm.Installer$InstallerException: com.android.server.pm.Installer$InstallerException 'from'(java.lang.Exception)>($r2);
+
+        throw $r3;
+
+        catch java.lang.Exception from label1 to label2 with label3;
+    }
+
+    public void getUserSize(java.lang.String, int, int, int[], android.content.pm.PackageStats) throws com.android.server.pm.Installer$InstallerException
+    {
+        com.android.server.pm.Installer r0;
+        int i0, i1;
+        int[] r1;
+        android.content.pm.PackageStats r2;
+        boolean $z0;
+        android.os.IInstalld $r3;
+        long $l2, $l3, $l4, $l5, $l6, $l7, $l8, $l9, $l10, $l11, $l12, $l13, $l14, $l15, $l16, $l17, $l18, $l19;
+        java.lang.Exception $r4;
+        com.android.server.pm.Installer$InstallerException $r5;
+        java.lang.String r6;
+        long[] r7;
+
+        r0 := @this: com.android.server.pm.Installer;
+
+        r6 := @parameter0: java.lang.String;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        r1 := @parameter3: int[];
+
+        r2 := @parameter4: android.content.pm.PackageStats;
+
+        $z0 = specialinvoke r0.<com.android.server.pm.Installer: boolean checkBeforeRemote()>();
+
+        if $z0 != 0 goto label1;
+
+        return;
+
+     label1:
+        $r3 = r0.<com.android.server.pm.Installer: android.os.IInstalld mInstalld>;
+
+        r7 = interfaceinvoke $r3.<android.os.IInstalld: long[] getUserSize(java.lang.String,int,int,int[])>(r6, i0, i1, r1);
+
+        $l3 = r2.<android.content.pm.PackageStats: long codeSize>;
+
+        $l2 = r7[0];
+
+        $l4 = $l3 + $l2;
+
+        r2.<android.content.pm.PackageStats: long codeSize> = $l4;
+
+        $l6 = r2.<android.content.pm.PackageStats: long dataSize>;
+
+        $l5 = r7[1];
+
+        $l7 = $l6 + $l5;
+
+        r2.<android.content.pm.PackageStats: long dataSize> = $l7;
+
+        $l9 = r2.<android.content.pm.PackageStats: long cacheSize>;
+
+        $l8 = r7[2];
+
+        $l10 = $l9 + $l8;
+
+        r2.<android.content.pm.PackageStats: long cacheSize> = $l10;
+
+        $l12 = r2.<android.content.pm.PackageStats: long externalCodeSize>;
+
+        $l11 = r7[3];
+
+        $l13 = $l12 + $l11;
+
+        r2.<android.content.pm.PackageStats: long externalCodeSize> = $l13;
+
+        $l15 = r2.<android.content.pm.PackageStats: long externalDataSize>;
+
+        $l14 = r7[4];
+
+        $l16 = $l15 + $l14;
+
+        r2.<android.content.pm.PackageStats: long externalDataSize> = $l16;
+
+        $l18 = r2.<android.content.pm.PackageStats: long externalCacheSize>;
+
+        $l17 = r7[5];
+
+        $l19 = $l18 + $l17;
+
+        r2.<android.content.pm.PackageStats: long externalCacheSize> = $l19;
+
+     label2:
+        return;
+
+     label3:
+        $r4 := @caughtexception;
+
+        $r5 = staticinvoke <com.android.server.pm.Installer$InstallerException: com.android.server.pm.Installer$InstallerException 'from'(java.lang.Exception)>($r4);
+
+        throw $r5;
+
+        catch java.lang.Exception from label1 to label2 with label3;
+    }
+
+    public byte[] hashSecondaryDexFile(java.lang.String, java.lang.String, int, java.lang.String, int) throws com.android.server.pm.Installer$InstallerException
+    {
+        com.android.server.pm.Installer r0;
+        java.lang.String r1, r2, r8;
+        int i0, i1;
+        boolean $z0;
+        dalvik.system.BlockGuard$VmPolicy $r3;
+        android.os.IInstalld $r4;
+        byte[] $r5, r9;
+        java.lang.Exception $r6;
+        com.android.server.pm.Installer$InstallerException $r7;
+
+        r0 := @this: com.android.server.pm.Installer;
+
+        r8 := @parameter0: java.lang.String;
+
+        r1 := @parameter1: java.lang.String;
+
+        i0 := @parameter2: int;
+
+        r2 := @parameter3: java.lang.String;
+
+        i1 := @parameter4: int;
+
+        $z0 = specialinvoke r0.<com.android.server.pm.Installer: boolean checkBeforeRemote()>();
+
+        if $z0 != 0 goto label1;
+
+        $r5 = newarray (byte)[0];
+
+        return $r5;
+
+     label1:
+        $r3 = staticinvoke <dalvik.system.BlockGuard: dalvik.system.BlockGuard$VmPolicy getVmPolicy()>();
+
+        interfaceinvoke $r3.<dalvik.system.BlockGuard$VmPolicy: void onPathAccess(java.lang.String)>(r8);
+
+     label2:
+        $r4 = r0.<com.android.server.pm.Installer: android.os.IInstalld mInstalld>;
+
+        r9 = interfaceinvoke $r4.<android.os.IInstalld: byte[] hashSecondaryDexFile(java.lang.String,java.lang.String,int,java.lang.String,int)>(r8, r1, i0, r2, i1);
+
+     label3:
+        return r9;
+
+     label4:
+        $r6 := @caughtexception;
+
+        $r7 = staticinvoke <com.android.server.pm.Installer$InstallerException: com.android.server.pm.Installer$InstallerException 'from'(java.lang.Exception)>($r6);
+
+        throw $r7;
+
+        catch java.lang.Exception from label2 to label3 with label4;
+    }
+
+    public void installApkVerity(java.lang.String, java.io.FileDescriptor, int) throws com.android.server.pm.Installer$InstallerException
+    {
+        com.android.server.pm.Installer r0;
+        java.io.FileDescriptor r1;
+        int i0;
+        boolean $z0;
+        dalvik.system.BlockGuard$VmPolicy $r2;
+        android.os.IInstalld $r3;
+        java.lang.Exception $r4;
+        com.android.server.pm.Installer$InstallerException $r5;
+        java.lang.String r6;
+
+        r0 := @this: com.android.server.pm.Installer;
+
+        r6 := @parameter0: java.lang.String;
+
+        r1 := @parameter1: java.io.FileDescriptor;
+
+        i0 := @parameter2: int;
+
+        $z0 = specialinvoke r0.<com.android.server.pm.Installer: boolean checkBeforeRemote()>();
+
+        if $z0 != 0 goto label1;
+
+        return;
+
+     label1:
+        $r2 = staticinvoke <dalvik.system.BlockGuard: dalvik.system.BlockGuard$VmPolicy getVmPolicy()>();
+
+        interfaceinvoke $r2.<dalvik.system.BlockGuard$VmPolicy: void onPathAccess(java.lang.String)>(r6);
+
+     label2:
+        $r3 = r0.<com.android.server.pm.Installer: android.os.IInstalld mInstalld>;
+
+        interfaceinvoke $r3.<android.os.IInstalld: void installApkVerity(java.lang.String,java.io.FileDescriptor,int)>(r6, r1, i0);
+
+     label3:
+        return;
+
+     label4:
+        $r4 := @caughtexception;
+
+        $r5 = staticinvoke <com.android.server.pm.Installer$InstallerException: com.android.server.pm.Installer$InstallerException 'from'(java.lang.Exception)>($r4);
+
+        throw $r5;
+
+        catch java.lang.Exception from label2 to label3 with label4;
+    }
+
+    public void invalidateMounts() throws com.android.server.pm.Installer$InstallerException
+    {
+        com.android.server.pm.Installer r0;
+        boolean $z0;
+        android.os.IInstalld $r2;
+        java.lang.Exception $r3;
+        com.android.server.pm.Installer$InstallerException $r4;
+
+        r0 := @this: com.android.server.pm.Installer;
+
+        $z0 = specialinvoke r0.<com.android.server.pm.Installer: boolean checkBeforeRemote()>();
+
+        if $z0 != 0 goto label1;
+
+        return;
+
+     label1:
+        $r2 = r0.<com.android.server.pm.Installer: android.os.IInstalld mInstalld>;
+
+        interfaceinvoke $r2.<android.os.IInstalld: void invalidateMounts()>();
+
+     label2:
+        return;
+
+     label3:
+        $r3 := @caughtexception;
+
+        $r4 = staticinvoke <com.android.server.pm.Installer$InstallerException: com.android.server.pm.Installer$InstallerException 'from'(java.lang.Exception)>($r3);
+
+        throw $r4;
+
+        catch java.lang.Exception from label1 to label2 with label3;
+    }
+
+    public boolean isQuotaSupported(java.lang.String) throws com.android.server.pm.Installer$InstallerException
+    {
+        com.android.server.pm.Installer r0;
+        boolean z0, $z1;
+        android.os.IInstalld $r1;
+        java.lang.Exception $r2;
+        com.android.server.pm.Installer$InstallerException $r3;
+        java.lang.String r4;
+
+        r0 := @this: com.android.server.pm.Installer;
+
+        r4 := @parameter0: java.lang.String;
+
+        $z1 = specialinvoke r0.<com.android.server.pm.Installer: boolean checkBeforeRemote()>();
+
+        if $z1 != 0 goto label1;
+
+        return 0;
+
+     label1:
+        $r1 = r0.<com.android.server.pm.Installer: android.os.IInstalld mInstalld>;
+
+        z0 = interfaceinvoke $r1.<android.os.IInstalld: boolean isQuotaSupported(java.lang.String)>(r4);
+
+     label2:
+        return z0;
+
+     label3:
+        $r2 := @caughtexception;
+
+        $r3 = staticinvoke <com.android.server.pm.Installer$InstallerException: com.android.server.pm.Installer$InstallerException 'from'(java.lang.Exception)>($r2);
+
+        throw $r3;
+
+        catch java.lang.Exception from label1 to label2 with label3;
+    }
+
+    public void lambda$connect$0$Installer()
+    {
+        com.android.server.pm.Installer r0;
+
+        r0 := @this: com.android.server.pm.Installer;
+
+        specialinvoke r0.<com.android.server.pm.Installer: void connect()>();
+
+        return;
+    }
+
+    public void linkFile(java.lang.String, java.lang.String, java.lang.String) throws com.android.server.pm.Installer$InstallerException
+    {
+        com.android.server.pm.Installer r0;
+        java.lang.String r1, r2, r8;
+        boolean $z0;
+        dalvik.system.BlockGuard$VmPolicy $r3, $r4;
+        android.os.IInstalld $r5;
+        java.lang.Exception $r6;
+        com.android.server.pm.Installer$InstallerException $r7;
+
+        r0 := @this: com.android.server.pm.Installer;
+
+        r8 := @parameter0: java.lang.String;
+
+        r1 := @parameter1: java.lang.String;
+
+        r2 := @parameter2: java.lang.String;
+
+        $z0 = specialinvoke r0.<com.android.server.pm.Installer: boolean checkBeforeRemote()>();
+
+        if $z0 != 0 goto label1;
+
+        return;
+
+     label1:
+        $r3 = staticinvoke <dalvik.system.BlockGuard: dalvik.system.BlockGuard$VmPolicy getVmPolicy()>();
+
+        interfaceinvoke $r3.<dalvik.system.BlockGuard$VmPolicy: void onPathAccess(java.lang.String)>(r1);
+
+        $r4 = staticinvoke <dalvik.system.BlockGuard: dalvik.system.BlockGuard$VmPolicy getVmPolicy()>();
+
+        interfaceinvoke $r4.<dalvik.system.BlockGuard$VmPolicy: void onPathAccess(java.lang.String)>(r2);
+
+     label2:
+        $r5 = r0.<com.android.server.pm.Installer: android.os.IInstalld mInstalld>;
+
+        interfaceinvoke $r5.<android.os.IInstalld: void linkFile(java.lang.String,java.lang.String,java.lang.String)>(r8, r1, r2);
+
+     label3:
+        return;
+
+     label4:
+        $r6 := @caughtexception;
+
+        $r7 = staticinvoke <com.android.server.pm.Installer$InstallerException: com.android.server.pm.Installer$InstallerException 'from'(java.lang.Exception)>($r6);
+
+        throw $r7;
+
+        catch java.lang.Exception from label2 to label3 with label4;
+    }
+
+    public void linkNativeLibraryDirectory(java.lang.String, java.lang.String, java.lang.String, int) throws com.android.server.pm.Installer$InstallerException
+    {
+        com.android.server.pm.Installer r0;
+        java.lang.String r1, r2, r7;
+        int i0;
+        boolean $z0;
+        dalvik.system.BlockGuard$VmPolicy $r3;
+        android.os.IInstalld $r4;
+        java.lang.Exception $r5;
+        com.android.server.pm.Installer$InstallerException $r6;
+
+        r0 := @this: com.android.server.pm.Installer;
+
+        r7 := @parameter0: java.lang.String;
+
+        r1 := @parameter1: java.lang.String;
+
+        r2 := @parameter2: java.lang.String;
+
+        i0 := @parameter3: int;
+
+        $z0 = specialinvoke r0.<com.android.server.pm.Installer: boolean checkBeforeRemote()>();
+
+        if $z0 != 0 goto label1;
+
+        return;
+
+     label1:
+        $r3 = staticinvoke <dalvik.system.BlockGuard: dalvik.system.BlockGuard$VmPolicy getVmPolicy()>();
+
+        interfaceinvoke $r3.<dalvik.system.BlockGuard$VmPolicy: void onPathAccess(java.lang.String)>(r2);
+
+     label2:
+        $r4 = r0.<com.android.server.pm.Installer: android.os.IInstalld mInstalld>;
+
+        interfaceinvoke $r4.<android.os.IInstalld: void linkNativeLibraryDirectory(java.lang.String,java.lang.String,java.lang.String,int)>(r7, r1, r2, i0);
+
+     label3:
+        return;
+
+     label4:
+        $r5 := @caughtexception;
+
+        $r6 = staticinvoke <com.android.server.pm.Installer$InstallerException: com.android.server.pm.Installer$InstallerException 'from'(java.lang.Exception)>($r5);
+
+        throw $r6;
+
+        catch java.lang.Exception from label2 to label3 with label4;
+    }
+
+    public boolean mergeProfiles(int, java.lang.String, java.lang.String) throws com.android.server.pm.Installer$InstallerException
+    {
+        com.android.server.pm.Installer r0;
+        int i0;
+        java.lang.String r1, r5;
+        boolean z0, $z1;
+        android.os.IInstalld $r2;
+        java.lang.Exception $r3;
+        com.android.server.pm.Installer$InstallerException $r4;
+
+        r0 := @this: com.android.server.pm.Installer;
+
+        i0 := @parameter0: int;
+
+        r5 := @parameter1: java.lang.String;
+
+        r1 := @parameter2: java.lang.String;
+
+        $z1 = specialinvoke r0.<com.android.server.pm.Installer: boolean checkBeforeRemote()>();
+
+        if $z1 != 0 goto label1;
+
+        return 0;
+
+     label1:
+        $r2 = r0.<com.android.server.pm.Installer: android.os.IInstalld mInstalld>;
+
+        z0 = interfaceinvoke $r2.<android.os.IInstalld: boolean mergeProfiles(int,java.lang.String,java.lang.String)>(i0, r5, r1);
+
+     label2:
+        return z0;
+
+     label3:
+        $r3 := @caughtexception;
+
+        $r4 = staticinvoke <com.android.server.pm.Installer$InstallerException: com.android.server.pm.Installer$InstallerException 'from'(java.lang.Exception)>($r3);
+
+        throw $r4;
+
+        catch java.lang.Exception from label1 to label2 with label3;
+    }
+
+    public void migrateAppData(java.lang.String, java.lang.String, int, int) throws com.android.server.pm.Installer$InstallerException
+    {
+        com.android.server.pm.Installer r0;
+        java.lang.String r1, r5;
+        int i0, i1;
+        boolean $z0;
+        android.os.IInstalld $r2;
+        java.lang.Exception $r3;
+        com.android.server.pm.Installer$InstallerException $r4;
+
+        r0 := @this: com.android.server.pm.Installer;
+
+        r5 := @parameter0: java.lang.String;
+
+        r1 := @parameter1: java.lang.String;
+
+        i0 := @parameter2: int;
+
+        i1 := @parameter3: int;
+
+        $z0 = specialinvoke r0.<com.android.server.pm.Installer: boolean checkBeforeRemote()>();
+
+        if $z0 != 0 goto label1;
+
+        return;
+
+     label1:
+        $r2 = r0.<com.android.server.pm.Installer: android.os.IInstalld mInstalld>;
+
+        interfaceinvoke $r2.<android.os.IInstalld: void migrateAppData(java.lang.String,java.lang.String,int,int)>(r5, r1, i0, i1);
+
+     label2:
+        return;
+
+     label3:
+        $r3 := @caughtexception;
+
+        $r4 = staticinvoke <com.android.server.pm.Installer$InstallerException: com.android.server.pm.Installer$InstallerException 'from'(java.lang.Exception)>($r3);
+
+        throw $r4;
+
+        catch java.lang.Exception from label1 to label2 with label3;
+    }
+
+    public boolean migrateLegacyObbData() throws com.android.server.pm.Installer$InstallerException
+    {
+        com.android.server.pm.Installer r0;
+        boolean $z0;
+        android.os.IInstalld $r2;
+        java.lang.Exception $r3;
+        com.android.server.pm.Installer$InstallerException $r4;
+
+        r0 := @this: com.android.server.pm.Installer;
+
+        $z0 = specialinvoke r0.<com.android.server.pm.Installer: boolean checkBeforeRemote()>();
+
+        if $z0 != 0 goto label1;
+
+        return 0;
+
+     label1:
+        $r2 = r0.<com.android.server.pm.Installer: android.os.IInstalld mInstalld>;
+
+        interfaceinvoke $r2.<android.os.IInstalld: void migrateLegacyObbData()>();
+
+     label2:
+        return 1;
+
+     label3:
+        $r3 := @caughtexception;
+
+        $r4 = staticinvoke <com.android.server.pm.Installer$InstallerException: com.android.server.pm.Installer$InstallerException 'from'(java.lang.Exception)>($r3);
+
+        throw $r4;
+
+        catch java.lang.Exception from label1 to label2 with label3;
+    }
+
+    public void moveAb(java.lang.String, java.lang.String, java.lang.String) throws com.android.server.pm.Installer$InstallerException
+    {
+        com.android.server.pm.Installer r0;
+        java.lang.String r1, r2, r8;
+        boolean $z0;
+        dalvik.system.BlockGuard$VmPolicy $r3, $r4;
+        android.os.IInstalld $r5;
+        java.lang.Exception $r6;
+        com.android.server.pm.Installer$InstallerException $r7;
+
+        r0 := @this: com.android.server.pm.Installer;
+
+        r8 := @parameter0: java.lang.String;
+
+        r1 := @parameter1: java.lang.String;
+
+        r2 := @parameter2: java.lang.String;
+
+        $z0 = specialinvoke r0.<com.android.server.pm.Installer: boolean checkBeforeRemote()>();
+
+        if $z0 != 0 goto label1;
+
+        return;
+
+     label1:
+        $r3 = staticinvoke <dalvik.system.BlockGuard: dalvik.system.BlockGuard$VmPolicy getVmPolicy()>();
+
+        interfaceinvoke $r3.<dalvik.system.BlockGuard$VmPolicy: void onPathAccess(java.lang.String)>(r8);
+
+        $r4 = staticinvoke <dalvik.system.BlockGuard: dalvik.system.BlockGuard$VmPolicy getVmPolicy()>();
+
+        interfaceinvoke $r4.<dalvik.system.BlockGuard$VmPolicy: void onPathAccess(java.lang.String)>(r2);
+
+     label2:
+        $r5 = r0.<com.android.server.pm.Installer: android.os.IInstalld mInstalld>;
+
+        interfaceinvoke $r5.<android.os.IInstalld: void moveAb(java.lang.String,java.lang.String,java.lang.String)>(r8, r1, r2);
+
+     label3:
+        return;
+
+     label4:
+        $r6 := @caughtexception;
+
+        $r7 = staticinvoke <com.android.server.pm.Installer$InstallerException: com.android.server.pm.Installer$InstallerException 'from'(java.lang.Exception)>($r6);
+
+        throw $r7;
+
+        catch java.lang.Exception from label2 to label3 with label4;
+    }
+
+    public void moveCompleteApp(java.lang.String, java.lang.String, java.lang.String, int, java.lang.String, int, java.lang.String) throws com.android.server.pm.Installer$InstallerException
+    {
+        com.android.server.pm.Installer r0;
+        java.lang.String r1, r2, r3, r4, r8;
+        int i0, i1;
+        boolean $z0;
+        android.os.IInstalld $r5;
+        java.lang.Exception $r6;
+        com.android.server.pm.Installer$InstallerException $r7;
+
+        r0 := @this: com.android.server.pm.Installer;
+
+        r8 := @parameter0: java.lang.String;
+
+        r1 := @parameter1: java.lang.String;
+
+        r2 := @parameter2: java.lang.String;
+
+        i0 := @parameter3: int;
+
+        r3 := @parameter4: java.lang.String;
+
+        i1 := @parameter5: int;
+
+        r4 := @parameter6: java.lang.String;
+
+        $z0 = specialinvoke r0.<com.android.server.pm.Installer: boolean checkBeforeRemote()>();
+
+        if $z0 != 0 goto label1;
+
+        return;
+
+     label1:
+        $r5 = r0.<com.android.server.pm.Installer: android.os.IInstalld mInstalld>;
+
+        interfaceinvoke $r5.<android.os.IInstalld: void moveCompleteApp(java.lang.String,java.lang.String,java.lang.String,int,java.lang.String,int,java.lang.String)>(r8, r1, r2, i0, r3, i1, r4);
+
+     label2:
+        return;
+
+     label3:
+        $r6 := @caughtexception;
+
+        $r7 = staticinvoke <com.android.server.pm.Installer$InstallerException: com.android.server.pm.Installer$InstallerException 'from'(java.lang.Exception)>($r6);
+
+        throw $r7;
+
+        catch java.lang.Exception from label1 to label2 with label3;
+    }
+
+    public void onPrivateVolumeRemoved(java.lang.String) throws com.android.server.pm.Installer$InstallerException
+    {
+        com.android.server.pm.Installer r0;
+        boolean $z0;
+        android.os.IInstalld $r1;
+        java.lang.Exception $r2;
+        com.android.server.pm.Installer$InstallerException $r3;
+        java.lang.String r4;
+
+        r0 := @this: com.android.server.pm.Installer;
+
+        r4 := @parameter0: java.lang.String;
+
+        $z0 = specialinvoke r0.<com.android.server.pm.Installer: boolean checkBeforeRemote()>();
+
+        if $z0 != 0 goto label1;
+
+        return;
+
+     label1:
+        $r1 = r0.<com.android.server.pm.Installer: android.os.IInstalld mInstalld>;
+
+        interfaceinvoke $r1.<android.os.IInstalld: void onPrivateVolumeRemoved(java.lang.String)>(r4);
+
+     label2:
+        return;
+
+     label3:
+        $r2 := @caughtexception;
+
+        $r3 = staticinvoke <com.android.server.pm.Installer$InstallerException: com.android.server.pm.Installer$InstallerException 'from'(java.lang.Exception)>($r2);
+
+        throw $r3;
+
+        catch java.lang.Exception from label1 to label2 with label3;
+    }
+
+    public void onStart()
+    {
+        com.android.server.pm.Installer r0;
+        boolean $z0;
+
+        r0 := @this: com.android.server.pm.Installer;
+
+        $z0 = r0.<com.android.server.pm.Installer: boolean mIsolated>;
+
+        if $z0 == 0 goto label1;
+
+        r0.<com.android.server.pm.Installer: android.os.IInstalld mInstalld> = null;
+
+        goto label2;
+
+     label1:
+        specialinvoke r0.<com.android.server.pm.Installer: void connect()>();
+
+     label2:
+        return;
+    }
+
+    public boolean prepareAppProfile(java.lang.String, int, int, java.lang.String, java.lang.String, java.lang.String) throws com.android.server.pm.Installer$InstallerException
+    {
+        com.android.server.pm.Installer r0;
+        int i0, i1;
+        java.lang.String r1, r2, r3, r9;
+        boolean z0, $z1;
+        dalvik.system.BlockGuard$VmPolicy $r4, $r5;
+        android.os.IInstalld $r6;
+        java.lang.Exception $r7;
+        com.android.server.pm.Installer$InstallerException $r8;
+
+        r0 := @this: com.android.server.pm.Installer;
+
+        r9 := @parameter0: java.lang.String;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        r1 := @parameter3: java.lang.String;
+
+        r2 := @parameter4: java.lang.String;
+
+        r3 := @parameter5: java.lang.String;
+
+        $z1 = specialinvoke r0.<com.android.server.pm.Installer: boolean checkBeforeRemote()>();
+
+        if $z1 != 0 goto label1;
+
+        return 0;
+
+     label1:
+        $r4 = staticinvoke <dalvik.system.BlockGuard: dalvik.system.BlockGuard$VmPolicy getVmPolicy()>();
+
+        interfaceinvoke $r4.<dalvik.system.BlockGuard$VmPolicy: void onPathAccess(java.lang.String)>(r2);
+
+        $r5 = staticinvoke <dalvik.system.BlockGuard: dalvik.system.BlockGuard$VmPolicy getVmPolicy()>();
+
+        interfaceinvoke $r5.<dalvik.system.BlockGuard$VmPolicy: void onPathAccess(java.lang.String)>(r3);
+
+     label2:
+        $r6 = r0.<com.android.server.pm.Installer: android.os.IInstalld mInstalld>;
+
+        z0 = interfaceinvoke $r6.<android.os.IInstalld: boolean prepareAppProfile(java.lang.String,int,int,java.lang.String,java.lang.String,java.lang.String)>(r9, i0, i1, r1, r2, r3);
+
+     label3:
+        return z0;
+
+     label4:
+        $r7 := @caughtexception;
+
+        $r8 = staticinvoke <com.android.server.pm.Installer$InstallerException: com.android.server.pm.Installer$InstallerException 'from'(java.lang.Exception)>($r7);
+
+        throw $r8;
+
+        catch java.lang.Exception from label2 to label3 with label4;
+    }
+
+    public boolean reconcileSecondaryDexFile(java.lang.String, java.lang.String, int, java.lang.String[], java.lang.String, int) throws com.android.server.pm.Installer$InstallerException
+    {
+        com.android.server.pm.Installer r0;
+        java.lang.String r1, r3, $r6, r9;
+        int i0, i1, $i2, i3;
+        java.lang.String[] r2;
+        boolean z0, $z1;
+        dalvik.system.BlockGuard$VmPolicy $r4;
+        android.os.IInstalld $r5;
+        java.lang.Exception $r7;
+        com.android.server.pm.Installer$InstallerException $r8;
+
+        r0 := @this: com.android.server.pm.Installer;
+
+        r9 := @parameter0: java.lang.String;
+
+        r1 := @parameter1: java.lang.String;
+
+        i0 := @parameter2: int;
+
+        r2 := @parameter3: java.lang.String[];
+
+        r3 := @parameter4: java.lang.String;
+
+        i1 := @parameter5: int;
+
+        i3 = 0;
+
+     label1:
+        $i2 = lengthof r2;
+
+        if i3 >= $i2 goto label2;
+
+        $r6 = r2[i3];
+
+        staticinvoke <com.android.server.pm.Installer: void assertValidInstructionSet(java.lang.String)>($r6);
+
+        i3 = i3 + 1;
+
+        goto label1;
+
+     label2:
+        $z1 = specialinvoke r0.<com.android.server.pm.Installer: boolean checkBeforeRemote()>();
+
+        if $z1 != 0 goto label3;
+
+        return 0;
+
+     label3:
+        $r4 = staticinvoke <dalvik.system.BlockGuard: dalvik.system.BlockGuard$VmPolicy getVmPolicy()>();
+
+        interfaceinvoke $r4.<dalvik.system.BlockGuard$VmPolicy: void onPathAccess(java.lang.String)>(r9);
+
+     label4:
+        $r5 = r0.<com.android.server.pm.Installer: android.os.IInstalld mInstalld>;
+
+        z0 = interfaceinvoke $r5.<android.os.IInstalld: boolean reconcileSecondaryDexFile(java.lang.String,java.lang.String,int,java.lang.String[],java.lang.String,int)>(r9, r1, i0, r2, r3, i1);
+
+     label5:
+        return z0;
+
+     label6:
+        $r7 := @caughtexception;
+
+        $r8 = staticinvoke <com.android.server.pm.Installer$InstallerException: com.android.server.pm.Installer$InstallerException 'from'(java.lang.Exception)>($r7);
+
+        throw $r8;
+
+        catch java.lang.Exception from label4 to label5 with label6;
+    }
+
+    public boolean restoreAppDataSnapshot(java.lang.String, int, java.lang.String, int, int, int) throws com.android.server.pm.Installer$InstallerException
+    {
+        com.android.server.pm.Installer r0;
+        int i0, i1, i2, i3;
+        java.lang.String r1, r5;
+        boolean $z0;
+        android.os.IInstalld $r2;
+        java.lang.Exception $r3;
+        com.android.server.pm.Installer$InstallerException $r4;
+
+        r0 := @this: com.android.server.pm.Installer;
+
+        r5 := @parameter0: java.lang.String;
+
+        i0 := @parameter1: int;
+
+        r1 := @parameter2: java.lang.String;
+
+        i1 := @parameter3: int;
+
+        i2 := @parameter4: int;
+
+        i3 := @parameter5: int;
+
+        $z0 = specialinvoke r0.<com.android.server.pm.Installer: boolean checkBeforeRemote()>();
+
+        if $z0 != 0 goto label1;
+
+        return 0;
+
+     label1:
+        $r2 = r0.<com.android.server.pm.Installer: android.os.IInstalld mInstalld>;
+
+        interfaceinvoke $r2.<android.os.IInstalld: void restoreAppDataSnapshot(java.lang.String,java.lang.String,int,java.lang.String,int,int,int)>(null, r5, i0, r1, i1, i2, i3);
+
+     label2:
+        return 1;
+
+     label3:
+        $r3 := @caughtexception;
+
+        $r4 = staticinvoke <com.android.server.pm.Installer$InstallerException: com.android.server.pm.Installer$InstallerException 'from'(java.lang.Exception)>($r3);
+
+        throw $r4;
+
+        catch java.lang.Exception from label1 to label2 with label3;
+    }
+
+    public void restoreconAppData(java.lang.String, java.lang.String, int, int, int, java.lang.String) throws com.android.server.pm.Installer$InstallerException
+    {
+        com.android.server.pm.Installer r0;
+        java.lang.String r1, r2, r6;
+        int i0, i1, i2;
+        boolean $z0;
+        android.os.IInstalld $r3;
+        java.lang.Exception $r4;
+        com.android.server.pm.Installer$InstallerException $r5;
+
+        r0 := @this: com.android.server.pm.Installer;
+
+        r6 := @parameter0: java.lang.String;
+
+        r1 := @parameter1: java.lang.String;
+
+        i0 := @parameter2: int;
+
+        i1 := @parameter3: int;
+
+        i2 := @parameter4: int;
+
+        r2 := @parameter5: java.lang.String;
+
+        $z0 = specialinvoke r0.<com.android.server.pm.Installer: boolean checkBeforeRemote()>();
+
+        if $z0 != 0 goto label1;
+
+        return;
+
+     label1:
+        $r3 = r0.<com.android.server.pm.Installer: android.os.IInstalld mInstalld>;
+
+        interfaceinvoke $r3.<android.os.IInstalld: void restoreconAppData(java.lang.String,java.lang.String,int,int,int,java.lang.String)>(r6, r1, i0, i1, i2, r2);
+
+     label2:
+        return;
+
+     label3:
+        $r4 := @caughtexception;
+
+        $r5 = staticinvoke <com.android.server.pm.Installer$InstallerException: com.android.server.pm.Installer$InstallerException 'from'(java.lang.Exception)>($r4);
+
+        throw $r5;
+
+        catch java.lang.Exception from label1 to label2 with label3;
+    }
+
+    public void rmPackageDir(java.lang.String) throws com.android.server.pm.Installer$InstallerException
+    {
+        com.android.server.pm.Installer r0;
+        boolean $z0;
+        dalvik.system.BlockGuard$VmPolicy $r1;
+        android.os.IInstalld $r2;
+        java.lang.Exception $r3;
+        com.android.server.pm.Installer$InstallerException $r4;
+        java.lang.String r5;
+
+        r0 := @this: com.android.server.pm.Installer;
+
+        r5 := @parameter0: java.lang.String;
+
+        $z0 = specialinvoke r0.<com.android.server.pm.Installer: boolean checkBeforeRemote()>();
+
+        if $z0 != 0 goto label1;
+
+        return;
+
+     label1:
+        $r1 = staticinvoke <dalvik.system.BlockGuard: dalvik.system.BlockGuard$VmPolicy getVmPolicy()>();
+
+        interfaceinvoke $r1.<dalvik.system.BlockGuard$VmPolicy: void onPathAccess(java.lang.String)>(r5);
+
+     label2:
+        $r2 = r0.<com.android.server.pm.Installer: android.os.IInstalld mInstalld>;
+
+        interfaceinvoke $r2.<android.os.IInstalld: void rmPackageDir(java.lang.String)>(r5);
+
+     label3:
+        return;
+
+     label4:
+        $r3 := @caughtexception;
+
+        $r4 = staticinvoke <com.android.server.pm.Installer$InstallerException: com.android.server.pm.Installer$InstallerException 'from'(java.lang.Exception)>($r3);
+
+        throw $r4;
+
+        catch java.lang.Exception from label2 to label3 with label4;
+    }
+
+    public void rmdex(java.lang.String, java.lang.String) throws com.android.server.pm.Installer$InstallerException
+    {
+        com.android.server.pm.Installer r0;
+        java.lang.String r1, r6;
+        boolean $z0;
+        dalvik.system.BlockGuard$VmPolicy $r2;
+        android.os.IInstalld $r3;
+        java.lang.Exception $r4;
+        com.android.server.pm.Installer$InstallerException $r5;
+
+        r0 := @this: com.android.server.pm.Installer;
+
+        r6 := @parameter0: java.lang.String;
+
+        r1 := @parameter1: java.lang.String;
+
+        staticinvoke <com.android.server.pm.Installer: void assertValidInstructionSet(java.lang.String)>(r1);
+
+        $z0 = specialinvoke r0.<com.android.server.pm.Installer: boolean checkBeforeRemote()>();
+
+        if $z0 != 0 goto label1;
+
+        return;
+
+     label1:
+        $r2 = staticinvoke <dalvik.system.BlockGuard: dalvik.system.BlockGuard$VmPolicy getVmPolicy()>();
+
+        interfaceinvoke $r2.<dalvik.system.BlockGuard$VmPolicy: void onPathAccess(java.lang.String)>(r6);
+
+     label2:
+        $r3 = r0.<com.android.server.pm.Installer: android.os.IInstalld mInstalld>;
+
+        interfaceinvoke $r3.<android.os.IInstalld: void rmdex(java.lang.String,java.lang.String)>(r6, r1);
+
+     label3:
+        return;
+
+     label4:
+        $r4 := @caughtexception;
+
+        $r5 = staticinvoke <com.android.server.pm.Installer$InstallerException: com.android.server.pm.Installer$InstallerException 'from'(java.lang.Exception)>($r4);
+
+        throw $r5;
+
+        catch java.lang.Exception from label2 to label3 with label4;
+    }
+
+    public void setAppQuota(java.lang.String, int, int, long) throws com.android.server.pm.Installer$InstallerException
+    {
+        com.android.server.pm.Installer r0;
+        int i0, i1;
+        long l2;
+        boolean $z0;
+        android.os.IInstalld $r1;
+        java.lang.Exception $r2;
+        com.android.server.pm.Installer$InstallerException $r3;
+        java.lang.String r4;
+
+        r0 := @this: com.android.server.pm.Installer;
+
+        r4 := @parameter0: java.lang.String;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        l2 := @parameter3: long;
+
+        $z0 = specialinvoke r0.<com.android.server.pm.Installer: boolean checkBeforeRemote()>();
+
+        if $z0 != 0 goto label1;
+
+        return;
+
+     label1:
+        $r1 = r0.<com.android.server.pm.Installer: android.os.IInstalld mInstalld>;
+
+        interfaceinvoke $r1.<android.os.IInstalld: void setAppQuota(java.lang.String,int,int,long)>(r4, i0, i1, l2);
+
+     label2:
+        return;
+
+     label3:
+        $r2 := @caughtexception;
+
+        $r3 = staticinvoke <com.android.server.pm.Installer$InstallerException: com.android.server.pm.Installer$InstallerException 'from'(java.lang.Exception)>($r2);
+
+        throw $r3;
+
+        catch java.lang.Exception from label1 to label2 with label3;
+    }
+
+    public void setWarnIfHeld(java.lang.Object)
+    {
+        com.android.server.pm.Installer r0;
+        java.lang.Object r1;
+
+        r0 := @this: com.android.server.pm.Installer;
+
+        r1 := @parameter0: java.lang.Object;
+
+        r0.<com.android.server.pm.Installer: java.lang.Object mWarnIfHeld> = r1;
+
+        return;
+    }
+
+    public long snapshotAppData(java.lang.String, int, int, int) throws com.android.server.pm.Installer$InstallerException
+    {
+        com.android.server.pm.Installer r0;
+        int i0, i1, i2;
+        long l3;
+        boolean $z0;
+        android.os.IInstalld $r1;
+        java.lang.Exception $r2;
+        com.android.server.pm.Installer$InstallerException $r3;
+        java.lang.String r4;
+
+        r0 := @this: com.android.server.pm.Installer;
+
+        r4 := @parameter0: java.lang.String;
+
+        i0 := @parameter1: int;
+
+        i1 := @parameter2: int;
+
+        i2 := @parameter3: int;
+
+        $z0 = specialinvoke r0.<com.android.server.pm.Installer: boolean checkBeforeRemote()>();
+
+        if $z0 != 0 goto label1;
+
+        return 0L;
+
+     label1:
+        $r1 = r0.<com.android.server.pm.Installer: android.os.IInstalld mInstalld>;
+
+        l3 = interfaceinvoke $r1.<android.os.IInstalld: long snapshotAppData(java.lang.String,java.lang.String,int,int,int)>(null, r4, i0, i1, i2);
+
+     label2:
+        return l3;
+
+     label3:
+        $r2 := @caughtexception;
+
+        $r3 = staticinvoke <com.android.server.pm.Installer$InstallerException: com.android.server.pm.Installer$InstallerException 'from'(java.lang.Exception)>($r2);
+
+        throw $r3;
+
+        catch java.lang.Exception from label1 to label2 with label3;
+    }
+
+    public void tryMountDataMirror(java.lang.String) throws com.android.server.pm.Installer$InstallerException
+    {
+        com.android.server.pm.Installer r0;
+        boolean $z0;
+        android.os.IInstalld $r1;
+        java.lang.Exception $r2;
+        com.android.server.pm.Installer$InstallerException $r3;
+        java.lang.String r4;
+
+        r0 := @this: com.android.server.pm.Installer;
+
+        r4 := @parameter0: java.lang.String;
+
+        $z0 = specialinvoke r0.<com.android.server.pm.Installer: boolean checkBeforeRemote()>();
+
+        if $z0 != 0 goto label1;
+
+        return;
+
+     label1:
+        $r1 = r0.<com.android.server.pm.Installer: android.os.IInstalld mInstalld>;
+
+        interfaceinvoke $r1.<android.os.IInstalld: void tryMountDataMirror(java.lang.String)>(r4);
+
+     label2:
+        return;
+
+     label3:
+        $r2 := @caughtexception;
+
+        $r3 = staticinvoke <com.android.server.pm.Installer$InstallerException: com.android.server.pm.Installer$InstallerException 'from'(java.lang.Exception)>($r2);
+
+        throw $r3;
+
+        catch java.lang.Exception from label1 to label2 with label3;
+    }
+
+    public static void <clinit>()
+    {
+        <com.android.server.pm.Installer: java.lang.String TAG> = "Installer";
+
+        <com.android.server.pm.Installer: int FLAG_USE_QUOTA> = 4096;
+
+        <com.android.server.pm.Installer: int FLAG_STORAGE_EXTERNAL> = 4;
+
+        <com.android.server.pm.Installer: int FLAG_STORAGE_DE> = 1;
+
+        <com.android.server.pm.Installer: int FLAG_STORAGE_CE> = 2;
+
+        <com.android.server.pm.Installer: int FLAG_FREE_CACHE_V2_DEFY_QUOTA> = 512;
+
+        <com.android.server.pm.Installer: int FLAG_FREE_CACHE_V2> = 256;
+
+        <com.android.server.pm.Installer: int FLAG_FREE_CACHE_NOOP> = 1024;
+
+        <com.android.server.pm.Installer: int FLAG_FORCE> = 8192;
+
+        <com.android.server.pm.Installer: int FLAG_CLEAR_CODE_CACHE_ONLY> = 32;
+
+        <com.android.server.pm.Installer: int FLAG_CLEAR_CACHE_ONLY> = 16;
+
+        <com.android.server.pm.Installer: int FLAG_CLEAR_APP_DATA_KEEP_ART_PROFILES> = 131072;
+
+        <com.android.server.pm.Installer: int DEXOPT_STORAGE_DE> = 256;
+
+        <com.android.server.pm.Installer: int DEXOPT_STORAGE_CE> = 128;
+
+        <com.android.server.pm.Installer: int DEXOPT_SECONDARY_DEX> = 32;
+
+        <com.android.server.pm.Installer: int DEXOPT_PUBLIC> = 2;
+
+        <com.android.server.pm.Installer: int DEXOPT_PROFILE_GUIDED> = 16;
+
+        <com.android.server.pm.Installer: int DEXOPT_IDLE_BACKGROUND_JOB> = 512;
+
+        <com.android.server.pm.Installer: int DEXOPT_GENERATE_COMPACT_DEX> = 2048;
+
+        <com.android.server.pm.Installer: int DEXOPT_GENERATE_APP_IMAGE> = 4096;
+
+        <com.android.server.pm.Installer: int DEXOPT_FOR_RESTORE> = 8192;
+
+        <com.android.server.pm.Installer: int DEXOPT_FORCE> = 64;
+
+        <com.android.server.pm.Installer: int DEXOPT_ENABLE_HIDDEN_API_CHECKS> = 1024;
+
+        <com.android.server.pm.Installer: int DEXOPT_DEBUGGABLE> = 4;
+
+        <com.android.server.pm.Installer: int DEXOPT_BOOTCOMPLETE> = 8;
+
+        return;
+    }
+}
